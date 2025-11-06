@@ -1,0 +1,1453 @@
+
+> digiurban-backend@1.0.0 dev
+> nodemon src/index.ts
+
+[33m[nodemon] 3.1.10[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): src\**\*[39m
+[33m[nodemon] watching extensions: ts,json[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+[Tenant] Path: /api/citizen/services/cmhf0blcu001ucb7k8wonb6tt/request
+[Tenant] Verificando JWT cookie cidadão...
+[Tenant] ✅ Tenant do JWT cookie cidadão: cmhf0bl1k0000cb7k988sql5x
+[Tenant] ID identificado: cmhf0bl1k0000cb7k988sql5x
+prisma:query SELECT `main`.`tenants`.`id`, `main`.`tenants`.`name`, `main`.`tenants`.`cnpj`, `main`.`tenants`.`plan`, `main`.`tenants`.`status`, `main`.`tenants`.`trialEndsAt`, `main`.`tenants`.`population`, `main`.`tenants`.`billing`, `main`.`tenants`.`limits`, `main`.`tenants`.`settings`, `main`.`tenants`.`metadata`, `main`.`tenants`.`codigoIbge`, `main`.`tenants`.`nomeMunicipio`, `main`.`tenants`.`ufMunicipio`, `main`.`tenants`.`createdAt`, `main`.`tenants`.`updatedAt`, `main`.`tenants`.`hasEmailService`, `main`.`tenants`.`emailPlanType`, COALESCE(`aggr_selection_0_User`.`_aggr_count_users`, 0) AS `_aggr_count_users`, COALESCE(`aggr_selection_1_ProtocolSimplified`.`_aggr_count_protocolsSimplified`, 0) AS `_aggr_count_protocolsSimplified`, COALESCE(`aggr_selection_2_ServiceSimplified`.`_aggr_count_servicesSimplified`, 0) AS `_aggr_count_servicesSimplified` FROM `main`.`tenants` LEFT JOIN (SELECT `main`.`users`.`tenantId`, COUNT(*) AS `_aggr_count_users` FROM `main`.`users` WHERE 1=1 GROUP BY `main`.`users`.`tenantId`) AS `aggr_selection_0_User` ON (`main`.`tenants`.`id` = `aggr_selection_0_User`.`tenantId`) LEFT JOIN (SELECT `main`.`protocols_simplified`.`tenantId`, COUNT(*) AS `_aggr_count_protocolsSimplified` FROM `main`.`protocols_simplified` WHERE 1=1 GROUP BY `main`.`protocols_simplified`.`tenantId`) AS `aggr_selection_1_ProtocolSimplified` ON (`main`.`tenants`.`id` = `aggr_selection_1_ProtocolSimplified`.`tenantId`) LEFT JOIN (SELECT `main`.`services_simplified`.`tenantId`, COUNT(*) AS `_aggr_count_servicesSimplified` FROM `main`.`services_simplified` WHERE 1=1 GROUP BY `main`.`services_simplified`.`tenantId`) AS `aggr_selection_2_ServiceSimplified` ON (`main`.`tenants`.`id` = `aggr_selection_2_ServiceSimplified`.`tenantId`) WHERE (`main`.`tenants`.`id` = ? AND 1=1) LIMIT ? OFFSET ?
+prisma:query SELECT `main`.`citizens`.`id`, `main`.`citizens`.`cpf`, `main`.`citizens`.`name`, `main`.`citizens`.`email`, `main`.`citizens`.`phone`, `main`.`citizens`.`birthDate`, `main`.`citizens`.`address`, `main`.`citizens`.`isActive`, `main`.`citizens`.`password`, `main`.`citizens`.`failedLoginAttempts`, `main`.`citizens`.`lockedUntil`, `main`.`citizens`.`verificationStatus`, `main`.`citizens`.`verifiedAt`, `main`.`citizens`.`verifiedBy`, `main`.`citizens`.`verificationNotes`, `main`.`citizens`.`registrationSource`, `main`.`citizens`.`tenantId`, `main`.`citizens`.`createdAt`, `main`.`citizens`.`updatedAt`, `main`.`citizens`.`lastLogin` FROM `main`.`citizens` WHERE (`main`.`citizens`.`id` = ? AND `main`.`citizens`.`tenantId` = ? AND `main`.`citizens`.`isActive` = ?) LIMIT ? OFFSET ?
+prisma:query SELECT `main`.`services_simplified`.`id`, `main`.`services_simplified`.`name`, `main`.`services_simplified`.`description`, `main`.`services_simplified`.`departmentId`, `main`.`services_simplified`.`serviceType`, `main`.`services_simplified`.`moduleType`, `main`.`services_simplified`.`formSchema`, `main`.`services_simplified`.`isActive`, `main`.`services_simplified`.`requiresDocuments`, `main`.`services_simplified`.`requiredDocuments`, `main`.`services_simplified`.`estimatedDays`, `main`.`services_simplified`.`priority`, `main`.`services_simplified`.`category`, `main`.`services_simplified`.`icon`, `main`.`services_simplified`.`color`, `main`.`services_simplified`.`tenantId`, `main`.`services_simplified`.`createdAt`, `main`.`services_simplified`.`updatedAt` FROM `main`.`services_simplified` WHERE (`main`.`services_simplified`.`id` = ? AND `main`.`services_simplified`.`tenantId` = ? AND `main`.`services_simplified`.`isActive` = ?) LIMIT ? OFFSET ?
+Erro ao solicitar serviço: Error: Este cidadão já está cadastrado como produtor rural
+    at RuralProducer (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\services\protocol-module.service.ts:195:17)
+    at async C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\services\protocol-module.service.ts:114:26
+    at async Proxy._transactionWithCallback (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:722:18)
+    at async ProtocolModuleService.createProtocolWithModule (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\services\protocol-module.service.ts:81:20)
+    at async C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\routes\citizen-services.ts:439:20
+::1 - - [31/Oct/2025:19:29:15 +0000] "POST /api/citizen/services/cmhf0blcu001ucb7k8wonb6tt/request HTTP/1.1" 500 103 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  override existing env vars with { override: true }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[32m[nodemon] restarting due to changes...[39m
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 version env with Radar: https://dotenvx.com/radar
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+[32m[nodemon] restarting due to changes...[39m
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/protocol-interactions.ts(2,45): error TS2307: Cannot find module '../middleware/auth.middleware' or its corresponding type declarations.
+src/routes/protocol-interactions.ts(3,38): error TS2307: Cannot find module '../types/auth.types' or its corresponding type declarations.
+src/routes/protocol-interactions.ts(24,53): error TS2339: Property 'CITIZEN' does not exist on type '{ GUEST: "GUEST"; USER: "USER"; COORDINATOR: "COORDINATOR"; MANAGER: "MANAGER"; ADMIN: "ADMIN"; SUPER_ADMIN: "SUPER_ADMIN"; }'.
+src/routes/protocol-interactions.ts(70,51): error TS2339: Property 'CITIZEN' does not exist on type '{ GUEST: "GUEST"; USER: "USER"; COORDINATOR: "COORDINATOR"; MANAGER: "MANAGER"; ADMIN: "ADMIN"; SUPER_ADMIN: "SUPER_ADMIN"; }'.
+
+    at createTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1895:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2307, 2307, 2339, 2339 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 version env with Radar: https://dotenvx.com/radar
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/protocol-interactions.ts(2,10): error TS2305: Module '"../middleware/auth"' has no exported member 'requireAuth'.
+src/routes/protocol-interactions.ts(2,23): error TS2724: '"../middleware/auth"' has no exported member named 'requireMinRole'. Did you mean 'requireRole'?
+src/routes/protocol-interactions.ts(3,38): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.
+
+    at createTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1895:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2305, 2724, 2307 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/protocol-interactions.ts(2,10): error TS2305: Module '"../middleware/auth"' has no exported member 'requireAuth'.
+src/routes/protocol-interactions.ts(2,23): error TS2724: '"../middleware/auth"' has no exported member named 'requireMinRole'. Did you mean 'requireRole'?
+src/routes/protocol-interactions.ts(24,19): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(24,35): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(33,29): error TS2339: Property 'userName' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(70,17): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(70,33): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+
+    at createTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1895:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [
+    2305, 2724,
+    2339, 2339,
+    2339, 2339,
+    2339
+  ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 version env with Radar: https://dotenvx.com/radar
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/protocol-interactions.ts(24,19): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(24,35): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(33,29): error TS2339: Property 'userName' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(70,17): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(70,33): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+
+    at createTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1895:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2339, 2339, 2339, 2339, 2339 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  override existing env vars with { override: true }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+URA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/protocol-interactions.ts(2,45): error TS2307: Cannot find module '../middleware/auth.middleware' or its corresponding type declarations.
+src/routes/protocol-interactions.ts(3,38): error TS2307: Cannot find module '../types/auth.types' or its corresponding type declarations.
+src/routes/protocol-interactions.ts(24,53): error TS2339: Property 'CITIZEN' does not exist on type '{ GUEST: "GUEST"; USER: "USER"; COORDINATOR: "COORDINATOR"; MANAGER: "MANAGER"; ADMIN: "ADMIN"; SUPER_ADMIN: "SUPER_ADMIN"; }'.
+src/routes/protocol-interactions.ts(70,51): error TS2339: Property 'CITIZEN' does not exist on type '{ GUEST: "GUEST"; USER: "USER"; COORDINATOR: "COORDINATOR"; MANAGER: "MANAGER"; ADMIN: "ADMIN"; SUPER_ADMIN: "SUPER_ADMIN"; }'.
+
+    at createTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1895:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2307, 2307, 2339, 2339 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/protocol-interactions.ts(2,10): error TS2305: Module '"../middleware/auth"' has no exported member 'requireAuth'.
+src/routes/protocol-interactions.ts(2,23): error TS2724: '"../middleware/auth"' has no exported member named 'requireMinRole'. Did you mean 'requireRole'?
+src/routes/protocol-interactions.ts(3,38): error TS2307: Cannot find module '../types/auth' or its corresponding type declarations.
+
+    at createTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1895:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2305, 2724, 2307 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/protocol-interactions.ts(2,10): error TS2305: Module '"../middleware/auth"' has no exported member 'requireAuth'.
+src/routes/protocol-interactions.ts(2,23): error TS2724: '"../middleware/auth"' has no exported member named 'requireMinRole'. Did you mean 'requireRole'?
+src/routes/protocol-interactions.ts(24,19): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(24,35): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(33,29): error TS2339: Property 'userName' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(70,17): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(70,33): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+
+    at createTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1895:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [
+    2305, 2724,
+    2339, 2339,
+    2339, 2339,
+    2339
+  ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859
+    return new TSError(diagnosticText, diagnosticCodes, diagnostics);
+           ^
+TSError: ⨯ Unable to compile TypeScript:
+src/routes/protocol-interactions.ts(24,19): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(24,35): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(33,29): error TS2339: Property 'userName' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(70,17): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+src/routes/protocol-interactions.ts(70,33): error TS2339: Property 'role' does not exist on type 'AuthenticatedRequest'.
+
+    at createTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:859:12)
+    at reportTSError (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:863:19)
+    at getOutput (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1077:36)
+    at Object.compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1433:41)
+    at Module.m._compile (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1617:30)
+    at node:internal/modules/cjs/loader:1895:10
+    at Object.require.extensions.<computed> [as .ts] (C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\node_modules\ts-node\src\index.ts:1621:12)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14) {
+  diagnosticCodes: [ 2339, 2339, 2339, 2339, 2339 ]
+}
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `ts-node src/index.ts src/index.ts`[39m
+[dotenv@17.2.2] injecting env (8) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+⚠️  DATABASE_URL não configurado corretamente. Usando: file:C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\prisma\dev.db
+📂 Carregando de: C:\Projetos Cursor\DigiurbanFinal\digiurban\backend\src\data\municipios-brasil.json
+✅ Carregados 5570 municípios brasileiros
+📍 Exemplo: {
+  codigo_ibge: '5200050',
+  nome: 'Abadia de Goiás',
+  uf: 'GO',
+  regiao: 'Centro-Oeste',
+  populacao: 22052,
+  capital: false,
+  latitude: -16.7573,
+  longitude: -49.4412,
+  ddd: 62,
+  cnpj: null
+}
+🔄 Registering all module handlers...
+✅ Education handlers registered
+📝 Handler registrado: health:MedicalAppointment
+📝 Handler registrado: health:VaccinationRecord
+📝 Handler registrado: health:MedicationDispense
+📝 Handler registrado: health:MedicalExam
+📝 Handler registrado: health:CampaignEnrollment
+📝 Handler registrado: health:HomeCare
+✅ Health handlers registered (6 handlers)
+📝 Handler registrado: social_assistance:SocialBenefitRequest
+📝 Handler registrado: social_assistance:SocialProgramEnrollment
+📝 Handler registrado: social_assistance:SocialHomeVisit
+📝 Handler registrado: social_assistance:DocumentRequest
+📝 Handler registrado: social_assistance:FamilyRegistration
+✅ Social Assistance handlers registered (5 handlers)
+✅ Culture handlers registered
+✅ Sport handlers registered
+✅ Tourism handlers registered
+✅ Public Works handlers registered
+✅ Public Services handlers registered
+✅ Housing handlers registered
+✅ Security handlers registered
+📝 Handler registrado: environment:EnvironmentalLicense
+📝 Handler registrado: environment:TreeAuthorization
+📝 Handler registrado: environment:EnvironmentalComplaint
+📝 Handler registrado: environment:OrganicCertification
+✅ Environment handlers registered
+📝 Handler registrado: AGRICULTURA:CADASTRO_PRODUTOR
+📝 Handler registrado: AGRICULTURA:ASSISTENCIA_TECNICA
+✅ Agriculture handlers registered (2 active)
+   - AGRICULTURA:CADASTRO_PRODUTOR
+   - AGRICULTURA:ASSISTENCIA_TECNICA
+📝 Handler registrado: urban_planning:BuildingPermit
+📝 Handler registrado: urban_planning:UrbanCertificate
+📝 Handler registrado: urban_planning:PropertyNumbering
+📝 Handler registrado: urban_planning:LotSubdivision
+✅ Urban Planning handlers registered
+✅ All module handlers registered successfully!
+✅ Todos os module handlers registrados com sucesso
+🚀 DigiUrban Backend server running on port 3001
+📱 API Documentation: http://localhost:3001/health
+⏰ Server is now listening and will stay alive...
+❌ Port 3001 is already in use
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m

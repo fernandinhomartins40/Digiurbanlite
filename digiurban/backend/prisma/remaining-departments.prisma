@@ -1,0 +1,899 @@
+// CONTINUAÇÃO DAS SECRETARIAS RESTANTES (6-13)
+// Esportes, Planejamento Urbano, Habitação, Obras Públicas, Cultura, Meio Ambiente, Agricultura, Turismo
+
+// ====================== 6. SECRETARIA DE ESPORTES (8 PÁGINAS) ======================
+// Páginas: atendimentos, equipes-esportivas, competicoes-torneios, atletas-federados, escolinhas-esportivas, eventos-esportivos, infraestrutura-esportiva, dashboard
+
+model SportsTeam {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  modality    String // "futebol", "volei", "basquete", "natacao", "atletismo"
+  category    String // "masculino", "feminino", "misto"
+  ageGroup    String // "infantil", "juvenil", "adulto", "master"
+  level       String // "iniciante", "intermediario", "avancado", "competitivo"
+  coach       String
+  assistantCoach String?
+  trainingSchedule Json
+  maxAthletes Int
+  currentAthletes Int @default(0)
+  isActive    Boolean @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  athletes    Athlete[]
+  competitions TeamCompetition[]
+
+  @@index([tenantId, modality])
+  @@index([tenantId, ageGroup])
+  @@index([tenantId, isActive])
+  @@map("sports_teams")
+}
+
+model Athlete {
+  id          String @id @default(cuid())
+  tenantId    String
+  citizenId   String
+  teamId      String?
+  registrationNumber String @unique
+  federation  String? // Para atletas federados
+  category    String
+  position    String?
+  joinedAt    DateTime @default(now())
+  isActive    Boolean @default(true)
+  medicalClearance DateTime?
+  performance Json?
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  citizen     Citizen @relation(fields: [citizenId], references: [id])
+  team        SportsTeam? @relation(fields: [teamId], references: [id])
+
+  @@unique([tenantId, citizenId])
+  @@index([tenantId, teamId])
+  @@index([tenantId, federation])
+  @@map("athletes")
+}
+
+model Competition {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "campeonato", "torneio", "festival", "copa"
+  modality    String
+  category    String
+  startDate   DateTime
+  endDate     DateTime
+  location    String
+  description String?
+  maxTeams    Int?
+  currentTeams Int @default(0)
+  registrationFee Float?
+  prize       Json?
+  status      String @default("planned") // "planned", "open", "ongoing", "completed", "cancelled"
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  teams       TeamCompetition[]
+
+  @@index([tenantId, modality])
+  @@index([tenantId, status])
+  @@index([tenantId, startDate])
+  @@map("competitions")
+}
+
+model TeamCompetition {
+  id            String @id @default(cuid())
+  tenantId      String
+  teamId        String
+  competitionId String
+  registeredAt  DateTime @default(now())
+  status        String @default("registered") // "registered", "qualified", "eliminated", "champion"
+  placement     Int?
+  points        Int @default(0)
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  team        SportsTeam @relation(fields: [teamId], references: [id])
+  competition Competition @relation(fields: [competitionId], references: [id])
+
+  @@unique([tenantId, teamId, competitionId])
+  @@map("team_competitions")
+}
+
+model SportsEvent {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "competicao", "apresentacao", "inauguracao", "clinica"
+  modality    String?
+  date        DateTime
+  location    String
+  description String?
+  targetAudience String?
+  capacity    Int?
+  currentParticipants Int @default(0)
+  isPublic    Boolean @default(true)
+  ticketPrice Float?
+  status      String @default("planned") // "planned", "confirmed", "completed", "cancelled"
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@map("sports_events")
+}
+
+model SportsInfrastructure {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "quadra", "campo", "piscina", "pista", "ginasio"
+  location    Json
+  capacity    Int?
+  dimensions  Json? // Dimensões do espaço
+  equipment   Json? // Equipamentos disponíveis
+  condition   String @default("good") // "excellent", "good", "fair", "poor"
+  isActive    Boolean @default(true)
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+  bookingCalendar Json?
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, condition])
+  @@index([tenantId, isActive])
+  @@map("sports_infrastructure")
+}
+
+// ====================== 7. SECRETARIA DE PLANEJAMENTO URBANO (8 PÁGINAS) ======================
+// Páginas: atendimentos, aprovacao-projetos, emissao-alvaras, denuncias-reclamacoes, consultas-publicas, mapa-urbano, projetos, dashboard-planejamento
+
+model UrbanProject {
+  id          String @id @default(cuid())
+  tenantId    String
+  protocolId  String?
+  projectNumber String @unique
+  name        String
+  type        String // "loteamento", "edificacao", "reforma", "demolicao", "comercial", "industrial"
+  location    Json
+  area        Float? // Área em m²
+  description String
+  applicantId String
+  responsibleTechnician String?
+  status      String @default("analysis") // "analysis", "approved", "rejected", "in_progress", "completed", "suspended"
+  submittedAt DateTime @default(now())
+  approvedAt  DateTime?
+  completedAt DateTime?
+  dueDate     DateTime?
+  documents   Json // Documentos anexados
+  observations String?
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol    Protocol? @relation(fields: [protocolId], references: [id])
+  applicant   Citizen @relation(fields: [applicantId], references: [id])
+  permits     BuildingPermit[]
+
+  @@unique([tenantId, projectNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, applicantId])
+  @@map("urban_projects")
+}
+
+model BuildingPermit {
+  id         String @id @default(cuid())
+  tenantId   String
+  protocolId String?
+  projectId  String?
+  permitNumber String @unique
+  type       String // "construcao", "reforma", "demolicao", "ocupacao"
+  location   Json
+  area       Float
+  purpose    String // "residencial", "comercial", "industrial", "misto"
+  validUntil DateTime
+  issuedAt   DateTime @default(now())
+  status     String @default("active") // "active", "expired", "revoked", "suspended"
+  fees       Float?
+  conditions Json? // Condicionantes do alvará
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol  Protocol? @relation(fields: [protocolId], references: [id])
+  project   UrbanProject? @relation(fields: [projectId], references: [id])
+
+  @@unique([tenantId, permitNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, validUntil])
+  @@map("building_permits")
+}
+
+model PublicComplaint {
+  id            String @id @default(cuid())
+  tenantId      String
+  protocolId    String?
+  complaintNumber String @unique
+  complainantId String?
+  type          String // "irregular_construction", "noise", "environmental", "zoning", "occupancy"
+  description   String
+  location      Json
+  evidence      Json? // Fotos, documentos
+  anonymous     Boolean @default(false)
+  priority      String @default("normal") // "low", "normal", "high", "urgent"
+  status        String @default("open") // "open", "investigating", "resolved", "dismissed", "transferred"
+  reportedAt    DateTime @default(now())
+  resolvedAt    DateTime?
+  resolution    String?
+  assignedTo    String?
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol    Protocol? @relation(fields: [protocolId], references: [id])
+  complainant Citizen? @relation(fields: [complainantId], references: [id])
+
+  @@unique([tenantId, complaintNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, reportedAt])
+  @@map("public_complaints")
+}
+
+model PublicConsultation {
+  id          String @id @default(cuid())
+  tenantId    String
+  title       String
+  description String
+  type        String // "plano_diretor", "zoneamento", "projeto_lei", "obra_publica"
+  startDate   DateTime
+  endDate     DateTime
+  documents   Json? // Documentos da consulta
+  location    String?
+  participationRules Json?
+  status      String @default("open") // "open", "closed", "analysis", "published"
+  participants Int @default(0)
+  contributions Json?
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, startDate, endDate])
+  @@map("public_consultations")
+}
+
+// ====================== 8. SECRETARIA DE HABITAÇÃO (6 PÁGINAS) ======================
+// Páginas: atendimentos, inscricoes, programas-habitacionais, unidades-habitacionais, regularizacao-fundiaria, dashboard-habitacao
+
+model HousingProgram {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  code        String
+  type        String // "minha_casa", "lote_social", "regularizacao", "aluguel_social"
+  description String
+  requirements Json
+  maxIncome   Float?
+  maxFamilySize Int?
+  benefits    Json
+  totalUnits  Int?
+  availableUnits Int @default(0)
+  isActive    Boolean @default(true)
+  startDate   DateTime
+  endDate     DateTime?
+
+  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  applications  HousingApplication[]
+  units         HousingUnit[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@map("housing_programs")
+}
+
+model HousingApplication {
+  id            String @id @default(cuid())
+  tenantId      String
+  protocolId    String?
+  programId     String
+  applicantId   String
+  applicationNumber String @unique
+  familyIncome  Float
+  familySize    Int
+  currentHousing Json
+  documents     Json
+  score         Float?
+  status        String @default("pending") // "pending", "approved", "rejected", "waiting_list"
+  appliedAt     DateTime @default(now())
+  reviewedAt    DateTime?
+  priority      String @default("normal")
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol    Protocol? @relation(fields: [protocolId], references: [id])
+  program     HousingProgram @relation(fields: [programId], references: [id])
+  applicant   Citizen @relation(fields: [applicantId], references: [id])
+
+  @@unique([tenantId, applicationNumber])
+  @@index([tenantId, programId])
+  @@index([tenantId, status])
+  @@index([tenantId, score])
+  @@map("housing_applications")
+}
+
+model HousingUnit {
+  id         String @id @default(cuid())
+  tenantId   String
+  programId  String?
+  unitNumber String
+  address    Json
+  type       String // "casa", "apartamento"
+  bedrooms   Int
+  area       Float
+  value      Float?
+  status     String @default("available") // "available", "occupied", "maintenance", "reserved"
+  occupantId String?
+  occupiedAt DateTime?
+  specifications Json?
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  program  HousingProgram? @relation(fields: [programId], references: [id])
+  occupant Citizen? @relation(fields: [occupantId], references: [id])
+
+  @@unique([tenantId, unitNumber])
+  @@index([tenantId, status])
+  @@index([tenantId, programId])
+  @@map("housing_units")
+}
+
+model LandRegularization {
+  id          String @id @default(cuid())
+  tenantId    String
+  protocolId  String?
+  processNumber String @unique
+  applicantId String
+  location    Json
+  area        Float
+  type        String // "usucapiao", "concessao_uso", "titulo_propriedade"
+  status      String @default("analysis") // "analysis", "approved", "rejected", "documentation", "completed"
+  documents   Json?
+  observations String?
+  submittedAt DateTime @default(now())
+  completedAt DateTime?
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol  Protocol? @relation(fields: [protocolId], references: [id])
+  applicant Citizen @relation(fields: [applicantId], references: [id])
+
+  @@unique([tenantId, processNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, applicantId])
+  @@map("land_regularization")
+}
+
+// ====================== 9. SECRETARIA DE OBRAS PÚBLICAS (5 PÁGINAS) ======================
+// Páginas: atendimentos, obras-intervencoes, progresso-obras, mapa-obras, dashboard-obras
+
+model PublicWork {
+  id          String @id @default(cuid())
+  tenantId    String
+  workNumber  String @unique
+  name        String
+  type        String // "pavimentacao", "saneamento", "edificacao", "ponte", "praca"
+  description String
+  location    Json
+  budget      Float
+  contractor  String?
+  engineer    String?
+  startDate   DateTime?
+  endDate     DateTime?
+  estimatedDuration Int? // em dias
+  progress    Float @default(0) // 0-100
+  status      String @default("planned") // "planned", "bidding", "in_progress", "completed", "suspended", "cancelled"
+  priority    String @default("normal")
+
+  tenant       Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inspections  WorkInspection[]
+  interventions WorkIntervention[]
+
+  @@unique([tenantId, workNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, startDate])
+  @@map("public_works")
+}
+
+model WorkInspection {
+  id         String @id @default(cuid())
+  tenantId   String
+  workId     String
+  inspector  String
+  date       DateTime
+  progress   Float
+  quality    String // "excellent", "good", "fair", "poor"
+  findings   String
+  photos     Json?
+  issues     Json?
+  nextInspection DateTime?
+  approved   Boolean @default(true)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  work   PublicWork @relation(fields: [workId], references: [id])
+
+  @@index([tenantId, workId])
+  @@index([tenantId, date])
+  @@index([tenantId, quality])
+  @@map("work_inspections")
+}
+
+model WorkIntervention {
+  id          String @id @default(cuid())
+  tenantId    String
+  protocolId  String?
+  workId      String?
+  requestNumber String @unique
+  type        String // "tapa_buraco", "limpeza_bueiro", "sinalizacao", "emergencial"
+  location    Json
+  description String
+  priority    String @default("normal")
+  status      String @default("open") // "open", "assigned", "in_progress", "completed", "cancelled"
+  requestedAt DateTime @default(now())
+  completedAt DateTime?
+  cost        Float?
+  materials   Json?
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol Protocol? @relation(fields: [protocolId], references: [id])
+  work     PublicWork? @relation(fields: [workId], references: [id])
+
+  @@unique([tenantId, requestNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, priority])
+  @@map("work_interventions")
+}
+
+// ====================== 10. SECRETARIA DE CULTURA (8 PÁGINAS) ======================
+// Páginas: atendimentos, espacos-culturais, projetos-culturais, eventos, grupos-artisticos, oficinas-cursos, manifestacoes-culturais, dashboard-cultura
+
+model CulturalSpace {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "teatro", "biblioteca", "museu", "centro_cultural", "galeria"
+  address     Json
+  capacity    Int?
+  equipment   Json?
+  schedule    Json
+  manager     String?
+  isActive    Boolean @default(true)
+  accessibility Boolean @default(false)
+  reservationRules Json?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  events CulturalEvent[]
+
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@map("cultural_spaces")
+}
+
+model CulturalProject {
+  id          String @id @default(cuid())
+  tenantId    String
+  protocolId  String?
+  projectNumber String @unique
+  name        String
+  type        String // "musical", "teatral", "literario", "artes_visuais", "audiovisual"
+  description String
+  coordinatorId String
+  budget      Float?
+  funding     Json? // Fontes de financiamento
+  startDate   DateTime
+  endDate     DateTime
+  status      String @default("proposed") // "proposed", "approved", "in_progress", "completed", "cancelled"
+  participants Json?
+  target      String? // Público-alvo
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol    Protocol? @relation(fields: [protocolId], references: [id])
+  coordinator Citizen @relation(fields: [coordinatorId], references: [id])
+
+  @@unique([tenantId, projectNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, coordinatorId])
+  @@map("cultural_projects")
+}
+
+model CulturalEvent {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "show", "exposicao", "workshop", "festival", "palestra"
+  description String
+  date        DateTime
+  endDate     DateTime?
+  location    String
+  spaceId     String?
+  capacity    Int?
+  ticketPrice Float?
+  isPublic    Boolean @default(true)
+  ageRating   String? // "livre", "10", "12", "14", "16", "18"
+  status      String @default("planned") // "planned", "confirmed", "completed", "cancelled"
+  organizer   String?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  space  CulturalSpace? @relation(fields: [spaceId], references: [id])
+
+  @@index([tenantId, type])
+  @@index([tenantId, date])
+  @@index([tenantId, status])
+  @@map("cultural_events")
+}
+
+model ArtistGroup {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "banda", "grupo_danca", "teatro", "coral", "orquestra"
+  style       String? // Estilo artístico
+  coordinator String
+  members     Json
+  contact     Json
+  repertoire  Json?
+  achievements Json?
+  isActive    Boolean @default(true)
+  foundedAt   DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@map("artist_groups")
+}
+
+model CulturalWorkshop {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "musica", "danca", "artes_plasticas", "literatura", "teatro"
+  instructor  String
+  schedule    Json
+  maxStudents Int
+  currentStudents Int @default(0)
+  ageGroup    String? // "infantil", "juvenil", "adulto", "idoso", "livre"
+  level       String? // "iniciante", "intermediario", "avancado"
+  startDate   DateTime
+  endDate     DateTime
+  fee         Float?
+  isActive    Boolean @default(true)
+  requirements Json?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@index([tenantId, startDate])
+  @@map("cultural_workshops")
+}
+
+// ====================== 11. SECRETARIA DE MEIO AMBIENTE (6 PÁGINAS) ======================
+// Páginas: atendimentos, licencas-ambientais, registro-denuncias, areas-protegidas, programas-ambientais, dashboard-meio-ambiente
+
+model EnvironmentalLicense {
+  id          String @id @default(cuid())
+  tenantId    String
+  protocolId  String?
+  licenseNumber String @unique
+  applicantId String
+  type        String // "instalacao", "operacao", "ampliacao", "renovacao"
+  activity    String
+  location    Json
+  validUntil  DateTime
+  conditions  Json?
+  status      String @default("analysis") // "analysis", "approved", "rejected", "expired", "revoked"
+  issuedAt    DateTime?
+  fees        Float?
+  documents   Json?
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol  Protocol? @relation(fields: [protocolId], references: [id])
+  applicant Citizen @relation(fields: [applicantId], references: [id])
+
+  @@unique([tenantId, licenseNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, validUntil])
+  @@index([tenantId, applicantId])
+  @@map("environmental_licenses")
+}
+
+model EnvironmentalComplaint {
+  id            String @id @default(cuid())
+  tenantId      String
+  protocolId    String?
+  complaintNumber String @unique
+  complainantId String?
+  type          String // "poluicao_agua", "poluicao_ar", "desmatamento", "residuos", "ruido"
+  description   String
+  location      Json
+  evidence      Json?
+  severity      String @default("medium") // "low", "medium", "high", "critical"
+  status        String @default("open") // "open", "investigating", "resolved", "dismissed"
+  reportedAt    DateTime @default(now())
+  investigatedAt DateTime?
+  resolvedAt    DateTime?
+  assignedTo    String?
+  actions       String?
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  protocol    Protocol? @relation(fields: [protocolId], references: [id])
+  complainant Citizen? @relation(fields: [complainantId], references: [id])
+
+  @@unique([tenantId, complaintNumber])
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, severity])
+  @@index([tenantId, reportedAt])
+  @@map("environmental_complaints")
+}
+
+model ProtectedArea {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "app", "reserva", "parque", "mata_ciliar", "uc"
+  location    Json
+  area        Float // em hectares
+  description String?
+  regulations Json?
+  legalFramework Json? // Marco legal
+  management  Json? // Plano de manejo
+  threats     Json? // Ameaças identificadas
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@map("protected_areas")
+}
+
+model EnvironmentalProgram {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "educacao_ambiental", "reflorestamento", "reciclagem", "conservacao"
+  description String
+  targetAudience String?
+  coordinator String
+  budget      Float?
+  startDate   DateTime
+  endDate     DateTime?
+  status      String @default("active") // "active", "completed", "suspended", "cancelled"
+  participants Json?
+  goals       Json?
+  results     Json?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, status])
+  @@index([tenantId, startDate])
+  @@map("environmental_programs")
+}
+
+// ====================== 12. SECRETARIA DE AGRICULTURA (6 PÁGINAS) ======================
+// Páginas: atendimentos, cadastro-produtores, assistencia-tecnica, programas-rurais, cursos-capacitacoes, dashboard-agricultura
+
+model RuralProducer {
+  id          String @id @default(cuid())
+  tenantId    String
+  citizenId   String
+  farmerNumber String @unique
+  farmName    String?
+  property    Json
+  production  Json
+  area        Float?
+  isActive    Boolean @default(true)
+  dap         String? // Declaração de Aptidão ao PRONAF
+  registeredAt DateTime @default(now())
+
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  citizen     Citizen @relation(fields: [citizenId], references: [id])
+  assistance  TechnicalAssistance[]
+
+  @@unique([tenantId, citizenId])
+  @@unique([tenantId, farmerNumber])
+  @@index([tenantId, isActive])
+  @@map("rural_producers")
+}
+
+model TechnicalAssistance {
+  id          String @id @default(cuid())
+  tenantId    String
+  producerId  String
+  technician  String
+  type        String // "orientacao", "capacitacao", "visita_tecnica", "diagnostico"
+  subject     String // "plantio", "irrigacao", "pragas", "comercializacao", "credito"
+  date        DateTime
+  description String
+  recommendations String?
+  nextVisit   DateTime?
+  status      String @default("completed") // "scheduled", "completed", "cancelled"
+  materials   Json? // Materiais fornecidos
+  cost        Float?
+
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  producer RuralProducer @relation(fields: [producerId], references: [id])
+
+  @@index([tenantId, producerId])
+  @@index([tenantId, technician])
+  @@index([tenantId, date])
+  @@index([tenantId, type])
+  @@map("technical_assistance")
+}
+
+model RuralProgram {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  code        String
+  type        String // "credito", "capacitacao", "fornecimento_sementes", "mecanizacao"
+  description String
+  requirements Json
+  benefits    Json
+  budget      Float?
+  coordinator String
+  startDate   DateTime
+  endDate     DateTime?
+  isActive    Boolean @default(true)
+  participants Int @default(0)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, code])
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@map("rural_programs")
+}
+
+model RuralTraining {
+  id          String @id @default(cuid())
+  tenantId    String
+  title       String
+  type        String // "workshop", "curso", "palestra", "dia_campo"
+  instructor  String
+  subject     String // "agricultura_organica", "irrigacao", "cooperativismo"
+  date        DateTime
+  duration    Int // duração em horas
+  location    String
+  maxParticipants Int
+  currentParticipants Int @default(0)
+  fee         Float?
+  certificate Boolean @default(false)
+  status      String @default("planned") // "planned", "confirmed", "completed", "cancelled"
+  materials   Json?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, date])
+  @@index([tenantId, status])
+  @@map("rural_training")
+}
+
+// ====================== 13. SECRETARIA DE TURISMO (7 PÁGINAS) ======================
+// Páginas: atendimentos, pontos-turisticos, estabelecimentos-locais, informacoes-turisticas, mapa-turistico, programas-turisticos, dashboard-turismo
+
+model TouristAttraction {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "natural", "historico", "cultural", "religioso", "gastronomico"
+  category    String? // Categoria específica
+  description String
+  location    Json
+  address     String
+  facilities  Json?
+  accessibility Boolean @default(false)
+  visitingHours Json?
+  entryFee    Float?
+  photos      Json?
+  rating      Float? // 0-5
+  isActive    Boolean @default(true)
+  featured    Boolean @default(false)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@index([tenantId, featured])
+  @@map("tourist_attractions")
+}
+
+model LocalBusiness {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "hotel", "pousada", "restaurante", "loja_artesanato", "agencia_turismo"
+  category    String // "hospedagem", "alimentacao", "compras", "servicos"
+  description String?
+  ownerId     String?
+  location    Json
+  address     String
+  contact     Json
+  services    Json?
+  amenities   Json?
+  priceRange  String? // "$", "$$", "$$$", "$$$$"
+  rating      Float?
+  photos      Json?
+  schedule    Json?
+  isActive    Boolean @default(true)
+  verified    Boolean @default(false)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  owner  Citizen? @relation(fields: [ownerId], references: [id])
+
+  @@index([tenantId, type])
+  @@index([tenantId, category])
+  @@index([tenantId, isActive])
+  @@index([tenantId, verified])
+  @@map("local_businesses")
+}
+
+model TourismProgram {
+  id          String @id @default(cuid())
+  tenantId    String
+  name        String
+  type        String // "roteiro", "pacote", "evento", "festival"
+  description String
+  itinerary   Json
+  duration    String // "meio_dia", "dia_inteiro", "fim_semana", "varios_dias"
+  price       Float?
+  maxParticipants Int?
+  currentParticipants Int @default(0)
+  includes    Json? // O que está incluso
+  requirements Json? // Requisitos
+  guide       String?
+  season      String? // "alta", "baixa", "ano_todo"
+  difficulty  String? // "facil", "moderado", "dificil"
+  isActive    Boolean @default(true)
+  featured    Boolean @default(false)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@index([tenantId, featured])
+  @@map("tourism_programs")
+}
+
+model TourismInfo {
+  id          String @id @default(cuid())
+  tenantId    String
+  title       String
+  type        String // "evento", "dica", "novidade", "promocao", "aviso"
+  content     String
+  summary     String?
+  image       String?
+  category    String?
+  tags        Json?
+  priority    String @default("normal") // "low", "normal", "high", "urgent"
+  validUntil  DateTime?
+  isHighlight Boolean @default(false)
+  isActive    Boolean @default(true)
+  views       Int @default(0)
+  publishedAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type])
+  @@index([tenantId, isActive])
+  @@index([tenantId, isHighlight])
+  @@index([tenantId, publishedAt])
+  @@map("tourism_info")
+}

@@ -1,0 +1,147 @@
+// ========================================
+// SCHEMA SIMPLIFICADO DO MOTOR DE PROTOCOLOS
+// Data: 29/10/2025
+// ========================================
+// Este arquivo cont\u00e9m apenas os novos modelos simplificados
+// Para adicionar ao schema.prisma principal
+// ========================================
+
+// ========================================
+// ENUMS SIMPLIFICADOS
+// ========================================
+
+enum ServiceType {
+  INFORMATIVO   // Apenas acompanhamento
+  COM_DADOS     // Captura dados para m\u00f3dulo
+}
+
+enum ProtocolStatus {
+  VINCULADO
+  PROGRESSO
+  ATUALIZACAO
+  PENDENCIA
+  CONCLUIDO
+  CANCELADO
+}
+
+// ========================================
+// SERVICE SIMPLIFICADO
+// ========================================
+
+model ServiceSimplified {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  departmentId String
+
+  // SIMPLIFICA\u00c7\u00c3O: 1 enum ao inv\u00e9s de 8 flags
+  serviceType  ServiceType
+
+  // Para servi\u00e7os COM_DADOS
+  moduleType   String?  // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc
+  formSchema   Json?    // Schema do formul\u00e1rio
+
+  // Campos b\u00e1sicos
+  isActive         Boolean @default(true)
+  requiresDocuments Boolean @default(false)
+  requiredDocuments Json?
+  estimatedDays    Int?
+  priority         Int @default(1)
+  category         String?
+  icon             String?
+  color            String?
+
+  tenantId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  department Department @relation(fields: [departmentId], references: [id])
+  tenant     Tenant @relation(fields: [tenantId], references: [id])
+  protocols  ProtocolSimplified[]
+
+  @@map("services_simplified")
+}
+
+// ========================================
+// PROTOCOL (CENTRO DO SISTEMA)
+// ========================================
+
+model ProtocolSimplified {
+  id           String @id @default(cuid())
+  number       String @unique
+  title        String
+  description  String?
+  status       ProtocolStatus @default(VINCULADO)
+  priority     Int @default(3)
+
+  // Relacionamentos principais
+  citizenId    String
+  serviceId    String
+  departmentId String
+  tenantId     String
+
+  // Dados capturados (se COM_DADOS)
+  customData   Json?
+  moduleType   String?  // Para roteamento
+
+  // Geolocaliza\u00e7\u00e3o
+  latitude     Float?
+  longitude    Float?
+  address      String?
+
+  // Documentos
+  documents    Json?
+  attachments  String?
+
+  // Gest\u00e3o
+  assignedUserId String?
+  createdById    String?
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  dueDate     DateTime?
+  concludedAt DateTime?
+
+  // Relacionamentos
+  citizen       Citizen @relation(fields: [citizenId], references: [id])
+  service       ServiceSimplified @relation(fields: [serviceId], references: [id])
+  department    Department @relation(fields: [departmentId], references: [id])
+  tenant        Tenant @relation(fields: [tenantId], references: [id])
+  assignedUser  User? @relation("AssignedUserSimplified", fields: [assignedUserId], references: [id])
+  createdBy     User? @relation("CreatedByUserSimplified", fields: [createdById], references: [id])
+
+  history       ProtocolHistorySimplified[]
+  evaluations   ProtocolEvaluationSimplified[]
+
+  @@map("protocols_simplified")
+}
+
+model ProtocolHistorySimplified {
+  id         String   @id @default(cuid())
+  action     String
+  comment    String?
+  oldStatus  String?
+  newStatus  String?
+  metadata   Json?
+  timestamp  DateTime @default(now())
+  userId     String?
+  protocolId String
+
+  protocol   ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_history_simplified")
+}
+
+model ProtocolEvaluationSimplified {
+  id             String   @id @default(cuid())
+  protocolId     String
+  rating         Int
+  comment        String?
+  wouldRecommend Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  protocol       ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@map("protocol_evaluations_simplified")
+}

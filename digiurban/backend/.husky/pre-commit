@@ -1,0 +1,55 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# ============================================================================
+# FASE 3.4 - PRE-COMMIT HOOKS
+# Validações automáticas antes de cada commit
+# ============================================================================
+
+echo "🔍 Executando validações pré-commit..."
+
+# 1. Verificar se há arquivos TypeScript sendo commitados
+if git diff --cached --name-only | grep -q '\.ts$'; then
+  echo "📋 Arquivos TypeScript detectados, executando verificações..."
+
+  # 2. Executar lint-staged (linting e formatação)
+  echo "🎨 Executando lint-staged..."
+  npx lint-staged
+
+  # 3. Verificar compilação TypeScript
+  echo "🔧 Verificando compilação TypeScript..."
+  npm run type-check
+
+  if [ $? -ne 0 ]; then
+    echo "❌ Falha na verificação TypeScript. Commit rejeitado."
+    echo "💡 Execute 'npm run fix' para corrigir automaticamente problemas de formatação/linting."
+    exit 1
+  fi
+
+  echo "✅ Todas as verificações TypeScript passaram!"
+fi
+
+# 4. Verificar se não há suppressions TypeScript desnecessárias
+echo "🚫 Verificando supressões TypeScript..."
+suppressed_files=$(git diff --cached --name-only | xargs grep -l "@ts-ignore\|@ts-expect-error\|@ts-nocheck" 2>/dev/null || true)
+
+if [ -n "$suppressed_files" ]; then
+  echo "⚠️  ATENÇÃO: Arquivos com supressões TypeScript detectados:"
+  echo "$suppressed_files"
+  echo ""
+  echo "❗ Na Fase 3, supressões devem ser evitadas. Considere:"
+  echo "   1. Corrigir o problema de tipos diretamente"
+  echo "   2. Adicionar interfaces apropriadas"
+  echo "   3. Usar type guards"
+  echo ""
+  echo "Se realmente necessário, adicione comentário explicativo."
+  echo ""
+  read -p "Deseja continuar mesmo assim? (y/N): " -n 1 -r
+  echo ""
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "❌ Commit cancelado."
+    exit 1
+  fi
+fi
+
+echo "🎉 Pré-commit validations concluídas com sucesso!"

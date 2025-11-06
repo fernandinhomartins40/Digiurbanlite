@@ -1,0 +1,495 @@
+[
+  {
+    "code": "EDU_MATRICULA_001",
+    "name": "Matrícula Escolar",
+    "category": "Educação",
+    "description": "Solicitação de matrícula em escola da rede municipal para o ano letivo",
+    "icon": "GraduationCap",
+    "moduleType": "education",
+    "moduleEntity": "StudentEnrollment",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "studentCpf", "label": "CPF do Estudante", "type": "text", "required": false},
+        {"id": "parentName", "label": "Nome do Responsável", "type": "text", "required": true},
+        {"id": "parentCpf", "label": "CPF do Responsável", "type": "text", "required": true},
+        {"id": "parentPhone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "desiredGrade", "label": "Série/Ano Desejado", "type": "select", "required": true, "options": ["Berçário", "Maternal", "Pré I", "Pré II", "1º ano", "2º ano", "3º ano", "4º ano", "5º ano", "6º ano", "7º ano", "8º ano", "9º ano"]},
+        {"id": "shift", "label": "Turno Preferencial", "type": "select", "required": true, "options": ["Matutino", "Vespertino", "Integral"]},
+        {"id": "hasSpecialNeeds", "label": "Necessidades Especiais?", "type": "boolean", "required": false},
+        {"id": "specialNeedsDescription", "label": "Descrição das Necessidades", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Certidão de Nascimento ou RG do estudante",
+        "RG e CPF do responsável",
+        "Comprovante de residência atualizado",
+        "Carteira de vacinação atualizada",
+        "Declaração de transferência (se aplicável)"
+      ]
+    },
+    "fieldMapping": {
+      "studentName": "studentName",
+      "birthDate": "birthDate",
+      "parentName": "parentName",
+      "parentCpf": "parentCpf",
+      "desiredGrade": "desiredGrade",
+      "shift": "desiredShift"
+    }
+  },
+  {
+    "code": "EDU_TRANSPORTE_002",
+    "name": "Transporte Escolar",
+    "category": "Educação",
+    "description": "Solicitação de vaga no transporte escolar municipal",
+    "icon": "Bus",
+    "moduleType": "education",
+    "moduleEntity": "SchoolTransport",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola que Frequenta", "type": "text", "required": true},
+        {"id": "grade", "label": "Série/Ano", "type": "text", "required": true},
+        {"id": "shift", "label": "Turno", "type": "select", "required": true, "options": ["Matutino", "Vespertino"]},
+        {"id": "address", "label": "Endereço (Ponto de Embarque)", "type": "text", "required": true},
+        {"id": "distance", "label": "Distância até a escola (km)", "type": "number", "required": false},
+        {"id": "parentPhone", "label": "Telefone do Responsável", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Declaração de matrícula",
+        "Comprovante de residência",
+        "RG do responsável"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_UNIFORME_003",
+    "name": "Kit Uniforme Escolar",
+    "category": "Educação",
+    "description": "Solicitação de kit de uniformes escolares",
+    "icon": "Shirt",
+    "moduleType": "education",
+    "moduleEntity": "SchoolMaterialRequest",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola", "type": "text", "required": true},
+        {"id": "grade", "label": "Série/Ano", "type": "text", "required": true},
+        {"id": "shirtSize", "label": "Tamanho da Camiseta", "type": "select", "required": true, "options": ["PP", "P", "M", "G", "GG", "XG"]},
+        {"id": "shortsSize", "label": "Tamanho da Bermuda/Calça", "type": "select", "required": true, "options": ["PP", "P", "M", "G", "GG", "XG"]},
+        {"id": "shoeSize", "label": "Número do Calçado", "type": "number", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Declaração de matrícula"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_MATERIAL_004",
+    "name": "Kit Material Escolar",
+    "category": "Educação",
+    "description": "Solicitação de kit de material escolar",
+    "icon": "Backpack",
+    "moduleType": "education",
+    "moduleEntity": "SchoolMaterialRequest",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola", "type": "text", "required": true},
+        {"id": "grade", "label": "Série/Ano", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Declaração de matrícula"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_HISTORICO_005",
+    "name": "Histórico Escolar (2ª Via)",
+    "category": "Educação",
+    "description": "Solicitação de segunda via do histórico escolar",
+    "icon": "FileText",
+    "moduleType": "education",
+    "moduleEntity": "DocumentRequest",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola onde Estudou", "type": "text", "required": true},
+        {"id": "conclusionYear", "label": "Ano de Conclusão", "type": "number", "required": true},
+        {"id": "reason", "label": "Motivo da Solicitação", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["RG do solicitante", "Comprovante de pagamento da taxa"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_TRANSFERENCIA_006",
+    "name": "Transferência Escolar",
+    "category": "Educação",
+    "description": "Solicitação de transferência entre escolas municipais",
+    "icon": "ArrowRightLeft",
+    "moduleType": "education",
+    "moduleEntity": "SchoolTransferRequest",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "currentSchool", "label": "Escola Atual", "type": "text", "required": true},
+        {"id": "desiredSchool", "label": "Escola Desejada", "type": "text", "required": true},
+        {"id": "grade", "label": "Série/Ano", "type": "text", "required": true},
+        {"id": "reason", "label": "Motivo da Transferência", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Histórico escolar parcial", "Declaração da escola atual"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_DECLARACAO_007",
+    "name": "Declaração de Matrícula",
+    "category": "Educação",
+    "description": "Solicitação de declaração de matrícula",
+    "icon": "FileCheck",
+    "moduleType": "education",
+    "moduleEntity": "DocumentRequest",
+    "estimatedTime": "2 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola", "type": "text", "required": true},
+        {"id": "grade", "label": "Série/Ano", "type": "text", "required": true},
+        {"id": "purpose", "label": "Finalidade", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": []
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_BOLSA_008",
+    "name": "Bolsa de Estudos Municipal",
+    "category": "Educação",
+    "description": "Solicitação de bolsa de estudos para cursos técnicos",
+    "icon": "Award",
+    "moduleType": "education",
+    "moduleEntity": "Scholarship",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "courseName", "label": "Nome do Curso", "type": "text", "required": true},
+        {"id": "institution", "label": "Instituição", "type": "text", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true},
+        {"id": "justification", "label": "Justificativa", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Comprovante de matrícula", "Comprovante de renda familiar", "RG e CPF"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_ESTAGIO_009",
+    "name": "Programa de Estágio Municipal",
+    "category": "Educação",
+    "description": "Inscrição em programa de estágio da prefeitura",
+    "icon": "Briefcase",
+    "moduleType": "education",
+    "moduleEntity": "InternshipProgram",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "courseName", "label": "Curso", "type": "text", "required": true},
+        {"id": "semester", "label": "Semestre/Período", "type": "text", "required": true},
+        {"id": "desiredArea", "label": "Área de Interesse", "type": "select", "required": true, "options": ["Administração", "TI", "Educação", "Saúde", "Jurídico", "Engenharia"]},
+        {"id": "availability", "label": "Disponibilidade", "type": "select", "required": true, "options": ["Manhã", "Tarde", "Noite"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["RG e CPF", "Comprovante de matrícula", "Currículo"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_MERENDA_010",
+    "name": "Merenda Especial",
+    "category": "Educação",
+    "description": "Solicitação de merenda especial (alergias, intolerâncias)",
+    "icon": "Utensils",
+    "moduleType": "education",
+    "moduleEntity": "SchoolMeal",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola", "type": "text", "required": true},
+        {"id": "restriction", "label": "Tipo de Restrição", "type": "select", "required": true, "options": ["Alergia Alimentar", "Intolerância à Lactose", "Diabetes", "Doença Celíaca", "Vegetariano", "Outro"]},
+        {"id": "description", "label": "Descrição Detalhada", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Laudo médico", "Receita médica (se aplicável)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_REFORCO_011",
+    "name": "Aulas de Reforço",
+    "category": "Educação",
+    "description": "Inscrição em programa de reforço escolar",
+    "icon": "BookOpen",
+    "moduleType": "education",
+    "moduleEntity": "TutoringProgram",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola", "type": "text", "required": true},
+        {"id": "grade", "label": "Série/Ano", "type": "text", "required": true},
+        {"id": "subject", "label": "Disciplina", "type": "select", "required": true, "options": ["Matemática", "Português", "Ciências", "História", "Geografia"]},
+        {"id": "availability", "label": "Disponibilidade", "type": "select", "required": true, "options": ["Segunda e Quarta", "Terça e Quinta", "Sábado"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Declaração de matrícula"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_BIBLIOTECA_012",
+    "name": "Carteirinha da Biblioteca",
+    "category": "Educação",
+    "description": "Solicitação de carteirinha para biblioteca municipal",
+    "icon": "Library",
+    "moduleType": "education",
+    "moduleEntity": "LibraryCard",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "userName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "email", "label": "E-mail", "type": "email", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["RG ou CNH", "Comprovante de residência"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_CRECHE_013",
+    "name": "Vaga em Creche Municipal",
+    "category": "Educação",
+    "description": "Solicitação de vaga em creche para criança de 0 a 3 anos",
+    "icon": "Baby",
+    "moduleType": "education",
+    "moduleEntity": "DaycareEnrollment",
+    "estimatedTime": "30 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "childName", "label": "Nome da Criança", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "parentName", "label": "Nome do Responsável", "type": "text", "required": true},
+        {"id": "parentCpf", "label": "CPF do Responsável", "type": "text", "required": true},
+        {"id": "parentOccupation", "label": "Profissão do Responsável", "type": "text", "required": true},
+        {"id": "parentPhone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço", "type": "text", "required": true},
+        {"id": "preferredCreche", "label": "Creche Preferencial", "type": "text", "required": false},
+        {"id": "shift", "label": "Turno Desejado", "type": "select", "required": true, "options": ["Integral", "Parcial - Manhã", "Parcial - Tarde"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Certidão de nascimento da criança", "RG e CPF do responsável", "Comprovante de residência", "Comprovante de trabalho", "Carteira de vacinação"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_ATESTADO_014",
+    "name": "Atestado de Frequência",
+    "category": "Educação",
+    "description": "Solicitação de atestado de frequência escolar",
+    "icon": "ClipboardCheck",
+    "moduleType": "education",
+    "moduleEntity": "DocumentRequest",
+    "estimatedTime": "2 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola", "type": "text", "required": true},
+        {"id": "grade", "label": "Série/Ano", "type": "text", "required": true},
+        {"id": "purpose", "label": "Finalidade", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": []
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_ALFABETIZACAO_015",
+    "name": "Programa de Alfabetização de Adultos",
+    "category": "Educação",
+    "description": "Inscrição em programa de alfabetização para jovens e adultos (EJA)",
+    "icon": "BookOpenText",
+    "moduleType": "education",
+    "moduleEntity": "AdultEducation",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "userName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "schooling", "label": "Escolaridade Atual", "type": "select", "required": true, "options": ["Não Alfabetizado", "Fundamental Incompleto", "Fundamental Completo"]},
+        {"id": "shift", "label": "Turno Preferencial", "type": "select", "required": true, "options": ["Manhã", "Tarde", "Noite"]},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["RG", "CPF", "Comprovante de residência"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_CONSELHO_016",
+    "name": "Conselho de Escola - Participação",
+    "category": "Educação",
+    "description": "Inscrição para participar do conselho de escola",
+    "icon": "Users",
+    "moduleType": "education",
+    "moduleEntity": "SchoolCouncil",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "userName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "schoolName", "label": "Escola", "type": "text", "required": true},
+        {"id": "role", "label": "Função", "type": "select", "required": true, "options": ["Pai/Mãe", "Professor", "Funcionário", "Aluno"]},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "motivation", "label": "Motivação para Participar", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["RG e CPF"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_INFORMATICA_017",
+    "name": "Curso de Informática Básica",
+    "category": "Educação",
+    "description": "Inscrição em curso gratuito de informática básica",
+    "icon": "Monitor",
+    "moduleType": "education",
+    "moduleEntity": "ComputerCourse",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "userName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "schooling", "label": "Escolaridade", "type": "select", "required": true, "options": ["Fundamental", "Médio", "Superior"]},
+        {"id": "hasComputer", "label": "Possui computador em casa?", "type": "boolean", "required": true},
+        {"id": "shift", "label": "Turno Preferencial", "type": "select", "required": true, "options": ["Manhã", "Tarde", "Noite"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["RG", "CPF", "Comprovante de residência"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_PROFISSIONALIZANTE_018",
+    "name": "Curso Profissionalizante Municipal",
+    "category": "Educação",
+    "description": "Inscrição em cursos profissionalizantes oferecidos pela prefeitura",
+    "icon": "Wrench",
+    "moduleType": "education",
+    "moduleEntity": "VocationalCourse",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "userName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "courseArea", "label": "Área de Interesse", "type": "select", "required": true, "options": ["Eletricista", "Encanador", "Pedreiro", "Costura", "Cozinha", "Mecânica", "Marcenaria"]},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "previousExperience", "label": "Possui experiência prévia?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["RG", "CPF", "Comprovante de escolaridade"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_NECESSIDADES_019",
+    "name": "Atendimento Educacional Especializado (AEE)",
+    "category": "Educação",
+    "description": "Solicitação de atendimento especializado para estudantes com necessidades especiais",
+    "icon": "HeartHandshake",
+    "moduleType": "education",
+    "moduleEntity": "SpecialEducation",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "studentName", "label": "Nome do Estudante", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "schoolName", "label": "Escola", "type": "text", "required": true},
+        {"id": "grade", "label": "Série/Ano", "type": "text", "required": true},
+        {"id": "disability", "label": "Tipo de Deficiência/Necessidade", "type": "select", "required": true, "options": ["Física", "Visual", "Auditiva", "Intelectual", "Autismo", "Múltipla", "Outra"]},
+        {"id": "description", "label": "Descrição Detalhada", "type": "textarea", "required": true},
+        {"id": "parentName", "label": "Nome do Responsável", "type": "text", "required": true},
+        {"id": "parentPhone", "label": "Telefone do Responsável", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Laudo médico", "Relatório de avaliação (se houver)", "RG do estudante", "RG do responsável"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "EDU_BRINQUEDOTECA_020",
+    "name": "Cadastro na Brinquedoteca Municipal",
+    "category": "Educação",
+    "description": "Cadastro para utilização da brinquedoteca municipal",
+    "icon": "Puzzle",
+    "moduleType": "education",
+    "moduleEntity": "ToyLibrary",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "childName", "label": "Nome da Criança", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "parentName", "label": "Nome do Responsável", "type": "text", "required": true},
+        {"id": "parentCpf", "label": "CPF do Responsável", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["RG do responsável", "Comprovante de residência"]
+    },
+    "fieldMapping": {}
+  }
+]

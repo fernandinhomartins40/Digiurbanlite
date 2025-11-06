@@ -1,0 +1,862 @@
+// ============================================================================
+// FASE 5: SECRETARIAS CULTURAIS
+// ============================================================================
+// Cultura, Esporte e Turismo
+// Total: 29 serviços (12 + 10 + 7)
+
+// ============================================================================
+// 5.1 CULTURA - Gestão de Espaços, Eventos e Manifestações Culturais
+// ============================================================================
+
+// Vínculo com serviços/protocolo para todas as entidades culturais
+model CulturalSpace {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações básicas
+  code            String   @unique
+  name            String
+  description     String
+  type            String   // "teatro", "cinema", "biblioteca", "museu", "centro_cultural", "galeria", "auditorio", "praca"
+  address         String
+  neighborhood    String
+  zipCode         String
+  coordinates     Json?    // { lat: -23.123, lng: -46.123 }
+
+  // Capacidade e infraestrutura
+  capacity        Int
+  infrastructure  Json?    // Array de facilidades: ["palco", "camarim", "ar_condicionado"]
+  equipment       Json?    // Array de equipamentos: ["projetor", "som", "iluminacao"]
+  accessibility   Boolean  @default(false)
+
+  // Gestão
+  manager         String
+  contact         String   // JSON { phone, email, website }
+  operatingHours  String?  // JSON horários de funcionamento
+  available       Boolean  @default(true)
+
+  // Vínculo com protocolo (quando solicitado via portal)
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual") // "portal", "manual"
+
+  // Timestamps
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@map("cultural_spaces")
+}
+
+model CulturalProject {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações básicas
+  name            String
+  description     String
+  type            String   // "musica", "teatro", "danca", "literatura", "artes_visuais", "cinema", "artesanato", "patrimonio"
+  responsible     String
+  contact         String?  // JSON contact info
+
+  // Cronograma
+  startDate       DateTime
+  endDate         DateTime
+  schedule        String?  // JSON detalhes do cronograma
+
+  // Orçamento
+  budget          Float    @default(0)
+  funding         String?  // JSON fontes de financiamento
+
+  // Público e alcance
+  targetAudience  String?  // JSON público-alvo
+  participants    Int?     // Número esperado de participantes
+
+  // Status
+  status          String   @default("PLANNING") // "PLANNING", "APPROVED", "IN_PROGRESS", "COMPLETED", "CANCELLED"
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@map("cultural_projects")
+}
+
+model CulturalEvent {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações do evento
+  title           String
+  description     String
+  type            String   // "show", "peca_teatro", "exposicao", "festival", "workshop", "palestra", "sarau", "feira"
+  category        String   // "musica", "teatro", "danca", "literatura", "artes_visuais", "cinema", "artesanato", "patrimonio"
+
+  // Local e data
+  spaceId         String?
+  space           CulturalSpace? @relation(fields: [spaceId], references: [id])
+  venue           String   // Nome do local (se não for um CulturalSpace cadastrado)
+  startDate       DateTime
+  endDate         DateTime
+  schedule        Json?    // Detalhes de horários
+
+  // Público e ingressos
+  capacity        Int?
+  targetAudience  String?  // JSON faixas etárias
+  ticketPrice     Float?   @default(0)
+  freeEvent       Boolean  @default(true)
+
+  // Organização
+  organizer       Json?    // JSON organizador
+  performers      Json?    // JSON artistas/palestrantes
+  contact         Json?    // JSON contact info
+
+  // Status
+  status          String   @default("PLANNED") // "PLANNED", "CONFIRMED", "SELLING", "SOLD_OUT", "COMPLETED", "CANCELLED"
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([category])
+  @@index([startDate])
+  @@map("cultural_events")
+}
+
+model ArtisticGroup {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações do grupo
+  name            String
+  category        String   // "musica", "teatro", "danca", "literatura", "artes_visuais", "cinema", "multidisciplinar"
+  foundationDate  DateTime?
+  responsible     String
+  contact         String   // JSON contact info
+  members         Json     // Array de membros com seus papéis
+
+  // Portfólio
+  portfolio       Json?    // Biografia, discografia, prêmios, apresentações
+  resources       Json?    // Equipamentos, necessidades especiais
+
+  // Status
+  status          String   @default("ACTIVE") // "ACTIVE", "INACTIVE"
+
+  // Vínculo com protocolo (cadastro via portal)
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([category])
+  @@map("artistic_groups")
+}
+
+model CulturalWorkshop {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações da oficina
+  name                String
+  description         String
+  category            String   // "musica", "teatro", "danca", "literatura", "artes_visuais", "artesanato", "cinema"
+  level               String?  // "iniciante", "intermediario", "avancado", "livre"
+
+  // Instrutor
+  instructor          String   // JSON instrutor info (nome, bio, experiência, contato)
+
+  // Cronograma
+  startDate           DateTime
+  endDate             DateTime?
+  schedule            String   // JSON horários (dias da semana, horários)
+  totalHours          Int?
+
+  // Local
+  location            String   // Nome do local
+
+  // Inscrições
+  maxParticipants     Int
+  currentParticipants Int      @default(0)
+  enrollmentStart     DateTime?
+  enrollmentEnd       DateTime?
+
+  // Investimento
+  isFree              Boolean  @default(true)
+  fee                 Float?   @default(0)
+  materials           Json?    // Materiais necessários
+
+  // Conteúdo
+  objectives          Json?    // Array de objetivos
+  syllabus            Json?    // Programa do curso
+
+  // Status
+  status              String   @default("PLANNED") // "PLANNED", "ENROLLING", "IN_PROGRESS", "COMPLETED", "CANCELLED"
+
+  // Vínculo com protocolo (inscrição via portal)
+  protocol            String?  @index
+  serviceId           String?
+  source              String   @default("manual")
+
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([category])
+  @@index([status])
+  @@map("cultural_workshops")
+}
+
+model CulturalAttendance {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Identificação do solicitante
+  citizenId       String
+  citizenName     String
+  contact         String
+  phone           String
+  email           String?
+
+  // Tipo de atendimento
+  protocol        String   @unique
+  type            String   // "inscricao_projeto", "reserva_espaco", "informacoes", "cadastro_grupo", "apoio_cultural", "denuncia"
+  subject         String
+  description     String
+  category        String?  // Área cultural
+
+  // Data do evento relacionado (se aplicável)
+  eventDate       DateTime?
+
+  // Acompanhamento
+  status          String   @default("PENDING") // "PENDING", "IN_PROGRESS", "RESOLVED", "CANCELLED"
+  resolution      String?
+  followUpDate    DateTime?
+
+  // Vínculo
+  serviceId       String?
+  source          String   @default("portal") // Sempre via portal
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([citizenId])
+  @@index([type])
+  @@index([status])
+  @@map("cultural_attendances")
+}
+
+// ============================================================================
+// 5.2 ESPORTE - Gestão de Equipes, Atletas, Competições
+// ============================================================================
+
+model SportsTeam {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações da equipe
+  name            String
+  sport           String   // Modalidade esportiva
+  modalityId      String?
+  modality        SportsModality? @relation(fields: [modalityId], references: [id])
+  category        String   // "infantil", "juvenil", "adulto", "veterano"
+  gender          String   // "masculino", "feminino", "misto"
+
+  // Treinador
+  coach           String
+  coachPhone      String?
+  trainingSchedule String? // JSON horários de treino
+
+  // Atletas
+  maxPlayers      Int
+  currentPlayers  Int      @default(0)
+
+  // Status
+  isActive        Boolean  @default(true)
+
+  // Vínculo com protocolo (cadastro via portal)
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([sport])
+  @@index([category])
+  @@map("sports_teams")
+}
+
+model SportsModality {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name            String
+  description     String?
+  category        String   // "individual", "coletivo"
+  isActive        Boolean  @default(true)
+
+  teams           SportsTeam[]
+  competitions    Competition[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("sports_modalities")
+}
+
+model Athlete {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Dados pessoais
+  name                String
+  birthDate           DateTime
+  cpf                 String
+  rg                  String?
+  address             String
+  phone               String
+  email               String?
+
+  // Dados esportivos
+  sport               String   // Modalidade principal
+  modalityId          String?
+  teamId              String?
+  federationNumber    String?  // Número de registro em federação
+  federationExpiry    DateTime?
+
+  // Saúde
+  medicalCertificate  String?  // JSON { hasValid, expiryDate, observations }
+  emergencyContact    String?  // JSON { name, phone, relationship }
+
+  // Status
+  isActive            Boolean  @default(true)
+
+  // Vínculo com protocolo (cadastro via portal)
+  protocol            String?  @index
+  serviceId           String?
+  source              String   @default("manual")
+
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([sport])
+  @@index([cpf])
+  @@map("athletes")
+}
+
+model Competition {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações da competição
+  name            String
+  sport           String
+  modalityId      String?
+  modality        SportsModality? @relation(fields: [modalityId], references: [id])
+  type            String   // "campeonato", "torneio", "festival", "amistoso"
+
+  // Datas
+  startDate       DateTime
+  endDate         DateTime
+  location        String
+
+  // Equipes
+  maxTeams        Int
+  registeredTeams Int      @default(0)
+
+  // Inscrição
+  entryFee        Float?   @default(0)
+  prizes          Json?    // Array de premiações
+  rules           String?  // Regulamento
+
+  // Organização
+  organizer       String
+  contact         Json?    // JSON contact info
+
+  // Status
+  status          String   @default("planejada") // "planejada", "inscricoes_abertas", "em_andamento", "finalizada", "cancelada"
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([sport])
+  @@index([status])
+  @@index([startDate])
+  @@map("competitions")
+}
+
+model SportsEvent {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações do evento
+  title               String
+  description         String
+  eventType           String   // "competicao", "treino", "apresentacao", "reuniao", "clinica"
+  sport               String?
+
+  // Data e local
+  date                DateTime
+  startTime           String
+  endTime             String
+  location            String
+
+  // Público
+  capacity            Int?
+  targetAudience      String?
+  entryFee            Float?   @default(0)
+  registrationRequired Boolean @default(false)
+
+  // Organização
+  organizer           String
+  contact             Json?    // JSON contact info
+
+  // Visibilidade
+  isPublic            Boolean  @default(true)
+
+  // Vínculo com protocolo
+  protocol            String?  @index
+  serviceId           String?
+  source              String   @default("manual")
+
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([date])
+  @@index([eventType])
+  @@map("sports_events")
+}
+
+model SportsInfrastructure {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações do local
+  name                String
+  type                String   // "quadra", "campo", "piscina", "pista", "ginasio", "academia"
+  address             String
+  coordinates         Json?    // { lat, lng }
+
+  // Capacidade
+  capacity            Int
+  modalities          String[] // Array de modalidades permitidas
+
+  // Infraestrutura
+  facilities          String[] // Array de facilidades: ["vestiario", "arquibancada", "estacionamento"]
+  operatingHours      Json?    // Horários de funcionamento
+
+  // Gestão
+  manager             String
+  contact             Json?    // JSON contact info
+  lastMaintenance     DateTime?
+  maintenanceSchedule String?
+
+  // Status
+  status              String   @default("ativo") // "ativo", "manutencao", "reforma", "inativo"
+  isPublic            Boolean  @default(true)
+
+  // Vínculo com protocolo (solicitação de manutenção)
+  protocol            String?  @index
+  serviceId           String?
+  source              String   @default("manual")
+
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@map("sports_infrastructure")
+}
+
+model SportsSchool {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações da escolinha
+  name                String
+  sport               String
+  description         String
+  targetAge           Json     // { minAge, maxAge }
+
+  // Instrutor
+  instructor          String
+  instructorCpf       String?
+  instructorCredentials String? // Certificações
+
+  // Cronograma
+  schedule            Json     // Array de horários { day, startTime, endTime }
+  location            String
+  startDate           DateTime
+  endDate             DateTime?
+
+  // Alunos
+  maxStudents         Int
+  currentStudents     Int      @default(0)
+
+  // Mensalidade
+  monthlyFee          Float?   @default(0)
+  requirements        String[] // Requisitos para inscrição
+
+  // Status
+  isActive            Boolean  @default(true)
+
+  // Vínculo com protocolo (inscrição via portal)
+  protocol            String?  @index
+  serviceId           String?
+  source              String   @default("manual")
+
+  // Timestamps
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([sport])
+  @@map("sports_schools")
+}
+
+model SportsAttendance {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Identificação
+  citizenId       String
+  serviceType     String   // "inscricao_escolinha", "inscricao_competicao", "reserva_espaco", "informacoes", "reclamacao"
+  description     String
+  sport           String?
+
+  // Encaminhamento
+  referredTo      String?
+  resolution      String?
+  followUpNeeded  Boolean  @default(false)
+  followUpDate    DateTime?
+
+  // Vínculo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("portal")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([citizenId])
+  @@index([serviceType])
+  @@map("sports_attendances")
+}
+
+// ============================================================================
+// 5.3 TURISMO - Gestão de Atrativos, Estabelecimentos e Programas Turísticos
+// ============================================================================
+
+model TouristAttraction {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações do atrativo
+  name            String
+  description     String
+  type            String   // "natural", "historico", "cultural", "religioso", "aventura", "gastronomico", "compras", "negocio"
+  category        String   // "ponto_turistico", "parque", "museu", "igreja", "praca", "monumento", "trilha", "cachoeira"
+
+  // Localização
+  address         String
+  neighborhood    String?
+  city            String
+  state           String
+  coordinates     Json?    // { lat, lng }
+
+  // Facilidades
+  facilities      Json?    // { parking, restrooms, accessibility, restaurant, giftShop, guide }
+  openingHours    Json?    // Horários de funcionamento
+  ticketPrice     Float?   @default(0)
+  freeEntry       Boolean  @default(true)
+
+  // Informações adicionais
+  contact         Json?    // { phone, email, website, socialMedia }
+  photos          String[] // URLs de fotos
+  seasonality     String?  // "ano_todo", "verao", "inverno", "seca", "chuva"
+
+  // Avaliação
+  averageRating   Float?   @default(0)
+  totalReviews    Int      @default(0)
+
+  // Destaque
+  featured        Boolean  @default(false)
+
+  // Status
+  isActive        Boolean  @default(true)
+
+  // Vínculo com protocolo (cadastro via portal)
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([category])
+  @@map("tourist_attractions")
+}
+
+model LocalBusiness {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações do estabelecimento
+  name            String
+  businessInfo    Json     // { name, tradeName, cnpj, type, category, description }
+  owner           String   // JSON { name, cpf, phone, email }
+
+  // Localização
+  address         String
+  neighborhood    String?
+  city            String
+  state           String
+  zipCode         String
+  coordinates     Json?    // { lat, lng }
+
+  // Serviços
+  services        Json?    // { offerings, capacity, specialties, languages, paymentMethods }
+  operatingHours  Json?    // Horários de funcionamento
+  pricing         Json?    // { priceRange, averageTicket, promotions }
+
+  // Certificações
+  touristRegistry Boolean  @default(false)
+  registryNumber  String?
+  certifications  String[] // Certificações de qualidade
+
+  // Contato e mídia
+  contact         Json?    // { phone, alternativePhone, email, website, socialMedia }
+  photos          String[] // URLs de fotos
+  priceRange      String?  // "$", "$$", "$$$", "$$$$"
+
+  // Avaliação
+  averageRating   Float?   @default(0)
+  totalReviews    Int      @default(0)
+
+  // Parceria
+  isPartner       Boolean  @default(false)
+
+  // Status
+  isActive        Boolean  @default(true)
+
+  // Vínculo com protocolo (cadastro via portal)
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([isPartner])
+  @@map("local_businesses")
+}
+
+model TourismProgram {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações do programa
+  name            String
+  description     String
+  type            String   // "roteiro", "evento", "festival", "campanha", "capacitacao", "desenvolvimento", "promocional"
+  category        String   // "ecoturismo", "turismo_rural", "turismo_cultural", "turismo_religioso", "turismo_aventura"
+
+  // Organização
+  organizer       Json     // { name, type, contact }
+  itinerary       Json?    // Roteiro detalhado
+  logistics       Json?    // { transportation, accommodation, meals, guide }
+
+  // Participação
+  targetAudience  String[] // Público-alvo
+  minParticipants Int
+  maxParticipants Int
+  currentParticipants Int  @default(0)
+
+  // Investimento
+  basePrice       Float    @default(0)
+  discounts       Json?    // Array de descontos
+  included        String[] // O que está incluso
+  excluded        String[] // O que não está incluso
+
+  // Cronograma
+  startDate       DateTime
+  endDate         DateTime?
+  frequency       String   // "unico", "diario", "semanal", "mensal", "temporada"
+
+  // Status
+  status          String   @default("planejado") // "planejado", "ativo", "suspenso", "finalizado", "cancelado"
+  isActive        Boolean  @default(true)
+
+  // Vínculo com protocolo (inscrição via portal)
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([category])
+  @@index([status])
+  @@map("tourism_programs")
+}
+
+model TourismInfo {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Informações do conteúdo
+  title           String
+  content         String   @db.Text
+  type            String   // "guia", "dica", "evento", "noticia", "promocao", "alerta", "historia"
+  category        String   // "geral", "transporte", "hospedagem", "gastronomia", "cultura", "natureza", "seguranca", "saude"
+
+  // Público-alvo
+  targetAudience  String[] // ["turistas", "empresarios", "guias", "moradores", "geral"]
+  languages       String[] @default(["portugues"])
+
+  // Detalhes do conteúdo
+  summary         String?
+  highlights      String[] // Destaques
+  recommendations String[] // Recomendações
+  warnings        String[] // Avisos importantes
+
+  // Mídia
+  featuredImage   String?
+  gallery         String[] // URLs de fotos
+  videos          String[] // URLs de vídeos
+  documents       String[] // URLs de documentos
+
+  // Publicação
+  publishDate     DateTime?
+  expiryDate      DateTime?
+  priority        String   @default("normal") // "baixa", "normal", "alta"
+  featured        Boolean  @default(false)
+
+  // SEO
+  keywords        String[] // Palavras-chave
+  metaDescription String?
+  slug            String?
+
+  // Status
+  isActive        Boolean  @default(true)
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([category])
+  @@map("tourism_info")
+}
+
+model TourismAttendance {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Identificação
+  citizenId       String
+  citizen         Citizen  @relation(fields: [citizenId], references: [id])
+  serviceType     String   // "informacoes_turisticas", "cadastro_estabelecimento", "inscricao_programa", "reclamacao", "sugestao", "parceria"
+  subject         String
+  description     String
+
+  // Perfil do turista
+  touristProfile  Json?    // { isLocalResident, origin, groupSize, stayDuration, interests }
+  businessInfo    Json?    // Se for cadastro de estabelecimento: { businessName, businessType, cnpj }
+
+  // Informações solicitadas
+  requestedInfo   Json?    // { attractions, accommodation, restaurants, transportation, events, tours, maps }
+  materials       Json?    // Materiais fornecidos/solicitados
+
+  // Acompanhamento
+  resolution      String?
+  followUpNeeded  Boolean  @default(false)
+  followUpDate    DateTime?
+
+  // Satisfação
+  satisfaction    Json?    // { rating, feedback }
+
+  // Vínculo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("portal")
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([citizenId])
+  @@index([serviceType])
+  @@map("tourism_attendances")
+}

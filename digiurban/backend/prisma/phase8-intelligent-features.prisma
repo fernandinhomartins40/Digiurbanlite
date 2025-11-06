@@ -1,0 +1,381 @@
+// ============================================================================
+// FASE 8: RECURSOS INTELIGENTES (Intelligent Features)
+// ============================================================================
+// Modelos para recursos avançados de serviços
+
+// ========== 1. MÓDULOS CUSTOMIZADOS ==========
+
+// Tabela customizada (metadados)
+model CustomDataTable {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tableName   String   // Nome único da tabela
+  displayName String   // Nome amigável
+  description String?
+
+  // Estrutura da tabela (schema)
+  fields      Json     // Array de definições de campos
+
+  // Configurações
+  allowCreate Boolean  @default(true)
+  allowUpdate Boolean  @default(true)
+  allowDelete Boolean  @default(true)
+
+  // Audit
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  records     CustomDataRecord[]
+
+  @@unique([tenantId, tableName])
+  @@map("custom_data_tables")
+}
+
+// Registro de dados customizados
+model CustomDataRecord {
+  id        String   @id @default(cuid())
+  tableId   String
+  table     CustomDataTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  // Dados (JSON flexível)
+  data      Json
+
+  // Vínculo com protocolo
+  protocol  String?
+  serviceId String?
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?  // userId
+
+  @@index([tableId])
+  @@index([protocol])
+  @@index([serviceId])
+  @@map("custom_data_records")
+}
+
+// ========== 2. AGENDAMENTOS ==========
+
+model Appointment {
+  id              String   @id @default(cuid())
+
+  // Vínculo
+  protocolId      String   @unique
+  protocol        Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  schedulingId    String
+  scheduling      ServiceScheduling @relation(fields: [schedulingId], references: [id], onDelete: Cascade)
+
+  // Data agendada
+  scheduledDate   DateTime
+  scheduledTime   String?  // HH:MM
+
+  // Status
+  status          String   @default("scheduled") // scheduled, confirmed, completed, cancelled, no_show
+
+  // Detalhes
+  notes           String?
+  reminderSent    Boolean  @default(false)
+  confirmedAt     DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancellationReason String?
+
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([schedulingId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@map("appointments")
+}
+
+// ========== 3. LOCALIZAÇÃO DE PROTOCOLOS ==========
+
+model ProtocolLocation {
+  id         String   @id @default(cuid())
+  protocolId String
+  protocol   Protocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  // Coordenadas
+  latitude   Float
+  longitude  Float
+
+  // Endereço estruturado
+  address    String?
+  number     String?
+  complement String?
+  neighborhood String?
+  city       String?
+  state      String?
+  zipCode    String?
+
+  // Referência
+  reference  String?
+
+  // Precisão
+  accuracy   Float?   // em metros
+
+  // Metadata
+  createdAt  DateTime @default(now())
+
+  @@index([protocolId])
+  @@map("protocol_locations")
+}
+
+// ========== 4. CONFIGURAÇÃO DE LOCALIZAÇÃO DE SERVIÇOS ==========
+
+model ServiceLocation {
+  id              String   @id @default(cuid())
+  serviceId       String   @unique
+  service         Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  // Configuração
+  required        Boolean  @default(false)
+  useCurrentLocation Boolean @default(true)
+  allowManualEntry Boolean @default(true)
+
+  // Validação
+  restrictToCity  Boolean  @default(false)
+  allowedCities   Json?    // Array de cidades permitidas
+
+  // Campos customizados
+  requireAddress  Boolean  @default(false)
+  requireReference Boolean @default(false)
+
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("service_locations")
+}
+
+// ========== 5. FORMULÁRIOS CUSTOMIZADOS ==========
+
+model ServiceForm {
+  id          String   @id @default(cuid())
+  serviceId   String   @unique
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  // Estrutura do formulário
+  title       String
+  description String?
+  fields      Json     // Array de campos do formulário
+
+  // Configurações
+  requiresAllFields Boolean @default(false)
+  allowDraft        Boolean @default(false)
+
+  // Validações
+  validationRules   Json?
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  submissions ServiceFormSubmission[]
+
+  @@map("service_forms")
+}
+
+// Submissão de formulário
+model ServiceFormSubmission {
+  id         String      @id @default(cuid())
+  formId     String
+  form       ServiceForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  protocolId String      @unique
+  protocol   Protocol    @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  // Dados submetidos
+  data       Json
+
+  // Status
+  isDraft    Boolean     @default(false)
+
+  // Metadata
+  submittedAt DateTime   @default(now())
+
+  @@index([formId])
+  @@map("service_form_submissions")
+}
+
+// ========== 6. AGENDAMENTOS DE SERVIÇOS ==========
+
+model ServiceScheduling {
+  id                String   @id @default(cuid())
+  serviceId         String   @unique
+  service           Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  // Configurações gerais
+  enabled           Boolean  @default(true)
+  requiresApproval  Boolean  @default(false)
+
+  // Horários disponíveis
+  availableDays     Json     // Array: ["monday", "tuesday", ...]
+  timeSlots         Json     // Array de slots: [{start: "09:00", end: "10:00", capacity: 5}]
+
+  // Capacidade
+  maxPerSlot        Int      @default(1)
+  maxPerDay         Int?
+
+  // Antecedência
+  minAdvanceDays    Int      @default(1)
+  maxAdvanceDays    Int      @default(30)
+
+  // Lembretes
+  sendReminder      Boolean  @default(true)
+  reminderHours     Int      @default(24)
+
+  // Metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relações
+  appointments      Appointment[]
+
+  @@map("service_scheduling")
+}
+
+// ========== 7. CAMPOS CUSTOMIZADOS ==========
+
+model ServiceCustomField {
+  id          String   @id @default(cuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  // Definição do campo
+  key         String   // Chave única no contexto do serviço
+  label       String
+  type        String   // text, number, date, select, checkbox, file, etc.
+
+  // Configurações
+  required    Boolean  @default(false)
+  placeholder String?
+  helpText    String?
+
+  // Validação
+  validation  Json?    // Regras de validação
+  options     Json?    // Para select/checkbox
+
+  // Ordem
+  order       Int      @default(0)
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  values      ProtocolCustomFieldValue[]
+
+  @@unique([serviceId, key])
+  @@index([serviceId])
+  @@map("service_custom_fields")
+}
+
+// Valores de campos customizados por protocolo
+model ProtocolCustomFieldValue {
+  id         String             @id @default(cuid())
+  protocolId String
+  protocol   Protocol           @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  fieldId    String
+  field      ServiceCustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  // Valor (flexível)
+  value      Json
+
+  // Metadata
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([protocolId, fieldId])
+  @@index([protocolId])
+  @@index([fieldId])
+  @@map("protocol_custom_field_values")
+}
+
+// ========== 8. DOCUMENTOS AVANÇADOS ==========
+
+model ServiceDocument {
+  id            String   @id @default(cuid())
+  serviceId     String
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  // Definição do Documento
+  name          String
+  description   String?
+  category      String?  // identificacao, comprovante, declaracao
+
+  // Configuração
+  required      Boolean  @default(true)
+  multiple      Boolean  @default(false)
+  minFiles      Int?     @default(1)
+  maxFiles      Int?     @default(1)
+
+  // Validação de Arquivo
+  acceptedTypes Json     // [".pdf", ".jpg", ".png"]
+  maxSize       Int      @default(5242880) // 5MB
+  minSize       Int?
+
+  // Validação Automática (OCR/IA)
+  validateWithAI Boolean @default(false)
+  extractData    Json?   // Campos a extrair
+  aiProvider     String?
+
+  // Template/Exemplo
+  templateUrl    String?
+  exampleUrl     String?
+
+  // Ordem
+  order         Int      @default(0)
+
+  // Metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relacionamentos
+  uploads       DocumentUpload[]
+
+  @@index([serviceId])
+  @@map("service_documents")
+}
+
+// Uploads de Documentos
+model DocumentUpload {
+  id              String          @id @default(cuid())
+  documentConfigId String
+  documentConfig  ServiceDocument @relation(fields: [documentConfigId], references: [id], onDelete: Cascade)
+
+  protocolId      String
+  protocol        Protocol        @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  // Arquivo
+  fileName        String
+  fileSize        Int
+  fileType        String
+  fileUrl         String
+  thumbnailUrl    String?
+
+  // Validação
+  isValidated     Boolean  @default(false)
+  validatedAt     DateTime?
+  validatedBy     String?
+  validationStatus String?
+  rejectionReason  String?
+
+  // Dados Extraídos (OCR/IA)
+  extractedData   Json?
+  ocrConfidence   Float?
+
+  // Metadata
+  uploadedAt      DateTime @default(now())
+  uploadedBy      String?
+
+  @@index([documentConfigId])
+  @@index([protocolId])
+  @@map("document_uploads")
+}

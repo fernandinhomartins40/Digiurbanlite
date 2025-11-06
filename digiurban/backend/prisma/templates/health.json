@@ -1,0 +1,914 @@
+[
+  {
+    "code": "SAU_CONSULTA_001",
+    "name": "Agendar Consulta Médica",
+    "category": "Saúde",
+    "description": "Agendamento de consulta médica em Unidade Básica de Saúde (UBS)",
+    "icon": "Stethoscope",
+    "moduleType": "health",
+    "moduleEntity": "MedicalAppointment",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Número do Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "preferredUnit", "label": "UBS Preferencial", "type": "text", "required": false},
+        {"id": "specialty", "label": "Especialidade", "type": "select", "required": true, "options": ["Clínica Geral", "Pediatria", "Ginecologia", "Outro"]},
+        {"id": "symptoms", "label": "Sintomas ou Queixas", "type": "textarea", "required": false},
+        {"id": "preferredPeriod", "label": "Período Preferencial", "type": "select", "required": true, "options": ["Manhã", "Tarde"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF",
+        "Comprovante de residência"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_EXAME_002",
+    "name": "Agendar Exame",
+    "category": "Saúde",
+    "description": "Agendamento de exames laboratoriais e de imagem",
+    "icon": "TestTube",
+    "moduleType": "health",
+    "moduleEntity": "MedicalExam",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "examType", "label": "Tipo de Exame", "type": "select", "required": true, "options": ["Exames de Sangue", "Ultrassonografia", "Raio-X", "Mamografia", "Tomografia", "Ressonância", "Outro"]},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": true},
+        {"id": "urgency", "label": "Urgência", "type": "select", "required": true, "options": ["Normal", "Urgente"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Pedido médico",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_VACINA_003",
+    "name": "Agendar Vacinação",
+    "category": "Saúde",
+    "description": "Agendamento de vacinas do calendário nacional ou campanhas específicas",
+    "icon": "Syringe",
+    "moduleType": "health",
+    "moduleEntity": "VaccinationRecord",
+    "estimatedTime": "2 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "vaccineType", "label": "Tipo de Vacina", "type": "select", "required": true, "options": ["COVID-19", "Gripe", "Hepatite B", "HPV", "Tríplice Viral", "Febre Amarela", "Outra"]},
+        {"id": "preferredUnit", "label": "UBS Preferencial", "type": "text", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão de vacinação",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_MEDICAMENTO_004",
+    "name": "Solicitar Medicamento",
+    "category": "Saúde",
+    "description": "Solicitação de medicamentos disponíveis na farmácia básica municipal",
+    "icon": "Pill",
+    "moduleType": "health",
+    "moduleEntity": "MedicationDispense",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "medicationName", "label": "Nome do Medicamento", "type": "text", "required": true},
+        {"id": "dosage", "label": "Dosagem/Apresentação", "type": "text", "required": true},
+        {"id": "requestingDoctor", "label": "Médico Prescritor", "type": "text", "required": true},
+        {"id": "isControlled", "label": "Medicamento Controlado?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Receita médica original",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_PSICOLOGO_005",
+    "name": "Consulta com Psicólogo",
+    "category": "Saúde",
+    "description": "Agendamento de consulta psicológica",
+    "icon": "Brain",
+    "moduleType": "health",
+    "moduleEntity": "PsychologyAppointment",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "patientType", "label": "Faixa Etária", "type": "select", "required": true, "options": ["Criança", "Adolescente", "Adulto", "Idoso"]},
+        {"id": "reason", "label": "Motivo da Consulta", "type": "textarea", "required": true},
+        {"id": "hasReferral", "label": "Possui Encaminhamento Médico?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF",
+        "Encaminhamento médico (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_DENTISTA_006",
+    "name": "Consulta Odontológica",
+    "category": "Saúde",
+    "description": "Agendamento de consulta com dentista na rede municipal",
+    "icon": "Sparkles",
+    "moduleType": "health",
+    "moduleEntity": "DentalAppointment",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "serviceType", "label": "Tipo de Atendimento", "type": "select", "required": true, "options": ["Primeira Consulta", "Urgência/Dor", "Tratamento em Andamento", "Limpeza", "Prótese"]},
+        {"id": "symptoms", "label": "Queixas ou Sintomas", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_FISIOTERAPIA_007",
+    "name": "Sessão de Fisioterapia",
+    "category": "Saúde",
+    "description": "Agendamento de sessões de fisioterapia",
+    "icon": "Activity",
+    "moduleType": "health",
+    "moduleEntity": "PhysiotherapySession",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "condition", "label": "Condição/Diagnóstico", "type": "textarea", "required": true},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": true},
+        {"id": "mobility", "label": "Mobilidade do Paciente", "type": "select", "required": true, "options": ["Sem restrições", "Dificuldade para caminhar", "Cadeirante", "Acamado"]},
+        {"id": "preferredPeriod", "label": "Período Preferencial", "type": "select", "required": true, "options": ["Manhã", "Tarde"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Pedido médico/Encaminhamento",
+        "Exames (se houver)",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_NUTRICAO_008",
+    "name": "Consulta com Nutricionista",
+    "category": "Saúde",
+    "description": "Agendamento de consulta nutricional",
+    "icon": "Apple",
+    "moduleType": "health",
+    "moduleEntity": "NutritionAppointment",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "reason", "label": "Motivo da Consulta", "type": "select", "required": true, "options": ["Obesidade", "Diabetes", "Hipertensão", "Desnutrição", "Gestante", "Orientação Geral"]},
+        {"id": "hasReferral", "label": "Possui Encaminhamento Médico?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF",
+        "Encaminhamento médico (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_ESPECIALISTA_009",
+    "name": "Consulta com Especialista",
+    "category": "Saúde",
+    "description": "Agendamento de consulta com médico especialista",
+    "icon": "UserRound",
+    "moduleType": "health",
+    "moduleEntity": "SpecialistAppointment",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "specialty", "label": "Especialidade", "type": "select", "required": true, "options": ["Cardiologia", "Ortopedia", "Neurologia", "Dermatologia", "Oftalmologia", "Endocrinologia", "Urologia", "Reumatologia", "Outro"]},
+        {"id": "requestingDoctor", "label": "Médico que Encaminhou", "type": "text", "required": true},
+        {"id": "condition", "label": "Diagnóstico/Motivo", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Encaminhamento médico obrigatório",
+        "Exames relacionados",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_HIPERDIA_010",
+    "name": "Programa Hiperdia (Hipertensão e Diabetes)",
+    "category": "Saúde",
+    "description": "Cadastro e acompanhamento de pacientes com hipertensão e/ou diabetes",
+    "icon": "HeartPulse",
+    "moduleType": "health",
+    "moduleEntity": "CampaignEnrollment",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "condition", "label": "Condição", "type": "select", "required": true, "options": ["Hipertensão", "Diabetes", "Ambos"]},
+        {"id": "medicationsInUse", "label": "Medicamentos em Uso", "type": "textarea", "required": false},
+        {"id": "preferredUnit", "label": "UBS Preferencial", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Laudo ou receita médica",
+        "Cartão SUS",
+        "RG ou CPF",
+        "Comprovante de residência"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_GESTANTE_011",
+    "name": "Pré-Natal",
+    "category": "Saúde",
+    "description": "Cadastro e acompanhamento de gestante no pré-natal",
+    "icon": "Baby",
+    "moduleType": "health",
+    "moduleEntity": "CampaignEnrollment",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome da Gestante", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF da Gestante", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "lastPeriod", "label": "Data da Última Menstruação", "type": "date", "required": true},
+        {"id": "previousPregnancies", "label": "Gestações Anteriores", "type": "number", "required": true},
+        {"id": "isHighRisk", "label": "Gestação de Alto Risco?", "type": "boolean", "required": false},
+        {"id": "preferredUnit", "label": "UBS Preferencial", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Teste de gravidez (se houver)",
+        "Cartão SUS",
+        "RG ou CPF",
+        "Cartão de vacinação"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_CRIANCA_012",
+    "name": "Puericultura (Acompanhamento Infantil)",
+    "category": "Saúde",
+    "description": "Acompanhamento do crescimento e desenvolvimento de crianças de 0 a 2 anos",
+    "icon": "BabyIcon",
+    "moduleType": "health",
+    "moduleEntity": "ChildCare",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "childName", "label": "Nome da Criança", "type": "text", "required": true},
+        {"id": "childCpf", "label": "CPF da Criança", "type": "text", "required": false},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS da Criança", "type": "text", "required": true},
+        {"id": "motherName", "label": "Nome da Mãe", "type": "text", "required": true},
+        {"id": "motherCpf", "label": "CPF da Mãe", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "birthWeight", "label": "Peso ao Nascer (kg)", "type": "number", "required": false},
+        {"id": "preferredUnit", "label": "UBS Preferencial", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Certidão de nascimento",
+        "Cartão SUS da criança",
+        "Cartão de vacinação",
+        "RG da mãe"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_IDOSO_013",
+    "name": "Programa do Idoso",
+    "category": "Saúde",
+    "description": "Atendimento e acompanhamento de saúde para idosos",
+    "icon": "Users",
+    "moduleType": "health",
+    "moduleEntity": "ElderCare",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Idoso", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Idoso", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "caretakerName", "label": "Nome do Cuidador/Responsável", "type": "text", "required": false},
+        {"id": "mobility", "label": "Mobilidade", "type": "select", "required": true, "options": ["Sem restrições", "Dificuldade para caminhar", "Usa bengala/andador", "Cadeirante", "Acamado"]},
+        {"id": "chronicConditions", "label": "Doenças Crônicas", "type": "textarea", "required": false},
+        {"id": "preferredUnit", "label": "UBS Preferencial", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF",
+        "Receitas médicas em uso"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_ATESTADO_014",
+    "name": "Atestado Médico",
+    "category": "Saúde",
+    "description": "Solicitação de atestado médico para fins diversos",
+    "icon": "FileText",
+    "moduleType": "health",
+    "moduleEntity": "MedicalCertificate",
+    "estimatedTime": "2 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "purpose", "label": "Finalidade do Atestado", "type": "select", "required": true, "options": ["Trabalho", "Escola", "Atividade Física", "Concurso Público", "Outro"]},
+        {"id": "consultationDate", "label": "Data da Consulta", "type": "date", "required": true},
+        {"id": "attendingDoctor", "label": "Médico que Atendeu", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou CPF",
+        "Cartão SUS",
+        "Comprovante de consulta"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_RECEITA_015",
+    "name": "Receita Médica (2ª Via)",
+    "category": "Saúde",
+    "description": "Solicitação de segunda via de receita médica",
+    "icon": "FileCheck",
+    "moduleType": "health",
+    "moduleEntity": "PrescriptionCopy",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "prescribingDoctor", "label": "Médico Prescritor", "type": "text", "required": true},
+        {"id": "consultationDate", "label": "Data da Consulta Original", "type": "date", "required": true},
+        {"id": "reason", "label": "Motivo da Solicitação", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou CPF",
+        "Cartão SUS",
+        "Receita original (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_CARTAO_SUS_016",
+    "name": "Cartão SUS",
+    "category": "Saúde",
+    "description": "Solicitação de Cartão Nacional de Saúde (SUS) - primeira via ou segunda via",
+    "icon": "CreditCard",
+    "moduleType": "health",
+    "moduleEntity": "SusCard",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "userName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "motherName", "label": "Nome da Mãe", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "email", "label": "E-mail", "type": "email", "required": false},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "requestType", "label": "Tipo de Solicitação", "type": "select", "required": true, "options": ["Primeira Via", "Segunda Via"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou Certidão de Nascimento",
+        "CPF",
+        "Comprovante de residência"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_TRANSPORTE_017",
+    "name": "Transporte para Tratamento Fora do Município",
+    "category": "Saúde",
+    "description": "Solicitação de transporte para tratamento médico em outra cidade",
+    "icon": "Ambulance",
+    "moduleType": "health",
+    "moduleEntity": "HealthTransport",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "destinationCity", "label": "Cidade de Destino", "type": "text", "required": true},
+        {"id": "medicalFacility", "label": "Hospital/Clínica", "type": "text", "required": true},
+        {"id": "appointmentDate", "label": "Data da Consulta/Tratamento", "type": "date", "required": true},
+        {"id": "needsCompanion", "label": "Necessita Acompanhante?", "type": "boolean", "required": true},
+        {"id": "companionName", "label": "Nome do Acompanhante", "type": "text", "required": false},
+        {"id": "reason", "label": "Motivo do Tratamento", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Encaminhamento médico",
+        "Comprovante de agendamento",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_CIRURGIA_018",
+    "name": "Agendar Cirurgia Eletiva",
+    "category": "Saúde",
+    "description": "Agendamento de cirurgia eletiva (não urgente)",
+    "icon": "Scissors",
+    "moduleType": "health",
+    "moduleEntity": "ElectiveSurgery",
+    "estimatedTime": "30 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "surgeryType", "label": "Tipo de Cirurgia", "type": "text", "required": true},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": true},
+        {"id": "diagnosis", "label": "Diagnóstico", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Pedido médico para cirurgia",
+        "Exames pré-operatórios",
+        "Avaliação cardiológica",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_DOMICILIAR_019",
+    "name": "Atendimento Domiciliar",
+    "category": "Saúde",
+    "description": "Solicitação de atendimento médico ou de enfermagem em domicílio",
+    "icon": "Home",
+    "moduleType": "health",
+    "moduleEntity": "HomeCare",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "condition", "label": "Condição do Paciente", "type": "textarea", "required": true},
+        {"id": "serviceNeeded", "label": "Tipo de Atendimento", "type": "select", "required": true, "options": ["Consulta Médica", "Enfermagem", "Curativo", "Aplicação de Medicação", "Verificação de Sinais Vitais"]},
+        {"id": "mobility", "label": "Mobilidade do Paciente", "type": "select", "required": true, "options": ["Dificuldade para sair de casa", "Acamado", "Cadeirante"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Encaminhamento médico",
+        "Laudo médico justificando necessidade",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_MENTAL_020",
+    "name": "CAPS - Centro de Atenção Psicossocial",
+    "category": "Saúde",
+    "description": "Atendimento em saúde mental no CAPS",
+    "icon": "HeartHandshake",
+    "moduleType": "health",
+    "moduleEntity": "MentalHealthCare",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "contactName", "label": "Nome do Responsável/Contato", "type": "text", "required": false},
+        {"id": "contactPhone", "label": "Telefone do Contato", "type": "phone", "required": false},
+        {"id": "condition", "label": "Condição/Queixa", "type": "textarea", "required": true},
+        {"id": "hasReferral", "label": "Possui Encaminhamento?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF",
+        "Encaminhamento médico (se houver)",
+        "Laudos ou relatórios médicos (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_MAMOGRAFIA_021",
+    "name": "Mamografia",
+    "category": "Saúde",
+    "description": "Agendamento de exame de mamografia",
+    "icon": "ScanSearch",
+    "moduleType": "health",
+    "moduleEntity": "Mammography",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome da Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF da Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "examType", "label": "Tipo de Exame", "type": "select", "required": true, "options": ["Rastreamento (Preventivo)", "Diagnóstico (Com suspeita)"]},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": false},
+        {"id": "hasSymptoms", "label": "Apresenta Sintomas?", "type": "boolean", "required": false},
+        {"id": "symptoms", "label": "Descrição dos Sintomas", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Pedido médico (se diagnóstico)",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_PREVENTIVO_022",
+    "name": "Exame Preventivo (Papanicolau)",
+    "category": "Saúde",
+    "description": "Agendamento de exame preventivo de câncer de colo de útero",
+    "icon": "ClipboardList",
+    "moduleType": "health",
+    "moduleEntity": "PapSmear",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome da Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF da Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "lastExamDate", "label": "Data do Último Exame", "type": "date", "required": false},
+        {"id": "isPregnant", "label": "Está Grávida?", "type": "boolean", "required": false},
+        {"id": "preferredUnit", "label": "UBS Preferencial", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_ULTRASSOM_023",
+    "name": "Ultrassonografia",
+    "category": "Saúde",
+    "description": "Agendamento de exame de ultrassom",
+    "icon": "ScanLine",
+    "moduleType": "health",
+    "moduleEntity": "Ultrasound",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "examType", "label": "Tipo de Ultrassom", "type": "select", "required": true, "options": ["Abdome Total", "Abdome Superior", "Pélvico", "Obstétrico", "Transvaginal", "Mama", "Tireoide", "Próstata", "Outro"]},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": true},
+        {"id": "isPregnant", "label": "Paciente Grávida?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Pedido médico",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_RAIO_X_024",
+    "name": "Raio-X",
+    "category": "Saúde",
+    "description": "Agendamento de exame de raio-X",
+    "icon": "ScanEye",
+    "moduleType": "health",
+    "moduleEntity": "XRay",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "bodyPart", "label": "Parte do Corpo", "type": "select", "required": true, "options": ["Tórax", "Coluna", "Joelho", "Tornozelo", "Pé", "Mão", "Punho", "Cotovelo", "Ombro", "Quadril", "Crânio", "Abdome", "Outro"]},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": true},
+        {"id": "isPregnant", "label": "Paciente Grávida?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Pedido médico",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_SANGUE_025",
+    "name": "Exames de Sangue",
+    "category": "Saúde",
+    "description": "Agendamento de exames laboratoriais (sangue, urina, fezes)",
+    "icon": "Droplet",
+    "moduleType": "health",
+    "moduleEntity": "BloodTest",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "examTypes", "label": "Tipos de Exame", "type": "select", "required": true, "options": ["Hemograma", "Glicemia", "Colesterol", "Triglicerídeos", "Ureia e Creatinina", "Exame de Urina", "Exame de Fezes", "Outros"]},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": true},
+        {"id": "requiresFasting", "label": "Exame em Jejum?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Pedido médico",
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_CADEIRANTE_026",
+    "name": "Equipamentos para Deficientes (Cadeira de Rodas)",
+    "category": "Saúde",
+    "description": "Solicitação de cadeira de rodas e outros equipamentos para pessoas com deficiência",
+    "icon": "Accessibility",
+    "moduleType": "health",
+    "moduleEntity": "DisabilityEquipment",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "equipmentType", "label": "Tipo de Equipamento", "type": "select", "required": true, "options": ["Cadeira de Rodas Manual", "Cadeira de Rodas Motorizada", "Muletas", "Andador", "Bengala", "Outro"]},
+        {"id": "condition", "label": "Condição/Diagnóstico", "type": "textarea", "required": true},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": true},
+        {"id": "height", "label": "Altura do Paciente (cm)", "type": "number", "required": false},
+        {"id": "weight", "label": "Peso do Paciente (kg)", "type": "number", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Laudo médico detalhado",
+        "Pedido médico especificando equipamento",
+        "Cartão SUS",
+        "RG ou CPF",
+        "Comprovante de residência"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_FRALDAS_027",
+    "name": "Fraldas Geriátricas",
+    "category": "Saúde",
+    "description": "Solicitação de fraldas geriátricas para pacientes acamados ou com incontinência",
+    "icon": "Package",
+    "moduleType": "health",
+    "moduleEntity": "GeriatricDiapers",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "size", "label": "Tamanho", "type": "select", "required": true, "options": ["P", "M", "G", "GG", "XG"]},
+        {"id": "condition", "label": "Condição do Paciente", "type": "textarea", "required": true},
+        {"id": "requestingDoctor", "label": "Médico Solicitante", "type": "text", "required": true},
+        {"id": "caretakerName", "label": "Nome do Cuidador", "type": "text", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Laudo médico",
+        "Receita médica ou pedido",
+        "Cartão SUS",
+        "RG ou CPF",
+        "Comprovante de residência"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_ALCOOL_028",
+    "name": "Tratamento para Dependência Química",
+    "category": "Saúde",
+    "description": "Atendimento para tratamento de dependência de álcool e outras drogas",
+    "icon": "ShieldAlert",
+    "moduleType": "health",
+    "moduleEntity": "AddictionTreatment",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "substanceType", "label": "Tipo de Substância", "type": "select", "required": true, "options": ["Álcool", "Crack/Cocaína", "Maconha", "Medicamentos", "Múltiplas Substâncias", "Outro"]},
+        {"id": "contactName", "label": "Nome do Familiar/Contato", "type": "text", "required": false},
+        {"id": "contactPhone", "label": "Telefone do Contato", "type": "phone", "required": false},
+        {"id": "treatmentType", "label": "Tipo de Tratamento", "type": "select", "required": true, "options": ["Ambulatorial", "Internação Voluntária", "Grupo de Apoio"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF",
+        "Termo de consentimento (se internação)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_TABAGISMO_029",
+    "name": "Programa Anti-Tabagismo",
+    "category": "Saúde",
+    "description": "Programa para cessação do tabagismo",
+    "icon": "Ban",
+    "moduleType": "health",
+    "moduleEntity": "SmokingCessation",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "susCard", "label": "Cartão SUS", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "cigarettesPerDay", "label": "Cigarros por Dia", "type": "number", "required": true},
+        {"id": "yearsOfSmoking", "label": "Anos Fumando", "type": "number", "required": true},
+        {"id": "previousAttempts", "label": "Tentou Parar Antes?", "type": "boolean", "required": false},
+        {"id": "motivation", "label": "Motivação para Parar", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Cartão SUS",
+        "RG ou CPF"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SAU_FARMACIA_030",
+    "name": "Farmácia Popular",
+    "category": "Saúde",
+    "description": "Cadastro e solicitação de medicamentos no programa Farmácia Popular",
+    "icon": "Store",
+    "moduleType": "health",
+    "moduleEntity": "PopularPharmacy",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "patientName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "patientCpf", "label": "CPF do Paciente", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "medicationName", "label": "Nome do Medicamento", "type": "text", "required": true},
+        {"id": "condition", "label": "Condição Tratada", "type": "select", "required": true, "options": ["Hipertensão", "Diabetes", "Asma", "Glaucoma", "Rinite", "Parkinson", "Osteoporose", "Anticoncepção", "Outra"]},
+        {"id": "requestingDoctor", "label": "Médico Prescritor", "type": "text", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Receita médica válida (até 120 dias)",
+        "CPF",
+        "RG ou CNH"
+      ]
+    },
+    "fieldMapping": {}
+  }
+]

@@ -1,0 +1,410 @@
+// ========================================
+// FASE 7: SECRETARIA DE SEGURANÇA PÚBLICA
+// ========================================
+// 8 serviços especializados com persistência automática
+// Handlers: police-report, patrol-request, camera-request, anonymous-tip
+
+// 1. BOLETINS DE OCORRÊNCIA
+model PoliceReport {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Informações do relato
+  type            String   // "theft", "vandalism", "disturbance", "traffic", "other"
+  description     String   @db.Text
+  location        String
+  coordinates     Json?    // { lat, lng }
+  occurrenceDate  DateTime
+  occurrenceTime  String?
+
+  // Envolvidos
+  reporterName    String?
+  reporterPhone   String?
+  reporterEmail   String?
+  witnessInfo     Json?    // Array de testemunhas
+  suspectInfo     Json?    // Informações do suspeito
+
+  // Evidências
+  photos          Json?    // Array de URLs de fotos
+  videos          Json?    // Array de URLs de vídeos
+  documents       Json?    // Documentos anexos
+
+  // Status e acompanhamento
+  reportNumber    String   @unique // Número do BO
+  status          String   @default("registered") // "registered", "investigating", "resolved", "archived"
+  priority        String   @default("normal") // "low", "normal", "high", "urgent"
+  category        String?  // Categoria específica
+
+  // Atendimento
+  assignedTo      String?  // ID do agente
+  assignedAt      DateTime?
+  investigationNotes Json? // Notas da investigação
+  resolution      String?  @db.Text
+  resolvedAt      DateTime?
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual") // "service", "manual", "emergency"
+
+  // Metadados
+  metadata        Json?
+  isAnonymous     Boolean  @default(false)
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([type])
+  @@index([reportNumber])
+  @@index([occurrenceDate])
+  @@map("police_reports")
+}
+
+// 2. SOLICITAÇÕES DE RONDA/PATRULHA
+model PatrolRequest {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Informações da solicitação
+  type            String   // "preventive", "monitoring", "event", "complaint"
+  reason          String   @db.Text
+  location        String
+  coordinates     Json?    // { lat, lng }
+  area            String?  // Bairro/região
+
+  // Período solicitado
+  requestedDate   DateTime?
+  requestedTime   String?
+  frequency       String?  // "once", "daily", "weekly", "monthly"
+  duration        String?  // Duração estimada
+
+  // Solicitante
+  requesterName   String
+  requesterPhone  String
+  requesterEmail  String?
+  requesterAddress String?
+
+  // Detalhes
+  description     String   @db.Text
+  concerns        Json?    // Preocupações específicas
+  additionalInfo  String?  @db.Text
+
+  // Status e atendimento
+  status          String   @default("pending") // "pending", "scheduled", "in_progress", "completed", "cancelled"
+  priority        String   @default("normal") // "low", "normal", "high"
+
+  // Programação
+  scheduledDate   DateTime?
+  scheduledTime   String?
+  assignedUnit    String?  // Viatura/unidade designada
+  assignedOfficers Json?   // Agentes designados
+
+  // Execução
+  patrolLog       Json?    // Log das rondas realizadas
+  observations    String?  @db.Text
+  completedAt     DateTime?
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual") // "service", "manual", "phone"
+
+  // Metadados
+  metadata        Json?
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([type])
+  @@index([requestedDate])
+  @@map("patrol_requests")
+}
+
+// 3. SOLICITAÇÕES DE CÂMERAS/MONITORAMENTO
+model CameraRequest {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Tipo de solicitação
+  type            String   // "installation", "maintenance", "footage", "relocation"
+  purpose         String   @db.Text
+
+  // Localização
+  location        String
+  coordinates     Json?    // { lat, lng }
+  area            String?  // Bairro
+  address         String?
+
+  // Detalhes da solicitação
+  cameraType      String?  // "fixed", "ptz", "dome", "speed"
+  quantity        Int?     @default(1)
+  justification   String   @db.Text
+
+  // Para solicitação de imagens
+  incidentDate    DateTime?
+  incidentTime    String?
+  timeRange       Json?    // { start, end }
+  incidentDescription String? @db.Text
+
+  // Análise técnica
+  feasibilityStatus String? // "pending", "approved", "denied", "needs_study"
+  technicalNotes  String?  @db.Text
+  estimatedCost   Decimal? @db.Decimal(10, 2)
+
+  // Solicitante
+  requesterName   String
+  requesterPhone  String
+  requesterEmail  String?
+  requesterDocument String?
+  requesterType   String?  // "citizen", "business", "institution", "police"
+
+  // Status
+  status          String   @default("pending") // "pending", "analysis", "approved", "in_installation", "completed", "denied"
+  priority        String   @default("normal")
+
+  // Instalação/Execução
+  scheduledDate   DateTime?
+  installedDate   DateTime?
+  installationTeam String?
+  cameraIds       Json?    // IDs das câmeras instaladas
+
+  // Entrega de imagens
+  footageDelivered Boolean? @default(false)
+  footageDeliveryDate DateTime?
+  footageNotes    String?  @db.Text
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Metadados
+  metadata        Json?
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([type])
+  @@map("camera_requests")
+}
+
+// 4. DENÚNCIAS ANÔNIMAS
+model AnonymousTip {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Tipo de denúncia
+  type            String   // "drug_trafficking", "theft", "violence", "vandalism", "corruption", "other"
+  category        String?  // Subcategoria
+
+  // Informações da denúncia
+  description     String   @db.Text
+  location        String?
+  coordinates     Json?    // { lat, lng }
+
+  // Detalhes
+  suspectInfo     Json?    // Informações do suspeito (sem identificação pessoal)
+  vehicleInfo     Json?    // Informações de veículos
+  timeframe       String?  // Quando ocorre/ocorreu
+  frequency       String?  // "once", "occasional", "frequent", "daily"
+
+  // Evidências (anônimas)
+  hasEvidence     Boolean  @default(false)
+  evidenceType    Json?    // Tipos de evidência disponível
+  evidenceNotes   String?  @db.Text
+
+  // Urgência
+  isUrgent        Boolean  @default(false)
+  dangerLevel     String?  // "low", "medium", "high", "critical"
+
+  // Status e acompanhamento
+  tipNumber       String   @unique // Número da denúncia para acompanhamento
+  status          String   @default("received") // "received", "analyzing", "investigating", "action_taken", "archived"
+  priority        String   @default("normal")
+
+  // Investigação
+  assignedTo      String?
+  assignedAt      DateTime?
+  investigationLog Json?   // Log de ações (sem expor identidade do denunciante)
+  actionTaken     String?  @db.Text
+  outcome         String?
+  closedAt        DateTime?
+
+  // Feedback ao denunciante
+  feedbackCode    String?  @unique // Código para acompanhamento
+  publicUpdates   Json?    // Updates que podem ser vistos com o código
+
+  // Vínculo com protocolo (se não for anônimo)
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual") // "service", "hotline", "web", "app"
+
+  // Segurança e anonimato
+  isAnonymous     Boolean  @default(true)
+  anonymityLevel  String   @default("full") // "full", "partial", "none"
+  ipHash          String?  // Hash do IP (não o IP real)
+
+  // Metadados
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([type])
+  @@index([tipNumber])
+  @@index([feedbackCode])
+  @@map("anonymous_tips")
+}
+
+// 5. AUTORIZAÇÕES PARA EVENTOS
+model EventAuthorization {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Informações do evento
+  eventName       String
+  eventType       String   // "concert", "parade", "sports", "festival", "fair", "other"
+  description     String   @db.Text
+
+  // Data e horário
+  eventDate       DateTime
+  startTime       String
+  endTime         String
+  setupDate       DateTime?
+  setupTime       String?
+  teardownTime    String?
+
+  // Local
+  location        String
+  address         String
+  coordinates     Json?
+  venue           String?  // Nome do local
+  isPublicSpace   Boolean  @default(true)
+
+  // Estimativas
+  expectedAttendees Int?
+  hasAlcohol      Boolean  @default(false)
+  hasSound        Boolean  @default(false)
+  soundLevel      String?  // "low", "medium", "high"
+
+  // Organizador
+  organizerName   String
+  organizerDocument String
+  organizerPhone  String
+  organizerEmail  String?
+  organizerType   String?  // "person", "company", "institution"
+
+  // Requisitos de segurança
+  securityPlan    String?  @db.Text
+  privateSecurityCount Int? @default(0)
+  needsPoliceSupport Boolean @default(false)
+  requestedOfficers Int?   @default(0)
+
+  // Análise e aprovação
+  status          String   @default("pending") // "pending", "analysis", "approved", "denied", "cancelled"
+  analysisNotes   String?  @db.Text
+  requirements    Json?    // Requisitos adicionais
+  conditions      String?  @db.Text
+
+  // Designação de recursos
+  assignedOfficers Int?    @default(0)
+  assignedUnits   Json?    // Viaturas/unidades
+  coordinatorOfficer String?
+
+  // Documentação
+  documents       Json?    // Documentos anexos
+  insurance       Json?    // Seguro do evento
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Metadados
+  approvedBy      String?
+  approvedAt      DateTime?
+  deniedReason    String?  @db.Text
+  metadata        Json?
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([eventDate])
+  @@map("event_authorizations")
+}
+
+// 6. REGISTRO DE OBJETOS PERDIDOS E ACHADOS
+model LostAndFound {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Tipo de registro
+  type            String   // "lost", "found"
+
+  // Informações do objeto
+  itemType        String   // "documents", "electronics", "keys", "wallet", "phone", "jewelry", "clothing", "other"
+  itemDescription String   @db.Text
+  brand           String?
+  model           String?
+  color           String?
+  distinctiveMarks String? @db.Text
+
+  // Local e data
+  location        String
+  lostFoundDate   DateTime
+  lostFoundTime   String?
+
+  // Fotos
+  photos          Json?
+
+  // Informações da pessoa
+  personName      String
+  personDocument  String?
+  personPhone     String
+  personEmail     String?
+  personAddress   String?
+
+  // Status
+  status          String   @default("active") // "active", "matched", "returned", "archived"
+
+  // Match entre perdido e achado
+  matchedWith     String?  // ID do registro correspondente
+  matchedAt       DateTime?
+
+  // Devolução
+  returnedTo      String?
+  returnedAt      DateTime?
+  returnNotes     String?  @db.Text
+
+  // Armazenamento (para achados)
+  storageLocation String?
+  storedBy        String?
+  storedAt        DateTime?
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Metadados
+  metadata        Json?
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([itemType])
+  @@index([lostFoundDate])
+  @@map("lost_and_found")
+}

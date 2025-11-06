@@ -1,0 +1,2 @@
+src/routes/tenants.ts(248,9): error TS2322: Type '{ codigoIbge: string; nome: string; uf: string; regiao: string; populacao: number; capital: boolean; ddd: number; coordenadas: { latitude: number; longitude: number; }; cnpjOficial: string | null; } | null' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+  Type 'null' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.

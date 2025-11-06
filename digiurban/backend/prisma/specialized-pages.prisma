@@ -1,0 +1,296 @@
+// Models especializados para as 95 páginas das secretarias
+// Integração com sistema de geração automática de serviços
+
+model SpecializedPage {
+  id           String @id @default(cuid())
+  tenantId     String
+  departmentId String
+
+  // Identificação da página
+  name         String  // "Atendimentos Médicos", "Matrículas Escolares", etc.
+  code         String  // "atendimentos", "matriculas", etc.
+  secretaria   String  // "saude", "educacao", "assistencia-social", etc.
+  pageType     String  // Tipo específico dentro da secretaria
+
+  // Configuração da página
+  config       Json    // Configurações específicas da página
+  functions    Json    // Funcionalidades internas disponíveis
+  workflows    Json    // Fluxos de trabalho configurados
+  permissions  Json    // Permissões específicas da página
+
+  // Status e controle
+  isActive     Boolean @default(true)
+  isPublic     Boolean @default(false) // Se gera serviços públicos
+  priority     Int     @default(1)
+
+  // Metadados
+  description  String?
+  icon         String? // Nome do ícone Lucide
+  color        String? // Cor da página
+
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  // Serviços gerados por esta página
+  generatedServices Service[]
+
+  // Logs de geração de serviços
+  serviceGenerations ServiceGeneration[]
+
+  // Configurações específicas
+  pageConfigurations PageConfiguration[]
+
+  // Protocolos processados por esta página
+  protocols Protocol[]
+
+  // Relatórios da página
+  pageReports PageReport[]
+
+  // Métricas da página
+  pageMetrics PageMetrics[]
+
+  @@unique([tenantId, departmentId, code])
+  @@index([tenantId, secretaria])
+  @@index([isActive, isPublic])
+  @@map("specialized_pages")
+}
+
+model ServiceGeneration {
+  id          String @id @default(cuid())
+  tenantId    String
+
+  // Referências
+  pageId      String
+  serviceId   String?  // Pode ser null se a geração falhou
+
+  // Configuração da geração
+  config      Json     // Parâmetros usados na geração
+  functions   Json     // Funcionalidades analisadas
+  patterns    Json     // Padrões identificados pela IA
+
+  // Resultado da geração
+  success     Boolean  @default(false)
+  generated   Json?    // Dados do serviço gerado
+  errors      Json?    // Erros ocorridos durante a geração
+
+  // Metadados de geração
+  aiAnalysis  Json?    // Análise da IA sobre a página
+  suggestions Json?    // Sugestões de melhorias
+  confidence  Float?   // Nível de confiança da IA (0-1)
+
+  // Timestamps
+  generatedAt DateTime @default(now())
+
+  // Relacionamentos
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  page        SpecializedPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  service     Service?       @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, pageId])
+  @@index([generatedAt])
+  @@index([success])
+  @@map("service_generations")
+}
+
+model PageConfiguration {
+  id         String @id @default(cuid())
+  tenantId   String
+  pageId     String
+
+  // Configuração específica
+  key        String  // Chave da configuração
+  value      Json    // Valor da configuração
+  type       String  // Tipo: "workflow", "field", "integration", "permission"
+  category   String? // Categoria da configuração
+
+  // Metadados
+  description String?
+  isRequired  Boolean @default(false)
+  isActive    Boolean @default(true)
+
+  // Versionamento
+  version     Int     @default(1)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  page        SpecializedPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, pageId, key])
+  @@index([tenantId, type])
+  @@map("page_configurations")
+}
+
+model PageReport {
+  id          String @id @default(cuid())
+  tenantId    String
+  pageId      String
+
+  // Dados do relatório
+  reportType  String   // "daily", "weekly", "monthly", "custom"
+  title       String
+  description String?
+
+  // Período do relatório
+  startDate   DateTime
+  endDate     DateTime
+
+  // Dados consolidados
+  data        Json     // Dados do relatório
+  metrics     Json     // Métricas calculadas
+  summary     Json     // Resumo executivo
+
+  // Formato e distribuição
+  format      String   @default("json") // "json", "pdf", "excel"
+  recipients  Json?    // Lista de destinatários
+
+  // Status
+  status      String   @default("generated") // "generating", "generated", "sent", "error"
+
+  // Timestamps
+  generatedAt DateTime @default(now())
+  sentAt      DateTime?
+
+  // Relacionamentos
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  page        SpecializedPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, pageId])
+  @@index([reportType, startDate])
+  @@map("page_reports")
+}
+
+model PageMetrics {
+  id            String @id @default(cuid())
+  tenantId      String
+  pageId        String
+
+  // Período das métricas
+  date          DateTime @db.Date
+
+  // Métricas de uso
+  pageViews     Int      @default(0)
+  uniqueUsers   Int      @default(0)
+  sessions      Int      @default(0)
+
+  // Métricas de protocolo
+  protocolsCreated    Int @default(0)
+  protocolsCompleted  Int @default(0)
+  protocolsPending    Int @default(0)
+
+  // Métricas de performance
+  avgResponseTime     Float? // Tempo médio de resposta em horas
+  satisfactionScore   Float? // Score de satisfação (0-10)
+
+  // Métricas específicas da página
+  customMetrics Json?  // Métricas específicas por tipo de página
+
+  // Geração de serviços
+  servicesGenerated   Int @default(0)
+  aiSuggestions      Int @default(0)
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relacionamentos
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  page          SpecializedPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, pageId, date])
+  @@index([tenantId, date])
+  @@map("page_metrics")
+}
+
+// Extensão do model Service para incluir origem da página
+model ServicePageOrigin {
+  id        String @id @default(cuid())
+  tenantId  String
+  serviceId String
+  pageId    String
+
+  // Dados da origem
+  originType      String  // "manual", "ai_generated", "imported"
+  generationData  Json?   // Dados da geração automática
+  confidence      Float?  // Confiança da IA na geração
+
+  // Status
+  isActive        Boolean @default(true)
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+
+  // Relacionamentos
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  service  Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  page     SpecializedPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, serviceId])
+  @@index([tenantId, pageId])
+  @@map("service_page_origins")
+}
+
+// Template de página para criação automática
+model PageTemplate {
+  id          String @id @default(cuid())
+
+  // Identificação do template
+  name        String  // "Saúde - Atendimentos", "Educação - Matrículas"
+  code        String  // "health-attendance", "education-enrollment"
+  secretaria  String  // "saude", "educacao", etc.
+  category    String  // "basic", "advanced", "specialized"
+
+  // Configuração do template
+  config      Json    // Configuração padrão
+  functions   Json    // Funcionalidades disponíveis
+  workflows   Json    // Fluxos de trabalho padrão
+  fields      Json    // Campos obrigatórios e opcionais
+
+  // Metadados
+  description String?
+  icon        String?
+  version     String  @default("1.0.0")
+
+  // Status
+  isActive    Boolean @default(true)
+  isPublic    Boolean @default(true)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([code])
+  @@index([secretaria, category])
+  @@map("page_templates")
+}
+
+// Relacionamentos adicionais nos models existentes
+
+// Adicionar aos models existentes:
+
+// Service model - adicionar relacionamento
+// serviceGenerations ServiceGeneration[]
+// pageOrigin        ServicePageOrigin?
+
+// Protocol model - adicionar relacionamento
+// specializedPage   SpecializedPage? @relation(fields: [specializedPageId], references: [id])
+// specializedPageId String?
+
+// Tenant model - adicionar relacionamentos
+// specializedPages     SpecializedPage[]
+// serviceGenerations   ServiceGeneration[]
+// pageConfigurations   PageConfiguration[]
+// pageReports         PageReport[]
+// pageMetrics         PageMetrics[]
+// servicePageOrigins  ServicePageOrigin[]
+
+// Department model - adicionar relacionamento
+// specializedPages SpecializedPage[]

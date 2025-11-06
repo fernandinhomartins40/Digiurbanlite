@@ -1,0 +1,53 @@
+-- ============================================================================
+-- MIGRATION: Padronizar protocol → protocolId em todos os modelos
+-- ============================================================================
+--
+-- Esta migration converte campos "protocol String @unique" para
+-- "protocolId String" com relação ao ProtocolSimplified
+--
+-- IMPORTANTE: Esta é uma MIGRATION MANUAL que deve ser revisada antes de aplicar
+--
+-- Modelos afetados (20+):
+-- - CulturalAttendance
+-- - SportsAttendance
+-- - HealthAttendance
+-- - HousingAttendance
+-- - SecurityOccurrence
+-- - SecurityAttendance
+-- - TourismAttendance
+-- - EnvironmentalComplaint
+-- - EnvironmentalAttendance
+-- - TechnicalAssistance
+-- - AgricultureAttendance
+-- - HousingApplication
+-- - LandRegularization
+-- - RentAssistance
+-- - SocialAssistanceAttendance
+-- - WorkInspection
+-- - PublicWorksAttendance
+-- - RoadRepairRequest
+-- - TechnicalInspection
+-- - UrbanPlanningAttendance
+-- ============================================================================
+
+-- ETAPA 1: Adicionar coluna protocolId (se não existir) mantendo protocol temporariamente
+-- Não podemos aplicar esta migration diretamente pois requer mudanças no schema.prisma
+
+-- INSTRUÇÕES:
+-- 1. Esta migration requer edição manual do schema.prisma
+-- 2. Para cada modelo listado acima, substituir:
+--
+--    ANTES:
+--    protocol String @unique
+--
+--    DEPOIS:
+--    protocolId String? @unique
+--    protocol ProtocolSimplified? @relation("ModelNameProtocol", fields: [protocolId], references: [id])
+--
+-- 3. Após editar schema.prisma, executar: npx prisma migrate dev --name standardize_protocol_fields
+-- 4. Os dados existentes serão preservados pois o campo protocolId aceita null (?)
+-- 5. Posteriormente, executar script de migração de dados para popular protocolId baseado no protocol string
+
+-- NOTA: Esta é uma migration de estrutura apenas. A migração de dados será feita separadamente.
+
+SELECT 'Migration preparada - Edite schema.prisma manualmente conforme instruções acima' as message;

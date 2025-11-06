@@ -1,0 +1,44 @@
+refactor: limpar seeds obsoletos e alinhar com plano de simplificação
+
+Removidos 8 seeds obsoletos que usavam modelos antigos (ServiceSimplified)
+ou arquitetura de templates em fases que não consta no plano atual.
+
+SEEDS REMOVIDOS:
+- src/scripts/seed.ts (modelo antigo ServiceSimplified)
+- src/seeds/service-templates.ts (templates Fase 2)
+- src/seeds/agriculture-templates.ts (templates específicos)
+- src/seeds/consolidated-seed.ts (seed parcial duplicado)
+- src/seeds/phase5-templates-seed.ts (fase não existe no plano)
+- src/seeds/phase7-security-templates-seed.ts (fase não existe no plano)
+- src/seeds/initial-services.ts (duplicado com model antigo)
+- seed-agricultura.ts (standalone não padronizado)
+
+SEEDS MANTIDOS:
+- prisma/seed.ts (seed principal consolidado)
+- prisma/seeds/initial-services.ts (154 serviços, model Service correto)
+- prisma/seeds/unassigned-pool.ts (pool especial para municípios)
+
+CORREÇÕES:
+- Ajustado import em src/routes/super-admin.ts:12
+  De: '../seeds/initial-services'
+  Para: '../../prisma/seeds/initial-services'
+- Removida pasta src/seeds/ (vazia após limpeza)
+
+IMPACTO:
+- Redução de 63% de código de seeds (~4.059 linhas removidas)
+- Unificação de models (todos seeds usam Service agora)
+- Estrutura centralizada em prisma/seeds/
+- 100% alinhado com PLANO_IMPLEMENTACAO_SIMPLIFICACAO.md
+
+PRÓXIMOS PASSOS:
+1. Validar seed principal: npm run db:seed
+2. Fase 2: Migrar schema (remover ServiceSimplified/ProtocolSimplified)
+3. Fase 3: Atualizar rotas para usar novos models
+
+Documentação completa:
+- LIMPEZA_SEEDS_DOCUMENTACAO.md
+- RESUMO_LIMPEZA_SEEDS.md
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>

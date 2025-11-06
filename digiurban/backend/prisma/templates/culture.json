@@ -1,0 +1,1897 @@
+[
+  {
+    "code": "CUL_ESPACO_001",
+    "name": "Solicitar Reserva de Espaço Cultural",
+    "category": "Cultura",
+    "description": "Solicitação de reserva de espaço cultural (teatro, centro cultural, biblioteca, etc.) para eventos artísticos e culturais",
+    "icon": "Theater",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "espacoId",
+          "label": "Espaço Cultural Desejado",
+          "type": "select",
+          "required": true,
+          "options": [],
+          "dynamicOptions": "/api/specialized/culture/spaces?isActive=true",
+          "placeholder": "Selecione o espaço"
+        },
+        {
+          "id": "eventName",
+          "label": "Nome do Evento",
+          "type": "text",
+          "required": true,
+          "placeholder": "Nome da atividade ou evento"
+        },
+        {
+          "id": "eventType",
+          "label": "Tipo de Evento",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Show",
+            "Peça de Teatro",
+            "Exposição",
+            "Workshop",
+            "Palestra",
+            "Sarau",
+            "Festa",
+            "Outro"
+          ]
+        },
+        {
+          "id": "eventDate",
+          "label": "Data do Evento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "startTime",
+          "label": "Horário de Início",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "endTime",
+          "label": "Horário de Término",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "expectedAudience",
+          "label": "Público Esperado",
+          "type": "number",
+          "required": true,
+          "min": 1,
+          "placeholder": "Número aproximado de pessoas"
+        },
+        {
+          "id": "organizerName",
+          "label": "Nome do Organizador",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "organizerPhone",
+          "label": "Telefone do Organizador",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "organizerEmail",
+          "label": "E-mail do Organizador",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "eventDescription",
+          "label": "Descrição do Evento",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva detalhadamente o evento que será realizado"
+        },
+        {
+          "id": "equipmentNeeds",
+          "label": "Equipamentos Necessários",
+          "type": "checkbox-multiple",
+          "required": false,
+          "options": [
+            "Som",
+            "Projetor",
+            "Iluminação Especial",
+            "Palco",
+            "Cadeiras Extras",
+            "Ar Condicionado"
+          ]
+        },
+        {
+          "id": "isFreeEvent",
+          "label": "Evento Gratuito?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "ticketPrice",
+          "label": "Valor do Ingresso (se cobrado)",
+          "type": "currency",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "isFreeEvent",
+            "value": "Não"
+          }
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do organizador",
+        "Comprovante de residência",
+        "Projeto ou roteiro do evento",
+        "Autorização de direitos autorais (se aplicável)"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalSpace",
+    "fieldMapping": {
+      "espacoId": "reservation.spaceId",
+      "eventName": "event.title",
+      "eventType": "event.type",
+      "eventDate": "event.date",
+      "eventDescription": "event.description",
+      "organizerName": "organizer.name",
+      "organizerPhone": "organizer.phone"
+    }
+  },
+  {
+    "code": "CUL_PROJETO_002",
+    "name": "Inscrição em Projeto Cultural",
+    "category": "Cultura",
+    "description": "Inscrição de projetos culturais para captação de recursos, apoio ou realização de eventos artísticos",
+    "icon": "FileText",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "projectTitle",
+          "label": "Título do Projeto",
+          "type": "text",
+          "required": true,
+          "placeholder": "Nome do projeto cultural"
+        },
+        {
+          "id": "projectCategory",
+          "label": "Categoria do Projeto",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Música",
+            "Teatro",
+            "Dança",
+            "Literatura",
+            "Artes Visuais",
+            "Cinema",
+            "Artesanato",
+            "Patrimônio Cultural"
+          ]
+        },
+        {
+          "id": "projectType",
+          "label": "Tipo de Projeto",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Apresentação",
+            "Oficina",
+            "Exposição",
+            "Festival",
+            "Concurso",
+            "Residência Artística"
+          ]
+        },
+        {
+          "id": "projectDescription",
+          "label": "Descrição do Projeto",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva detalhadamente o projeto cultural",
+          "minLength": 100
+        },
+        {
+          "id": "projectObjectives",
+          "label": "Objetivos do Projeto",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Quais são os objetivos e resultados esperados?"
+        },
+        {
+          "id": "targetAudience",
+          "label": "Público-Alvo",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Crianças (0-12)",
+            "Jovens (13-17)",
+            "Adultos (18-59)",
+            "Idosos (60+)",
+            "PcD",
+            "Geral"
+          ]
+        },
+        {
+          "id": "startDate",
+          "label": "Data de Início",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "endDate",
+          "label": "Data de Término",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "expectedParticipants",
+          "label": "Número Esperado de Participantes",
+          "type": "number",
+          "required": true,
+          "min": 1
+        },
+        {
+          "id": "projectBudget",
+          "label": "Orçamento Total do Projeto",
+          "type": "currency",
+          "required": true
+        },
+        {
+          "id": "fundingSource",
+          "label": "Fonte de Financiamento",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Recursos Próprios",
+            "Lei de Incentivo",
+            "Edital Público",
+            "Patrocínio Privado",
+            "Misto"
+          ]
+        },
+        {
+          "id": "responsibleName",
+          "label": "Nome do Responsável",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "responsibleCpf",
+          "label": "CPF do Responsável",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "responsiblePhone",
+          "label": "Telefone do Responsável",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "responsibleEmail",
+          "label": "E-mail do Responsável",
+          "type": "email",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do responsável",
+        "Comprovante de residência",
+        "Projeto detalhado (PDF)",
+        "Portfólio ou currículo artístico",
+        "Orçamento detalhado",
+        "Cronograma de execução"
+      ]
+    },
+    "estimatedTime": "15 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalProject",
+    "fieldMapping": {
+      "projectTitle": "project.name",
+      "projectCategory": "project.type",
+      "projectDescription": "project.description",
+      "responsibleName": "project.responsible",
+      "startDate": "project.startDate",
+      "endDate": "project.endDate",
+      "projectBudget": "project.budget"
+    }
+  },
+  {
+    "code": "CUL_GRUPO_003",
+    "name": "Cadastro de Grupo Artístico",
+    "category": "Cultura",
+    "description": "Cadastramento de grupos artísticos no município para mapeamento cultural e oportunidades de apresentação",
+    "icon": "Users",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "groupName",
+          "label": "Nome do Grupo/Coletivo",
+          "type": "text",
+          "required": true,
+          "placeholder": "Nome artístico do grupo"
+        },
+        {
+          "id": "groupCategory",
+          "label": "Categoria Artística",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Música",
+            "Teatro",
+            "Dança",
+            "Literatura",
+            "Artes Visuais",
+            "Cinema",
+            "Multidisciplinar"
+          ]
+        },
+        {
+          "id": "groupStyle",
+          "label": "Estilo/Gênero",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: Rock, Teatro de rua, Dança contemporânea..."
+        },
+        {
+          "id": "foundationDate",
+          "label": "Data de Fundação",
+          "type": "date",
+          "required": false
+        },
+        {
+          "id": "groupDescription",
+          "label": "Descrição do Grupo",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "História, estilo, apresentações realizadas...",
+          "minLength": 50
+        },
+        {
+          "id": "coordinatorName",
+          "label": "Nome do Coordenador",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "coordinatorCpf",
+          "label": "CPF do Coordenador",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "coordinatorPhone",
+          "label": "Telefone do Coordenador",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "coordinatorEmail",
+          "label": "E-mail do Coordenador",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "numberOfMembers",
+          "label": "Número de Integrantes",
+          "type": "number",
+          "required": true,
+          "min": 2
+        },
+        {
+          "id": "members",
+          "label": "Integrantes (Nome e Função)",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Liste os integrantes e suas funções no grupo"
+        },
+        {
+          "id": "socialMediaInstagram",
+          "label": "Instagram",
+          "type": "text",
+          "required": false,
+          "placeholder": "@usuario"
+        },
+        {
+          "id": "socialMediaFacebook",
+          "label": "Facebook",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "socialMediaYoutube",
+          "label": "YouTube",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "needsTransport",
+          "label": "Necessita Transporte para Apresentações?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "equipment",
+          "label": "Equipamentos Próprios",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Liste os equipamentos que o grupo possui"
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do coordenador",
+        "Comprovante de residência",
+        "Fotos do grupo (mínimo 3)",
+        "Portfólio ou material de divulgação",
+        "Vídeos de apresentações (se disponível)"
+      ]
+    },
+    "estimatedTime": "3 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "ArtisticGroup",
+    "fieldMapping": {
+      "groupName": "group.name",
+      "groupCategory": "group.category",
+      "groupDescription": "group.description",
+      "coordinatorName": "coordinator.name",
+      "coordinatorCpf": "coordinator.cpf",
+      "coordinatorPhone": "coordinator.phone",
+      "coordinatorEmail": "coordinator.email",
+      "foundationDate": "group.foundationDate"
+    }
+  },
+  {
+    "code": "CUL_OFICINA_004",
+    "name": "Inscrição em Oficina Cultural",
+    "category": "Cultura",
+    "description": "Inscrição em oficinas e cursos culturais oferecidos pela secretaria (música, teatro, dança, artes, etc.)",
+    "icon": "BookOpen",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "workshopId",
+          "label": "Oficina/Curso Desejado",
+          "type": "select",
+          "required": true,
+          "options": [],
+          "dynamicOptions": "/api/specialized/culture/workshops?status=inscricoes_abertas",
+          "placeholder": "Selecione a oficina"
+        },
+        {
+          "id": "participantName",
+          "label": "Nome Completo do Participante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "participantBirthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "participantCpf",
+          "label": "CPF do Participante",
+          "type": "text",
+          "required": false,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "participantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "participantEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "participantAddress",
+          "label": "Endereço Completo",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "experienceLevel",
+          "label": "Nível de Experiência",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Nenhuma experiência",
+            "Iniciante",
+            "Intermediário",
+            "Avançado"
+          ]
+        },
+        {
+          "id": "motivation",
+          "label": "Por que deseja participar desta oficina?",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Conte-nos sua motivação"
+        },
+        {
+          "id": "specialNeeds",
+          "label": "Necessidades Especiais ou Restrições",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Informe se possui alguma necessidade especial"
+        },
+        {
+          "id": "responsibleName",
+          "label": "Nome do Responsável (se menor de 18 anos)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "responsiblePhone",
+          "label": "Telefone do Responsável",
+          "type": "phone",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou Certidão de Nascimento",
+        "CPF (se maior de 18 anos)",
+        "Comprovante de residência",
+        "Foto 3x4 recente",
+        "Autorização dos pais (se menor de idade)"
+      ]
+    },
+    "estimatedTime": "2 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalWorkshop",
+    "fieldMapping": {
+      "workshopId": "enrollment.workshopId",
+      "participantName": "participant.name",
+      "participantBirthDate": "participant.birthDate",
+      "participantCpf": "participant.cpf",
+      "participantPhone": "participant.phone",
+      "participantEmail": "participant.email"
+    }
+  },
+  {
+    "code": "CUL_EVENTO_005",
+    "name": "Proposta de Evento Cultural",
+    "category": "Cultura",
+    "description": "Submissão de proposta para realização de evento cultural com apoio ou parceria da secretaria",
+    "icon": "Calendar",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "eventTitle",
+          "label": "Título do Evento",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "eventType",
+          "label": "Tipo de Evento",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Show Musical",
+            "Peça de Teatro",
+            "Exposição de Arte",
+            "Festival",
+            "Workshop",
+            "Palestra",
+            "Sarau",
+            "Feira Cultural"
+          ]
+        },
+        {
+          "id": "eventCategory",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Música",
+            "Teatro",
+            "Dança",
+            "Literatura",
+            "Artes Visuais",
+            "Cinema",
+            "Artesanato",
+            "Patrimônio Cultural"
+          ]
+        },
+        {
+          "id": "eventDescription",
+          "label": "Descrição do Evento",
+          "type": "textarea",
+          "required": true,
+          "minLength": 100,
+          "placeholder": "Descreva detalhadamente o evento proposto"
+        },
+        {
+          "id": "eventDate",
+          "label": "Data Prevista",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "eventStartTime",
+          "label": "Horário de Início",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "eventDuration",
+          "label": "Duração Estimada (em horas)",
+          "type": "number",
+          "required": true,
+          "min": 0.5,
+          "step": 0.5
+        },
+        {
+          "id": "expectedAudience",
+          "label": "Público Esperado",
+          "type": "number",
+          "required": true,
+          "min": 1
+        },
+        {
+          "id": "targetAudience",
+          "label": "Faixa Etária do Público-Alvo",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Crianças",
+            "Jovens",
+            "Adultos",
+            "Idosos",
+            "Livre"
+          ]
+        },
+        {
+          "id": "venuePreference",
+          "label": "Local Preferencial",
+          "type": "select",
+          "required": false,
+          "options": [],
+          "dynamicOptions": "/api/specialized/culture/spaces?isActive=true",
+          "placeholder": "Selecione um espaço (opcional)"
+        },
+        {
+          "id": "isFreeEvent",
+          "label": "Evento Gratuito?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "ticketPrice",
+          "label": "Valor do Ingresso",
+          "type": "currency",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "isFreeEvent",
+            "value": "Não"
+          }
+        },
+        {
+          "id": "performers",
+          "label": "Artistas/Palestrantes",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Liste os artistas ou palestrantes que participarão"
+        },
+        {
+          "id": "supportNeeded",
+          "label": "Tipo de Apoio Necessário",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Espaço",
+            "Divulgação",
+            "Equipamentos",
+            "Cachê de Artistas",
+            "Infraestrutura",
+            "Transporte",
+            "Patrocínio"
+          ]
+        },
+        {
+          "id": "estimatedBudget",
+          "label": "Orçamento Estimado Total",
+          "type": "currency",
+          "required": true
+        },
+        {
+          "id": "proposerName",
+          "label": "Nome do Proponente",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "proposerPhone",
+          "label": "Telefone do Proponente",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "proposerEmail",
+          "label": "E-mail do Proponente",
+          "type": "email",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do proponente",
+        "Projeto ou roteiro do evento",
+        "Orçamento detalhado",
+        "Currículo dos artistas/palestrantes",
+        "Plano de divulgação"
+      ]
+    },
+    "estimatedTime": "10 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalEvent",
+    "fieldMapping": {
+      "eventTitle": "event.title",
+      "eventType": "event.type",
+      "eventCategory": "event.category",
+      "eventDescription": "event.description",
+      "eventDate": "event.startDate",
+      "expectedAudience": "event.capacity",
+      "proposerName": "organizer.name"
+    }
+  },
+  {
+    "code": "CUL_BIBLIOTECA_006",
+    "name": "Solicitação de Serviços de Biblioteca",
+    "category": "Cultura",
+    "description": "Cadastro para uso de biblioteca municipal e solicitação de serviços (empréstimo, pesquisa, etc.)",
+    "icon": "Book",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "serviceType",
+          "label": "Tipo de Serviço",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Cadastro de Usuário",
+            "Empréstimo de Livros",
+            "Renovação de Cadastro",
+            "Pesquisa no Acervo",
+            "Uso de Computadores",
+            "Participação em Clube de Leitura"
+          ]
+        },
+        {
+          "id": "userName",
+          "label": "Nome Completo",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "userBirthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "userCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "userRg",
+          "label": "RG",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "userPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "userEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "userAddress",
+          "label": "Endereço Completo",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "occupation",
+          "label": "Ocupação",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Estudante",
+            "Professor",
+            "Pesquisador",
+            "Profissional Liberal",
+            "Funcionário Público",
+            "Autônomo",
+            "Aposentado",
+            "Outro"
+          ]
+        },
+        {
+          "id": "educationLevel",
+          "label": "Nível de Escolaridade",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Ensino Fundamental",
+            "Ensino Médio",
+            "Superior Incompleto",
+            "Superior Completo",
+            "Pós-Graduação"
+          ]
+        },
+        {
+          "id": "interests",
+          "label": "Áreas de Interesse",
+          "type": "checkbox-multiple",
+          "required": false,
+          "options": [
+            "Literatura",
+            "História",
+            "Ciências",
+            "Filosofia",
+            "Artes",
+            "Biografias",
+            "Autoajuda",
+            "Ficção",
+            "Técnicos/Acadêmicos"
+          ]
+        },
+        {
+          "id": "responsibleName",
+          "label": "Nome do Responsável (se menor de 18 anos)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "responsibleCpf",
+          "label": "CPF do Responsável",
+          "type": "text",
+          "required": false,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "responsiblePhone",
+          "label": "Telefone do Responsável",
+          "type": "phone",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou Certidão de Nascimento",
+        "CPF",
+        "Comprovante de residência atualizado",
+        "Foto 3x4 recente",
+        "Autorização dos pais (se menor de idade)"
+      ]
+    },
+    "estimatedTime": "1 dia útil",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalAttendance",
+    "fieldMapping": {
+      "serviceType": "attendance.type",
+      "userName": "citizen.name",
+      "userCpf": "citizen.cpf",
+      "userPhone": "citizen.phone",
+      "userEmail": "citizen.email"
+    }
+  },
+  {
+    "code": "CUL_PATRIMONIO_007",
+    "name": "Denúncia de Dano ao Patrimônio Cultural",
+    "category": "Cultura",
+    "description": "Denúncia de danos, depredação ou ameaça ao patrimônio histórico e cultural do município",
+    "icon": "AlertTriangle",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "monumentName",
+          "label": "Nome do Patrimônio/Monumento",
+          "type": "text",
+          "required": true,
+          "placeholder": "Nome do local ou bem cultural afetado"
+        },
+        {
+          "id": "monumentLocation",
+          "label": "Localização Exata",
+          "type": "text",
+          "required": true,
+          "placeholder": "Endereço ou ponto de referência"
+        },
+        {
+          "id": "damageType",
+          "label": "Tipo de Dano",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Pichação",
+            "Depredação",
+            "Abandono",
+            "Demolição Irregular",
+            "Roubo/Furto",
+            "Alteração Não Autorizada",
+            "Outro"
+          ]
+        },
+        {
+          "id": "damageDescription",
+          "label": "Descrição do Dano",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva detalhadamente o que foi observado"
+        },
+        {
+          "id": "damageDate",
+          "label": "Data em que o Dano Foi Observado",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "damageSeverity",
+          "label": "Gravidade do Dano",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Leve",
+            "Moderado",
+            "Grave",
+            "Muito Grave"
+          ]
+        },
+        {
+          "id": "photos",
+          "label": "Fotos do Local",
+          "type": "file-multiple",
+          "required": false,
+          "accept": "image/*",
+          "maxFiles": 5,
+          "maxSize": 5242880
+        },
+        {
+          "id": "coordinates",
+          "label": "Localização GPS (se disponível)",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "witnessName",
+          "label": "Há Testemunhas?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "witnessInfo",
+          "label": "Informações das Testemunhas",
+          "type": "textarea",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "witnessName",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "reporterName",
+          "label": "Nome do Denunciante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "reporterPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "reporterEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "anonymousReport",
+          "label": "Deseja Manter Anonimato?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Fotos do dano (mínimo 2)",
+        "Documentos que comprovem a denúncia (se houver)"
+      ]
+    },
+    "estimatedTime": "3 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalAttendance",
+    "fieldMapping": {
+      "monumentName": "complaint.subject",
+      "monumentLocation": "complaint.location",
+      "damageType": "complaint.type",
+      "damageDescription": "complaint.description",
+      "reporterName": "reporter.name",
+      "reporterPhone": "reporter.phone"
+    }
+  },
+  {
+    "code": "CUL_ARTESAO_008",
+    "name": "Cadastro de Artesão",
+    "category": "Cultura",
+    "description": "Cadastramento de artesãos para participação em feiras, eventos e programa de fomento ao artesanato local",
+    "icon": "Palette",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "artisanName",
+          "label": "Nome do Artesão",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "artisanCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "artisanRg",
+          "label": "RG",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "artisanBirthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "artisanPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "artisanEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "artisanAddress",
+          "label": "Endereço Completo",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "craftType",
+          "label": "Tipo de Artesanato",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Cerâmica",
+            "Madeira",
+            "Tecido",
+            "Couro",
+            "Metal",
+            "Papel",
+            "Reciclagem",
+            "Bordado",
+            "Crochê/Tricô",
+            "Bijuterias",
+            "Outro"
+          ]
+        },
+        {
+          "id": "craftDescription",
+          "label": "Descrição dos Produtos",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva os tipos de produtos que você produz"
+        },
+        {
+          "id": "experienceYears",
+          "label": "Anos de Experiência",
+          "type": "number",
+          "required": true,
+          "min": 0
+        },
+        {
+          "id": "productionVolume",
+          "label": "Capacidade de Produção Mensal",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Até 10 peças",
+            "11 a 30 peças",
+            "31 a 50 peças",
+            "51 a 100 peças",
+            "Mais de 100 peças"
+          ]
+        },
+        {
+          "id": "averagePrice",
+          "label": "Faixa de Preço Médio dos Produtos",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Até R$ 20",
+            "R$ 21 a R$ 50",
+            "R$ 51 a R$ 100",
+            "R$ 101 a R$ 200",
+            "Acima de R$ 200"
+          ]
+        },
+        {
+          "id": "sellsOnline",
+          "label": "Vende Online?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "onlineStoreUrl",
+          "label": "Link da Loja/Página",
+          "type": "text",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "sellsOnline",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "needsTraining",
+          "label": "Tem Interesse em Capacitações?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "trainingInterests",
+          "label": "Áreas de Interesse para Capacitação",
+          "type": "checkbox-multiple",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "needsTraining",
+            "value": "Sim"
+          },
+          "options": [
+            "Novas Técnicas",
+            "Gestão de Negócios",
+            "Precificação",
+            "Marketing Digital",
+            "Vendas Online",
+            "Design de Produtos"
+          ]
+        },
+        {
+          "id": "portfolioPhotos",
+          "label": "Fotos dos Produtos",
+          "type": "file-multiple",
+          "required": true,
+          "accept": "image/*",
+          "maxFiles": 10,
+          "maxSize": 5242880
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Fotos dos produtos (mínimo 5)",
+        "Certificados de cursos (se houver)"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "ArtisticGroup",
+    "fieldMapping": {
+      "artisanName": "artisan.name",
+      "artisanCpf": "artisan.cpf",
+      "artisanPhone": "artisan.phone",
+      "craftType": "artisan.category",
+      "craftDescription": "artisan.description"
+    }
+  },
+  {
+    "code": "CUL_MUSEU_009",
+    "name": "Visita Guiada em Museu",
+    "category": "Cultura",
+    "description": "Agendamento de visita guiada em museus municipais para grupos escolares ou turísticos",
+    "icon": "Users",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "museumId",
+          "label": "Museu",
+          "type": "select",
+          "required": true,
+          "options": [],
+          "dynamicOptions": "/api/specialized/culture/spaces?type=museu&isActive=true",
+          "placeholder": "Selecione o museu"
+        },
+        {
+          "id": "visitDate",
+          "label": "Data Desejada para Visita",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "visitTime",
+          "label": "Horário Preferencial",
+          "type": "select",
+          "required": true,
+          "options": [
+            "08:00 - 09:30",
+            "09:30 - 11:00",
+            "11:00 - 12:30",
+            "14:00 - 15:30",
+            "15:30 - 17:00"
+          ]
+        },
+        {
+          "id": "groupType",
+          "label": "Tipo de Grupo",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Escola/Creche",
+            "Universidade",
+            "Grupo Turístico",
+            "Empresa",
+            "Terceira Idade",
+            "Família",
+            "Outro"
+          ]
+        },
+        {
+          "id": "numberOfVisitors",
+          "label": "Número de Visitantes",
+          "type": "number",
+          "required": true,
+          "min": 1,
+          "max": 50
+        },
+        {
+          "id": "ageGroup",
+          "label": "Faixa Etária Predominante",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Infantil (4-10 anos)",
+            "Pré-adolescente (11-14 anos)",
+            "Adolescente (15-17 anos)",
+            "Adulto (18-59 anos)",
+            "Idoso (60+)",
+            "Mista"
+          ]
+        },
+        {
+          "id": "specialNeeds",
+          "label": "Há Pessoas com Necessidades Especiais?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "specialNeedsDetails",
+          "label": "Especifique as Necessidades",
+          "type": "textarea",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "specialNeeds",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "visitTheme",
+          "label": "Tema de Interesse (se houver)",
+          "type": "text",
+          "required": false,
+          "placeholder": "Ex: História local, Arte, Arqueologia..."
+        },
+        {
+          "id": "needsTransport",
+          "label": "Necessita Transporte?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "institutionName",
+          "label": "Nome da Instituição/Empresa",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "responsibleName",
+          "label": "Nome do Responsável",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "responsiblePhone",
+          "label": "Telefone do Responsável",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "responsibleEmail",
+          "label": "E-mail do Responsável",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "additionalInfo",
+          "label": "Informações Adicionais",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Alguma observação ou solicitação especial?"
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Ofício da instituição (se aplicável)",
+        "Lista nominal dos participantes",
+        "Autorizações dos pais (para menores)"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalEvent",
+    "fieldMapping": {
+      "museumId": "event.spaceId",
+      "visitDate": "event.date",
+      "numberOfVisitors": "event.capacity",
+      "responsibleName": "organizer.name",
+      "responsiblePhone": "organizer.phone"
+    }
+  },
+  {
+    "code": "CUL_CINEMA_010",
+    "name": "Sessão de Cinema Comunitário",
+    "category": "Cultura",
+    "description": "Solicitação de sessão de cinema comunitário em praças ou centros culturais",
+    "icon": "Film",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "movieTitle",
+          "label": "Título do Filme (sugestão)",
+          "type": "text",
+          "required": false,
+          "placeholder": "Se tiver uma sugestão específica"
+        },
+        {
+          "id": "movieGenre",
+          "label": "Gênero Preferido",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Infantil",
+            "Animação",
+            "Comédia",
+            "Drama",
+            "Ação",
+            "Aventura",
+            "Documentário",
+            "Nacional",
+            "Clássicos"
+          ]
+        },
+        {
+          "id": "targetAudience",
+          "label": "Público-Alvo",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Infantil",
+            "Familiar",
+            "Adolescente",
+            "Adulto",
+            "Geral"
+          ]
+        },
+        {
+          "id": "preferredDate",
+          "label": "Data Preferencial",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "preferredTime",
+          "label": "Horário Preferencial",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Tarde (15h-17h)",
+            "Noite (19h-21h)"
+          ]
+        },
+        {
+          "id": "locationPreference",
+          "label": "Local Preferido",
+          "type": "select",
+          "required": true,
+          "options": [],
+          "dynamicOptions": "/api/specialized/culture/spaces?isActive=true",
+          "placeholder": "Selecione o local"
+        },
+        {
+          "id": "expectedAudience",
+          "label": "Público Esperado",
+          "type": "number",
+          "required": true,
+          "min": 20
+        },
+        {
+          "id": "communityGroup",
+          "label": "Nome da Comunidade/Associação",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "eventPurpose",
+          "label": "Finalidade do Evento",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva o objetivo da sessão (celebração, campanha educativa, lazer, etc.)"
+        },
+        {
+          "id": "hasInfrastructure",
+          "label": "O Local Possui Infraestrutura?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "infrastructureNeeds",
+          "label": "Necessidades de Infraestrutura",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Telão",
+            "Projetor",
+            "Som",
+            "Cadeiras",
+            "Iluminação",
+            "Gerador",
+            "Segurança"
+          ]
+        },
+        {
+          "id": "requestorName",
+          "label": "Nome do Solicitante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "requestorPhone",
+          "label": "Telefone do Solicitante",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "requestorEmail",
+          "label": "E-mail do Solicitante",
+          "type": "email",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Ofício da comunidade/associação",
+        "Documento do responsável",
+        "Autorização do local (se privado)"
+      ]
+    },
+    "estimatedTime": "7 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalEvent",
+    "fieldMapping": {
+      "movieTitle": "event.title",
+      "movieGenre": "event.category",
+      "preferredDate": "event.startDate",
+      "locationPreference": "event.spaceId",
+      "requestorName": "organizer.name"
+    }
+  },
+  {
+    "code": "CUL_LITERATURA_011",
+    "name": "Inscrição em Clube de Leitura",
+    "category": "Cultura",
+    "description": "Inscrição em clubes de leitura e rodas literárias organizadas pela secretaria de cultura",
+    "icon": "BookOpen",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "clubId",
+          "label": "Clube de Leitura",
+          "type": "select",
+          "required": true,
+          "options": [],
+          "dynamicOptions": "/api/specialized/culture/workshops?category=literatura&status=inscricoes_abertas",
+          "placeholder": "Selecione o clube"
+        },
+        {
+          "id": "participantName",
+          "label": "Nome Completo",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "participantBirthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "participantCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "participantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "participantEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "readingFrequency",
+          "label": "Frequência de Leitura",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Leio diariamente",
+            "Leio semanalmente",
+            "Leio mensalmente",
+            "Leio ocasionalmente",
+            "Raramente leio"
+          ]
+        },
+        {
+          "id": "favoriteGenres",
+          "label": "Gêneros Literários Preferidos",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Ficção",
+            "Romance",
+            "Suspense/Mistério",
+            "Fantasia",
+            "Ficção Científica",
+            "Não-Ficção",
+            "Biografia",
+            "História",
+            "Poesia",
+            "Contos"
+          ]
+        },
+        {
+          "id": "favoriteAuthors",
+          "label": "Autores Favoritos",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Liste alguns autores que você admira"
+        },
+        {
+          "id": "recentBooks",
+          "label": "Últimos Livros que Leu",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Mencione os últimos 3 livros que você leu"
+        },
+        {
+          "id": "participationGoals",
+          "label": "Objetivos ao Participar do Clube",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "O que você espera do clube de leitura?"
+        },
+        {
+          "id": "canAttendInPerson",
+          "label": "Pode Participar Presencialmente?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não (prefiro online)"
+          ]
+        },
+        {
+          "id": "availability",
+          "label": "Disponibilidade de Horário",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Segunda de manhã",
+            "Segunda à tarde",
+            "Segunda à noite",
+            "Terça de manhã",
+            "Terça à tarde",
+            "Terça à noite",
+            "Quarta de manhã",
+            "Quarta à tarde",
+            "Quarta à noite",
+            "Quinta de manhã",
+            "Quinta à tarde",
+            "Quinta à noite",
+            "Sexta de manhã",
+            "Sexta à tarde",
+            "Sexta à noite",
+            "Sábado"
+          ]
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Foto 3x4"
+      ]
+    },
+    "estimatedTime": "2 dias úteis",
+    "moduleType": "culture",
+    "moduleEntity": "CulturalWorkshop",
+    "fieldMapping": {
+      "clubId": "enrollment.workshopId",
+      "participantName": "participant.name",
+      "participantCpf": "participant.cpf",
+      "participantPhone": "participant.phone",
+      "participantEmail": "participant.email"
+    }
+  },
+  {
+    "code": "CUL_MUSICA_012",
+    "name": "Aulas de Música Gratuitas",
+    "category": "Cultura",
+    "description": "Inscrição em aulas de música e coral oferecidas pela prefeitura",
+    "icon": "Music",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "courseId",
+          "label": "Curso/Oficina de Música",
+          "type": "select",
+          "required": true,
+          "options": [],
+          "dynamicOptions": "/api/specialized/culture/workshops?category=musica&status=inscricoes_abertas",
+          "placeholder": "Selecione o curso"
+        },
+        {
+          "id": "instrument",
+          "label": "Instrumento de Interesse",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Violão",
+            "Guitarra",
+            "Teclado/Piano",
+            "Bateria",
+            "Flauta",
+            "Saxofone",
+            "Trompete",
+            "Violino",
+            "Canto/Coral",
+            "Teoria Musical",
+            "Outro"
+          ]
+        },
+        {
+          "id": "studentName",
+          "label": "Nome Completo do Aluno",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "studentBirthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "studentCpf",
+          "label": "CPF do Aluno",
+          "type": "text",
+          "required": false,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "studentPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "studentEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "studentAddress",
+          "label": "Endereço Completo",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "hasExperience",
+          "label": "Tem Experiência Musical?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "experienceDetails",
+          "label": "Detalhes da Experiência",
+          "type": "textarea",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "hasExperience",
+            "value": "Sim"
+          },
+          "placeholder": "Quanto tempo estudou, onde, etc."
+        },
+        {
+          "id": "hasInstrument",
+          "label": "Possui o Instrumento?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "musicGoals",
+          "label": "Objetivos com as Aulas",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "O que você espera aprender?"
+        },
+        {
+          "id": "availability",
+          "label": "Disponibilidade de Horário",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Segunda-feira",
+            "Terça-feira",
+            "Quarta-feira",
+            "Quinta-feira",
+            "Sexta-feira",
+            "Sábado"
+          ]
+        },
+        {
+          "id": "preferredShift",
+          "label": "Turno Preferencial",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Manhã",
+            "Tarde",
+            "Noite"
+          ]
+        },
+        {
+          "id": "responsibleName",
+          "label": "Nome do Responsável (se menor de 18 anos)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "responsibleCpf",
+          "label": "CPF do Responsável",
+          "type": "text",
+          "required": false,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "responsiblePhone",
+          "label": "Telefone do Responsável",
+          "type": "phone",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou Certidão de Nascimento",
+        "CPF (se maior de 18 anos)",
+        "Comprovante de residência",
+        "Foto 3x4",
+        "Autorização dos pais (se menor de idade)"
+      ]
+    },
+    "estimatedTime": "3 dias úteis",
+    "moduleType": "INSCRICAO_OFICINA_CULTURAL",
+    "moduleEntity": "CulturalWorkshopEnrollment",
+    "redirectTo": "/cidadao/servicos/{serviceId}/selecionar",
+    "usesDynamicForm": true,
+    "fieldMapping": {}
+  }
+]

@@ -1,0 +1,143 @@
+// ============================================================================
+// FASE 4: SECRETARIAS DE INFRAESTRUTURA
+// ============================================================================
+
+// 4.1 OBRAS PÚBLICAS - Problemas de Infraestrutura
+model InfrastructureProblem {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Tipo de problema
+  type            String   // "pothole", "lighting", "leak", "sewer", "pavement", "sidewalk", "accessibility", "signage"
+  description     String
+  location        String
+  coordinates     Json?    // { lat: -23.123, lng: -46.123 }
+  photos          Json?    // Array de URLs de fotos
+
+  // Status e prioridade
+  status          String   @default("pending") // "pending", "in_progress", "resolved", "cancelled"
+  priority        String   @default("normal")  // "low", "normal", "high", "urgent"
+
+  // Vínculo com protocolo (origem: portal)
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual") // "portal", "manual", "mobile"
+
+  // Resolução
+  resolvedAt      DateTime?
+  resolvedBy      String?  // userId
+  resolutionNotes String?
+
+  // Metadados adicionais
+  metadata        Json?    // Dados específicos por tipo (tamanho, profundidade, etc.)
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@map("infrastructure_problems")
+}
+
+// 4.2 SERVIÇOS PÚBLICOS - Solicitações de manutenção urbana
+model UrbanMaintenanceRequest {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Tipo de serviço
+  type            String   // "tree_pruning", "waste_removal", "pest_control", "cleaning", "garbage_collection"
+  description     String
+  location        String
+  coordinates     Json?
+  photos          Json?
+
+  // Detalhes específicos
+  details         Json?    // Dados específicos por tipo de serviço
+
+  // Status e prioridade
+  status          String   @default("pending")
+  priority        String   @default("normal")
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Agendamento e execução
+  scheduledFor    DateTime?
+  completedAt     DateTime?
+  completedBy     String?
+  completionNotes String?
+
+  // Equipe designada
+  assignedTeam    String?
+  assignedTo      String?  // userId
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@map("urban_maintenance_requests")
+}
+
+// 4.3 HABITAÇÃO - Cadastro e acompanhamento de solicitações
+model HousingRequest {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Tipo de solicitação
+  type            String   // "housing_program", "lot_application", "regularization", "housing_aid"
+
+  // Dados do solicitante
+  citizenName     String
+  citizenCpf      String
+  citizenRg       String?
+  phone           String
+  email           String?
+
+  // Composição familiar
+  familySize      Int
+  monthlyIncome   Float?
+  familyData      Json?    // Detalhes da composição familiar
+
+  // Dados da solicitação
+  currentAddress  String?
+  currentSituation String? // "aluguel", "casa_cedida", "situacao_rua", etc.
+  requestDetails  Json?    // Dados específicos por tipo
+
+  // Status e análise
+  status          String   @default("pending") // "pending", "under_review", "approved", "rejected", "completed"
+  priority        String   @default("normal")
+  analysisNotes   String?
+
+  // Vínculo com protocolo
+  protocol        String?  @index
+  serviceId       String?
+  source          String   @default("manual")
+
+  // Aprovação/Rejeição
+  reviewedAt      DateTime?
+  reviewedBy      String?  // userId
+  rejectionReason String?
+
+  // Documentos
+  documents       Json?    // Array de documentos anexados
+
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([status])
+  @@index([citizenCpf])
+  @@map("housing_requests")
+}

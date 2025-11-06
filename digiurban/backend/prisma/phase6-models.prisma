@@ -1,0 +1,705 @@
+// ============================================================
+// FASE 6: MODELOS DE SECRETARIAS AMBIENTAIS
+// ============================================================
+// Este arquivo contém os modelos para:
+// - Meio Ambiente (Environmental)
+// - Agricultura (Agriculture)
+// - Planejamento Urbano (Urban Planning)
+// ============================================================
+
+// ============================================================
+// MEIO AMBIENTE - Environmental Models
+// ============================================================
+
+// Licenças Ambientais
+model EnvironmentalLicense {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do requerente
+  applicantName   String
+  applicantCpf    String
+  applicantPhone  String
+  applicantEmail  String?
+
+  // Tipo de licença
+  licenseType     String   // "LP" (Prévia), "LI" (Instalação), "LO" (Operação)
+  activityType    String   // Tipo de atividade/empreendimento
+  description     String   @db.Text
+
+  // Localização
+  location        String
+  coordinates     Json?
+  area            Float?   // Área em m² ou hectares
+
+  // Status e prazos
+  status          String   @default("pending") // pending, under_review, approved, rejected, expired
+  validFrom       DateTime?
+  validUntil      DateTime?
+
+  // Análise técnica
+  technicalReport Json?
+  conditions      Json?    // Condicionantes
+  observations    String?  @db.Text
+
+  // Documentos
+  documents       Json?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual") // "service", "manual"
+
+  // Auditoria
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  approvedBy      String?
+  approvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([serviceId])
+  @@index([status])
+  @@map("environmental_licenses")
+}
+
+// Autorizações de Poda/Supressão de Árvores
+model TreeAuthorization {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do requerente
+  applicantName   String
+  applicantCpf    String
+  applicantPhone  String
+
+  // Tipo de autorização
+  authorizationType String // "pruning" (poda), "removal" (supressão)
+  reason          String   @db.Text
+
+  // Localização
+  location        String
+  coordinates     Json?
+  photos          Json?
+
+  // Dados da(s) árvore(s)
+  treeCount       Int      @default(1)
+  treeSpecies     Json?    // Array com espécies
+  treeData        Json?    // Dados detalhados (altura, CAP, etc)
+
+  // Status
+  status          String   @default("pending") // pending, inspected, approved, rejected, executed
+
+  // Análise técnica
+  inspectionDate  DateTime?
+  technicalReport Json?
+  inspectorId     String?
+
+  // Compensação (se supressão)
+  requiresCompensation Boolean @default(false)
+  compensationPlan     Json?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  approvedBy      String?
+  approvedAt      DateTime?
+  executedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("tree_authorizations")
+}
+
+// Denúncias Ambientais
+model EnvironmentalComplaint {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do denunciante (opcional para anônimas)
+  complainantName String?
+  complainantPhone String?
+  complainantEmail String?
+  isAnonymous     Boolean  @default(false)
+
+  // Tipo de denúncia
+  complaintType   String   // "pollution", "illegal_logging", "animal_abuse", "waste_disposal", "noise", etc
+  description     String   @db.Text
+
+  // Localização
+  location        String
+  coordinates     Json?
+  photos          Json?
+
+  // Status
+  status          String   @default("pending") // pending, investigating, verified, resolved, unfounded
+  priority        String   @default("normal") // low, normal, high, urgent
+
+  // Investigação
+  investigationDate DateTime?
+  investigatorId    String?
+  investigationReport Json?
+
+  // Ações tomadas
+  actionsTaken    Json?
+  evidences       Json?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  assignedTo      String?
+  resolvedBy      String?
+  resolvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@index([complaintType])
+  @@map("environmental_complaints")
+}
+
+// Certificação Orgânica
+model OrganicCertification {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do produtor
+  producerName    String
+  producerCpf     String
+  producerPhone   String
+  producerEmail   String?
+
+  // Dados da propriedade
+  propertyName    String?
+  propertyLocation String
+  propertyArea    Float    // em hectares
+  coordinates     Json?
+
+  // Produtos/culturas
+  products        Json     // Array de produtos cultivados
+  productionSystem String  // "organic", "in_transition", "agroecological"
+
+  // Status
+  status          String   @default("pending") // pending, inspected, approved, rejected, suspended
+  certificationNumber String?  @unique
+
+  // Validade
+  validFrom       DateTime?
+  validUntil      DateTime?
+
+  // Inspeções
+  inspections     Json?    // Histórico de inspeções
+  lastInspectionDate DateTime?
+  nextInspectionDate DateTime?
+
+  // Documentação
+  documents       Json?
+  technicalReport Json?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  inspectorId     String?
+  approvedBy      String?
+  approvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("organic_certifications")
+}
+
+// ============================================================
+// AGRICULTURA - Agriculture Models
+// ============================================================
+
+// Assistência Técnica Rural
+model TechnicalAssistance {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do produtor
+  producerName    String
+  producerCpf     String
+  producerPhone   String
+
+  // Dados da propriedade
+  propertyLocation String
+  propertyArea    Float?   // em hectares
+
+  // Tipo de assistência solicitada
+  assistanceType  String   // "crop", "livestock", "soil", "irrigation", "pest_control", etc
+  description     String   @db.Text
+  cropTypes       Json?    // Culturas existentes/desejadas
+
+  // Status
+  status          String   @default("pending") // pending, scheduled, in_progress, completed, cancelled
+  priority        String   @default("normal")
+
+  // Agendamento
+  scheduledDate   DateTime?
+  technicianId    String?
+
+  // Visita técnica
+  visitDate       DateTime?
+  visitReport     Json?
+  recommendations Json?
+  photos          Json?
+
+  // Acompanhamento
+  followUpRequired Boolean  @default(false)
+  followUpDate    DateTime?
+  followUpNotes   String?  @db.Text
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  completedBy     String?
+  completedAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("technical_assistance")
+}
+
+// Distribuição de Sementes e Mudas
+model SeedDistribution {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do produtor
+  producerName    String
+  producerCpf     String
+  producerPhone   String
+  propertyLocation String
+  propertyArea    Float?
+
+  // Solicitação
+  requestType     String   // "seeds", "seedlings", "both"
+  items           Json     // Array com itens solicitados [{type, species, quantity}]
+  purpose         String   // "commercial", "subsistence", "agroforestry"
+
+  // Status
+  status          String   @default("pending") // pending, approved, ready, delivered, cancelled
+
+  // Aprovação
+  approvedQuantity Json?   // Quantidade aprovada (pode diferir da solicitada)
+  approvalNotes   String?  @db.Text
+
+  // Entrega
+  deliveryDate    DateTime?
+  deliveredBy     String?
+  deliveredItems  Json?    // Itens efetivamente entregues
+  receivedBy      String?  // Nome de quem recebeu
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  approvedBy      String?
+  approvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("seed_distributions")
+}
+
+// Análise de Solo
+model SoilAnalysis {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do produtor
+  producerName    String
+  producerCpf     String
+  producerPhone   String
+
+  // Dados da propriedade
+  propertyLocation String
+  propertyArea    Float?
+  coordinates     Json?
+
+  // Solicitação
+  analysisType    String   // "basic", "complete", "specific"
+  purpose         String   // Objetivo da análise
+  cropIntended    String?  // Cultura pretendida
+
+  // Coleta de amostras
+  sampleCount     Int      @default(1)
+  collectionDate  DateTime?
+  collectedBy     String?
+  sampleLocations Json?
+
+  // Status
+  status          String   @default("pending") // pending, collected, lab, completed
+
+  // Resultados
+  labId           String?
+  labSentDate     DateTime?
+  resultsDate     DateTime?
+  results         Json?    // Resultados laboratoriais
+
+  // Recomendações
+  recommendations Json?    // Correção, adubação, etc
+  technicalReport String?  @db.Text
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  analyzedBy      String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("soil_analyses")
+}
+
+// Cadastro Feira do Produtor
+model FarmerMarketRegistration {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do produtor
+  producerName    String
+  producerCpf     String
+  producerPhone   String
+  producerEmail   String?
+
+  // Dados da propriedade
+  propertyLocation String
+  propertyArea    Float?
+
+  // Produtos
+  products        Json     // Array de produtos que pretende vender
+  productionType  String   // "organic", "conventional", "agroecological"
+  hasOrganicCert  Boolean  @default(false)
+  certificationId String?  // Ref à certificação orgânica
+
+  // Status
+  status          String   @default("pending") // pending, approved, active, suspended, cancelled
+  registrationNumber String? @unique
+
+  // Infraestrutura
+  needsStall      Boolean  @default(false)
+  stallPreference String?  // Tipo/tamanho de barraca preferida
+
+  // Documentação
+  documents       Json?
+
+  // Validade
+  validFrom       DateTime?
+  validUntil      DateTime?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  inspectedBy     String?
+  inspectionDate  DateTime?
+  approvedBy      String?
+  approvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("farmer_market_registrations")
+}
+
+// ============================================================
+// PLANEJAMENTO URBANO - Urban Planning Models
+// ============================================================
+
+// Alvarás de Construção
+model BuildingPermit {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do requerente
+  applicantName   String
+  applicantCpf    String
+  applicantPhone  String
+  applicantEmail  String?
+
+  // Tipo de alvará
+  permitType      String   // "new_construction", "reform", "expansion", "demolition"
+  constructionType String  // "residential", "commercial", "industrial", "mixed"
+
+  // Dados do imóvel
+  propertyAddress String
+  propertyNumber  String?
+  neighborhood    String
+  lotNumber       String?
+  blockNumber     String?
+
+  // Dados do projeto
+  totalArea       Float    // Área total em m²
+  builtArea       Float    // Área construída em m²
+  floors          Int      @default(1)
+  projectValue    Float?
+
+  // Responsáveis técnicos
+  engineerName    String?
+  engineerCrea    String?
+  architectName   String?
+  architectCau    String?
+
+  // Status
+  status          String   @default("pending") // pending, under_review, approved, rejected, issued, cancelled
+  permitNumber    String?  @unique
+
+  // Análise
+  technicalAnalysis Json?
+  observations    String?  @db.Text
+  requirements    Json?    // Exigências/pendências
+
+  // Documentação
+  documents       Json?
+  projectFiles    Json?
+
+  // Validade
+  issuedDate      DateTime?
+  validUntil      DateTime?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  approvedBy      String?
+  approvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("building_permits")
+}
+
+// Certidões Diversas
+model UrbanCertificate {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do requerente
+  applicantName   String
+  applicantCpf    String
+  applicantPhone  String
+  applicantEmail  String?
+
+  // Tipo de certidão
+  certificateType String   // "zoning", "alignment", "land_use", "building_code", "tax_clearance"
+  purpose         String   // Finalidade da certidão
+
+  // Dados do imóvel
+  propertyAddress String
+  propertyNumber  String?
+  neighborhood    String
+  lotNumber       String?
+  blockNumber     String?
+  cadastralNumber String?
+
+  // Status
+  status          String   @default("pending") // pending, under_review, issued, rejected
+  certificateNumber String? @unique
+
+  // Informações técnicas
+  zoning          String?  // Zoneamento
+  landUse         String?  // Uso do solo
+  restrictions    Json?    // Restrições aplicáveis
+  observations    String?  @db.Text
+
+  // Validade
+  issuedDate      DateTime?
+  validUntil      DateTime? // Algumas certidões têm validade
+
+  // Documentação
+  documents       Json?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  issuedBy        String?
+  verifiedBy      String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@index([certificateType])
+  @@map("urban_certificates")
+}
+
+// Numeração de Imóveis
+model PropertyNumbering {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do requerente
+  applicantName   String
+  applicantCpf    String
+  applicantPhone  String
+
+  // Dados do imóvel
+  propertyAddress String
+  neighborhood    String
+  reference       String?  // Ponto de referência
+  coordinates     Json?
+
+  // Tipo de numeração
+  numberingType   String   // "new", "change", "additional"
+  reason          String   @db.Text
+
+  // Numeração atual (se alteração)
+  currentNumber   String?
+
+  // Status
+  status          String   @default("pending") // pending, inspected, approved, assigned
+
+  // Inspeção
+  inspectionDate  DateTime?
+  inspectorId     String?
+  inspectionReport Json?
+  photos          Json?
+
+  // Numeração atribuída
+  assignedNumber  String?
+  assignmentDate  DateTime?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  approvedBy      String?
+  approvedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("property_numbering")
+}
+
+// Desmembramento de Lotes
+model LotSubdivision {
+  id              String   @id @default(cuid())
+  tenantId        String
+
+  // Dados do proprietário
+  ownerName       String
+  ownerCpf        String
+  ownerPhone      String
+  ownerEmail      String?
+
+  // Dados do lote original
+  originalAddress String
+  originalLotNumber String?
+  originalBlockNumber String?
+  originalArea    Float    // em m²
+  cadastralNumber String?
+
+  // Desmembramento proposto
+  newLotsCount    Int
+  newLotsData     Json     // Array com dados de cada novo lote
+
+  // Status
+  status          String   @default("pending") // pending, under_review, approved, rejected, registered
+
+  // Análise técnica
+  technicalAnalysis Json?
+  meetsRequirements Boolean?
+  observations    String?  @db.Text
+
+  // Documentação
+  documents       Json?
+  surveyPlans     Json?    // Plantas, memoriais descritivos
+
+  // Responsável técnico
+  surveyorName    String?
+  surveyorCrea    String?
+
+  // Aprovação
+  approvalNumber  String?
+  approvedDate    DateTime?
+
+  // Registro cartorial
+  registryNumber  String?
+  registryDate    DateTime?
+
+  // Vínculo com protocolo
+  protocol        String?   @index
+  serviceId       String?
+  source          String    @default("manual")
+
+  // Auditoria
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  approvedBy      String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([protocol])
+  @@index([status])
+  @@map("lot_subdivisions")
+}
