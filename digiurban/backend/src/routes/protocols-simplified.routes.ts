@@ -258,6 +258,114 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
 });
 
 // ========================================
+// BUSCAR PROTOCOLO POR ID
+// ========================================
+
+/**
+ * GET /api/protocols-simplified/:id
+ * Buscar protocolo específico por ID
+ */
+router.get('/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId;
+    const user = authReq.user;
+    const { id } = req.params;
+
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: { id },
+      include: {
+        citizen: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            email: true,
+            phone: true,
+            address: true
+          }
+        },
+        service: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            description: true
+          }
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            role: true
+          }
+        },
+        history: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                role: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Verificar permissões
+    if (user.role === 'USER' && protocol.assignedUserId !== userId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Você não tem permissão para ver este protocolo'
+      });
+    }
+
+    if (user.role === 'MANAGER' && protocol.departmentId !== user.departmentId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Você não tem permissão para ver protocolos de outros departamentos'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: { protocol }
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar protocolo:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao buscar protocolo'
+    });
+  }
+});
+
+// ========================================
 // APROVAR/REJEITAR PROTOCOLO (NOVO)
 // ========================================
 

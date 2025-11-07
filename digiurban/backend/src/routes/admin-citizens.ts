@@ -266,6 +266,61 @@ router.get(
   })
 );
 
+// GET /api/admin/citizens/:id - Buscar cidadão por ID
+router.get(
+  '/:id',
+  requirePermission('citizens:read'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = authReq.params;
+
+    const citizen = await prisma.citizen.findFirst({
+      where: {
+        id
+      },
+      include: {
+        protocolsSimplified: {
+          include: {
+            service: true,
+            department: true
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        },
+        familyAsHead: {
+          include: {
+            member: true
+          }
+        },
+        familyAsMember: {
+          include: {
+            head: true
+          }
+        },
+        documents: {
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (!citizen) {
+      res.status(404).json({
+        success: false,
+        error: 'Cidadão não encontrado'
+      });
+      return;
+    }
+
+    // Remover senha da resposta
+    const { password: _, ...citizenData } = citizen;
+
+    res.json({
+      success: true,
+      data: { citizen: citizenData }
+    });
+  })
+);
+
 // PUT /api/admin/citizens/:id/verify - Aprovar cidadão (Bronze → Prata)
 router.put(
   '/:id/verify',
