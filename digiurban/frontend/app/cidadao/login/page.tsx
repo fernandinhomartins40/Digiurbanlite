@@ -53,61 +53,57 @@ export default function CitizenLoginPage() {
     municipio: '',
   })
 
-  // Estados para busca de municípios
-  const [municipioSearch, setMunicipioSearch] = useState('')
-  const [municipios, setMunicipios] = useState<Municipio[]>([])
-  const [showMunicipioDropdown, setShowMunicipioDropdown] = useState(false)
-  const [selectedMunicipio, setSelectedMunicipio] = useState<Municipio | null>(null)
-  const [loadingMunicipios, setLoadingMunicipios] = useState(false)
-  const municipioRef = useRef<HTMLDivElement>(null)
+  // Estado para o município configurado (Single Tenant)
+  const [municipioConfig, setMunicipioConfig] = useState<{
+    nomeMunicipio: string
+    ufMunicipio: string
+    codigoIbge: string | null
+  } | null>(null)
+  const [loadingMunicipioConfig, setLoadingMunicipioConfig] = useState(true)
 
-  // Buscar municípios ao digitar
+  // Buscar configuração do município (Single Tenant)
   useEffect(() => {
-    const searchMunicipios = async () => {
-      if (municipioSearch.length < 2) {
-        setMunicipios([])
-        return
-      }
-
-      setLoadingMunicipios(true)
+    const fetchMunicipioConfig = async () => {
+      setLoadingMunicipioConfig(true)
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const url = `${apiUrl}/public/municipios-brasil?search=${encodeURIComponent(municipioSearch)}`
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+        const url = `${apiUrl}/public/municipio-config`
 
-        console.log('🔍 Buscando municípios:', url)
+        console.log('🔍 Buscando configuração do município:', url)
 
         const response = await fetch(url)
         const data = await response.json()
 
-        console.log('📊 Resposta da API:', data)
+        console.log('📊 Configuração do município:', data)
 
-        if (data.success) {
-          setMunicipios(data.data.municipios || [])
-          console.log(`✅ ${data.data.municipios?.length || 0} municípios encontrados`)
+        if (data.success && data.config) {
+          setMunicipioConfig({
+            nomeMunicipio: data.config.nomeMunicipio,
+            ufMunicipio: data.config.ufMunicipio,
+            codigoIbge: data.config.codigoIbge || null
+          })
+          console.log('✅ Município configurado:', data.config.nomeMunicipio)
         } else {
           console.error('❌ Erro na resposta:', data)
+          toast({
+            variant: 'destructive',
+            title: 'Erro',
+            description: 'Não foi possível carregar a configuração do município',
+          })
         }
       } catch (error) {
-        console.error('❌ Erro ao buscar municípios:', error)
+        console.error('❌ Erro ao buscar configuração do município:', error)
+        toast({
+          variant: 'destructive',
+          title: 'Erro',
+          description: 'Não foi possível conectar ao servidor',
+        })
       } finally {
-        setLoadingMunicipios(false)
+        setLoadingMunicipioConfig(false)
       }
     }
 
-    const debounce = setTimeout(searchMunicipios, 300)
-    return () => clearTimeout(debounce)
-  }, [municipioSearch])
-
-  // Fechar dropdown ao clicar fora
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (municipioRef.current && !municipioRef.current.contains(event.target as Node)) {
-        setShowMunicipioDropdown(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    fetchMunicipioConfig()
   }, [])
 
   // Carregar credenciais salvas ao montar componente
@@ -130,13 +126,6 @@ export default function CitizenLoginPage() {
         .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
     }
     return value
-  }
-
-  const handleSelectMunicipio = (municipio: Municipio) => {
-    setSelectedMunicipio(municipio)
-    setMunicipioSearch(`${municipio.nome} - ${municipio.uf}`)
-    setShowMunicipioDropdown(false)
-    setRegisterData({ ...registerData, municipio: municipio.codigo_ibge || municipio.id || '' })
   }
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -208,8 +197,8 @@ export default function CitizenLoginPage() {
       return
     }
 
-    if (!selectedMunicipio) {
-      setError('Selecione seu município')
+    if (!municipioConfig) {
+      setError('Configuração do município não disponível. Tente novamente.')
       return
     }
 
@@ -239,17 +228,14 @@ export default function CitizenLoginPage() {
         email: registerData.email,
         phone: registerData.phone,
         password: registerData.password,
+        // Dados do município configurado (Single Tenant)
+        nomeMunicipio: municipioConfig.nomeMunicipio,
+        ufMunicipio: municipioConfig.ufMunicipio,
       }
 
-      // Adicionar dados do município selecionado
-      if (selectedMunicipio.hasTenant === true && selectedMunicipio.id) {
-        // Tenant já existente - vincular ao tenant
-        payload.municipioId = selectedMunicipio.id
-      } else if (selectedMunicipio.hasTenant === false && selectedMunicipio.codigo_ibge) {
-        // Município brasileiro sem tenant - criar tenant automaticamente
-        payload.codigoIbge = selectedMunicipio.codigo_ibge
-        payload.nomeMunicipio = selectedMunicipio.nome
-        payload.ufMunicipio = selectedMunicipio.uf
+      // Adicionar código IBGE se disponível
+      if (municipioConfig.codigoIbge) {
+        payload.codigoIbge = municipioConfig.codigoIbge
       }
 
       const registerSuccess = await register(payload)
@@ -461,86 +447,31 @@ export default function CitizenLoginPage() {
                   />
                 </div>
 
-                <div className="space-y-2" ref={municipioRef}>
-                  <Label htmlFor="register-municipio">Município *</Label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                <div className="space-y-2">
+                  <Label htmlFor="register-municipio">Município</Label>
+                  {loadingMunicipioConfig ? (
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                      <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                      <span className="text-sm text-gray-600">Carregando município...</span>
                     </div>
-                    <Input
-                      id="register-municipio"
-                      placeholder="Digite o nome da sua cidade..."
-                      value={municipioSearch}
-                      onChange={(e) => {
-                        setMunicipioSearch(e.target.value)
-                        setShowMunicipioDropdown(true)
-                      }}
-                      onFocus={() => setShowMunicipioDropdown(true)}
-                      className="pl-10"
-                      required
-                      autoComplete="off"
-                    />
-                    {loadingMunicipios && (
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
-                      </div>
-                    )}
-                  </div>
-
-                  {showMunicipioDropdown && municipios.length > 0 && (
-                    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {municipios.map((municipio, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => handleSelectMunicipio(municipio)}
-                          className="w-full px-4 py-3 text-left hover:bg-blue-50 border-b border-gray-100 last:border-0 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {municipio.nome}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {municipio.uf} • {municipio.regiao}
-                                {municipio.populacao && (
-                                  <> • {municipio.populacao.toLocaleString('pt-BR')} habitantes</>
-                                )}
-                              </div>
-                            </div>
-                            <MapPin className="h-4 w-4 text-blue-600" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {showMunicipioDropdown && municipioSearch.length >= 2 && municipios.length === 0 && !loadingMunicipios && (
-                    <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-4">
-                      <p className="text-sm text-gray-500 text-center">
-                        Nenhum município encontrado
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedMunicipio && (
-                    <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                      <MapPin className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  ) : municipioConfig ? (
+                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
                       <div className="text-sm">
-                        <span className="font-medium text-blue-900">
-                          {selectedMunicipio.nome} - {selectedMunicipio.uf}
+                        <span className="font-semibold text-blue-900">
+                          {municipioConfig.nomeMunicipio} - {municipioConfig.ufMunicipio}
                         </span>
-                        {selectedMunicipio.hasTenant === true && (
-                          <span className="text-green-600 ml-2">
-                            (DigiUrban ativo)
-                          </span>
-                        )}
-                        {selectedMunicipio.hasTenant === false && (
-                          <span className="text-blue-600 ml-2">
-                            (Será criado automaticamente)
-                          </span>
-                        )}
+                        <p className="text-xs text-blue-700 mt-0.5">
+                          Sistema exclusivo para cidadãos deste município
+                        </p>
                       </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                      <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                      <span className="text-sm text-red-700">
+                        Não foi possível carregar o município
+                      </span>
                     </div>
                   )}
                 </div>

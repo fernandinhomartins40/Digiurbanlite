@@ -30,6 +30,41 @@ function normalizeString(str: string): string {
     .trim();
 }
 
+// GET /api/public/municipio-config - Retornar configuração do município (Single Tenant)
+router.get(
+  '/municipio-config',
+  handleAsync(async (req, res) => {
+    try {
+      const config = await prisma.municipioConfig.findFirst();
+
+      if (!config) {
+        res.status(404).json({
+          success: false,
+          error: 'Configuração do município não encontrada'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        config: {
+          nomeMunicipio: config.nomeMunicipio,
+          ufMunicipio: config.ufMunicipio,
+          codigoIbge: config.codigoIbge,
+          brasao: config.brasao,
+          corPrimaria: config.corPrimaria,
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao buscar configuração do município:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Erro ao buscar configuração do município'
+      });
+    }
+  })
+);
+
 // GET /api/public/municipios-brasil - Listar todos os municípios brasileiros
 router.get(
   '/municipios-brasil',
