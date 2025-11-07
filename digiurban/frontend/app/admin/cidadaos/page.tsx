@@ -25,8 +25,7 @@ import {
   Clock,
   ShieldCheck,
   ArrowRight,
-  Smartphone,
-  RefreshCw
+  Smartphone
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -82,14 +81,12 @@ export default function CidadaosPage() {
   const [approvalNotes, setApprovalNotes] = useState('')
   const [rejectionReason, setRejectionReason] = useState('')
   const [processing, setProcessing] = useState(false)
-  const [pendingTransfers, setPendingTransfers] = useState(0)
 
   const canVerify = hasPermission('citizens:verify')
 
   useEffect(() => {
     if (user) {
       fetchCitizens()
-      fetchTransferStats()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
@@ -126,17 +123,6 @@ export default function CidadaosPage() {
       setCitizens([])
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchTransferStats = async () => {
-    try {
-      const response = await apiRequest('/admin/transfer-requests?status=PENDING')
-      if (response.success && response.stats) {
-        setPendingTransfers(response.stats.pending || 0)
-      }
-    } catch (err) {
-      console.error('[TRANSFERÊNCIAS] Erro ao buscar estatísticas:', err)
     }
   }
 
@@ -297,17 +283,6 @@ export default function CidadaosPage() {
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           )}
-          {pendingTransfers > 0 && (
-            <Button
-              variant="outline"
-              onClick={() => router.push('/admin/cidadaos/transferencias')}
-              className="border-blue-500 text-blue-700 hover:bg-blue-50"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {pendingTransfers} Transferência{pendingTransfers !== 1 ? 's' : ''}
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          )}
           <Button onClick={() => router.push('/admin/cidadaos/novo')}>
             <UserPlus className="h-4 w-4 mr-2" />
             Adicionar Cidadão
@@ -316,7 +291,7 @@ export default function CidadaosPage() {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -369,22 +344,6 @@ export default function CidadaosPage() {
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
             <p className="text-xs text-red-700">Cadastros desativados</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-md transition-shadow border-2 border-blue-200 bg-blue-50/50"
-          onClick={() => router.push('/admin/cidadaos/transferencias')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transferências</CardTitle>
-            <RefreshCw className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{pendingTransfers}</div>
-            <p className="text-xs text-blue-700">
-              {pendingTransfers > 0 ? 'Aguardando análise' : 'Nenhuma pendente'}
-            </p>
           </CardContent>
         </Card>
       </div>

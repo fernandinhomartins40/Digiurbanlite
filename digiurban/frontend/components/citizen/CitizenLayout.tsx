@@ -14,11 +14,9 @@ import {
   LogOut,
   Bell,
   ChevronRight,
-  MapPin,
-  RefreshCw
+  MapPin
 } from 'lucide-react';
 import { useCitizenAuth, useCitizenProtectedRoute } from '@/contexts/CitizenAuthContext';
-import { TransferRequestModal } from './TransferRequestModal';
 import { RegistrationLevelBadge } from './RegistrationLevelBadge';
 import { LevelUpgradeModal } from './LevelUpgradeModal';
 import { mapVerificationStatusToLevel } from '@/lib/citizen-utils';
@@ -30,7 +28,6 @@ interface CitizenLayoutProps {
 
 export function CitizenLayout({ children, title }: CitizenLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showTransferModal, setShowTransferModal] = useState(false);
   const [showLevelUpgradeModal, setShowLevelUpgradeModal] = useState(false);
   const pathname = usePathname();
 
@@ -280,15 +277,6 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
                     onUpgradeClick={() => setShowLevelUpgradeModal(true)}
                   />
 
-                  {/* Transferência - Compacto */}
-                  <button
-                    onClick={() => setShowTransferModal(true)}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 px-2 py-1 rounded hover:bg-blue-50 transition-colors"
-                  >
-                    <RefreshCw className="h-3 w-3 flex-shrink-0" />
-                    <span className="hidden xl:inline">Transferência</span>
-                  </button>
-
                   {/* Botão de Logout */}
                   <button
                     onClick={handleLogout}
@@ -319,12 +307,6 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
           </div>
         </main>
       </div>
-
-      {/* Modal de Transferência */}
-      <TransferRequestModal
-        isOpen={showTransferModal}
-        onClose={() => setShowTransferModal(false)}
-      />
 
       {/* Modal de Upgrade de Nível */}
       <LevelUpgradeModal
