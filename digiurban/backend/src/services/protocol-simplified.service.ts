@@ -8,6 +8,7 @@
 import { ProtocolStatus } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { getModuleEntity, isInformativeModule } from '../config/module-mapping'
+import { generateProtocolNumberSafe } from './protocol-number-generator-safe'
 
 // ========================================
 // TYPES & INTERFACES
@@ -87,7 +88,7 @@ export class ProtocolServiceSimplified {
     }
 
     // 2. Gerar n\u00famero do protocolo
-    const protocolNumber = await this.generateProtocolNumber()
+    const protocolNumber = await generateProtocolNumberSafe()
 
     // 3. Criar protocolo
     const protocol = await prisma.protocolSimplified.create({
@@ -503,39 +504,6 @@ export class ProtocolServiceSimplified {
       byStatus,
       byModule
     }
-  }
-
-  /**
-   * Gerar n\u00famero de protocolo
-   * Formato: PROT-YYYYMMDD-XXXXX
-   */
-  private async generateProtocolNumber(): Promise<string> {
-    const today = new Date()
-    const year = today.getFullYear()
-    const month = String(today.getMonth() + 1).padStart(2, '0')
-    const day = String(today.getDate()).padStart(2, '0')
-    const datePrefix = `${year}${month}${day}`
-
-    // Buscar \u00faltimo protocolo do dia
-    const lastProtocol = await prisma.protocolSimplified.findFirst({
-      where: {
-        number: {
-          startsWith: `PROT-${datePrefix}`
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    let sequence = 1
-    if (lastProtocol) {
-      const lastSequence = parseInt(lastProtocol.number.split('-')[2])
-      sequence = lastSequence + 1
-    }
-
-    const sequenceStr = String(sequence).padStart(5, '0')
-    return `PROT-${datePrefix}-${sequenceStr}`
   }
 }
 
