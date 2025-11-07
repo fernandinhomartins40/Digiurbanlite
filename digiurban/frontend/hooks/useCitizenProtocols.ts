@@ -79,10 +79,10 @@ export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocols
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
 
-  const { citizen, tenant, apiRequest } = useCitizenAuth();
+  const { citizen, apiRequest } = useCitizenAuth();
 
   const fetchProtocols = async () => {
-    if (!tenant || !citizen) {
+    if (!citizen) {
       setLoading(false);
       return;
     }
@@ -128,7 +128,7 @@ export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocols
 
   useEffect(() => {
     fetchProtocols();
-  }, [tenant, citizen, params?.status, params?.page, params?.limit, params?.includeFamily]);
+  }, [citizen, params?.status, params?.page, params?.limit, params?.includeFamily]);
 
   // Calcular estatísticas baseadas nos protocolos carregados
   const stats = {

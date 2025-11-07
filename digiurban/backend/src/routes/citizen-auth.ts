@@ -290,8 +290,7 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asy
     return res.json({
       success: true,
       message: 'Login realizado com sucesso',
-      citizen: citizenData,
-      // Single tenant: tenantId removido
+      citizen: citizenData
     });
   } catch (error: unknown) {
     console.error('Erro no login:', sanitizeForLog(error));
