@@ -31,18 +31,14 @@ interface Protocol {
 }
 
 const getAuthConfig = () => {
-  const token = localStorage.getItem('digiurban_admin_token')
-  const tenant = typeof window !== 'undefined' && window.location.hostname.split('.')[0] !== 'localhost'
-    ? window.location.hostname.split('.')[0]
-    : 'demo'
+  const tenant = 'cmhav73z00000cblg3uhyri24' // Single Tenant
 
   return {
     headers: {
       'Content-Type': 'application/json',
       'X-Tenant-ID': tenant,
-      ...(token && { Authorization: `Bearer ${token}` })
     },
-    withCredentials: true // Necessário para enviar cookies httpOnly
+    withCredentials: true // httpOnly cookies são enviados automaticamente
   }
 }
 
@@ -59,7 +55,7 @@ export const agendaService = {
     if (filters?.status) params.append('status', filters.status)
 
     const response = await axios.get(
-      `${API_URL}/api/admin/gabinete/agenda?${params.toString()}`,
+      `${API_URL}/admin/gabinete/agenda?${params.toString()}`,
       getAuthConfig()
     )
     return response.data
@@ -67,7 +63,7 @@ export const agendaService = {
 
   async getEventById(id: string) {
     const response = await axios.get(
-      `${API_URL}/api/admin/gabinete/agenda/${id}`,
+      `${API_URL}/admin/gabinete/agenda/${id}`,
       getAuthConfig()
     )
     return response.data
@@ -75,7 +71,7 @@ export const agendaService = {
 
   async createEvent(data: AgendaEvent) {
     const response = await axios.post(
-      `${API_URL}/api/admin/gabinete/agenda`,
+      `${API_URL}/admin/gabinete/agenda`,
       data,
       getAuthConfig()
     )
@@ -84,7 +80,7 @@ export const agendaService = {
 
   async updateEvent(id: string, data: Partial<AgendaEvent>) {
     const response = await axios.put(
-      `${API_URL}/api/admin/gabinete/agenda/${id}`,
+      `${API_URL}/admin/gabinete/agenda/${id}`,
       data,
       getAuthConfig()
     )
@@ -93,7 +89,7 @@ export const agendaService = {
 
   async deleteEvent(id: string) {
     const response = await axios.delete(
-      `${API_URL}/api/admin/gabinete/agenda/${id}`,
+      `${API_URL}/admin/gabinete/agenda/${id}`,
       getAuthConfig()
     )
     return response.data
@@ -101,7 +97,7 @@ export const agendaService = {
 
   async markAsRealized(id: string) {
     const response = await axios.patch(
-      `${API_URL}/api/admin/gabinete/agenda/${id}/realize`,
+      `${API_URL}/admin/gabinete/agenda/${id}/realize`,
       {},
       getAuthConfig()
     )
@@ -122,7 +118,7 @@ export const mapaDemandasService = {
     if (filters?.endDate) params.append('endDate', filters.endDate)
 
     const response = await axios.get<{ success: boolean; data: Protocol[] }>(
-      `${API_URL}/api/admin/gabinete/mapa-demandas/protocols?${params.toString()}`,
+      `${API_URL}/admin/gabinete/mapa-demandas/protocols?${params.toString()}`,
       getAuthConfig()
     )
     return response.data
@@ -130,7 +126,7 @@ export const mapaDemandasService = {
 
   async getStats() {
     const response = await axios.get(
-      `${API_URL}/api/admin/gabinete/mapa-demandas/stats`,
+      `${API_URL}/admin/gabinete/mapa-demandas/stats`,
       getAuthConfig()
     )
     return response.data

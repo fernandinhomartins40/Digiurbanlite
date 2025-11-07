@@ -256,7 +256,6 @@ router.get('/mapa-demandas/protocols', adminAuthMiddleware, requireAdmin, async 
     const { categoria, status, startDate, endDate } = req.query
 
     const where: any = {
-
       latitude: { not: null },
       longitude: { not: null }
     }
@@ -322,7 +321,7 @@ router.get('/mapa-demandas/stats', adminAuthMiddleware, requireAdmin, async (req
     // Total de protocolos com geolocalização
     const totalWithLocation = await prisma.protocolSimplified.count({
       where: {
-          latitude: { not: null },
+        latitude: { not: null },
         longitude: { not: null }
       }
     })
@@ -331,7 +330,7 @@ router.get('/mapa-demandas/stats', adminAuthMiddleware, requireAdmin, async (req
     const byStatus = await prisma.protocolSimplified.groupBy({
       by: ['status'],
       where: {
-          latitude: { not: null },
+        latitude: { not: null },
         longitude: { not: null }
       },
       _count: {
@@ -342,21 +341,21 @@ router.get('/mapa-demandas/stats', adminAuthMiddleware, requireAdmin, async (req
     // Por categoria de serviço
     const protocolsWithService = await prisma.protocolSimplified.findMany({
       where: {
-          latitude: { not: null },
+        latitude: { not: null },
         longitude: { not: null },
-        serviceId: { not: null as any } // Prisma type issue - cast para any
+        serviceId: { not: null }
       },
       select: {
         service: {
           select: {
             category: true
           }
-      }
+        }
       }
     })
 
     const byCategory = protocolsWithService.reduce((acc: any, p) => {
-      const category = (p as any).service?.category || 'Sem Categoria' // Cast necessário devido ao include
+      const category = p.service?.category || 'Sem Categoria'
       acc[category] = (acc[category] || 0) + 1
       return acc
     }, {})

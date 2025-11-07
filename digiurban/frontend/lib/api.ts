@@ -20,15 +20,8 @@ class ApiClient {
       'Content-Type': 'application/json',
     }
 
-    // ✅ NOTA: Não é mais necessário enviar Authorization header
-    // O JWT é enviado automaticamente via httpOnly cookie (mais seguro)
-    // Fallback mantido apenas para retrocompatibilidade temporária
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('digiurban_super_admin_token') || localStorage.getItem('digiurban_admin_token')
-      if (token) {
-        headers.Authorization = `Bearer ${token}`
-      }
-    }
+    // ✅ httpOnly cookies são enviados automaticamente pelo navegador
+    // Não é necessário adicionar Authorization header
 
     return headers
   }
@@ -172,19 +165,8 @@ export async function apiRequest(endpoint: string, options?: RequestInit) {
     ...(options?.headers as Record<string, string> || {}),
   }
 
-  if (typeof window !== 'undefined') {
-    // Tentar buscar token do super admin primeiro, depois admin normal
-    const token = localStorage.getItem('digiurban_super_admin_token') || localStorage.getItem('digiurban_admin_token')
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-
-      // ✅ PROFISSIONAL: Extrair tenant do JWT ao invés de localStorage separado
-      const tenantId = getTenantFromToken(token)
-      if (tenantId) {
-        headers['X-Tenant-ID'] = tenantId
-      }
-    }
-  }
+  // ✅ httpOnly cookies são enviados automaticamente pelo navegador
+  // Não é necessário adicionar Authorization header
 
   // Build the full URL
   const url = `${API_BASE_URL}${endpoint}`

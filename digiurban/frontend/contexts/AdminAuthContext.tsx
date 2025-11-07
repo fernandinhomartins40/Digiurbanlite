@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { getFullApiUrl } from '@/lib/api-config'
 
 export type UserRole = 'GUEST' | 'USER' | 'COORDINATOR' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN'
 
@@ -77,7 +78,6 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     }
 
     // ✅ Usar getFullApiUrl e limpar /api duplicado (como SuperAdminContext e CitizenContext)
-    const { getFullApiUrl } = await import('@/lib/api-config');
     const cleanEndpoint = endpoint.replace(/^\/api/, '');
     const url = getFullApiUrl(cleanEndpoint);
 
@@ -117,7 +117,6 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
       setIsRedirecting(false)
 
       // ✅ CORRIGIDO: Usar getFullApiUrl para consistência com outros contextos
-      const { getFullApiUrl } = await import('@/lib/api-config');
       const loginUrl = getFullApiUrl('/admin/auth/login');
 
       // Login SEM especificar tenant - backend identifica automaticamente
