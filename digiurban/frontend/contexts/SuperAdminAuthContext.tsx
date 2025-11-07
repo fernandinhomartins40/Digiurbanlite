@@ -53,6 +53,9 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
 
   // ✅ SEGURANÇA: Função para fazer requisições autenticadas (usa cookies automáticos)
   const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+    console.log('[SuperAdminAuth] ====== apiRequest DEBUG ======')
+    console.log('[SuperAdminAuth] Endpoint solicitado:', endpoint)
+
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers
@@ -64,17 +67,29 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
     const cleanEndpoint = endpoint.replace(/^\/api/, '')
     const url = getFullApiUrl(cleanEndpoint)
 
+    console.log('[SuperAdminAuth] URL construída:', url)
+    console.log('[SuperAdminAuth] Headers:', headers)
+    console.log('[SuperAdminAuth] Cookies do navegador:', document.cookie ? 'EXISTEM' : 'VAZIO')
+
     const response = await fetch(url, {
       ...options,
       headers,
       credentials: 'include', // ✅ CRÍTICO: Enviar cookies automaticamente
     })
 
+    console.log('[SuperAdminAuth] Resposta recebida:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    })
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido', code: null }))
+      console.log('[SuperAdminAuth] ❌ Erro na resposta:', errorData)
 
       // Se token expirado ou inválido (401), limpar autenticação
       if (response.status === 401) {
+        console.log('[SuperAdminAuth] 🔒 Status 401 - Limpando autenticação')
         setUser(null)
         setStats(null)
 
@@ -84,6 +99,7 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
           !window.location.pathname.includes('/login') &&
           !isRedirecting
         ) {
+          console.log('[SuperAdminAuth] 🔄 Redirecionando para login...')
           setIsRedirecting(true)
           setTimeout(() => {
             window.location.href = '/super-admin/login'
@@ -94,19 +110,27 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
       throw new Error(errorData.error || 'Erro na requisição')
     }
 
-    return response.json()
+    const data = await response.json()
+    console.log('[SuperAdminAuth] ✅ Sucesso! Dados recebidos:', Object.keys(data))
+    return data
   }
 
   // Função de login
   const login = async (email: string, password: string) => {
     try {
+      console.log('[SuperAdminAuth] ====== LOGIN INICIADO ======')
+      console.log('[SuperAdminAuth] Email:', email)
+
       setLoading(true)
       setError(null)
       setIsRedirecting(false)
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
+      const loginUrl = `${apiUrl}/super-admin/login`
 
-      const response = await fetch(`${apiUrl}/super-admin/login`, {
+      console.log('[SuperAdminAuth] URL de login:', loginUrl)
+
+      const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -115,12 +139,21 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
         body: JSON.stringify({ email, password })
       })
 
+      console.log('[SuperAdminAuth] Resposta do login:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      })
+
       if (!response.ok) {
         const errorData = await response.json()
+        console.log('[SuperAdminAuth] ❌ Erro no login:', errorData)
         throw new Error(errorData.error || 'Erro no login')
       }
 
       const data = await response.json()
+      console.log('[SuperAdminAuth] ✅ Login bem-sucedido! Usuário:', data.user?.email)
+      console.log('[SuperAdminAuth] Cookies após login:', document.cookie ? 'EXISTEM' : 'VAZIO')
 
       // ✅ SEGURANÇA: Token agora vem em cookie httpOnly, não em JSON
       // Atualizar estado com dados do login (já vêm na resposta)
@@ -130,8 +163,10 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
       // Não chamar refreshUserData() aqui - dados já vieram no login
       // O refreshUserData() será chamado pelo checkAuth() ao montar o dashboard
 
+      console.log('[SuperAdminAuth] 🔄 Redirecionando para dashboard...')
       router.push('/super-admin')
     } catch (err) {
+      console.error('[SuperAdminAuth] 💥 Erro no login:', err)
       setError(err instanceof Error ? err.message : 'Erro no login')
       throw err
     } finally {
@@ -163,20 +198,24 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
   // Função para atualizar dados do usuário
   const refreshUserData = async (): Promise<boolean> => {
     try {
+      console.log('[SuperAdminAuth] ====== REFRESH USER DATA ======')
       const response = await apiRequest('/super-admin/auth/me')
+      console.log('[SuperAdminAuth] ✅ Dados atualizados:', response.user?.email)
       setUser(response.user)
       setStats(response.stats || null)
       return true
     } catch (err) {
+      console.log('[SuperAdminAuth] ❌ Erro ao atualizar dados:', err instanceof Error ? err.message : 'Unknown')
       // Silenciar erro 401 (já tratado no apiRequest) e erro de token
       if (err instanceof Error &&
           !err.message.includes('Token não fornecido') &&
           !err.message.includes('Authentication failed') &&
           !err.message.includes('Não autenticado')) {
-        console.error('Erro ao atualizar dados do super admin:', err)
+        console.error('[SuperAdminAuth] Erro inesperado ao atualizar dados:', err)
       }
       // Se erro de token, limpar estado silenciosamente
       if (err instanceof Error && err.message.includes('Token não fornecido')) {
+        console.log('[SuperAdminAuth] 🔒 Limpando estado por falta de token')
         setUser(null)
         setStats(null)
       }

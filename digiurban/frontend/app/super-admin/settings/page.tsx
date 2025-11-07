@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SuperAdminCard } from '@/components/super-admin/SuperAdminCard';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
 import {
   Settings,
@@ -279,7 +279,11 @@ export default function SettingsManagementPage() {
 
         {/* Tab Content */}
         {selectedTab === 'global' && (
-          <SuperAdminCard title="Configurações Globais">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações Globais</CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -372,11 +376,16 @@ export default function SettingsManagementPage() {
                 </button>
               </div>
             </div>
-          </SuperAdminCard>
+            </CardContent>
+          </Card>
         )}
 
         {selectedTab === 'features' && (
-          <SuperAdminCard title="Feature Flags">
+          <Card>
+            <CardHeader>
+              <CardTitle>Feature Flags</CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="space-y-4">
               {featureFlags.map((flag) => (
                 <div key={flag.id} className="p-4 border border-gray-200 rounded-lg">
@@ -415,11 +424,16 @@ export default function SettingsManagementPage() {
                 </div>
               ))}
             </div>
-          </SuperAdminCard>
+            </CardContent>
+          </Card>
         )}
 
         {selectedTab === 'limits' && (
-          <SuperAdminCard title="Limites e Quotas">
+          <Card>
+            <CardHeader>
+              <CardTitle>Limites e Quotas</CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="space-y-4">
               {limits.map((limit) => (
                 <div key={limit.key} className="p-4 border border-gray-200 rounded-lg">
@@ -451,11 +465,16 @@ export default function SettingsManagementPage() {
                 </div>
               ))}
             </div>
-          </SuperAdminCard>
+            </CardContent>
+          </Card>
         )}
 
         {selectedTab === 'integrations' && (
-          <SuperAdminCard title="Integrações Externas">
+          <Card>
+            <CardHeader>
+              <CardTitle>Integrações Externas</CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {integrations.map((integration) => (
                 <div key={integration.id} className="p-4 border border-gray-200 rounded-lg">
@@ -491,11 +510,16 @@ export default function SettingsManagementPage() {
                 </div>
               ))}
             </div>
-          </SuperAdminCard>
+            </CardContent>
+          </Card>
         )}
 
         {selectedTab === 'notifications' && (
-          <SuperAdminCard title="Configurações de Notificações">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações de Notificações</CardTitle>
+            </CardHeader>
+            <CardContent>
             <div className="space-y-6">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-gray-700">
@@ -575,7 +599,8 @@ export default function SettingsManagementPage() {
                 </button>
               </div>
             </div>
-          </SuperAdminCard>
+            </CardContent>
+          </Card>
         )}
       </div>
       <ConfirmDialog />

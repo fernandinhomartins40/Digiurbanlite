@@ -12,7 +12,18 @@ async function main() {
 
     const municipioConfig = await prisma.municipioConfig.upsert({
       where: { id: 'singleton' },
-      update: {},
+      update: {
+        subscriptionEnds: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 ano
+        subscriptionPlan: 'professional',
+        maxUsers: 50,
+        maxCitizens: 50000,
+        features: {
+          analytics: true,
+          customModules: true,
+          advancedReports: true,
+          api: true
+        }
+      },
       create: {
         id: 'singleton',
         nome: 'Município Demonstração',

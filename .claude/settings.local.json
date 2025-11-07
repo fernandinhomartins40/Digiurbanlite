@@ -36,7 +36,14 @@
       "Bash($env:PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"Sim\")",
       "Bash(git checkout:*)",
       "Bash(powershell:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nrefactor(super-admin): Adaptação completa para arquitetura Single Tenant\n\n## Mudanças Principais\n\n### Backend\n- Expandido super-admin.ts com novos endpoints (system/health, system/metrics, system/backup, users/admins)\n- Removidos endpoints multi-tenant desnecessários\n- Adicionadas funcionalidades de monitoramento e backup do sistema\n\n### Frontend\n- Removidas 10+ páginas multi-tenant (tenants, billing, analytics SaaS, etc)\n- Criada nova página /super-admin/municipio para gestão do município único\n- Refatorado dashboard principal com métricas Single Tenant\n- Adaptada página de usuários para gerenciar apenas Super Admins\n- Refatorada página de monitoramento com métricas do sistema\n- Refatorada página de operações com gerenciamento de backups\n- Atualizado layout com menu simplificado (7 itens vs 11 anteriores)\n\n### Limpeza\n- Removidos componentes legados (TenantSelector, TenantAutocomplete, QuickActions, etc)\n- Removidos hooks legados (useTenants, useSystemMetrics, useAuditLog)\n- Removida página super-admin duplicada em /admin/super-admin\n- Limpas referências em dashboards analytics\n\n### Resultado\n- ~70% menos código comparado ao sistema multi-tenant\n- Arquitetura mais simples e focada\n- Melhor performance e manutenibilidade\n- Interface limpa alinhada com Single Tenant\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(del \"c:\\Projetos Cursor\\Digiurbanlite\\digiurban\\backend\\test-municipio.ts\")",
+      "Bash(del \"c:\\Projetos Cursor\\Digiurbanlite\\digiurban\\frontend\\app\\api\\super-admin\\auth\\me\\route.ts\")",
+      "Bash(test:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

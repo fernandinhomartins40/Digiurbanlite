@@ -113,16 +113,18 @@ router.get('/auth/me', adminAuthMiddleware, superAdminOnly, async (req: Request,
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        department: true
-      },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
         departmentId: true,
-        department: true,
+        department: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         isActive: true,
         createdAt: true
       }
@@ -678,6 +680,152 @@ router.delete('/users/admins/:id', adminAuthMiddleware, superAdminOnly, async (r
     });
   } catch (error) {
     console.error('Erro ao desativar super admin:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// ============================================
+// EMAIL SERVER ROUTES
+// ============================================
+
+// GET /api/super-admin/email-server/domains - Listar domínios
+router.get('/email-server/domains', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    // TODO: Integrar com ultrazend-smtp-server para buscar domínios reais
+    // Por enquanto, retornar mock vazio
+    const domains: any[] = [];
+
+    return res.json({ domains });
+  } catch (error) {
+    console.error('Erro ao buscar domínios:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// POST /api/super-admin/email-server/domains - Adicionar domínio
+router.post('/email-server/domains', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { domain_name } = req.body;
+
+    if (!domain_name || typeof domain_name !== 'string') {
+      return res.status(400).json({ error: 'Nome do domínio é obrigatório' });
+    }
+
+    // TODO: Integrar com ultrazend-smtp-server para adicionar domínio real
+    const domain = {
+      id: Date.now().toString(),
+      domain_name: domain_name.toLowerCase(),
+      is_verified: false,
+      dkim_enabled: true,
+      spf_enabled: true,
+      created_at: new Date().toISOString()
+    };
+
+    return res.json({ domain });
+  } catch (error) {
+    console.error('Erro ao adicionar domínio:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// DELETE /api/super-admin/email-server/domains/:id - Remover domínio
+router.delete('/email-server/domains/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // TODO: Integrar com ultrazend-smtp-server para remover domínio real
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao remover domínio:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// POST /api/super-admin/email-server/domains/:id/verify - Verificar domínio
+router.post('/email-server/domains/:id/verify', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // TODO: Integrar com ultrazend-smtp-server para verificar DNS real
+    // Por enquanto, simular verificação
+    const verified = Math.random() > 0.5; // Mock: 50% de chance
+
+    return res.json({ verified });
+  } catch (error) {
+    console.error('Erro ao verificar domínio:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// GET /api/super-admin/email-server/dkim - Listar chaves DKIM
+router.get('/email-server/dkim', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    // TODO: Integrar com ultrazend-smtp-server para buscar chaves DKIM reais
+    const keys: any[] = [];
+
+    return res.json({ keys });
+  } catch (error) {
+    console.error('Erro ao buscar chaves DKIM:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// POST /api/super-admin/email-server/dkim/generate - Gerar chave DKIM
+router.post('/email-server/dkim/generate', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { domain_id } = req.body;
+
+    if (!domain_id) {
+      return res.status(400).json({ error: 'ID do domínio é obrigatório' });
+    }
+
+    // TODO: Integrar com ultrazend-smtp-server para gerar chave DKIM real
+    const key = {
+      id: Date.now().toString(),
+      domain_id,
+      selector: 'default',
+      public_key: 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...', // Mock
+      is_active: true
+    };
+
+    return res.json({ key });
+  } catch (error) {
+    console.error('Erro ao gerar chave DKIM:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// GET /api/super-admin/email-server/config - Obter configuração SMTP
+router.get('/email-server/config', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    // TODO: Integrar com ultrazend-smtp-server para buscar config real
+    const config = {
+      hostname: 'mail.digiurban.com',
+      mxPort: 25,
+      submissionPort: 587,
+      tlsEnabled: true,
+      maxConnections: 100,
+      maxMessageSize: 50 * 1024 * 1024
+    };
+
+    return res.json({ config });
+  } catch (error) {
+    console.error('Erro ao buscar configuração:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// PUT /api/super-admin/email-server/config - Atualizar configuração SMTP
+router.put('/email-server/config', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { hostname, mxPort, submissionPort, tlsEnabled, maxConnections, maxMessageSize } = req.body;
+
+    // TODO: Integrar com ultrazend-smtp-server para salvar config real
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao atualizar configuração:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });

@@ -19,7 +19,8 @@ import {
   Wrench,
   Database,
   Bell,
-  Search
+  Search,
+  Mail
 } from 'lucide-react';
 
 interface MenuItem {
@@ -68,6 +69,11 @@ const menuItems: MenuItem[] = [
     title: 'Operações',
     href: '/super-admin/operations',
     icon: Wrench
+  },
+  {
+    title: 'Email Server',
+    href: '/super-admin/email-server',
+    icon: Mail
   },
   {
     title: 'Configurações',
