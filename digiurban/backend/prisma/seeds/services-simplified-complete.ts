@@ -3599,6 +3599,32 @@ const ENVIRONMENT_SERVICES: ServiceDefinition[] = [
     category: 'Atendimento',
     icon: 'Leaf',
     color: '#10b981',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        motivoAtendimento: { type: 'string', title: 'Motivo do Atendimento', enum: ['Licença Ambiental', 'Denúncia Ambiental', 'Autorização de Poda/Corte', 'Programa Ambiental', 'Vistoria', 'Informações', 'Outro'] },
+        descricaoAtendimento: { type: 'string', title: 'Descrição do Atendimento', minLength: 10, maxLength: 1000 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'motivoAtendimento', 'descricaoAtendimento']
+    }
   },
   {
     name: 'Licença Ambiental',
@@ -3613,6 +3639,37 @@ const ENVIRONMENT_SERVICES: ServiceDefinition[] = [
     category: 'Licenciamento',
     icon: 'FileCheck',
     color: '#059669',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo do Requerente', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Requerente', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Requerente', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        tipoLicenca: { type: 'string', title: 'Tipo de Licença', enum: ['Licença Prévia (LP)', 'Licença de Instalação (LI)', 'Licença de Operação (LO)', 'Licença Única'] },
+        tipoAtividade: { type: 'string', title: 'Tipo de Atividade', enum: ['Industrial', 'Comercial', 'Agrícola', 'Mineração', 'Construção Civil', 'Serviços', 'Outro'] },
+        descricaoAtividade: { type: 'string', title: 'Descrição da Atividade', minLength: 30, maxLength: 1000 },
+        enderecoEmpreendimento: { type: 'string', title: 'Endereço do Empreendimento', minLength: 10, maxLength: 300 },
+        areaEmpreendimento: { type: 'number', title: 'Área do Empreendimento (m²)', minimum: 0 },
+        nomeResponsavelTecnico: { type: 'string', title: 'Nome do Responsável Técnico', minLength: 3, maxLength: 200 },
+        registroResponsavelTecnico: { type: 'string', title: 'Registro Profissional (CREA/CAU)', maxLength: 50 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoLicenca', 'tipoAtividade', 'descricaoAtividade', 'enderecoEmpreendimento', 'nomeResponsavelTecnico']
+    }
   },
   {
     name: 'Denúncia Ambiental',
@@ -3626,6 +3683,34 @@ const ENVIRONMENT_SERVICES: ServiceDefinition[] = [
     category: 'Denúncia',
     icon: 'AlertTriangle',
     color: '#dc2626',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        tipoDenuncia: { type: 'string', title: 'Tipo de Denúncia', enum: ['Desmatamento', 'Poluição da Água', 'Poluição do Ar', 'Poluição Sonora', 'Maus-tratos a Animais', 'Queimada Irregular', 'Descarte Irregular de Lixo', 'Outro'] },
+        descricaoDenuncia: { type: 'string', title: 'Descrição da Denúncia', minLength: 30, maxLength: 1000 },
+        enderecoOcorrencia: { type: 'string', title: 'Endereço da Ocorrência', minLength: 10, maxLength: 300 },
+        dataOcorrencia: { type: 'string', format: 'date', title: 'Data da Ocorrência' },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoDenuncia', 'descricaoDenuncia', 'enderecoOcorrencia']
+    }
   },
   {
     name: 'Programa Ambiental',
@@ -3640,6 +3725,33 @@ const ENVIRONMENT_SERVICES: ServiceDefinition[] = [
     category: 'Programas',
     icon: 'GraduationCap',
     color: '#16a34a',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        nomePrograma: { type: 'string', title: 'Nome do Programa', maxLength: 200 },
+        tipoPrograma: { type: 'string', title: 'Tipo de Programa', enum: ['Educação Ambiental', 'Coleta Seletiva', 'Reciclagem', 'Horta Comunitária', 'Reflorestamento', 'Outro'] },
+        motivoInscricao: { type: 'string', title: 'Motivo da Inscrição', minLength: 20, maxLength: 500 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomePrograma', 'tipoPrograma']
+    }
   },
   {
     name: 'Autorização de Poda ou Corte de Árvore',
@@ -3654,6 +3766,37 @@ const ENVIRONMENT_SERVICES: ServiceDefinition[] = [
     category: 'Autorização',
     icon: 'TreeDeciduous',
     color: '#15803d',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        tipoSolicitacao: { type: 'string', title: 'Tipo de Solicitação', enum: ['Poda', 'Corte', 'Remoção'] },
+        enderecoArvore: { type: 'string', title: 'Endereço da Árvore', minLength: 10, maxLength: 300 },
+        especieArvore: { type: 'string', title: 'Espécie da Árvore (se souber)', maxLength: 100 },
+        alturaEstimada: { type: 'number', title: 'Altura Estimada (metros)', minimum: 0 },
+        motivoSolicitacao: { type: 'string', title: 'Motivo da Solicitação', enum: ['Risco de Queda', 'Raízes Danificando Estruturas', 'Galhos sobre Fiação', 'Doença', 'Praga', 'Outro'] },
+        descricaoMotivo: { type: 'string', title: 'Descrição Detalhada do Motivo', minLength: 30, maxLength: 1000 },
+        possuiLaudoTecnico: { type: 'string', title: 'Possui Laudo Técnico?', enum: ['Sim', 'Não'] },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoSolicitacao', 'enderecoArvore', 'motivoSolicitacao', 'descricaoMotivo']
+    }
   },
   {
     name: 'Vistoria Ambiental',
@@ -3668,6 +3811,33 @@ const ENVIRONMENT_SERVICES: ServiceDefinition[] = [
     category: 'Vistoria',
     icon: 'Search',
     color: '#14532d',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        tipoVistoria: { type: 'string', title: 'Tipo de Vistoria', enum: ['Área de Preservação', 'Licenciamento', 'Denúncia', 'Regularização', 'Outro'] },
+        enderecoVistoria: { type: 'string', title: 'Endereço para Vistoria', minLength: 10, maxLength: 300 },
+        motivoVistoria: { type: 'string', title: 'Motivo da Vistoria', minLength: 30, maxLength: 1000 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoVistoria', 'enderecoVistoria', 'motivoVistoria']
+    }
   },
   {
     name: 'Gestão de Áreas Protegidas',
