@@ -14,7 +14,8 @@ import {
   LogOut,
   Bell,
   ChevronRight,
-  MapPin
+  MapPin,
+  FileCheck
 } from 'lucide-react';
 import { useCitizenAuth, useCitizenProtectedRoute } from '@/contexts/CitizenAuthContext';
 import { RegistrationLevelBadge } from './RegistrationLevelBadge';
@@ -55,6 +56,11 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
       name: 'Protocolos',
       href: '/cidadao/protocolos',
       icon: Folder
+    },
+    {
+      name: 'Documentos',
+      href: '/cidadao/documentos',
+      icon: FileCheck
     },
     {
       name: 'Perfil',

@@ -16,7 +16,8 @@ import {
   Bell,
   ArrowRight,
   Activity,
-  Loader2
+  Loader2,
+  FileCheck
 } from 'lucide-react';
 
 export default function CitizenDashboard() {
@@ -75,6 +76,15 @@ export default function CitizenDashboard() {
       icon: Activity,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
+      available: true
+    },
+    {
+      title: 'Meus Documentos',
+      description: 'Digitalizar e gerenciar documentos',
+      href: '/cidadao/documentos',
+      icon: FileCheck,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
       available: true
     },
     {
