@@ -472,15 +472,23 @@ const updateProfileSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres').optional(),
   email: z.string().email('Email inválido').optional(),
   phone: z.string().optional(),
+  phoneSecondary: z.string().optional(),
+  birthDate: z.string().optional(),
+  rg: z.string().optional(),
+  motherName: z.string().optional(),
+  maritalStatus: z.string().optional(),
+  occupation: z.string().optional(),
+  familyIncome: z.string().optional(),
   address: z
     .object({
-      street: z.string().optional(),
-      number: z.string().optional(),
-      complement: z.string().optional(),
-      neighborhood: z.string().optional(),
-      city: z.string().optional(),
-      state: z.string().optional(),
-      zipCode: z.string().optional()
+      cep: z.string().optional(),
+      logradouro: z.string().optional(),
+      numero: z.string().optional(),
+      complemento: z.string().optional(),
+      bairro: z.string().optional(),
+      cidade: z.string().optional(),
+      uf: z.string().optional(),
+      pontoReferencia: z.string().optional()
         })
     .optional()
         });
@@ -540,6 +548,13 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
     if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.phoneSecondary !== undefined) updateData.phoneSecondary = data.phoneSecondary;
+    if (data.birthDate !== undefined) updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
+    if (data.rg !== undefined) updateData.rg = data.rg;
+    if (data.motherName !== undefined) updateData.motherName = data.motherName;
+    if (data.maritalStatus !== undefined) updateData.maritalStatus = data.maritalStatus;
+    if (data.occupation !== undefined) updateData.occupation = data.occupation;
+    if (data.familyIncome !== undefined) updateData.familyIncome = data.familyIncome;
 
     // Mesclar endereço existente com novos dados
     if (data.address) {
