@@ -1838,6 +1838,29 @@ const SOCIAL_SERVICES: ServiceDefinition[] = [
     category: 'Programas',
     icon: 'Users',
     color: '#a855f7',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Logradouro', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        tipoAtividade: { type: 'string', title: 'Tipo de Atividade', enum: ['Oficina de Artesanato', 'Oficina de Informática', 'Grupo de Idosos', 'Grupo de Mulheres', 'Grupo de Jovens', 'Reforço Escolar', 'Oficina Cultural', 'Esporte e Lazer', 'Outro'] },
+        nomeGrupoOficina: { type: 'string', title: 'Nome do Grupo/Oficina', minLength: 3, maxLength: 200 },
+        unidadeCRAS: { type: 'string', title: 'Unidade CRAS/CREAS', minLength: 3, maxLength: 200 },
+        turnoPreferido: { type: 'string', title: 'Turno Preferido', enum: ['Manhã', 'Tarde', 'Noite', 'Qualquer'] },
+        motivoInteresse: { type: 'string', title: 'Motivo do Interesse', minLength: 10, maxLength: 500 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'telefone', 'cep', 'bairro', 'nomeMae', 'tipoAtividade', 'nomeGrupoOficina', 'unidadeCRAS', 'motivoInteresse']
+    }
   },
   {
     name: 'Visitas Domiciliares',
@@ -1852,6 +1875,29 @@ const SOCIAL_SERVICES: ServiceDefinition[] = [
     category: 'Atendimento',
     icon: 'Home',
     color: '#f97316',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        motivoVisita: { type: 'string', title: 'Motivo da Visita', minLength: 20, maxLength: 1000 },
+        dataPreferencial: { type: 'string', format: 'date', title: 'Data Preferencial' },
+        turnoPreferencial: { type: 'string', title: 'Turno Preferencial', enum: ['Manhã', 'Tarde', 'Qualquer'] },
+        urgente: { type: 'boolean', title: 'Caso Urgente?', default: false },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'motivoVisita']
+    }
   },
   {
     name: 'Inscrição em Programa Social',
@@ -1866,6 +1912,29 @@ const SOCIAL_SERVICES: ServiceDefinition[] = [
     category: 'Programas',
     icon: 'FileCheck',
     color: '#8b5cf6',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Logradouro', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        nisCadUnico: { type: 'string', title: 'NIS do CadÚnico', maxLength: 20 },
+        nomePrograma: { type: 'string', title: 'Nome do Programa', minLength: 3, maxLength: 200 },
+        tipoPrograma: { type: 'string', title: 'Tipo de Programa', enum: ['Programa de Transferência de Renda', 'Programa para Idosos', 'Programa para Crianças', 'Programa para Mulheres', 'Programa de Capacitação', 'Outro'] },
+        rendaFamiliarMensal: { type: 'number', title: 'Renda Familiar Mensal', minimum: 0 },
+        quantidadePessoasFamilia: { type: 'integer', title: 'Pessoas na Família', minimum: 1, maximum: 30 },
+        motivoInscricao: { type: 'string', title: 'Motivo da Inscrição', minLength: 20, maxLength: 500 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'telefone', 'cep', 'bairro', 'nomeMae', 'nomePrograma', 'tipoPrograma', 'motivoInscricao']
+    }
   },
   {
     name: 'Agendamento de Atendimento Social',
@@ -1879,6 +1948,27 @@ const SOCIAL_SERVICES: ServiceDefinition[] = [
     category: 'Agendamento',
     icon: 'Calendar',
     color: '#06b6d4',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        unidadeCRAS: { type: 'string', title: 'Unidade CRAS/CREAS', minLength: 3, maxLength: 200 },
+        motivoAtendimento: { type: 'string', title: 'Motivo do Atendimento', minLength: 10, maxLength: 500 },
+        tipoAtendimento: { type: 'string', title: 'Tipo de Atendimento', enum: ['Primeira vez', 'Retorno', 'Orientação', 'Acompanhamento', 'Outro'] },
+        dataPreferencial: { type: 'string', format: 'date', title: 'Data Preferencial' },
+        turnoPreferencial: { type: 'string', title: 'Turno Preferencial', enum: ['Manhã', 'Tarde', 'Qualquer'] },
+        urgente: { type: 'boolean', title: 'Caso Urgente?', default: false },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'telefone', 'bairro', 'nomeMae', 'unidadeCRAS', 'motivoAtendimento', 'tipoAtendimento']
+    }
   },
   {
     name: 'Gestão CRAS/CREAS',
