@@ -567,16 +567,55 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
-        tipoProdutor: {
-          type: 'string',
-          title: 'Tipo de Produtor',
-          enum: ['Agricultor Familiar', 'Produtor Rural', 'Assentado', 'Quilombola', 'Indígena']
-        },
-        dap: { type: 'string', title: 'DAP (Declaração de Aptidão ao PRONAF)' },
-        areaTotalHectares: { type: 'number', title: 'Área Total (Hectares)' },
-        principaisProducoes: { type: 'string', title: 'Principais Produções' },
+        // BLOCO 1: IDENTIFICAÇÃO
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        // BLOCO 2: CONTATO
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+        // BLOCO 3: ENDEREÇO
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+        // BLOCO 4: COMPLEMENTARES
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', 'De 1 a 2 salários mínimos', 'De 2 a 3 salários mínimos', 'De 3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        // DADOS DO PRODUTOR
+        tipoProdutor: { type: 'string', title: 'Tipo de Produtor', enum: ['Agricultor Familiar', 'Produtor Rural', 'Assentado', 'Quilombola', 'Indígena'] },
+        dap: { type: 'string', title: 'DAP (PRONAF)', maxLength: 50 },
+        areaTotalHectares: { type: 'number', title: 'Área Total (ha)', minimum: 0 },
+        tipoPropriedade: { type: 'string', title: 'Tipo de Propriedade', enum: ['Própria', 'Arrendada', 'Parceria/Meação', 'Comodato', 'Assentamento', 'Posse', 'Outra'] },
+        nomePropriedade: { type: 'string', title: 'Nome da Propriedade', maxLength: 200 },
+        enderecoPropriedade: { type: 'string', title: 'Localização da Propriedade', maxLength: 500 },
+        coordenadasGPS: { type: 'string', title: 'Coordenadas GPS', maxLength: 100 },
+        principaisCulturas: { type: 'string', title: 'Principais Culturas', maxLength: 500 },
+        principaisCriacoes: { type: 'string', title: 'Criações Animais', maxLength: 500 },
+        possuiIrrigacao: { type: 'boolean', title: 'Possui irrigação?', default: false },
+        tipoIrrigacao: { type: 'string', title: 'Tipo de irrigação', maxLength: 200 },
+        usaAgrotoxicos: { type: 'boolean', title: 'Usa agrotóxicos?', default: false },
+        possuiCertificacaoOrganica: { type: 'boolean', title: 'Certificação orgânica?', default: false },
+        orgaoCertificador: { type: 'string', title: 'Órgão Certificador', maxLength: 200 },
+        participaCooperativa: { type: 'boolean', title: 'Participa de cooperativa?', default: false },
+        nomeCooperativa: { type: 'string', title: 'Nome da Cooperativa', maxLength: 200 },
+        participaSindicato: { type: 'boolean', title: 'É sindicalizado?', default: false },
+        nomeSindicato: { type: 'string', title: 'Nome do Sindicato', maxLength: 200 },
+        comercializaPAA: { type: 'boolean', title: 'Comercializa para PAA?', default: false },
+        comercializaPNAE: { type: 'boolean', title: 'Fornece para Merenda?', default: false },
+        possuiMaquinario: { type: 'boolean', title: 'Possui maquinário?', default: false },
+        tiposMaquinario: { type: 'string', title: 'Tipos de maquinário', maxLength: 500 },
+        recebeATER: { type: 'boolean', title: 'Recebe ATER?', default: false },
+        orgaoATER: { type: 'string', title: 'Órgão ATER', maxLength: 200 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['tipoProdutor']
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoProdutor']
     }
   },
   {
