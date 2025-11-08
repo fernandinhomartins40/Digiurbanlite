@@ -1377,32 +1377,81 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
-        nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
+        nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Responsável' },
+
+        // ========== BLOCO 2: CONTATO DO RESPONSÁVEL ==========
+        email: { type: 'string', format: 'email', title: 'E-mail do Responsável' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO DO RESPONSÁVEL ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES DO RESPONSÁVEL ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe do Responsável', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: DADOS DO ALUNO ==========
+        nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
+        dataNascimentoAluno: { type: 'string', format: 'date', title: 'Data de Nascimento do Aluno' },
+        cpfAluno: { type: 'string', title: 'CPF do Aluno (se possuir)', pattern: '^\\d{11}$' },
+        numeroMatricula: { type: 'string', title: 'Número da Matrícula', maxLength: 50 },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
         serie: { type: 'string', title: 'Série/Ano', maxLength: 50 },
         turma: { type: 'string', title: 'Turma', maxLength: 50 },
+        turno: { type: 'string', title: 'Turno', enum: ['Matutino', 'Vespertino', 'Integral', 'Noturno'] },
+
+        // ========== BLOCO 6: DADOS DA OCORRÊNCIA ==========
         tipoOcorrencia: {
           type: 'string',
           title: 'Tipo de Ocorrência',
-          enum: ['Disciplinar', 'Comportamental', 'Falta', 'Violência', 'Bullying', 'Danos ao Patrimônio', 'Outro'],
-          enumNames: ['Disciplinar', 'Comportamental', 'Falta', 'Violência', 'Bullying', 'Danos ao Patrimônio', 'Outro']
+          enum: ['Disciplinar', 'Comportamental', 'Falta', 'Violência', 'Bullying', 'Danos ao Patrimônio', 'Outro']
         },
         dataOcorrencia: { type: 'string', format: 'date', title: 'Data da Ocorrência' },
         horaOcorrencia: { type: 'string', title: 'Hora da Ocorrência', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
         localOcorrencia: { type: 'string', title: 'Local da Ocorrência', minLength: 3, maxLength: 200 },
-        descricaoOcorrencia: { type: 'string', title: 'Descrição da Ocorrência', minLength: 20, maxLength: 2000 },
-        professorRelator: { type: 'string', title: 'Professor/Servidor Relator', minLength: 3, maxLength: 200 },
+        descricaoOcorrencia: { type: 'string', title: 'Descrição Detalhada da Ocorrência', minLength: 20, maxLength: 2000 },
         gravidadeOcorrencia: {
           type: 'string',
-          title: 'Gravidade',
-          enum: ['LEVE', 'MODERADA', 'GRAVE', 'GRAVISSIMA'],
-          enumNames: ['Leve', 'Moderada', 'Grave', 'Gravíssima']
+          title: 'Gravidade da Ocorrência',
+          enum: ['LEVE', 'MODERADA', 'GRAVE', 'GRAVISSIMA']
         },
-        responsavelNotificado: { type: 'boolean', title: 'Responsável Notificado', default: false },
-        medidaTomada: { type: 'string', title: 'Medida Tomada', maxLength: 500 },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
+
+        // ========== BLOCO 7: PROFISSIONAL E MEDIDAS ==========
+        professorRelator: { type: 'string', title: 'Professor/Servidor Relator', minLength: 3, maxLength: 200 },
+        testemunhas: { type: 'string', title: 'Testemunhas (nomes)', maxLength: 500 },
+        medidaTomada: { type: 'string', title: 'Medida Disciplinar Tomada', maxLength: 500 },
+        responsavelNotificado: { type: 'boolean', title: 'Responsável Foi Notificado?', default: false },
+        dataNotificacao: { type: 'string', format: 'date', title: 'Data da Notificação ao Responsável' },
+        meioNotificacao: { type: 'string', title: 'Meio de Notificação', enum: ['Telefone', 'E-mail', 'Presencial', 'Carta', 'Outro'] },
+
+        // ========== BLOCO 8: ENCAMINHAMENTOS ==========
+        encaminhamentoPsicologico: { type: 'boolean', title: 'Encaminhado para Psicólogo Escolar?', default: false },
+        encaminhamentoConselhoTutelar: { type: 'boolean', title: 'Encaminhado ao Conselho Tutelar?', default: false },
+        acionamentoPolicia: { type: 'boolean', title: 'Houve Acionamento Policial?', default: false },
+        boletimOcorrencia: { type: 'string', title: 'Número do Boletim de Ocorrência (se houver)', maxLength: 50 },
+
+        // ========== BLOCO 9: OBSERVAÇÕES ==========
+        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 1000 }
       },
-      required: ['nomeAluno', 'unidadeEscolar', 'serie', 'tipoOcorrencia', 'dataOcorrencia', 'localOcorrencia', 'descricaoOcorrencia', 'professorRelator', 'gravidadeOcorrencia']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'nomeAluno', 'dataNascimentoAluno', 'numeroMatricula', 'unidadeEscolar', 'serie', 'turma', 'turno',
+        'tipoOcorrencia', 'dataOcorrencia', 'horaOcorrencia', 'localOcorrencia', 'descricaoOcorrencia',
+        'gravidadeOcorrencia', 'professorRelator'
+      ]
     }
   },
   {
@@ -1421,24 +1470,70 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
-        nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
-        cpfAluno: { type: 'string', title: 'CPF do Aluno', pattern: '^\\d{11}$' },
-        unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE (RESPONSÁVEL) ==========
+        nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Solicitante' },
+
+        // ========== BLOCO 2: CONTATO DO SOLICITANTE ==========
+        email: { type: 'string', format: 'email', title: 'E-mail do Solicitante' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO DO SOLICITANTE ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES DO SOLICITANTE ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe do Solicitante', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: VÍNCULO COM O ALUNO ==========
+        vinculoComAluno: { type: 'string', title: 'Vínculo com o Aluno', enum: ['Próprio Aluno (maior de idade)', 'Pai', 'Mãe', 'Avô/Avó', 'Tio/Tia', 'Irmão(ã) maior', 'Tutor Legal', 'Procurador', 'Outro'] },
+        possuiProcuracao: { type: 'boolean', title: 'Possui Procuração? (se não for responsável direto)', default: false },
+
+        // ========== BLOCO 6: DADOS DO ALUNO ==========
+        nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
+        cpfAluno: { type: 'string', title: 'CPF do Aluno (se possuir)', pattern: '^\\d{11}$' },
+        dataNascimentoAluno: { type: 'string', format: 'date', title: 'Data de Nascimento do Aluno' },
+        numeroMatricula: { type: 'string', title: 'Número da Matrícula', maxLength: 50 },
+        unidadeEscolar: { type: 'string', title: 'Unidade Escolar onde estudou/estuda', minLength: 3, maxLength: 200 },
+
+        // ========== BLOCO 7: DADOS DO DOCUMENTO SOLICITADO ==========
         tipoDocumento: {
           type: 'string',
           title: 'Tipo de Documento',
-          enum: ['Histórico Escolar', 'Declaração de Matrícula', 'Declaração de Conclusão', 'Certificado de Conclusão', 'Boletim Escolar', 'Declaração de Frequência', 'Transferência', 'Outro'],
-          enumNames: ['Histórico Escolar', 'Declaração de Matrícula', 'Declaração de Conclusão', 'Certificado de Conclusão', 'Boletim Escolar', 'Declaração de Frequência', 'Transferência', 'Outro']
+          enum: ['Histórico Escolar', 'Declaração de Matrícula', 'Declaração de Conclusão', 'Certificado de Conclusão', 'Boletim Escolar', 'Declaração de Frequência', 'Transferência', 'Outro']
         },
+        outroTipoDocumento: { type: 'string', title: 'Especifique o Tipo de Documento (se Outro)', maxLength: 200 },
         anoLetivo: { type: 'string', title: 'Ano Letivo', pattern: '^\\d{4}$' },
+        serieAnoReferencia: { type: 'string', title: 'Série/Ano de Referência', maxLength: 50 },
+        periodoReferencia: { type: 'string', title: 'Período de Referência (se aplicável)', maxLength: 100 },
+
+        // ========== BLOCO 8: FINALIDADE E ENTREGA ==========
         finalidade: { type: 'string', title: 'Finalidade do Documento', minLength: 10, maxLength: 300 },
-        urgente: { type: 'boolean', title: 'Urgente', default: false },
-        nomeResponsavelSolicitacao: { type: 'string', title: 'Nome do Responsável pela Solicitação', minLength: 3, maxLength: 200 },
-        cpfResponsavel: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-        telefoneContato: { type: 'string', title: 'Telefone de Contato', pattern: '^\\d{10,11}$' },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        instituicaoDestino: { type: 'string', title: 'Instituição de Destino (se aplicável)', maxLength: 200 },
+        urgente: { type: 'boolean', title: 'Solicitação Urgente?', default: false },
+        motivoUrgencia: { type: 'string', title: 'Motivo da Urgência (se urgente)', maxLength: 300 },
+        formaEntrega: { type: 'string', title: 'Forma de Entrega Desejada', enum: ['Retirada Presencial', 'Correios (sedex)', 'E-mail (se permitido)', 'Outra'] },
+        enderecoEntrega: { type: 'string', title: 'Endereço para Entrega (se diferente do cadastro)', maxLength: 300 },
+
+        // ========== BLOCO 9: OBSERVAÇÕES ==========
+        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 500 }
       },
-      required: ['nomeAluno', 'unidadeEscolar', 'tipoDocumento', 'finalidade', 'nomeResponsavelSolicitacao', 'cpfResponsavel', 'telefoneContato']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'vinculoComAluno', 'nomeAluno', 'dataNascimentoAluno', 'unidadeEscolar',
+        'tipoDocumento', 'anoLetivo', 'finalidade', 'formaEntrega'
+      ]
     }
   },
   {
@@ -1457,31 +1552,82 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
-        nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
+        nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Responsável' },
+
+        // ========== BLOCO 2: CONTATO DO RESPONSÁVEL ==========
+        email: { type: 'string', format: 'email', title: 'E-mail do Responsável' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO ATUAL DO RESPONSÁVEL ==========
+        cep: { type: 'string', title: 'CEP Atual', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida Atual', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número Atual', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro Atual', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES DO RESPONSÁVEL ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe do Responsável', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: DADOS DO ALUNO ==========
+        nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
+        dataNascimentoAluno: { type: 'string', format: 'date', title: 'Data de Nascimento do Aluno' },
+        cpfAluno: { type: 'string', title: 'CPF do Aluno (se possuir)', pattern: '^\\d{11}$' },
+        numeroMatricula: { type: 'string', title: 'Número da Matrícula', maxLength: 50 },
+        grauParentesco: { type: 'string', title: 'Grau de Parentesco', enum: ['Pai', 'Mãe', 'Avô/Avó', 'Tio/Tia', 'Irmão(ã) maior', 'Tutor Legal', 'Outro'] },
+
+        // ========== BLOCO 6: ESCOLA ATUAL ==========
         unidadeEscolarAtual: { type: 'string', title: 'Unidade Escolar Atual', minLength: 3, maxLength: 200 },
         serieAtual: { type: 'string', title: 'Série/Ano Atual', maxLength: 50 },
+        turmaAtual: { type: 'string', title: 'Turma Atual', maxLength: 50 },
+        turnoAtual: { type: 'string', title: 'Turno Atual', enum: ['Matutino', 'Vespertino', 'Integral', 'Noturno'] },
+        anoLetivoAtual: { type: 'string', title: 'Ano Letivo Atual', pattern: '^\\d{4}$' },
+
+        // ========== BLOCO 7: ESCOLA DE DESTINO ==========
         unidadeEscolarDestino: { type: 'string', title: 'Unidade Escolar de Destino', minLength: 3, maxLength: 200 },
-        turnoDesejado: {
-          type: 'string',
-          title: 'Turno Desejado',
-          enum: ['MATUTINO', 'VESPERTINO', 'INTEGRAL', 'NOTURNO'],
-          enumNames: ['Matutino', 'Vespertino', 'Integral', 'Noturno']
-        },
+        turnoDesejado: { type: 'string', title: 'Turno Desejado', enum: ['Matutino', 'Vespertino', 'Integral', 'Noturno'] },
+        dataDesejadaTransferencia: { type: 'string', format: 'date', title: 'Data Desejada para Transferência' },
+
+        // ========== BLOCO 8: MOTIVO DA TRANSFERÊNCIA ==========
         motivoTransferencia: {
           type: 'string',
           title: 'Motivo da Transferência',
-          enum: ['Mudança de Endereço', 'Problemas de Adaptação', 'Proximidade da Residência', 'Problemas de Transporte', 'Outro'],
-          enumNames: ['Mudança de Endereço', 'Problemas de Adaptação', 'Proximidade da Residência', 'Problemas de Transporte', 'Outro']
+          enum: ['Mudança de Endereço', 'Problemas de Adaptação', 'Proximidade da Residência', 'Problemas de Transporte', 'Mudança de Turno', 'Outro']
         },
-        descricaoMotivo: { type: 'string', title: 'Descrição do Motivo', minLength: 20, maxLength: 500 },
-        nomeResponsavel: { type: 'string', title: 'Nome do Responsável', minLength: 3, maxLength: 200 },
-        cpfResponsavel: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-        telefoneResponsavel: { type: 'string', title: 'Telefone do Responsável', pattern: '^\\d{10,11}$' },
-        novoEndereco: { type: 'string', title: 'Novo Endereço', minLength: 10, maxLength: 300 },
-        dataDesejadaTransferencia: { type: 'string', format: 'date', title: 'Data Desejada para Transferência' },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        descricaoMotivo: { type: 'string', title: 'Descrição Detalhada do Motivo', minLength: 20, maxLength: 500 },
+
+        // ========== BLOCO 9: NOVO ENDEREÇO (SE MUDANÇA) ==========
+        mudouEndereco: { type: 'boolean', title: 'Houve Mudança de Endereço?', default: false },
+        novoCep: { type: 'string', title: 'Novo CEP (se mudança)', pattern: '^\\d{8}$' },
+        novoLogradouro: { type: 'string', title: 'Nova Rua/Avenida (se mudança)', maxLength: 200 },
+        novoNumero: { type: 'string', title: 'Novo Número (se mudança)', maxLength: 10 },
+        novoComplemento: { type: 'string', title: 'Novo Complemento (se mudança)', maxLength: 100 },
+        novoBairro: { type: 'string', title: 'Novo Bairro (se mudança)', maxLength: 100 },
+        novoPontoReferencia: { type: 'string', title: 'Novo Ponto de Referência (se mudança)', maxLength: 200 },
+
+        // ========== BLOCO 10: NECESSIDADES ESPECIAIS ==========
+        possuiNecessidadesEspeciais: { type: 'boolean', title: 'Aluno Possui Necessidades Especiais?', default: false },
+        descricaoNecessidades: { type: 'string', title: 'Descrição das Necessidades Especiais', maxLength: 500 },
+
+        // ========== BLOCO 11: OBSERVAÇÕES ==========
+        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 500 }
       },
-      required: ['nomeAluno', 'unidadeEscolarAtual', 'serieAtual', 'unidadeEscolarDestino', 'turnoDesejado', 'motivoTransferencia', 'descricaoMotivo', 'nomeResponsavel', 'cpfResponsavel', 'telefoneResponsavel']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'nomeAluno', 'dataNascimentoAluno', 'numeroMatricula', 'grauParentesco',
+        'unidadeEscolarAtual', 'serieAtual', 'turnoAtual', 'anoLetivoAtual',
+        'unidadeEscolarDestino', 'turnoDesejado', 'dataDesejadaTransferencia',
+        'motivoTransferencia', 'descricaoMotivo'
+      ]
     }
   },
   {
@@ -1499,20 +1645,55 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
-        nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
-        matricula: { type: 'string', title: 'Matrícula', minLength: 5, maxLength: 50 },
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE ==========
+        nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Solicitante' },
+
+        // ========== BLOCO 2: CONTATO DO SOLICITANTE ==========
+        email: { type: 'string', format: 'email', title: 'E-mail do Solicitante' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO DO SOLICITANTE ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES DO SOLICITANTE ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe do Solicitante', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: VÍNCULO COM O ALUNO ==========
+        vinculoComAluno: { type: 'string', title: 'Vínculo com o Aluno', enum: ['Próprio Aluno (maior)', 'Pai', 'Mãe', 'Avô/Avó', 'Tio/Tia', 'Irmão(ã)', 'Tutor Legal', 'Outro'] },
+
+        // ========== BLOCO 6: DADOS DO ALUNO ==========
+        nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
+        matricula: { type: 'string', title: 'Número da Matrícula', minLength: 5, maxLength: 50 },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
         serie: { type: 'string', title: 'Série/Ano', maxLength: 50 },
         turma: { type: 'string', title: 'Turma', maxLength: 50 },
+
+        // ========== BLOCO 7: CONSULTA ==========
         periodoConsulta: {
           type: 'string',
           title: 'Período da Consulta',
-          enum: ['BIMESTRE_1', 'BIMESTRE_2', 'BIMESTRE_3', 'BIMESTRE_4', 'ANO_COMPLETO'],
-          enumNames: ['1º Bimestre', '2º Bimestre', '3º Bimestre', '4º Bimestre', 'Ano Completo']
+          enum: ['BIMESTRE_1', 'BIMESTRE_2', 'BIMESTRE_3', 'BIMESTRE_4', 'ANO_COMPLETO']
         },
         anoLetivo: { type: 'string', title: 'Ano Letivo', pattern: '^\\d{4}$' }
       },
-      required: ['nomeAluno', 'matricula', 'unidadeEscolar', 'serie', 'periodoConsulta', 'anoLetivo']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'vinculoComAluno', 'nomeAluno', 'matricula', 'unidadeEscolar', 'serie',
+        'periodoConsulta', 'anoLetivo'
+      ]
     }
   },
   {
@@ -1530,21 +1711,56 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
-        nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
-        matricula: { type: 'string', title: 'Matrícula', minLength: 5, maxLength: 50 },
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE ==========
+        nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Solicitante' },
+
+        // ========== BLOCO 2: CONTATO DO SOLICITANTE ==========
+        email: { type: 'string', format: 'email', title: 'E-mail do Solicitante' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO DO SOLICITANTE ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES DO SOLICITANTE ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe do Solicitante', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: VÍNCULO COM O ALUNO ==========
+        vinculoComAluno: { type: 'string', title: 'Vínculo com o Aluno', enum: ['Próprio Aluno (maior)', 'Pai', 'Mãe', 'Avô/Avó', 'Tio/Tia', 'Irmão(ã)', 'Tutor Legal', 'Outro'] },
+
+        // ========== BLOCO 6: DADOS DO ALUNO ==========
+        nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
+        matricula: { type: 'string', title: 'Número da Matrícula', minLength: 5, maxLength: 50 },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
         serie: { type: 'string', title: 'Série/Ano', maxLength: 50 },
         turma: { type: 'string', title: 'Turma', maxLength: 50 },
+
+        // ========== BLOCO 7: CONSULTA ==========
         periodoConsulta: {
           type: 'string',
           title: 'Período da Consulta',
-          enum: ['BIMESTRE_1', 'BIMESTRE_2', 'BIMESTRE_3', 'BIMESTRE_4', 'ANO_COMPLETO'],
-          enumNames: ['1º Bimestre', '2º Bimestre', '3º Bimestre', '4º Bimestre', 'Ano Completo']
+          enum: ['BIMESTRE_1', 'BIMESTRE_2', 'BIMESTRE_3', 'BIMESTRE_4', 'ANO_COMPLETO']
         },
         anoLetivo: { type: 'string', title: 'Ano Letivo', pattern: '^\\d{4}$' },
         disciplinaEspecifica: { type: 'string', title: 'Disciplina Específica (opcional)', maxLength: 100 }
       },
-      required: ['nomeAluno', 'matricula', 'unidadeEscolar', 'serie', 'periodoConsulta', 'anoLetivo']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'vinculoComAluno', 'nomeAluno', 'matricula', 'unidadeEscolar', 'serie',
+        'periodoConsulta', 'anoLetivo'
+      ]
     }
   },
   {
