@@ -76,6 +76,13 @@ interface CitizenData {
   name: string;
   email: string;
   phone?: string;
+  phoneSecondary?: string;
+  birthDate?: string;
+  rg?: string;
+  motherName?: string;
+  maritalStatus?: string;
+  occupation?: string;
+  familyIncome?: string;
   address?: {
     street?: string;
     number?: string;
@@ -84,6 +91,7 @@ interface CitizenData {
     city?: string;
     state?: string;
     zipCode?: string;
+    pontoReferencia?: string;
   };
   verificationStatus: 'PENDING' | 'VERIFIED' | 'GOLD' | 'REJECTED';
   createdAt: string;
@@ -188,6 +196,108 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   'cpf_responsavel': (c) => c.cpf,
   'cpf_proprietario': (c) => c.cpf,
   'cpf_declarante': (c) => c.cpf,
+
+  // ============================================================================
+  // RG - Todas as variações
+  // ============================================================================
+  'rg': (c) => c.rg || '',
+  'identidade': (c) => c.rg || '',
+  'carteira_identidade': (c) => c.rg || '',
+  'numero_rg': (c) => c.rg || '',
+  'rg_numero': (c) => c.rg || '',
+  'applicantrg': (c) => c.rg || '',
+  'requesterrg': (c) => c.rg || '',
+  'reporterrg': (c) => c.rg || '',
+  'ownerrg': (c) => c.rg || '',
+  'responsiblerg': (c) => c.rg || '',
+  'userrg': (c) => c.rg || '',
+  'studentrg': (c) => c.rg || '',
+  'parentrg': (c) => c.rg || '',
+  'participantrg': (c) => c.rg || '',
+
+  // ============================================================================
+  // DATA DE NASCIMENTO - Todas as variações
+  // ============================================================================
+  'datanascimento': (c) => c.birthDate || '',
+  'data_nascimento': (c) => c.birthDate || '',
+  'birthdate': (c) => c.birthDate || '',
+  'birth_date': (c) => c.birthDate || '',
+  'nascimento': (c) => c.birthDate || '',
+  'dtnascimento': (c) => c.birthDate || '',
+  'dt_nascimento': (c) => c.birthDate || '',
+  'dateofbirth': (c) => c.birthDate || '',
+  'date_of_birth': (c) => c.birthDate || '',
+  'applicantbirthdate': (c) => c.birthDate || '',
+  'requesterbirthdate': (c) => c.birthDate || '',
+  'studentbirthdate': (c) => c.birthDate || '',
+  'participantbirthdate': (c) => c.birthDate || '',
+
+  // ============================================================================
+  // NOME DA MÃE - Todas as variações
+  // ============================================================================
+  'nomemae': (c) => c.motherName || '',
+  'nome_mae': (c) => c.motherName || '',
+  'mothername': (c) => c.motherName || '',
+  'mother_name': (c) => c.motherName || '',
+  'mae': (c) => c.motherName || '',
+  'nome_da_mae': (c) => c.motherName || '',
+  'nomedamae': (c) => c.motherName || '',
+  'nomecompletomae': (c) => c.motherName || '',
+  'nome_completo_mae': (c) => c.motherName || '',
+  'filiacao_materna': (c) => c.motherName || '',
+  'filiacaomaterna': (c) => c.motherName || '',
+
+  // ============================================================================
+  // ESTADO CIVIL - Todas as variações
+  // ============================================================================
+  'estadocivil': (c) => c.maritalStatus || '',
+  'estado_civil': (c) => c.maritalStatus || '',
+  'maritalstatus': (c) => c.maritalStatus || '',
+  'marital_status': (c) => c.maritalStatus || '',
+  'civilstatus': (c) => c.maritalStatus || '',
+  'civil_status': (c) => c.maritalStatus || '',
+
+  // ============================================================================
+  // PROFISSÃO/OCUPAÇÃO - Todas as variações
+  // ============================================================================
+  'profissao': (c) => c.occupation || '',
+  'ocupacao': (c) => c.occupation || '',
+  'occupation': (c) => c.occupation || '',
+  'profession': (c) => c.occupation || '',
+  'atividade': (c) => c.occupation || '',
+  'atividade_profissional': (c) => c.occupation || '',
+  'atividadeprofissional': (c) => c.occupation || '',
+  'cargo': (c) => c.occupation || '',
+
+  // ============================================================================
+  // RENDA FAMILIAR - Todas as variações
+  // ============================================================================
+  'rendafamiliar': (c) => c.familyIncome || '',
+  'renda_familiar': (c) => c.familyIncome || '',
+  'familyincome': (c) => c.familyIncome || '',
+  'family_income': (c) => c.familyIncome || '',
+  'renda': (c) => c.familyIncome || '',
+  'renda_mensal': (c) => c.familyIncome || '',
+  'rendamensal': (c) => c.familyIncome || '',
+  'income': (c) => c.familyIncome || '',
+
+  // ============================================================================
+  // TELEFONE SECUNDÁRIO - Todas as variações
+  // ============================================================================
+  'telefonesecundario': (c) => c.phoneSecondary || '',
+  'telefone_secundario': (c) => c.phoneSecondary || '',
+  'secondaryphone': (c) => c.phoneSecondary || '',
+  'secondary_phone': (c) => c.phoneSecondary || '',
+  'telefone2': (c) => c.phoneSecondary || '',
+  'telefone_2': (c) => c.phoneSecondary || '',
+  'phone2': (c) => c.phoneSecondary || '',
+  'phone_2': (c) => c.phoneSecondary || '',
+  'celular2': (c) => c.phoneSecondary || '',
+  'celular_2': (c) => c.phoneSecondary || '',
+  'telefone_alternativo': (c) => c.phoneSecondary || '',
+  'telefonealternativo': (c) => c.phoneSecondary || '',
+  'alternativephone': (c) => c.phoneSecondary || '',
+  'alternative_phone': (c) => c.phoneSecondary || '',
 
   // ============================================================================
   // EMAIL - Todas as variações
@@ -384,6 +494,14 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   'codigo_postal': (c) => c.address?.zipCode || '',
   'endereco_cep': (c) => c.address?.zipCode || '',
   'postalcode': (c) => c.address?.zipCode || '',
+
+  // Ponto de Referência
+  'pontoreferencia': (c) => c.address?.pontoReferencia || '',
+  'ponto_referencia': (c) => c.address?.pontoReferencia || '',
+  'referencepoint': (c) => c.address?.pontoReferencia || '',
+  'reference_point': (c) => c.address?.pontoReferencia || '',
+  'referencia': (c) => c.address?.pontoReferencia || '',
+  'endereco_referencia': (c) => c.address?.pontoReferencia || '',
 };
 
 /**
@@ -476,7 +594,7 @@ function normalizeFieldId(fieldId: string): string {
  * 2. Identifica palavras-chave no ID normalizado
  * 3. Retorna o tipo de dado detectado
  */
-function detectFieldTypeSemantica(normalizedId: string): 'name' | 'cpf' | 'email' | 'phone' | 'address' | null {
+function detectFieldTypeSemantica(normalizedId: string): 'name' | 'cpf' | 'rg' | 'birthdate' | 'mothername' | 'maritalstatus' | 'occupation' | 'familyincome' | 'email' | 'phone' | 'phonesecondary' | 'address' | null {
   // Padrões de NOME (qualquer campo que termine com "name" ou contenha indicadores de nome)
   if (
     normalizedId.endsWith('name') ||
@@ -550,6 +668,76 @@ function detectFieldTypeSemantica(normalizedId: string): 'name' | 'cpf' | 'email
     return 'address';
   }
 
+  // Padrões de RG
+  if (
+    normalizedId.includes('rg') ||
+    normalizedId.includes('identidade') ||
+    (normalizedId.includes('carteira') && normalizedId.includes('identidade'))
+  ) {
+    return 'rg';
+  }
+
+  // Padrões de DATA DE NASCIMENTO
+  if (
+    normalizedId.includes('nascimento') ||
+    normalizedId.includes('birthdate') ||
+    normalizedId.includes('birth_date') ||
+    normalizedId.includes('dateofbirth') ||
+    normalizedId.includes('date_of_birth') ||
+    (normalizedId.includes('data') && normalizedId.includes('nasc'))
+  ) {
+    return 'birthdate';
+  }
+
+  // Padrões de NOME DA MÃE
+  if (
+    normalizedId.includes('mae') ||
+    normalizedId.includes('mother') ||
+    normalizedId.includes('filiacao') && normalizedId.includes('materna')
+  ) {
+    return 'mothername';
+  }
+
+  // Padrões de ESTADO CIVIL
+  if (
+    normalizedId.includes('estadocivil') ||
+    normalizedId.includes('estado_civil') ||
+    normalizedId.includes('marital') ||
+    normalizedId.includes('civil') && normalizedId.includes('status')
+  ) {
+    return 'maritalstatus';
+  }
+
+  // Padrões de PROFISSÃO/OCUPAÇÃO
+  if (
+    normalizedId.includes('profissao') ||
+    normalizedId.includes('ocupacao') ||
+    normalizedId.includes('occupation') ||
+    normalizedId.includes('profession') ||
+    normalizedId.includes('atividade') && normalizedId.includes('profissional')
+  ) {
+    return 'occupation';
+  }
+
+  // Padrões de RENDA FAMILIAR
+  if (
+    normalizedId.includes('renda') ||
+    normalizedId.includes('income') ||
+    normalizedId.includes('familiar') && normalizedId.includes('renda')
+  ) {
+    return 'familyincome';
+  }
+
+  // Padrões de TELEFONE SECUNDÁRIO
+  if (
+    (normalizedId.includes('telefone') || normalizedId.includes('phone')) &&
+    (normalizedId.includes('secundario') || normalizedId.includes('secondary') ||
+     normalizedId.includes('2') || normalizedId.includes('alternativo') ||
+     normalizedId.includes('alternative'))
+  ) {
+    return 'phonesecondary';
+  }
+
   return null;
 }
 
@@ -570,11 +758,32 @@ function trySemanticMapping(
     case 'cpf':
       return citizenData.cpf;
 
+    case 'rg':
+      return citizenData.rg || '';
+
+    case 'birthdate':
+      return citizenData.birthDate || '';
+
+    case 'mothername':
+      return citizenData.motherName || '';
+
+    case 'maritalstatus':
+      return citizenData.maritalStatus || '';
+
+    case 'occupation':
+      return citizenData.occupation || '';
+
+    case 'familyincome':
+      return citizenData.familyIncome || '';
+
     case 'email':
       return citizenData.email;
 
     case 'phone':
       return citizenData.phone || '';
+
+    case 'phonesecondary':
+      return citizenData.phoneSecondary || '';
 
     case 'address':
       // Para endereço, retorna o endereço completo formatado
