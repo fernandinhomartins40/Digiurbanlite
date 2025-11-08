@@ -41,13 +41,21 @@ export default function PerfilPage() {
     name: '',
     email: '',
     phone: '',
+    phoneSecondary: '',
+    birthDate: '',
+    rg: '',
+    motherName: '',
+    maritalStatus: '',
+    occupation: '',
+    familyIncome: '',
     zipCode: '',
     street: '',
     number: '',
     complement: '',
     neighborhood: '',
     city: '',
-    state: ''
+    state: '',
+    referencePoint: ''
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -63,15 +71,23 @@ export default function PerfilPage() {
         name: citizen.name || '',
         email: citizen.email || '',
         phone: citizen.phone || '',
-        zipCode: citizen.address?.zipCode || '',
-        street: citizen.address?.street || '',
-        number: citizen.address?.number || '',
-        complement: citizen.address?.complement || '',
-        neighborhood: citizen.address?.neighborhood || '',
-        city: citizen.address?.city || '',
-        state: citizen.address?.state || ''
+        phoneSecondary: citizen.phoneSecondary || '',
+        birthDate: citizen.birthDate ? new Date(citizen.birthDate).toISOString().split('T')[0] : '',
+        rg: citizen.rg || '',
+        motherName: citizen.motherName || '',
+        maritalStatus: citizen.maritalStatus || '',
+        occupation: citizen.occupation || '',
+        familyIncome: citizen.familyIncome || '',
+        zipCode: citizen.address?.cep || citizen.address?.zipCode || '',
+        street: citizen.address?.logradouro || citizen.address?.street || '',
+        number: citizen.address?.numero || citizen.address?.number || '',
+        complement: citizen.address?.complemento || citizen.address?.complement || '',
+        neighborhood: citizen.address?.bairro || citizen.address?.neighborhood || '',
+        city: citizen.address?.cidade || citizen.address?.city || '',
+        state: citizen.address?.uf || citizen.address?.state || '',
+        referencePoint: citizen.address?.pontoReferencia || citizen.address?.referencePoint || ''
       });
-      setCepInputValue(citizen.address?.zipCode || '');
+      setCepInputValue(citizen.address?.cep || citizen.address?.zipCode || '');
     }
   }, [citizen]);
 
@@ -120,14 +136,22 @@ export default function PerfilPage() {
         name: formData.name,
         email: formData.email,
         phone: formData.phone || undefined,
+        phoneSecondary: formData.phoneSecondary || undefined,
+        birthDate: formData.birthDate ? new Date(formData.birthDate).toISOString() : undefined,
+        rg: formData.rg || undefined,
+        motherName: formData.motherName || undefined,
+        maritalStatus: formData.maritalStatus || undefined,
+        occupation: formData.occupation || undefined,
+        familyIncome: formData.familyIncome || undefined,
         address: {
-          zipCode: formData.zipCode || '',
-          street: formData.street || '',
-          number: formData.number || '',
-          complement: formData.complement || '',
-          neighborhood: formData.neighborhood || '',
-          city: formData.city || '',
-          state: formData.state || '',
+          cep: formData.zipCode || '',
+          logradouro: formData.street || '',
+          numero: formData.number || '',
+          complemento: formData.complement || '',
+          bairro: formData.neighborhood || '',
+          cidade: formData.city || '',
+          uf: formData.state || '',
+          pontoReferencia: formData.referencePoint || ''
         }
       };
 
@@ -309,12 +333,151 @@ export default function PerfilPage() {
                           id="phone"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="(00) 00000-0000"
                         />
                       ) : (
                         <div className="flex items-center gap-2 text-gray-900">
                           <Phone className="h-4 w-4 text-gray-400" />
                           {citizen?.phone || '-'}
                         </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phoneSecondary">Telefone Secundário</Label>
+                    <div className="mt-1">
+                      {isEditing ? (
+                        <Input
+                          id="phoneSecondary"
+                          value={formData.phoneSecondary}
+                          onChange={(e) => setFormData({ ...formData, phoneSecondary: e.target.value })}
+                          placeholder="(00) 00000-0000"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-900">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                          {citizen?.phoneSecondary || '-'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="birthDate">Data de Nascimento</Label>
+                    <div className="mt-1">
+                      {isEditing ? (
+                        <Input
+                          id="birthDate"
+                          type="date"
+                          value={formData.birthDate}
+                          onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-900">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                          {citizen?.birthDate ? new Date(citizen.birthDate).toLocaleDateString('pt-BR') : '-'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="rg">RG</Label>
+                    <div className="mt-1">
+                      {isEditing ? (
+                        <Input
+                          id="rg"
+                          value={formData.rg}
+                          onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
+                          placeholder="00.000.000-0"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-900">
+                          <Shield className="h-4 w-4 text-gray-400" />
+                          {citizen?.rg || '-'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="motherName">Nome da Mãe</Label>
+                    <div className="mt-1">
+                      {isEditing ? (
+                        <Input
+                          id="motherName"
+                          value={formData.motherName}
+                          onChange={(e) => setFormData({ ...formData, motherName: e.target.value })}
+                          placeholder="Nome completo da mãe"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-900">
+                          <User className="h-4 w-4 text-gray-400" />
+                          {citizen?.motherName || '-'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="maritalStatus">Estado Civil</Label>
+                    <div className="mt-1">
+                      {isEditing ? (
+                        <select
+                          id="maritalStatus"
+                          value={formData.maritalStatus}
+                          onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="Solteiro(a)">Solteiro(a)</option>
+                          <option value="Casado(a)">Casado(a)</option>
+                          <option value="Divorciado(a)">Divorciado(a)</option>
+                          <option value="Viúvo(a)">Viúvo(a)</option>
+                          <option value="União Estável">União Estável</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-900">{citizen?.maritalStatus || '-'}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="occupation">Profissão/Ocupação</Label>
+                    <div className="mt-1">
+                      {isEditing ? (
+                        <Input
+                          id="occupation"
+                          value={formData.occupation}
+                          onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+                          placeholder="Sua profissão ou ocupação"
+                        />
+                      ) : (
+                        <p className="text-gray-900">{citizen?.occupation || '-'}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="familyIncome">Renda Familiar</Label>
+                    <div className="mt-1">
+                      {isEditing ? (
+                        <select
+                          id="familyIncome"
+                          value={formData.familyIncome}
+                          onChange={(e) => setFormData({ ...formData, familyIncome: e.target.value })}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <option value="">Selecione...</option>
+                          <option value="Até 1 salário mínimo">Até 1 salário mínimo</option>
+                          <option value="1 a 2 salários mínimos">1 a 2 salários mínimos</option>
+                          <option value="2 a 3 salários mínimos">2 a 3 salários mínimos</option>
+                          <option value="3 a 5 salários mínimos">3 a 5 salários mínimos</option>
+                          <option value="Acima de 5 salários mínimos">Acima de 5 salários mínimos</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-900">{citizen?.familyIncome || '-'}</p>
                       )}
                     </div>
                   </div>
@@ -469,7 +632,27 @@ export default function PerfilPage() {
                           maxLength={2}
                         />
                       ) : (
-                        <p className="text-gray-900">{citizen?.address?.state || '-'}</p>
+                        <p className="text-gray-900">{citizen?.address?.uf || citizen?.address?.state || '-'}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Ponto de Referência */}
+                  <div className="md:col-span-2">
+                    <Label htmlFor="referencePoint">Ponto de Referência</Label>
+                    <div className="mt-1">
+                      {isEditing ? (
+                        <Input
+                          id="referencePoint"
+                          value={formData.referencePoint}
+                          onChange={(e) => setFormData({ ...formData, referencePoint: e.target.value })}
+                          placeholder="Ex: Próximo ao mercado central"
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-900">
+                          <MapPin className="h-4 w-4 text-gray-400" />
+                          {citizen?.address?.pontoReferencia || citizen?.address?.referencePoint || '-'}
+                        </div>
                       )}
                     </div>
                   </div>
