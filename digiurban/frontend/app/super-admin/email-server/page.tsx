@@ -189,7 +189,7 @@ export default function EmailServerPage() {
   const handleDeleteDomain = async (domainId: string, domainName: string) => {
     const confirmed = await confirm({
       title: 'Confirmar exclusão',
-      message: `Tem certeza que deseja excluir o domínio ${domainName}? Esta ação não pode ser desfeita.`,
+      description: `Tem certeza que deseja excluir o domínio ${domainName}? Esta ação não pode ser desfeita.`,
       confirmText: 'Excluir',
       cancelText: 'Cancelar'
     });

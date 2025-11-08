@@ -22,7 +22,6 @@ export {
   CoordinatorDashboard,
   ManagerDashboard,
   ExecutiveDashboard,
-  SuperAdminDashboard,
   DASHBOARD_COMPONENTS,
   DASHBOARD_NAMES,
   DASHBOARD_ACCESS,
