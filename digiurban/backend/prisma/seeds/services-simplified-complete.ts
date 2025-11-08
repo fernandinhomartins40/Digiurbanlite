@@ -1298,25 +1298,68 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
-        nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
+        nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Responsável' },
+
+        // ========== BLOCO 2: CONTATO DO RESPONSÁVEL ==========
+        email: { type: 'string', format: 'email', title: 'E-mail do Responsável' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO DO RESPONSÁVEL ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES DO RESPONSÁVEL ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe do Responsável', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: DADOS DO ALUNO ==========
+        nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
+        dataNascimentoAluno: { type: 'string', format: 'date', title: 'Data de Nascimento do Aluno' },
+        cpfAluno: { type: 'string', title: 'CPF do Aluno (se possuir)', pattern: '^\\d{11}$' },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
         serie: { type: 'string', title: 'Série/Ano', maxLength: 50 },
-        turno: {
-          type: 'string',
-          title: 'Turno',
-          enum: ['MATUTINO', 'VESPERTINO', 'INTEGRAL', 'NOTURNO'],
-          enumNames: ['Matutino', 'Vespertino', 'Integral', 'Noturno']
-        },
-        nomeResponsavel: { type: 'string', title: 'Nome do Responsável', minLength: 3, maxLength: 200 },
-        telefoneResponsavel: { type: 'string', title: 'Telefone do Responsável', pattern: '^\\d{10,11}$' },
-        enderecoCompleto: { type: 'string', title: 'Endereço Completo', minLength: 10, maxLength: 300 },
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência', minLength: 5, maxLength: 200 },
-        distanciaEscolaKm: { type: 'number', title: 'Distância da Escola (km)', minimum: 0 },
-        necessitaMonitor: { type: 'boolean', title: 'Necessita Monitor', default: false },
-        motivoNecessidadeMonitor: { type: 'string', title: 'Motivo da Necessidade de Monitor', maxLength: 500 },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        turno: { type: 'string', title: 'Turno', enum: ['Matutino', 'Vespertino', 'Integral', 'Noturno'] },
+        numeroMatricula: { type: 'string', title: 'Número da Matrícula', maxLength: 50 },
+
+        // ========== BLOCO 6: ENDEREÇO DE EMBARQUE ==========
+        enderecoEmbarqueCompleto: { type: 'string', title: 'Endereço Completo de Embarque', minLength: 10, maxLength: 300 },
+        pontoReferenciaEmbarque: { type: 'string', title: 'Ponto de Referência para Embarque', minLength: 5, maxLength: 200 },
+        distanciaEscolaKm: { type: 'number', title: 'Distância até a Escola (km)', minimum: 0, maximum: 100 },
+        zonaResidencia: { type: 'string', title: 'Zona de Residência', enum: ['Urbana', 'Rural'] },
+
+        // ========== BLOCO 7: NECESSIDADES ESPECIAIS ==========
+        possuiNecessidadesEspeciais: { type: 'boolean', title: 'Aluno Possui Necessidades Especiais?', default: false },
+        tipoNecessidade: { type: 'string', title: 'Tipo de Necessidade', enum: ['Cadeirante', 'Deficiência Visual', 'Deficiência Auditiva', 'Mobilidade Reduzida', 'TEA (Autismo)', 'Outra'] },
+        necessitaMonitor: { type: 'boolean', title: 'Necessita Monitor no Transporte?', default: false },
+        motivoNecessidadeMonitor: { type: 'string', title: 'Motivo/Descrição da Necessidade de Monitor', maxLength: 500 },
+        necessitaCadeiraRodas: { type: 'boolean', title: 'Necessita Transporte Adaptado (Cadeira de Rodas)?', default: false },
+
+        // ========== BLOCO 8: HORÁRIOS ==========
+        horarioEntradaEscola: { type: 'string', title: 'Horário de Entrada na Escola', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
+        horarioSaidaEscola: { type: 'string', title: 'Horário de Saída da Escola', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
+        necessitaTransporteIda: { type: 'boolean', title: 'Necessita Transporte Ida?', default: true },
+        necessitaTransporteVolta: { type: 'boolean', title: 'Necessita Transporte Volta?', default: true },
+
+        // ========== BLOCO 9: OBSERVAÇÕES ==========
+        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 500 }
       },
-      required: ['nomeAluno', 'unidadeEscolar', 'serie', 'turno', 'nomeResponsavel', 'telefoneResponsavel', 'enderecoCompleto', 'pontoReferencia']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'nomeAluno', 'dataNascimentoAluno', 'unidadeEscolar', 'serie', 'turno',
+        'enderecoEmbarqueCompleto', 'pontoReferenciaEmbarque', 'distanciaEscolaKm', 'horarioEntradaEscola'
+      ]
     }
   },
   {
@@ -1575,6 +1618,89 @@ const SOCIAL_SERVICES: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'UserCheck',
     color: '#db2777',
+    formSchema: {
+      type: 'object',
+      properties: {
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL FAMILIAR ==========
+        nome: { type: 'string', title: 'Nome Completo do Responsável Familiar', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        orgaoEmissorRG: { type: 'string', title: 'Órgão Emissor do RG', maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        sexo: { type: 'string', title: 'Sexo', enum: ['Masculino', 'Feminino'] },
+        racaCor: { type: 'string', title: 'Raça/Cor', enum: ['Branca', 'Preta', 'Parda', 'Amarela', 'Indígena'] },
+
+        // ========== BLOCO 2: FILIAÇÃO ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        nomePai: { type: 'string', title: 'Nome do Pai (se houver)', maxLength: 200 },
+
+        // ========== BLOCO 3: CONTATO ==========
+        email: { type: 'string', format: 'email', title: 'E-mail (se possuir)' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+        possuiCelular: { type: 'boolean', title: 'Possui Celular?', default: false },
+
+        // ========== BLOCO 4: ENDEREÇO ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        tipoImovel: { type: 'string', title: 'Tipo de Imóvel', enum: ['Casa', 'Apartamento', 'Cômodo', 'Barraco', 'Outros'] },
+        situacaoImovel: { type: 'string', title: 'Situação do Imóvel', enum: ['Próprio (quitado)', 'Próprio (pagando)', 'Alugado', 'Cedido', 'Ocupado', 'Outro'] },
+        valorAluguel: { type: 'number', title: 'Valor do Aluguel (se alugado)', minimum: 0 },
+
+        // ========== BLOCO 5: COMPOSIÇÃO FAMILIAR ==========
+        quantidadePessoasDomicilio: { type: 'integer', title: 'Quantidade de Pessoas no Domicílio', minimum: 1, maximum: 30 },
+        quantidadeFamilias: { type: 'integer', title: 'Quantidade de Famílias no Domicílio', minimum: 1, maximum: 10 },
+
+        // ========== BLOCO 6: SITUAÇÃO SOCIOECONÔMICA ==========
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável', 'Separado(a)'] },
+        escolaridade: { type: 'string', title: 'Escolaridade', enum: ['Analfabeto', 'Fundamental Incompleto', 'Fundamental Completo', 'Médio Incompleto', 'Médio Completo', 'Superior Incompleto', 'Superior Completo', 'Pós-graduação'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        situacaoTrabalho: { type: 'string', title: 'Situação de Trabalho', enum: ['Empregado CLT', 'Autônomo', 'Desempregado', 'Aposentado/Pensionista', 'Trabalho Informal', 'Não trabalha', 'Outro'] },
+        rendaMensal: { type: 'number', title: 'Renda Mensal Individual (R$)', minimum: 0 },
+        rendaFamiliarTotal: { type: 'number', title: 'Renda Familiar Total (R$)', minimum: 0 },
+
+        // ========== BLOCO 7: PROGRAMAS SOCIAIS ==========
+        possuiBolsaFamilia: { type: 'boolean', title: 'Já recebe Bolsa Família?', default: false },
+        nisBolsaFamilia: { type: 'string', title: 'NIS do Bolsa Família', maxLength: 20 },
+        possuiBPC: { type: 'boolean', title: 'Recebe BPC (Benefício de Prestação Continuada)?', default: false },
+        outroBeneficio: { type: 'string', title: 'Outro Benefício que Recebe', maxLength: 200 },
+
+        // ========== BLOCO 8: CONDIÇÕES DE MORADIA ==========
+        possuiAguaEncanada: { type: 'boolean', title: 'Possui Água Encanada?', default: false },
+        possuiEnergiaEletrica: { type: 'boolean', title: 'Possui Energia Elétrica?', default: false },
+        possuiEsgoto: { type: 'boolean', title: 'Possui Esgotamento Sanitário?', default: false },
+        coletaLixo: { type: 'boolean', title: 'Possui Coleta de Lixo?', default: false },
+        materialParedes: { type: 'string', title: 'Material Predominante nas Paredes', enum: ['Alvenaria', 'Madeira', 'Taipa', 'Material Aproveitado', 'Outro'] },
+        materialTelhado: { type: 'string', title: 'Material Predominante no Telhado', enum: ['Telha', 'Laje', 'Zinco', 'Material Aproveitado', 'Outro'] },
+        numeroComodos: { type: 'integer', title: 'Número de Cômodos', minimum: 1, maximum: 30 },
+
+        // ========== BLOCO 9: SAÚDE ==========
+        possuiDeficiencia: { type: 'boolean', title: 'Possui Deficiência?', default: false },
+        tipoDeficiencia: { type: 'string', title: 'Tipo de Deficiência', enum: ['Física', 'Visual', 'Auditiva', 'Intelectual', 'Múltipla', 'Outra'] },
+        possuiDoencaCronica: { type: 'boolean', title: 'Possui Doença Crônica?', default: false },
+        descricaoDoenca: { type: 'string', title: 'Descrição da Doença', maxLength: 300 },
+
+        // ========== BLOCO 10: SITUAÇÃO DE VULNERABILIDADE ==========
+        situacaoVulnerabilidade: { type: 'string', title: 'Principal Situação de Vulnerabilidade', enum: ['Extrema Pobreza', 'Desemprego', 'Violência Doméstica', 'Dependência Química', 'Situação de Rua', 'Idoso Vulnerável', 'Criança/Adolescente em Risco', 'Outro'] },
+        descricaoSituacao: { type: 'string', title: 'Descrição Detalhada da Situação', minLength: 20, maxLength: 1000 },
+        necessidadeUrgente: { type: 'boolean', title: 'Caso de Necessidade Urgente?', default: false },
+
+        // ========== BLOCO 11: OBSERVAÇÕES ==========
+        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 500 }
+      },
+      required: [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'sexo', 'racaCor',
+        'nomeMae', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro',
+        'tipoImovel', 'situacaoImovel', 'quantidadePessoasDomicilio', 'quantidadeFamilias',
+        'estadoCivil', 'escolaridade', 'situacaoTrabalho', 'rendaFamiliarTotal',
+        'situacaoVulnerabilidade', 'descricaoSituacao'
+      ]
+    }
   },
   {
     name: 'Solicitação de Benefício Social',
@@ -1589,6 +1715,69 @@ const SOCIAL_SERVICES: ServiceDefinition[] = [
     category: 'Benefícios',
     icon: 'DollarSign',
     color: '#16a34a',
+    formSchema: {
+      type: 'object',
+      properties: {
+        // ========== BLOCO 1: IDENTIFICAÇÃO ==========
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+
+        // ========== BLOCO 2: CONTATO ==========
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Sem renda', 'Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', 'Acima de 3 salários mínimos'] },
+
+        // ========== BLOCO 5: CADASTRO ÚNICO ==========
+        possuiCadUnico: { type: 'boolean', title: 'Possui Cadastro Único (CadÚnico)?', default: false },
+        nisCadUnico: { type: 'string', title: 'NIS do CadÚnico', maxLength: 20 },
+
+        // ========== BLOCO 6: TIPO DE BENEFÍCIO ==========
+        tipoBeneficio: { type: 'string', title: 'Tipo de Benefício Solicitado', enum: ['BPC (Idoso)', 'BPC (Pessoa com Deficiência)', 'Bolsa Família', 'Auxílio Emergencial', 'Cesta Básica', 'Tarifa Social de Energia', 'Outro'] },
+        outroBeneficio: { type: 'string', title: 'Outro Benefício (especificar)', maxLength: 200 },
+
+        // ========== BLOCO 7: JUSTIFICATIVA ==========
+        motivoSolicitacao: { type: 'string', title: 'Motivo da Solicitação', minLength: 20, maxLength: 1000 },
+        situacaoVulnerabilidade: { type: 'string', title: 'Situação de Vulnerabilidade', enum: ['Extrema Pobreza', 'Desemprego', 'Doença/Deficiência', 'Idoso sem Renda', 'Situação de Rua', 'Violência Doméstica', 'Outro'] },
+        urgente: { type: 'boolean', title: 'Caso Urgente?', default: false },
+
+        // ========== BLOCO 8: COMPOSIÇÃO FAMILIAR ==========
+        quantidadePessoasFamilia: { type: 'integer', title: 'Quantidade de Pessoas na Família', minimum: 1, maximum: 30 },
+        quantidadeCriancas: { type: 'integer', title: 'Quantidade de Crianças (0-12 anos)', minimum: 0, maximum: 20 },
+        quantidadeAdolescentes: { type: 'integer', title: 'Quantidade de Adolescentes (13-17 anos)', minimum: 0, maximum: 20 },
+        quantidadeIdosos: { type: 'integer', title: 'Quantidade de Idosos (60+ anos)', minimum: 0, maximum: 10 },
+        quantidadePCD: { type: 'integer', title: 'Quantidade de Pessoas com Deficiência', minimum: 0, maximum: 10 },
+
+        // ========== BLOCO 9: RENDA ==========
+        rendaFamiliarMensal: { type: 'number', title: 'Renda Familiar Mensal (R$)', minimum: 0 },
+        possuiRendaFixa: { type: 'boolean', title: 'Possui Renda Fixa?', default: false },
+        fonteRenda: { type: 'string', title: 'Principal Fonte de Renda', maxLength: 200 },
+
+        // ========== BLOCO 10: OBSERVAÇÕES ==========
+        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 500 }
+      },
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'tipoBeneficio', 'motivoSolicitacao', 'situacaoVulnerabilidade',
+        'quantidadePessoasFamilia', 'rendaFamiliarMensal'
+      ]
+    }
   },
   {
     name: 'Entrega Emergencial (Cesta Básica)',
@@ -1603,6 +1792,38 @@ const SOCIAL_SERVICES: ServiceDefinition[] = [
     category: 'Emergencial',
     icon: 'Package',
     color: '#dc2626',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Sem renda', 'Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', 'Acima de 3 salários mínimos'] },
+        tipoAjuda: { type: 'string', title: 'Tipo de Ajuda Necessária', enum: ['Cesta Básica', 'Auxílio Alimentação', 'Kit Higiene', 'Auxílio Emergencial (dinheiro)', 'Medicamentos', 'Outro'] },
+        quantidadePessoasFamilia: { type: 'integer', title: 'Quantas pessoas moram na casa?', minimum: 1, maximum: 30 },
+        quantidadeCriancas: { type: 'integer', title: 'Quantas crianças (0-12 anos)?', minimum: 0, maximum: 20 },
+        motivoSolicitacao: { type: 'string', title: 'Motivo da Solicitação Emergencial', minLength: 20, maxLength: 1000 },
+        situacaoEmergencial: { type: 'string', title: 'Situação Emergencial', enum: ['Desemprego recente', 'Doença na família', 'Perda de moradia', 'Calamidade (incêndio, enchente)', 'Fome/Extrema necessidade', 'Outro'] },
+        possuiCadUnico: { type: 'boolean', title: 'Possui CadÚnico?', default: false },
+        nisCadUnico: { type: 'string', title: 'NIS (se possuir)', maxLength: 20 },
+        urgente: { type: 'boolean', title: 'Caso URGENTE (risco de fome)?', default: false },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoAjuda', 'quantidadePessoasFamilia', 'motivoSolicitacao', 'situacaoEmergencial']
+    }
   },
   {
     name: 'Inscrição em Grupo ou Oficina Social',
