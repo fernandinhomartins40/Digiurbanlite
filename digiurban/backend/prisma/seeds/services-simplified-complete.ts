@@ -3870,6 +3870,32 @@ const PUBLIC_WORKS_SERVICES: ServiceDefinition[] = [
     category: 'Atendimento',
     icon: 'HardHat',
     color: '#f59e0b',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        motivoAtendimento: { type: 'string', title: 'Motivo do Atendimento', enum: ['Solicitação de Reparo', 'Vistoria Técnica', 'Informações sobre Obras', 'Reclamação', 'Outro'] },
+        descricaoAtendimento: { type: 'string', title: 'Descrição do Atendimento', minLength: 10, maxLength: 1000 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'motivoAtendimento', 'descricaoAtendimento']
+    }
   },
   {
     name: 'Solicitação de Reparo de Via',
@@ -3883,6 +3909,34 @@ const PUBLIC_WORKS_SERVICES: ServiceDefinition[] = [
     category: 'Manutenção',
     icon: 'Construction',
     color: '#ea580c',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        enderecoProblema: { type: 'string', title: 'Endereço do Problema', minLength: 10, maxLength: 300 },
+        tipoProblema: { type: 'string', title: 'Tipo de Problema', enum: ['Buraco', 'Afundamento', 'Rachadura', 'Pavimentação Danificada', 'Valeta', 'Outro'] },
+        descricaoProblema: { type: 'string', title: 'Descrição do Problema', minLength: 20, maxLength: 1000 },
+        tamanhoEstimado: { type: 'string', title: 'Tamanho Estimado', enum: ['Pequeno (até 1m)', 'Médio (1-3m)', 'Grande (mais de 3m)'] },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'enderecoProblema', 'tipoProblema', 'descricaoProblema']
+    }
   },
   {
     name: 'Vistoria Técnica de Obras',
@@ -3897,6 +3951,33 @@ const PUBLIC_WORKS_SERVICES: ServiceDefinition[] = [
     category: 'Vistoria',
     icon: 'ClipboardCheck',
     color: '#f97316',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        enderecoObra: { type: 'string', title: 'Endereço da Obra', minLength: 10, maxLength: 300 },
+        tipoVistoria: { type: 'string', title: 'Tipo de Vistoria', enum: ['Estrutural', 'Elétrica', 'Hidráulica', 'Pavimentação', 'Geral', 'Outro'] },
+        motivoVistoria: { type: 'string', title: 'Motivo da Vistoria', minLength: 30, maxLength: 1000 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'enderecoObra', 'tipoVistoria', 'motivoVistoria']
+    }
   },
   {
     name: 'Cadastro de Obra Pública',
@@ -3911,6 +3992,37 @@ const PUBLIC_WORKS_SERVICES: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Building2',
     color: '#fb923c',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        nomeObra: { type: 'string', title: 'Nome da Obra', minLength: 3, maxLength: 200 },
+        tipoObra: { type: 'string', title: 'Tipo de Obra', enum: ['Pavimentação', 'Edificação', 'Saneamento', 'Drenagem', 'Ponte/Viaduto', 'Praça/Parque', 'Outro'] },
+        enderecoObra: { type: 'string', title: 'Endereço da Obra', minLength: 10, maxLength: 300 },
+        descricaoObra: { type: 'string', title: 'Descrição da Obra', minLength: 50, maxLength: 1000 },
+        dataInicio: { type: 'string', format: 'date', title: 'Data de Início Prevista' },
+        dataTermino: { type: 'string', format: 'date', title: 'Data de Término Prevista' },
+        valorOrcado: { type: 'number', title: 'Valor Orçado (R$)', minimum: 0 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeObra', 'tipoObra', 'enderecoObra', 'descricaoObra', 'dataInicio', 'dataTermino']
+    }
   },
   {
     name: 'Inspeção de Obra',
@@ -3924,6 +4036,35 @@ const PUBLIC_WORKS_SERVICES: ServiceDefinition[] = [
     category: 'Inspeção',
     icon: 'Eye',
     color: '#fdba74',
+    formSchema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', title: 'Nome Completo do Fiscal', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Fiscal', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Fiscal', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        nomeObra: { type: 'string', title: 'Nome da Obra Inspecionada', maxLength: 200 },
+        dataInspecao: { type: 'string', format: 'date', title: 'Data da Inspeção' },
+        percentualConcluido: { type: 'integer', title: 'Percentual Concluído (%)', minimum: 0, maximum: 100 },
+        situacaoObra: { type: 'string', title: 'Situação da Obra', enum: ['No Prazo', 'Atrasada', 'Paralisada', 'Concluída'] },
+        relatoInspecao: { type: 'string', title: 'Relato da Inspeção', minLength: 30, maxLength: 1000 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+      },
+      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeObra', 'dataInspecao', 'situacaoObra', 'relatoInspecao']
+    }
   },
   {
     name: 'Acompanhamento de Obras',
