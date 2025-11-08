@@ -229,6 +229,69 @@ export function CameraCapture({
     setIsCameraActive(false);
   };
 
+  // Função para processar imagem com efeito de documento digitalizado
+  const processDocumentImage = (context: CanvasRenderingContext2D, width: number, height: number) => {
+    const imageData = context.getImageData(0, 0, width, height);
+    const data = imageData.data;
+
+    // Passo 1: Aumentar contraste e converter para escala de cinza
+    for (let i = 0; i < data.length; i += 4) {
+      // Converter para escala de cinza (média ponderada)
+      const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+
+      // Aplicar contraste forte (1.5x) e brilho (+20)
+      const contrast = 1.5;
+      const brightness = 20;
+      let adjusted = (gray - 128) * contrast + 128 + brightness;
+
+      // Aplicar threshold para preto e branco (estilo documento escaneado)
+      // Se for muito escuro ou muito claro, mantém; caso contrário, força preto ou branco
+      if (adjusted < 100) {
+        adjusted = 0; // Preto puro
+      } else if (adjusted > 180) {
+        adjusted = 255; // Branco puro
+      } else {
+        // Zona intermediária: força para preto ou branco baseado no threshold
+        adjusted = adjusted < 140 ? 0 : 255;
+      }
+
+      data[i] = adjusted;     // R
+      data[i + 1] = adjusted; // G
+      data[i + 2] = adjusted; // B
+      // data[i + 3] mantém alpha
+    }
+
+    // Passo 2: Aplicar sharpen (nitidez) para melhorar legibilidade do texto
+    const tempData = new Uint8ClampedArray(data);
+    const kernel = [
+      0, -1, 0,
+      -1, 5, -1,
+      0, -1, 0
+    ];
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = (y * width + x) * 4;
+
+        let sum = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const kernelIdx = (ky + 1) * 3 + (kx + 1);
+            const pixelIdx = ((y + ky) * width + (x + kx)) * 4;
+            sum += tempData[pixelIdx] * kernel[kernelIdx];
+          }
+        }
+
+        const sharpened = Math.max(0, Math.min(255, sum));
+        data[idx] = sharpened;
+        data[idx + 1] = sharpened;
+        data[idx + 2] = sharpened;
+      }
+    }
+
+    context.putImageData(imageData, 0, 0);
+  };
+
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
@@ -245,8 +308,14 @@ export function CameraCapture({
     // Desenhar frame atual do vídeo no canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Converter para imagem
-    const imageData = canvas.toDataURL('image/jpeg', 0.9);
+    // Aplicar processamento de imagem para efeito de documento digitalizado
+    // (apenas para documentos, não para fotos de perfil)
+    if (documentType !== 'foto_perfil') {
+      processDocumentImage(context, canvas.width, canvas.height);
+    }
+
+    // Converter para imagem com alta qualidade
+    const imageData = canvas.toDataURL('image/jpeg', 0.95);
     setCapturedImage(imageData);
     stopCamera();
   };
