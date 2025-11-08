@@ -107,6 +107,24 @@ interface FormField {
 }
 
 /**
+ * Função auxiliar para formatar data para input type="date" (yyyy-MM-dd)
+ */
+function formatDateForInput(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Mapeamento COMPLETO de IDs de campos para propriedades do cidadão
  * Suporta TODAS as variações de nomenclatura encontradas nos 603 campos únicos
  *
@@ -218,19 +236,19 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // DATA DE NASCIMENTO - Todas as variações
   // ============================================================================
-  'datanascimento': (c) => c.birthDate || '',
-  'data_nascimento': (c) => c.birthDate || '',
-  'birthdate': (c) => c.birthDate || '',
-  'birth_date': (c) => c.birthDate || '',
-  'nascimento': (c) => c.birthDate || '',
-  'dtnascimento': (c) => c.birthDate || '',
-  'dt_nascimento': (c) => c.birthDate || '',
-  'dateofbirth': (c) => c.birthDate || '',
-  'date_of_birth': (c) => c.birthDate || '',
-  'applicantbirthdate': (c) => c.birthDate || '',
-  'requesterbirthdate': (c) => c.birthDate || '',
-  'studentbirthdate': (c) => c.birthDate || '',
-  'participantbirthdate': (c) => c.birthDate || '',
+  'datanascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'data_nascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'birthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'birth_date': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'nascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'dtnascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'dt_nascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'dateofbirth': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'date_of_birth': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'applicantbirthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'requesterbirthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'studentbirthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'participantbirthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
 
   // ============================================================================
   // NOME DA MÃE - Todas as variações
@@ -519,7 +537,20 @@ export function prefillFormData(
     return initializeEmptyForm(fields);
   }
 
+  console.log('🔍 [PREFILL] Dados do cidadão:', {
+    name: citizenData.name,
+    cpf: citizenData.cpf,
+    rg: citizenData.rg,
+    birthDate: citizenData.birthDate,
+    motherName: citizenData.motherName,
+    maritalStatus: citizenData.maritalStatus,
+    occupation: citizenData.occupation,
+    familyIncome: citizenData.familyIncome,
+    phoneSecondary: citizenData.phoneSecondary
+  });
+
   const formData: Record<string, any> = {};
+  let prefilledCount = 0;
 
   fields.forEach(field => {
     // Normalizar o ID do campo para lowercase e remover acentos
@@ -536,6 +567,8 @@ export function prefillFormData(
       // Apenas preencher se houver valor
       if (value !== undefined && value !== null && value !== '') {
         formData[field.id] = value;
+        prefilledCount++;
+        console.log(`✅ [MAPEAMENTO DIRETO] "${field.id}" (${normalizedId}) → ${String(value).substring(0, 50)}`);
       } else {
         formData[field.id] = getDefaultValueForType(field.type);
       }
@@ -545,13 +578,17 @@ export function prefillFormData(
 
       if (semanticValue !== null && semanticValue !== undefined && semanticValue !== '') {
         formData[field.id] = semanticValue;
-        console.log(`✓ Campo "${field.id}" preenchido por detecção semântica: ${semanticValue}`);
+        prefilledCount++;
+        console.log(`✅ [SEMÂNTICO] "${field.id}" (${normalizedId}) → ${String(semanticValue).substring(0, 50)}`);
       } else {
         // 3. Inicializar vazio (campo não reconhecido)
         formData[field.id] = getDefaultValueForType(field.type);
+        console.log(`⚪ [NÃO RECONHECIDO] "${field.id}" (${normalizedId})`);
       }
     }
   });
+
+  console.log(`📊 [PREFILL] Total: ${prefilledCount}/${fields.length} campos preenchidos`);
 
   return formData;
 }
@@ -762,7 +799,7 @@ function trySemanticMapping(
       return citizenData.rg || '';
 
     case 'birthdate':
-      return citizenData.birthDate || '';
+      return citizenData.birthDate ? formatDateForInput(citizenData.birthDate) : '';
 
     case 'mothername':
       return citizenData.motherName || '';
