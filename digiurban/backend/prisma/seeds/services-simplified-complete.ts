@@ -910,22 +910,54 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE ==========
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+
+        // ========== BLOCO 2: CONTATO ==========
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: DADOS DO ATENDIMENTO ==========
         tipoAtendimento: {
           type: 'string',
           title: 'Tipo de Atendimento',
-          enum: ['Assistência Técnica', 'Orientação', 'Vistoria', 'Inscrição em Programa', 'Solicitação de Documentos', 'Reclamação', 'Outro'],
-          enumNames: ['Assistência Técnica', 'Orientação', 'Vistoria', 'Inscrição em Programa', 'Solicitação de Documentos', 'Reclamação', 'Outro']
+          enum: ['Assistência Técnica', 'Orientação', 'Vistoria', 'Inscrição em Programa', 'Solicitação de Documentos', 'Reclamação', 'Outro']
         },
         assunto: { type: 'string', title: 'Assunto', minLength: 5, maxLength: 200 },
-        descricao: { type: 'string', title: 'Descrição do Atendimento', minLength: 10, maxLength: 2000 },
+        descricao: { type: 'string', title: 'Descrição Detalhada do Atendimento', minLength: 10, maxLength: 2000 },
         dataAtendimento: { type: 'string', format: 'date', title: 'Data do Atendimento' },
+        horarioPreferencial: { type: 'string', title: 'Horário Preferencial', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
         tecnicoResponsavel: { type: 'string', title: 'Técnico Responsável', minLength: 3, maxLength: 200 },
-        propriedadeRural: { type: 'string', title: 'Propriedade Rural', maxLength: 200 },
-        atendimentoPresencial: { type: 'boolean', title: 'Atendimento Presencial', default: true },
-        resolvido: { type: 'boolean', title: 'Resolvido', default: false },
+        propriedadeRural: { type: 'string', title: 'Nome da Propriedade Rural (se aplicável)', maxLength: 200 },
+        atendimentoPresencial: { type: 'boolean', title: 'Atendimento Presencial?', default: true },
+        localAtendimento: { type: 'string', title: 'Local do Atendimento (se presencial)', maxLength: 200 },
+        urgente: { type: 'boolean', title: 'Atendimento Urgente?', default: false },
+        resolvido: { type: 'boolean', title: 'Resolvido?', default: false },
         observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['tipoAtendimento', 'assunto', 'descricao', 'dataAtendimento', 'tecnicoResponsavel']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'tipoAtendimento', 'assunto', 'descricao', 'dataAtendimento', 'tecnicoResponsavel'
+      ]
     }
   },
   {
@@ -1044,24 +1076,66 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO PARTICIPANTE ==========
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+
+        // ========== BLOCO 2: CONTATO ==========
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: FORMAÇÃO ==========
+        escolaridade: {
+          type: 'string',
+          title: 'Escolaridade',
+          enum: ['Fundamental Incompleto', 'Fundamental Completo', 'Médio Incompleto', 'Médio Completo', 'Superior Incompleto', 'Superior Completo']
+        },
+        cursoSuperior: { type: 'string', title: 'Curso Superior (se possuir)', maxLength: 200 },
+
+        // ========== BLOCO 6: DADOS DO CURSO ==========
         nomeCurso: { type: 'string', title: 'Nome do Curso', minLength: 3, maxLength: 200 },
         temaCurso: {
           type: 'string',
           title: 'Tema do Curso',
-          enum: ['Agricultura Orgânica', 'Apicultura', 'Avicultura', 'Bovinocultura', 'Fruticultura', 'Horticultura', 'Irrigação', 'Mecanização Agrícola', 'Gestão Rural', 'Associativismo', 'Agroecologia', 'Outro'],
-          enumNames: ['Agricultura Orgânica', 'Apicultura', 'Avicultura', 'Bovinocultura', 'Fruticultura', 'Horticultura', 'Irrigação', 'Mecanização Agrícola', 'Gestão Rural', 'Associativismo', 'Agroecologia', 'Outro']
+          enum: ['Agricultura Orgânica', 'Apicultura', 'Avicultura', 'Bovinocultura', 'Fruticultura', 'Horticultura', 'Irrigação', 'Mecanização Agrícola', 'Gestão Rural', 'Associativismo', 'Agroecologia', 'Outro']
         },
-        escolaridade: {
-          type: 'string',
-          title: 'Escolaridade',
-          enum: ['Fundamental Incompleto', 'Fundamental Completo', 'Médio Incompleto', 'Médio Completo', 'Superior Incompleto', 'Superior Completo'],
-          enumNames: ['Fundamental Incompleto', 'Fundamental Completo', 'Médio Incompleto', 'Médio Completo', 'Superior Incompleto', 'Superior Completo']
-        },
-        experienciaTema: { type: 'boolean', title: 'Possui Experiência no Tema', default: false },
+        outroTema: { type: 'string', title: 'Especifique o Tema (se Outro)', maxLength: 200 },
         motivoInscricao: { type: 'string', title: 'Motivo da Inscrição', minLength: 20, maxLength: 500 },
+
+        // ========== BLOCO 7: EXPERIÊNCIA RURAL ==========
+        produtorRural: { type: 'boolean', title: 'É Produtor Rural?', default: false },
+        temPropriedade: { type: 'boolean', title: 'Possui Propriedade Rural?', default: false },
+        nomePropriedade: { type: 'string', title: 'Nome da Propriedade (se possuir)', maxLength: 200 },
+        experienciaTema: { type: 'boolean', title: 'Possui Experiência no Tema?', default: false },
+        tempoExperiencia: { type: 'string', title: 'Tempo de Experiência (se possuir)', maxLength: 100 },
+
+        // ========== BLOCO 8: OBSERVAÇÕES ==========
+        necessidadesEspeciais: { type: 'boolean', title: 'Possui Necessidades Especiais?', default: false },
+        descricaoNecessidades: { type: 'string', title: 'Descrição das Necessidades Especiais', maxLength: 300 },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['nomeCurso', 'temaCurso', 'escolaridade']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'escolaridade', 'nomeCurso', 'temaCurso', 'motivoInscricao'
+      ]
     }
   },
   {
@@ -1080,24 +1154,72 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO PRODUTOR ==========
+        nome: { type: 'string', title: 'Nome Completo do Produtor', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+
+        // ========== BLOCO 2: CONTATO ==========
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: DADOS DO PROGRAMA ==========
         tipoPrograma: {
           type: 'string',
           title: 'Tipo de Programa',
-          enum: ['PRONAF', 'PAA', 'PNAE', 'Garantia-Safra', 'Seguro da Agricultura Familiar', 'Assistência Técnica', 'Programa de Sementes', 'Outro'],
-          enumNames: ['PRONAF', 'PAA (Programa de Aquisição de Alimentos)', 'PNAE (Programa Nacional de Alimentação Escolar)', 'Garantia-Safra', 'Seguro da Agricultura Familiar', 'Assistência Técnica', 'Programa de Sementes', 'Outro']
+          enum: ['PRONAF', 'PAA', 'PNAE', 'Garantia-Safra', 'Seguro da Agricultura Familiar', 'Assistência Técnica', 'Programa de Sementes', 'Outro']
         },
+        outroPrograma: { type: 'string', title: 'Especifique o Programa (se Outro)', maxLength: 200 },
+        finalidadeInscricao: { type: 'string', title: 'Finalidade/Objetivo da Inscrição', minLength: 20, maxLength: 500 },
+
+        // ========== BLOCO 6: DADOS DA PROPRIEDADE ==========
         nomePropriedade: { type: 'string', title: 'Nome da Propriedade', minLength: 3, maxLength: 200 },
-        dap: { type: 'string', title: 'Número da DAP', minLength: 5, maxLength: 50 },
+        localizacaoPropriedade: { type: 'string', title: 'Localização/Comunidade da Propriedade', maxLength: 200 },
         areaTotalHectares: { type: 'number', title: 'Área Total (Hectares)', minimum: 0 },
         areaProdutivaHectares: { type: 'number', title: 'Área Produtiva (Hectares)', minimum: 0 },
+        tipoPropriedade: { type: 'string', title: 'Tipo de Propriedade', enum: ['Própria', 'Arrendada', 'Posse', 'Comodato', 'Assentamento'] },
+
+        // ========== BLOCO 7: PRODUÇÃO ==========
         principaisProducoes: { type: 'string', title: 'Principais Produções', minLength: 5, maxLength: 500 },
-        producaoEstimada: { type: 'string', title: 'Produção Estimada (kg/ano)', maxLength: 200 },
-        rendaFamiliarMensal: { type: 'number', title: 'Renda Familiar Mensal (R$)', minimum: 0 },
+        producaoEstimada: { type: 'string', title: 'Produção Estimada (kg/ano ou unidades)', maxLength: 200 },
+        destinoProducao: { type: 'string', title: 'Destino da Produção', enum: ['Consumo próprio', 'Venda local', 'Programas governamentais', 'Cooperativa', 'Misto'] },
+
+        // ========== BLOCO 8: DOCUMENTAÇÃO RURAL ==========
+        possuiDAP: { type: 'boolean', title: 'Possui DAP Ativa?', default: false },
+        dap: { type: 'string', title: 'Número da DAP (se possuir)', minLength: 5, maxLength: 50 },
+        possuiCAR: { type: 'boolean', title: 'Possui CAR (Cadastro Ambiental Rural)?', default: false },
+        car: { type: 'string', title: 'Número do CAR (se possuir)', maxLength: 50 },
+
+        // ========== BLOCO 9: FAMÍLIA ==========
         numeroFamiliares: { type: 'integer', title: 'Número de Familiares', minimum: 1 },
-        possuiDAP: { type: 'boolean', title: 'Possui DAP Ativa', default: false },
+        rendaFamiliarMensal: { type: 'number', title: 'Renda Familiar Mensal (R$)', minimum: 0 },
+        familiaresTrabalhadores: { type: 'integer', title: 'Quantos Familiares Trabalham na Propriedade?', minimum: 0 },
+
+        // ========== BLOCO 10: OBSERVAÇÕES ==========
         observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['tipoPrograma', 'nomePropriedade', 'areaTotalHectares', 'principaisProducoes', 'numeroFamiliares']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'tipoPrograma', 'finalidadeInscricao', 'nomePropriedade',
+        'areaTotalHectares', 'principaisProducoes', 'numeroFamiliares'
+      ]
     }
   },
   {
@@ -1116,35 +1238,82 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO PROPRIETÁRIO ==========
+        nome: { type: 'string', title: 'Nome Completo do Proprietário', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Proprietário', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Proprietário', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+
+        // ========== BLOCO 2: CONTATO DO PROPRIETÁRIO ==========
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO DO PROPRIETÁRIO ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: DADOS DA PROPRIEDADE ==========
         nomePropriedade: { type: 'string', title: 'Nome da Propriedade', minLength: 3, maxLength: 200 },
+        localizacao: { type: 'string', title: 'Localização/Comunidade', minLength: 3, maxLength: 200 },
+        coordenadasGPS: { type: 'string', title: 'Coordenadas GPS (latitude, longitude)', maxLength: 100 },
         inscricaoMunicipal: { type: 'string', title: 'Inscrição Municipal', maxLength: 50 },
-        car: { type: 'string', title: 'CAR (Cadastro Ambiental Rural)', maxLength: 50 },
-        itr: { type: 'string', title: 'ITR (Inscrição no INCRA)', maxLength: 50 },
-        matricula: { type: 'string', title: 'Matrícula do Imóvel', maxLength: 50 },
+        matricula: { type: 'string', title: 'Matrícula do Imóvel (Cartório)', maxLength: 50 },
+
+        // ========== BLOCO 6: ÁREAS ==========
         areaTotalHectares: { type: 'number', title: 'Área Total (Hectares)', minimum: 0 },
         areaProdutivaHectares: { type: 'number', title: 'Área Produtiva (Hectares)', minimum: 0 },
         areaReservaLegal: { type: 'number', title: 'Área de Reserva Legal (Hectares)', minimum: 0 },
-        areaAPP: { type: 'number', title: 'Área de APP (Hectares)', minimum: 0 },
-        localizacao: { type: 'string', title: 'Localização/Comunidade', minLength: 3, maxLength: 200 },
-        coordenadasGPS: { type: 'string', title: 'Coordenadas GPS', maxLength: 100 },
+        areaAPP: { type: 'number', title: 'Área de APP - Preservação Permanente (Hectares)', minimum: 0 },
+
+        // ========== BLOCO 7: DOCUMENTAÇÃO AMBIENTAL E FISCAL ==========
+        possuiCAR: { type: 'boolean', title: 'Possui CAR (Cadastro Ambiental Rural)?', default: false },
+        car: { type: 'string', title: 'Número do CAR', maxLength: 50 },
+        possuiITR: { type: 'boolean', title: 'Possui ITR (Imposto Territorial Rural)?', default: false },
+        itr: { type: 'string', title: 'Número/Inscrição do ITR (INCRA)', maxLength: 50 },
+
+        // ========== BLOCO 8: TIPO E EXPLORAÇÃO ==========
         tipoPropriedade: {
           type: 'string',
           title: 'Tipo de Propriedade',
-          enum: ['Própria', 'Arrendada', 'Posse', 'Comodato', 'Assentamento'],
-          enumNames: ['Própria', 'Arrendada', 'Posse', 'Comodato', 'Assentamento']
+          enum: ['Própria', 'Arrendada', 'Posse', 'Comodato', 'Assentamento']
         },
         tipoExploracao: {
           type: 'string',
           title: 'Tipo de Exploração',
-          enum: ['Agricultura', 'Pecuária', 'Mista', 'Extrativismo', 'Aquicultura'],
-          enumNames: ['Agricultura', 'Pecuária', 'Mista', 'Extrativismo', 'Aquicultura']
+          enum: ['Agricultura', 'Pecuária', 'Mista', 'Extrativismo', 'Aquicultura']
         },
-        principaisAtividades: { type: 'string', title: 'Principais Atividades', minLength: 5, maxLength: 500 },
-        possuiAguaEncanada: { type: 'boolean', title: 'Possui Água Encanada', default: false },
-        possuiEnergiaEletrica: { type: 'boolean', title: 'Possui Energia Elétrica', default: false },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
+        principaisAtividades: { type: 'string', title: 'Principais Atividades Desenvolvidas', minLength: 5, maxLength: 500 },
+        producaoPrincipal: { type: 'string', title: 'Produção Principal', maxLength: 200 },
+
+        // ========== BLOCO 9: INFRAESTRUTURA ==========
+        possuiAguaEncanada: { type: 'boolean', title: 'Possui Água Encanada?', default: false },
+        possuiEnergiaEletrica: { type: 'boolean', title: 'Possui Energia Elétrica?', default: false },
+        possuiPocoArtesiano: { type: 'boolean', title: 'Possui Poço Artesiano?', default: false },
+        possuiIrrigacao: { type: 'boolean', title: 'Possui Sistema de Irrigação?', default: false },
+        tipoIrrigacao: { type: 'string', title: 'Tipo de Irrigação (se possuir)', maxLength: 100 },
+        possuiBenfeitorias: { type: 'boolean', title: 'Possui Benfeitorias (galpões, estufas, etc)?', default: false },
+        descricaoBenfeitorias: { type: 'string', title: 'Descrição das Benfeitorias', maxLength: 500 },
+
+        // ========== BLOCO 10: OBSERVAÇÕES ==========
+        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 1000 }
       },
-      required: ['nomePropriedade', 'areaTotalHectares', 'localizacao', 'tipoPropriedade', 'tipoExploracao', 'principaisAtividades']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'nomePropriedade', 'localizacao', 'areaTotalHectares',
+        'tipoPropriedade', 'tipoExploracao', 'principaisAtividades'
+      ]
     }
   },
 ];
