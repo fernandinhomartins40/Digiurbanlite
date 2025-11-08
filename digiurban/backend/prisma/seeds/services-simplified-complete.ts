@@ -69,29 +69,65 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO PACIENTE ==========
+        nome: { type: 'string', title: 'Nome Completo do Paciente', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+
+        // ========== BLOCO 2: CONTATO ==========
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: DADOS DE SAÚDE ==========
+        cartaoSUS: { type: 'string', title: 'Cartão SUS (CNS)', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
+        tipoSanguineo: { type: 'string', title: 'Tipo Sanguíneo', enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Não sei'] },
+
+        // ========== BLOCO 6: DADOS DO ATENDIMENTO ==========
         tipoAtendimento: {
           type: 'string',
           title: 'Tipo de Atendimento',
-          enum: ['Consulta', 'Emergência', 'Retorno', 'Preventivo', 'Vacinação', 'Exame'],
-          enumNames: ['Consulta', 'Emergência', 'Retorno', 'Preventivo', 'Vacinação', 'Exame']
+          enum: ['Consulta', 'Emergência', 'Retorno', 'Preventivo', 'Vacinação', 'Exame']
         },
         unidadeSaude: { type: 'string', title: 'Unidade de Saúde', minLength: 3, maxLength: 200 },
-        profissionalResponsavel: { type: 'string', title: 'Profissional Responsável', minLength: 3, maxLength: 200 },
-        especialidade: { type: 'string', title: 'Especialidade', maxLength: 100 },
         dataAtendimento: { type: 'string', format: 'date', title: 'Data do Atendimento' },
-        descricao: { type: 'string', title: 'Descrição do Atendimento', minLength: 10, maxLength: 2000 },
+        horaAtendimento: { type: 'string', title: 'Hora do Atendimento', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
+        profissionalResponsavel: { type: 'string', title: 'Profissional Responsável', minLength: 3, maxLength: 200 },
+        cnsProfissional: { type: 'string', title: 'CNS do Profissional', maxLength: 20 },
+        especialidade: { type: 'string', title: 'Especialidade', maxLength: 100 },
+        descricao: { type: 'string', title: 'Descrição/Queixa Principal', minLength: 10, maxLength: 2000 },
         diagnostico: { type: 'string', title: 'Diagnóstico/CID', maxLength: 500 },
         procedimentosRealizados: { type: 'string', title: 'Procedimentos Realizados', maxLength: 1000 },
-        prescricoes: { type: 'string', title: 'Prescrições/Orientações', maxLength: 1000 },
+        prescricoes: { type: 'string', title: 'Prescrições/Orientações Médicas', maxLength: 1000 },
         prioridade: {
           type: 'string',
           title: 'Prioridade',
           enum: ['BAIXA', 'NORMAL', 'ALTA', 'URGENTE'],
-          enumNames: ['Baixa', 'Normal', 'Alta', 'Urgente'],
           default: 'NORMAL'
-        }
+        },
+        encaminhamento: { type: 'boolean', title: 'Houve Encaminhamento?', default: false },
+        especialidadeEncaminhamento: { type: 'string', title: 'Especialidade do Encaminhamento', maxLength: 200 }
       },
-      required: ['tipoAtendimento', 'unidadeSaude', 'dataAtendimento', 'descricao']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'cartaoSUS', 'tipoAtendimento', 'unidadeSaude', 'dataAtendimento', 'descricao'
+      ]
     }
   },
   {
