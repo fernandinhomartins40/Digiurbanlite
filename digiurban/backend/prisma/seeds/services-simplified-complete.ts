@@ -834,7 +834,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
         horarioAplicacao: { type: 'string', title: 'Horário da Aplicação', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
         unidadeVacinacao: { type: 'string', title: 'Unidade de Saúde (Vacinação)', minLength: 3, maxLength: 200 },
         profissionalAplicador: { type: 'string', title: 'Nome do Profissional Aplicador', minLength: 3, maxLength: 200 },
-        cnsP rofissional: { type: 'string', title: 'CNS do Profissional', pattern: '^\\d{15}$' },
+        cnsProfissional: { type: 'string', title: 'CNS do Profissional', pattern: '^\\d{15}$' },
 
         // ========== BLOCO 8: AGENDAMENTO PRÓXIMA DOSE ==========
         existeProximaDose: { type: 'boolean', title: 'Existe Próxima Dose?', default: false },
