@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import DocumentUploadField from '@/components/ui/document-upload-field';
-import { FileText, Download, Trash2, Upload, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { CameraCapture, DocumentType } from '@/components/ui/camera-capture';
+import { FileText, Download, Trash2, Upload, Calendar, CheckCircle, AlertCircle, Camera, Image as ImageIcon } from 'lucide-react';
 
 interface Document {
   id: string;
@@ -37,6 +37,8 @@ export default function DocumentosPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
+  const [showCamera, setShowCamera] = useState<{type: string, docType: DocumentType} | null>(null);
+  const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
   useEffect(() => {
     loadDocuments();
@@ -68,24 +70,34 @@ export default function DocumentosPage() {
     }
   };
 
-  const handleUpload = async (type: string, file: File | string) => {
+  const handleFileSelect = async (type: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    await handleUpload(type, file);
+  };
+
+  const handleCameraCapture = (type: string, docType: DocumentType) => {
+    setShowCamera({ type, docType });
+  };
+
+  const handleCaptureComplete = async (imageData: string) => {
+    if (!showCamera) return;
+
+    const blob = await fetch(imageData).then(r => r.blob());
+    const file = new File([blob], `${showCamera.type}-${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+    setShowCamera(null);
+    await handleUpload(showCamera.type, file);
+  };
+
+  const handleUpload = async (type: string, file: File) => {
     try {
       setUploadingType(type);
 
-      // Converter base64 para File se necessário
-      let uploadFile: File;
-      if (typeof file === 'string') {
-        // É base64 da câmera
-        const base64Data = file.split(',')[1];
-        const blob = await fetch(file).then(r => r.blob());
-        uploadFile = new File([blob], `${type}-${Date.now()}.jpg`, { type: 'image/jpeg' });
-      } else {
-        uploadFile = file;
-      }
-
       // TODO: Implementar upload real
       // const formData = new FormData();
-      // formData.append('file', uploadFile);
+      // formData.append('file', file);
       // formData.append('type', type);
       // await fetch('/api/cidadao/documentos', {
       //   method: 'POST',
@@ -96,8 +108,8 @@ export default function DocumentosPage() {
       const newDocument: Document = {
         id: Date.now().toString(),
         type,
-        fileName: uploadFile.name,
-        fileUrl: URL.createObjectURL(uploadFile),
+        fileName: file.name,
+        fileUrl: URL.createObjectURL(file),
         uploadDate: new Date().toISOString(),
         status: 'pending'
       };
@@ -201,18 +213,59 @@ export default function DocumentosPage() {
                     <FileText className="w-5 h-5 text-gray-400" />
                   </div>
 
-                  <DocumentUploadField
-                    label=""
-                    value={existingDoc?.fileUrl || ''}
-                    onChange={(file) => handleUpload(docType.value, file)}
-                    accept="image/*,.pdf"
-                    documentType={docType.value}
-                    disabled={isUploading}
-                  />
+                  {existingDoc ? (
+                    <div className="space-y-2">
+                      {existingDoc.fileUrl.startsWith('data:') ? (
+                        <img src={existingDoc.fileUrl} alt={docType.label} className="w-full h-32 object-cover rounded border" />
+                      ) : (
+                        <div className="flex items-center justify-center h-32 bg-gray-100 rounded border">
+                          <FileText className="w-12 h-12 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="text-xs text-gray-500">
+                        Enviado em {formatDate(existingDoc.uploadDate)}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        ref={(el) => { fileInputRefs.current[docType.value] = el; }}
+                        accept="image/*,.pdf"
+                        onChange={(e) => handleFileSelect(docType.value, e)}
+                        className="hidden"
+                        disabled={isUploading}
+                      />
 
-                  {existingDoc && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      Enviado em {formatDate(existingDoc.uploadDate)}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRefs.current[docType.value]?.click()}
+                        disabled={isUploading}
+                        className="w-full"
+                      >
+                        <ImageIcon className="w-4 h-4 mr-2" />
+                        Escolher Arquivo
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCameraCapture(docType.value, docType.value as DocumentType)}
+                        disabled={isUploading}
+                        className="w-full"
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Tirar Foto
+                      </Button>
+
+                      {isUploading && (
+                        <div className="text-xs text-center text-gray-500">
+                          Enviando...
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -310,6 +363,31 @@ export default function DocumentosPage() {
           </ul>
         </CardContent>
       </Card>
+
+      {/* Modal da Câmera */}
+      {showCamera && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="font-semibold">Capturar Documento</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCamera(null)}
+              >
+                ✕
+              </Button>
+            </div>
+            <div className="p-4">
+              <CameraCapture
+                documentType={showCamera.docType}
+                onCapture={handleCaptureComplete}
+                onCancel={() => setShowCamera(null)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
