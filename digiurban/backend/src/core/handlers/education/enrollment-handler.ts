@@ -1,58 +1,50 @@
 import { BaseModuleHandler } from '../base-handler';
 import { ModuleAction } from '../../../types/module-handler';
-import { PrismaClient } from '@prisma/client';
+
 export class StudentEnrollmentHandler extends BaseModuleHandler {
   moduleType = 'education';
-  entityName = 'StudentEnrollment';
+  entityName = 'StudentEnrollmentRequest';
 
   async execute(action: ModuleAction, tx: any) {
     const { data, protocol, serviceId } = action;
 
-    // 1. Criar ou buscar estudante
-    let student = null;
-
-    if (data.studentCpf) {
-      student = await tx.student.findFirst({
-        where: {
-                    cpf: data.studentCpf
-        }
-      });
+    // ✅ VALIDAR citizenId obrigatório
+    if (!data.citizenId) {
+      throw new Error('citizenId é obrigatório');
     }
 
-    if (!student) {
-      student = await tx.student.create({
-        data: {
-                    name: data.studentName,
-          birthDate: new Date(data.birthDate),
-          cpf: data.studentCpf || null,
-          parentName: data.parentName,
-          parentPhone: data.parentPhone,
-          address: data.address,
-          specialNeeds: data.specialNeeds || null,
-          isActive: true
-        }
-      });
+    // ✅ VALIDAR se cidadão existe
+    const citizen = await tx.citizen.findUnique({
+      where: { id: data.citizenId }
+    });
+
+    if (!citizen || !citizen.isActive) {
+      throw new Error('Cidadão não encontrado ou inativo');
     }
 
-    // 2. Criar matrícula pendente (admin define a turma depois)
-    const enrollment = await tx.studentEnrollment.create({
+    // ✅ CRIAR solicitação de matrícula sem duplicação
+    const enrollment = await tx.studentEnrollmentRequest.create({
       data: {
-                studentId: student.id,
-        classId: null, // Admin define depois
+        citizenId: data.citizenId, // ✅ Apenas vincula ao cidadão
+        studentName: data.studentName,
+        studentBirthDate: new Date(data.birthDate),
+        studentCpf: data.studentCpf || null,
         grade: data.desiredGrade,
         year: new Date().getFullYear(),
-        status: 'pending_approval',
+        schoolId: data.schoolId || null,
+        specialNeeds: data.specialNeeds || null,
+        observations: data.observations || null,
+        status: 'pending',
         protocol,
         serviceId,
         source: 'service',
-        createdBy: data.citizenId || null
+        createdBy: data.citizenId
       }
     });
 
     return {
-      student,
       enrollment,
-      message: 'Matrícula criada com sucesso. Aguardando aprovação da secretaria.'
+      message: 'Solicitação de matrícula criada. Aguardando aprovação da secretaria.'
     };
   }
 }

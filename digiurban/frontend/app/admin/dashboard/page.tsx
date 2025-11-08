@@ -117,7 +117,7 @@ export default function AdminDashboard() {
       setLoadingProtocols(true)
 
       // Buscar protocolos do backend - API retorna { success: true, data: { protocols: [], pagination: {} } }
-      const response = await apiRequest('/admin/protocols?limit=5&status=VINCULADO,PROGRESSO,ATUALIZACAO,PENDENCIA')
+      const response = await apiRequest('/protocols?limit=5')
 
       // Extrair protocolos da resposta
       const protocols = response?.data?.protocols || []

@@ -1,10 +1,13 @@
 /**
  * ============================================================================
- * ENTITY HANDLERS - Handlers completos para TODAS as entidades dos módulos
+ * LEGACY ENTITY HANDLERS - DEPRECATED
  * ============================================================================
  *
- * Este arquivo contém os handlers de criação para todas as 95+ entidades
- * mapeadas no MODULE_MAPPING.
+ * AVISO: Este arquivo contém código legado (2583 linhas) com duplicação de campos.
+ * Os handlers modernos estão em: src/core/handlers/ e src/modules/handlers/
+ *
+ * Este arquivo será removido após migração completa para o novo sistema de handlers.
+ * Utilizado apenas como fallback durante transição.
  */
 
 import { Prisma } from '@prisma/client';
@@ -40,32 +43,55 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
     requireField(ctx.formData.citizenName || ctx.formData.patientName, 'Nome do cidadão/paciente');
     const cpf = validateCPF(ctx.formData.cpf || ctx.formData.patientCpf, 'CPF');
 
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.patientName || ctx.formData.citizenName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: validatePhone(ctx.formData.contact || ctx.formData.phone, true),
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.healthAttendance.create({
       data: {
-
         protocolId: ctx.protocolId,
         protocol: ctx.protocolNumber,
-        citizenName: ctx.formData.patientName || ctx.formData.citizenName,
-        citizenCPF: cpf,
-        contact: validatePhone(ctx.formData.contact || ctx.formData.phone, true) || '',
+        citizenId: citizen.id,
         type: ctx.formData.type || 'CONSULTA',
         status: 'PENDING',
         description: ctx.formData.description || ctx.formData.symptoms || '',
         urgency: ctx.formData.urgency || 'NORMAL',
-        symptoms: ctx.formData.symptoms,
-        priority: ctx.formData.priority || 'MEDIUM'
-        }
-        });
+        observations: ctx.formData.symptoms
+      }
+    });
   },
 
   HealthAppointment: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.patientCpf, 'CPF do paciente');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.patientName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.patientPhone || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.healthAppointment.create({
       data: {
-
         protocolId: ctx.protocolId,
-        patientName: ctx.formData.patientName || 'Não informado',
-        patientCpf: validateCPF(ctx.formData.patientCpf, 'CPF do paciente'),
-        patientPhone: ctx.formData.patientPhone || ctx.formData.phone,
+        citizenId: citizen.id,
         appointmentDate: ctx.formData.appointmentDate ? new Date(ctx.formData.appointmentDate) : new Date(),
         appointmentTime: ctx.formData.appointmentTime || '08:00',
         speciality: ctx.formData.speciality || ctx.formData.specialty || 'GENERAL',
@@ -73,26 +99,38 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         status: 'SCHEDULED',
         symptoms: ctx.formData.symptoms,
         observations: ctx.formData.observations
-        }
-        });
+      }
+    });
   },
 
   MedicationDispense: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.patientCpf, 'CPF do paciente');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.patientName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.medicationDispense.create({
       data: {
-
         protocolId: ctx.protocolId,
-        patientName: ctx.formData.patientName || 'Não informado',
-        patientCpf: validateCPF(ctx.formData.patientCpf, 'CPF do paciente'),
+        protocol: ctx.protocolNumber,
+        citizenId: citizen.id,
         medicationName: ctx.formData.medication || ctx.formData.medicationName || 'Não especificado',
         dosage: ctx.formData.dosage || '1x ao dia',
         quantity: ctx.formData.quantity ? parseInt(ctx.formData.quantity) : 1,
-        pharmacistName: ctx.formData.pharmacistName || 'A definir',
-        dispensedBy: ctx.formData.dispensedBy || 'Sistema',
-        status: 'DISPENSED',
+        status: 'pending',
         observations: ctx.formData.observations
-        }
-        });
+      }
+    });
   },
 
   HealthCampaign: async (ctx) => {
@@ -134,11 +172,25 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   },
 
   HealthTransport: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.patientCpf || ctx.formData.cpf, 'CPF do paciente');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.patientName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.healthTransport.create({
       data: {
-
         protocolId: ctx.protocolId,
-        patientName: ctx.formData.patientName || 'Não informado',
+        citizenId: citizen.id,
         origin: ctx.formData.origin || ctx.formData.address || 'Não informado',
         destination: ctx.formData.destination || 'A definir',
         transportType: ctx.formData.transportType || 'AMBULANCIA',
@@ -146,45 +198,74 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         scheduledDate: ctx.formData.scheduledDate ? new Date(ctx.formData.scheduledDate) : new Date(),
         status: 'SCHEDULED',
         observations: ctx.formData.observations
-        }
-        });
+      }
+    });
   },
 
   HealthExam: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.patientCpf, 'CPF do paciente');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.patientName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.patientPhone || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.healthExam.create({
       data: {
-
         protocolId: ctx.protocolId,
-        patientName: ctx.formData.patientName || 'Não informado',
-        patientCpf: validateCPF(ctx.formData.patientCpf, 'CPF do paciente'),
-        patientPhone: ctx.formData.patientPhone || ctx.formData.phone,
+        citizenId: citizen.id,
         examType: ctx.formData.examType || 'LABORATORIAL',
         examName: ctx.formData.examName || ctx.formData.exam || 'Exame solicitado',
         requestedBy: ctx.formData.requestedBy || ctx.formData.doctorName || 'Médico solicitante',
         priority: ctx.formData.priority || 'NORMAL',
         status: 'REQUESTED',
         observations: ctx.formData.observations
-        }
-        });
+      }
+    });
   },
 
   HealthTransportRequest: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.patientCpf, 'CPF do paciente');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.patientName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.patientPhone || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.healthTransportRequest.create({
       data: {
-
         protocolId: ctx.protocolId,
-        patientName: ctx.formData.patientName || 'Não informado',
-        patientCpf: validateCPF(ctx.formData.patientCpf, 'CPF do paciente'),
-        patientPhone: ctx.formData.patientPhone || ctx.formData.phone,
+        citizenId: citizen.id,
+        requestType: ctx.formData.requestType || 'CONSULTA',
+        specialty: ctx.formData.specialty,
         origin: ctx.formData.origin || ctx.formData.address || 'Não informado',
         destination: ctx.formData.destination || 'A definir',
-        transportType: ctx.formData.transportType || 'VEICULO_COMUM',
-        urgencyLevel: ctx.formData.urgencyLevel || 'NORMAL',
+        transportType: ctx.formData.transportType || 'AMBULANCIA',
         reason: ctx.formData.reason || ctx.formData.description || 'Transporte para tratamento',
-        status: 'REQUESTED',
-        observations: ctx.formData.observations
-        }
-        });
+        urgencyLevel: ctx.formData.urgencyLevel || 'NORMAL',
+        diagnosis: ctx.formData.diagnosis,
+        medicalJustification: ctx.formData.observations,
+        status: 'REQUESTED'
+      }
+    });
   },
 
   Vaccination: async (ctx) => {
@@ -211,48 +292,70 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   },
 
   Patient: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.cpf || ctx.formData.patientCpf, 'CPF');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.fullName || ctx.formData.patientName || ctx.formData.name || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.phone,
+        birthDate: ctx.formData.birthDate ? new Date(ctx.formData.birthDate) : undefined,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.patient.create({
       data: {
-
         protocolId: ctx.protocolId,
-        fullName: ctx.formData.fullName || ctx.formData.patientName || ctx.formData.name || 'Não informado',
-        cpf: validateCPF(ctx.formData.cpf || ctx.formData.patientCpf, 'CPF'),
-        rg: ctx.formData.rg,
-        birthDate: ctx.formData.birthDate ? new Date(ctx.formData.birthDate) : new Date('2000-01-01'),
-        gender: ctx.formData.gender || 'NAO_INFORMADO',
+        citizenId: citizen.id,
         bloodType: ctx.formData.bloodType,
-        phone: ctx.formData.phone,
-        email: ctx.formData.email,
-        address: ctx.formData.address,
         susCardNumber: ctx.formData.susCardNumber,
-        allergies: ctx.formData.allergies,
-        chronicDiseases: ctx.formData.chronicDiseases,
-        medications: ctx.formData.medications,
-        emergencyContact: ctx.formData.emergencyContact,
-        emergencyPhone: ctx.formData.emergencyPhone,
+        emergencyContactName: ctx.formData.emergencyContact,
+        emergencyContactPhone: ctx.formData.emergencyPhone,
         observations: ctx.formData.observations,
-        registeredBy: ctx.formData.registeredBy || 'Sistema'
-        }
-        });
+        registeredBy: 'system',
+        moduleType: 'CADASTRO_PACIENTE',
+        status: 'PENDING_APPROVAL'
+      }
+    });
   },
 
   CommunityHealthAgent: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.cpf, 'CPF');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.fullName || ctx.formData.name || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.phone || 'Não informado',
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.communityHealthAgent.create({
       data: {
-
         protocolId: ctx.protocolId,
-        fullName: ctx.formData.fullName || ctx.formData.name || 'Não informado',
-        cpf: validateCPF(ctx.formData.cpf, 'CPF'),
-        phone: ctx.formData.phone || 'Não informado',
-        email: ctx.formData.email,
-        address: ctx.formData.address,
-        assignedArea: ctx.formData.assignedArea || ctx.formData.area || 'A definir',
+        citizenId: citizen.id,
+        registrationNumber: ctx.formData.registrationNumber,
         hireDate: ctx.formData.hireDate ? new Date(ctx.formData.hireDate) : new Date(),
+        contractType: ctx.formData.contractType,
+        healthUnitId: ctx.formData.healthUnitId,
+        healthUnitName: ctx.formData.healthUnit,
+        assignedArea: ctx.formData.assignedArea || ctx.formData.area || 'A definir',
         status: 'ACTIVE',
-        healthUnit: ctx.formData.healthUnit,
-        supervisor: ctx.formData.supervisor
-        }
-        });
+        observations: ctx.formData.observations
+      }
+    });
   },
 
   // ========================================
@@ -260,47 +363,70 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   // ========================================
 
   EducationAttendance: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.citizenCpf || ctx.formData.cpf, 'CPF do cidadão');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.citizenName || ctx.formData.name || 'Não informado',
+        email: ctx.formData.citizenEmail || ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.citizenPhone || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.educationAttendance.create({
       data: {
-
+        citizenId: citizen.id,
         protocolId: ctx.protocolId,
-        citizenName: ctx.formData.citizenName || ctx.formData.studentName || 'Não informado',
-        citizenCpf: validateCPF(ctx.formData.citizenCpf || ctx.formData.cpf, 'CPF do cidadão'),
-        citizenPhone: ctx.formData.citizenPhone || ctx.formData.phone,
-        citizenEmail: ctx.formData.citizenEmail || ctx.formData.email,
         serviceType: ctx.formData.serviceType || 'INFORMACAO',
         description: ctx.formData.description || '',
         status: 'PENDING',
         priority: ctx.formData.priority || 'NORMAL'
-        }
-        });
+      }
+    });
   },
 
   Student: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.schoolId) {}
-
+    // Validação obrigatória
     if (!ctx.formData.schoolId) {
       throw new Error('schoolId é obrigatório para cadastro de estudante');
     }
 
+    const cpf = validateCPF(ctx.formData.parentCpf || ctx.formData.cpf, 'CPF do responsável');
+
+    // Busca ou cria o cidadão (responsável)
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.parentName || ctx.formData.responsibleName || 'Não informado',
+        email: ctx.formData.parentEmail || ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.parentPhone || ctx.formData.phone || 'Não informado',
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.student.create({
       data: {
-
         protocolId: ctx.protocolId,
+        citizenId: citizen.id,
         schoolId: ctx.formData.schoolId,
-        name: ctx.formData.name || ctx.formData.studentName || 'Não informado',
-        birthDate: ctx.formData.birthDate ? new Date(ctx.formData.birthDate) : new Date('2010-01-01'),
-        cpf: ctx.formData.cpf,
-        rg: ctx.formData.rg,
-        parentName: ctx.formData.parentName || ctx.formData.responsibleName || 'Não informado',
-        parentPhone: ctx.formData.parentPhone || ctx.formData.phone || 'Não informado',
-        parentEmail: ctx.formData.parentEmail || ctx.formData.email,
-        address: ctx.formData.address || 'Não informado',
-        medicalInfo: ctx.formData.medicalInfo || null,
-        isActive: true
-        }
-        });
+        studentName: ctx.formData.name || ctx.formData.studentName,
+        studentBirthDate: ctx.formData.birthDate ? new Date(ctx.formData.birthDate) : undefined,
+        studentCpf: ctx.formData.studentCpf,
+        parentName: citizen.name,
+        parentPhone: citizen.phone,
+        parentEmail: citizen.email,
+        medicalInfo: ctx.formData.medicalInfo || null
+      }
+    });
   },
 
   StudentTransport: async (ctx) => {
@@ -320,17 +446,24 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   },
 
   DisciplinaryRecord: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.schoolId) {}
-    if (ctx.formData.studentId) {}
-
+    // Validações obrigatórias
     if (!ctx.formData.studentId || !ctx.formData.schoolId) {
       throw new Error('studentId e schoolId são obrigatórios');
     }
 
+    // Busca o estudante para pegar o citizenId
+    const student = await ctx.tx.student.findUnique({
+      where: { id: ctx.formData.studentId },
+      select: { citizenId: true }
+    });
+
+    if (!student) {
+      throw new Error('Estudante não encontrado');
+    }
+
     return ctx.tx.disciplinaryRecord.create({
       data: {
-
+        citizenId: student.citizenId,
         protocolId: ctx.protocolId,
         studentId: ctx.formData.studentId,
         schoolId: ctx.formData.schoolId,
@@ -341,34 +474,61 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         measures: ctx.formData.measures || 'A definir',
         responsibleTeacher: ctx.formData.responsibleTeacher || 'Professor',
         status: 'PENDING'
-        }
-        });
+      }
+    });
   },
 
   SchoolDocument: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.studentId) {}
+    const cpf = validateCPF(ctx.formData.requestorCpf || ctx.formData.cpf, 'CPF do solicitante');
+
+    // Busca ou cria o cidadão solicitante
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.requestorName || ctx.formData.name || 'Não informado',
+        email: ctx.formData.requestorEmail || ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.requestorPhone || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
 
     return ctx.tx.schoolDocument.create({
       data: {
-
+        citizenId: citizen.id,
         protocolId: ctx.protocolId,
         studentId: ctx.formData.studentId,
         studentName: ctx.formData.studentName || 'Não informado',
+        requestorName: citizen.name,
+        requestorCpf: cpf,
+        requestorPhone: citizen.phone,
+        requestorEmail: citizen.email,
         documentType: ctx.formData.documentType || 'DECLARACAO',
         status: 'PENDING',
         observations: ctx.formData.observations
-        }
-        });
+      }
+    });
   },
 
   StudentTransfer: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.studentId) {}
+    if (!ctx.formData.studentId) {
+      throw new Error('studentId é obrigatório');
+    }
+
+    // Busca o estudante para pegar o citizenId
+    const student = await ctx.tx.student.findUnique({
+      where: { id: ctx.formData.studentId },
+      select: { citizenId: true }
+    });
+
+    if (!student) {
+      throw new Error('Estudante não encontrado');
+    }
 
     return ctx.tx.studentTransfer.create({
       data: {
-
         protocolId: ctx.protocolId,
         studentId: ctx.formData.studentId,
         studentName: ctx.formData.studentName || 'Não informado',
@@ -377,18 +537,28 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         grade: ctx.formData.grade || 'Não informado',
         transferReason: ctx.formData.transferReason || ctx.formData.reason || 'Transferência',
         status: 'PENDING'
-        }
-        });
+      }
+    });
   },
 
   AttendanceRecord: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.schoolId) {}
-    if (ctx.formData.studentId) {}
+    if (!ctx.formData.schoolId || !ctx.formData.studentId) {
+      throw new Error('schoolId e studentId são obrigatórios');
+    }
+
+    // Busca o estudante para pegar o citizenId
+    const student = await ctx.tx.student.findUnique({
+      where: { id: ctx.formData.studentId },
+      select: { citizenId: true }
+    });
+
+    if (!student) {
+      throw new Error('Estudante não encontrado');
+    }
 
     return ctx.tx.attendanceRecord.create({
       data: {
-
+        citizenId: student.citizenId,
         protocolId: ctx.protocolId,
         studentId: ctx.formData.studentId,
         studentName: ctx.formData.studentName || 'Não informado',
@@ -400,18 +570,28 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         presentDays: ctx.formData.presentDays ? parseInt(ctx.formData.presentDays) : 0,
         absentDays: ctx.formData.absentDays ? parseInt(ctx.formData.absentDays) : 0,
         percentage: ctx.formData.percentage ? parseFloat(ctx.formData.percentage) : 0
-        }
-        });
+      }
+    });
   },
 
   GradeRecord: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.schoolId) {}
-    if (ctx.formData.studentId) {}
+    if (!ctx.formData.schoolId || !ctx.formData.studentId) {
+      throw new Error('schoolId e studentId são obrigatórios');
+    }
+
+    // Busca o estudante para pegar o citizenId
+    const student = await ctx.tx.student.findUnique({
+      where: { id: ctx.formData.studentId },
+      select: { citizenId: true }
+    });
+
+    if (!student) {
+      throw new Error('Estudante não encontrado');
+    }
 
     return ctx.tx.gradeRecord.create({
       data: {
-
+        citizenId: student.citizenId,
         protocolId: ctx.protocolId,
         studentId: ctx.formData.studentId,
         studentName: ctx.formData.studentName || 'Não informado',
@@ -423,17 +603,30 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         maxGrade: ctx.formData.maxGrade ? parseFloat(ctx.formData.maxGrade) : 10,
         status: 'APPROVED',
         teacherName: ctx.formData.teacherName
-        }
-        });
+      }
+    });
   },
 
   SchoolManagement: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.schoolId) {}
+    const cpf = validateCPF(ctx.formData.requesterCpf || ctx.formData.cpf, 'CPF do solicitante');
+
+    // Busca ou cria o cidadão solicitante
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.requesterName || ctx.formData.name || 'Não informado',
+        email: ctx.formData.requesterEmail || ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.requesterPhone || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
 
     return ctx.tx.schoolManagement.create({
       data: {
-
+        citizenId: citizen.id,
         protocolId: ctx.protocolId,
         schoolId: ctx.formData.schoolId,
         schoolName: ctx.formData.schoolName || 'Escola',
@@ -441,8 +634,8 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         description: ctx.formData.description || '',
         status: 'PENDING',
         priority: ctx.formData.priority || 'NORMAL'
-        }
-        });
+      }
+    });
   },
 
   SchoolMeal: async (ctx) => {
@@ -468,18 +661,27 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   // ========================================
 
   SocialAssistanceAttendance: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.citizenId) {}
+    const cpf = validateCPF(ctx.formData.citizenCpf || ctx.formData.cpf, 'CPF do cidadão');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.citizenName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.phone || ctx.formData.contact?.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
 
     return ctx.tx.socialAssistanceAttendance.create({
       data: {
-
         protocolId: ctx.protocolId,
         protocol: ctx.protocolNumber,
-        citizenId: ctx.formData.citizenId || null,
-        citizenName: ctx.formData.citizenName || 'Não informado',
-        citizenCpf: validateCPF(ctx.formData.citizenCpf || ctx.formData.cpf, 'CPF do cidadão'),
-        contact: ctx.formData.contact || { phone: ctx.formData.phone || '' },
+        citizenId: citizen.id,
         familyIncome: ctx.formData.familyIncome ? parseFloat(ctx.formData.familyIncome) : null,
         familySize: ctx.formData.familySize ? parseInt(ctx.formData.familySize) : null,
         serviceType: ctx.formData.serviceType || 'ATENDIMENTO_GERAL',
@@ -489,8 +691,8 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         urgency: ctx.formData.urgency || 'NORMAL',
         followUpNeeded: ctx.formData.followUpNeeded || false,
         status: 'PENDING'
-        }
-        });
+      }
+    });
   },
 
   VulnerableFamily: async (ctx) => {
@@ -597,56 +799,98 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   },
 
   SocialProgramEnrollment: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.citizenId) {}
+    const cpf = validateCPF(ctx.formData.beneficiaryCpf || ctx.formData.cpf, 'CPF do beneficiário');
+
+    // Busca ou cria o cidadão (beneficiário)
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.beneficiaryName || ctx.formData.citizenName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
 
     return ctx.tx.socialProgramEnrollment.create({
       data: {
-
         protocolId: ctx.protocolId,
-        citizenId: ctx.formData.citizenId,
-        beneficiaryName: ctx.formData.beneficiaryName || ctx.formData.citizenName || 'Não informado',
-        beneficiaryCpf: ctx.formData.beneficiaryCpf || ctx.formData.cpf,
+        protocol: ctx.protocolNumber,
+        citizenId: citizen.id,
         programName: ctx.formData.programName || 'Programa Social',
         programType: ctx.formData.programType || 'ASSISTENCIA',
         enrollmentDate: new Date(),
-        status: 'PENDING'
-        }
-        });
+        status: 'pending',
+        familyIncome: ctx.formData.familyIncome ? parseFloat(ctx.formData.familyIncome) : null,
+        familySize: ctx.formData.familySize ? parseInt(ctx.formData.familySize) : null,
+        vulnerability: ctx.formData.vulnerability,
+        createdBy: 'system',
+        moduleType: 'PROGRAMA_SOCIAL'
+      }
+    });
   },
 
   SocialAppointment: async (ctx) => {
-    // Validações de tenant para relacionamentos
-    if (ctx.formData.citizenId) {}
+    const cpf = validateCPF(ctx.formData.citizenCpf || ctx.formData.cpf, 'CPF do cidadão');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.citizenName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
 
     return ctx.tx.socialAppointment.create({
       data: {
-
         protocolId: ctx.protocolId,
-        citizenId: ctx.formData.citizenId,
-        citizenName: ctx.formData.citizenName || 'Não informado',
-        citizenCpf: ctx.formData.citizenCpf || ctx.formData.cpf,
+        citizenId: citizen.id,
         appointmentType: ctx.formData.appointmentType || ctx.formData.serviceType || 'ATENDIMENTO',
         appointmentDate: ctx.formData.appointmentDate ? new Date(ctx.formData.appointmentDate) : new Date(),
         purpose: ctx.formData.purpose || ctx.formData.description || 'Atendimento social',
         status: 'SCHEDULED',
         notes: ctx.formData.notes || ctx.formData.description
-        }
-        });
+      }
+    });
   },
 
   SocialEquipment: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.coordinatorCpf || ctx.formData.cpf, 'CPF do coordenador');
+
+    // Busca ou cria o cidadão (coordenador)
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.coordinatorName || ctx.formData.name || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.socialEquipment.create({
       data: {
-
         protocolId: ctx.protocolId,
+        citizenId: citizen.id,
         equipmentName: ctx.formData.equipmentName || ctx.formData.name || 'Equipamento Social',
         equipmentType: ctx.formData.equipmentType || ctx.formData.type || 'CRAS',
         address: ctx.formData.address || 'Não informado',
         capacity: ctx.formData.capacity ? parseInt(ctx.formData.capacity) : 0,
         status: 'ACTIVE'
-        }
-        });
+      }
+    });
   },
 
   // ========================================
@@ -677,12 +921,28 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   },
 
   TechnicalAssistance: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.producerCpf || ctx.formData.cpf, 'CPF do produtor');
+
+    // Busca ou cria o cidadão (produtor)
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.producerName || ctx.formData.citizenName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.contact || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.technicalAssistance.create({
       data: {
-
+        citizenId: citizen.id,
         protocolId: ctx.protocolId,
-        producerName: ctx.formData.producerName || ctx.formData.citizenName || 'Não informado',
-        producerCpf: validateCPF(ctx.formData.producerCpf || ctx.formData.cpf, 'CPF do produtor'),
+        producerName: citizen.name,
+        producerCpf: cpf,
         propertyName: ctx.formData.propertyName || 'Propriedade',
         propertySize: ctx.formData.propertySize ? parseFloat(ctx.formData.propertySize) : 0,
         location: ctx.formData.location || ctx.formData.address || 'Não informado',
@@ -692,24 +952,37 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
         technician: ctx.formData.technician || 'A definir',
         visitDate: ctx.formData.visitDate ? new Date(ctx.formData.visitDate) : new Date(),
         recommendations: ctx.formData.recommendations || {}
-        }
-        });
+      }
+    });
   },
 
   AgricultureAttendance: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.producerCpf || ctx.formData.cpf, 'CPF do produtor');
+
+    // Busca ou cria o cidadão (produtor)
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.producerName || ctx.formData.citizenName || 'Não informado',
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.contact || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     return ctx.tx.agricultureAttendance.create({
       data: {
-
+        citizenId: citizen.id,
         protocolId: ctx.protocolId,
-        producerName: ctx.formData.producerName || ctx.formData.citizenName || 'Não informado',
-        producerCpf: validateCPF(ctx.formData.producerCpf || ctx.formData.cpf, 'CPF do produtor'),
-        contact: ctx.formData.contact || ctx.formData.phone || 'Não informado',
         serviceType: ctx.formData.serviceType || 'ORIENTACAO',
         subject: ctx.formData.subject || 'Atendimento agrícola',
         description: ctx.formData.description || '',
         status: 'PENDING'
-        }
-        });
+      }
+    });
   },
 
   RuralProducer: async (ctx) => {
@@ -732,26 +1005,30 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
     if (!name) {
       throw new Error('Nome do produtor é obrigatório');
     }
-    if (!ctx.formData.citizenId) {
-      throw new Error('citizenId é obrigatório para cadastro de produtor rural');
-    }
     if (!document) {
       throw new Error('Documento (CPF) do produtor é obrigatório');
     }
 
-    // Validar que o cidadão existe
-    const citizen = await ctx.tx.citizen.findFirst({
-      where: { id: ctx.formData.citizenId }
+    const cpf = validateCPF(document, 'CPF do produtor');
+
+    // Busca ou cria o cidadão (produtor rural)
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name,
+        email: ctx.formData.email || `${cpf}@temp.local`,
+        phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
     });
-    if (!citizen) {
-      throw new Error('Cidadão não encontrado');
-    }
 
     return ctx.tx.ruralProducer.create({
       data: {
-
         protocolId: ctx.protocolId,
-        citizenId: ctx.formData.citizenId,
+        citizenId: citizen.id,
         name,
         document,
         phone,
@@ -781,7 +1058,8 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
 
     // Validar que o produtor existe
     const producer = await ctx.tx.ruralProducer.findFirst({
-      where: { id: ctx.formData.producerId }
+      where: { id: ctx.formData.producerId },
+      select: { id: true, name: true, citizenId: true }
     });
     if (!producer) {
       throw new Error('Produtor não encontrado');
@@ -789,7 +1067,7 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
 
     return ctx.tx.ruralProperty.create({
       data: {
-
+        citizenId: producer.citizenId,
         protocolId: ctx.protocolId,
         producerId: ctx.formData.producerId,
         name: ctx.formData.name || ctx.formData.propertyName,
@@ -1401,17 +1679,21 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   },
 
   UrbanPlanningAttendance: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.citizenCpf || ctx.formData.cpf, 'CPF do cidadão');
+
     return ctx.tx.urbanPlanningAttendance.create({
       data: {
-
         protocolId: ctx.protocolId,
         citizenName: ctx.formData.citizenName || ctx.formData.requesterName || 'Não informado',
-        contactInfo: ctx.formData.contactInfo || ctx.formData.phone || ctx.formData.email,
+        citizenCpf: cpf,
+        citizenPhone: ctx.formData.phone || ctx.formData.citizenPhone || '',
+        citizenEmail: ctx.formData.email || ctx.formData.citizenEmail,
         subject: ctx.formData.subject || 'Atendimento de planejamento urbano',
         description: ctx.formData.description || '',
+        attendanceType: ctx.formData.attendanceType || 'INFORMACAO',
         status: 'OPEN'
-        }
-        });
+      }
+    });
   },
 
   SecurityAttendance: async (ctx) => {
@@ -1714,46 +1996,54 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   // ========================================
 
   ProjectApproval: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.ownerCpf || ctx.formData.applicantCpf || ctx.formData.cpf, 'CPF do proprietário');
+
     return ctx.tx.projectApproval.create({
       data: {
-
         protocolId: ctx.protocolId,
-        applicantName: ctx.formData.applicantName || ctx.formData.citizenName || 'Não informado',
-        projectName: ctx.formData.projectName || 'Projeto',
-        projectType: ctx.formData.projectType || 'construction',
-        description: ctx.formData.description || ctx.formData.projectDescription || '',
-        documents: ctx.formData.documents || {},
-        status: 'UNDER_REVIEW',
-        submissionDate: new Date(),
-        approvalDate: ctx.formData.approvalDate ? new Date(ctx.formData.approvalDate) : null
-        }
-        });
+        ownerName: ctx.formData.ownerName || ctx.formData.applicantName || ctx.formData.citizenName || 'Não informado',
+        ownerCpf: cpf,
+        ownerPhone: ctx.formData.ownerPhone || ctx.formData.phone || '',
+        ownerEmail: ctx.formData.ownerEmail || ctx.formData.email,
+        propertyAddress: ctx.formData.propertyAddress || ctx.formData.address || 'Não informado',
+        propertyNumber: ctx.formData.propertyNumber || 'S/N',
+        neighborhood: ctx.formData.neighborhood || ctx.formData.bairro || 'Não informado',
+        projectType: ctx.formData.projectType || 'RESIDENTIAL',
+        projectCategory: ctx.formData.projectCategory || 'NEW',
+        constructionArea: ctx.formData.constructionArea ? parseFloat(ctx.formData.constructionArea) : 0,
+        totalArea: ctx.formData.totalArea ? parseFloat(ctx.formData.totalArea) : 0,
+        floors: ctx.formData.floors ? parseInt(ctx.formData.floors) : 1,
+        architectName: ctx.formData.architectName || 'A definir',
+        architectCau: ctx.formData.architectCau || '000000',
+        architectPhone: ctx.formData.architectPhone || '',
+        status: 'ANALYSIS'
+      }
+    });
   },
 
   BuildingPermit: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.ownerCpf || ctx.formData.applicantCpf || ctx.formData.cpf, 'CPF do proprietário');
+
     return ctx.tx.buildingPermit.create({
       data: {
-
         protocolId: ctx.protocolId,
-        applicantName: ctx.formData.applicantName || ctx.formData.ownerName || ctx.formData.citizenName || 'Não informado',
-        applicantCpf: ctx.formData.applicantCpf || ctx.formData.cpf,
-        applicantCpfCnpj: ctx.formData.applicantCpfCnpj || ctx.formData.cpf,
-        applicantPhone: ctx.formData.applicantPhone || ctx.formData.phone,
+        ownerName: ctx.formData.ownerName || ctx.formData.applicantName || ctx.formData.citizenName || 'Não informado',
+        ownerCpf: cpf,
+        ownerPhone: ctx.formData.ownerPhone || ctx.formData.applicantPhone || ctx.formData.phone || '',
+        ownerEmail: ctx.formData.ownerEmail || ctx.formData.email,
         propertyAddress: ctx.formData.propertyAddress || ctx.formData.address || 'Não informado',
-        property: ctx.formData.property || {},
-        construction: ctx.formData.construction || {},
-        permitType: ctx.formData.permitType || 'new_construction',
-        requestedBy: ctx.formData.requestedBy || ctx.formData.applicantName,
-        description: ctx.formData.description,
-        documents: ctx.formData.documents || {},
-        technicalAnalysis: ctx.formData.technicalAnalysis || {},
-        permitNumber: ctx.formData.permitNumber,
-        observations: ctx.formData.observations,
-        status: 'PENDING',
-        submissionDate: new Date(),
-        approvalDate: ctx.formData.approvalDate ? new Date(ctx.formData.approvalDate) : null
-        }
-        });
+        propertyNumber: ctx.formData.propertyNumber || 'S/N',
+        neighborhood: ctx.formData.neighborhood || ctx.formData.bairro || 'Não informado',
+        projectType: ctx.formData.projectType || 'RESIDENTIAL',
+        constructionArea: ctx.formData.constructionArea ? parseFloat(ctx.formData.constructionArea) : 0,
+        totalArea: ctx.formData.totalArea ? parseFloat(ctx.formData.totalArea) : 0,
+        floors: ctx.formData.floors ? parseInt(ctx.formData.floors) : 1,
+        engineerName: ctx.formData.engineerName || 'A definir',
+        engineerCrea: ctx.formData.engineerCrea || '000000',
+        engineerPhone: ctx.formData.engineerPhone || '',
+        status: 'ANALYSIS'
+      }
+    });
   },
 
   BusinessLicense: async (ctx) => {
@@ -1783,29 +2073,24 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
   },
 
   CertificateRequest: async (ctx) => {
+    const cpf = validateCPF(ctx.formData.requesterCpf || ctx.formData.applicantCpf || ctx.formData.cpf, 'CPF do solicitante');
+
     return ctx.tx.certificateRequest.create({
       data: {
-
         protocolId: ctx.protocolId,
-        applicantName: ctx.formData.applicantName || ctx.formData.citizenName || 'Não informado',
-        applicantCpfCnpj: ctx.formData.applicantCpfCnpj || ctx.formData.applicantCpf || ctx.formData.cpf,
-        applicantPhone: ctx.formData.applicantPhone || ctx.formData.phone,
-        applicantEmail: ctx.formData.applicantEmail || ctx.formData.email,
-        certificateType: ctx.formData.certificateType || 'zoning',
+        requesterName: ctx.formData.requesterName || ctx.formData.applicantName || ctx.formData.citizenName || 'Não informado',
+        requesterCpf: cpf,
+        requesterPhone: ctx.formData.requesterPhone || ctx.formData.applicantPhone || ctx.formData.phone || '',
+        requesterEmail: ctx.formData.requesterEmail || ctx.formData.applicantEmail || ctx.formData.email,
+        certificateType: ctx.formData.certificateType || 'USO_SOLO',
         purpose: ctx.formData.purpose || ctx.formData.reason || ctx.formData.description,
         propertyAddress: ctx.formData.propertyAddress || ctx.formData.address,
-        propertyNumber: ctx.formData.propertyNumber,
-        neighborhood: ctx.formData.neighborhood || ctx.formData.bairro,
-        certificateNumber: ctx.formData.certificateNumber,
-        observations: ctx.formData.observations,
-        documents: ctx.formData.documents || {},
-        reviewedBy: ctx.formData.reviewedBy,
-        status: 'PENDING',
-        submissionDate: new Date(),
-        issuedDate: ctx.formData.issuedDate ? new Date(ctx.formData.issuedDate) : null,
-        validUntil: ctx.formData.validUntil ? new Date(ctx.formData.validUntil) : null
-        }
-        });
+        propertyRegistration: ctx.formData.propertyRegistration,
+        lotNumber: ctx.formData.lotNumber,
+        block: ctx.formData.block,
+        status: 'PENDING'
+      }
+    });
   },
 
   UrbanInfraction: async (ctx) => {
@@ -2465,23 +2750,34 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
       throw new Error('Programa sem vagas disponíveis');
     }
 
+    const cpf = validateCPF(ctx.formData.applicantCpf || ctx.formData.cpf, 'CPF do inscrito');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.applicantName || ctx.formData.name || 'Não informado',
+        email: ctx.formData.applicantEmail || ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.applicantPhone || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     // Criar inscrição
     const enrollment = await ctx.tx.ruralProgramEnrollment.create({
       data: {
-
+        citizenId: citizen.id,
         protocolId: ctx.protocolId,
         programId,
-        applicantName: ctx.formData.applicantName || ctx.formData.name || 'Não informado',
-        applicantCpf: ctx.formData.applicantCpf || ctx.formData.cpf,
-        applicantEmail: ctx.formData.applicantEmail || ctx.formData.email,
-        applicantPhone: ctx.formData.applicantPhone || ctx.formData.phone,
-        applicantAddress: ctx.formData.applicantAddress || ctx.formData.address,
         status: 'PENDING',
         customData: ctx.formData.customData || {},
         documents: ctx.formData.documents || [],
         observations: ctx.formData.observations
-        }
-        });
+      }
+    });
 
     // Incrementar contador de participantes
     await ctx.tx.ruralProgram.update({
@@ -2512,22 +2808,33 @@ export const entityHandlers: Record<string, (ctx: EntityHandlerContext) => Promi
       throw new Error('Curso sem vagas disponíveis');
     }
 
+    const cpf = validateCPF(ctx.formData.applicantCpf || ctx.formData.cpf, 'CPF do inscrito');
+
+    // Busca ou cria o cidadão
+    const citizen = await ctx.tx.citizen.upsert({
+      where: { cpf },
+      update: {},
+      create: {
+        cpf,
+        name: ctx.formData.applicantName || ctx.formData.name || 'Não informado',
+        email: ctx.formData.applicantEmail || ctx.formData.email || `${cpf}@temp.local`,
+        phone: ctx.formData.applicantPhone || ctx.formData.phone,
+        password: 'TEMP_PASSWORD',
+        isActive: true
+      }
+    });
+
     const enrollment = await ctx.tx.ruralTrainingEnrollment.create({
       data: {
-
+        citizenId: citizen.id,
         protocolId: ctx.protocolId,
         trainingId,
-        applicantName: ctx.formData.applicantName || ctx.formData.name || 'Não informado',
-        applicantCpf: ctx.formData.applicantCpf || ctx.formData.cpf,
-        applicantEmail: ctx.formData.applicantEmail || ctx.formData.email,
-        applicantPhone: ctx.formData.applicantPhone || ctx.formData.phone,
-        applicantAddress: ctx.formData.applicantAddress || ctx.formData.address,
         status: 'PENDING',
         customData: ctx.formData.customData || {},
         documents: ctx.formData.documents || [],
         observations: ctx.formData.observations
-        }
-        });
+      }
+    });
 
     await ctx.tx.ruralTraining.update({
       where: { id: trainingId },

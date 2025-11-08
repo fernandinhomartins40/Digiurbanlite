@@ -1,10 +1,12 @@
 // ============================================================
 // AGRICULTURE HANDLER - Cadastro de Produtor Rural
+// ✅ REFATORADO - FASE 1: Compliance com citizenId obrigatório
 // ============================================================
 
 import { BaseModuleHandler } from '../../../core/handlers/base-handler';
 import { ModuleAction } from '../../../types/module-handler';
 import { PrismaClient } from '@prisma/client';
+import { CitizenLookupService } from '../../../services/citizen-lookup.service';
 
 type PrismaTransaction = Omit<
   PrismaClient,
@@ -35,6 +37,7 @@ export class RuralProducerHandler extends BaseModuleHandler {
 
   /**
    * Criar cadastro de produtor rural via protocolo
+   * ✅ REFATORADO: Sem duplicação de dados, apenas citizenId
    * Fluxo: Protocolo → Produtor (PENDING_APPROVAL) → Aprovação → ACTIVE
    */
   private async createProducer(
@@ -45,52 +48,54 @@ export class RuralProducerHandler extends BaseModuleHandler {
   ) {
     // ========== VALIDAÇÃO 1: citizenId obrigatório ==========
     if (!data.citizenId) {
-      throw new Error('O produtor rural deve ser vinculado a um cidadão existente');
+      throw new Error('citizenId é obrigatório. O produtor rural deve ser vinculado a um cidadão existente.');
     }
 
-    // ========== VALIDAÇÃO 2: Verificar se o cidadão existe ==========
-    const citizen = await tx.citizen.findFirst({
-      where: {
-        id: data.citizenId
-        }
-        });
+    // ========== VALIDAÇÃO 2: Usar CitizenLookupService para validar e buscar cidadão ==========
+    const citizenService = new CitizenLookupService();
+    const citizen = await citizenService.findById(data.citizenId);
 
     if (!citizen) {
-      throw new Error('Cidadão não encontrado ou não pertence a este município');
+      throw new Error('Cidadão não encontrado com o ID fornecido');
+    }
+
+    if (!citizen.isActive) {
+      throw new Error('Cidadão não está ativo no sistema');
     }
 
     // ========== VALIDAÇÃO 3: Verificar se o cidadão já é um produtor rural ==========
-    const existingProducer = await tx.ruralProducer.findFirst({
+    const existingProducer = await tx.ruralProducer.findUnique({
       where: {
-                citizenId: data.citizenId
-        }
-        });
+        citizenId: data.citizenId
+      }
+    });
 
     if (existingProducer) {
       throw new Error('Este cidadão já está cadastrado como produtor rural');
     }
 
-    // ========== VALIDAÇÃO 4: Campos obrigatórios adicionais ==========
+    // ========== VALIDAÇÃO 4: Campos obrigatórios específicos do produtor ==========
     if (!data.productionType && !data.tipoProducao) {
-      throw new Error('Tipo de produção é obrigatório (ex: orgânica, convencional, agroecológica)');
+      throw new Error('Tipo de produção é obrigatório (ex: AGRICULTOR_FAMILIAR, PRODUTOR_RURAL, ASSENTADO)');
     }
 
     if (!data.mainCrop && !data.principaisCulturas) {
       throw new Error('Cultura principal é obrigatória (ex: café, milho, hortaliças)');
     }
 
-    // Criar produtor rural com status PENDING_APPROVAL
+    // ✅ Criar produtor rural SEM duplicações - apenas dados específicos
     const producer = await tx.ruralProducer.create({
       data: {
-                citizenId: data.citizenId,
+        citizenId: data.citizenId, // ✅ OBRIGATÓRIO
         protocolId: protocol,
-        name: data.name || data.nomeProdutor || citizen.name,
-        document: data.document || data.cpf || citizen.cpf,
-        email: data.email || citizen.email,
-        phone: data.phone || data.telefone || citizen.phone || '',
-        address: data.address || data.endereco || JSON.stringify(citizen.address),
-        productionType: data.productionType || data.tipoProducao || 'conventional',
-        mainCrop: data.mainCrop || data.principaisCulturas || '',
+
+        // ✅ APENAS campos específicos do produtor
+        productionType: data.productionType || data.tipoProducao,
+        mainCrop: data.mainCrop || data.principaisCulturas,
+        dap: data.dap || null, // DAP - Declaração de Aptidão ao PRONAF
+        totalAreaHectares: data.totalAreaHectares || data.areaTotal || null,
+        mainProductions: data.mainProductions || data.principaisProducoes || null,
+
         status: 'PENDING_APPROVAL',
         isActive: false, // Só ativa após aprovação
       },
@@ -101,13 +106,18 @@ export class RuralProducerHandler extends BaseModuleHandler {
             name: true,
             cpf: true,
             email: true,
-            phone: true
+            phone: true,
+            address: true
+          }
         }
       }
-        }
-        });
+    });
 
-    return { producer };
+    return {
+      producer,
+      // ✅ Retornar dados do cidadão via relação (não duplicados)
+      citizen: producer.citizen
+    };
   }
 
   /**
@@ -155,34 +165,53 @@ export class RuralProducerHandler extends BaseModuleHandler {
 
   /**
    * Atualizar dados do produtor rural
+   * ✅ REFATORADO: Não permite atualizar dados do cidadão (name, cpf, email, phone, address)
    */
   private async updateProducer(data: any, tx: PrismaTransaction) {
     const {
       producerId,
       productionType,
       mainCrop,
-      address,
-      phone,
-      email,
+      dap,
+      totalAreaHectares,
+      mainProductions,
       status
-        } = data;
+    } = data;
 
+    // ✅ Atualizar APENAS campos específicos do produtor
     const producer = await tx.ruralProducer.update({
       where: { id: producerId },
       data: {
         ...(productionType && { productionType }),
         ...(mainCrop && { mainCrop }),
-        ...(address && { address }),
-        ...(phone && { phone }),
-        ...(email && { email }),
-        ...(status && { status, isActive: status === 'ACTIVE' }),
+        ...(dap && { dap }),
+        ...(totalAreaHectares && { totalAreaHectares }),
+        ...(mainProductions && { mainProductions }),
+        ...(status && {
+          status,
+          isActive: status === 'ACTIVE',
+          ...(status === 'ACTIVE' && { approvedAt: new Date() })
+        }),
         updatedAt: new Date()
-        },
+      },
       include: {
-        citizen: true
+        citizen: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            email: true,
+            phone: true,
+            address: true
+          }
         }
-      });
+      }
+    });
 
-    return { producer };
+    return {
+      producer,
+      // ✅ Dados do cidadão vêm da relação, não são duplicados
+      citizen: producer.citizen
+    };
   }
 }

@@ -3,13 +3,14 @@
  * Separado para evitar imports circulares
  */
 
-import { ProtocolSimplified as Protocol } from '@prisma/client';
+import { ProtocolSimplified as Protocol, PrismaClient } from '@prisma/client';
 
 export interface ModuleExecutionContext {
   protocol: Protocol;
   service: any;
   requestData: any;
   citizenId: string;
+  prisma: PrismaClient;
 }
 
 export interface ModuleExecutionResult {

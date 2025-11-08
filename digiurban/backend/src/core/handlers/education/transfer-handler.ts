@@ -8,22 +8,26 @@ export class SchoolTransferHandler extends BaseModuleHandler {
   async execute(action: ModuleAction, tx: any) {
     const { data, protocol, serviceId } = action;
 
-    // 1. Buscar estudante
-    let student = null;
-
-    if (data.studentCpf) {
-      student = await tx.student.findFirst({
-        where: {
-                    cpf: data.studentCpf
-        }
-      });
+    // ✅ VALIDAR citizenId obrigatório
+    if (!data.citizenId) {
+      throw new Error('citizenId é obrigatório');
     }
 
-    // 2. Criar solicitação de transferência
+    // ✅ VALIDAR se cidadão existe
+    const citizen = await tx.citizen.findUnique({
+      where: { id: data.citizenId }
+    });
+
+    if (!citizen || !citizen.isActive) {
+      throw new Error('Cidadão não encontrado ou inativo');
+    }
+
+    // ✅ CRIAR solicitação de transferência sem duplicação
     const transferRequest = await tx.schoolTransferRequest.create({
       data: {
-                studentId: student?.id || null,
+        citizenId: data.citizenId, // ✅ Vincula ao cidadão (responsável)
         studentName: data.studentName,
+        studentCpf: data.studentCpf || null,
         currentSchool: data.currentSchool || null,
         targetSchool: data.targetSchool || null,
         targetSchoolName: data.targetSchoolName,
@@ -34,12 +38,11 @@ export class SchoolTransferHandler extends BaseModuleHandler {
         protocol,
         serviceId,
         source: 'service',
-        createdBy: data.citizenId || null
+        createdBy: data.citizenId
       }
     });
 
     return {
-      student,
       transferRequest,
       message: 'Solicitação de transferência criada. Aguardando processamento.'
     };

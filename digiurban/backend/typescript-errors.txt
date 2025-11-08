@@ -1,673 +1,149 @@
-src/middleware/upload.ts(153,24): error TS1005: ',' expected.
-src/modules/module-handler.ts(547,28): error TS1005: ',' expected.
-src/modules/module-handler.ts(547,37): error TS1005: ',' expected.
-src/modules/module-handler.ts(547,42): error TS1003: Identifier expected.
-src/modules/module-handler.ts(565,51): error TS1005: ',' expected.
-src/modules/module-handler.ts(565,60): error TS1005: ',' expected.
-src/modules/security/anonymous-tip-handler.ts(105,42): error TS1005: ',' expected.
-src/modules/security/police-report-handler.ts(83,45): error TS1005: ',' expected.
-src/routes/admin-agriculture.ts(35,21): error TS1005: ',' expected.
-src/routes/admin-agriculture.ts(35,39): error TS1005: ':' expected.
-src/routes/admin-chamados.ts(176,27): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(176,33): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(176,50): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(177,7): error TS1005: ':' expected.
-src/routes/admin-chamados.ts(188,27): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(188,33): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(188,50): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(189,9): error TS1005: ':' expected.
-src/routes/admin-chamados.ts(220,34): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(220,40): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(220,63): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(220,72): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(236,37): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(236,43): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(301,45): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(301,51): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(366,39): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(366,41): error TS1136: Property assignment expected.
-src/routes/admin-chamados.ts(366,48): error TS1359: Identifier expected. 'null' is a reserved word that cannot be used here.
-src/routes/admin-chamados.ts(366,53): error TS1005: ':' expected.
-src/routes/admin-chamados.ts(367,6): error TS1005: ')' expected.
-src/routes/admin-chamados.ts(470,7): error TS1128: Declaration or statement expected.
-src/routes/admin-chamados.ts(470,8): error TS1128: Declaration or statement expected.
-src/routes/admin-chamados.ts(471,1): error TS1128: Declaration or statement expected.
-src/routes/admin-chamados.ts(494,36): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(495,9): error TS1005: ':' expected.
-src/routes/admin-chamados.ts(548,36): error TS1005: ',' expected.
-src/routes/admin-chamados.ts(549,9): error TS1005: ':' expected.
-src/routes/admin-transfer.ts(280,22): error TS1005: ',' expected.
-src/routes/admin-transfer.ts(280,30): error TS1005: ',' expected.
-src/routes/alerts.ts(552,42): error TS1005: ',' expected.
-src/routes/analytics.ts(738,52): error TS1005: ',' expected.
-src/routes/analytics.ts(755,52): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(225,30): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(225,49): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(247,28): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(247,47): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(276,10): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(276,29): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(358,23): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(358,34): error TS1005: ':' expected.
-src/routes/citizen-auth.ts(385,30): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(385,39): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(408,27): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(408,36): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(456,30): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(456,38): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(499,27): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(499,36): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(499,49): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(499,51): error TS1136: Property assignment expected.
-src/routes/citizen-auth.ts(500,5): error TS1135: Argument expression expected.
-src/routes/citizen-auth.ts(500,6): error TS1472: 'catch' or 'finally' expected.
-src/routes/citizen-auth.ts(500,7): error TS1005: ')' expected.
-src/routes/citizen-auth.ts(501,3): error TS1128: Declaration or statement expected.
-src/routes/citizen-auth.ts(501,5): error TS1005: 'try' expected.
-src/routes/citizen-auth.ts(510,1): error TS1128: Declaration or statement expected.
-src/routes/citizen-auth.ts(510,2): error TS1128: Declaration or statement expected.
-src/routes/citizen-auth.ts(510,3): error TS1128: Declaration or statement expected.
-src/routes/citizen-auth.ts(544,30): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(544,38): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(576,28): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(576,36): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(657,30): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(657,38): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(716,28): error TS1005: ',' expected.
-src/routes/citizen-auth.ts(716,36): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(148,22): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(315,25): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(315,33): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(418,23): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(418,31): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(488,23): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(488,31): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(554,23): error TS1005: ',' expected.
-src/routes/citizen-documents.ts(554,31): error TS1005: ',' expected.
-src/routes/citizen-notifications.ts(142,35): error TS1005: ',' expected.
-src/routes/citizen-notifications.ts(142,43): error TS1005: ',' expected.
-src/routes/citizen-notifications.ts(295,43): error TS1005: ',' expected.
-src/routes/citizen-notifications.ts(295,51): error TS1005: ',' expected.
-src/routes/citizen-notifications.ts(339,27): error TS1005: ',' expected.
-src/routes/citizen-notifications.ts(339,35): error TS1005: ',' expected.
-src/routes/citizen-protocols.ts(65,22): error TS1005: ',' expected.
-src/routes/citizen-protocols.ts(65,30): error TS1005: ',' expected.
-src/routes/citizen-protocols.ts(90,77): error TS1005: ',' expected.
-src/routes/citizen-protocols.ts(90,85): error TS1005: ',' expected.
-src/routes/citizen-services.ts(389,22): error TS1005: ',' expected.
-src/routes/citizen-services.ts(389,30): error TS1005: ',' expected.
-src/routes/citizen-transfer.ts(92,30): error TS1005: ',' expected.
-src/routes/citizen-transfer.ts(92,38): error TS1005: ',' expected.
-src/routes/citizen-transfer.ts(127,25): error TS1005: ',' expected.
-src/routes/citizen-transfer.ts(127,31): error TS1005: ',' expected.
-src/routes/citizen-transfer.ts(181,28): error TS1005: ',' expected.
-src/routes/citizen-transfer.ts(181,36): error TS1005: ',' expected.
-src/routes/custom-modules.ts(282,20): error TS1005: ',' expected.
-src/routes/custom-modules.ts(282,28): error TS1005: ',' expected.
-src/routes/custom-modules.ts(348,20): error TS1005: ',' expected.
-src/routes/custom-modules.ts(348,28): error TS1005: ',' expected.
-src/routes/custom-modules.ts(394,20): error TS1005: ',' expected.
-src/routes/custom-modules.ts(394,28): error TS1005: ',' expected.
-src/routes/custom-modules.ts(451,20): error TS1005: ',' expected.
-src/routes/custom-modules.ts(451,28): error TS1005: ',' expected.
-src/routes/custom-modules.ts(498,20): error TS1005: ',' expected.
-src/routes/custom-modules.ts(498,28): error TS1005: ',' expected.
-src/routes/integrations.ts(77,21): error TS1005: ',' expected.
-src/routes/integrations.ts(78,5): error TS1005: ':' expected.
-src/routes/secretarias-agricultura-produtores.ts(30,25): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(30,33): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(75,15): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(75,23): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(80,15): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(80,23): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(84,15): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(84,23): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(88,15): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(88,23): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(184,22): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(184,30): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(196,15): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(196,23): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(209,15): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(209,23): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(221,14): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(221,22): error TS1005: ',' expected.
-src/routes/secretarias-agricultura-produtores.ts(279,17): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura-produtores.ts(279,25): error TS1005: ',' expected.
-src/routes/secretarias-agricultura.ts(1764,27): error TS1136: Property assignment expected.
-src/routes/secretarias-agricultura.ts(2088,27): error TS1136: Property assignment expected.
-src/routes/secretarias-cultura.ts(54,37): error TS1136: Property assignment expected.
-src/routes/secretarias-cultura.ts(54,45): error TS1005: ',' expected.
-src/routes/secretarias-cultura.ts(55,3): error TS1003: Identifier expected.
-src/routes/secretarias-cultura.ts(256,14): error TS1003: Identifier expected.
-src/routes/secretarias-cultura.ts(270,26): error TS1136: Property assignment expected.
-src/routes/secretarias-cultura.ts(270,33): error TS1005: ',' expected.
-src/routes/secretarias-cultura.ts(270,40): error TS1003: Identifier expected.
-src/routes/secretarias-cultura.ts(311,14): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(38,19): error TS1131: Property or signature expected.
-src/routes/secretarias-genericas.ts(38,20): error TS1131: Property or signature expected.
-src/routes/secretarias-genericas.ts(141,23): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(141,25): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(141,31): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(143,24): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(144,10): error TS1005: ')' expected.
-src/routes/secretarias-genericas.ts(171,1): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(171,2): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(171,3): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(181,13): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(181,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(181,21): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(186,12): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(196,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(196,11): error TS1005: ')' expected.
-src/routes/secretarias-genericas.ts(203,1): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(203,2): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(203,3): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(219,13): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(219,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(219,21): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(224,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(224,11): error TS1005: ')' expected.
-src/routes/secretarias-genericas.ts(239,12): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(239,14): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(239,20): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(252,12): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(267,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(267,10): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(270,1): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(270,2): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(270,3): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(286,13): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(286,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(286,21): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(291,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(291,11): error TS1005: ')' expected.
-src/routes/secretarias-genericas.ts(297,23): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(297,25): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(297,31): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(300,5): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(301,9): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(348,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(348,17): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(348,23): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(351,13): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(352,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(352,10): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(353,9): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(356,1): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(356,2): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(356,3): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(372,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(372,17): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(372,23): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(377,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(377,11): error TS1005: ')' expected.
-src/routes/secretarias-genericas.ts(386,3): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(386,4): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(387,1): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(401,13): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(401,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(401,21): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(405,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(405,11): error TS1005: ')' expected.
-src/routes/secretarias-genericas.ts(409,13): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(409,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(409,21): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(414,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(414,10): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(424,13): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(424,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(424,21): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(432,12): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(441,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(441,10): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(453,1): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(453,2): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(453,3): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(473,15): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(473,17): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(473,23): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(478,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(478,11): error TS1005: ')' expected.
-src/routes/secretarias-genericas.ts(494,31): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(494,33): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(494,39): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(499,15): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(506,15): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(506,18): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(506,20): error TS1136: Property assignment expected.
-src/routes/secretarias-genericas.ts(506,26): error TS1003: Identifier expected.
-src/routes/secretarias-genericas.ts(507,17): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(509,16): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(511,19): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(512,22): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(513,21): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(514,20): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(515,9): error TS1005: ',' expected.
-src/routes/secretarias-genericas.ts(516,9): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(516,10): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(519,5): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(522,3): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(522,4): error TS1128: Declaration or statement expected.
-src/routes/secretarias-genericas.ts(523,1): error TS1128: Declaration or statement expected.
-src/routes/secretarias-habitacao.ts(37,37): error TS1136: Property assignment expected.
-src/routes/secretarias-habitacao.ts(37,45): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(38,3): error TS1003: Identifier expected.
-src/routes/secretarias-habitacao.ts(67,130): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(178,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(178,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(178,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(178,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(213,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(213,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(213,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(213,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(232,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(232,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(232,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(232,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(267,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(267,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(267,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(267,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(283,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(283,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(283,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(283,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(304,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(304,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(304,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(304,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(327,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(327,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(327,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(327,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(362,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(362,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(362,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(362,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(378,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(378,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(378,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(378,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(399,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(399,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(399,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(399,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(422,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(422,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(422,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(422,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(457,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(457,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(457,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(457,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(473,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(473,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(473,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(473,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(494,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(494,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(494,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(494,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(517,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(517,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(517,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(517,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(552,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(552,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(552,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(552,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(567,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(567,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(567,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(567,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(580,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(580,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(580,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(580,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(601,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(601,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(601,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(601,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(624,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(624,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(624,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(624,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(662,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(662,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(662,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(662,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(681,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(681,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(681,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(681,16): error TS1109: Expression expected.
-src/routes/secretarias-habitacao.ts(702,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(702,14): error TS1005: ',' expected.
-src/routes/secretarias-habitacao.ts(702,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-habitacao.ts(702,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(37,37): error TS1136: Property assignment expected.
-src/routes/secretarias-meio-ambiente.ts(37,45): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(38,3): error TS1003: Identifier expected.
-src/routes/secretarias-meio-ambiente.ts(67,130): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(189,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(189,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(189,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(189,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(224,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(224,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(224,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(224,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(243,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(243,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(243,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(243,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(278,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(278,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(278,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(278,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(294,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(294,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(294,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(294,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(315,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(315,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(315,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(315,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(338,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(338,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(338,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(338,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(373,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(373,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(373,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(373,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(389,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(389,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(389,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(389,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(410,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(410,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(410,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(410,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(433,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(433,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(433,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(433,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(468,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(468,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(468,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(468,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(484,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(484,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(484,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(484,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(505,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(505,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(505,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(505,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(528,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(528,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(528,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(528,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(563,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(563,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(563,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(563,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(579,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(579,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(579,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(579,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(600,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(600,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(600,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(600,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(623,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(623,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(623,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(623,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(658,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(658,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(658,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(658,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(674,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(674,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(674,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(674,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(695,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(695,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(695,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(695,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(718,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(718,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(718,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(718,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(753,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(753,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(753,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(753,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(768,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(768,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(768,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(768,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(781,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(781,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(781,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(781,16): error TS1109: Expression expected.
-src/routes/secretarias-meio-ambiente.ts(802,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(802,14): error TS1005: ',' expected.
-src/routes/secretarias-meio-ambiente.ts(802,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-meio-ambiente.ts(802,16): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(37,37): error TS1136: Property assignment expected.
-src/routes/secretarias-planejamento-urbano.ts(37,45): error TS1005: ',' expected.
-src/routes/secretarias-planejamento-urbano.ts(38,3): error TS1003: Identifier expected.
-src/routes/secretarias-planejamento-urbano.ts(67,130): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(214,143): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(236,144): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(262,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(276,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(292,143): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(314,144): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(354,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(368,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(384,146): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(406,147): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(440,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(454,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(470,134): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(492,135): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(524,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(538,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(554,142): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(576,143): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(611,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(625,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(641,136): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(661,137): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(693,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(707,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(723,137): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(745,138): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(771,36): error TS1109: Expression expected.
-src/routes/secretarias-planejamento-urbano.ts(785,36): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(37,37): error TS1136: Property assignment expected.
-src/routes/secretarias-seguranca.ts(37,45): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(38,3): error TS1003: Identifier expected.
-src/routes/secretarias-seguranca.ts(67,130): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(215,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(215,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(215,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(215,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(250,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(250,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(250,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(250,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(266,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(266,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(266,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(266,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(279,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(279,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(279,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(279,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(311,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(311,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(311,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(311,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(346,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(346,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(346,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(346,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(363,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(363,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(363,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(363,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(379,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(379,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(379,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(379,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(415,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(415,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(415,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(415,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(450,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(450,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(450,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(450,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(467,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(467,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(467,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(467,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(483,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(483,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(483,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(483,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(521,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(521,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(521,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(521,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(556,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(556,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(556,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(556,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(573,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(573,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(573,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(573,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(589,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(589,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(589,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(589,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(623,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(623,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(623,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(623,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(659,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(659,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(659,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(659,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(679,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(679,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(679,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(679,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(692,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(692,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(692,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(692,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(724,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(724,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(724,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(724,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(757,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(757,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(757,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(757,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(772,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(772,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(772,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(772,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(785,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(785,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(785,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(785,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(820,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(820,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(820,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(820,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(853,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(853,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(853,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(853,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(871,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(871,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(871,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(871,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(889,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(889,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(889,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(889,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(921,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(921,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(921,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(921,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(956,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(956,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(956,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(956,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(971,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(971,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(971,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(971,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(988,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(988,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(988,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(988,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(1028,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1028,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(1028,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1028,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(1063,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1063,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(1063,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1063,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(1082,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1082,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(1082,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1082,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(1099,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1099,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(1099,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1099,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(1150,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1150,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(1150,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1150,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(1185,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1185,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(1185,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1185,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(1203,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1203,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(1203,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1203,16): error TS1109: Expression expected.
-src/routes/secretarias-seguranca.ts(1220,9): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1220,14): error TS1005: ',' expected.
-src/routes/secretarias-seguranca.ts(1220,15): error TS1134: Variable declaration expected.
-src/routes/secretarias-seguranca.ts(1220,16): error TS1109: Expression expected.
-src/routes/secretarias-turismo.ts(321,27): error TS1136: Property assignment expected.
-src/routes/secretarias-turismo.ts(477,27): error TS1136: Property assignment expected.
-src/services/protocol-sla.service.ts(227,55): error TS1109: Expression expected.
-src/types/lead.ts(83,35): error TS1005: ',' expected.
-src/types/lead.ts(83,42): error TS1005: ',' expected.
-src/types/lead.ts(83,57): error TS1005: ',' expected.
-src/types/lead.ts(83,64): error TS1005: ',' expected.
-src/utils/audit-logger.ts(39,34): error TS1005: ',' expected.
-src/utils/audit-logger.ts(39,40): error TS1005: ',' expected.
-src/utils/audit-logger.ts(39,55): error TS1005: ',' expected.
-src/utils/audit-logger.ts(39,61): error TS1005: ',' expected.
-src/utils/audit-logger.ts(87,34): error TS1005: ',' expected.
-src/utils/audit-logger.ts(87,42): error TS1005: ',' expected.
-src/utils/express-helpers.ts(182,57): error TS1005: ',' expected.
-src/utils/express-helpers.ts(182,59): error TS1136: Property assignment expected.
-src/utils/express-helpers.ts(186,1): error TS1128: Declaration or statement expected.
-src/utils/prisma-helpers.ts(74,22): error TS1005: ',' expected.
+src/core/handlers/education/index.ts(38,5): error TS2345: Argument of type 'StudentEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'StudentEnrollmentHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/education/index.ts(44,5): error TS2345: Argument of type 'SchoolTransportHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'SchoolTransportHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/education/index.ts(62,5): error TS2345: Argument of type 'SchoolTransferHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'SchoolTransferHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/education/index.ts(86,5): error TS2345: Argument of type 'SchoolMealHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'SchoolMealHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/education/index.ts(92,5): error TS2345: Argument of type 'SchoolMaterialHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'SchoolMaterialHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/health/index.ts(28,5): error TS2345: Argument of type 'MedicalAppointmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'MedicalAppointmentHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/health/index.ts(34,5): error TS2345: Argument of type 'MedicalAppointmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'MedicalAppointmentHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/health/index.ts(40,5): error TS2345: Argument of type 'MedicationDispenseHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'MedicationDispenseHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/health/index.ts(46,5): error TS2345: Argument of type 'HealthProgramEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'HealthProgramEnrollmentHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/health/index.ts(52,5): error TS2345: Argument of type 'HealthProgramEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'HealthProgramEnrollmentHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/health/index.ts(58,5): error TS2345: Argument of type 'MedicalExamHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'MedicalExamHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/health/index.ts(64,5): error TS2345: Argument of type 'VaccinationHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'VaccinationHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/health/index.ts(70,5): error TS2345: Argument of type 'HomeCareHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'HomeCareHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/social-assistance/attendance-handler.ts(34,9): error TS2353: Object literal may only specify known properties, and 'contact' does not exist in type 'Without<SocialAssistanceAttendanceCreateInput, SocialAssistanceAttendanceUncheckedCreateInput> & SocialAssistanceAttendanceUncheckedCreateInput'.
+src/core/handlers/social-assistance/equipment-handler.ts(28,7): error TS2322: Type '{ protocolId: string; citizenId: string; equipmentType: any; name: any; code: any; cnpj: any; address: any; addressNumber: any; addressComplement: any; neighborhood: any; city: any; state: any; zipCode: any; ... 41 more ...; internalNotes: any; }' is not assignable to type '(Without<SocialEquipmentCreateInput, SocialEquipmentUncheckedCreateInput> & SocialEquipmentUncheckedCreateInput) | (Without<...> & SocialEquipmentCreateInput)'.
+  Type '{ protocolId: string; citizenId: string; equipmentType: any; name: any; code: any; cnpj: any; address: any; addressNumber: any; addressComplement: any; neighborhood: any; city: any; state: any; zipCode: any; ... 41 more ...; internalNotes: any; }' is not assignable to type 'Without<SocialEquipmentCreateInput, SocialEquipmentUncheckedCreateInput> & SocialEquipmentUncheckedCreateInput'.
+    Property 'equipmentName' is missing in type '{ protocolId: string; citizenId: string; equipmentType: any; name: any; code: any; cnpj: any; address: any; addressNumber: any; addressComplement: any; neighborhood: any; city: any; state: any; zipCode: any; ... 41 more ...; internalNotes: any; }' but required in type 'SocialEquipmentUncheckedCreateInput'.
+src/core/handlers/social-assistance/index.ts(32,5): error TS2345: Argument of type 'FamilyRegistrationHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'FamilyRegistrationHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/social-assistance/index.ts(38,5): error TS2345: Argument of type 'SocialBenefitRequestHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'SocialBenefitRequestHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/social-assistance/index.ts(44,5): error TS2345: Argument of type 'SocialBenefitRequestHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'SocialBenefitRequestHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/social-assistance/index.ts(50,5): error TS2345: Argument of type 'SocialProgramEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'SocialProgramEnrollmentHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/social-assistance/index.ts(56,5): error TS2345: Argument of type 'HomeVisitHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'HomeVisitHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/social-assistance/index.ts(62,5): error TS2345: Argument of type 'SocialProgramEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'SocialProgramEnrollmentHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/core/handlers/social-assistance/index.ts(80,5): error TS2345: Argument of type 'DocumentRequestHandler' is not assignable to parameter of type 'ModuleHandler'.
+  Type 'DocumentRequestHandler' is missing the following properties from type 'ModuleHandler': createEntity, activateEntity, findByProtocolId, updateEntity, and 2 more.
+src/modules/handlers/culture/artistic-group-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/culture/artistic-group-handler.ts(85,9): error TS2353: Object literal may only specify known properties, and 'isActive' does not exist in type '(Without<CulturalManifestationUpdateInput, CulturalManifestationUncheckedUpdateInput> & CulturalManifestationUncheckedUpdateInput) | (Without<...> & CulturalManifestationUpdateInput)'.
+src/modules/handlers/culture/cultural-attendance-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/culture/cultural-attendance-handler.ts(42,9): error TS2353: Object literal may only specify known properties, and 'citizen' does not exist in type 'CulturalAttendanceInclude<DefaultArgs>'.
+src/modules/handlers/culture/cultural-attendance-handler.ts(71,11): error TS2353: Object literal may only specify known properties, and 'citizen' does not exist in type 'CulturalAttendanceInclude<DefaultArgs>'.
+src/modules/handlers/culture/cultural-attendance-handler.ts(98,9): error TS2322: Type 'string' is not assignable to type 'CulturalAttendanceStatus | EnumCulturalAttendanceStatusFieldUpdateOperationsInput | undefined'.
+src/modules/handlers/culture/cultural-manifestation-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/culture/cultural-manifestation-handler.ts(79,9): error TS2353: Object literal may only specify known properties, and 'isActive' does not exist in type '(Without<CulturalManifestationUpdateInput, CulturalManifestationUncheckedUpdateInput> & CulturalManifestationUncheckedUpdateInput) | (Without<...> & CulturalManifestationUpdateInput)'.
+src/modules/handlers/culture/cultural-manifestation-handler.ts(90,9): error TS2353: Object literal may only specify known properties, and 'rejectionReason' does not exist in type '(Without<CulturalManifestationUpdateInput, CulturalManifestationUncheckedUpdateInput> & CulturalManifestationUncheckedUpdateInput) | (Without<...> & CulturalManifestationUpdateInput)'.
+src/modules/handlers/environment/environmental-attendance-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/environment/environmental-program-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/environment/environmental-program-handler.ts(82,9): error TS2353: Object literal may only specify known properties, and 'approvedAt' does not exist in type '(Without<EnvironmentalProgramUpdateInput, EnvironmentalProgramUncheckedUpdateInput> & EnvironmentalProgramUncheckedUpdateInput) | (Without<...> & EnvironmentalProgramUpdateInput)'.
+src/modules/handlers/environment/environmental-program-handler.ts(93,9): error TS2353: Object literal may only specify known properties, and 'cancellationReason' does not exist in type '(Without<EnvironmentalProgramUpdateInput, EnvironmentalProgramUncheckedUpdateInput> & EnvironmentalProgramUncheckedUpdateInput) | (Without<...> & EnvironmentalProgramUpdateInput)'.
+src/modules/handlers/housing/housing-attendance-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/housing/housing-attendance-handler.ts(98,9): error TS2322: Type 'string' is not assignable to type 'HousingAttendanceStatus | EnumHousingAttendanceStatusFieldUpdateOperationsInput | undefined'.
+src/modules/handlers/housing/housing-unit-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/housing/housing-unit-handler.ts(83,9): error TS2353: Object literal may only specify known properties, and 'isActive' does not exist in type '(Without<HousingUnitUpdateInput, HousingUnitUncheckedUpdateInput> & HousingUnitUncheckedUpdateInput) | (Without<...> & HousingUnitUpdateInput)'.
+src/modules/handlers/housing/housing-unit-handler.ts(93,9): error TS2353: Object literal may only specify known properties, and 'occupantId' does not exist in type '(Without<HousingUnitUpdateInput, HousingUnitUncheckedUpdateInput> & HousingUnitUncheckedUpdateInput) | (Without<...> & HousingUnitUpdateInput)'.
+src/modules/handlers/security/anonymous-complaint-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/security/anonymous-complaint-handler.ts(80,9): error TS2353: Object literal may only specify known properties, and 'investigatorId' does not exist in type '(Without<SecurityOccurrenceUpdateInput, SecurityOccurrenceUncheckedUpdateInput> & SecurityOccurrenceUncheckedUpdateInput) | (Without<...> & SecurityOccurrenceUpdateInput)'.
+src/modules/handlers/security/camera-request-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/security/camera-request-handler.ts(82,9): error TS2353: Object literal may only specify known properties, and 'analysisNotes' does not exist in type '(Without<SecurityOccurrenceUpdateInput, SecurityOccurrenceUncheckedUpdateInput> & SecurityOccurrenceUncheckedUpdateInput) | (Without<...> & SecurityOccurrenceUpdateInput)'.
+src/modules/handlers/security/critical-point-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/security/critical-point-handler.ts(82,9): error TS2353: Object literal may only specify known properties, and 'analysisNotes' does not exist in type '(Without<SecurityOccurrenceUpdateInput, SecurityOccurrenceUncheckedUpdateInput> & SecurityOccurrenceUncheckedUpdateInput) | (Without<...> & SecurityOccurrenceUpdateInput)'.
+src/modules/handlers/security/security-alert-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/security/security-alert-handler.ts(77,9): error TS2353: Object literal may only specify known properties, and 'deactivatedAt' does not exist in type '(Without<SecurityAlertUpdateInput, SecurityAlertUncheckedUpdateInput> & SecurityAlertUncheckedUpdateInput) | (Without<...> & SecurityAlertUpdateInput)'.
+src/modules/handlers/security/security-attendance-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/security/security-attendance-handler.ts(42,9): error TS2353: Object literal may only specify known properties, and 'citizen' does not exist in type 'SecurityAttendanceInclude<DefaultArgs>'.
+src/modules/handlers/security/security-attendance-handler.ts(71,11): error TS2353: Object literal may only specify known properties, and 'citizen' does not exist in type 'SecurityAttendanceInclude<DefaultArgs>'.
+src/modules/handlers/security/security-occurrence-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/security/security-patrol-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/security/security-patrol-handler.ts(58,20): error TS2353: Object literal may only specify known properties, and 'requestedDate' does not exist in type 'SecurityPatrolOrderByWithRelationInput | SecurityPatrolOrderByWithRelationInput[]'.
+src/modules/handlers/security/security-patrol-handler.ts(78,9): error TS2353: Object literal may only specify known properties, and 'teamId' does not exist in type '(Without<SecurityPatrolUpdateInput, SecurityPatrolUncheckedUpdateInput> & SecurityPatrolUncheckedUpdateInput) | (Without<...> & SecurityPatrolUpdateInput)'.
+src/modules/handlers/security/security-patrol-handler.ts(90,9): error TS2353: Object literal may only specify known properties, and 'completedAt' does not exist in type '(Without<SecurityPatrolUpdateInput, SecurityPatrolUncheckedUpdateInput> & SecurityPatrolUncheckedUpdateInput) | (Without<...> & SecurityPatrolUpdateInput)'.
+src/modules/handlers/sports/sports-attendance-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/sports/sports-attendance-handler.ts(42,9): error TS2353: Object literal may only specify known properties, and 'citizen' does not exist in type 'SportsAttendanceInclude<DefaultArgs>'.
+src/modules/handlers/sports/sports-attendance-handler.ts(71,11): error TS2353: Object literal may only specify known properties, and 'citizen' does not exist in type 'SportsAttendanceInclude<DefaultArgs>'.
+src/modules/handlers/sports/sports-attendance-handler.ts(98,9): error TS2322: Type 'string' is not assignable to type 'SportsAttendanceStatus | EnumSportsAttendanceStatusFieldUpdateOperationsInput | undefined'.
+src/modules/handlers/sports/sports-modality-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/sports/sports-modality-handler.ts(77,9): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type '(Without<SportsModalityUpdateInput, SportsModalityUncheckedUpdateInput> & SportsModalityUncheckedUpdateInput) | (Without<...> & SportsModalityUpdateInput)'.
+src/modules/handlers/sports/sports-reservation-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/sports/sports-reservation-handler.ts(43,9): error TS2353: Object literal may only specify known properties, and 'infrastructure' does not exist in type 'SportsInfrastructureReservationInclude<DefaultArgs>'.
+src/modules/handlers/sports/sports-reservation-handler.ts(64,11): error TS2353: Object literal may only specify known properties, and 'infrastructure' does not exist in type 'SportsInfrastructureReservationInclude<DefaultArgs>'.
+src/modules/handlers/sports/sports-reservation-handler.ts(103,9): error TS2353: Object literal may only specify known properties, and 'cancellationReason' does not exist in type '(Without<SportsInfrastructureReservationUpdateInput, SportsInfrastructureReservationUncheckedUpdateInput> & SportsInfrastructureReservationUncheckedUpdateInput) | (Without<...> & SportsInfrastructureReservationUpdateInput)'.
+src/modules/handlers/sports/sports-school-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/sports/sports-school-handler.ts(42,9): error TS2353: Object literal may only specify known properties, and 'school' does not exist in type 'SportsSchoolEnrollmentInclude<DefaultArgs>'.
+src/modules/handlers/sports/sports-school-handler.ts(64,11): error TS2353: Object literal may only specify known properties, and 'school' does not exist in type 'SportsSchoolEnrollmentInclude<DefaultArgs>'.
+src/modules/handlers/sports/sports-school-handler.ts(99,9): error TS2353: Object literal may only specify known properties, and 'enrolledAt' does not exist in type '(Without<SportsSchoolEnrollmentUpdateInput, SportsSchoolEnrollmentUncheckedUpdateInput> & SportsSchoolEnrollmentUncheckedUpdateInput) | (Without<...> & SportsSchoolEnrollmentUpdateInput)'.
+src/modules/handlers/sports/sports-school-handler.ts(109,9): error TS2353: Object literal may only specify known properties, and 'rejectionReason' does not exist in type '(Without<SportsSchoolEnrollmentUpdateInput, SportsSchoolEnrollmentUncheckedUpdateInput> & SportsSchoolEnrollmentUncheckedUpdateInput) | (Without<...> & SportsSchoolEnrollmentUpdateInput)'.
+src/modules/handlers/sports/sports-tournament-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/sports/sports-tournament-handler.ts(82,9): error TS2353: Object literal may only specify known properties, and 'isActive' does not exist in type '(Without<SportsEventUpdateInput, SportsEventUncheckedUpdateInput> & SportsEventUncheckedUpdateInput) | (Without<...> & SportsEventUpdateInput)'.
+src/modules/handlers/sports/sports-tournament-handler.ts(93,9): error TS2353: Object literal may only specify known properties, and 'cancellationReason' does not exist in type '(Without<SportsEventUpdateInput, SportsEventUncheckedUpdateInput> & SportsEventUncheckedUpdateInput) | (Without<...> & SportsEventUpdateInput)'.
+src/modules/handlers/tourism/tourism-attendance-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/tourism/tourism-event-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/tourism/tourism-event-handler.ts(85,9): error TS2353: Object literal may only specify known properties, and 'isActive' does not exist in type '(Without<TourismEventUpdateInput, TourismEventUncheckedUpdateInput> & TourismEventUncheckedUpdateInput) | (Without<...> & TourismEventUpdateInput)'.
+src/modules/handlers/tourism/tourism-event-handler.ts(96,9): error TS2353: Object literal may only specify known properties, and 'isActive' does not exist in type '(Without<TourismEventUpdateInput, TourismEventUncheckedUpdateInput> & TourismEventUncheckedUpdateInput) | (Without<...> & TourismEventUpdateInput)'.
+src/modules/handlers/tourism/tourism-guide-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/tourism/tourism-guide-handler.ts(79,9): error TS2353: Object literal may only specify known properties, and 'registrationNumber' does not exist in type '(Without<TourismGuideUpdateInput, TourismGuideUncheckedUpdateInput> & TourismGuideUncheckedUpdateInput) | (Without<...> & TourismGuideUpdateInput)'.
+src/modules/handlers/tourism/tourism-guide-handler.ts(90,9): error TS2353: Object literal may only specify known properties, and 'suspensionReason' does not exist in type '(Without<TourismGuideUpdateInput, TourismGuideUncheckedUpdateInput> & TourismGuideUncheckedUpdateInput) | (Without<...> & TourismGuideUpdateInput)'.
+src/modules/handlers/tourism/tourism-route-handler.ts(10,45): error TS2339: Property 'prisma' does not exist on type 'ModuleExecutionContext'.
+src/modules/handlers/tourism/tourism-route-handler.ts(83,9): error TS2353: Object literal may only specify known properties, and 'status' does not exist in type '(Without<TourismRouteUpdateInput, TourismRouteUncheckedUpdateInput> & TourismRouteUncheckedUpdateInput) | (Without<...> & TourismRouteUpdateInput)'.
+src/modules/handlers/tourism/tourism-route-handler.ts(95,9): error TS2353: Object literal may only specify known properties, and 'deactivationReason' does not exist in type '(Without<TourismRouteUpdateInput, TourismRouteUncheckedUpdateInput> & TourismRouteUncheckedUpdateInput) | (Without<...> & TourismRouteUpdateInput)'.
+src/routes/admin-citizen-lookup.ts(188,18): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(189,20): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(190,19): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(191,25): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(192,21): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(193,21): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/protocols-simplified.routes.ts(320,13): error TS2353: Object literal may only specify known properties, and 'user' does not exist in type 'ProtocolHistorySimplifiedInclude<DefaultArgs>'.
+src/routes/protocols-simplified.routes.ts(328,22): error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'ProtocolHistorySimplifiedOrderByWithRelationInput | ProtocolHistorySimplifiedOrderByWithRelationInput[]'.
+src/routes/secretarias-agricultura.ts(651,11): error TS2322: Type '{ name: any; producerId: any; protocolId: string; size: number; location: any; plantedArea: number | null; mainCrops: any; status: any; }' is not assignable to type '(Without<RuralPropertyCreateInput, RuralPropertyUncheckedCreateInput> & RuralPropertyUncheckedCreateInput) | (Without<...> & RuralPropertyCreateInput)'.
+  Type '{ name: any; producerId: any; protocolId: string; size: number; location: any; plantedArea: number | null; mainCrops: any; status: any; }' is not assignable to type 'Without<RuralPropertyCreateInput, RuralPropertyUncheckedCreateInput> & RuralPropertyUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ name: any; producerId: any; protocolId: string; size: number; location: any; plantedArea: number | null; mainCrops: any; status: any; }' but required in type 'RuralPropertyUncheckedCreateInput'.
+src/routes/secretarias-agricultura.ts(2118,13): error TS2339: Property 'applicantName' does not exist on type '{ citizen: { name: string; cpf: string; email: string; phone: string | null; }; protocol: { number: string; status: ProtocolStatus; } | null; } & { id: string; createdAt: Date; ... 16 more ...; programId: string; }'.
+src/routes/secretarias-agricultura.ts(2119,13): error TS2339: Property 'applicantCpf' does not exist on type '{ citizen: { name: string; cpf: string; email: string; phone: string | null; }; protocol: { number: string; status: ProtocolStatus; } | null; } & { id: string; createdAt: Date; ... 16 more ...; programId: string; }'.
+src/routes/secretarias-agricultura.ts(2120,13): error TS2339: Property 'applicantEmail' does not exist on type '{ citizen: { name: string; cpf: string; email: string; phone: string | null; }; protocol: { number: string; status: ProtocolStatus; } | null; } & { id: string; createdAt: Date; ... 16 more ...; programId: string; }'.
+src/routes/secretarias-agricultura.ts(2121,13): error TS2339: Property 'applicantPhone' does not exist on type '{ citizen: { name: string; cpf: string; email: string; phone: string | null; }; protocol: { number: string; status: ProtocolStatus; } | null; } & { id: string; createdAt: Date; ... 16 more ...; programId: string; }'.
+src/services/citizen-lookup.service.ts(117,11): error TS2353: Object literal may only specify known properties, and 'mode' does not exist in type 'StringFilter<"Citizen">'.
+src/services/entity-handlers.ts(264,7): error TS2322: Type '{ protocolId: string; citizenName: any; citizenCpf: string; citizenPhone: any; citizenEmail: any; serviceType: any; description: any; status: string; priority: any; }' is not assignable to type '(Without<EducationAttendanceCreateInput, EducationAttendanceUncheckedCreateInput> & EducationAttendanceUncheckedCreateInput) | (Without<...> & EducationAttendanceCreateInput)'.
+  Type '{ protocolId: string; citizenName: any; citizenCpf: string; citizenPhone: any; citizenEmail: any; serviceType: any; description: any; status: string; priority: any; }' is not assignable to type 'Without<EducationAttendanceCreateInput, EducationAttendanceUncheckedCreateInput> & EducationAttendanceUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ protocolId: string; citizenName: any; citizenCpf: string; citizenPhone: any; citizenEmail: any; serviceType: any; description: any; status: string; priority: any; }' but required in type 'EducationAttendanceUncheckedCreateInput'.
+src/services/entity-handlers.ts(332,7): error TS2322: Type '{ protocolId: string; studentId: any; schoolId: any; incidentType: any; severity: any; description: any; incidentDate: Date; measures: any; responsibleTeacher: any; status: string; }' is not assignable to type '(Without<DisciplinaryRecordCreateInput, DisciplinaryRecordUncheckedCreateInput> & DisciplinaryRecordUncheckedCreateInput) | (Without<...> & DisciplinaryRecordCreateInput)'.
+  Type '{ protocolId: string; studentId: any; schoolId: any; incidentType: any; severity: any; description: any; incidentDate: Date; measures: any; responsibleTeacher: any; status: string; }' is not assignable to type 'Without<DisciplinaryRecordCreateInput, DisciplinaryRecordUncheckedCreateInput> & DisciplinaryRecordUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ protocolId: string; studentId: any; schoolId: any; incidentType: any; severity: any; description: any; incidentDate: Date; measures: any; responsibleTeacher: any; status: string; }' but required in type 'DisciplinaryRecordUncheckedCreateInput'.
+src/services/entity-handlers.ts(353,7): error TS2322: Type '{ protocolId: string; studentId: any; studentName: any; documentType: any; status: string; observations: any; }' is not assignable to type '(Without<SchoolDocumentCreateInput, SchoolDocumentUncheckedCreateInput> & SchoolDocumentUncheckedCreateInput) | (Without<...> & SchoolDocumentCreateInput)'.
+  Type '{ protocolId: string; studentId: any; studentName: any; documentType: any; status: string; observations: any; }' is not assignable to type 'Without<SchoolDocumentCreateInput, SchoolDocumentUncheckedCreateInput> & SchoolDocumentUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ protocolId: string; studentId: any; studentName: any; documentType: any; status: string; observations: any; }' but required in type 'SchoolDocumentUncheckedCreateInput'.
+src/services/entity-handlers.ts(390,7): error TS2322: Type '{ protocolId: string; studentId: any; studentName: any; schoolId: any; classId: any; month: number; year: number; totalDays: number; presentDays: number; absentDays: number; percentage: number; }' is not assignable to type '(Without<AttendanceRecordCreateInput, AttendanceRecordUncheckedCreateInput> & AttendanceRecordUncheckedCreateInput) | (Without<...> & AttendanceRecordCreateInput)'.
+  Type '{ protocolId: string; studentId: any; studentName: any; schoolId: any; classId: any; month: number; year: number; totalDays: number; presentDays: number; absentDays: number; percentage: number; }' is not assignable to type 'Without<AttendanceRecordCreateInput, AttendanceRecordUncheckedCreateInput> & AttendanceRecordUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ protocolId: string; studentId: any; studentName: any; schoolId: any; classId: any; month: number; year: number; totalDays: number; presentDays: number; absentDays: number; percentage: number; }' but required in type 'AttendanceRecordUncheckedCreateInput'.
+src/services/entity-handlers.ts(413,7): error TS2322: Type '{ protocolId: string; studentId: any; studentName: any; schoolId: any; classId: any; subject: any; period: any; grade: number; maxGrade: number; status: string; teacherName: any; }' is not assignable to type '(Without<GradeRecordCreateInput, GradeRecordUncheckedCreateInput> & GradeRecordUncheckedCreateInput) | (Without<...> & GradeRecordCreateInput)'.
+  Type '{ protocolId: string; studentId: any; studentName: any; schoolId: any; classId: any; subject: any; period: any; grade: number; maxGrade: number; status: string; teacherName: any; }' is not assignable to type 'Without<GradeRecordCreateInput, GradeRecordUncheckedCreateInput> & GradeRecordUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ protocolId: string; studentId: any; studentName: any; schoolId: any; classId: any; subject: any; period: any; grade: number; maxGrade: number; status: string; teacherName: any; }' but required in type 'GradeRecordUncheckedCreateInput'.
+src/services/entity-handlers.ts(435,7): error TS2322: Type '{ protocolId: string; schoolId: any; schoolName: any; managementType: any; description: any; status: string; priority: any; }' is not assignable to type '(Without<SchoolManagementCreateInput, SchoolManagementUncheckedCreateInput> & SchoolManagementUncheckedCreateInput) | (Without<...> & SchoolManagementCreateInput)'.
+  Type '{ protocolId: string; schoolId: any; schoolName: any; managementType: any; description: any; status: string; priority: any; }' is not assignable to type 'Without<SchoolManagementCreateInput, SchoolManagementUncheckedCreateInput> & SchoolManagementUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ protocolId: string; schoolId: any; schoolName: any; managementType: any; description: any; status: string; priority: any; }' but required in type 'SchoolManagementUncheckedCreateInput'.
+src/services/entity-handlers.ts(681,7): error TS2322: Type '{ protocolId: string; producerName: any; producerCpf: string; propertyName: any; propertySize: number; location: any; assistanceType: any; subject: any; description: any; technician: any; visitDate: Date; recommendations: any; }' is not assignable to type '(Without<TechnicalAssistanceCreateInput, TechnicalAssistanceUncheckedCreateInput> & TechnicalAssistanceUncheckedCreateInput) | (Without<...> & TechnicalAssistanceCreateInput)'.
+  Type '{ protocolId: string; producerName: any; producerCpf: string; propertyName: any; propertySize: number; location: any; assistanceType: any; subject: any; description: any; technician: any; visitDate: Date; recommendations: any; }' is not assignable to type 'Without<TechnicalAssistanceCreateInput, TechnicalAssistanceUncheckedCreateInput> & TechnicalAssistanceUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ protocolId: string; producerName: any; producerCpf: string; propertyName: any; propertySize: number; location: any; assistanceType: any; subject: any; description: any; technician: any; visitDate: Date; recommendations: any; }' but required in type 'TechnicalAssistanceUncheckedCreateInput'.
+src/services/entity-handlers.ts(704,9): error TS2353: Object literal may only specify known properties, and 'producerName' does not exist in type 'Without<AgricultureAttendanceCreateInput, AgricultureAttendanceUncheckedCreateInput> & AgricultureAttendanceUncheckedCreateInput'.
+src/services/entity-handlers.ts(791,7): error TS2322: Type '{ protocolId: string; producerId: any; name: any; size: number; location: any; totalArea: number; cultivatedArea: number | null; plantedArea: number | null; mainCrops: any; owner: any; status: string; }' is not assignable to type '(Without<RuralPropertyCreateInput, RuralPropertyUncheckedCreateInput> & RuralPropertyUncheckedCreateInput) | (Without<...> & RuralPropertyCreateInput)'.
+  Type '{ protocolId: string; producerId: any; name: any; size: number; location: any; totalArea: number; cultivatedArea: number | null; plantedArea: number | null; mainCrops: any; owner: any; status: string; }' is not assignable to type 'Without<RuralPropertyCreateInput, RuralPropertyUncheckedCreateInput> & RuralPropertyUncheckedCreateInput'.
+    Property 'citizenId' is missing in type '{ protocolId: string; producerId: any; name: any; size: number; location: any; totalArea: number; cultivatedArea: number | null; plantedArea: number | null; mainCrops: any; owner: any; status: string; }' but required in type 'RuralPropertyUncheckedCreateInput'.
+src/services/entity-handlers.ts(2474,9): error TS2353: Object literal may only specify known properties, and 'applicantName' does not exist in type 'Without<RuralProgramEnrollmentCreateInput, RuralProgramEnrollmentUncheckedCreateInput> & RuralProgramEnrollmentUncheckedCreateInput'.
+src/services/entity-handlers.ts(2520,9): error TS2353: Object literal may only specify known properties, and 'applicantName' does not exist in type 'Without<RuralTrainingEnrollmentCreateInput, RuralTrainingEnrollmentUncheckedCreateInput> & RuralTrainingEnrollmentUncheckedCreateInput'.

@@ -1,0 +1,1670 @@
+// ============================================
+// FASE 2 - MODELS PRISMA
+// Saúde, Educação e Assistência Social
+// Total: 30 módulos COM_DADOS
+// ============================================
+
+// ============================================
+// SAÚDE (11 MÓDULOS)
+// ============================================
+
+// 1. ATENDIMENTOS_SAUDE
+model HealthAttendance {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("HealthAttendanceProtocol", fields: [protocolId], references: [id])
+
+  // Paciente
+  patientId         String?
+  patient           Patient?            @relation(fields: [patientId], references: [id])
+  patientName       String
+  patientCpf        String
+  patientPhone      String
+  patientBirthDate  DateTime
+
+  // Atendimento
+  healthUnitId      String
+  attendanceType    String              // CONSULTA, EMERGENCIA, PROCEDIMENTO, EXAME
+  speciality        String?
+  professionalId    String?
+  professionalName  String?
+  attendanceDate    DateTime
+
+  // Detalhes Clínicos
+  chiefComplaint    String              // Queixa principal
+  symptoms          String?
+  vitalSigns        Json?               // PA, temperatura, peso, altura
+  diagnosis         String?
+  treatment         String?
+  prescription      Json?
+  referral          String?             // Encaminhamento
+
+  // Status
+  status            String              @default("SCHEDULED") // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  isActive          Boolean             @default(true)
+  completedAt       DateTime?
+
+  // Observações
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([patientCpf])
+  @@index([attendanceDate])
+  @@index([status])
+  @@map("health_attendances")
+}
+
+// 2. AGENDAMENTOS_MEDICOS
+model MedicalAppointment {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("MedicalAppointmentProtocol", fields: [protocolId], references: [id])
+
+  // Paciente
+  patientId         String?
+  patient           Patient?            @relation(fields: [patientId], references: [id])
+  patientName       String
+  patientCpf        String
+  patientPhone      String
+  patientBirthDate  DateTime
+
+  // Agendamento
+  healthUnitId      String
+  speciality        String
+  doctorId          String?
+  doctorName        String?
+  appointmentDate   DateTime
+  appointmentTime   String
+
+  // Detalhes
+  symptoms          String?
+  observations      String?
+  priority          String              @default("NORMAL") // NORMAL, HIGH, EMERGENCY
+
+  // Status
+  status            String              @default("SCHEDULED") // SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+  isActive          Boolean             @default(true)
+  confirmedAt       DateTime?
+  completedAt       DateTime?
+  cancellationReason String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([patientCpf])
+  @@index([appointmentDate])
+  @@index([status])
+  @@map("medical_appointments")
+}
+
+// 3. CONTROLE_MEDICAMENTOS (já existe como MedicationDispensing - manter)
+
+// 4. CAMPANHAS_SAUDE
+model HealthCampaign {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("HealthCampaignProtocol", fields: [protocolId], references: [id])
+
+  name              String
+  description       String
+  campaignType      String              // VACINACAO, PREVENCAO, CONSCIENTIZACAO, RASTREAMENTO
+  targetAudience    String
+  ageRange          Json?               // { min: 0, max: 100 }
+
+  // Período
+  startDate         DateTime
+  endDate           DateTime
+
+  // Locais
+  locations         Json?               // Array de unidades de saúde
+
+  // Metas
+  goal              Int?                // Meta de pessoas
+  achieved          Int                 @default(0)
+
+  // Responsável
+  coordinatorId     String?
+  coordinatorName   String?
+  team              Json?
+
+  // Status
+  status            String              @default("PLANNED") // PLANNED, ACTIVE, COMPLETED, CANCELLED
+  isActive          Boolean             @default(true)
+
+  // Resultados
+  results           Json?
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([campaignType])
+  @@index([startDate])
+  @@index([status])
+  @@map("health_campaigns")
+}
+
+// 5. PROGRAMAS_SAUDE
+model HealthProgram {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("HealthProgramProtocol", fields: [protocolId], references: [id])
+
+  name              String
+  description       String
+  programType       String              // HIPERDIA, GESTANTE, BOLSA_FAMILIA, SAUDE_MENTAL, etc
+  targetAudience    String
+
+  // Período
+  startDate         DateTime
+  endDate           DateTime?           // Programas contínuos não têm data fim
+
+  // Coordenação
+  coordinatorId     String?
+  coordinatorName   String?
+  team              Json?
+
+  // Participantes
+  maxParticipants   Int?
+  currentParticipants Int               @default(0)
+
+  // Atividades
+  activities        Json?               // Consultas, exames, palestras
+  schedule          Json?
+
+  // Status
+  status            String              @default("ACTIVE") // ACTIVE, SUSPENDED, COMPLETED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  enrollments       HealthProgramEnrollment[]
+
+  @@index([programType])
+  @@index([status])
+  @@map("health_programs")
+}
+
+model HealthProgramEnrollment {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("HealthProgramEnrollmentProtocol", fields: [protocolId], references: [id])
+
+  programId         String
+  program           HealthProgram       @relation(fields: [programId], references: [id])
+
+  // Paciente
+  patientId         String?
+  patient           Patient?            @relation(fields: [patientId], references: [id])
+  patientName       String
+  patientCpf        String
+  patientPhone      String
+
+  // Inscrição
+  enrollmentDate    DateTime            @default(now())
+  status            String              @default("ACTIVE") // ACTIVE, INACTIVE, COMPLETED, DROPPED
+
+  // Acompanhamento
+  lastVisit         DateTime?
+  nextVisit         DateTime?
+  observations      String?
+
+  isActive          Boolean             @default(true)
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([programId])
+  @@index([patientCpf])
+  @@index([status])
+  @@map("health_program_enrollments")
+}
+
+// 6. ENCAMINHAMENTOS_TFD (Tratamento Fora de Domicílio)
+model TFDReferral {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("TFDReferralProtocol", fields: [protocolId], references: [id])
+
+  // Paciente
+  patientId         String?
+  patient           Patient?            @relation(fields: [patientId], references: [id])
+  patientName       String
+  patientCpf        String
+  patientPhone      String
+  patientBirthDate  DateTime
+
+  // Encaminhamento
+  referringDoctorId String?
+  referringDoctor   String
+  referringUnit     String
+  specialty         String
+  diagnosis         String
+  procedure         String              // Procedimento solicitado
+  justification     String              // Justificativa médica
+  urgency           String              @default("NORMAL") // NORMAL, HIGH, EMERGENCY
+
+  // Destino
+  destinationCity   String
+  destinationState  String
+  destinationFacility String?
+
+  // Transporte
+  needsTransport    Boolean             @default(false)
+  needsAccommodation Boolean            @default(false)
+  needsCompanion    Boolean             @default(false)
+  companionName     String?
+  companionCpf      String?
+
+  // Agendamento
+  scheduledDate     DateTime?
+  scheduledTime     String?
+
+  // Status
+  status            String              @default("ANALYSIS") // ANALYSIS, APPROVED, SCHEDULED, COMPLETED, REJECTED
+  isActive          Boolean             @default(true)
+  approvedAt        DateTime?
+  approvedBy        String?
+  rejectionReason   String?
+  completedAt       DateTime?
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([patientCpf])
+  @@index([status])
+  @@index([urgency])
+  @@map("tfd_referrals")
+}
+
+// 7. EXAMES
+model MedicalExam {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("MedicalExamProtocol", fields: [protocolId], references: [id])
+
+  // Paciente
+  patientId         String?
+  patient           Patient?            @relation(fields: [patientId], references: [id])
+  patientName       String
+  patientCpf        String
+  patientPhone      String
+
+  // Exame
+  examType          String              // LABORATORIAL, IMAGEM, CARDIOLOGICO
+  examName          String
+  examCode          String?             // Código SUS/SIGTAP
+  requestingDoctorId String?
+  requestingDoctor  String
+  requestingUnit    String
+
+  // Solicitação
+  clinicalIndication String             // Indicação clínica
+  urgency           String              @default("ROUTINE") // ROUTINE, URGENT, EMERGENCY
+
+  // Agendamento
+  scheduledDate     DateTime?
+  scheduledTime     String?
+  scheduledLocation String?
+
+  // Execução
+  performedDate     DateTime?
+  performedBy       String?
+
+  // Resultado
+  resultDate        DateTime?
+  result            String?
+  resultFile        String?             // URL do arquivo PDF
+  observations      String?
+
+  // Status
+  status            String              @default("REQUESTED") // REQUESTED, SCHEDULED, COLLECTED, PROCESSING, COMPLETED, CANCELLED
+  isActive          Boolean             @default(true)
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([patientCpf])
+  @@index([examType])
+  @@index([status])
+  @@index([scheduledDate])
+  @@map("medical_exams")
+}
+
+// 8. TRANSPORTE_PACIENTES
+model PatientTransport {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("PatientTransportProtocol", fields: [protocolId], references: [id])
+
+  // Paciente
+  patientId         String?
+  patient           Patient?            @relation(fields: [patientId], references: [id])
+  patientName       String
+  patientCpf        String
+  patientPhone      String
+
+  // Transporte
+  transportType     String              // AMBULANCIA, VEICULO, TFD
+  reason            String              // Motivo do transporte
+  origin            String              // Endereço origem
+  destination       String              // Endereço destino
+  destinationCity   String?
+
+  // Agendamento
+  scheduledDate     DateTime
+  scheduledTime     String
+  returnNeeded      Boolean             @default(false)
+  returnDate        DateTime?
+  returnTime        String?
+
+  // Condições
+  needsStretcher    Boolean             @default(false)
+  needsWheelchair   Boolean             @default(false)
+  needsOxygen       Boolean             @default(false)
+  needsCompanion    Boolean             @default(false)
+  companionName     String?
+
+  medicalCondition  String?             // Condição médica do paciente
+  specialNeeds      String?
+
+  // Execução
+  vehicleId         String?
+  vehicleType       String?
+  driverId          String?
+  driverName        String?
+  departureTime     DateTime?
+  arrivalTime       DateTime?
+
+  // Status
+  status            String              @default("REQUESTED") // REQUESTED, SCHEDULED, IN_TRANSIT, COMPLETED, CANCELLED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([patientCpf])
+  @@index([scheduledDate])
+  @@index([status])
+  @@map("patient_transports")
+}
+
+// 9. CADASTRO_PACIENTE
+model Patient {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("PatientProtocol", fields: [protocolId], references: [id])
+
+  // Dados Pessoais
+  name              String
+  cpf               String              @unique
+  rg                String?
+  birthDate         DateTime
+  gender            String
+  mothersName       String
+  fathersName       String?
+
+  // Contato
+  phone             String
+  email             String?
+  address           String
+  addressNumber     String?
+  complement        String?
+  neighborhood      String
+  city              String
+  state             String
+  zipCode           String
+
+  // Documentação
+  susCard           String?             // Cartão SUS
+  bloodType         String?
+  organDonor        Boolean             @default(false)
+
+  // Dados Sociais
+  maritalStatus     String?
+  education         String?
+  occupation        String?
+
+  // Saúde
+  allergies         Json?
+  chronicDiseases   Json?
+  medications       Json?
+  disabilities      Json?
+
+  // Programa Saúde da Família
+  healthUnit        String?
+  familyGroup       String?
+  acsResponsible    String?             // Agente Comunitário de Saúde
+
+  // Status
+  isActive          Boolean             @default(true)
+  registrationDate  DateTime            @default(now())
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relações
+  healthAttendances HealthAttendance[]
+  medicalAppointments MedicalAppointment[]
+  programEnrollments HealthProgramEnrollment[]
+  tfdReferrals      TFDReferral[]
+  medicalExams      MedicalExam[]
+  patientTransports PatientTransport[]
+  vaccinations      Vaccination[]
+
+  @@index([cpf])
+  @@index([susCard])
+  @@index([healthUnit])
+  @@map("patients")
+}
+
+// 10. VACINACAO (já existe - manter)
+
+// 11. GESTAO_ACS (Agentes Comunitários de Saúde)
+model CommunityHealthAgent {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("CommunityHealthAgentProtocol", fields: [protocolId], references: [id])
+
+  // Dados Pessoais
+  name              String
+  cpf               String              @unique
+  rg                String?
+  birthDate         DateTime
+  phone             String
+  email             String?
+
+  // Endereço
+  address           String
+  neighborhood      String
+  city              String
+  state             String
+
+  // Profissional
+  registrationNumber String             @unique // Matrícula
+  hiringDate        DateTime
+  healthUnit        String
+
+  // Área de Atuação
+  coverageArea      Json                // Bairros/ruas
+  familyGroups      Json?               // Grupos familiares
+  familiesCount     Int                 @default(0)
+
+  // Status
+  status            String              @default("ACTIVE") // ACTIVE, VACATION, LEAVE, INACTIVE
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  homeVisits        HomeVisit[]
+
+  @@index([cpf])
+  @@index([healthUnit])
+  @@index([status])
+  @@map("community_health_agents")
+}
+
+model HomeVisit {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("HomeVisitProtocol", fields: [protocolId], references: [id])
+
+  acsId             String
+  acs               CommunityHealthAgent @relation(fields: [acsId], references: [id])
+
+  // Família/Domicílio
+  familyId          String?             // ID da família cadastrada
+  address           String
+  familyMembers     Int
+
+  // Visita
+  visitDate         DateTime
+  visitType         String              // ROTINA, GESTANTE, BEBE, HIPERTENSO, DIABETICO
+  objectives        String              // Objetivos da visita
+
+  // Achados
+  findings          String?             // Achados/observações
+  healthIssues      Json?               // Problemas identificados
+  referrals         Json?               // Encaminhamentos
+
+  // Ações
+  actions           Json?               // Ações realizadas
+  orientations      String?             // Orientações dadas
+
+  // Acompanhamento
+  followUpNeeded    Boolean             @default(false)
+  nextVisit         DateTime?
+
+  socialWorkerId    String?
+  socialWorker      User?               @relation("HomeVisitSocialWorker", fields: [socialWorkerId], references: [id])
+
+  // Status
+  status            String              @default("COMPLETED") // SCHEDULED, COMPLETED, CANCELLED
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([acsId])
+  @@index([visitDate])
+  @@index([visitType])
+  @@map("home_visits")
+}
+
+// ============================================
+// EDUCAÇÃO (10 MÓDULOS)
+// ============================================
+
+// 1. ATENDIMENTOS_EDUCACAO
+model EducationAttendance {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("EducationAttendanceProtocol", fields: [protocolId], references: [id])
+
+  // Solicitante
+  requesterName     String
+  requesterCpf      String
+  requesterPhone    String
+  relationship      String              // PAI, MAE, RESPONSAVEL, PROPRIO_ALUNO
+
+  // Aluno (se aplicável)
+  studentId         String?
+  student           Student?            @relation(fields: [studentId], references: [id])
+  studentName       String?
+
+  // Atendimento
+  schoolId          String?
+  school            School?             @relation(fields: [schoolId], references: [id])
+  attendanceType    String              // INFORMACAO, RECLAMACAO, MATRICULA, TRANSFERENCIA, DOCUMENTO
+  subject           String              // Assunto
+  description       String
+
+  // Atendente
+  attendantId       String?
+  attendantName     String?
+  attendanceDate    DateTime            @default(now())
+
+  // Resolução
+  resolution        String?
+  resolvedAt        DateTime?
+
+  // Status
+  status            String              @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([requesterCpf])
+  @@index([studentId])
+  @@index([status])
+  @@map("education_attendances")
+}
+
+// 2. MATRICULA_ALUNO
+model StudentEnrollment {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("StudentEnrollmentProtocol", fields: [protocolId], references: [id])
+
+  // Aluno
+  studentId         String?
+  student           Student?            @relation(fields: [studentId], references: [id])
+  studentName       String
+  studentCpf        String?
+  studentRg         String?
+  birthDate         DateTime
+  gender            String
+
+  // Filiação
+  mothersName       String
+  mothersCpf        String?
+  mothersPhone      String
+  fathersName       String?
+  fathersCpf        String?
+  fathersPhone      String?
+
+  // Endereço
+  address           String
+  neighborhood      String
+  city              String
+  state             String
+  zipCode           String
+
+  // Matrícula
+  schoolId          String
+  school            School              @relation(fields: [schoolId], references: [id])
+  grade             String              // Série/ano
+  shift             String              // MATUTINO, VESPERTINO, NOTURNO, INTEGRAL
+  enrollmentYear    Int
+
+  // Dados Adicionais
+  specialNeeds      Boolean             @default(false)
+  specialNeedsDescription String?
+  previousSchool    String?
+  transferStudent   Boolean             @default(false)
+
+  // Documentos
+  birthCertificate  Boolean             @default(false)
+  cpfDocument       Boolean             @default(false)
+  photoId           Boolean             @default(false)
+  proofOfResidence  Boolean             @default(false)
+  vaccinationCard   Boolean             @default(false)
+
+  // Status
+  status            String              @default("ANALYSIS") // ANALYSIS, APPROVED, ENROLLED, REJECTED
+  isActive          Boolean             @default(true)
+  enrollmentDate    DateTime?
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([studentCpf])
+  @@index([schoolId])
+  @@index([enrollmentYear])
+  @@index([status])
+  @@map("student_enrollments")
+}
+
+// 3. TRANSPORTE_ESCOLAR
+model SchoolTransportRequest {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SchoolTransportProtocol", fields: [protocolId], references: [id])
+
+  // Aluno
+  studentId         String?
+  student           Student?            @relation(fields: [studentId], references: [id])
+  studentName       String
+  studentCpf        String?
+  birthDate         DateTime
+  grade             String
+
+  // Responsável
+  responsibleName   String
+  responsibleCpf    String
+  responsiblePhone  String
+  relationship      String
+
+  // Escola
+  schoolId          String
+  school            School              @relation(fields: [schoolId], references: [id])
+  schoolName        String
+  shift             String
+
+  // Endereço (ponto de embarque)
+  address           String
+  neighborhood      String
+  referencePoint    String?
+  distanceKm        Float?
+
+  // Necessidades Especiais
+  specialNeeds      Boolean             @default(false)
+  needsWheelchair   Boolean             @default(false)
+  needsMonitor      Boolean             @default(false)
+  specialNeedsDescription String?
+
+  // Rota
+  routeId           String?
+  routeName         String?
+  vehicleId         String?
+  driverId          String?
+
+  // Status
+  status            String              @default("ANALYSIS") // ANALYSIS, APPROVED, ACTIVE, SUSPENDED, CANCELLED
+  isActive          Boolean             @default(true)
+  approvedAt        DateTime?
+  startDate         DateTime?
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([studentId])
+  @@index([schoolId])
+  @@index([status])
+  @@map("school_transport_requests")
+}
+
+// 4. REGISTRO_OCORRENCIA_ESCOLAR
+model SchoolIncident {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SchoolIncidentProtocol", fields: [protocolId], references: [id])
+
+  // Escola
+  schoolId          String
+  school            School              @relation(fields: [schoolId], references: [id])
+
+  // Envolvidos
+  studentId         String?
+  student           Student?            @relation(fields: [studentId], references: [id])
+  studentsInvolved  Json?               // Array de alunos envolvidos
+
+  // Ocorrência
+  incidentType      String              // DISCIPLINAR, ACADEMICA, SAUDE, SEGURANCA, OUTRA
+  incidentDate      DateTime
+  incidentTime      String
+  location          String              // Local da ocorrência
+
+  description       String              // Descrição detalhada
+  severity          String              @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+
+  // Reportado por
+  reportedBy        String
+  reporterRole      String              // PROFESSOR, DIRETOR, FUNCIONARIO, ALUNO, RESPONSAVEL
+
+  // Ações Tomadas
+  immediateActions  String?
+  notifiedParents   Boolean             @default(false)
+  notificationDate  DateTime?
+
+  // Acompanhamento
+  requiresFollowUp  Boolean             @default(false)
+  followUpActions   String?
+  resolvedAt        DateTime?
+
+  // Status
+  status            String              @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([incidentType])
+  @@index([incidentDate])
+  @@index([status])
+  @@map("school_incidents")
+}
+
+// 5. SOLICITACAO_DOCUMENTO_ESCOLAR
+model SchoolDocumentRequest {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SchoolDocumentProtocol", fields: [protocolId], references: [id])
+
+  // Solicitante
+  requesterName     String
+  requesterCpf      String
+  requesterPhone    String
+  relationship      String              // ALUNO, PAI, MAE, RESPONSAVEL
+
+  // Aluno
+  studentId         String?
+  student           Student?            @relation(fields: [studentId], references: [id])
+  studentName       String
+  studentCpf        String?
+
+  // Escola
+  schoolId          String?
+  school            School?             @relation(fields: [schoolId], references: [id])
+  schoolName        String
+
+  // Documento
+  documentType      String              // HISTORICO, DECLARACAO, BOLETIM, CERTIFICADO, TRANSFERENCIA
+  purpose           String              // Finalidade
+  quantity          Int                 @default(1)
+
+  // Período (para histórico/boletim)
+  academicYear      Int?
+  period            String?
+
+  // Entrega
+  deliveryMethod    String              @default("PRESENCIAL") // PRESENCIAL, CORREIOS, EMAIL
+  deliveryAddress   String?
+  email             String?
+
+  // Status
+  status            String              @default("REQUESTED") // REQUESTED, PROCESSING, READY, DELIVERED, CANCELLED
+  isActive          Boolean             @default(true)
+  estimatedDate     DateTime?
+  readyDate         DateTime?
+  deliveredDate     DateTime?
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([requesterCpf])
+  @@index([studentId])
+  @@index([documentType])
+  @@index([status])
+  @@map("school_document_requests")
+}
+
+// 6. TRANSFERENCIA_ESCOLAR
+model SchoolTransfer {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SchoolTransferProtocol", fields: [protocolId], references: [id])
+
+  // Aluno
+  studentId         String?
+  student           Student?            @relation(fields: [studentId], references: [id])
+  studentName       String
+  studentCpf        String?
+
+  // Responsável
+  responsibleName   String
+  responsibleCpf    String
+  responsiblePhone  String
+
+  // Escola Origem
+  originSchoolId    String?
+  originSchool      School?             @relation("OriginSchool", fields: [originSchoolId], references: [id])
+  originSchoolName  String
+  currentGrade      String
+  currentShift      String
+
+  // Escola Destino
+  destinationSchoolId String?
+  destinationSchool School?             @relation("DestinationSchool", fields: [destinationSchoolId], references: [id])
+  destinationSchoolName String
+  desiredGrade      String
+  desiredShift      String
+
+  // Motivo
+  transferReason    String
+  urgent            Boolean             @default(false)
+
+  // Documentação
+  hasHistorico      Boolean             @default(false)
+  hasDeclaracao     Boolean             @default(false)
+
+  // Status
+  status            String              @default("REQUESTED") // REQUESTED, ANALYSIS, APPROVED, COMPLETED, REJECTED
+  isActive          Boolean             @default(true)
+  approvedAt        DateTime?
+  transferDate      DateTime?
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([studentId])
+  @@index([originSchoolId])
+  @@index([destinationSchoolId])
+  @@index([status])
+  @@map("school_transfers")
+}
+
+// 7. CONSULTA_FREQUENCIA (Sistema interno - não precisa de model específico)
+
+// 8. CONSULTA_NOTAS (Sistema interno - não precisa de model específico)
+
+// 9. GESTAO_ESCOLAR
+model School {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("SchoolProtocol", fields: [protocolId], references: [id])
+
+  // Identificação
+  name              String              @unique
+  code              String              @unique
+  inepCode          String?             // Código INEP/MEC
+
+  // Tipo
+  schoolType        String              // INFANTIL, FUNDAMENTAL, MEDIO, EJA
+  administrativeType String             // MUNICIPAL, ESTADUAL, FEDERAL
+
+  // Localização
+  address           String
+  neighborhood      String
+  city              String
+  state             String
+  zipCode           String
+  coordinates       Json?
+
+  // Contato
+  phone             String
+  email             String?
+
+  // Gestão
+  principalName     String
+  principalCpf      String?
+  principalPhone    String
+
+  // Estrutura
+  capacity          Int                 // Capacidade total
+  currentStudents   Int                 @default(0)
+  classrooms        Int
+  shifts            Json                // Array de turnos disponíveis
+  grades            Json                // Array de séries/anos
+
+  // Infraestrutura
+  infrastructure    Json?               // Biblioteca, laboratório, quadra, etc
+  accessibility     Boolean             @default(false)
+
+  // Status
+  status            String              @default("ACTIVE") // ACTIVE, MAINTENANCE, INACTIVE
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relações
+  enrollments       StudentEnrollment[]
+  transportRequests SchoolTransportRequest[]
+  incidents         SchoolIncident[]
+  documentRequests  SchoolDocumentRequest[]
+  transfersOrigin   SchoolTransfer[]    @relation("OriginSchool")
+  transfersDestination SchoolTransfer[] @relation("DestinationSchool")
+  students          Student[]
+  mealRecords       SchoolMealRecord[]
+  educationAttendances EducationAttendance[]
+
+  @@index([code])
+  @@index([inepCode])
+  @@index([status])
+  @@map("schools")
+}
+
+// 10. GESTAO_MERENDA
+model SchoolMealRecord {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("SchoolMealProtocol", fields: [protocolId], references: [id])
+
+  schoolId          String
+  school            School              @relation(fields: [schoolId], references: [id])
+
+  // Data
+  recordDate        DateTime
+  shift             String              // MATUTINO, VESPERTINO, NOTURNO
+
+  // Refeição
+  mealType          String              // CAFE_MANHA, ALMOCO, LANCHE, JANTA
+  menu              Json                // Menu do dia
+
+  // Números
+  studentsPresent   Int                 // Alunos presentes
+  mealsServed       Int                 // Refeições servidas
+
+  // Ingredientes Utilizados
+  ingredients       Json                // Array de ingredientes e quantidades
+
+  // Qualidade
+  temperature       String?             // Temperatura da refeição
+  acceptance        String?             // BOA, REGULAR, RUIM
+  feedback          String?
+
+  // Responsável
+  responsibleName   String
+  responsibleRole   String              // MERENDEIRA, NUTRICIONISTA
+
+  // Status
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([schoolId])
+  @@index([recordDate])
+  @@index([mealType])
+  @@map("school_meal_records")
+}
+
+model Student {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("StudentProtocol", fields: [protocolId], references: [id])
+
+  // Dados Pessoais
+  name              String
+  cpf               String?             @unique
+  rg                String?
+  birthDate         DateTime
+  gender            String
+
+  // Filiação
+  mothersName       String
+  mothersCpf        String?
+  mothersPhone      String
+  fathersName       String?
+  fathersCpf        String?
+  fathersPhone      String?
+
+  // Endereço
+  address           String
+  neighborhood      String
+  city              String
+  state             String
+  zipCode           String
+
+  // Escola Atual
+  schoolId          String?
+  school            School?             @relation(fields: [schoolId], references: [id])
+  currentGrade      String?
+  currentShift      String?
+
+  // Necessidades Especiais
+  specialNeeds      Boolean             @default(false)
+  specialNeedsDescription String?
+
+  // Status
+  enrollmentStatus  String              @default("ACTIVE") // ACTIVE, TRANSFERRED, GRADUATED, DROPPED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relações
+  enrollments       StudentEnrollment[]
+  transportRequests SchoolTransportRequest[]
+  incidents         SchoolIncident[]
+  documentRequests  SchoolDocumentRequest[]
+  transfers         SchoolTransfer[]
+  educationAttendances EducationAttendance[]
+
+  @@index([cpf])
+  @@index([schoolId])
+  @@index([enrollmentStatus])
+  @@map("students")
+}
+
+// ============================================
+// ASSISTÊNCIA SOCIAL (9 MÓDULOS)
+// ============================================
+
+// 1. ATENDIMENTOS_ASSISTENCIA_SOCIAL
+model SocialAssistanceAttendance {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SocialAssistanceAttendanceProtocol", fields: [protocolId], references: [id])
+
+  // Usuário
+  citizenId         String?
+  citizen           Citizen?            @relation("SocialAssistanceAttendanceCitizen", fields: [citizenId], references: [id])
+  citizenName       String
+  citizenCpf        String
+  citizenPhone      String
+
+  // Atendimento
+  equipmentId       String?
+  equipment         SocialEquipment?    @relation(fields: [equipmentId], references: [id])
+  equipmentName     String              // CRAS, CREAS, etc
+  attendanceType    String              // ACOLHIMENTO, ORIENTACAO, ACOMPANHAMENTO
+
+  // Demanda
+  demand            String              // Demanda apresentada
+  vulnerability     String              // BAIXA, MEDIA, ALTA, MUITO_ALTA
+
+  // Atendente
+  socialWorkerId    String?
+  socialWorker      User?               @relation("SocialAssistanceWorker", fields: [socialWorkerId], references: [id])
+  socialWorkerName  String
+
+  // Diagnóstico Social
+  familySituation   Json?               // Situação familiar
+  incomeSituation   Json?               // Situação de renda
+  housingSituation  Json?               // Situação de moradia
+
+  // Encaminhamentos
+  referrals         Json?               // Encaminhamentos realizados
+  servicesOffered   Json?               // Serviços ofertados
+
+  // Acompanhamento
+  requiresFollowUp  Boolean             @default(false)
+  followUpDate      DateTime?
+
+  // Status
+  status            String              @default("COMPLETED") // SCHEDULED, IN_PROGRESS, COMPLETED
+  attendanceDate    DateTime            @default(now())
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([citizenCpf])
+  @@index([equipmentId])
+  @@index([attendanceDate])
+  @@index([vulnerability])
+  @@map("social_assistance_attendances")
+}
+
+// 2. CADASTRO_UNICO (CadÚnico)
+model CadUnicoRegistration {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("CadUnicoProtocol", fields: [protocolId], references: [id])
+
+  // Responsável Familiar
+  responsibleName   String
+  responsibleCpf    String              @unique
+  responsibleRg     String?
+  birthDate         DateTime
+  mothersName       String
+
+  // Contato
+  phone             String
+  email             String?
+
+  // Endereço
+  address           String
+  addressNumber     String?
+  complement        String?
+  neighborhood      String
+  city              String
+  state             String
+  zipCode           String
+
+  // Dados da Família
+  familyMembers     Json                // Array com dados de cada membro
+  familyIncome      Float?              // Renda familiar total
+  perCapitaIncome   Float?              // Renda per capita
+
+  // Moradia
+  housingType       String              // PROPRIA, ALUGADA, CEDIDA, OUTROS
+  rooms             Int?
+  housingCondition  String?             // Condições de moradia
+
+  // Serviços Básicos
+  electricity       Boolean             @default(false)
+  water             Boolean             @default(false)
+  sewage            Boolean             @default(false)
+  garbage           Boolean             @default(false)
+
+  // NIS (Número de Identificação Social)
+  nisNumber         String?             @unique
+  nisDate           DateTime?
+
+  // Status
+  status            String              @default("PENDING") // PENDING, ACTIVE, INACTIVE, CANCELLED
+  isActive          Boolean             @default(true)
+  registrationDate  DateTime?
+  lastUpdate        DateTime?
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  benefitRequests   SocialBenefitRequest[]
+
+  @@index([responsibleCpf])
+  @@index([nisNumber])
+  @@index([status])
+  @@map("cadunico_registrations")
+}
+
+// 3. SOLICITACAO_BENEFICIO
+model SocialBenefitRequest {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SocialBenefitProtocol", fields: [protocolId], references: [id])
+
+  // Solicitante
+  citizenId         String?
+  citizen           Citizen?            @relation("SocialBenefitCitizen", fields: [citizenId], references: [id])
+  citizenName       String
+  citizenCpf        String
+  citizenPhone      String
+
+  // CadÚnico
+  cadUnicoId        String?
+  cadUnico          CadUnicoRegistration? @relation(fields: [cadUnicoId], references: [id])
+  nisNumber         String?
+
+  // Benefício
+  benefitType       String              // AUXILIO_BRASIL, BPC, CESTA_BASICA, AUXILIO_FUNERAL, PASSE_LIVRE
+  benefitCategory   String              // TRANSFERENCIA_RENDA, EVENTUAL, CONTINUO
+
+  // Justificativa
+  reason            String              // Motivo da solicitação
+  vulnerability     String              // Situação de vulnerabilidade
+  urgency           String              @default("NORMAL") // NORMAL, HIGH, EMERGENCY
+
+  // Análise Social
+  socialStudy       Json?               // Estudo social realizado
+  homeVisitRequired Boolean             @default(false)
+  homeVisitDate     DateTime?
+  homeVisitReport   String?
+
+  // Parecer
+  socialWorkerOpinion String?
+  recommendation    String?             // APROVAR, NEGAR, NECESSITA_COMPLEMENTACAO
+
+  // Aprovação
+  approvedBy        String?
+  approvedAt        DateTime?
+  denialReason      String?
+
+  // Benefício Concedido
+  benefitValue      Float?
+  startDate         DateTime?
+  endDate           DateTime?
+  renewable         Boolean             @default(false)
+
+  // Status
+  status            String              @default("ANALYSIS") // ANALYSIS, HOME_VISIT, APPROVED, ACTIVE, DENIED, SUSPENDED, CANCELLED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  emergencyAids     EmergencyAid[]
+
+  @@index([citizenCpf])
+  @@index([benefitType])
+  @@index([status])
+  @@index([vulnerability])
+  @@map("social_benefit_requests")
+}
+
+// 4. ENTREGA_EMERGENCIAL
+model EmergencyAid {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("EmergencyAidProtocol", fields: [protocolId], references: [id])
+
+  benefitRequestId  String?
+  benefitRequest    SocialBenefitRequest? @relation(fields: [benefitRequestId], references: [id])
+
+  // Beneficiário
+  citizenId         String?
+  citizen           Citizen?            @relation("EmergencyAidCitizen", fields: [citizenId], references: [id])
+  citizenName       String
+  citizenCpf        String
+  citizenPhone      String
+  address           String
+
+  // Emergência
+  emergencyType     String              // CESTA_BASICA, COLCHAO, COBERTOR, AUXILIO_FUNERAL, AUXILIO_NATALIDADE
+  reason            String              // Motivo da emergência
+  urgencyLevel      String              @default("HIGH") // NORMAL, HIGH, CRITICAL
+
+  // Itens
+  items             Json                // Array de itens a serem entregues
+  estimatedValue    Float?
+
+  // Autorização
+  authorizedBy      String?
+  authorizedAt      DateTime?
+
+  // Entrega
+  deliveryDate      DateTime?
+  deliveryTime      String?
+  deliveredBy       String?
+  receivedBy        String?
+  receiverDocument  String?             // CPF/RG de quem recebeu
+
+  // Comprovação
+  deliveryProof     String?             // URL da foto/assinatura
+
+  // Status
+  status            String              @default("REQUESTED") // REQUESTED, APPROVED, SEPARATED, DELIVERED, CANCELLED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([citizenCpf])
+  @@index([emergencyType])
+  @@index([status])
+  @@index([deliveryDate])
+  @@map("emergency_aids")
+}
+
+// 5. INSCRICAO_GRUPO_OFICINA
+model SocialGroupEnrollment {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SocialGroupProtocol", fields: [protocolId], references: [id])
+
+  groupId           String
+  group             SocialGroup         @relation(fields: [groupId], references: [id])
+
+  // Participante
+  citizenId         String?
+  citizen           Citizen?            @relation("SocialGroupEnrollmentCitizen", fields: [citizenId], references: [id])
+  participantName   String
+  participantCpf    String
+  participantPhone  String
+  birthDate         DateTime?
+
+  // Responsável (se menor de idade)
+  responsibleName   String?
+  responsibleCpf    String?
+  responsiblePhone  String?
+
+  // Inscrição
+  enrollmentDate    DateTime            @default(now())
+  motivations       String?             // Motivação para participar
+  expectations      String?
+
+  // Frequência
+  attendanceCount   Int                 @default(0)
+  totalSessions     Int                 @default(0)
+  attendanceRate    Float?              // Percentual de frequência
+
+  // Avaliação
+  evaluation        String?
+  progress          String?
+
+  // Status
+  status            String              @default("ACTIVE") // ACTIVE, INACTIVE, COMPLETED, DROPPED
+  isActive          Boolean             @default(true)
+  completedAt       DateTime?
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([groupId])
+  @@index([participantCpf])
+  @@index([status])
+  @@map("social_group_enrollments")
+}
+
+model SocialGroup {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("SocialGroupMasterProtocol", fields: [protocolId], references: [id])
+
+  // Identificação
+  name              String
+  type              String              // OFICINA, GRUPO_CONVIVENCIA, CURSO, ATIVIDADE
+  category          String              // IDOSO, CRIANCA, ADOLESCENTE, MULHER, FAMILIA
+
+  // Descrição
+  description       String
+  objectives        Json                // Objetivos do grupo
+  methodology       String?
+
+  // Coordenação
+  coordinatorId     String?
+  coordinatorName   String
+  facilitators      Json?               // Array de facilitadores
+
+  // Programação
+  equipmentId       String?
+  equipment         SocialEquipment?    @relation(fields: [equipmentId], references: [id])
+  location          String
+  schedule          Json                // Dias e horários
+  duration          Int?                // Duração em minutos
+  totalSessions     Int?                // Total de encontros
+
+  // Capacidade
+  maxParticipants   Int
+  currentParticipants Int               @default(0)
+  minAge            Int?
+  maxAge            Int?
+
+  // Período
+  startDate         DateTime
+  endDate           DateTime?
+
+  // Status
+  status            String              @default("ACTIVE") // PLANNED, ACTIVE, SUSPENDED, COMPLETED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  enrollments       SocialGroupEnrollment[]
+
+  @@index([type])
+  @@index([category])
+  @@index([status])
+  @@index([startDate])
+  @@map("social_groups")
+}
+
+// 6. VISITAS_DOMICILIARES (já existe como HomeVisit - pode ser reaproveitado)
+
+// 7. INSCRICAO_PROGRAMA_SOCIAL
+model SocialProgramEnrollment {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SocialProgramEnrollmentProtocol", fields: [protocolId], references: [id])
+
+  programId         String
+  program           SocialProgram       @relation(fields: [programId], references: [id])
+
+  // Participante
+  citizenId         String?
+  citizen           Citizen?            @relation("SocialProgramEnrollmentCitizen", fields: [citizenId], references: [id])
+  participantName   String
+  participantCpf    String
+  participantPhone  String
+
+  // Família
+  familyMembers     Int
+  familyIncome      Float?
+  perCapitaIncome   Float?
+
+  // Elegibilidade
+  eligibilityCriteria Json              // Critérios atendidos
+  vulnerability     String              // Nível de vulnerabilidade
+
+  // Inscrição
+  enrollmentDate    DateTime            @default(now())
+
+  // Acompanhamento
+  lastFollowUp      DateTime?
+  nextFollowUp      DateTime?
+  followUpNotes     String?
+
+  // Status
+  status            String              @default("ACTIVE") // ACTIVE, SUSPENDED, COMPLETED, CANCELLED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([programId])
+  @@index([participantCpf])
+  @@index([status])
+  @@map("social_program_enrollments")
+}
+
+model SocialProgram {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("SocialProgramMasterProtocol", fields: [protocolId], references: [id])
+
+  // Identificação
+  name              String              @unique
+  code              String              @unique
+  description       String
+  programType       String              // TRANSFERENCIA_RENDA, CAPACITACAO, INCLUSAO_PRODUTIVA
+
+  // Público-Alvo
+  targetAudience    String
+  eligibilityCriteria Json              // Critérios de elegibilidade
+
+  // Coordenação
+  coordinatorId     String?
+  coordinatorName   String
+  team              Json?
+
+  // Recursos
+  budget            Float?
+  source            String?             // Fonte de recursos (Federal, Estadual, Municipal)
+
+  // Capacidade
+  maxParticipants   Int?
+  currentParticipants Int               @default(0)
+
+  // Período
+  startDate         DateTime
+  endDate           DateTime?
+
+  // Status
+  status            String              @default("ACTIVE") // ACTIVE, SUSPENDED, COMPLETED
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  enrollments       SocialProgramEnrollment[]
+
+  @@index([code])
+  @@index([programType])
+  @@index([status])
+  @@map("social_programs")
+}
+
+// 8. AGENDAMENTO_ATENDIMENTO_SOCIAL
+model SocialAppointment {
+  id                String              @id @default(cuid())
+  protocolId        String              @unique
+  protocol          ProtocolSimplified  @relation("SocialAppointmentProtocol", fields: [protocolId], references: [id])
+
+  // Usuário
+  citizenId         String?
+  citizen           Citizen?            @relation("SocialAppointmentCitizen", fields: [citizenId], references: [id])
+  citizenName       String
+  citizenCpf        String
+  citizenPhone      String
+
+  // Agendamento
+  equipmentId       String?
+  equipment         SocialEquipment?    @relation(fields: [equipmentId], references: [id])
+  equipmentName     String
+
+  appointmentDate   DateTime
+  appointmentTime   String
+
+  // Tipo de Atendimento
+  serviceType       String              // PRIMEIRA_VEZ, RETORNO, ACOMPANHAMENTO
+  subject           String              // Assunto/motivo
+
+  // Profissional
+  socialWorkerId    String?
+  socialWorker      User?               @relation("SocialAppointmentWorker", fields: [socialWorkerId], references: [id])
+  socialWorkerName  String?
+
+  // Prioridade
+  priority          String              @default("NORMAL") // NORMAL, HIGH, URGENT
+
+  // Status
+  status            String              @default("SCHEDULED") // SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+  isActive          Boolean             @default(true)
+
+  confirmedAt       DateTime?
+  completedAt       DateTime?
+  cancellationReason String?
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([citizenCpf])
+  @@index([equipmentId])
+  @@index([appointmentDate])
+  @@index([status])
+  @@map("social_appointments")
+}
+
+// 9. GESTAO_CRAS_CREAS
+model SocialEquipment {
+  id                String              @id @default(cuid())
+  protocolId        String?             @unique
+  protocol          ProtocolSimplified? @relation("SocialEquipmentProtocol", fields: [protocolId], references: [id])
+
+  // Identificação
+  name              String              @unique
+  code              String              @unique
+  type              String              // CRAS, CREAS, CENTRO_POP, ABRIGO, CENTRO_DIA
+
+  // Localização
+  address           String
+  neighborhood      String
+  city              String
+  state             String
+  zipCode           String
+  coordinates       Json?
+
+  // Contato
+  phone             String
+  email             String?
+
+  // Coordenação
+  coordinatorId     String?
+  coordinator       User?               @relation("SocialEquipmentCoordinator", fields: [coordinatorId], references: [id])
+  coordinatorName   String
+
+  // Equipe
+  socialWorkers     Int                 @default(0)
+  psychologists     Int                 @default(0)
+  otherProfessionals Json?
+
+  // Estrutura
+  capacity          Int                 // Capacidade de atendimento
+  rooms             Int
+  infrastructure    Json?
+
+  // Área de Abrangência
+  coverageArea      Json                // Bairros/territórios atendidos
+
+  // Horário de Funcionamento
+  operatingHours    Json                // Dias e horários
+
+  // Serviços Oferecidos
+  services          Json                // Array de serviços
+
+  // Status
+  status            String              @default("ACTIVE") // ACTIVE, MAINTENANCE, INACTIVE
+  isActive          Boolean             @default(true)
+
+  observations      String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  // Relações
+  attendances       SocialAssistanceAttendance[]
+  appointments      SocialAppointment[]
+  groups            SocialGroup[]
+
+  @@index([code])
+  @@index([type])
+  @@index([status])
+  @@map("social_equipments")
+}

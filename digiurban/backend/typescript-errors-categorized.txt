@@ -1,0 +1,158 @@
+src/core/handlers/education/index.ts(38,5): error TS2345: Argument of type 'StudentEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/education/index.ts(44,5): error TS2345: Argument of type 'SchoolTransportHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/education/index.ts(62,5): error TS2345: Argument of type 'SchoolTransferHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/education/index.ts(86,5): error TS2345: Argument of type 'SchoolMealHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/education/index.ts(92,5): error TS2345: Argument of type 'SchoolMaterialHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/health/index.ts(28,5): error TS2345: Argument of type 'MedicalAppointmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/health/index.ts(34,5): error TS2345: Argument of type 'MedicalAppointmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/health/index.ts(40,5): error TS2345: Argument of type 'MedicationDispenseHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/health/index.ts(46,5): error TS2345: Argument of type 'HealthProgramEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/health/index.ts(52,5): error TS2345: Argument of type 'HealthProgramEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/health/index.ts(58,5): error TS2345: Argument of type 'MedicalExamHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/health/index.ts(64,5): error TS2345: Argument of type 'VaccinationHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/health/index.ts(70,5): error TS2345: Argument of type 'HomeCareHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/social-assistance/index.ts(32,5): error TS2345: Argument of type 'FamilyRegistrationHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/social-assistance/index.ts(38,5): error TS2345: Argument of type 'SocialBenefitRequestHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/social-assistance/index.ts(44,5): error TS2345: Argument of type 'SocialBenefitRequestHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/social-assistance/index.ts(50,5): error TS2345: Argument of type 'SocialProgramEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/social-assistance/index.ts(56,5): error TS2345: Argument of type 'HomeVisitHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/social-assistance/index.ts(62,5): error TS2345: Argument of type 'SocialProgramEnrollmentHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/core/handlers/social-assistance/index.ts(80,5): error TS2345: Argument of type 'DocumentRequestHandler' is not assignable to parameter of type 'ModuleHandler'.
+src/modules/handlers/registry.ts(168,33): error TS2307: Cannot find module './health/index' or its corresponding type declarations.
+src/modules/handlers/registry.ts(173,36): error TS2307: Cannot find module './education/index' or its corresponding type declarations.
+src/modules/handlers/registry.ts(178,33): error TS2307: Cannot find module './social/index' or its corresponding type declarations.
+src/modules/handlers/security/security-alert-handler.ts(13,7): error TS2322: Type '{ protocolId: string; title: any; alertType: any; message: any; description: any; location: any; targetArea: any; coordinates: any; severity: any; priority: any; targetAudience: any; affectedAreas: any; ... 4 more ...; status: string; }' is not assignable to type '(Without<SecurityAlertCreateInput, SecurityAlertUncheckedCreateInput> & SecurityAlertUncheckedCreateInput) | (Without<...> & SecurityAlertCreateInput)'.
+src/modules/handlers/security/security-occurrence-handler.ts(13,7): error TS2322: Type '{ protocol: string; protocolId: string; occurrenceType: any; type: any; severity: any; description: any; location: any; reportedBy: any; reporterName: any; reporterPhone: any; reporterCpf: any; status: string; }' is not assignable to type '(Without<SecurityOccurrenceCreateInput, SecurityOccurrenceUncheckedCreateInput> & SecurityOccurrenceUncheckedCreateInput) | (Without<...> & SecurityOccurrenceCreateInput)'.
+src/modules/handlers/security/security-patrol-handler.ts(14,9): error TS2561: Object literal may only specify known properties, but 'protocol' does not exist in type 'Without<SecurityPatrolCreateInput, SecurityPatrolUncheckedCreateInput> & SecurityPatrolUncheckedCreateInput'. Did you mean to write 'protocolId'?
+src/modules/handlers/sports/sports-tournament-handler.ts(30,9): error TS2561: Object literal may only specify known properties, but 'registrationOpen' does not exist in type '(Without<SportsEventCreateInput, SportsEventUncheckedCreateInput> & SportsEventUncheckedCreateInput) | (Without<...> & SportsEventCreateInput)'. Did you mean to write 'registrationFee'?
+src/routes/admin-citizen-lookup.ts(188,18): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(189,20): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(190,19): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(191,25): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(192,21): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/admin-citizen-lookup.ts(193,21): error TS2551: Property 'member' does not exist on type '{ id: string; headId: string; memberId: string; relationship: string; isDependent: boolean; createdAt: Date; updatedAt: Date; }'. Did you mean 'memberId'?
+src/routes/alerts.ts(72,36): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/alerts.ts(74,13): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/alerts.ts(78,7): error TS2322: Type '{ isActive?: boolean | undefined; type?: string | undefined; }' is not assignable to type 'AlertWhereInput'.
+src/routes/alerts.ts(109,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/alerts.ts(110,19): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Schema'.
+src/routes/alerts.ts(113,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/alerts.ts(117,38): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/alerts.ts(128,32): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/alerts.ts(153,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/alerts.ts(154,19): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Schema'.
+src/routes/alerts.ts(157,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/alerts.ts(179,39): error TS2345: Argument of type '{ id: string; name: string; type: AlertType; metric: string; condition: string; threshold: number; threshold2: number | null; frequency: AlertFrequency; recipients: JsonValue; ... 8 more ...; triggerCount: number; }' is not assignable to parameter of type 'AlertData'.
+src/routes/alerts.ts(196,42): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/alerts.ts(198,13): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/alerts.ts(238,48): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/alerts.ts(240,13): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/alerts.ts(247,18): error TS2353: Object literal may only specify known properties, and 'tenantId' does not exist in type '(Without<AlertScalarRelationFilter, AlertWhereInput> & AlertWhereInput) | (Without<AlertWhereInput, AlertScalarRelationFilter> & AlertScalarRelationFilter)'.
+src/routes/alerts.ts(267,63): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/alerts.ts(289,21): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/alerts.ts(311,45): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/alerts.ts(313,13): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/alerts.ts(328,22): error TS2353: Object literal may only specify known properties, and 'tenantId' does not exist in type '(Without<AlertScalarRelationFilter, AlertWhereInput> & AlertWhereInput) | (Without<AlertWhereInput, AlertScalarRelationFilter> & AlertScalarRelationFilter)'.
+src/routes/alerts.ts(338,22): error TS2353: Object literal may only specify known properties, and 'tenantId' does not exist in type '(Without<AlertScalarRelationFilter, AlertWhereInput> & AlertWhereInput) | (Without<AlertWhereInput, AlertScalarRelationFilter> & AlertScalarRelationFilter)'.
+src/routes/alerts.ts(393,45): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/alerts.ts(395,13): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/alerts.ts(410,44): error TS2345: Argument of type '{ id: string; name: string; type: AlertType; metric: string; condition: string; threshold: number; threshold2: number | null; frequency: AlertFrequency; recipients: JsonValue; ... 8 more ...; triggerCount: number; }' is not assignable to parameter of type 'AlertData'.
+src/routes/alerts.ts(467,54): error TS2339: Property 'getTime' does not exist on type '{}'.
+src/routes/alerts.ts(467,66): error TS18048: 'alert.cooldown' is possibly 'undefined'.
+src/routes/analytics.ts(109,17): error TS2554: Expected 2-3 arguments, but got 1.
+src/routes/analytics.ts(110,14): error TS2554: Expected 2-3 arguments, but got 1.
+src/routes/analytics.ts(118,13): error TS2554: Expected 2-3 arguments, but got 1.
+src/routes/analytics.ts(119,15): error TS2554: Expected 2-3 arguments, but got 1.
+src/routes/analytics.ts(176,16): error TS2339: Property 'protocolEvaluation' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/routes/analytics.ts(237,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/analytics.ts(238,19): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Schema'.
+src/routes/analytics.ts(241,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/analytics.ts(241,25): error TS2339: Property 'role' does not exist on type 'UserWithRelations | undefined'.
+src/routes/analytics.ts(257,63): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(260,64): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(263,67): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(266,63): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(299,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/analytics.ts(300,19): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Schema'.
+src/routes/analytics.ts(303,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations'.
+src/routes/analytics.ts(310,23): error TS2339: Property 'category' does not exist on type 'FilterOptions'.
+src/routes/analytics.ts(310,55): error TS2339: Property 'category' does not exist on type 'FilterOptions'.
+src/routes/analytics.ts(318,56): error TS2345: Argument of type '{ id: string; name: string; isActive: boolean; description: string | null; createdAt: Date; updatedAt: Date; category: string; createdBy: string; unit: string; formula: string; target: number | null; ... 4 more ...; updateFrequency: string; }' is not assignable to parameter of type 'KPIDefinition'.
+src/routes/analytics.ts(323,44): error TS2345: Argument of type '{ id: string; name: string; isActive: boolean; description: string | null; createdAt: Date; updatedAt: Date; category: string; createdBy: string; unit: string; formula: string; target: number | null; ... 4 more ...; updateFrequency: string; }' is not assignable to parameter of type 'KPIDefinition'.
+src/routes/analytics.ts(346,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/analytics.ts(347,19): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Schema'.
+src/routes/analytics.ts(350,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations'.
+src/routes/analytics.ts(371,42): error TS2345: Argument of type '(PickEnumerable<AnalyticsGroupByOutputType, ("metric" | "period")[]> & { _count: { value: number; }; _avg: { value: number | null; }; })[]' is not assignable to parameter of type 'TrendDataPoint[]'.
+src/routes/analytics.ts(395,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/analytics.ts(398,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations | undefined'.
+src/routes/analytics.ts(398,25): error TS2339: Property 'role' does not exist on type 'UserWithRelations | undefined'.
+src/routes/analytics.ts(437,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/analytics.ts(438,19): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Schema'.
+src/routes/analytics.ts(441,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations'.
+src/routes/analytics.ts(450,44): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(469,23): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(498,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/analytics.ts(501,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations'.
+src/routes/analytics.ts(509,58): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(561,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/analytics.ts(562,19): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Schema'.
+src/routes/analytics.ts(565,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations'.
+src/routes/analytics.ts(569,24): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(579,32): error TS18048: 'req.user' is possibly 'undefined'.
+src/routes/analytics.ts(606,3): error TS2304: Cannot find name 'tenantMiddleware'.
+src/routes/analytics.ts(609,15): error TS2339: Property 'tenantId' does not exist on type 'UserWithRelations'.
+src/routes/analytics.ts(639,77): error TS2345: Argument of type '{ id: string; metric: string; updatedAt: Date; category: string; source: string | null; year: number; period: string; region: string; population: string; p25: number | null; p50: number | null; p75: number | null; average: number | null; sampleSize: number; }[]' is not assignable to parameter of type 'BenchmarkData[]'.
+src/routes/analytics.ts(670,14): error TS2322: Type 'string' is not assignable to type '(Without<UserNullableScalarRelationFilter, UserWhereInput> & UserWhereInput) | (Without<UserWhereInput, UserNullableScalarRelationFilter> & UserNullableScalarRelationFilter) | null | undefined'.
+src/routes/analytics.ts(679,45): error TS2339: Property 'evaluations' does not exist on type '{ number: string; id: string; description: string | null; departmentId: string; createdAt: Date; updatedAt: Date; status: ProtocolStatus; createdById: string | null; ... 13 more ...; concludedAt: Date | null; }'.
+src/routes/analytics.ts(802,14): error TS2339: Property 'p75' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(802,37): error TS2339: Property 'p75' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(803,19): error TS2339: Property 'p50' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(803,42): error TS2339: Property 'p50' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(804,19): error TS2339: Property 'p25' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(804,42): error TS2339: Property 'p25' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(808,5): error TS2322: Type 'string' is not assignable to type 'number'.
+src/routes/analytics.ts(809,44): error TS2559: Type 'BenchmarkData' has no properties in common with type 'BenchmarkPercentiles'.
+src/routes/analytics.ts(811,19): error TS2339: Property 'p25' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(812,19): error TS2339: Property 'p50' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(813,19): error TS2339: Property 'p75' does not exist on type 'BenchmarkData'.
+src/routes/analytics.ts(814,23): error TS2339: Property 'average' does not exist on type 'BenchmarkData'.
+src/routes/protocols-simplified.routes.ts(320,13): error TS2353: Object literal may only specify known properties, and 'user' does not exist in type 'ProtocolHistorySimplifiedInclude<DefaultArgs>'.
+src/routes/protocols-simplified.routes.ts(328,22): error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type 'ProtocolHistorySimplifiedOrderByWithRelationInput | ProtocolHistorySimplifiedOrderByWithRelationInput[]'.
+src/routes/secretarias-agricultura.ts(651,11): error TS2322: Type '{ name: any; producerId: any; protocolId: string; size: number; location: any; plantedArea: number | null; mainCrops: any; status: any; }' is not assignable to type '(Without<RuralPropertyCreateInput, RuralPropertyUncheckedCreateInput> & RuralPropertyUncheckedCreateInput) | (Without<...> & RuralPropertyCreateInput)'.
+src/routes/secretarias-agricultura.ts(2118,13): error TS2339: Property 'applicantName' does not exist on type '{ citizen: { name: string; cpf: string; email: string; phone: string | null; }; protocol: { number: string; status: ProtocolStatus; } | null; } & { id: string; createdAt: Date; ... 16 more ...; programId: string; }'.
+src/routes/secretarias-agricultura.ts(2119,13): error TS2339: Property 'applicantCpf' does not exist on type '{ citizen: { name: string; cpf: string; email: string; phone: string | null; }; protocol: { number: string; status: ProtocolStatus; } | null; } & { id: string; createdAt: Date; ... 16 more ...; programId: string; }'.
+src/routes/secretarias-agricultura.ts(2120,13): error TS2339: Property 'applicantEmail' does not exist on type '{ citizen: { name: string; cpf: string; email: string; phone: string | null; }; protocol: { number: string; status: ProtocolStatus; } | null; } & { id: string; createdAt: Date; ... 16 more ...; programId: string; }'.
+src/routes/secretarias-agricultura.ts(2121,13): error TS2339: Property 'applicantPhone' does not exist on type '{ citizen: { name: string; cpf: string; email: string; phone: string | null; }; protocol: { number: string; status: ProtocolStatus; } | null; } & { id: string; createdAt: Date; ... 16 more ...; programId: string; }'.
+src/services/citizen-lookup.service.ts(117,11): error TS2353: Object literal may only specify known properties, and 'mode' does not exist in type 'StringFilter<"Citizen">'.
+src/services/entity-handlers.ts(51,9): error TS2353: Object literal may only specify known properties, and 'citizenName' does not exist in type 'Without<HealthAttendanceCreateInput, HealthAttendanceUncheckedCreateInput> & HealthAttendanceUncheckedCreateInput'.
+src/services/entity-handlers.ts(69,9): error TS2353: Object literal may only specify known properties, and 'patientName' does not exist in type 'Without<HealthAppointmentCreateInput, HealthAppointmentUncheckedCreateInput> & HealthAppointmentUncheckedCreateInput'.
+src/services/entity-handlers.ts(88,9): error TS2353: Object literal may only specify known properties, and 'patientName' does not exist in type 'Without<MedicationDispenseCreateInput, MedicationDispenseUncheckedCreateInput> & MedicationDispenseUncheckedCreateInput'.
+src/services/entity-handlers.ts(144,9): error TS2353: Object literal may only specify known properties, and 'patientName' does not exist in type 'Without<HealthTransportCreateInput, HealthTransportUncheckedCreateInput> & HealthTransportUncheckedCreateInput'.
+src/services/entity-handlers.ts(161,9): error TS2353: Object literal may only specify known properties, and 'patientName' does not exist in type 'Without<HealthExamCreateInput, HealthExamUncheckedCreateInput> & HealthExamUncheckedCreateInput'.
+src/services/entity-handlers.ts(179,9): error TS2353: Object literal may only specify known properties, and 'patientName' does not exist in type 'Without<HealthTransportRequestCreateInput, HealthTransportRequestUncheckedCreateInput> & HealthTransportRequestUncheckedCreateInput'.
+src/services/entity-handlers.ts(221,9): error TS2353: Object literal may only specify known properties, and 'fullName' does not exist in type 'Without<PatientCreateInput, PatientUncheckedCreateInput> & PatientUncheckedCreateInput'.
+src/services/entity-handlers.ts(247,9): error TS2353: Object literal may only specify known properties, and 'fullName' does not exist in type 'Without<CommunityHealthAgentCreateInput, CommunityHealthAgentUncheckedCreateInput> & CommunityHealthAgentUncheckedCreateInput'.
+src/services/entity-handlers.ts(268,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(270,9): error TS2561: Object literal may only specify known properties, but 'citizenCpf' does not exist in type 'Without<EducationAttendanceCreateInput, EducationAttendanceUncheckedCreateInput> & EducationAttendanceUncheckedCreateInput'. Did you mean to write 'citizen'?
+src/services/entity-handlers.ts(294,9): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Without<StudentCreateInput, StudentUncheckedCreateInput> & StudentUncheckedCreateInput'.
+src/services/entity-handlers.ts(335,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(356,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(393,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(416,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(438,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(482,9): error TS2353: Object literal may only specify known properties, and 'citizenName' does not exist in type 'Without<SocialAssistanceAttendanceCreateInput, SocialAssistanceAttendanceUncheckedCreateInput> & SocialAssistanceAttendanceUncheckedCreateInput'.
+src/services/entity-handlers.ts(610,9): error TS2353: Object literal may only specify known properties, and 'beneficiaryName' does not exist in type 'Without<SocialProgramEnrollmentCreateInput, SocialProgramEnrollmentUncheckedCreateInput> & SocialProgramEnrollmentUncheckedCreateInput'.
+src/services/entity-handlers.ts(629,9): error TS2353: Object literal may only specify known properties, and 'citizenName' does not exist in type 'Without<SocialAppointmentCreateInput, SocialAppointmentUncheckedCreateInput> & SocialAppointmentUncheckedCreateInput'.
+src/services/entity-handlers.ts(642,7): error TS2322: Type '{ protocolId: string; equipmentName: any; equipmentType: any; address: any; capacity: number; status: string; }' is not assignable to type '(Without<SocialEquipmentCreateInput, SocialEquipmentUncheckedCreateInput> & SocialEquipmentUncheckedCreateInput) | (Without<...> & SocialEquipmentCreateInput)'.
+src/services/entity-handlers.ts(684,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(704,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(706,9): error TS2353: Object literal may only specify known properties, and 'producerCpf' does not exist in type 'Without<AgricultureAttendanceCreateInput, AgricultureAttendanceUncheckedCreateInput> & AgricultureAttendanceUncheckedCreateInput'.
+src/services/entity-handlers.ts(793,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(1410,9): error TS2353: Object literal may only specify known properties, and 'contactInfo' does not exist in type 'Without<UrbanPlanningAttendanceCreateInput, UrbanPlanningAttendanceUncheckedCreateInput> & UrbanPlanningAttendanceUncheckedCreateInput'.
+src/services/entity-handlers.ts(1722,9): error TS2353: Object literal may only specify known properties, and 'applicantName' does not exist in type 'Without<ProjectApprovalCreateInput, ProjectApprovalUncheckedCreateInput> & ProjectApprovalUncheckedCreateInput'.
+src/services/entity-handlers.ts(1739,9): error TS2353: Object literal may only specify known properties, and 'applicantName' does not exist in type 'Without<BuildingPermitCreateInput, BuildingPermitUncheckedCreateInput> & BuildingPermitUncheckedCreateInput'.
+src/services/entity-handlers.ts(1791,9): error TS2353: Object literal may only specify known properties, and 'applicantName' does not exist in type 'Without<CertificateRequestCreateInput, CertificateRequestUncheckedCreateInput> & CertificateRequestUncheckedCreateInput'.
+src/services/entity-handlers.ts(2472,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(2475,9): error TS2353: Object literal may only specify known properties, and 'applicantCpf' does not exist in type 'Without<RuralProgramEnrollmentCreateInput, RuralProgramEnrollmentUncheckedCreateInput> & RuralProgramEnrollmentUncheckedCreateInput'.
+src/services/entity-handlers.ts(2517,24): error TS2339: Property 'citizenId' does not exist on type 'EntityHandlerContext'.
+src/services/entity-handlers.ts(2520,9): error TS2353: Object literal may only specify known properties, and 'applicantCpf' does not exist in type 'Without<RuralTrainingEnrollmentCreateInput, RuralTrainingEnrollmentUncheckedCreateInput> & RuralTrainingEnrollmentUncheckedCreateInput'.

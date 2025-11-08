@@ -8,11 +8,24 @@ export class DocumentRequestHandler extends BaseModuleHandler {
   async execute(action: ModuleAction, tx: any) {
     const { data, protocol, serviceId } = action;
 
+    // ✅ VALIDAR citizenId obrigatório
+    if (!data.citizenId) {
+      throw new Error('citizenId é obrigatório');
+    }
+
+    // ✅ VALIDAR se cidadão existe
+    const citizen = await tx.citizen.findUnique({
+      where: { id: data.citizenId }
+    });
+
+    if (!citizen || !citizen.isActive) {
+      throw new Error('Cidadão não encontrado ou inativo');
+    }
+
+    // ✅ CRIAR solicitação sem duplicação
     const documentRequest = await tx.documentRequest.create({
       data: {
-                citizenName: data.citizenName,
-        citizenCpf: data.citizenCpf,
-        phone: data.phone || null,
+        citizenId: data.citizenId, // ✅ Apenas vincula ao cidadão
         documentType: data.documentType,
         reason: data.reason,
         urgency: data.urgency || 'normal',
@@ -20,7 +33,7 @@ export class DocumentRequestHandler extends BaseModuleHandler {
         protocol,
         serviceId,
         source: 'service',
-        createdBy: data.citizenId || null
+        createdBy: data.citizenId
       }
     });
 

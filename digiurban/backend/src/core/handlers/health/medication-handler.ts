@@ -8,10 +8,21 @@ export class MedicationDispenseHandler extends BaseModuleHandler {
   async execute(action: ModuleAction, tx: any) {
     const { data, protocol, serviceId } = action;
 
+    if (!data.citizenId) {
+      throw new Error('citizenId é obrigatório');
+    }
+
+    const citizen = await tx.citizen.findUnique({
+      where: { id: data.citizenId }
+    });
+
+    if (!citizen || !citizen.isActive) {
+      throw new Error('Cidadão não encontrado ou inativo');
+    }
+
     const medication = await tx.medicationDispense.create({
       data: {
-                patientName: data.patientName,
-        patientCpf: data.patientCpf,
+        citizenId: data.citizenId,
         medicationName: data.medicationName,
         dosage: data.dosage || null,
         quantity: data.quantity || 1,
@@ -22,7 +33,7 @@ export class MedicationDispenseHandler extends BaseModuleHandler {
         protocol,
         serviceId,
         source: 'service',
-        createdBy: data.citizenId || null
+        createdBy: data.citizenId
       }
     });
 

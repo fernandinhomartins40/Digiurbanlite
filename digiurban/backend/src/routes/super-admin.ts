@@ -99,7 +99,7 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('user'), async 
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+      return res.status(400).json({ error: 'Dados inválidos', details: error.issues });
     }
     console.error('Erro no login super admin:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });

@@ -290,7 +290,10 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // RENDA FAMILIAR - Todas as variações
   // ============================================================================
-  'rendafamiliar': (c) => c.familyIncome || '',
+  'rendafamiliar': (c) => {
+    console.log('🔍 [RENDA FAMILIAR PREFILL] Valor:', c.familyIncome);
+    return c.familyIncome || '';
+  },
   'renda_familiar': (c) => c.familyIncome || '',
   'familyincome': (c) => c.familyIncome || '',
   'family_income': (c) => c.familyIncome || '',
@@ -316,6 +319,9 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   'telefonealternativo': (c) => c.phoneSecondary || '',
   'alternativephone': (c) => c.phoneSecondary || '',
   'alternative_phone': (c) => c.phoneSecondary || '',
+  'phonesecondary': (c) => c.phoneSecondary || '',
+  'applicantphonesecondary': (c) => c.phoneSecondary || '',
+  'requesterphonesecondary': (c) => c.phoneSecondary || '',
 
   // ============================================================================
   // EMAIL - Todas as variações
@@ -541,12 +547,13 @@ export function prefillFormData(
     name: citizenData.name,
     cpf: citizenData.cpf,
     rg: citizenData.rg,
+    phone: citizenData.phone,
+    phoneSecondary: citizenData.phoneSecondary,
     birthDate: citizenData.birthDate,
     motherName: citizenData.motherName,
     maritalStatus: citizenData.maritalStatus,
     occupation: citizenData.occupation,
-    familyIncome: citizenData.familyIncome,
-    phoneSecondary: citizenData.phoneSecondary
+    familyIncome: citizenData.familyIncome
   });
 
   const formData: Record<string, any> = {};
@@ -568,7 +575,17 @@ export function prefillFormData(
       if (value !== undefined && value !== null && value !== '') {
         formData[field.id] = value;
         prefilledCount++;
-        console.log(`✅ [MAPEAMENTO DIRETO] "${field.id}" (${normalizedId}) → ${String(value).substring(0, 50)}`);
+
+        // Log especial para campos select
+        if (field.type === 'select' && field.options) {
+          const matchFound = field.options.includes(value);
+          console.log(`✅ [MAPEAMENTO DIRETO SELECT] "${field.id}" (${normalizedId})`);
+          console.log(`   Valor: "${value}"`);
+          console.log(`   Opções: [${field.options.map(o => `"${o}"`).join(', ')}]`);
+          console.log(`   Match encontrado: ${matchFound ? '✅ SIM' : '❌ NÃO'}`);
+        } else {
+          console.log(`✅ [MAPEAMENTO DIRETO] "${field.id}" (${normalizedId}) → ${String(value).substring(0, 50)}`);
+        }
       } else {
         formData[field.id] = getDefaultValueForType(field.type);
       }
@@ -579,7 +596,17 @@ export function prefillFormData(
       if (semanticValue !== null && semanticValue !== undefined && semanticValue !== '') {
         formData[field.id] = semanticValue;
         prefilledCount++;
-        console.log(`✅ [SEMÂNTICO] "${field.id}" (${normalizedId}) → ${String(semanticValue).substring(0, 50)}`);
+
+        // Log especial para campos select
+        if (field.type === 'select' && field.options) {
+          const matchFound = field.options.includes(semanticValue);
+          console.log(`✅ [SEMÂNTICO SELECT] "${field.id}" (${normalizedId})`);
+          console.log(`   Valor: "${semanticValue}"`);
+          console.log(`   Opções: [${field.options.map(o => `"${o}"`).join(', ')}]`);
+          console.log(`   Match encontrado: ${matchFound ? '✅ SIM' : '❌ NÃO'}`);
+        } else {
+          console.log(`✅ [SEMÂNTICO] "${field.id}" (${normalizedId}) → ${String(semanticValue).substring(0, 50)}`);
+        }
       } else {
         // 3. Inicializar vazio (campo não reconhecido)
         formData[field.id] = getDefaultValueForType(field.type);

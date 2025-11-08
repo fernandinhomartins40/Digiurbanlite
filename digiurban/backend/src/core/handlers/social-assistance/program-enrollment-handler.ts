@@ -8,13 +8,25 @@ export class SocialProgramEnrollmentHandler extends BaseModuleHandler {
   async execute(action: ModuleAction, tx: any) {
     const { data, protocol, serviceId } = action;
 
+    // ✅ VALIDAR citizenId obrigatório
+    if (!data.citizenId) {
+      throw new Error('citizenId é obrigatório');
+    }
+
+    // ✅ VALIDAR se cidadão existe
+    const citizen = await tx.citizen.findUnique({
+      where: { id: data.citizenId }
+    });
+
+    if (!citizen || !citizen.isActive) {
+      throw new Error('Cidadão não encontrado ou inativo');
+    }
+
+    // ✅ CRIAR inscrição no programa sem duplicação
     const enrollment = await tx.socialProgramEnrollment.create({
       data: {
-                programId: data.programId || null,
-        citizenName: data.citizenName,
-        citizenCpf: data.citizenCpf,
-        phone: data.phone || null,
-        address: data.address || null,
+        citizenId: data.citizenId, // ✅ Apenas vincula ao cidadão
+        programId: data.programId || null,
         familyIncome: data.familyIncome ? parseFloat(data.familyIncome) : null,
         familySize: data.familySize ? parseInt(data.familySize) : null,
         vulnerability: data.vulnerability || null,
@@ -23,7 +35,7 @@ export class SocialProgramEnrollmentHandler extends BaseModuleHandler {
         protocol,
         serviceId,
         source: 'service',
-        createdBy: data.citizenId || null
+        createdBy: data.citizenId
       }
     });
 

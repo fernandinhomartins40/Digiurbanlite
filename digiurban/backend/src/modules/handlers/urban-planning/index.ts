@@ -1,44 +1,79 @@
 // ============================================================
-// URBAN PLANNING HANDLERS - Index
+// URBAN PLANNING HANDLERS - Index FASE 3
 // ============================================================
 
 import { moduleHandlerRegistry } from '../../../core/module-handler';
-import { BuildingPermitHandler } from './building-permit-handler';
-import { UrbanCertificateHandler } from './certificate-handler';
-import { PropertyNumberingHandler } from './property-numbering-handler';
-import { LotSubdivisionHandler } from './lot-subdivision-handler';
+import { UrbanPlanningAttendanceHandler } from './urban-planning-attendance-handler';
+import { ProjectApprovalHandler } from './project-approval-handler';
+import { BuildingPermitHandlerPhase3 } from './building-permit-handler-phase3';
+import { OperatingLicenseHandler } from './operating-license-handler';
+import { CertificateRequestHandler } from './certificate-request-handler';
+import { IllegalConstructionReportHandler } from './illegal-construction-report-handler';
+import { SubdivisionRegistrationHandler } from './subdivision-registration-handler';
 
 export function registerUrbanPlanningHandlers() {
-  // Alvarás de Construção
+  // ============================================================
+  // FASE 3: PLANEJAMENTO URBANO - 7 MÓDULOS
+  // ============================================================
+
+  // 1. Atendimentos de Planejamento
   moduleHandlerRegistry.register(
-    'urban_planning:BuildingPermit',
-    new BuildingPermitHandler()
+    'PLANEJAMENTO:ATENDIMENTOS_PLANEJAMENTO',
+    new UrbanPlanningAttendanceHandler()
   );
 
-  // Certidões Diversas
+  // 2. Aprovação de Projeto Arquitetônico
   moduleHandlerRegistry.register(
-    'urban_planning:UrbanCertificate',
-    new UrbanCertificateHandler()
+    'PLANEJAMENTO:APROVACAO_PROJETO',
+    new ProjectApprovalHandler()
   );
 
-  // Numeração de Imóveis
+  // 3. Alvará de Construção
   moduleHandlerRegistry.register(
-    'urban_planning:PropertyNumbering',
-    new PropertyNumberingHandler()
+    'PLANEJAMENTO:ALVARA_CONSTRUCAO',
+    new BuildingPermitHandlerPhase3()
   );
 
-  // Desmembramento de Lotes
+  // 4. Alvará de Funcionamento
   moduleHandlerRegistry.register(
-    'urban_planning:LotSubdivision',
-    new LotSubdivisionHandler()
+    'PLANEJAMENTO:ALVARA_FUNCIONAMENTO',
+    new OperatingLicenseHandler()
   );
 
-  console.log('✅ Urban Planning handlers registered');
+  // 5. Solicitação de Certidão
+  moduleHandlerRegistry.register(
+    'PLANEJAMENTO:SOLICITACAO_CERTIDAO',
+    new CertificateRequestHandler()
+  );
+
+  // 6. Denúncia de Construção Irregular
+  moduleHandlerRegistry.register(
+    'PLANEJAMENTO:DENUNCIA_CONSTRUCAO_IRREGULAR',
+    new IllegalConstructionReportHandler()
+  );
+
+  // 7. Cadastro de Loteamento
+  moduleHandlerRegistry.register(
+    'PLANEJAMENTO:CADASTRO_LOTEAMENTO',
+    new SubdivisionRegistrationHandler()
+  );
+
+  console.log('✅ Urban Planning handlers registered (7 handlers - FASE 3 COMPLETA)');
+  console.log('   - PLANEJAMENTO:ATENDIMENTOS_PLANEJAMENTO');
+  console.log('   - PLANEJAMENTO:APROVACAO_PROJETO');
+  console.log('   - PLANEJAMENTO:ALVARA_CONSTRUCAO');
+  console.log('   - PLANEJAMENTO:ALVARA_FUNCIONAMENTO');
+  console.log('   - PLANEJAMENTO:SOLICITACAO_CERTIDAO');
+  console.log('   - PLANEJAMENTO:DENUNCIA_CONSTRUCAO_IRREGULAR');
+  console.log('   - PLANEJAMENTO:CADASTRO_LOTEAMENTO');
 }
 
 export {
-  BuildingPermitHandler,
-  UrbanCertificateHandler,
-  PropertyNumberingHandler,
-  LotSubdivisionHandler
+  UrbanPlanningAttendanceHandler,
+  ProjectApprovalHandler,
+  BuildingPermitHandlerPhase3,
+  OperatingLicenseHandler,
+  CertificateRequestHandler,
+  IllegalConstructionReportHandler,
+  SubdivisionRegistrationHandler
 };

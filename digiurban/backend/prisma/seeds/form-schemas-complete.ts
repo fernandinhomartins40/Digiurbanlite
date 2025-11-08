@@ -47,9 +47,9 @@ export const CITIZEN_DATA_TEMPLATE = {
     title: 'Faixa de Renda Familiar',
     enum: [
       'Até 1 salário mínimo',
-      'De 1 a 2 salários mínimos',
-      'De 2 a 3 salários mínimos',
-      'De 3 a 5 salários mínimos',
+      '1 a 2 salários mínimos',
+      '2 a 3 salários mínimos',
+      '3 a 5 salários mínimos',
       'Acima de 5 salários mínimos'
     ]
   },

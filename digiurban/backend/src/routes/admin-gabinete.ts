@@ -342,8 +342,7 @@ router.get('/mapa-demandas/stats', adminAuthMiddleware, requireAdmin, async (req
     const protocolsWithService = await prisma.protocolSimplified.findMany({
       where: {
         latitude: { not: null },
-        longitude: { not: null },
-        serviceId: { not: null }
+        longitude: { not: null }
       },
       select: {
         service: {
@@ -354,11 +353,13 @@ router.get('/mapa-demandas/stats', adminAuthMiddleware, requireAdmin, async (req
       }
     })
 
-    const byCategory = protocolsWithService.reduce((acc: any, p) => {
-      const category = p.service?.category || 'Sem Categoria'
-      acc[category] = (acc[category] || 0) + 1
-      return acc
-    }, {})
+    const byCategory = protocolsWithService
+      .filter(p => p.service?.category) // Filtrar apenas com categoria
+      .reduce((acc: any, p) => {
+        const category = p.service!.category || 'Sem Categoria'
+        acc[category] = (acc[category] || 0) + 1
+        return acc
+      }, {})
 
     res.json({
       success: true,

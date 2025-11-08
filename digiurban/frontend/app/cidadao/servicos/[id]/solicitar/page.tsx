@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -60,8 +60,11 @@ export default function SolicitarServicoPage() {
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
-  const rawFormFields = selectedProgram?.formSchema || service?.formSchema?.fields || [];
-  const activeFormFields = Array.isArray(rawFormFields) ? rawFormFields : [];
+  // useMemo para evitar recriar array em cada render
+  const activeFormFields = useMemo(() => {
+    const rawFormFields = selectedProgram?.formSchema || service?.formSchema?.fields || [];
+    return Array.isArray(rawFormFields) ? rawFormFields : [];
+  }, [selectedProgram?.formSchema, service?.formSchema?.fields]);
 
   // Hook de pré-preenchimento (será inicializado depois que o serviço carregar)
   const {
@@ -538,21 +541,6 @@ export default function SolicitarServicoPage() {
                   {activeFormFields.map((field: any) => {
                     const isPrefilled = isFieldPrefilled(field.id);
 
-                    // Detectar tipo de máscara baseado no ID do campo
-                    const getMaskType = (fieldId: string) => {
-                      const id = fieldId.toLowerCase();
-                      if (id.includes('cpf') && id.includes('cnpj')) return 'cpf-cnpj';
-                      if (id.includes('cpf')) return 'cpf';
-                      if (id.includes('cnpj')) return 'cnpj';
-                      if (id.includes('telefone') || id.includes('phone') || id.includes('celular') || id.includes('fone')) return 'phone';
-                      if (id.includes('cep') || id.includes('zipcode')) return 'cep';
-                      if (id.includes('rg') || id.includes('identidade')) return 'rg';
-                      if (id.includes('data') || id.includes('date') || id.includes('nascimento') || id.includes('birth')) return 'date';
-                      return null;
-                    };
-
-                    const maskType = getMaskType(field.id);
-
                     return (
                       <div key={field.id} className="space-y-2">
                         <Label htmlFor={field.id} className="flex items-center gap-2">
@@ -566,17 +554,7 @@ export default function SolicitarServicoPage() {
                           )}
                         </Label>
 
-                        {field.type === 'text' && maskType ? (
-                          <MaskedInput
-                            id={field.id}
-                            type={maskType}
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            placeholder={field.placeholder || getMaskPlaceholder(maskType)}
-                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
-                          />
-                        ) : field.type === 'text' ? (
+                        {field.type === 'text' ? (
                           <input
                             id={field.id}
                             type="text"
@@ -610,23 +588,23 @@ export default function SolicitarServicoPage() {
 
                         {field.type === 'select' && field.options && (
                           <select
-                            id={field.id}
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : 'border-gray-300'
-                            }`}
-                          >
-                            <option value="">Selecione...</option>
-                            {field.options.map((option: string) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
+                              id={field.id}
+                              required={field.required}
+                              value={customFormData[field.id] || ''}
+                              onChange={(e) => updateField(field.id, e.target.value)}
+                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                isPrefilled
+                                  ? 'border-green-300 bg-green-50/30'
+                                  : 'border-gray-300'
+                              }`}
+                            >
+                              <option value="">Selecione...</option>
+                              {field.options.map((option: string) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
                         )}
 
                         {field.type === 'textarea' && (

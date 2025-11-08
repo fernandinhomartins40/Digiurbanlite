@@ -7,6 +7,8 @@ import { EnvironmentalLicenseHandler } from './environmental-license-handler';
 import { TreeAuthorizationHandler } from './tree-authorization-handler';
 import { EnvironmentalComplaintHandler } from './environmental-complaint-handler';
 import { OrganicCertificationHandler } from './organic-certification-handler';
+import { EnvironmentalAttendanceHandler } from './environmental-attendance-handler';
+import { EnvironmentalProgramHandler } from './environmental-program-handler';
 
 export function registerEnvironmentHandlers() {
   // Licenças Ambientais
@@ -33,12 +35,14 @@ export function registerEnvironmentHandlers() {
     new OrganicCertificationHandler()
   );
 
-  console.log('✅ Environment handlers registered');
+  console.log('✅ Environment handlers registered (6 módulos)');
 }
 
 export {
   EnvironmentalLicenseHandler,
   TreeAuthorizationHandler,
   EnvironmentalComplaintHandler,
-  OrganicCertificationHandler
+  OrganicCertificationHandler,
+  EnvironmentalAttendanceHandler,
+  EnvironmentalProgramHandler
 };

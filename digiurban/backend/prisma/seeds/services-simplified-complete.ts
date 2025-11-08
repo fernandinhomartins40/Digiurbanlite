@@ -71,17 +71,17 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
       properties: {
         // ========== BLOCO 1: IDENTIFICAÇÃO DO PACIENTE ==========
         nome: { type: 'string', title: 'Nome Completo do Paciente', minLength: 3, maxLength: 200 },
-        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
-        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11, mask: 'cpf' },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20, mask: 'rg' },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento', mask: 'date' },
 
         // ========== BLOCO 2: CONTATO ==========
         email: { type: 'string', format: 'email', title: 'E-mail' },
-        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', mask: 'phone' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', mask: 'phone' },
 
         // ========== BLOCO 3: ENDEREÇO ==========
-        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', mask: 'cep' },
         logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
         numero: { type: 'string', title: 'Número', maxLength: 10 },
         complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
@@ -1032,7 +1032,7 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
         nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
         estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
         profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', 'De 1 a 2 salários mínimos', 'De 2 a 3 salários mínimos', 'De 3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
         // DADOS DO PRODUTOR
         tipoProdutor: { type: 'string', title: 'Tipo de Produtor', enum: ['Agricultor Familiar', 'Produtor Rural', 'Assentado', 'Quilombola', 'Indígena'] },
         dap: { type: 'string', title: 'DAP (PRONAF)', maxLength: 50 },

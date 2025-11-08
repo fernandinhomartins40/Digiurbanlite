@@ -77,9 +77,24 @@ export function useFormPrefill(options: UseFormPrefillOptions): UseFormPrefillRe
 
   // Inicializar formulário com dados pré-preenchidos
   useEffect(() => {
-    if (!fields || fields.length === 0) return;
+    if (!fields || fields.length === 0) {
+      console.log('⚠️ [HOOK] Sem campos para preencher');
+      return;
+    }
+
+    // Aguardar cidadão estar carregado antes de pré-preencher
+    if (!citizen || !citizen.id) {
+      // Inicializar vazio enquanto aguarda
+      const emptyData: Record<string, any> = {};
+      fields.forEach(field => {
+        emptyData[field.id] = field.type === 'select' ? '' : (field.type === 'number' ? 0 : '');
+      });
+      setFormData(emptyData);
+      return;
+    }
 
     const initialData = prefillFormData(fields, citizen);
+
     setFormData(initialData);
     setIsInitialized(true);
 
@@ -88,7 +103,7 @@ export function useFormPrefill(options: UseFormPrefillOptions): UseFormPrefillRe
       const prefilled = getPrefilledFields(fields, initialData);
       onPrefillComplete(prefilled.length);
     }
-  }, [fields, citizen?.id]); // Reexecutar se o cidadão mudar
+  }, [fields, citizen?.id]); // Reexecutar se os campos ou o cidadão mudarem
 
   // Calcular campos pré-preenchidos (memoizado para performance)
   const prefilledFields = useMemo(() => {

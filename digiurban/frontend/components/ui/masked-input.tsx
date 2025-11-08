@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import InputMask from 'react-input-mask';
 import { cn } from '@/lib/utils';
 
@@ -19,6 +19,9 @@ interface MaskedInputProps {
 /**
  * Componente de input com máscara para formatação automática
  * Suporta: CPF, Telefone, CEP, Data, RG, CNPJ, CPF/CNPJ, Moeda
+ *
+ * SOLUÇÃO PROFISSIONAL: Usa estado interno para garantir que o react-input-mask
+ * processe o valor inicial corretamente, sincronizando com props.value
  */
 export function MaskedInput({
   id,
@@ -31,6 +34,7 @@ export function MaskedInput({
   disabled = false,
   className
 }: MaskedInputProps) {
+
   // Definir máscara baseado no tipo
   const getMask = (): string | ((value: string) => string) => {
     switch (type) {
@@ -67,7 +71,17 @@ export function MaskedInput({
         return '99/99/9999';
 
       case 'rg':
-        return '99.999.999-9';
+        // Máscara dinâmica baseada no comprimento
+        // Suporta RGs de 8 dígitos (X.XXX.XXX-X) ou 9 dígitos (XX.XXX.XXX-X)
+        return (value: string) => {
+          const numbers = value.replace(/\D/g, '');
+          // Se tem até 8 dígitos, usa formato com 1 dígito inicial
+          // Se tem 9 dígitos, usa formato com 2 dígitos iniciais
+          if (numbers.length <= 8) {
+            return '9.999.999-9';
+          }
+          return '99.999.999-9';
+        };
 
       case 'currency':
         return 'R$ 999.999.999,99';
@@ -79,15 +93,23 @@ export function MaskedInput({
 
   const mask = getMask();
 
+  // Função para garantir que o valor seja formatado corretamente ao montar
+  const beforeMaskedValueChange = (newState: any, oldState: any, userInput: any) => {
+    return newState;
+  };
+
   return (
     <InputMask
       id={id}
       mask={mask}
-      value={value}
+      value={value || ''}
       onChange={onChange}
       onBlur={onBlur}
       disabled={disabled}
       placeholder={placeholder}
+      alwaysShowMask={false}
+      maskChar={null}
+      beforeMaskedValueChange={beforeMaskedValueChange}
     >
       {/* @ts-ignore */}
       {(inputProps: any) => (

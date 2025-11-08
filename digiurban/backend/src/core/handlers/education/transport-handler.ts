@@ -3,53 +3,44 @@ import { ModuleAction } from '../../../types/module-handler';
 
 export class SchoolTransportHandler extends BaseModuleHandler {
   moduleType = 'education';
-  entityName = 'SchoolTransport';
+  entityName = 'SchoolTransportRequest';
 
   async execute(action: ModuleAction, tx: any) {
     const { data, protocol, serviceId } = action;
 
-    // 1. Buscar ou criar estudante
-    let student = null;
-
-    if (data.studentCpf) {
-      student = await tx.student.findFirst({
-        where: {
-                    cpf: data.studentCpf
-        }
-      });
+    // ✅ VALIDAR citizenId obrigatório
+    if (!data.citizenId) {
+      throw new Error('citizenId é obrigatório');
     }
 
-    if (!student && data.studentName) {
-      student = await tx.student.create({
-        data: {
-                    name: data.studentName,
-          birthDate: data.birthDate ? new Date(data.birthDate) : new Date(),
-          cpf: data.studentCpf || null,
-          parentName: data.parentName,
-          parentPhone: data.parentPhone,
-          address: data.address,
-          isActive: true
-        }
-      });
+    // ✅ VALIDAR se cidadão existe
+    const citizen = await tx.citizen.findUnique({
+      where: { id: data.citizenId }
+    });
+
+    if (!citizen || !citizen.isActive) {
+      throw new Error('Cidadão não encontrado ou inativo');
     }
 
-    // 2. Criar solicitação de transporte
-    const transport = await tx.schoolTransport.create({
+    // ✅ CRIAR solicitação de transporte sem duplicação
+    const transport = await tx.schoolTransportRequest.create({
       data: {
-                studentId: student?.id || null,
+        citizenId: data.citizenId, // ✅ Vincula ao cidadão (responsável)
+        studentName: data.studentName,
+        studentCpf: data.studentCpf || null,
+        studentBirthDate: data.birthDate ? new Date(data.birthDate) : null,
         route: data.route || 'A definir',
         shift: data.shift,
-        address: data.address,
+        pickupAddress: data.address,
         status: 'pending',
         protocol,
         serviceId,
         source: 'service',
-        createdBy: data.citizenId || null
+        createdBy: data.citizenId
       }
     });
 
     return {
-      student,
       transport,
       message: 'Solicitação de transporte criada. A rota será definida pela secretaria.'
     };

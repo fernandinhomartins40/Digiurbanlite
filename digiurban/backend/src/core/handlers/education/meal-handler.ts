@@ -3,40 +3,31 @@ import { ModuleAction } from '../../../types/module-handler';
 
 export class SchoolMealHandler extends BaseModuleHandler {
   moduleType = 'education';
-  entityName = 'SchoolMeal';
+  entityName = 'SchoolMealRequest';
 
   async execute(action: ModuleAction, tx: any) {
     const { data, protocol, serviceId } = action;
 
-    // 1. Buscar ou criar estudante
-    let student = null;
-
-    if (data.studentCpf) {
-      student = await tx.student.findFirst({
-        where: {
-                    cpf: data.studentCpf
-        }
-      });
+    // ✅ VALIDAR citizenId obrigatório
+    if (!data.citizenId) {
+      throw new Error('citizenId é obrigatório');
     }
 
-    if (!student && data.studentName) {
-      student = await tx.student.create({
-        data: {
-                    name: data.studentName,
-          birthDate: data.birthDate ? new Date(data.birthDate) : new Date(),
-          cpf: data.studentCpf || null,
-          parentName: data.parentName,
-          parentPhone: data.parentPhone,
-          address: data.address,
-          isActive: true
-        }
-      });
+    // ✅ VALIDAR se cidadão existe
+    const citizen = await tx.citizen.findUnique({
+      where: { id: data.citizenId }
+    });
+
+    if (!citizen || !citizen.isActive) {
+      throw new Error('Cidadão não encontrado ou inativo');
     }
 
-    // 2. Criar solicitação de dieta especial
-    const meal = await tx.schoolMeal.create({
+    // ✅ CRIAR solicitação de dieta especial sem duplicação
+    const meal = await tx.schoolMealRequest.create({
       data: {
-                studentId: student?.id || null,
+        citizenId: data.citizenId, // ✅ Vincula ao cidadão (responsável)
+        studentName: data.studentName,
+        studentCpf: data.studentCpf || null,
         shift: data.shift,
         dietType: data.dietType,
         restrictions: data.restrictions,
@@ -45,12 +36,11 @@ export class SchoolMealHandler extends BaseModuleHandler {
         protocol,
         serviceId,
         source: 'service',
-        createdBy: data.citizenId || null
+        createdBy: data.citizenId
       }
     });
 
     return {
-      student,
       meal,
       message: 'Solicitação de dieta especial criada. Aguardando aprovação.'
     };

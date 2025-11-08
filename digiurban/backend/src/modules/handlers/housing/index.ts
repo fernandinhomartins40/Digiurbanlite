@@ -3,11 +3,14 @@
  * HOUSING HANDLERS - Habitação
  * ============================================================================
  *
- * 4 handlers consolidados para serviços de habitação
+ * 6 handlers consolidados para serviços de habitação
  */
 
 import { prisma } from '../../../lib/prisma';
 import { ModuleExecutionContext, ModuleExecutionResult } from '../../types';
+
+export { HousingAttendanceHandler } from './housing-attendance-handler';
+export { HousingUnitHandler } from './housing-unit-handler';
 
 /**
  * 1. HOUSING APPLICATION - Inscrição em Programas Habitacionais (MCMV, etc)
@@ -303,6 +306,6 @@ export class HousingManager {
  * Registra todos os handlers de habitação
  */
 export function registerHousingHandlers() {
-  console.log('✅ Housing handlers registered');
+  console.log('✅ Housing handlers registered (6 módulos)');
   // Handlers são registrados automaticamente via exports
 }

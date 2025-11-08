@@ -316,16 +316,7 @@ router.get('/:id', requireMinRole(UserRole.USER), async (req, res) => {
           }
         },
         history: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                role: true
-              }
-            }
-          },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { timestamp: 'desc' }
         }
       }
     });

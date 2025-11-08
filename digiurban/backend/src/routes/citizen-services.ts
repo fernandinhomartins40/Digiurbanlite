@@ -235,7 +235,8 @@ router.get('/:id', async (req, res) => {
         type: prop.enum ? 'select' : (prop.type === 'number' ? 'number' : 'text'),
         required: required.includes(id),
         placeholder: prop.description,
-        options: prop.enum || undefined
+        options: prop.enum || undefined,
+        mask: prop.mask || undefined
         }));
 
       formSchemaConverted = { fields };
@@ -271,7 +272,6 @@ router.get('/:id/requirements', async (req, res) => {
       select: {
         id: true,
         name: true,
-        // requirements: true, // REMOVED: Campo removido do ServiceSimplified
         requiredDocuments: true,
         estimatedDays: true
         }
@@ -285,7 +285,6 @@ router.get('/:id/requirements', async (req, res) => {
       service: {
         id: service.id,
         name: service.name,
-        requirements: [], // DEPRECATED: Feature removida do MVP simplificado
         requiredDocuments: service.requiredDocuments || [],
         estimatedDays: service.estimatedDays
         }
@@ -367,18 +366,11 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       return res.status(401).json({ error: 'Cidadão não autenticado' });
     }
 
-    // Buscar o serviço
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         id: serviceId,
         isActive: true
-      },
-      // REMOVED: Features deprecated removidas do ServiceSimplified
-      // include: {
-      //   customForm: true,
-      //   locationConfig: true,
-      //   scheduling: true,
-      // }
+      }
       });
 
     if (!service) {
@@ -422,25 +414,9 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       priority = 3
         } = req.body;
 
-    // Validações
     if (!description || description.trim().length === 0) {
       return res.status(400).json({ error: 'Descrição é obrigatória' });
     }
-
-    // DEPRECATED: Validações de features removidas do MVP simplificado
-    // TODO: Reimplementar location/scheduling/customForm em iteração futura se necessário
-
-    // Validar localização se obrigatório (DEPRECATED)
-    // if (service.hasLocation && service.locationConfig) { ... }
-
-    // Validar agendamento se obrigatório (DEPRECATED)
-    // if (service.hasScheduling && !schedulingData) { ... }
-
-    // Validar formulário customizado (DEPRECATED)
-    // if (service.hasCustomForm && service.customForm) { ... }
-
-    // ========== CRIAR PROTOCOLO COM MÓDULO ==========
-    // ✅ Usar protocolModuleService para criar protocolo + entidade do módulo
     const { protocolModuleService } = await import('../services/protocol-module.service');
 
     // Preparar formData com citizenId
@@ -488,8 +464,7 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
             id: true,
             name: true
         }
-      },
-        // appointment: true, // REMOVED: Feature deprecated do MVP simplificado
+      }
       }
         });
 

@@ -68,6 +68,16 @@ app.get('/health', (_req, res: express.Response) => {
 });
 
 // ============================================================
+// INICIALIZAÇÃO DO HANDLER REGISTRY
+// ============================================================
+console.log('🔧 Inicializando Handler Registry...');
+import { initializeHandlers } from './modules/handlers/registry';
+initializeHandlers().catch(err => {
+  console.error('❌ Erro ao inicializar handlers:', err);
+  // Não bloquear o servidor
+});
+
+// ============================================================
 // CARREGAMENTO DE ROTAS - Single Tenant Mode (OTIMIZADO)
 // ============================================================
 console.log('📦 Carregando rotas essenciais...');
@@ -103,6 +113,10 @@ app.use('/api/public', publicRoutes);
 // Rotas de serviços
 const serviceRoutes = require('./routes/services').default;
 app.use('/api/services', serviceRoutes);
+
+// Rota de busca de cidadão (usado por todas as secretarias)
+const citizenLookupRoutes = require('./routes/admin-citizen-lookup').default;
+app.use('/api/admin/citizen-lookup', citizenLookupRoutes);
 
 console.log('✅ Rotas básicas carregadas!');
 

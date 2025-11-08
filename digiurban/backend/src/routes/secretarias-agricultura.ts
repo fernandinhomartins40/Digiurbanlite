@@ -551,7 +551,8 @@ router.post(
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { name, producerId, size, location, plantedArea, mainCrops, status } = req.body;
+      const authReq = req as AuthenticatedRequest;
+      const { name, producerId, size, location, plantedArea, mainCrops, status } = req.body;
 
       // Validar campos obrigatórios
       if (!name || !producerId || !size || !location) {
@@ -647,17 +648,19 @@ router.post(
         });
 
         // 2. Criar propriedade vinculada ao protocolo
+        const citizenId = producer.citizenId;
         const property = await tx.ruralProperty.create({
           data: {
-                        name,
+            citizenId: citizenId,
+            name,
             producerId,
             protocolId: protocol.id,
-            size: parseFloat(size),
+            totalArea: parseFloat(size),
             location,
             plantedArea: plantedArea ? parseFloat(plantedArea) : null,
             mainCrops: mainCrops || null,
             status: status || 'ACTIVE'
-        },
+        } as any,
           include: {
             producer: {
               select: {
@@ -2115,10 +2118,10 @@ router.get(
       const csvHeader = 'Nome,CPF,Email,Telefone,Status,Protocolo,Data Inscrição,Data Aprovação\n';
       const csvRows = enrollments.map((e) => {
         return [
-          e.applicantName || e.citizen?.name || '',
-          e.applicantCpf || e.citizen?.cpf || '',
-          e.applicantEmail || e.citizen?.email || '',
-          e.applicantPhone || e.citizen?.phone || '',
+          e.citizen?.name || '',
+          e.citizen?.cpf || '',
+          e.citizen?.email || '',
+          e.citizen?.phone || '',
           e.status,
           e.protocol?.number || '',
           new Date(e.enrollmentDate).toLocaleDateString('pt-BR'),

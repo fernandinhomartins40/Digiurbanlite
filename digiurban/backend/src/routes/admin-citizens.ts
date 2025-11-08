@@ -296,9 +296,6 @@ router.get(
           include: {
             head: true
           }
-        },
-        documents: {
-          orderBy: { createdAt: 'desc' }
         }
       }
     });

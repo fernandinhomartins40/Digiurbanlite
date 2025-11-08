@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MaskedInput } from '@/components/ui/masked-input';
 import { useViaCEP, formatCEP, isValidCEP } from '@/hooks/useViaCEP';
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import {
@@ -329,8 +330,9 @@ export default function PerfilPage() {
                     <Label htmlFor="phone">Telefone</Label>
                     <div className="mt-1">
                       {isEditing ? (
-                        <Input
+                        <MaskedInput
                           id="phone"
+                          type="phone"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           placeholder="(00) 00000-0000"
@@ -348,8 +350,9 @@ export default function PerfilPage() {
                     <Label htmlFor="phoneSecondary">Telefone Secundário</Label>
                     <div className="mt-1">
                       {isEditing ? (
-                        <Input
+                        <MaskedInput
                           id="phoneSecondary"
+                          type="phone"
                           value={formData.phoneSecondary}
                           onChange={(e) => setFormData({ ...formData, phoneSecondary: e.target.value })}
                           placeholder="(00) 00000-0000"
@@ -386,8 +389,9 @@ export default function PerfilPage() {
                     <Label htmlFor="rg">RG</Label>
                     <div className="mt-1">
                       {isEditing ? (
-                        <Input
+                        <MaskedInput
                           id="rg"
+                          type="rg"
                           value={formData.rg}
                           onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
                           placeholder="00.000.000-0"
@@ -505,12 +509,12 @@ export default function PerfilPage() {
                     <div className="mt-1">
                       {isEditing ? (
                         <div className="relative">
-                          <Input
+                          <MaskedInput
                             id="zipCode"
+                            type="cep"
                             placeholder="00000-000"
                             value={cepInputValue}
                             onChange={(e) => handleCEPChange(e.target.value)}
-                            maxLength={9}
                             className={cepError ? 'border-red-300' : ''}
                           />
                           {cepLoading && (
