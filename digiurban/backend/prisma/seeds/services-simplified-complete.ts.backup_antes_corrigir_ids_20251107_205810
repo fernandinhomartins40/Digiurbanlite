@@ -69,6 +69,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        cidadaoId: { type: 'string', title: 'ID do Cidadão' },
         tipoAtendimento: {
           type: 'string',
           title: 'Tipo de Atendimento',
@@ -91,7 +92,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
           default: 'NORMAL'
         }
       },
-      required: ['tipoAtendimento', 'unidadeSaude', 'dataAtendimento', 'descricao']
+      required: ['cidadaoId', 'tipoAtendimento', 'unidadeSaude', 'dataAtendimento', 'descricao']
     }
   },
   {
@@ -110,6 +111,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        pacienteId: { type: 'string', title: 'ID do Paciente' },
         cartaoSUS: { type: 'string', title: 'Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         especialidade: {
           type: 'string',
@@ -130,7 +132,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
         urgencia: { type: 'boolean', title: 'Caso Urgente', default: false },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['cartaoSUS', 'especialidade', 'unidadePreferencial', 'motivoConsulta'],
+      required: ['pacienteId', 'cartaoSUS', 'especialidade', 'unidadePreferencial', 'motivoConsulta'],
       dependencies: {
         urgencia: {
           oneOf: [{
@@ -159,6 +161,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        pacienteId: { type: 'string', title: 'ID do Paciente' },
         cartaoSUS: { type: 'string', title: 'Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         numeroReceita: { type: 'string', title: 'Número da Receita', minLength: 5, maxLength: 50 },
         dataReceita: { type: 'string', format: 'date', title: 'Data da Receita' },
@@ -184,7 +187,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
         unidadeRetirada: { type: 'string', title: 'Unidade de Retirada', minLength: 3, maxLength: 200 },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['cartaoSUS', 'numeroReceita', 'dataReceita', 'nomeMedico', 'medicamentos', 'unidadeRetirada']
+      required: ['pacienteId', 'cartaoSUS', 'numeroReceita', 'dataReceita', 'nomeMedico', 'medicamentos', 'unidadeRetirada']
     }
   },
   {
@@ -244,6 +247,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        pacienteId: { type: 'string', title: 'ID do Paciente' },
         cartaoSUS: { type: 'string', title: 'Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         tipoPrograma: {
           type: 'string',
@@ -265,7 +269,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
         medicamentosUso: { type: 'string', title: 'Medicamentos em Uso', maxLength: 1000 },
         observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['cartaoSUS', 'tipoPrograma', 'nomeMedico', 'diagnostico', 'dataInicio', 'unidadeAcompanhamento']
+      required: ['pacienteId', 'cartaoSUS', 'tipoPrograma', 'nomeMedico', 'diagnostico', 'dataInicio', 'unidadeAcompanhamento']
     }
   },
   {
@@ -284,6 +288,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        pacienteId: { type: 'string', title: 'ID do Paciente' },
         cartaoSUS: { type: 'string', title: 'Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         nomePaciente: { type: 'string', title: 'Nome Completo do Paciente', minLength: 3, maxLength: 200 },
         cpfPaciente: { type: 'string', title: 'CPF do Paciente', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -301,7 +306,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
         necessitaHospedagem: { type: 'boolean', title: 'Necessita Hospedagem', default: false },
         observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['cartaoSUS', 'nomePaciente', 'cpfPaciente', 'nomeMedicoSolicitante', 'especialidadeDestino', 'cidadeDestino', 'motivoEncaminhamento', 'dataEncaminhamento']
+      required: ['pacienteId', 'cartaoSUS', 'nomePaciente', 'cpfPaciente', 'nomeMedicoSolicitante', 'especialidadeDestino', 'cidadeDestino', 'motivoEncaminhamento', 'dataEncaminhamento']
     }
   },
   {
@@ -320,6 +325,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        pacienteId: { type: 'string', title: 'ID do Paciente' },
         cartaoSUS: { type: 'string', title: 'Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         nomeMedicoSolicitante: { type: 'string', title: 'Médico Solicitante', minLength: 3, maxLength: 200 },
         crmMedico: { type: 'string', title: 'CRM', pattern: '^\\d{4,8}$' },
@@ -354,7 +360,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
         preparoEspecial: { type: 'string', title: 'Preparo Especial', maxLength: 500 },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['cartaoSUS', 'nomeMedicoSolicitante', 'tipoExame', 'examesSolicitados', 'motivoSolicitacao']
+      required: ['pacienteId', 'cartaoSUS', 'nomeMedicoSolicitante', 'tipoExame', 'examesSolicitados', 'motivoSolicitacao']
     }
   },
   {
@@ -373,6 +379,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        pacienteId: { type: 'string', title: 'ID do Paciente' },
         nomePaciente: { type: 'string', title: 'Nome do Paciente', minLength: 3, maxLength: 200 },
         cpfPaciente: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
         telefoneContato: { type: 'string', title: 'Telefone de Contato', pattern: '^\\d{10,11}$' },
@@ -392,7 +399,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
         necessitaAcompanhante: { type: 'boolean', title: 'Acompanhante', default: false },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['nomePaciente', 'cpfPaciente', 'telefoneContato', 'tipoTransporte', 'motivoTransporte', 'enderecoOrigem', 'enderecoDestino', 'dataTransporte']
+      required: ['pacienteId', 'nomePaciente', 'cpfPaciente', 'telefoneContato', 'tipoTransporte', 'motivoTransporte', 'enderecoOrigem', 'enderecoDestino', 'dataTransporte']
     }
   },
   {
@@ -453,6 +460,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        pacienteId: { type: 'string', title: 'ID do Paciente' },
         cartaoSUS: { type: 'string', title: 'Cartão SUS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
         nomePaciente: { type: 'string', title: 'Nome do Paciente', minLength: 3, maxLength: 200 },
         cpfPaciente: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -473,7 +481,7 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
         dataProximaDose: { type: 'string', format: 'date', title: 'Data da Próxima Dose' },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['nomePaciente', 'nomeVacina', 'loteVacina', 'fabricante', 'dose', 'dataAplicacao', 'unidadeVacinacao', 'profissionalAplicador']
+      required: ['pacienteId', 'nomePaciente', 'nomeVacina', 'loteVacina', 'fabricante', 'dose', 'dataAplicacao', 'unidadeVacinacao', 'profissionalAplicador']
     }
   },
   {
@@ -533,6 +541,8 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        citizenId: { type: 'string', title: 'ID do Cidadão', 'x-component': 'CitizenAutocomplete' },
+        produtorId: { type: 'string', title: 'ID do Produtor (opcional)' },
         tipoAtendimento: {
           type: 'string',
           title: 'Tipo de Atendimento',
@@ -548,7 +558,7 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
         resolvido: { type: 'boolean', title: 'Resolvido', default: false },
         observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['tipoAtendimento', 'assunto', 'descricao', 'dataAtendimento', 'tecnicoResponsavel']
+      required: ['citizenId', 'tipoAtendimento', 'assunto', 'descricao', 'dataAtendimento', 'tecnicoResponsavel']
     }
   },
   {
@@ -567,6 +577,7 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        citizenId: { type: 'string', title: 'ID do Cidadão', 'x-component': 'CitizenAutocomplete' },
         tipoProdutor: {
           type: 'string',
           title: 'Tipo de Produtor',
@@ -576,7 +587,7 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
         areaTotalHectares: { type: 'number', title: 'Área Total (Hectares)' },
         principaisProducoes: { type: 'string', title: 'Principais Produções' },
       },
-      required: ['tipoProdutor']
+      required: ['citizenId', 'tipoProdutor']
     }
   },
   {
@@ -595,6 +606,8 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        citizenId: { type: 'string', title: 'ID do Cidadão', 'x-component': 'CitizenAutocomplete' },
+        produtorId: { type: 'string', title: 'ID do Produtor (opcional)' },
         nomePropriedade: { type: 'string', title: 'Nome da Propriedade', minLength: 3, maxLength: 200 },
         tipoAssistencia: {
           type: 'string',
@@ -609,7 +622,7 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
         urgente: { type: 'boolean', title: 'Urgente', default: false },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['nomePropriedade', 'tipoAssistencia', 'culturaAtividade', 'problemaDescricao']
+      required: ['citizenId', 'nomePropriedade', 'tipoAssistencia', 'culturaAtividade', 'problemaDescricao']
     }
   },
   {
@@ -628,6 +641,8 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        citizenId: { type: 'string', title: 'ID do Cidadão', 'x-component': 'CitizenAutocomplete' },
+        produtorId: { type: 'string', title: 'ID do Produtor (opcional)' },
         nomeCurso: { type: 'string', title: 'Nome do Curso', minLength: 3, maxLength: 200 },
         temaCurso: {
           type: 'string',
@@ -645,7 +660,7 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
         motivoInscricao: { type: 'string', title: 'Motivo da Inscrição', minLength: 20, maxLength: 500 },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['nomeCurso', 'temaCurso', 'escolaridade']
+      required: ['citizenId', 'nomeCurso', 'temaCurso', 'escolaridade']
     }
   },
   {
@@ -664,6 +679,8 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        citizenId: { type: 'string', title: 'ID do Cidadão', 'x-component': 'CitizenAutocomplete' },
+        produtorId: { type: 'string', title: 'ID do Produtor (opcional)' },
         tipoPrograma: {
           type: 'string',
           title: 'Tipo de Programa',
@@ -681,7 +698,7 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
         possuiDAP: { type: 'boolean', title: 'Possui DAP Ativa', default: false },
         observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['tipoPrograma', 'nomePropriedade', 'areaTotalHectares', 'principaisProducoes', 'numeroFamiliares']
+      required: ['citizenId', 'tipoPrograma', 'nomePropriedade', 'areaTotalHectares', 'principaisProducoes', 'numeroFamiliares']
     }
   },
   {
@@ -700,6 +717,8 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        citizenId: { type: 'string', title: 'ID do Cidadão', 'x-component': 'CitizenAutocomplete' },
+        produtorId: { type: 'string', title: 'ID do Produtor (opcional)' },
         nomePropriedade: { type: 'string', title: 'Nome da Propriedade', minLength: 3, maxLength: 200 },
         inscricaoMunicipal: { type: 'string', title: 'Inscrição Municipal', maxLength: 50 },
         car: { type: 'string', title: 'CAR (Cadastro Ambiental Rural)', maxLength: 50 },
@@ -728,7 +747,7 @@ const AGRICULTURE_SERVICES: ServiceDefinition[] = [
         possuiEnergiaEletrica: { type: 'boolean', title: 'Possui Energia Elétrica', default: false },
         observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['nomePropriedade', 'areaTotalHectares', 'localizacao', 'tipoPropriedade', 'tipoExploracao', 'principaisAtividades']
+      required: ['citizenId', 'nomePropriedade', 'areaTotalHectares', 'localizacao', 'tipoPropriedade', 'tipoExploracao', 'principaisAtividades']
     }
   },
 ];
@@ -752,6 +771,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        alunoId: { type: 'string', title: 'ID do Aluno' },
         responsavelId: { type: 'string', title: 'ID do Responsável' },
         tipoAtendimento: {
           type: 'string',
@@ -837,6 +857,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        alunoId: { type: 'string', title: 'ID do Aluno' },
         nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
         serie: { type: 'string', title: 'Série/Ano', maxLength: 50 },
@@ -855,7 +876,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
         motivoNecessidadeMonitor: { type: 'string', title: 'Motivo da Necessidade de Monitor', maxLength: 500 },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['nomeAluno', 'unidadeEscolar', 'serie', 'turno', 'nomeResponsavel', 'telefoneResponsavel', 'enderecoCompleto', 'pontoReferencia']
+      required: ['alunoId', 'nomeAluno', 'unidadeEscolar', 'serie', 'turno', 'nomeResponsavel', 'telefoneResponsavel', 'enderecoCompleto', 'pontoReferencia']
     }
   },
   {
@@ -873,6 +894,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        alunoId: { type: 'string', title: 'ID do Aluno' },
         nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
         serie: { type: 'string', title: 'Série/Ano', maxLength: 50 },
@@ -898,7 +920,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
         medidaTomada: { type: 'string', title: 'Medida Tomada', maxLength: 500 },
         observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
       },
-      required: ['nomeAluno', 'unidadeEscolar', 'serie', 'tipoOcorrencia', 'dataOcorrencia', 'localOcorrencia', 'descricaoOcorrencia', 'professorRelator', 'gravidadeOcorrencia']
+      required: ['alunoId', 'nomeAluno', 'unidadeEscolar', 'serie', 'tipoOcorrencia', 'dataOcorrencia', 'localOcorrencia', 'descricaoOcorrencia', 'professorRelator', 'gravidadeOcorrencia']
     }
   },
   {
@@ -917,6 +939,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        alunoId: { type: 'string', title: 'ID do Aluno' },
         nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
         cpfAluno: { type: 'string', title: 'CPF do Aluno', pattern: '^\\d{11}$' },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
@@ -934,7 +957,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
         telefoneContato: { type: 'string', title: 'Telefone de Contato', pattern: '^\\d{10,11}$' },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['nomeAluno', 'unidadeEscolar', 'tipoDocumento', 'finalidade', 'nomeResponsavelSolicitacao', 'cpfResponsavel', 'telefoneContato']
+      required: ['alunoId', 'nomeAluno', 'unidadeEscolar', 'tipoDocumento', 'finalidade', 'nomeResponsavelSolicitacao', 'cpfResponsavel', 'telefoneContato']
     }
   },
   {
@@ -953,6 +976,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        alunoId: { type: 'string', title: 'ID do Aluno' },
         nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
         unidadeEscolarAtual: { type: 'string', title: 'Unidade Escolar Atual', minLength: 3, maxLength: 200 },
         serieAtual: { type: 'string', title: 'Série/Ano Atual', maxLength: 50 },
@@ -977,7 +1001,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
         dataDesejadaTransferencia: { type: 'string', format: 'date', title: 'Data Desejada para Transferência' },
         observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
       },
-      required: ['nomeAluno', 'unidadeEscolarAtual', 'serieAtual', 'unidadeEscolarDestino', 'turnoDesejado', 'motivoTransferencia', 'descricaoMotivo', 'nomeResponsavel', 'cpfResponsavel', 'telefoneResponsavel']
+      required: ['alunoId', 'nomeAluno', 'unidadeEscolarAtual', 'serieAtual', 'unidadeEscolarDestino', 'turnoDesejado', 'motivoTransferencia', 'descricaoMotivo', 'nomeResponsavel', 'cpfResponsavel', 'telefoneResponsavel']
     }
   },
   {
@@ -995,6 +1019,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        alunoId: { type: 'string', title: 'ID do Aluno' },
         nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
         matricula: { type: 'string', title: 'Matrícula', minLength: 5, maxLength: 50 },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
@@ -1008,7 +1033,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
         },
         anoLetivo: { type: 'string', title: 'Ano Letivo', pattern: '^\\d{4}$' }
       },
-      required: ['nomeAluno', 'matricula', 'unidadeEscolar', 'serie', 'periodoConsulta', 'anoLetivo']
+      required: ['alunoId', 'nomeAluno', 'matricula', 'unidadeEscolar', 'serie', 'periodoConsulta', 'anoLetivo']
     }
   },
   {
@@ -1026,6 +1051,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
+        alunoId: { type: 'string', title: 'ID do Aluno' },
         nomeAluno: { type: 'string', title: 'Nome do Aluno', minLength: 3, maxLength: 200 },
         matricula: { type: 'string', title: 'Matrícula', minLength: 5, maxLength: 50 },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
@@ -1040,7 +1066,7 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
         anoLetivo: { type: 'string', title: 'Ano Letivo', pattern: '^\\d{4}$' },
         disciplinaEspecifica: { type: 'string', title: 'Disciplina Específica (opcional)', maxLength: 100 }
       },
-      required: ['nomeAluno', 'matricula', 'unidadeEscolar', 'serie', 'periodoConsulta', 'anoLetivo']
+      required: ['alunoId', 'nomeAluno', 'matricula', 'unidadeEscolar', 'serie', 'periodoConsulta', 'anoLetivo']
     }
   },
   {
