@@ -18,6 +18,13 @@ interface Citizen {
   name: string;
   email: string;
   phone?: string;
+  phoneSecondary?: string;
+  birthDate?: string;
+  rg?: string;
+  motherName?: string;
+  maritalStatus?: string;
+  occupation?: string;
+  familyIncome?: string;
   address?: any;
   isActive: boolean;
   verificationStatus: 'PENDING' | 'VERIFIED' | 'GOLD' | 'REJECTED';
@@ -33,14 +40,22 @@ interface UpdateProfileData {
   name?: string;
   email?: string;
   phone?: string;
+  phoneSecondary?: string;
+  birthDate?: string;
+  rg?: string;
+  motherName?: string;
+  maritalStatus?: string;
+  occupation?: string;
+  familyIncome?: string;
   address?: {
-    street?: string;
-    number?: string;
-    complement?: string;
-    neighborhood?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
+    cep?: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    cidade?: string;
+    uf?: string;
+    pontoReferencia?: string;
   };
 }
 
