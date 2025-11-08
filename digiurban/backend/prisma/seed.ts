@@ -258,8 +258,24 @@ async function main() {
           name: 'José Silva',
           email: 'jose.silva@example.com',
           phone: '11999999999',
+          phoneSecondary: '11988888888',
           password: hashedCitizenPassword,
           birthDate: new Date('1990-01-01'),
+          rg: '123456789',
+          motherName: 'Maria Silva',
+          maritalStatus: 'Casado(a)',
+          occupation: 'Analista de Sistemas',
+          familyIncome: '3 a 5 salários mínimos',
+          address: {
+            cep: '01310100',
+            logradouro: 'Avenida Paulista',
+            numero: '1000',
+            complemento: 'Apto 101',
+            bairro: 'Bela Vista',
+            cidade: 'São Paulo',
+            uf: 'SP',
+            pontoReferencia: 'Próximo ao MASP'
+          },
           isActive: true
         }
       });
@@ -269,6 +285,22 @@ async function main() {
         where: { id: citizenUser.id },
         data: {
           password: hashedCitizenPassword,
+          phoneSecondary: '11988888888',
+          rg: '123456789',
+          motherName: 'Maria Silva',
+          maritalStatus: 'Casado(a)',
+          occupation: 'Analista de Sistemas',
+          familyIncome: '3 a 5 salários mínimos',
+          address: {
+            cep: '01310100',
+            logradouro: 'Avenida Paulista',
+            numero: '1000',
+            complemento: 'Apto 101',
+            bairro: 'Bela Vista',
+            cidade: 'São Paulo',
+            uf: 'SP',
+            pontoReferencia: 'Próximo ao MASP'
+          },
           isActive: true
         }
       });
@@ -308,6 +340,18 @@ async function main() {
     console.log('✅ Modo: SINGLE TENANT');
     console.log('✅ Sem multitenancy, sem tenantId');
     console.log('📋 ========================================\n');
+
+    // ========== 7. EXECUTAR SEED DE SERVIÇOS ==========
+    console.log('\n📦 Executando seed de serviços...');
+
+    try {
+      const { seedServices } = await import('./seeds/services-simplified-complete');
+      const servicesCreated = await seedServices();
+      console.log(`   ✅ ${servicesCreated} serviços criados/atualizados\n`);
+    } catch (error: any) {
+      console.error('   ⚠️  Erro ao executar seed de serviços:', error.message);
+      console.log('   ℹ️  Continuando sem os serviços...\n');
+    }
 
   } catch (error) {
     console.error('❌ Erro no seed:', error);
