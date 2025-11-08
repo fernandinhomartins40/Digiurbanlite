@@ -1373,22 +1373,54 @@ const EDUCATION_SERVICES: ServiceDefinition[] = [
     formSchema: {
       type: 'object',
       properties: {
-        responsavelId: { type: 'string', title: 'ID do Responsável' },
+        // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
+        nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+
+        // ========== BLOCO 2: CONTATO ==========
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
+
+        // ========== BLOCO 3: ENDEREÇO ==========
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+        // ========== BLOCO 4: COMPLEMENTARES ==========
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // ========== BLOCO 5: DADOS DO ATENDIMENTO ==========
         tipoAtendimento: {
           type: 'string',
           title: 'Tipo de Atendimento',
-          enum: ['Matrícula', 'Transferência', 'Documentação', 'Transporte Escolar', 'Reunião Pedagógica', 'Reclamação', 'Solicitação', 'Outro'],
-          enumNames: ['Matrícula', 'Transferência', 'Documentação', 'Transporte Escolar', 'Reunião Pedagógica', 'Reclamação', 'Solicitação', 'Outro']
+          enum: ['Matrícula', 'Transferência', 'Documentação', 'Transporte Escolar', 'Reunião Pedagógica', 'Reclamação', 'Solicitação', 'Outro']
         },
-        assunto: { type: 'string', title: 'Assunto', minLength: 5, maxLength: 200 },
-        descricao: { type: 'string', title: 'Descrição do Atendimento', minLength: 10, maxLength: 2000 },
+        assunto: { type: 'string', title: 'Assunto do Atendimento', minLength: 5, maxLength: 200 },
+        descricao: { type: 'string', title: 'Descrição Detalhada', minLength: 10, maxLength: 2000 },
         unidadeEscolar: { type: 'string', title: 'Unidade Escolar', minLength: 3, maxLength: 200 },
         dataAtendimento: { type: 'string', format: 'date', title: 'Data do Atendimento' },
+        horarioAtendimento: { type: 'string', title: 'Horário do Atendimento', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
         servidorResponsavel: { type: 'string', title: 'Servidor Responsável', minLength: 3, maxLength: 200 },
-        resolvido: { type: 'boolean', title: 'Resolvido', default: false },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
+        setor: { type: 'string', title: 'Setor', enum: ['Secretaria Escolar', 'Direção', 'Coordenação Pedagógica', 'Transporte', 'Merenda', 'Outro'] },
+        prioridade: { type: 'string', title: 'Prioridade', enum: ['BAIXA', 'NORMAL', 'ALTA', 'URGENTE'], default: 'NORMAL' },
+        resolvido: { type: 'boolean', title: 'Atendimento Resolvido?', default: false },
+        dataResolucao: { type: 'string', format: 'date', title: 'Data da Resolução (se resolvido)' },
+        observacoes: { type: 'string', title: 'Observações e Encaminhamentos', maxLength: 1000 }
       },
-      required: ['tipoAtendimento', 'assunto', 'descricao', 'unidadeEscolar', 'dataAtendimento', 'servidorResponsavel']
+      required: [
+        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
+        'tipoAtendimento', 'assunto', 'descricao', 'unidadeEscolar', 'dataAtendimento', 'servidorResponsavel'
+      ]
     }
   },
   {
