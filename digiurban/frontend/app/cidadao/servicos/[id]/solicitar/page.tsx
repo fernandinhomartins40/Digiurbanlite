@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { useFormPrefill } from '@/hooks/useFormPrefill';
 import { ProgramSelector } from '@/components/citizen/ProgramSelector';
+import { MaskedInput, getMaskPlaceholder } from '@/components/ui/masked-input';
 
 interface Service {
   id: string;
@@ -486,12 +487,12 @@ export default function SolicitarServicoPage() {
                     <Label htmlFor="applicantCpf">
                       CPF <span className="text-red-500">*</span>
                     </Label>
-                    <Input
+                    <MaskedInput
                       id="applicantCpf"
-                      type="text"
+                      type="cpf"
                       value={customFormData.applicantCpf || citizen?.cpf || ''}
                       onChange={(e) => updateField('applicantCpf', e.target.value)}
-                      placeholder="000.000.000-00"
+                      placeholder={getMaskPlaceholder('cpf')}
                       required
                     />
                   </div>
@@ -516,12 +517,12 @@ export default function SolicitarServicoPage() {
                     <Label htmlFor="applicantPhone">
                       Telefone <span className="text-red-500">*</span>
                     </Label>
-                    <Input
+                    <MaskedInput
                       id="applicantPhone"
-                      type="tel"
+                      type="phone"
                       value={customFormData.applicantPhone || citizen?.phone || ''}
                       onChange={(e) => updateField('applicantPhone', e.target.value)}
-                      placeholder="(00) 00000-0000"
+                      placeholder={getMaskPlaceholder('phone')}
                       required
                     />
                   </div>
@@ -537,6 +538,21 @@ export default function SolicitarServicoPage() {
                   {activeFormFields.map((field: any) => {
                     const isPrefilled = isFieldPrefilled(field.id);
 
+                    // Detectar tipo de máscara baseado no ID do campo
+                    const getMaskType = (fieldId: string) => {
+                      const id = fieldId.toLowerCase();
+                      if (id.includes('cpf') && id.includes('cnpj')) return 'cpf-cnpj';
+                      if (id.includes('cpf')) return 'cpf';
+                      if (id.includes('cnpj')) return 'cnpj';
+                      if (id.includes('telefone') || id.includes('phone') || id.includes('celular') || id.includes('fone')) return 'phone';
+                      if (id.includes('cep') || id.includes('zipcode')) return 'cep';
+                      if (id.includes('rg') || id.includes('identidade')) return 'rg';
+                      if (id.includes('data') || id.includes('date') || id.includes('nascimento') || id.includes('birth')) return 'date';
+                      return null;
+                    };
+
+                    const maskType = getMaskType(field.id);
+
                     return (
                       <div key={field.id} className="space-y-2">
                         <Label htmlFor={field.id} className="flex items-center gap-2">
@@ -550,7 +566,17 @@ export default function SolicitarServicoPage() {
                           )}
                         </Label>
 
-                        {field.type === 'text' && (
+                        {field.type === 'text' && maskType ? (
+                          <MaskedInput
+                            id={field.id}
+                            type={maskType}
+                            required={field.required}
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            placeholder={field.placeholder || getMaskPlaceholder(maskType)}
+                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+                          />
+                        ) : field.type === 'text' ? (
                           <input
                             id={field.id}
                             type="text"
@@ -564,7 +590,7 @@ export default function SolicitarServicoPage() {
                             }`}
                             placeholder={field.placeholder}
                           />
-                        )}
+                        ) : null}
 
                         {field.type === 'number' && (
                           <input
