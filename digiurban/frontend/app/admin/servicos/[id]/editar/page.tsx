@@ -10,7 +10,9 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BasicInfoStep } from '@/components/admin/services/steps/BasicInfoStep'
 import { DocumentsStep } from '@/components/admin/services/steps/DocumentsStep'
+import { FormFieldsStep } from '@/components/admin/services/steps/FormFieldsStep'
 import { FeaturesStep } from '@/components/admin/services/steps/FeaturesStep'
+import { DataCaptureStep } from '@/components/admin/services/steps/DataCaptureStep'
 import {
   ArrowLeft,
   Save,
@@ -18,6 +20,13 @@ import {
   Sparkles,
   Settings,
   Loader2,
+  FormInput,
+  MapPin,
+  Calendar,
+  BarChart,
+  GitBranch,
+  FileSearch,
+  Bell,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -34,7 +43,7 @@ interface Service {
   category: string | null
   departmentId: string
   requiresDocuments: boolean
-  requiredDocuments: string[] | null
+  requiredDocuments: any[] | null
   estimatedDays: number | null
   priority: number
   icon: string | null
@@ -48,6 +57,8 @@ interface Service {
   hasCustomFields: boolean
   hasAdvancedDocs: boolean
   hasNotifications: boolean
+  formSchema?: any
+  moduleType?: string
 }
 
 interface ServiceFormData {
@@ -60,7 +71,7 @@ interface ServiceFormData {
   icon: string
   color: string
   requiresDocuments: boolean
-  requiredDocuments: string[]
+  requiredDocuments: any[]
   hasCustomForm: boolean
   hasLocation: boolean
   hasScheduling: boolean
@@ -69,6 +80,10 @@ interface ServiceFormData {
   hasCustomFields: boolean
   hasAdvancedDocs: boolean
   hasNotifications: boolean
+  formSchema?: any
+  moduleType?: string
+  enabledFields?: string[]
+  formFieldsConfig?: any
 }
 
 export default function EditServicePage() {
@@ -105,6 +120,10 @@ export default function EditServicePage() {
     hasCustomFields: false,
     hasAdvancedDocs: false,
     hasNotifications: false,
+    formSchema: null,
+    moduleType: '',
+    enabledFields: [],
+    formFieldsConfig: null,
   })
 
   useEffect(() => {
@@ -144,6 +163,10 @@ export default function EditServicePage() {
         hasCustomFields: serviceData.hasCustomFields || false,
         hasAdvancedDocs: serviceData.hasAdvancedDocs || false,
         hasNotifications: serviceData.hasNotifications || false,
+        formSchema: serviceData.formSchema || null,
+        moduleType: serviceData.moduleType || '',
+        enabledFields: serviceData.enabledFields || [],
+        formFieldsConfig: serviceData.formFieldsConfig || null,
       })
     } catch (error: any) {
       console.error('Erro ao carregar serviço:', error)
@@ -214,6 +237,12 @@ export default function EditServicePage() {
           hasCustomFields: formData.hasCustomFields,
           hasAdvancedDocs: formData.hasAdvancedDocs,
           hasNotifications: formData.hasNotifications,
+          // Configurações avançadas
+          formSchema: formData.formSchema || null,
+          moduleType: formData.moduleType || null,
+          // Configuração de campos do formulário
+          enabledFields: formData.enabledFields || null,
+          formFieldsConfig: formData.formFieldsConfig || null,
         }),
       })
 
@@ -254,6 +283,39 @@ export default function EditServicePage() {
     .filter(([key]) => key.startsWith('has'))
     .filter(([, value]) => value === true)
 
+  // Definir abas dinâmicas baseadas nos recursos ativos
+  const baseTabs = [
+    { value: 'basic', label: 'Informações Básicas', icon: FileText },
+    { value: 'documents', label: 'Documentos', icon: FileText },
+    { value: 'form-config', label: 'Formulário', icon: FormInput },
+    { value: 'features', label: 'Recursos', icon: Sparkles },
+  ]
+
+  const featureTabs = []
+  if (formData.hasCustomForm || formData.hasCustomFields) {
+    featureTabs.push({ value: 'form-fields', label: 'Campos do Formulário', icon: FormInput })
+  }
+  if (formData.hasLocation) {
+    featureTabs.push({ value: 'location', label: 'Localização', icon: MapPin })
+  }
+  if (formData.hasScheduling) {
+    featureTabs.push({ value: 'scheduling', label: 'Agendamento', icon: Calendar })
+  }
+  if (formData.hasSurvey) {
+    featureTabs.push({ value: 'survey', label: 'Pesquisa', icon: BarChart })
+  }
+  if (formData.hasCustomWorkflow) {
+    featureTabs.push({ value: 'workflow', label: 'Workflow', icon: GitBranch })
+  }
+  if (formData.hasAdvancedDocs) {
+    featureTabs.push({ value: 'advanced-docs', label: 'Docs Inteligentes', icon: FileSearch })
+  }
+  if (formData.hasNotifications) {
+    featureTabs.push({ value: 'notifications', label: 'Notificações', icon: Bell })
+  }
+
+  const allTabs = [...baseTabs, ...featureTabs]
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto py-6 px-4">
       {/* Header */}
@@ -286,21 +348,30 @@ export default function EditServicePage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="basic" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Informações Básicas
-          </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Documentos
-          </TabsTrigger>
-          <TabsTrigger value="features" className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            Recursos Avançados
-          </TabsTrigger>
-        </TabsList>
+        <div className="border-b border-gray-200 mb-6">
+          <div className="flex overflow-x-auto gap-2 pb-2">
+            {allTabs.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeTab === tab.value
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveTab(tab.value)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-t-lg border-b-2 transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'border-primary bg-primary/5 text-primary font-medium'
+                      : 'border-transparent hover:bg-gray-50 text-gray-600'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{tab.label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
+        {/* Aba: Informações Básicas */}
         <TabsContent value="basic" className="mt-6">
           <Card>
             <CardContent className="pt-6">
@@ -314,6 +385,7 @@ export default function EditServicePage() {
           </Card>
         </TabsContent>
 
+        {/* Aba: Documentos */}
         <TabsContent value="documents" className="mt-6">
           <Card>
             <CardContent className="pt-6">
@@ -325,6 +397,25 @@ export default function EditServicePage() {
           </Card>
         </TabsContent>
 
+        {/* Aba: Formulário */}
+        <TabsContent value="form-config" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuração de Campos do Formulário</CardTitle>
+              <CardDescription>
+                Configure quais campos do cidadão serão pré-preenchidos e quais campos adicionais do serviço estarão disponíveis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormFieldsStep
+                formData={formData}
+                onChange={handleFieldChange}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba: Recursos Avançados */}
         <TabsContent value="features" className="mt-6">
           <Card>
             <CardContent className="pt-6">
@@ -336,21 +427,213 @@ export default function EditServicePage() {
           </Card>
 
           {activeFeatures.length > 0 && (
-            <Card className="mt-4 border-blue-200 bg-blue-50">
+            <Card className="mt-4 border-green-200 bg-green-50">
               <CardHeader>
-                <CardTitle className="text-base text-blue-900 flex items-center gap-2">
+                <CardTitle className="text-base text-green-900 flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  Configurações Detalhadas dos Recursos
+                  Recursos Configuráveis
                 </CardTitle>
-                <CardDescription className="text-blue-700">
-                  As configurações específicas de cada recurso (formulários, workflows, etc.) serão
-                  implementadas em versões futuras desta interface. Por enquanto, os recursos ficam
-                  ativados e podem ser configurados via API.
+                <CardDescription className="text-green-700">
+                  Use as abas acima para configurar cada recurso ativado:
+                  {featureTabs.map((tab, idx) => (
+                    <span key={tab.value}>
+                      {idx > 0 && ', '}
+                      <strong>{tab.label}</strong>
+                    </span>
+                  ))}
                 </CardDescription>
               </CardHeader>
             </Card>
           )}
         </TabsContent>
+
+        {/* Aba: Campos do Formulário */}
+        {(formData.hasCustomForm || formData.hasCustomFields) && (
+          <TabsContent value="form-fields" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Campos do Formulário</CardTitle>
+                <CardDescription>
+                  Configure os campos que serão exibidos no formulário de solicitação do serviço
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DataCaptureStep
+                  formData={formData}
+                  onChange={handleFieldChange}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Aba: Localização */}
+        {formData.hasLocation && (
+          <TabsContent value="location" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Configuração de Localização
+                </CardTitle>
+                <CardDescription>
+                  Configure como o serviço captura e utiliza informações de localização
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    Configuração de Localização
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Em breve: Configurar captura de GPS, endereço, raio de atuação, validação por geofencing
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Aba: Agendamento */}
+        {formData.hasScheduling && (
+          <TabsContent value="scheduling" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Sistema de Agendamento
+                </CardTitle>
+                <CardDescription>
+                  Configure horários disponíveis, duração das sessões e regras de agendamento
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    Sistema de Agendamento
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Em breve: Horários, slots, duração, limites, lembretes automáticos
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Aba: Pesquisa de Satisfação */}
+        {formData.hasSurvey && (
+          <TabsContent value="survey" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart className="h-5 w-5" />
+                  Pesquisa de Satisfação
+                </CardTitle>
+                <CardDescription>
+                  Configure perguntas, escalas de avaliação e quando a pesquisa será enviada
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <BarChart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    Pesquisa de Satisfação
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Em breve: NPS, CSAT, perguntas customizadas, trigger automático
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Aba: Workflow Customizado */}
+        {formData.hasCustomWorkflow && (
+          <TabsContent value="workflow" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GitBranch className="h-5 w-5" />
+                  Workflow Customizado
+                </CardTitle>
+                <CardDescription>
+                  Defina etapas, aprovações, responsáveis e automações do fluxo de trabalho
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    Workflow Customizado
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Em breve: Editor visual de workflow, etapas, aprovadores, SLAs
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Aba: Documentos Inteligentes */}
+        {formData.hasAdvancedDocs && (
+          <TabsContent value="advanced-docs" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileSearch className="h-5 w-5" />
+                  Documentos Inteligentes
+                </CardTitle>
+                <CardDescription>
+                  Configure OCR, validação com IA e extração automática de dados dos documentos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <FileSearch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    Documentos Inteligentes (IA)
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Em breve: OCR automático, validação por IA, extração de dados estruturados
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {/* Aba: Notificações */}
+        {formData.hasNotifications && (
+          <TabsContent value="notifications" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" />
+                  Sistema de Notificações
+                </CardTitle>
+                <CardDescription>
+                  Configure templates, canais (Email, SMS, WhatsApp) e triggers automáticos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm text-gray-600 font-medium">
+                    Sistema de Notificações
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Em breve: Templates personalizados, multi-canal, triggers por evento
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Botões de Ação */}
