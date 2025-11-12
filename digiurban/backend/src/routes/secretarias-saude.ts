@@ -5,7 +5,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma, Prisma } from '../lib/prisma';
-import { generateProtocolNumber } from '../utils/protocol-number-generator';
 
 import {
   adminAuthMiddleware,
@@ -828,8 +827,10 @@ router.post('/health-attendances', requireManager, handleAsyncRoute(async (req, 
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // Gerar número do protocolo
-      const protocolNumber = generateProtocolNumber();
+      // Gerar número do protocolo - Sistema YYYY-NNNNNN
+      const year = new Date().getFullYear();
+      const count = await tx.protocolSimplified.count({});
+      const protocolNumber = `${year}-${String(count + 1).padStart(6, '0')}`;
 
       // Buscar cidadão pelo CPF
       const citizen = await tx.citizen.findFirst({
