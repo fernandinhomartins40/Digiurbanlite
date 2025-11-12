@@ -184,11 +184,10 @@ router.post(
       // Setar cookie httpOnly com o token
       res.cookie('digiurban_admin_token', token, {
         httpOnly: true,
-        secure: false, // Permitir HTTP em desenvolvimento
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 3600000,
         path: '/'
-        // Não definir domain para localhost funcionar
         });
 
       // Remover senha da resposta
@@ -518,7 +517,7 @@ router.post('/logout', handleAsyncRoute(async (req, res) => {
     // Limpar cookie httpOnly
     res.clearCookie('digiurban_admin_token', {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/'
         });
