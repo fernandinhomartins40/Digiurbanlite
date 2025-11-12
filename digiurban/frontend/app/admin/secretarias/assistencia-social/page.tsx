@@ -561,7 +561,7 @@ export default function SecretariaAssistenciaSocialPage() {
               <p className="text-red-800">Erro ao carregar serviços</p>
             </CardContent>
           </Card>
-        ) : services.filter((s: any) => s.serviceType === 'COM_DADOS').length === 0 ? (
+        ) : services.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
               <HandHeart className="h-16 w-16 text-muted-foreground mb-4" />
@@ -574,7 +574,6 @@ export default function SecretariaAssistenciaSocialPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {services
-              .filter((s: any) => s.serviceType === 'COM_DADOS')
               .map((service) => (
               <Card key={service.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>

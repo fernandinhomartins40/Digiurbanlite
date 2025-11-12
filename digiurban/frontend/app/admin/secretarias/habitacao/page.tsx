@@ -36,7 +36,7 @@ export default function SecretariaHabitacaoPage() {
   const { stats, loading: statsLoading, error: statsError } = useHabitacaoStats();
 
   // Separar serviços
-  const servicesWithModule = services.filter((s: any) => s.moduleType && s.serviceType === 'COM_DADOS');
+  const servicesWithModule = services.filter((s: any) => s.moduleType);
 
   return (
     <div className="space-y-6">

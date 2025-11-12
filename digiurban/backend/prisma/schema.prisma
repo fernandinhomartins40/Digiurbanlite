@@ -6666,9 +6666,8 @@ enum ProtocolStatus {
 }
 
 enum ServiceType {
-  INFORMATIVO // Apenas acompanhamento (deprecated - use SEM_DADOS)
-  COM_DADOS // Captura dados para módulo
-  SEM_DADOS // Gera protocolo mas não captura dados estruturados
+  COM_DADOS // Captura dados estruturados para módulo específico
+  SEM_DADOS // Gera protocolo de acompanhamento, pode receber arquivos
 }
 
 enum TenantStatus {

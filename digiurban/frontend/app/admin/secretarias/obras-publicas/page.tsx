@@ -37,9 +37,9 @@ export default function SecretariaObrasPublicasPage() {
   // Buscar estatísticas
   const { stats, loading: statsLoading, error: statsError } = useObrasPublicasStats();
 
-  // Separar serviços por tipo
-  const servicesComDados = services.filter((s: any) => s.serviceType === 'COM_DADOS');
-  const servicesInformativos = services.filter((s: any) => s.serviceType === 'INFORMATIVO');
+  // Todos os serviços
+  const servicesComDados = services;
+  const servicesInformativos = [];
 
   // Calcular totais
   const currentDate = new Date();

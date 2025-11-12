@@ -36,8 +36,8 @@ export default function SecretariaTurismoPage() {
   // Buscar estatísticas
   const { stats, dashboard, loading: statsLoading, error: statsError } = useTurismoStats();
 
-  // Separar serviços com e sem módulo
-  const servicesWithModule = services.filter((s: any) => s.moduleType && s.serviceType === 'COM_DADOS');
+  // Todos os serviços
+  const servicesWithModule = services.filter((s: any) => s.moduleType);
   const allServices = services;
 
   return (

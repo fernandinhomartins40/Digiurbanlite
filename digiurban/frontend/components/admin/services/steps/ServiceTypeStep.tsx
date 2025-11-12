@@ -13,14 +13,14 @@ interface ServiceTypeStepProps {
 export function ServiceTypeStep({ formData, onChange }: ServiceTypeStepProps) {
   const serviceTypes = [
     {
-      value: 'INFORMATIVO',
-      title: 'Serviço Informativo',
-      description: 'Apenas acompanhamento de protocolo. Não captura dados estruturados.',
+      value: 'SEM_DADOS',
+      title: 'Serviço sem Captura de Dados',
+      description: 'Gera protocolo de acompanhamento. Pode receber arquivos/documentos anexos.',
       icon: <FileText className="h-8 w-8" />,
       examples: [
         'Consulta de Calendário Escolar',
-        'Acompanhamento de Manifestação',
-        'Informações sobre Programas',
+        'Acompanhamento de Obras',
+        'Mapa Turístico da Cidade',
       ],
       color: 'blue',
     },
@@ -59,8 +59,8 @@ export function ServiceTypeStep({ formData, onChange }: ServiceTypeStepProps) {
             )}
             onClick={() => {
               onChange('serviceType', type.value)
-              // Limpar campos de captura de dados se mudar para INFORMATIVO
-              if (type.value === 'INFORMATIVO') {
+              // Limpar campos de captura de dados se mudar para SEM_DADOS
+              if (type.value === 'SEM_DADOS') {
                 onChange('moduleType', '')
                 onChange('formSchema', null)
               }
@@ -123,8 +123,8 @@ export function ServiceTypeStep({ formData, onChange }: ServiceTypeStepProps) {
               Qual é a diferença?
             </p>
             <p className="text-xs text-blue-700">
-              <strong>Informativos</strong> apenas geram protocolos para acompanhamento.{' '}
-              <strong>Com Captura de Dados</strong> salvam informações estruturadas que podem
+              <strong>Sem Dados</strong> geram protocolos de acompanhamento e podem receber arquivos anexos.{' '}
+              <strong>Com Dados</strong> salvam informações estruturadas que podem
               ser consultadas e relatadas posteriormente (ex: lista de alunos matriculados,
               agendamentos de consultas).
             </p>

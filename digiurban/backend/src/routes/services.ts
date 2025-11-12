@@ -150,7 +150,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       description,
       departmentId,
       category,
-      serviceType, // INFORMATIVO | COM_DADOS
+      serviceType, // COM_DADOS | SEM_DADOS
       requiresDocuments,
       requiredDocuments,
       estimatedDays,
@@ -196,10 +196,10 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
     }
 
     // Validar serviceType
-    if (serviceType && !['INFORMATIVO', 'COM_DADOS'].includes(serviceType)) {
+    if (serviceType && !['COM_DADOS', 'SEM_DADOS'].includes(serviceType)) {
       return res.status(400).json({
         error: 'Bad request',
-        message: 'serviceType deve ser INFORMATIVO ou COM_DADOS'
+        message: 'serviceType deve ser COM_DADOS ou SEM_DADOS'
         });
     }
 
@@ -227,7 +227,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
         description: description || null,
         category: category || null,
         departmentId,
-        serviceType: serviceType || 'INFORMATIVO',
+        serviceType: serviceType || 'SEM_DADOS',
         requiresDocuments: requiresDocuments || false,
         requiredDocuments: requiredDocuments || null,
         estimatedDays: estimatedDays || null,

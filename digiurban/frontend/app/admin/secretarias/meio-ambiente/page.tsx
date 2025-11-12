@@ -32,8 +32,8 @@ export default function SecretariaMeioAmbientePage() {
   const { stats, loading: statsLoading, error: statsError } = useMeioAmbienteStats();
   const { services, loading: servicesLoading, error: servicesError } = useSecretariaServices('meio-ambiente');
 
-  // Separar serviços COM_DADOS
-  const servicesComDados = services.filter((s: any) => s.serviceType === 'COM_DADOS');
+  // Todos os serviços
+  const servicesComDados = services;
 
   return (
     <div className="space-y-6">

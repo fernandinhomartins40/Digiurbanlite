@@ -37,8 +37,8 @@ export default function SecretariaPlanejamentoUrbanoPage() {
   // Buscar estatísticas
   const { stats, loading: statsLoading, error: statsError } = usePlanejamentoUrbanoStats();
 
-  // Separar serviços com e sem módulo
-  const servicesWithModule = services.filter((s: any) => s.serviceType === 'COM_DADOS');
+  // Todos os serviços
+  const servicesWithModule = services;
   const allServices = services;
 
   return (

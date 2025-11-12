@@ -73,7 +73,7 @@ describe('ProtocolService - Testes Unitários', () => {
       const mockService = {
         id: 'service-2',
         name: 'Calendário Escolar',
-        serviceType: 'INFORMATIVO',
+        serviceType: 'SEM_DADOS',
         moduleType: null
       }
 
@@ -208,7 +208,7 @@ describe('ProtocolService - Testes Unitários', () => {
       const mockProtocol = {
         id: 'protocol-1',
         moduleType: null,
-        service: { serviceType: 'INFORMATIVO' }
+        service: { serviceType: 'SEM_DADOS' }
       }
 
       prisma.protocol.findUnique = jest.fn().mockResolvedValue(mockProtocol)

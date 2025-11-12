@@ -75,7 +75,7 @@ describe('Protocol Engine - Load Tests', () => {
           name: 'Serviço Teste',
           description: 'Teste de carga',
           category: 'TESTE',
-          serviceType: 'INFORMATIVO',
+          serviceType: 'SEM_DADOS',
           departmentId: department.id,
           isActive: true
         }
