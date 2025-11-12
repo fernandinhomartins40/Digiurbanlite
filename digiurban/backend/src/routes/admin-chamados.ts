@@ -11,6 +11,7 @@ import {
   requirePermission,
   addDataFilter
         } from '../middleware/admin-auth';
+import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 
@@ -230,10 +231,8 @@ router.post(
       }
     }
 
-    // Gerar número do protocolo - Sistema YYYY-NNNNNN
-    const year = new Date().getFullYear();
-    const count = await prisma.protocolSimplified.count({});
-    const protocolNumber = `${year}-${String(count + 1).padStart(6, '0')}`;
+    // Gerar número do protocolo - Sistema centralizado com lock
+    const protocolNumber = await generateProtocolNumberSafe();
 
     // Criar protocolo automaticamente (FLUXO 1)
     const protocolData = {

@@ -10,6 +10,7 @@
 import { ProtocolStatus, Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { getModuleEntity, isInformativeModule } from '../config/module-mapping';
+import { generateProtocolNumberSafe } from './protocol-number.service';
 
 // ============================================================================
 // TYPES
@@ -69,13 +70,11 @@ export class ProtocolModuleService {
     // 2. Verificar se serviço tem módulo
     const hasModule = service.moduleType && !isInformativeModule(service.moduleType);
 
-    // 3. Gerar número do protocolo
-    const year = new Date().getFullYear();
-    const count = await prisma.protocolSimplified.count({});
-    const protocolNumber = `${year}-${String(count + 1).padStart(6, '0')}`;
-
-    // 4. Criar protocolo em transação
+    // 3. Criar protocolo em transação
     const result = await prisma.$transaction(async (tx) => {
+      // Gerar número do protocolo - Sistema centralizado com lock
+      const protocolNumber = await generateProtocolNumberSafe(tx);
+
       // Converter attachments de array para string JSON se necessário
       const attachmentsData = rest.attachments
         ? (Array.isArray(rest.attachments) ? JSON.stringify(rest.attachments) : rest.attachments)

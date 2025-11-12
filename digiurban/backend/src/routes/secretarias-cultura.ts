@@ -5,6 +5,7 @@ import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { UserRole } from '@prisma/client';
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse } from '../types';
 import { asyncHandler } from '../utils/express-helpers';
+import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 
 // ===== TIPOS LOCAIS ISOLADOS - SEM DEPENDÊNCIAS CENTRALIZADAS =====
 
@@ -306,10 +307,8 @@ router.post('/cultural-attendances', adminAuthMiddleware, requireMinRole(UserRol
     // Verificação removida (single tenant)
 
     const result = await prisma.$transaction(async (tx) => {
-      // Gerar número do protocolo - Sistema YYYY-NNNNNN
-      const year = new Date().getFullYear();
-      const count = await tx.protocolSimplified.count({});
-      const protocolNumber = `${year}-${String(count + 1).padStart(6, '0')}`;
+      // Gerar número do protocolo - Sistema centralizado com lock
+      const protocolNumber = await generateProtocolNumberSafe(tx);
 
       // Buscar cidadão pelo nome (cultura não usa CPF)
       const citizen = await tx.citizen.findFirst({

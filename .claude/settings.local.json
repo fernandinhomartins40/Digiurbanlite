@@ -23,7 +23,14 @@
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma migrate reset --force)",
       "Bash(cat:*)",
       "Bash(git log:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(node:*)",
+      "Bash(cmd /c:*)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(tasklist)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

@@ -8,6 +8,7 @@
 import { ProtocolStatus } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { getModuleEntity, isInformativeModule } from '../config/module-mapping'
+import { generateProtocolNumberSafe } from './protocol-number.service'
 
 // ========================================
 // TYPES & INTERFACES
@@ -87,9 +88,7 @@ export class ProtocolServiceSimplified {
     }
 
     // 2. Gerar n\u00famero do protocolo
-    const year = new Date().getFullYear()
-    const count = await prisma.protocolSimplified.count({})
-    const protocolNumber = `${year}-${String(count + 1).padStart(6, '0')}`
+    const protocolNumber = await generateProtocolNumberSafe()
 
     // 3. Criar protocolo
     const protocol = await prisma.protocolSimplified.create({
