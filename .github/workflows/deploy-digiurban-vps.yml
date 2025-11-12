@@ -1,0 +1,169 @@
+name: Deploy DigiUrban to VPS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        with:
+          host: 72.60.10.108
+          username: root
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          timeout: 300s
+          command_timeout: 300s
+          envs: DATABASE_URL,JWT_SECRET
+          script: |
+            set -e
+
+            echo "=== Iniciando Deploy DigiUrban ==="
+
+            # Diretório da aplicação
+            APP_DIR="/root/digiurban"
+
+            # Criar diretório se não existir
+            mkdir -p $APP_DIR
+            cd $APP_DIR
+
+            # Clonar ou atualizar repositório
+            if [ -d ".git" ]; then
+              echo "Atualizando repositório..."
+              git fetch origin
+              git reset --hard origin/main
+              git clean -fd
+              echo "Verificando integridade do repositório..."
+              git status
+              git log --oneline -5
+              echo "Verificando arquivo crítico tenant.ts..."
+              if ! grep -q "tenantMiddleware" digiurban/backend/src/middleware/tenant.ts; then
+                echo "❌ ERRO CRÍTICO: Middleware tenant não encontrado!"
+                echo "Git pull falhou em atualizar o arquivo. Abortando deploy."
+                exit 1
+              fi
+              echo "✅ Middleware tenant confirmado no código-fonte"
+            else
+              echo "Clonando repositório..."
+              git clone https://github.com/${{ github.repository }} .
+            fi
+
+            # Criar arquivo .env
+            echo "Criando arquivo .env..."
+            cat > .env << EOF
+            # Node.js
+            NODE_ENV=production
+
+            # Backend
+            PORT=3001
+            BACKEND_PORT=3001
+
+            # Frontend
+            FRONTEND_PORT=3000
+            NEXT_PUBLIC_API_URL=http://localhost:3001
+
+            # Database
+            DATABASE_URL=${DATABASE_URL}
+
+            # JWT
+            JWT_SECRET=${JWT_SECRET}
+            JWT_EXPIRES_IN=7d
+            JWT_ADMIN_EXPIRES_IN=8h
+            JWT_CITIZEN_EXPIRES_IN=30d
+
+            # CORS
+            FRONTEND_URL=https://www.digiurban.com.br
+            CORS_ORIGIN=https://www.digiurban.com.br
+            ALLOWED_ORIGINS=https://www.digiurban.com.br,http://www.digiurban.com.br,https://digiurban.com.br,http://digiurban.com.br,http://72.60.10.108:3060,http://localhost:3060
+
+            # Tenants
+            DEFAULT_TENANT=demo
+
+            # Logs
+            LOG_LEVEL=info
+
+            # Build
+            BUILD_TIMESTAMP=$(date +%s)
+            EOF
+
+            # Parar container existente
+            echo "Parando container existente..."
+            docker-compose -f docker-compose.vps.yml down || true
+
+            # ⚠️ CRÍTICO: Remover TODOS os arquivos .db ANTES do build
+            echo "Removendo arquivos .db do código-fonte..."
+            find . -name "*.db" -type f ! -path "*/node_modules/*" -delete || true
+            find . -name "*.db-*" -type f ! -path "*/node_modules/*" -delete || true
+            echo "✅ Arquivos .db removidos"
+
+            # Limpar TODOS os recursos Docker antigos para garantir rebuild limpo
+            echo "Limpando recursos antigos..."
+            docker container prune -f || true
+            docker image prune -f || true
+            docker volume prune -f || true
+            docker system prune -af --volumes || true
+
+            # Garantir BUILD_TIMESTAMP como variável de ambiente ANTES do build
+            export BUILD_TIMESTAMP=$(date +%s)
+            echo "BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"
+
+            # Build da imagem sem cache (BUILD_TIMESTAMP vem do export acima)
+            echo "Construindo nova imagem..."
+            docker-compose -f docker-compose.vps.yml build --no-cache --pull
+
+            # Iniciar container
+            echo "Iniciando container..."
+            docker-compose -f docker-compose.vps.yml up -d
+
+            # Aguardar container iniciar
+            echo "Aguardando container iniciar..."
+            sleep 15
+
+            # Verificar status
+            echo "Verificando status do container..."
+            docker-compose -f docker-compose.vps.yml ps
+
+            # Verificar logs
+            echo "Últimas 50 linhas dos logs:"
+            docker-compose -f docker-compose.vps.yml logs --tail=50
+
+            # Verificar health
+            echo "Verificando health check..."
+            for i in {1..10}; do
+              if curl -f http://localhost:3060/health; then
+                echo "✅ DigiUrban está rodando na porta 3060!"
+
+                # Verificar se o código compilado tem o middleware
+                echo "Verificando código compilado..."
+                docker exec digiurban-vps ls -la /app/backend/dist/middleware/tenant.js || echo "⚠️ Middleware não encontrado"
+
+                exit 0
+              fi
+              echo "Tentativa $i/10 falhou, aguardando 5s..."
+              sleep 5
+            done
+
+            echo "⚠️ Health check falhou após 10 tentativas"
+            echo "Logs completos:"
+            docker-compose -f docker-compose.vps.yml logs
+            exit 1
+
+      - name: Verify Deployment
+        if: success()
+        run: |
+          echo "✅ Deploy concluído com sucesso!"
+          echo "🌐 DigiUrban disponível em: https://www.digiurban.com.br"
+          echo "🌐 Acesso alternativo: http://72.60.10.108:3060"
+          echo "📊 Health check: http://72.60.10.108:3060/health"

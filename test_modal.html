@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Citizens Modal</title>
+</head>
+<body>
+    <h1>Testando Modais de Cidadãos</h1>
+    <button id="testBtn">Teste Click</button>
+
+    <script>
+        // Simular clique nos botões da página
+        fetch('https://digiurban.com.br/super-admin/citizens')
+            .then(r => r.text())
+            .then(html => {
+                console.log('Página carregada, verificando JavaScript...');
+
+                // Verificar se o código contém as funções
+                if (html.includes('openViewModal')) {
+                    console.log('✅ openViewModal encontrado no HTML');
+                } else {
+                    console.log('❌ openViewModal NÃO encontrado no HTML');
+                }
+
+                if (html.includes('openEditModal')) {
+                    console.log('✅ openEditModal encontrado no HTML');
+                } else {
+                    console.log('❌ openEditModal NÃO encontrado no HTML');
+                }
+            });
+    </script>
+</body>
+</html>

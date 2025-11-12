@@ -1,0 +1,787 @@
+[
+  {
+    "code": "ASS_CESTA_001",
+    "name": "Solicitar Cesta Básica",
+    "category": "Assistência Social",
+    "description": "Solicitação de cesta básica para famílias em situação de vulnerabilidade social",
+    "icon": "ShoppingBasket",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialBenefitRequest",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true},
+        {"id": "hasNIS", "label": "Possui NIS (Número de Identificação Social)?", "type": "boolean", "required": true},
+        {"id": "nisNumber", "label": "Número do NIS", "type": "text", "required": false},
+        {"id": "vulnerabilitySituation", "label": "Situação de Vulnerabilidade", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do solicitante",
+        "Comprovante de residência",
+        "Comprovante de renda (ou declaração de ausência de renda)",
+        "Certidão de nascimento dos filhos menores"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_BOLSA_002",
+    "name": "Cadastro Bolsa Família",
+    "category": "Assistência Social",
+    "description": "Cadastro e atualização no programa Bolsa Família",
+    "icon": "Wallet",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialProgramEnrollment",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Responsável Familiar", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "childrenUnder18", "label": "Crianças/Adolescentes até 17 anos", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Per Capita Mensal", "type": "number", "required": true},
+        {"id": "requestType", "label": "Tipo de Solicitação", "type": "select", "required": true, "options": ["Novo Cadastro", "Atualização", "Recurso"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF de todos os membros da família",
+        "Certidão de nascimento ou casamento",
+        "Comprovante de residência",
+        "Comprovante de renda de todos os trabalhadores",
+        "Comprovante de matrícula escolar (filhos de 6 a 15 anos)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_RENDA_003",
+    "name": "Programa Renda Cidadã",
+    "category": "Assistência Social",
+    "description": "Inscrição no programa municipal de transferência de renda",
+    "icon": "DollarSign",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialProgramEnrollment",
+    "estimatedTime": "20 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Total", "type": "number", "required": true},
+        {"id": "isUnemployed", "label": "Está desempregado?", "type": "boolean", "required": true},
+        {"id": "unemploymentTime", "label": "Tempo de Desemprego (meses)", "type": "number", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda familiar",
+        "Carteira de Trabalho",
+        "Declaração de desemprego (se aplicável)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_LEITE_004",
+    "name": "Programa Leite Solidário",
+    "category": "Assistência Social",
+    "description": "Cadastro no programa de distribuição de leite para famílias com crianças",
+    "icon": "Milk",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialProgramEnrollment",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Responsável", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "childName", "label": "Nome da Criança", "type": "text", "required": true},
+        {"id": "childBirthDate", "label": "Data de Nascimento da Criança", "type": "date", "required": true},
+        {"id": "childAge", "label": "Idade da Criança", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true},
+        {"id": "hasLactoseIntolerance", "label": "Criança possui intolerância à lactose?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do responsável",
+        "Certidão de nascimento da criança",
+        "Comprovante de residência",
+        "Comprovante de renda familiar",
+        "Cartão de vacinação da criança"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_FAMILIA_005",
+    "name": "Cadastro Único (CadÚnico)",
+    "category": "Assistência Social",
+    "description": "Cadastro e atualização no Cadastro Único para Programas Sociais",
+    "icon": "Users",
+    "moduleType": "social_assistance",
+    "moduleEntity": "FamilyRegistration",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Responsável Familiar", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Total", "type": "number", "required": true},
+        {"id": "requestType", "label": "Tipo de Solicitação", "type": "select", "required": true, "options": ["Novo Cadastro", "Atualização de Dados", "Inclusão de Membro", "Exclusão de Membro"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF de todos os membros da família maiores de 16 anos",
+        "Certidão de nascimento ou RG dos menores de 16 anos",
+        "Comprovante de residência",
+        "Título de eleitor (opcional)",
+        "Carteira de Trabalho (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_VISITA_006",
+    "name": "Solicitar Visita Domiciliar",
+    "category": "Assistência Social",
+    "description": "Solicitação de visita domiciliar de assistente social",
+    "icon": "Home",
+    "moduleType": "social_assistance",
+    "moduleEntity": "HomeVisit",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "visitReason", "label": "Motivo da Visita", "type": "select", "required": true, "options": ["Avaliação Social", "Cadastro em Programa", "Acompanhamento Familiar", "Orientação Social", "Outro"]},
+        {"id": "description", "label": "Descrição Detalhada", "type": "textarea", "required": true},
+        {"id": "preferredDate", "label": "Data Preferencial", "type": "date", "required": false},
+        {"id": "preferredShift", "label": "Turno Preferencial", "type": "select", "required": true, "options": ["Manhã", "Tarde"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do solicitante",
+        "Comprovante de residência"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_DOCUMENTOS_007",
+    "name": "Auxílio para Tirar Documentos",
+    "category": "Assistência Social",
+    "description": "Auxílio para emissão de documentos (RG, CPF, Certidões)",
+    "icon": "FileText",
+    "moduleType": "social_assistance",
+    "moduleEntity": "DocumentRequest",
+    "estimatedTime": "20 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "documentType", "label": "Tipo de Documento", "type": "select", "required": true, "options": ["RG (1ª via)", "RG (2ª via)", "CPF", "Certidão de Nascimento", "Certidão de Casamento", "Carteira de Trabalho"]},
+        {"id": "hasDocuments", "label": "Possui algum documento?", "type": "boolean", "required": true},
+        {"id": "availableDocuments", "label": "Documentos Disponíveis", "type": "textarea", "required": false},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Qualquer documento disponível (se houver)",
+        "Comprovante de residência",
+        "Comprovante de renda familiar"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_PASSAGEM_008",
+    "name": "Auxílio Passagem",
+    "category": "Assistência Social",
+    "description": "Auxílio financeiro para passagens de transporte intermunicipal",
+    "icon": "Ticket",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialBenefitRequest",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "destination", "label": "Cidade de Destino", "type": "text", "required": true},
+        {"id": "travelReason", "label": "Motivo da Viagem", "type": "select", "required": true, "options": ["Tratamento Médico", "Consulta Especializada", "Exame/Procedimento", "Retorno ao Município de Origem", "Outro"]},
+        {"id": "description", "label": "Descrição Detalhada", "type": "textarea", "required": true},
+        {"id": "travelDate", "label": "Data da Viagem", "type": "date", "required": true},
+        {"id": "needsCompanion", "label": "Necessita Acompanhante?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de agendamento médico ou justificativa",
+        "Comprovante de residência",
+        "Declaração de baixa renda"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_FUNERAL_009",
+    "name": "Auxílio Funeral",
+    "category": "Assistência Social",
+    "description": "Auxílio financeiro para despesas funerárias",
+    "icon": "Heart",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialBenefitRequest",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF do Solicitante", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "deceasedName", "label": "Nome do Falecido", "type": "text", "required": true},
+        {"id": "deceasedCpf", "label": "CPF do Falecido", "type": "text", "required": true},
+        {"id": "deathDate", "label": "Data do Óbito", "type": "date", "required": true},
+        {"id": "relationship", "label": "Grau de Parentesco", "type": "select", "required": true, "options": ["Cônjuge", "Filho(a)", "Pai/Mãe", "Irmão(ã)", "Outro"]},
+        {"id": "estimatedCost", "label": "Valor Estimado das Despesas", "type": "number", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do solicitante",
+        "Certidão de óbito",
+        "Orçamento da funerária",
+        "Comprovante de residência do falecido",
+        "Comprovante de baixa renda"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_NATALIDADE_010",
+    "name": "Auxílio Natalidade",
+    "category": "Assistência Social",
+    "description": "Auxílio financeiro para famílias com recém-nascidos",
+    "icon": "Baby",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialBenefitRequest",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "motherName", "label": "Nome da Mãe", "type": "text", "required": true},
+        {"id": "motherCpf", "label": "CPF da Mãe", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "babyName", "label": "Nome do Bebê", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF da mãe",
+        "Certidão de nascimento do bebê",
+        "Comprovante de residência",
+        "Comprovante de renda familiar",
+        "Declaração de nascido vivo"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_CRIANCA_011",
+    "name": "CRAS - Serviços para Crianças",
+    "category": "Assistência Social",
+    "description": "Inscrição em programas e atividades para crianças no CRAS",
+    "icon": "Users",
+    "moduleType": "social_assistance",
+    "moduleEntity": "ChildrenServices",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "childName", "label": "Nome da Criança", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "age", "label": "Idade", "type": "number", "required": true},
+        {"id": "parentName", "label": "Nome do Responsável", "type": "text", "required": true},
+        {"id": "parentCpf", "label": "CPF do Responsável", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "serviceType", "label": "Tipo de Serviço", "type": "select", "required": true, "options": ["Atividades Recreativas", "Reforço Escolar", "Oficinas", "Acompanhamento Social", "Todos"]},
+        {"id": "shift", "label": "Turno Preferencial", "type": "select", "required": true, "options": ["Manhã", "Tarde"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do responsável",
+        "Certidão de nascimento da criança",
+        "Comprovante de residência",
+        "Declaração escolar"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_IDOSO_012",
+    "name": "Programa para Idosos",
+    "category": "Assistência Social",
+    "description": "Inscrição em programas e serviços para pessoas idosas",
+    "icon": "Users",
+    "moduleType": "social_assistance",
+    "moduleEntity": "ElderlyProgram",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "seniorName", "label": "Nome do Idoso", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "age", "label": "Idade", "type": "number", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "livesAlone", "label": "Mora Sozinho?", "type": "boolean", "required": true},
+        {"id": "programType", "label": "Tipo de Programa", "type": "select", "required": true, "options": ["Centro de Convivência", "Atividades Físicas", "Artesanato", "BPC (Benefício de Prestação Continuada)", "Acompanhamento Social"]},
+        {"id": "hasHealthIssues", "label": "Possui Problemas de Saúde?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Atestado médico (se aplicável)",
+        "Comprovante de renda (para BPC)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_MULHER_013",
+    "name": "Centro de Referência da Mulher",
+    "category": "Assistência Social",
+    "description": "Atendimento e orientação para mulheres em situação de vulnerabilidade",
+    "icon": "Heart",
+    "moduleType": "social_assistance",
+    "moduleEntity": "WomenCenter",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "womanName", "label": "Nome", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": false},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "age", "label": "Idade", "type": "number", "required": true},
+        {"id": "hasChildren", "label": "Possui Filhos?", "type": "boolean", "required": false},
+        {"id": "numberOfChildren", "label": "Quantidade de Filhos", "type": "number", "required": false},
+        {"id": "serviceType", "label": "Tipo de Atendimento", "type": "select", "required": true, "options": ["Orientação Jurídica", "Apoio Psicológico", "Encaminhamento para Abrigo", "Qualificação Profissional", "Violência Doméstica", "Outro"]},
+        {"id": "isUrgent", "label": "Situação Urgente?", "type": "boolean", "required": true},
+        {"id": "description", "label": "Descrição da Situação", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG (se possível)",
+        "Boletim de ocorrência (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_VULNERAVEL_014",
+    "name": "Acolhimento de Pessoas em Situação de Vulnerabilidade",
+    "category": "Assistência Social",
+    "description": "Acolhimento e assistência para pessoas em situação de vulnerabilidade social",
+    "icon": "Shield",
+    "moduleType": "social_assistance",
+    "moduleEntity": "VulnerabilitySupport",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "personName", "label": "Nome da Pessoa", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": false},
+        {"id": "age", "label": "Idade", "type": "number", "required": true},
+        {"id": "phone", "label": "Telefone de Contato", "type": "phone", "required": false},
+        {"id": "vulnerabilityType", "label": "Tipo de Vulnerabilidade", "type": "select", "required": true, "options": ["Situação de Rua", "Violência", "Abandono", "Dependência Química", "Saúde Mental", "Outro"]},
+        {"id": "description", "label": "Descrição da Situação", "type": "textarea", "required": true},
+        {"id": "needsShelter", "label": "Necessita Abrigo?", "type": "boolean", "required": true},
+        {"id": "hasFamily", "label": "Possui Família?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Documento de identificação (se houver)",
+        "Relatos ou encaminhamentos (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_RUA_015",
+    "name": "Atendimento População de Rua",
+    "category": "Assistência Social",
+    "description": "Atendimento especializado para população em situação de rua",
+    "icon": "Home",
+    "moduleType": "social_assistance",
+    "moduleEntity": "StreetPopulation",
+    "estimatedTime": "2 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "personName", "label": "Nome (se souber)", "type": "text", "required": false},
+        {"id": "age", "label": "Idade Aproximada", "type": "number", "required": true},
+        {"id": "gender", "label": "Gênero", "type": "select", "required": true, "options": ["Masculino", "Feminino", "Outro", "Não informado"]},
+        {"id": "location", "label": "Local onde se Encontra", "type": "text", "required": true},
+        {"id": "timeOnStreet", "label": "Tempo em Situação de Rua", "type": "select", "required": false, "options": ["Menos de 1 mês", "1 a 6 meses", "6 meses a 1 ano", "Mais de 1 ano", "Não sabe"]},
+        {"id": "hasHealthIssues", "label": "Aparenta Problemas de Saúde?", "type": "boolean", "required": false},
+        {"id": "description", "label": "Observações", "type": "textarea", "required": false},
+        {"id": "requestType", "label": "Tipo de Solicitação", "type": "select", "required": true, "options": ["Abordagem Social", "Encaminhamento para Abrigo", "Atendimento Emergencial", "Documentação"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": []
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_ALUGUEL_016",
+    "name": "Auxílio Aluguel",
+    "category": "Assistência Social",
+    "description": "Auxílio financeiro temporário para pagamento de aluguel",
+    "icon": "Home",
+    "moduleType": "social_assistance",
+    "moduleEntity": "RentAssistance",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Atual", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true},
+        {"id": "rentValue", "label": "Valor do Aluguel", "type": "number", "required": true},
+        {"id": "reason", "label": "Motivo da Solicitação", "type": "textarea", "required": true},
+        {"id": "hasEvictionNotice", "label": "Recebeu Aviso de Despejo?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Contrato de aluguel",
+        "Comprovante de renda familiar",
+        "Conta de luz ou água",
+        "Declaração de baixa renda"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_GAS_017",
+    "name": "Vale Gás",
+    "category": "Assistência Social",
+    "description": "Auxílio para compra de botijão de gás de cozinha",
+    "icon": "Flame",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialBenefitRequest",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true},
+        {"id": "hasNIS", "label": "Possui NIS?", "type": "boolean", "required": true},
+        {"id": "nisNumber", "label": "Número do NIS", "type": "text", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda familiar",
+        "Cartão do NIS (se possuir)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_MEDICAMENTO_018",
+    "name": "Auxílio Medicamento",
+    "category": "Assistência Social",
+    "description": "Auxílio financeiro para compra de medicamentos de uso contínuo",
+    "icon": "Pill",
+    "moduleType": "social_assistance",
+    "moduleEntity": "MedicineAid",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Paciente", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "disease", "label": "Doença/Condição", "type": "text", "required": true},
+        {"id": "medicationName", "label": "Nome do Medicamento", "type": "text", "required": true},
+        {"id": "isControlled", "label": "Medicamento Controlado?", "type": "boolean", "required": false},
+        {"id": "estimatedCost", "label": "Valor Estimado Mensal", "type": "number", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Receita médica atualizada",
+        "Laudo médico",
+        "Comprovante de residência",
+        "Comprovante de renda familiar",
+        "Orçamento do medicamento"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_CADERNO_019",
+    "name": "Kit Material Social",
+    "category": "Assistência Social",
+    "description": "Doação de kit com materiais básicos (higiene, limpeza, etc)",
+    "icon": "Package",
+    "moduleType": "social_assistance",
+    "moduleEntity": "SocialKit",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "kitType", "label": "Tipo de Kit", "type": "select", "required": true, "options": ["Higiene Pessoal", "Limpeza", "Bebê", "Completo"]},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true},
+        {"id": "reason", "label": "Justificativa", "type": "textarea", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda familiar"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_ROUPA_020",
+    "name": "Doação de Roupas",
+    "category": "Assistência Social",
+    "description": "Solicitação de doação de roupas e calçados",
+    "icon": "Shirt",
+    "moduleType": "social_assistance",
+    "moduleEntity": "ClothingDonation",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "itemType", "label": "Tipo de Item", "type": "select", "required": true, "options": ["Roupas Adulto", "Roupas Infantil", "Roupas Bebê", "Calçados", "Cobertores", "Todos"]},
+        {"id": "sizes", "label": "Tamanhos Necessários", "type": "textarea", "required": true},
+        {"id": "urgency", "label": "Situação Urgente?", "type": "boolean", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_MOVEIS_021",
+    "name": "Doação de Móveis",
+    "category": "Assistência Social",
+    "description": "Solicitação de doação de móveis e eletrodomésticos",
+    "icon": "Armchair",
+    "moduleType": "social_assistance",
+    "moduleEntity": "FurnitureDonation",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome do Solicitante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "itemsNeeded", "label": "Itens Necessários", "type": "select", "required": true, "options": ["Cama", "Colchão", "Fogão", "Geladeira", "Armário", "Mesa e Cadeiras", "Sofá", "Outros"]},
+        {"id": "description", "label": "Descrição Detalhada", "type": "textarea", "required": true},
+        {"id": "reason", "label": "Motivo da Solicitação", "type": "textarea", "required": true},
+        {"id": "familyIncome", "label": "Renda Familiar Mensal", "type": "number", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda familiar",
+        "Fotos da residência (se possível)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_EMPREGO_022",
+    "name": "SINE - Intermediação de Emprego",
+    "category": "Assistência Social",
+    "description": "Cadastro no SINE para intermediação de mão de obra e emprego",
+    "icon": "Briefcase",
+    "moduleType": "social_assistance",
+    "moduleEntity": "EmploymentService",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "email", "label": "E-mail", "type": "email", "required": false},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "education", "label": "Escolaridade", "type": "select", "required": true, "options": ["Fundamental Incompleto", "Fundamental Completo", "Médio Incompleto", "Médio Completo", "Superior Incompleto", "Superior Completo"]},
+        {"id": "desiredArea", "label": "Área de Interesse", "type": "text", "required": true},
+        {"id": "hasExperience", "label": "Possui Experiência?", "type": "boolean", "required": true},
+        {"id": "experienceDescription", "label": "Descrição da Experiência", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Carteira de Trabalho",
+        "Comprovante de residência",
+        "Comprovante de escolaridade",
+        "Currículo (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_QUALIFICACAO_023",
+    "name": "Programa de Qualificação Profissional",
+    "category": "Assistência Social",
+    "description": "Inscrição em cursos de qualificação e capacitação profissional",
+    "icon": "GraduationCap",
+    "moduleType": "social_assistance",
+    "moduleEntity": "TrainingProgram",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "applicantName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "education", "label": "Escolaridade", "type": "select", "required": true, "options": ["Fundamental Incompleto", "Fundamental Completo", "Médio Incompleto", "Médio Completo", "Superior Incompleto", "Superior Completo"]},
+        {"id": "courseArea", "label": "Área de Interesse", "type": "select", "required": true, "options": ["Informática", "Artesanato", "Costura", "Culinária", "Beleza", "Construção Civil", "Elétrica", "Mecânica", "Outro"]},
+        {"id": "isUnemployed", "label": "Está Desempregado?", "type": "boolean", "required": true},
+        {"id": "availability", "label": "Disponibilidade", "type": "select", "required": true, "options": ["Manhã", "Tarde", "Noite", "Integral"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de escolaridade",
+        "Carteira de Trabalho"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_ABRIGO_024",
+    "name": "Encaminhamento para Abrigo",
+    "category": "Assistência Social",
+    "description": "Encaminhamento para abrigo temporário em situações de emergência",
+    "icon": "Home",
+    "moduleType": "social_assistance",
+    "moduleEntity": "ShelterReferral",
+    "estimatedTime": "2 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "personName", "label": "Nome da Pessoa", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": false},
+        {"id": "age", "label": "Idade", "type": "number", "required": true},
+        {"id": "phone", "label": "Telefone de Contato", "type": "phone", "required": false},
+        {"id": "hasChildren", "label": "Está com Crianças?", "type": "boolean", "required": true},
+        {"id": "numberOfChildren", "label": "Quantidade de Crianças", "type": "number", "required": false},
+        {"id": "childrenAges", "label": "Idades das Crianças", "type": "text", "required": false},
+        {"id": "reason", "label": "Motivo do Encaminhamento", "type": "select", "required": true, "options": ["Situação de Rua", "Violência Doméstica", "Desastre Natural", "Despejo", "Outro"]},
+        {"id": "description", "label": "Descrição da Situação", "type": "textarea", "required": true},
+        {"id": "isUrgent", "label": "Situação de Emergência?", "type": "boolean", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Documento de identificação (se houver)",
+        "Boletim de ocorrência (se aplicável)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "ASS_CREAS_025",
+    "name": "CREAS - Situações de Violência",
+    "category": "Assistência Social",
+    "description": "Atendimento especializado para situações de violência e violação de direitos",
+    "icon": "ShieldAlert",
+    "moduleType": "social_assistance",
+    "moduleEntity": "CREAS",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "victimName", "label": "Nome da Vítima", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": false},
+        {"id": "age", "label": "Idade", "type": "number", "required": true},
+        {"id": "phone", "label": "Telefone de Contato", "type": "phone", "required": true},
+        {"id": "address", "label": "Endereço", "type": "text", "required": false},
+        {"id": "violenceType", "label": "Tipo de Violência", "type": "select", "required": true, "options": ["Violência Física", "Violência Psicológica", "Violência Sexual", "Negligência", "Abandono", "Exploração", "Trabalho Infantil", "Outro"]},
+        {"id": "victimType", "label": "Perfil da Vítima", "type": "select", "required": true, "options": ["Criança", "Adolescente", "Mulher", "Idoso", "Pessoa com Deficiência", "Outro"]},
+        {"id": "description", "label": "Descrição da Situação", "type": "textarea", "required": true},
+        {"id": "hasPoliceReport", "label": "Possui Boletim de Ocorrência?", "type": "boolean", "required": false},
+        {"id": "isUrgent", "label": "Situação de Risco Iminente?", "type": "boolean", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Documento de identificação (se houver)",
+        "Boletim de ocorrência (se houver)",
+        "Relatórios médicos ou escolares (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  }
+]

@@ -1,0 +1,548 @@
+[
+  {
+    "code": "SER_PODA_001",
+    "name": "Poda de Árvore em Via Pública",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de poda de árvore que está atrapalhando fiação ou trânsito",
+    "icon": "Trees",
+    "moduleType": "public_services",
+    "moduleEntity": "tree_pruning",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Localização da Árvore", "type": "text", "required": true, "placeholder": "Rua, número, bairro"},
+        {"id": "coordinates", "label": "Localização GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Problema", "type": "textarea", "required": true},
+        {"id": "treeType", "label": "Tipo de Árvore", "type": "select", "required": false, "options": ["Pequeno porte", "Médio porte", "Grande porte", "Não sei"]},
+        {"id": "issue", "label": "Motivo da Poda", "type": "select", "required": true, "options": ["Galhos na fiação", "Atrapalha trânsito", "Risco de queda", "Bloqueia iluminação", "Outro"]},
+        {"id": "urgency", "label": "Urgência", "type": "select", "required": true, "options": ["Baixa", "Média", "Alta - risco iminente"]},
+        {"id": "photos", "label": "Fotos da Árvore", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone para Contato", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos da árvore (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_PODA_002",
+    "name": "Poda de Árvore em Área Residencial",
+    "category": "Serviços Públicos",
+    "description": "Poda de árvore que afeta residências ou quintais",
+    "icon": "Home",
+    "moduleType": "public_services",
+    "moduleEntity": "tree_pruning",
+    "estimatedTime": "20 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço Completo", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "propertyType", "label": "Local", "type": "select", "required": true, "options": ["Calçada em frente", "Área pública próxima", "Terreno municipal"]},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Galhos sobre telhado", "Raízes danificando calçada", "Sujeira excessiva", "Bloqueio de luz solar", "Outro"]},
+        {"id": "affectedProperty", "label": "Afeta sua residência?", "type": "select", "required": true, "options": ["Sim", "Não - vizinho", "Não - área comum"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do problema"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_PODA_003",
+    "name": "Remoção de Árvore em Risco",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de remoção completa de árvore com risco de queda",
+    "icon": "AlertTriangle",
+    "moduleType": "public_services",
+    "moduleEntity": "tree_pruning",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local da Árvore", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": true},
+        {"id": "description", "label": "Descrição do Risco", "type": "textarea", "required": true},
+        {"id": "condition", "label": "Condição da Árvore", "type": "select", "required": true, "options": ["Seca/morta", "Inclinada", "Tronco rachado", "Cupins/pragas", "Raízes expostas"]},
+        {"id": "riskLevel", "label": "Nível de Risco", "type": "select", "required": true, "options": ["Médio", "Alto", "Muito alto - emergência"]},
+        {"id": "nearBuildings", "label": "Próximo a construções?", "type": "select", "required": true, "options": ["Sim - casas", "Sim - prédios", "Sim - fiação", "Não"]},
+        {"id": "photos", "label": "Fotos (OBRIGATÓRIO)", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": true},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos da árvore (obrigatório)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_PODA_004",
+    "name": "Plantio de Árvore em Área Pública",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de plantio de nova árvore em via pública",
+    "icon": "Sprout",
+    "moduleType": "public_services",
+    "moduleEntity": "tree_pruning",
+    "estimatedTime": "30 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local Proposto", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "preferredType", "label": "Preferência de Espécie", "type": "select", "required": false, "options": ["Árvore frutífera", "Árvore ornamental", "Árvore nativa", "Sem preferência"]},
+        {"id": "reason", "label": "Motivo", "type": "select", "required": true, "options": ["Melhorar sombreamento", "Arborização da rua", "Substituir árvore removida", "Embelezamento"]},
+        {"id": "spaceAvailable", "label": "Espaço Disponível", "type": "select", "required": true, "options": ["Sim - calçada larga", "Sim - área verde", "Limitado", "Não sei"]},
+        {"id": "photos", "label": "Fotos do Local", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local proposto"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_ENTULHO_001",
+    "name": "Retirada de Entulho Doméstico",
+    "category": "Serviços Públicos",
+    "description": "Coleta de entulho de pequenas reformas residenciais",
+    "icon": "Trash2",
+    "moduleType": "public_services",
+    "moduleEntity": "waste_removal",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço para Coleta", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Entulho", "type": "textarea", "required": true},
+        {"id": "wasteType", "label": "Tipo de Material", "type": "select", "required": true, "options": ["Madeira", "Tijolos/blocos", "Concreto", "Cerâmica", "Misto"]},
+        {"id": "volume", "label": "Volume Estimado", "type": "select", "required": true, "options": ["Pequeno (até 1m³)", "Médio (1-3m³)", "Grande (3-5m³)"]},
+        {"id": "accessibility", "label": "Acesso para Caminhão", "type": "select", "required": true, "options": ["Fácil", "Difícil", "Necessita ajuda para carga"]},
+        {"id": "photos", "label": "Fotos do Entulho", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do entulho (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_ENTULHO_002",
+    "name": "Retirada de Entulho em Via Pública",
+    "category": "Serviços Públicos",
+    "description": "Remoção de entulho descartado irregularmente em via pública",
+    "icon": "AlertCircle",
+    "moduleType": "public_services",
+    "moduleEntity": "waste_removal",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local do Entulho", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "wasteType", "label": "Tipo", "type": "select", "required": true, "options": ["Entulho de construção", "Móveis velhos", "Eletrodomésticos", "Lixo/resíduos", "Misto"]},
+        {"id": "volume", "label": "Quantidade", "type": "select", "required": true, "options": ["Pequena", "Média", "Grande"]},
+        {"id": "trafficImpact", "label": "Obstrui a via?", "type": "select", "required": true, "options": ["Sim - totalmente", "Sim - parcialmente", "Não"]},
+        {"id": "duration", "label": "Tempo no Local", "type": "select", "required": false, "options": ["Menos de 1 dia", "1-3 dias", "Mais de 3 dias", "Não sei"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_ENTULHO_003",
+    "name": "Retirada de Móveis e Eletrodomésticos",
+    "category": "Serviços Públicos",
+    "description": "Coleta de móveis velhos e eletrodomésticos",
+    "icon": "Sofa",
+    "moduleType": "public_services",
+    "moduleEntity": "waste_removal",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição dos Itens", "type": "textarea", "required": true},
+        {"id": "itemType", "label": "Tipo de Item", "type": "select", "required": true, "options": ["Móveis (sofá, cama, armário)", "Eletrodomésticos (geladeira, fogão)", "Eletrônicos (TV, computador)", "Misto"]},
+        {"id": "quantity", "label": "Quantidade de Itens", "type": "select", "required": true, "options": ["1-3 itens", "4-6 itens", "Mais de 6 itens"]},
+        {"id": "needsHelp", "label": "Necessita ajuda?", "type": "select", "required": true, "options": ["Não - itens na calçada", "Sim - preciso de ajuda para retirar", "Sim - item muito pesado"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos dos itens"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_ENTULHO_004",
+    "name": "Retirada de Galhos e Restos de Poda",
+    "category": "Serviços Públicos",
+    "description": "Coleta de galhos e restos de poda de árvores e jardins",
+    "icon": "LeafyGreen",
+    "moduleType": "public_services",
+    "moduleEntity": "waste_removal",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "wasteType", "label": "Tipo de Material", "type": "select", "required": true, "options": ["Galhos finos", "Galhos grossos/troncos", "Folhas e grama", "Misto"]},
+        {"id": "volume", "label": "Volume", "type": "select", "required": true, "options": ["Pequeno (até 1m³)", "Médio (1-3m³)", "Grande (mais de 3m³)"]},
+        {"id": "origin", "label": "Origem", "type": "select", "required": true, "options": ["Poda particular", "Árvore caída", "Limpeza de terreno"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos dos resíduos"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_DEDETIZACAO_001",
+    "name": "Dedetização em Imóvel Residencial",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de dedetização em residência",
+    "icon": "Bug",
+    "moduleType": "public_services",
+    "moduleEntity": "pest_control",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição da Infestação", "type": "textarea", "required": true},
+        {"id": "pestType", "label": "Tipo de Praga", "type": "select", "required": true, "options": ["Baratas", "Ratos", "Formigas", "Mosquitos", "Escorpiões", "Misto/Não sei"]},
+        {"id": "severity", "label": "Gravidade", "type": "select", "required": true, "options": ["Leve", "Moderada", "Grave - infestação"]},
+        {"id": "propertyType", "label": "Tipo de Imóvel", "type": "select", "required": true, "options": ["Casa", "Apartamento", "Comércio", "Outro"]},
+        {"id": "hasChildren", "label": "Há crianças ou gestantes?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos da infestação (se possível)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_DEDETIZACAO_002",
+    "name": "Dedetização em Área Pública",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de dedetização em praça, parque ou área pública",
+    "icon": "Trees",
+    "moduleType": "public_services",
+    "moduleEntity": "pest_control",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "pestType", "label": "Tipo de Praga", "type": "select", "required": true, "options": ["Mosquitos", "Ratos", "Baratas", "Carrapatos", "Escorpiões", "Outro"]},
+        {"id": "areaType", "label": "Tipo de Área", "type": "select", "required": true, "options": ["Praça", "Parque", "Terreno baldio", "Área verde", "Outro"]},
+        {"id": "publicUse", "label": "Uso da Área", "type": "select", "required": true, "options": ["Alta circulação", "Média circulação", "Baixa circulação"]},
+        {"id": "healthRisk", "label": "Risco à saúde?", "type": "select", "required": true, "options": ["Sim - próximo a residências", "Sim - próximo a escolas", "Moderado", "Baixo"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_DEDETIZACAO_003",
+    "name": "Controle de Vetores (Dengue/Zika)",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de combate a mosquito da dengue e outros vetores",
+    "icon": "ShieldAlert",
+    "moduleType": "public_services",
+    "moduleEntity": "pest_control",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço/Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição da Situação", "type": "textarea", "required": true},
+        {"id": "vectorType", "label": "Tipo de Vetor", "type": "select", "required": true, "options": ["Mosquito Aedes (dengue)", "Mosquito comum", "Não identificado"]},
+        {"id": "breedingSite", "label": "Foco de Reprodução", "type": "select", "required": true, "options": ["Água parada em recipientes", "Pneus", "Calhas entupidas", "Terreno com lixo", "Não identificado", "Outro"]},
+        {"id": "caseReported", "label": "Casos confirmados?", "type": "select", "required": false, "options": ["Sim - na residência", "Sim - na vizinhança", "Não", "Não sei"]},
+        {"id": "urgency", "label": "Urgência", "type": "select", "required": true, "options": ["Baixa - prevenção", "Média", "Alta - surto na região"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do foco (se identificado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_DEDETIZACAO_004",
+    "name": "Desratização de Área Pública",
+    "category": "Serviços Públicos",
+    "description": "Controle de ratos em área pública ou terreno baldio",
+    "icon": "AlertTriangle",
+    "moduleType": "public_services",
+    "moduleEntity": "pest_control",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "areaType", "label": "Tipo de Local", "type": "select", "required": true, "options": ["Terreno baldio", "Área próxima a córrego", "Praça/parque", "Via pública", "Outro"]},
+        {"id": "infestation", "label": "Nível de Infestação", "type": "select", "required": true, "options": ["Poucos avistamentos", "Avistamentos frequentes", "Infestação grave"]},
+        {"id": "healthRisk", "label": "Risco à saúde", "type": "select", "required": true, "options": ["Alto - próximo a residências", "Médio", "Baixo"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_LIMPEZA_001",
+    "name": "Capina e Limpeza de Terreno Público",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de capina e limpeza de terreno ou área pública",
+    "icon": "Scissors",
+    "moduleType": "public_services",
+    "moduleEntity": "cleaning",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "areaType", "label": "Tipo de Área", "type": "select", "required": true, "options": ["Terreno baldio municipal", "Praça", "Canteiro central", "Calçada", "Outro"]},
+        {"id": "condition", "label": "Condição", "type": "select", "required": true, "options": ["Mato alto", "Mato baixo com lixo", "Muito sujo/abandonado"]},
+        {"id": "size", "label": "Tamanho da Área", "type": "select", "required": true, "options": ["Pequena (< 100m²)", "Média (100-500m²)", "Grande (> 500m²)"]},
+        {"id": "healthRisk", "label": "Risco", "type": "select", "required": false, "options": ["Alto - possível foco de animais", "Médio", "Baixo"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_LIMPEZA_002",
+    "name": "Limpeza de Praça ou Parque",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de limpeza intensiva em praça ou parque",
+    "icon": "ParkingCircle",
+    "moduleType": "public_services",
+    "moduleEntity": "cleaning",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Nome da Praça/Parque", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Problema", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Tipo de Limpeza", "type": "select", "required": true, "options": ["Lixo acumulado", "Mato alto", "Limpeza geral", "Área vandalizada"]},
+        {"id": "frequency", "label": "Frequência do Problema", "type": "select", "required": true, "options": ["Constante", "Ocasional", "Primeira vez"]},
+        {"id": "publicUse", "label": "Impacto no Uso", "type": "select", "required": true, "options": ["Impede uso da área", "Dificulta uso", "Baixo impacto"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos da situação"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_LIMPEZA_003",
+    "name": "Limpeza de Córrego ou Bueiro",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de limpeza de córrego, bueiro ou drenagem",
+    "icon": "Droplets",
+    "moduleType": "public_services",
+    "moduleEntity": "cleaning",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "locationType", "label": "Tipo", "type": "select", "required": true, "options": ["Córrego", "Bueiro", "Boca de lobo", "Galeria pluvial"]},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Entupido com lixo", "Entupido com vegetação", "Assoreado", "Muito sujo"]},
+        {"id": "floodingRisk", "label": "Risco de alagamento?", "type": "select", "required": true, "options": ["Sim - já alaga", "Sim - potencial", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_LIMPEZA_004",
+    "name": "Limpeza de Via Pública (Varrição)",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de varrição e limpeza de rua",
+    "icon": "Wind",
+    "moduleType": "public_services",
+    "moduleEntity": "cleaning",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Rua/Avenida", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Lixo acumulado", "Folhas secas", "Areia/terra", "Entulho pequeno", "Outro"]},
+        {"id": "extension", "label": "Extensão", "type": "select", "required": true, "options": ["Trecho específico", "Rua inteira", "Várias ruas"]},
+        {"id": "urgency", "label": "Urgência", "type": "select", "required": false, "options": ["Baixa", "Média", "Alta"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos da rua"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_COLETA_001",
+    "name": "Coleta Especial de Lixo Eletrônico",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de coleta de equipamentos eletrônicos",
+    "icon": "Laptop",
+    "moduleType": "public_services",
+    "moduleEntity": "garbage_collection",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço para Coleta", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição dos Itens", "type": "textarea", "required": true},
+        {"id": "itemType", "label": "Tipo de Equipamento", "type": "select", "required": true, "options": ["Computadores/notebooks", "TVs/monitores", "Celulares/tablets", "Eletrodomésticos pequenos", "Misto"]},
+        {"id": "quantity", "label": "Quantidade", "type": "select", "required": true, "options": ["1-3 itens", "4-10 itens", "Mais de 10 itens"]},
+        {"id": "origin", "label": "Origem", "type": "select", "required": false, "options": ["Residencial", "Comercial", "Instituição"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Lista de itens (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_COLETA_002",
+    "name": "Coleta de Óleo de Cozinha Usado",
+    "category": "Serviços Públicos",
+    "description": "Solicitação de coleta de óleo de cozinha para reciclagem",
+    "icon": "Droplet",
+    "moduleType": "public_services",
+    "moduleEntity": "garbage_collection",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": false},
+        {"id": "quantity", "label": "Quantidade (litros)", "type": "select", "required": true, "options": ["Até 5 litros", "5-20 litros", "20-50 litros", "Mais de 50 litros"]},
+        {"id": "packaging", "label": "Acondicionamento", "type": "select", "required": true, "options": ["Em garrafas PET", "Em galões", "Em bombonas", "Não acondicionado"]},
+        {"id": "origin", "label": "Origem", "type": "select", "required": true, "options": ["Residencial", "Restaurante/lanchonete", "Escola", "Outro estabelecimento"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Nenhum"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_COLETA_003",
+    "name": "Coleta de Recicláveis em Grande Quantidade",
+    "category": "Serviços Públicos",
+    "description": "Coleta especial de materiais recicláveis em volume",
+    "icon": "Recycle",
+    "moduleType": "public_services",
+    "moduleEntity": "garbage_collection",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "materialType", "label": "Tipo de Material", "type": "select", "required": true, "options": ["Papel/papelão", "Plástico", "Metal", "Vidro", "Misto"]},
+        {"id": "volume", "label": "Volume Estimado", "type": "select", "required": true, "options": ["Até 1m³", "1-3m³", "3-5m³", "Mais de 5m³"]},
+        {"id": "origin", "label": "Origem", "type": "select", "required": true, "options": ["Residencial", "Comercial", "Condomínio", "Evento", "Outro"]},
+        {"id": "organized", "label": "Material Separado?", "type": "select", "required": true, "options": ["Sim - por tipo", "Sim - misturado", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos dos materiais"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "SER_COLETA_004",
+    "name": "Problema na Coleta Regular de Lixo",
+    "category": "Serviços Públicos",
+    "description": "Reportar problema com coleta regular de lixo doméstico",
+    "icon": "Trash",
+    "moduleType": "public_services",
+    "moduleEntity": "garbage_collection",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço/Rua", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Problema", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Tipo de Problema", "type": "select", "required": true, "options": ["Coleta não realizada", "Coleta irregular", "Lixo deixado para trás", "Horário inadequado", "Outro"]},
+        {"id": "frequency", "label": "Frequência", "type": "select", "required": true, "options": ["Acontece sempre", "Ocasional", "Primeira vez"]},
+        {"id": "daysWithoutCollection", "label": "Tempo sem Coleta", "type": "select", "required": false, "options": ["1-2 dias", "3-5 dias", "Mais de 5 dias"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do lixo acumulado (se houver)"]
+    },
+    "fieldMapping": {}
+  }
+]

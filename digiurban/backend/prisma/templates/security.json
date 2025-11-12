@@ -1,0 +1,981 @@
+[
+  {
+    "code": "SEG_BO_001",
+    "name": "Registrar Boletim de Ocorrência",
+    "category": "Segurança Pública",
+    "description": "Registro de boletim de ocorrência para diversos tipos de incidentes (furto, vandalismo, perturbação, etc.)",
+    "icon": "Shield",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "reportType",
+          "label": "Tipo de Ocorrência",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Furto/Roubo",
+            "Vandalismo",
+            "Perturbação da Ordem",
+            "Acidente de Trânsito",
+            "Violência Doméstica",
+            "Outros"
+          ]
+        },
+        {
+          "id": "occurrenceDate",
+          "label": "Data da Ocorrência",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "occurrenceTime",
+          "label": "Horário da Ocorrência",
+          "type": "time",
+          "required": false
+        },
+        {
+          "id": "location",
+          "label": "Local da Ocorrência",
+          "type": "text",
+          "required": true,
+          "placeholder": "Endereço completo ou referência"
+        },
+        {
+          "id": "coordinates",
+          "label": "Localização no Mapa",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "description",
+          "label": "Descrição Detalhada do Ocorrido",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva o que aconteceu com o máximo de detalhes possível"
+        },
+        {
+          "id": "reporterName",
+          "label": "Nome do Declarante",
+          "type": "text",
+          "required": false,
+          "placeholder": "Deixe em branco para denúncia anônima"
+        },
+        {
+          "id": "reporterPhone",
+          "label": "Telefone do Declarante",
+          "type": "phone",
+          "required": false
+        },
+        {
+          "id": "reporterEmail",
+          "label": "E-mail do Declarante",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "witnesses",
+          "label": "Há Testemunhas?",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Informe nome e contato de testemunhas, se houver"
+        },
+        {
+          "id": "suspectInfo",
+          "label": "Informações sobre Suspeito(s)",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Características físicas, vestimentas, veículo, etc."
+        },
+        {
+          "id": "photos",
+          "label": "Fotos do Local/Evidências",
+          "type": "file-multiple",
+          "accept": "image/*",
+          "maxFiles": 10,
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou CPF do declarante (se não for anônimo)",
+        "Fotos do local (opcional)",
+        "Fotos de evidências (opcional)",
+        "Comprovante de residência (opcional)"
+      ]
+    },
+    "estimatedTime": "Imediato",
+    "moduleType": "security",
+    "moduleEntity": "PoliceReport",
+    "fieldMapping": {
+      "reportType": "policeReport.type",
+      "occurrenceDate": "policeReport.occurrenceDate",
+      "occurrenceTime": "policeReport.occurrenceTime",
+      "location": "policeReport.location",
+      "coordinates": "policeReport.coordinates",
+      "description": "policeReport.description",
+      "reporterName": "policeReport.reporterName",
+      "reporterPhone": "policeReport.reporterPhone",
+      "reporterEmail": "policeReport.reporterEmail",
+      "witnesses": "policeReport.witnessInfo",
+      "suspectInfo": "policeReport.suspectInfo",
+      "photos": "policeReport.photos"
+    }
+  },
+  {
+    "code": "SEG_RONDA_002",
+    "name": "Solicitar Patrulha/Ronda",
+    "category": "Segurança Pública",
+    "description": "Solicitação de patrulhamento preventivo ou monitoramento em determinada área ou local",
+    "icon": "Car",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "patrolType",
+          "label": "Tipo de Patrulha",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Preventiva",
+            "Monitoramento de Área",
+            "Evento Específico",
+            "Reclamação/Denúncia"
+          ]
+        },
+        {
+          "id": "location",
+          "label": "Local/Área para Patrulhamento",
+          "type": "text",
+          "required": true,
+          "placeholder": "Rua, bairro ou área específica"
+        },
+        {
+          "id": "area",
+          "label": "Bairro",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "coordinates",
+          "label": "Localização no Mapa",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "reason",
+          "label": "Motivo da Solicitação",
+          "type": "text",
+          "required": true,
+          "placeholder": "Ex: Aumento de furtos, local ermo, etc."
+        },
+        {
+          "id": "description",
+          "label": "Descrição Detalhada",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva a situação e por que é necessária a patrulha"
+        },
+        {
+          "id": "requestedDate",
+          "label": "Data Desejada para Início",
+          "type": "date",
+          "required": false
+        },
+        {
+          "id": "requestedTime",
+          "label": "Horário Preferencial",
+          "type": "time",
+          "required": false
+        },
+        {
+          "id": "frequency",
+          "label": "Frequência Desejada",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Uma vez",
+            "Diária",
+            "Semanal",
+            "Mensal"
+          ]
+        },
+        {
+          "id": "requesterName",
+          "label": "Nome do Solicitante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "requesterPhone",
+          "label": "Telefone para Contato",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "requesterEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "concerns",
+          "label": "Preocupações Específicas",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Horários mais críticos, locais específicos, etc."
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou CPF do solicitante",
+        "Comprovante de residência (se morador da área)"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "security",
+    "moduleEntity": "PatrolRequest",
+    "fieldMapping": {
+      "patrolType": "patrolRequest.type",
+      "location": "patrolRequest.location",
+      "area": "patrolRequest.area",
+      "coordinates": "patrolRequest.coordinates",
+      "reason": "patrolRequest.reason",
+      "description": "patrolRequest.description",
+      "requestedDate": "patrolRequest.requestedDate",
+      "requestedTime": "patrolRequest.requestedTime",
+      "frequency": "patrolRequest.frequency",
+      "requesterName": "patrolRequest.requesterName",
+      "requesterPhone": "patrolRequest.requesterPhone",
+      "requesterEmail": "patrolRequest.requesterEmail",
+      "concerns": "patrolRequest.concerns"
+    }
+  },
+  {
+    "code": "SEG_CAMERA_003",
+    "name": "Solicitar Instalação de Câmera",
+    "category": "Segurança Pública",
+    "description": "Solicitação de instalação de câmera de monitoramento em local específico",
+    "icon": "Camera",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "location",
+          "label": "Local para Instalação",
+          "type": "text",
+          "required": true,
+          "placeholder": "Endereço completo"
+        },
+        {
+          "id": "coordinates",
+          "label": "Localização no Mapa",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "area",
+          "label": "Bairro",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "justification",
+          "label": "Justificativa para Instalação",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Explique por que é necessária a câmera neste local"
+        },
+        {
+          "id": "cameraType",
+          "label": "Tipo de Câmera Sugerido",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Fixa",
+            "PTZ (Móvel)",
+            "Dome",
+            "Medidor de Velocidade"
+          ]
+        },
+        {
+          "id": "quantity",
+          "label": "Quantidade Sugerida",
+          "type": "number",
+          "required": false,
+          "default": 1
+        },
+        {
+          "id": "requesterName",
+          "label": "Nome do Solicitante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "requesterPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "requesterEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "requesterDocument",
+          "label": "CPF",
+          "type": "text",
+          "mask": "999.999.999-99",
+          "required": false
+        },
+        {
+          "id": "requesterType",
+          "label": "Tipo de Solicitante",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Cidadão",
+            "Empresa",
+            "Instituição",
+            "Polícia"
+          ]
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do solicitante",
+        "Fotos do local proposto",
+        "Justificativa técnica (opcional)"
+      ]
+    },
+    "estimatedTime": "30 dias úteis",
+    "moduleType": "security",
+    "moduleEntity": "CameraRequest",
+    "fieldMapping": {
+      "location": "cameraRequest.location",
+      "coordinates": "cameraRequest.coordinates",
+      "area": "cameraRequest.area",
+      "justification": "cameraRequest.justification",
+      "cameraType": "cameraRequest.cameraType",
+      "quantity": "cameraRequest.quantity",
+      "requesterName": "cameraRequest.requesterName",
+      "requesterPhone": "cameraRequest.requesterPhone",
+      "requesterEmail": "cameraRequest.requesterEmail",
+      "requesterDocument": "cameraRequest.requesterDocument",
+      "requesterType": "cameraRequest.requesterType"
+    }
+  },
+  {
+    "code": "SEG_IMAGENS_004",
+    "name": "Solicitar Imagens de Câmera",
+    "category": "Segurança Pública",
+    "description": "Solicitação de gravações de câmeras de monitoramento para investigação de incidente",
+    "icon": "Video",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "location",
+          "label": "Local do Incidente",
+          "type": "text",
+          "required": true,
+          "placeholder": "Endereço onde ocorreu o incidente"
+        },
+        {
+          "id": "incidentDate",
+          "label": "Data do Incidente",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "incidentTime",
+          "label": "Horário do Incidente",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "timeRange",
+          "label": "Período de Gravação Desejado",
+          "type": "text",
+          "required": false,
+          "placeholder": "Ex: 1 hora antes e depois do incidente"
+        },
+        {
+          "id": "incidentDescription",
+          "label": "Descrição do Incidente",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva o que ocorreu"
+        },
+        {
+          "id": "purpose",
+          "label": "Finalidade da Solicitação",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Para que serão usadas as imagens?"
+        },
+        {
+          "id": "requesterName",
+          "label": "Nome do Solicitante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "requesterPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "requesterEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "requesterDocument",
+          "label": "CPF",
+          "type": "text",
+          "mask": "999.999.999-99",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do solicitante",
+        "Boletim de Ocorrência (se houver)",
+        "Documento que comprove necessidade das imagens"
+      ]
+    },
+    "estimatedTime": "7 dias úteis",
+    "moduleType": "security",
+    "moduleEntity": "CameraRequest",
+    "fieldMapping": {
+      "location": "cameraRequest.location",
+      "incidentDate": "cameraRequest.incidentDate",
+      "incidentTime": "cameraRequest.incidentTime",
+      "timeRange": "cameraRequest.timeRange",
+      "incidentDescription": "cameraRequest.incidentDescription",
+      "purpose": "cameraRequest.purpose",
+      "requesterName": "cameraRequest.requesterName",
+      "requesterPhone": "cameraRequest.requesterPhone",
+      "requesterEmail": "cameraRequest.requesterEmail",
+      "requesterDocument": "cameraRequest.requesterDocument"
+    }
+  },
+  {
+    "code": "SEG_DENUNCIA_005",
+    "name": "Denúncia Anônima",
+    "category": "Segurança Pública",
+    "description": "Canal para denúncias anônimas de crimes, atividades suspeitas ou irregularidades",
+    "icon": "AlertTriangle",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "tipType",
+          "label": "Tipo de Denúncia",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Tráfico de Drogas",
+            "Furto/Roubo",
+            "Violência",
+            "Vandalismo",
+            "Corrupção",
+            "Outros"
+          ]
+        },
+        {
+          "id": "description",
+          "label": "Descrição da Denúncia",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva o que está ocorrendo. Não inclua dados pessoais seus."
+        },
+        {
+          "id": "location",
+          "label": "Local (Opcional)",
+          "type": "text",
+          "required": false,
+          "placeholder": "Onde está ocorrendo? (pode ser aproximado)"
+        },
+        {
+          "id": "timeframe",
+          "label": "Quando Ocorre?",
+          "type": "select",
+          "required": false,
+          "options": [
+            "Está acontecendo agora",
+            "Ocorre diariamente",
+            "Ocorre frequentemente",
+            "Ocorreu uma vez"
+          ]
+        },
+        {
+          "id": "suspectInfo",
+          "label": "Informações sobre Suspeito(s)",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Características gerais, sem nomes completos"
+        },
+        {
+          "id": "vehicleInfo",
+          "label": "Informações sobre Veículo (se houver)",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Marca, cor, placa (se souber)"
+        },
+        {
+          "id": "hasEvidence",
+          "label": "Possui Evidências?",
+          "type": "radio",
+          "required": false,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "evidenceNotes",
+          "label": "Sobre as Evidências",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Que tipo de evidência possui?"
+        },
+        {
+          "id": "dangerLevel",
+          "label": "Nível de Perigo",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Baixo",
+            "Médio",
+            "Alto",
+            "Crítico"
+          ]
+        },
+        {
+          "id": "isUrgent",
+          "label": "É Urgente?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        }
+      ]
+    },
+    "requiredDocs": [],
+    "estimatedTime": "Imediato",
+    "moduleType": "security",
+    "moduleEntity": "AnonymousTip",
+    "fieldMapping": {
+      "tipType": "anonymousTip.type",
+      "description": "anonymousTip.description",
+      "location": "anonymousTip.location",
+      "timeframe": "anonymousTip.timeframe",
+      "suspectInfo": "anonymousTip.suspectInfo",
+      "vehicleInfo": "anonymousTip.vehicleInfo",
+      "hasEvidence": "anonymousTip.hasEvidence",
+      "evidenceNotes": "anonymousTip.evidenceNotes",
+      "dangerLevel": "anonymousTip.dangerLevel",
+      "isUrgent": "anonymousTip.isUrgent"
+    }
+  },
+  {
+    "code": "SEG_EVENTO_006",
+    "name": "Autorização de Segurança para Evento",
+    "category": "Segurança Pública",
+    "description": "Solicitação de apoio policial e autorização de segurança para eventos públicos",
+    "icon": "Calendar",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "eventName",
+          "label": "Nome do Evento",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "eventType",
+          "label": "Tipo de Evento",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Show/Concerto",
+            "Desfile",
+            "Evento Esportivo",
+            "Festival",
+            "Feira",
+            "Outro"
+          ]
+        },
+        {
+          "id": "description",
+          "label": "Descrição do Evento",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "eventDate",
+          "label": "Data do Evento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "startTime",
+          "label": "Horário de Início",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "endTime",
+          "label": "Horário de Término",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "location",
+          "label": "Local do Evento",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "address",
+          "label": "Endereço Completo",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "expectedAttendees",
+          "label": "Público Esperado",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "hasAlcohol",
+          "label": "Haverá Venda de Bebidas Alcoólicas?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "hasSound",
+          "label": "Haverá Som Amplificado?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "organizerName",
+          "label": "Nome do Organizador",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "organizerDocument",
+          "label": "CPF/CNPJ do Organizador",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "organizerPhone",
+          "label": "Telefone do Organizador",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "organizerEmail",
+          "label": "E-mail do Organizador",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "securityPlan",
+          "label": "Plano de Segurança",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva as medidas de segurança previstas"
+        },
+        {
+          "id": "privateSecurityCount",
+          "label": "Quantidade de Seguranças Privados",
+          "type": "number",
+          "required": false,
+          "default": 0
+        },
+        {
+          "id": "needsPoliceSupport",
+          "label": "Necessita Apoio Policial?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "requestedOfficers",
+          "label": "Número de Policiais Solicitados",
+          "type": "number",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do organizador",
+        "CNPJ (se empresa)",
+        "Plano de segurança do evento",
+        "Apólice de seguro do evento",
+        "Alvará do local (se aplicável)"
+      ]
+    },
+    "estimatedTime": "15 dias úteis",
+    "moduleType": "security",
+    "moduleEntity": "EventAuthorization",
+    "fieldMapping": {}
+  },
+  {
+    "code": "SEG_PERDIDO_007",
+    "name": "Registrar Objeto Perdido",
+    "category": "Segurança Pública",
+    "description": "Registro de objetos perdidos para facilitar a devolução",
+    "icon": "Search",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "itemType",
+          "label": "Tipo de Objeto",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Documentos",
+            "Eletrônicos",
+            "Chaves",
+            "Carteira",
+            "Celular",
+            "Joias",
+            "Roupas",
+            "Outros"
+          ]
+        },
+        {
+          "id": "itemDescription",
+          "label": "Descrição do Objeto",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva o objeto perdido com detalhes"
+        },
+        {
+          "id": "brand",
+          "label": "Marca",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "model",
+          "label": "Modelo",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "color",
+          "label": "Cor",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "distinctiveMarks",
+          "label": "Marcas Distintivas",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Arranhões, adesivos, gravações, etc."
+        },
+        {
+          "id": "location",
+          "label": "Local onde Perdeu",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "lostFoundDate",
+          "label": "Data em que Perdeu",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "lostFoundTime",
+          "label": "Horário Aproximado",
+          "type": "time",
+          "required": false
+        },
+        {
+          "id": "personName",
+          "label": "Seu Nome",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "personDocument",
+          "label": "CPF",
+          "type": "text",
+          "mask": "999.999.999-99",
+          "required": false
+        },
+        {
+          "id": "personPhone",
+          "label": "Telefone para Contato",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "personEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou CPF",
+        "Fotos do objeto (se tiver)",
+        "Nota fiscal (se for eletrônico)"
+      ]
+    },
+    "estimatedTime": "Imediato",
+    "moduleType": "security",
+    "moduleEntity": "LostAndFound",
+    "fieldMapping": {}
+  },
+  {
+    "code": "SEG_ACHADO_008",
+    "name": "Registrar Objeto Achado",
+    "category": "Segurança Pública",
+    "description": "Registro de objetos encontrados para devolução ao dono",
+    "icon": "Package",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "itemType",
+          "label": "Tipo de Objeto",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Documentos",
+            "Eletrônicos",
+            "Chaves",
+            "Carteira",
+            "Celular",
+            "Joias",
+            "Roupas",
+            "Outros"
+          ]
+        },
+        {
+          "id": "itemDescription",
+          "label": "Descrição do Objeto",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva o objeto encontrado com detalhes"
+        },
+        {
+          "id": "brand",
+          "label": "Marca",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "model",
+          "label": "Modelo",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "color",
+          "label": "Cor",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "distinctiveMarks",
+          "label": "Marcas Distintivas",
+          "type": "textarea",
+          "required": false,
+          "placeholder": "Arranhões, adesivos, gravações, etc."
+        },
+        {
+          "id": "location",
+          "label": "Local onde Encontrou",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "lostFoundDate",
+          "label": "Data em que Encontrou",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "lostFoundTime",
+          "label": "Horário Aproximado",
+          "type": "time",
+          "required": false
+        },
+        {
+          "id": "photos",
+          "label": "Fotos do Objeto",
+          "type": "file-multiple",
+          "accept": "image/*",
+          "maxFiles": 5,
+          "required": false
+        },
+        {
+          "id": "personName",
+          "label": "Seu Nome",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "personDocument",
+          "label": "CPF",
+          "type": "text",
+          "mask": "999.999.999-99",
+          "required": false
+        },
+        {
+          "id": "personPhone",
+          "label": "Telefone para Contato",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "personEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG ou CPF de quem encontrou",
+        "Fotos do objeto encontrado"
+      ]
+    },
+    "estimatedTime": "Imediato",
+    "moduleType": "security",
+    "moduleEntity": "LostAndFound",
+    "fieldMapping": {}
+  }
+]

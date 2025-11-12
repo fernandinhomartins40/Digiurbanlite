@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push:*)",
+      "Bash(npm run build:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(tee:*)",
+      "Bash(npm run:*)",
+      "Read(//c/C/**)",
+      "Bash(npx prisma:*)",
+      "Bash(rm -f '${entity')",
+      "Bash(npm install)",
+      "Bash(psql:*)",
+      "Bash(where psql)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma migrate reset --force)",
+      "Bash(cat:*)",
+      "Bash(git log:*)",
+      "Bash(git init:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
