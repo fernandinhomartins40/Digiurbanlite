@@ -6,6 +6,7 @@ import { UserRole } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/express-helpers';
 import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
+import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 
 const router = Router();
 
@@ -243,7 +244,7 @@ router.get('/attendances', adminAuthMiddleware, requireMinRole(UserRole.MANAGER)
 router.post('/attendances', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const validated = securityAttendanceSchema.parse(req.body);
 
-  const protocolNumber = `SEC-${Date.now()}`;
+  const protocolNumber = await generateProtocolNumberSafe();
 
   const attendance = await prisma.securityAttendance.create({
     data: {
@@ -335,7 +336,7 @@ router.get('/occurrences', adminAuthMiddleware, requireMinRole(UserRole.MANAGER)
 router.post('/occurrences', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const validated = securityOccurrenceSchema.parse(req.body);
 
-  const protocolNumber = `OCC-${Date.now()}`;
+  const protocolNumber = await generateProtocolNumberSafe();
 
   const occurrence = await prisma.securityOccurrence.create({
     data: {
@@ -435,7 +436,7 @@ router.get('/patrol-requests', adminAuthMiddleware, requireMinRole(UserRole.MANA
 router.post('/patrol-requests', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const validated = patrolRequestSchema.parse(req.body);
 
-  const protocolNumber = `PATROL-${Date.now()}`;
+  const protocolNumber = await generateProtocolNumberSafe();
 
   const patrolRequest = await prisma.patrolRequest.create({
     data: {
@@ -537,7 +538,7 @@ router.get('/camera-requests', adminAuthMiddleware, requireMinRole(UserRole.MANA
 router.post('/camera-requests', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   const validated = cameraRequestSchema.parse(req.body);
 
-  const protocolNumber = `CAM-${Date.now()}`;
+  const protocolNumber = await generateProtocolNumberSafe();
 
   const cameraRequest = await prisma.cameraRequest.create({
     data: {
@@ -638,7 +639,7 @@ router.post('/anonymous-tips', adminAuthMiddleware, requireMinRole(UserRole.MANA
 
   const tipNumber = `TIP-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
   const feedbackCode = `FB-${Math.random().toString(36).substr(2, 12).toUpperCase()}`;
-  const protocolNumber = `TIP-${Date.now()}`;
+  const protocolNumber = await generateProtocolNumberSafe();
 
   const anonymousTip = await prisma.anonymousTip.create({
     data: {

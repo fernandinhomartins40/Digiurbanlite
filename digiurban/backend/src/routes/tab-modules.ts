@@ -19,6 +19,7 @@ import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { UserRole, ProtocolStatus } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { getManagementConfig } from './management-configs';
+import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 
 const router = Router();
 
@@ -1551,19 +1552,8 @@ router.post(
         });
       }
 
-      // Gerar número de protocolo
-      const year = new Date().getFullYear();
-      const count = await prisma.protocolSimplified.count({
-        where: {
-          departmentId: dept.id,
-          createdAt: {
-            gte: new Date(`${year}-01-01`),
-            lt: new Date(`${year + 1}-01-01`)
-          }
-        }
-      });
-
-      const protocolNumber = `${dept.code}${year}${String(count + 1).padStart(6, '0')}`;
+      // Gerar número de protocolo - Sistema centralizado com lock
+      const protocolNumber = await generateProtocolNumberSafe();
 
       // Criar protocolo (citizenId será null para registros administrativos)
       const protocol = await prisma.protocolSimplified.create({

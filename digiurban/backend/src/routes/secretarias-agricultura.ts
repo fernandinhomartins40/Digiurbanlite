@@ -12,6 +12,7 @@ import {
 import { UserRole, ProtocolStatus } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
+import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 
 const router = Router();
 
@@ -616,12 +617,10 @@ router.post(
         });
       }
 
-      // Gerar número de protocolo
-      const protocolCount = await prisma.protocolSimplified.count({});
-      const protocolNumber = `PROP-${String(protocolCount + 1).padStart(6, '0')}`;
-
       // Usar transação para criar propriedade + protocolo
       const result = await prisma.$transaction(async (tx) => {
+        // Gerar número de protocolo - Sistema centralizado com lock
+        const protocolNumber = await generateProtocolNumberSafe(tx);
         // 1. Criar protocolo concluído
         const protocol = await tx.protocolSimplified.create({
           data: {

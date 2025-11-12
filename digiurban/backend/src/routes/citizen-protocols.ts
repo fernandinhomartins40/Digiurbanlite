@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import { upload, getFileUrl } from '../config/upload';
+import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 
 const router = Router();
 
@@ -74,9 +75,8 @@ router.post('/', upload.array('documents'), async (req, res) => {
         });
     }
 
-    // Gerar número do protocolo
-    const protocolCount = await prisma.protocolSimplified.count();
-    const protocolNumber = `PROT-${String(protocolCount + 1).padStart(8, '0')}`;
+    // Gerar número do protocolo - Sistema centralizado com lock
+    const protocolNumber = await generateProtocolNumberSafe();
 
     // Criar protocolo
     const protocol = await prisma.protocolSimplified.create({
