@@ -61,6 +61,28 @@ interface TeamMember {
     name: string
     code: string | null
   }
+  // ✅ NOVO: Múltiplos departamentos
+  departments?: Array<{
+    id: string
+    name: string
+    code: string | null
+  }>
+  primaryDepartment?: {
+    id: string
+    name: string
+    code: string | null
+  }
+  userDepartments?: Array<{
+    id: string
+    departmentId: string
+    isPrimary: boolean
+    isActive: boolean
+    department: {
+      id: string
+      name: string
+      code: string | null
+    }
+  }>
   _count?: {
     assignedProtocolsSimplified: number
   }
@@ -107,7 +129,16 @@ export default function EquipePage() {
   }
 
   const handleEditUser = (member: TeamMember) => {
-    setSelectedUser(member)
+    // ✅ Preparar dados com múltiplos departamentos
+    const departmentIds = member.departments?.map(d => d.id) ||
+                         (member.department ? [member.department.id] : []);
+    const primaryDepartmentId = member.primaryDepartment?.id || member.department?.id;
+
+    setSelectedUser({
+      ...member,
+      departmentIds,
+      primaryDepartmentId
+    })
     setModalOpen(true)
   }
 
@@ -317,8 +348,28 @@ export default function EquipePage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
-                        <Building2 className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {member.department?.name || 'Sem departamento'}
+                        <Building2 className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
+                        {member.departments && member.departments.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {member.departments.map((dept) => {
+                              const isPrimary = member.primaryDepartment?.id === dept.id;
+                              return (
+                                <Badge
+                                  key={dept.id}
+                                  variant="outline"
+                                  className={`text-xs ${isPrimary ? 'bg-blue-100 text-blue-800 border-blue-300' : ''}`}
+                                >
+                                  {dept.name}
+                                  {isPrimary && ' ★'}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        ) : member.department ? (
+                          <span>{member.department.name}</span>
+                        ) : (
+                          <span className="text-muted-foreground">Sem departamento</span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>{getRoleBadge(member.role)}</TableCell>

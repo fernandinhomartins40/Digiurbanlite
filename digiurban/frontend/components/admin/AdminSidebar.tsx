@@ -348,9 +348,20 @@ export function AdminSidebar() {
       <div className="border-t border-gray-200 p-4">
         <div className="text-xs text-gray-500">
           <div className="font-medium">{user.name || user.email || 'Usuário'}</div>
-          {user.department && (
+          {user.departments && user.departments.length > 0 ? (
+            <div className="mt-1 space-y-0.5">
+              {user.departments.map((dept) => {
+                const isPrimary = user.primaryDepartment?.id === dept.id;
+                return (
+                  <div key={dept.id} className={`truncate ${isPrimary ? 'font-semibold' : ''}`}>
+                    {isPrimary && '★ '}{dept.name}
+                  </div>
+                );
+              })}
+            </div>
+          ) : user.department ? (
             <div className="truncate">{user.department.name}</div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

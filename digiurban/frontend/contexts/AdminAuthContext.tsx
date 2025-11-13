@@ -22,6 +22,31 @@ export interface AdminUser {
     code: string
     description?: string
   }
+  // ✅ NOVO: Múltiplos departamentos
+  departments?: Array<{
+    id: string
+    name: string
+    code: string
+    description?: string
+  }>
+  primaryDepartment?: {
+    id: string
+    name: string
+    code: string
+    description?: string
+  }
+  userDepartments?: Array<{
+    id: string
+    departmentId: string
+    isPrimary: boolean
+    isActive: boolean
+    department: {
+      id: string
+      name: string
+      code: string
+      description?: string
+    }
+  }>
   assignedProtocols?: Array<{
     id: string
     number: string
