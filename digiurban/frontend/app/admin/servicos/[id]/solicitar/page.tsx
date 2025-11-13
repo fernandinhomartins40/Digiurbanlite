@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,8 +66,9 @@ export default function AdminSolicitarServicoPage() {
 
   // Estados para seleção de cidadão
   const [selectedCitizen, setSelectedCitizen] = useState<any>(null);
-  const [cpfSearch, setCpfSearch] = useState('');
+  const [nameSearch, setNameSearch] = useState('');
   const [searchingCitizen, setSearchingCitizen] = useState(false);
+  const [citizenResults, setCitizenResults] = useState<any[]>([]);
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
   const activeFormFields = useMemo(() => {
@@ -96,6 +97,15 @@ export default function AdminSolicitarServicoPage() {
   useEffect(() => {
     loadService();
   }, [serviceId]);
+
+  // Cleanup: cancelar busca pendente ao desmontar
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current);
+      }
+    };
+  }, []);
 
   const loadService = async () => {
     try {
@@ -139,32 +149,54 @@ export default function AdminSolicitarServicoPage() {
     toast.info('Arquivo removido');
   };
 
-  const handleSearchCitizen = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Debounce timer ref
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    const cleanCpf = cpfSearch.replace(/\D/g, '');
-    if (cleanCpf.length !== 11) {
-      toast.error('CPF inválido. Digite 11 dígitos.');
+  const handleSearchCitizen = useCallback(async (searchTerm: string) => {
+    if (searchTerm.trim().length < 2) {
+      setCitizenResults([]);
+      setSearchingCitizen(false);
       return;
     }
 
     setSearchingCitizen(true);
     try {
-      const response = await api.get(`/admin/citizens/search?q=${cleanCpf}`);
+      const response = await api.get(`/admin/citizens/search?q=${encodeURIComponent(searchTerm.trim())}`);
 
-      if (response.data.success && response.data.data && response.data.data.length > 0) {
-        const foundCitizen = response.data.data[0];
-        setSelectedCitizen(foundCitizen);
-        toast.success(`Cidadão encontrado: ${foundCitizen.name}`);
+      if (response.data.success && response.data.data) {
+        // A resposta pode ser array direto ou objeto com citizens
+        const results = Array.isArray(response.data.data)
+          ? response.data.data
+          : (response.data.data.citizens || []);
+        setCitizenResults(results);
       } else {
-        toast.error('Cidadão não encontrado. Verifique o CPF digitado.');
+        setCitizenResults([]);
       }
     } catch (error: any) {
-      console.error('Erro ao buscar cidadão:', error);
-      toast.error(error.response?.data?.message || 'Erro ao buscar cidadão');
+      console.error('❌ Erro ao buscar cidadão:', error);
+      setCitizenResults([]);
     } finally {
       setSearchingCitizen(false);
     }
+  }, []);
+
+  const debouncedSearch = useCallback((searchTerm: string) => {
+    // Cancelar busca anterior
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+
+    // Agendar nova busca
+    searchTimerRef.current = setTimeout(() => {
+      handleSearchCitizen(searchTerm);
+    }, 400); // 400ms de debounce
+  }, [handleSearchCitizen]);
+
+  const handleSelectCitizen = (citizen: any) => {
+    setSelectedCitizen(citizen);
+    setNameSearch(citizen.name);
+    setCitizenResults([]);
+    toast.success(`Cidadão selecionado: ${citizen.name}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -382,40 +414,68 @@ export default function AdminSolicitarServicoPage() {
                 Buscar Cidadão
               </CardTitle>
               <CardDescription className="text-orange-700">
-                Digite o CPF do cidadão para o qual você está solicitando este serviço
+                Digite o nome do cidadão para o qual você está solicitando este serviço
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSearchCitizen} className="flex gap-3">
-                <div className="flex-1">
+              <div className="space-y-3">
+                <div className="relative">
                   <Input
                     type="text"
-                    value={cpfSearch}
-                    onChange={(e) => setCpfSearch(e.target.value)}
-                    placeholder="000.000.000-00"
-                    maxLength={14}
-                    disabled={searchingCitizen}
-                    className="bg-white"
+                    value={nameSearch}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setNameSearch(value);
+
+                      // Limpar resultados se campo vazio
+                      if (!value.trim()) {
+                        setCitizenResults([]);
+                        return;
+                      }
+
+                      // Busca com debounce
+                      debouncedSearch(value);
+                    }}
+                    placeholder="Digite o nome do cidadão..."
+                    className="bg-white pr-10"
+                    autoComplete="off"
                   />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {searchingCitizen ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    ) : (
+                      <Search className="h-4 w-4 text-gray-400" />
+                    )}
+                  </div>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={searchingCitizen}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  {searchingCitizen ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Buscando...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-4 w-4 mr-2" />
-                      Buscar
-                    </>
-                  )}
-                </Button>
-              </form>
+
+                {/* Lista de resultados */}
+                {citizenResults.length > 0 && (
+                  <div className="bg-white border border-orange-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                    {citizenResults.map((citizen) => (
+                      <button
+                        key={citizen.id}
+                        type="button"
+                        onClick={() => handleSelectCitizen(citizen)}
+                        className="w-full text-left px-4 py-3 hover:bg-orange-50 transition-colors border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-900">{citizen.name}</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          CPF: {citizen.cpf}
+                          {citizen.email && ` • ${citizen.email}`}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Mensagem quando não há resultados */}
+                {nameSearch.length >= 2 && !searchingCitizen && citizenResults.length === 0 && (
+                  <div className="text-sm text-orange-700 bg-white rounded-lg p-3 border border-orange-200">
+                    Nenhum cidadão encontrado com este nome
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         )}
@@ -442,7 +502,8 @@ export default function AdminSolicitarServicoPage() {
                   size="sm"
                   onClick={() => {
                     setSelectedCitizen(null);
-                    setCpfSearch('');
+                    setNameSearch('');
+                    setCitizenResults([]);
                   }}
                   className="text-green-700 hover:text-green-900"
                 >

@@ -125,21 +125,55 @@ router.get(
     const authReq = req as AuthenticatedRequest;
     const { q } = authReq.query;
 
-    if (!q || typeof q !== 'string' || q.length < 3) {
-      res.status(400).json({
-        success: false,
-        error: 'Parâmetro de busca deve ter no mínimo 3 caracteres'
+    if (!q || typeof q !== 'string' || q.trim().length < 2) {
+      res.json({
+        success: true,
+        data: []
         });
       return;
+    }
+
+    const searchTerm = q.trim();
+    const cleanCpf = searchTerm.replace(/\D/g, ''); // Remove pontuação do CPF
+
+    console.log(`🔍 [CITIZEN-SEARCH] Buscando por: "${searchTerm}" | CPF limpo: "${cleanCpf}"`);
+
+    // Construir condições de busca
+    const searchConditions: any[] = [];
+
+    // Buscar por nome (case-insensitive)
+    if (searchTerm.length >= 2) {
+      searchConditions.push({
+        name: {
+          contains: searchTerm,
+          mode: 'insensitive' as const
+        }
+      });
+    }
+
+    // Buscar por CPF (se tiver números)
+    if (cleanCpf.length > 0) {
+      searchConditions.push({
+        cpf: {
+          contains: cleanCpf
+        }
+      });
+    }
+
+    // Buscar por email (se parecer um email)
+    if (searchTerm.includes('@') || searchTerm.length >= 3) {
+      searchConditions.push({
+        email: {
+          contains: searchTerm,
+          mode: 'insensitive' as const
+        }
+      });
     }
 
     const citizens = await prisma.citizen.findMany({
       where: {
         isActive: true,
-        OR: [
-          { name: { contains: q } },
-          { cpf: { contains: q } },
-        ]
+        OR: searchConditions
         },
       select: {
         id: true,
@@ -153,9 +187,14 @@ router.get(
       orderBy: { name: 'asc' }
         });
 
+    console.log(`✅ [CITIZEN-SEARCH] Encontrados ${citizens.length} resultados`);
+    if (citizens.length > 0) {
+      console.log(`   Primeiros resultados: ${citizens.slice(0, 3).map(c => c.name).join(', ')}`);
+    }
+
     res.json({
       success: true,
-      data: { citizens }
+      data: citizens
         });
   })
 );
