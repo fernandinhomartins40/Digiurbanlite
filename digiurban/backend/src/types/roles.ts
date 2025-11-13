@@ -140,7 +140,7 @@ export function getCreatableRoles(currentRole: string): TeamRoleType[] {
 /**
  * Mapa de permissões por role (expandível)
  */
-export const ROLE_PERMISSIONS = {
+export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   GUEST: [],
   USER: [
     'protocols:read',
@@ -177,23 +177,23 @@ export const ROLE_PERMISSIONS = {
     'analytics:*'
   ],
   SUPER_ADMIN: ['*'] // Acesso total
-} as const;
+};
 
 /**
  * Helper: Verificar se um role tem uma permissão específica
  */
 export function hasPermission(role: string, permission: string): boolean {
-  const permissions = ROLE_PERMISSIONS[role as keyof typeof ROLE_PERMISSIONS] || [];
+  const permissions = ROLE_PERMISSIONS[role] || [];
 
   // SUPER_ADMIN tem todas as permissões
   if (permissions.includes('*')) return true;
 
   // Verificar permissão exata
-  if (permissions.includes(permission as any)) return true;
+  if (permissions.includes(permission)) return true;
 
   // Verificar wildcard (ex: protocols:* permite protocols:read)
   const [resource] = permission.split(':');
-  if (permissions.includes(`${resource}:*` as any)) return true;
+  if (permissions.includes(`${resource}:*`)) return true;
 
   return false;
 }

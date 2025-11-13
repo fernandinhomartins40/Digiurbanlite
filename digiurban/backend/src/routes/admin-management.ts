@@ -16,6 +16,12 @@ import {
   getRoleLevel,
   isTeamRole
 } from '../types/roles';
+import {
+  getUserDepartments,
+  getPrimaryDepartment,
+  getUserDepartmentIds,
+  syncUserDepartments
+} from '../types/user-departments';
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 
@@ -341,17 +347,23 @@ const strongPasswordSchema = z.string()
 const createUserSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
-  password: strongPasswordSchema, // ✅ Validação de senha forte
-  role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']), // ✅ Removido GUEST - não é para equipe
-  departmentId: z.string().optional()
+  password: strongPasswordSchema,
+  role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']),
+  // ✅ SUPORTA AMBOS: antigo e novo
+  departmentId: z.string().optional(),           // Schema antigo (1 dept)
+  departmentIds: z.array(z.string()).optional(), // Schema novo (N depts)
+  primaryDepartmentId: z.string().optional()     // Qual é o principal
         });
 
 const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
-  role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']).optional(), // ✅ Removido GUEST - não é para equipe
+  role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']).optional(),
+  isActive: z.boolean().optional(),
+  // ✅ SUPORTA AMBOS
   departmentId: z.string().optional(),
-  isActive: z.boolean().optional()
+  departmentIds: z.array(z.string()).optional(),
+  primaryDepartmentId: z.string().optional()
         });
 
 // ====================== ROUTER SETUP ======================
@@ -630,6 +642,7 @@ router.get(
           isActive: true,
           createdAt: true,
           lastLogin: true,
+          departmentId: true,
           department: {
             select: {
               id: true,
@@ -637,6 +650,23 @@ router.get(
               code: true
         }
       },
+          // ✅ NOVO: Incluir múltiplos departamentos
+          userDepartments: {
+            where: { isActive: true },
+            include: {
+              department: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true
+                }
+              }
+            },
+            orderBy: [
+              { isPrimary: 'desc' },
+              { createdAt: 'asc' }
+            ]
+          },
           _count: {
             select: {
               assignedProtocolsSimplified: true
@@ -650,6 +680,13 @@ router.get(
       prisma.user.count({ where }),
     ]);
 
+    // ✅ Adicionar campos computed
+    const membersWithDepartments = teamMembers.map(member => ({
+      ...member,
+      departments: getUserDepartments(member as any),
+      primaryDepartment: getPrimaryDepartment(member as any)
+    }));
+
     const pagination = {
       page,
       limit,
@@ -657,7 +694,7 @@ router.get(
       pages: Math.ceil(total / limit)
         };
 
-    return res.json(createSuccessResponse({ teamMembers, pagination }));
+    return res.json(createSuccessResponse({ teamMembers: membersWithDepartments, pagination }));
   })
 );
 
@@ -672,17 +709,8 @@ router.post(
     const data = createUserSchema.parse(req.body);
     const { user } = req;
 
-    // ✅ VALIDAÇÃO: GUEST não pode ser atribuído à equipe
-    if (data.role === 'GUEST') {
-      return res.status(400).json(
-        createErrorResponse(
-          'INVALID_ROLE',
-          'O role GUEST não pode ser atribuído à equipe administrativa. Use USER, COORDINATOR, MANAGER ou ADMIN.'
-        )
-      );
-    }
-
     // ✅ VALIDAÇÃO: Verificar se é um role válido para equipe
+    // (Zod já garante que só USER, COORDINATOR, MANAGER ou ADMIN são aceitos)
     if (!isTeamRole(data.role)) {
       return res.status(400).json(
         createErrorResponse(
@@ -715,38 +743,70 @@ router.post(
       );
     }
 
-    // Definir departamento
-    let departmentId = data.departmentId;
-    if (user.role !== 'ADMIN') {
-      departmentId = user.departmentId; // Forçar departamento do usuário
+    // ✅ MÚLTIPLOS DEPARTAMENTOS: Processar departmentIds (novo) ou departmentId (legado)
+    let departmentIds: string[] = [];
+    let primaryDepartmentId: string | null = null;
+
+    if (data.departmentIds && data.departmentIds.length > 0) {
+      // Schema novo: múltiplos departamentos
+      departmentIds = data.departmentIds;
+      primaryDepartmentId = data.primaryDepartmentId || departmentIds[0];
+    } else if (data.departmentId) {
+      // Schema legado: single department
+      departmentIds = [data.departmentId];
+      primaryDepartmentId = data.departmentId;
     }
 
-    // ✅ VALIDAÇÃO PROFISSIONAL: Verificar se o departamento existe e é oficial
-    if (departmentId) {
-      const isValid = await validateDepartment(departmentId);
+    // Se não é ADMIN, forçar apenas seus próprios departamentos
+    if (user.role !== 'ADMIN' && user.departmentId) {
+      departmentIds = [user.departmentId];
+      primaryDepartmentId = user.departmentId;
+    }
+
+    // ✅ VALIDAÇÃO PROFISSIONAL: Verificar se todos os departamentos existem e são oficiais
+    for (const deptId of departmentIds) {
+      const isValid = await validateDepartment(deptId);
       if (!isValid) {
         return res.status(400).json(
           createErrorResponse(
             'INVALID_DEPARTMENT',
-            'Departamento inválido ou não encontrado. Apenas as 13 secretarias oficiais podem ser selecionadas.'
+            `Departamento ${deptId} é inválido ou não encontrado. Apenas as 13 secretarias oficiais podem ser selecionadas.`
           )
         );
       }
     }
 
+    // Verificar se o primary existe na lista
+    if (primaryDepartmentId && !departmentIds.includes(primaryDepartmentId)) {
+      return res.status(400).json(
+        createErrorResponse(
+          'INVALID_PRIMARY',
+          'O departamento principal deve estar na lista de departamentos selecionados.'
+        )
+      );
+    }
+
     // Hash da senha
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Criar usuário
+    // Criar usuário COM múltiplos departamentos
     const newUser = await prisma.user.create({
       data: {
         name: data.name,
         email: data.email,
         password: hashedPassword,
         role: data.role,
-        departmentId: departmentId || null,
+        departmentId: primaryDepartmentId, // ✅ Manter compatibilidade
         isActive: true,
-        mustChangePassword: true
+        mustChangePassword: true,
+        // ✅ NOVO: Criar userDepartments
+        userDepartments: {
+          create: departmentIds.map(deptId => ({
+            departmentId: deptId,
+            isPrimary: deptId === primaryDepartmentId,
+            isActive: true
+          }))
+        }
         },
       select: {
         id: true,
@@ -761,12 +821,35 @@ router.post(
             name: true,
             code: true
         }
-      }
+      },
+        userDepartments: {
+          where: { isActive: true },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { createdAt: 'asc' }
+          ]
+        }
         }
         });
 
+    // ✅ Adicionar campos computed
+    const userWithDepartments = {
+      ...newUser,
+      departments: getUserDepartments(newUser as any),
+      primaryDepartment: getPrimaryDepartment(newUser as any)
+    };
+
     return res.status(201).json(
-      createSuccessResponse(newUser, 'Membro da equipe criado com sucesso')
+      createSuccessResponse(userWithDepartments, 'Membro da equipe criado com sucesso')
     );
   })
 );
@@ -841,14 +924,40 @@ router.put(
       );
     }
 
-    // ✅ VALIDAÇÃO PROFISSIONAL: Verificar se o departamento existe e é oficial
-    if (data.departmentId) {
-      const isValid = await validateDepartment(data.departmentId);
-      if (!isValid) {
+    // ✅ MÚLTIPLOS DEPARTAMENTOS: Processar departmentIds (novo) ou departmentId (legado)
+    let departmentIds: string[] | undefined;
+    let primaryDepartmentId: string | null | undefined;
+
+    if (data.departmentIds !== undefined) {
+      // Schema novo: múltiplos departamentos
+      departmentIds = data.departmentIds;
+      primaryDepartmentId = data.primaryDepartmentId || (departmentIds.length > 0 ? departmentIds[0] : null);
+    } else if (data.departmentId !== undefined) {
+      // Schema legado: single department
+      departmentIds = data.departmentId ? [data.departmentId] : [];
+      primaryDepartmentId = data.departmentId;
+    }
+
+    // ✅ VALIDAÇÃO PROFISSIONAL: Verificar se todos os departamentos existem e são oficiais
+    if (departmentIds && departmentIds.length > 0) {
+      for (const deptId of departmentIds) {
+        const isValid = await validateDepartment(deptId);
+        if (!isValid) {
+          return res.status(400).json(
+            createErrorResponse(
+              'INVALID_DEPARTMENT',
+              `Departamento ${deptId} é inválido ou não encontrado. Apenas as 13 secretarias oficiais podem ser selecionadas.`
+            )
+          );
+        }
+      }
+
+      // Verificar se o primary existe na lista
+      if (primaryDepartmentId && !departmentIds.includes(primaryDepartmentId)) {
         return res.status(400).json(
           createErrorResponse(
-            'INVALID_DEPARTMENT',
-            'Departamento inválido ou não encontrado. Apenas as 13 secretarias oficiais podem ser selecionadas.'
+            'INVALID_PRIMARY',
+            'O departamento principal deve estar na lista de departamentos selecionados.'
           )
         );
       }
@@ -862,8 +971,45 @@ router.put(
     if (data.name) updateData.name = data.name;
     if (data.email) updateData.email = data.email;
     if (data.role) updateData.role = data.role;
-    if (data.departmentId !== undefined) updateData.departmentId = data.departmentId;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+    // ✅ Atualizar departmentId (compatibilidade)
+    if (primaryDepartmentId !== undefined) {
+      updateData.departmentId = primaryDepartmentId;
+    }
+
+    // ✅ NOVO: Atualizar userDepartments se fornecido
+    if (departmentIds !== undefined) {
+      // Desativar todos os departamentos atuais
+      await prisma.userDepartment.updateMany({
+        where: { userId, isActive: true },
+        data: { isActive: false }
+      });
+
+      // Criar/reativar novos departamentos
+      if (departmentIds.length > 0) {
+        for (const deptId of departmentIds) {
+          await prisma.userDepartment.upsert({
+            where: {
+              userId_departmentId: {
+                userId,
+                departmentId: deptId
+              }
+            },
+            create: {
+              userId,
+              departmentId: deptId,
+              isPrimary: deptId === primaryDepartmentId,
+              isActive: true
+            },
+            update: {
+              isPrimary: deptId === primaryDepartmentId,
+              isActive: true
+            }
+          });
+        }
+      }
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -881,11 +1027,34 @@ router.put(
             name: true,
             code: true
         }
-      }
+      },
+        userDepartments: {
+          where: { isActive: true },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { createdAt: 'asc' }
+          ]
+        }
         }
         });
 
-    return res.json(createSuccessResponse(updatedUser, 'Membro da equipe atualizado com sucesso'));
+    // ✅ Adicionar campos computed
+    const userWithDepartments = {
+      ...updatedUser,
+      departments: getUserDepartments(updatedUser as any),
+      primaryDepartment: getPrimaryDepartment(updatedUser as any)
+    };
+
+    return res.json(createSuccessResponse(userWithDepartments, 'Membro da equipe atualizado com sucesso'));
   })
 );
 
