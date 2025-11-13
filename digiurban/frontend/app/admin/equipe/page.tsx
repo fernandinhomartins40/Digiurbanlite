@@ -19,6 +19,7 @@ import {
   XCircle,
   Loader2
 } from 'lucide-react'
+import { ROLE_DISPLAY_NAMES } from '@/types/roles'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -158,14 +159,15 @@ export default function EquipePage() {
     (member.department?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
+  // ✅ Badges de roles usando constantes centralizadas
   const getRoleBadge = (role: string) => {
     const roles = {
-      SUPER_ADMIN: { label: 'Super Admin', color: 'bg-purple-100 text-purple-800' },
-      ADMIN: { label: 'Administrador', color: 'bg-red-100 text-red-800' },
-      MANAGER: { label: 'Gerente', color: 'bg-blue-100 text-blue-800' },
-      COORDINATOR: { label: 'Coordenador', color: 'bg-green-100 text-green-800' },
-      USER: { label: 'Usuário', color: 'bg-gray-100 text-gray-800' },
-      GUEST: { label: 'Visitante', color: 'bg-yellow-100 text-yellow-800' }
+      SUPER_ADMIN: { label: ROLE_DISPLAY_NAMES.SUPER_ADMIN, color: 'bg-purple-100 text-purple-800' },
+      ADMIN: { label: ROLE_DISPLAY_NAMES.ADMIN, color: 'bg-red-100 text-red-800' },
+      MANAGER: { label: ROLE_DISPLAY_NAMES.MANAGER, color: 'bg-orange-100 text-orange-800' },
+      COORDINATOR: { label: ROLE_DISPLAY_NAMES.COORDINATOR, color: 'bg-blue-100 text-blue-800' },
+      USER: { label: ROLE_DISPLAY_NAMES.USER, color: 'bg-green-100 text-green-800' },
+      GUEST: { label: ROLE_DISPLAY_NAMES.GUEST, color: 'bg-gray-100 text-gray-800' }
     }
 
     const roleConfig = roles[role as keyof typeof roles] || roles.USER

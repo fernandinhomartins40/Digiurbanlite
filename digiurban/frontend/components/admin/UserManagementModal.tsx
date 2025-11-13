@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { getFullApiUrl } from '@/lib/api-config'
+import { ROLE_HIERARCHY, ROLE_DISPLAY_NAMES, TEAM_ROLES, isTeamRole, type TeamRoleType } from '@/types/roles'
 
 interface Department {
   id: string
@@ -34,24 +35,8 @@ interface UserManagementModalProps {
   currentUserDepartmentId?: string
 }
 
-// Hierarquia de roles
-const ROLE_HIERARCHY = {
-  GUEST: 0,
-  USER: 1,
-  COORDINATOR: 2,
-  MANAGER: 3,
-  ADMIN: 4,
-  SUPER_ADMIN: 5
-} as const
-
-const ROLE_LABELS = {
-  GUEST: 'Visitante',
-  USER: 'Usuário',
-  COORDINATOR: 'Coordenador',
-  MANAGER: 'Gerente',
-  ADMIN: 'Administrador',
-  SUPER_ADMIN: 'Super Administrador'
-} as const
+// ✅ As constantes de roles agora vêm do arquivo centralizado @/types/roles
+// Isso garante consistência em toda a aplicação
 
 export function UserManagementModal({
   open,
@@ -156,16 +141,17 @@ export function UserManagementModal({
     }
   }
 
-  // Roles disponíveis (apenas inferiores ao usuário atual)
-  const availableRoles = Object.entries(ROLE_HIERARCHY)
-    .filter(([role, level]) => {
+  // ✅ Roles disponíveis: apenas TEAM_ROLES (exclui GUEST e SUPER_ADMIN) e inferiores ao usuário atual
+  const availableRoles = TEAM_ROLES
+    .filter((role) => {
+      const roleLevel = ROLE_HIERARCHY[role as keyof typeof ROLE_HIERARCHY]
       // Usuário pode criar apenas roles inferiores ao dele
-      return level < currentUserLevel
+      return roleLevel < currentUserLevel
     })
-    .map(([role, level]) => ({
+    .map((role) => ({
       value: role,
-      label: ROLE_LABELS[role as keyof typeof ROLE_LABELS],
-      level
+      label: ROLE_DISPLAY_NAMES[role as keyof typeof ROLE_DISPLAY_NAMES],
+      level: ROLE_HIERARCHY[role as keyof typeof ROLE_HIERARCHY]
     }))
     .sort((a, b) => b.level - a.level)
 

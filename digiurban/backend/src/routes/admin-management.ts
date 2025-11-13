@@ -8,6 +8,14 @@ import * as bcrypt from 'bcryptjs';
 import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
+import {
+  ROLE_HIERARCHY,
+  ROLE_DISPLAY_NAMES,
+  TEAM_ROLES,
+  canManageRole as canManageRoleHelper,
+  getRoleLevel,
+  isTeamRole
+} from '../types/roles';
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 
@@ -102,15 +110,7 @@ interface ProtocolFilterInput {
 
 // ====================== HELPER FUNCTIONS ======================
 
-// Hierarquia de roles para validação
-const ROLE_HIERARCHY: Record<string, number> = {
-  GUEST: 0,
-  USER: 1,
-  COORDINATOR: 2,
-  MANAGER: 3,
-  ADMIN: 4,
-  SUPER_ADMIN: 5
-};
+// ✅ Constantes de roles agora vêm de @/types/roles para centralização
 
 // ✅ Lista oficial das 13 secretarias do sistema
 const OFFICIAL_DEPARTMENTS = [
@@ -129,16 +129,8 @@ const OFFICIAL_DEPARTMENTS = [
   'Secretaria de Turismo'
 ];
 
-function getRoleLevel(role: string): number {
-  return ROLE_HIERARCHY[role] || 0;
-}
-
-function canManageRole(managerRole: string, targetRole: string): boolean {
-  const managerLevel = getRoleLevel(managerRole);
-  const targetLevel = getRoleLevel(targetRole);
-  // Usuário só pode gerenciar roles inferiores ao dele
-  return managerLevel > targetLevel;
-}
+// Alias para manter compatibilidade
+const canManageRole = canManageRoleHelper;
 
 async function validateDepartment(departmentId: string): Promise<boolean> {
   const department = await prisma.department.findFirst({
@@ -350,14 +342,14 @@ const createUserSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: strongPasswordSchema, // ✅ Validação de senha forte
-  role: z.enum(['GUEST', 'USER', 'COORDINATOR', 'MANAGER', 'ADMIN']),
+  role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']), // ✅ Removido GUEST - não é para equipe
   departmentId: z.string().optional()
         });
 
 const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
-  role: z.enum(['GUEST', 'USER', 'COORDINATOR', 'MANAGER', 'ADMIN']).optional(),
+  role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']).optional(), // ✅ Removido GUEST - não é para equipe
   departmentId: z.string().optional(),
   isActive: z.boolean().optional()
         });
@@ -680,12 +672,32 @@ router.post(
     const data = createUserSchema.parse(req.body);
     const { user } = req;
 
+    // ✅ VALIDAÇÃO: GUEST não pode ser atribuído à equipe
+    if (data.role === 'GUEST') {
+      return res.status(400).json(
+        createErrorResponse(
+          'INVALID_ROLE',
+          'O role GUEST não pode ser atribuído à equipe administrativa. Use USER, COORDINATOR, MANAGER ou ADMIN.'
+        )
+      );
+    }
+
+    // ✅ VALIDAÇÃO: Verificar se é um role válido para equipe
+    if (!isTeamRole(data.role)) {
+      return res.status(400).json(
+        createErrorResponse(
+          'INVALID_ROLE',
+          `O role ${data.role} não é válido para equipe. Roles válidos: ${TEAM_ROLES.join(', ')}`
+        )
+      );
+    }
+
     // ✅ VALIDAÇÃO DE HIERARQUIA: Verificar se o usuário pode criar o role solicitado
     if (!canManageRole(user.role, data.role)) {
       return res.status(403).json(
         createErrorResponse(
           'FORBIDDEN',
-          `Você não pode criar usuários com role ${data.role}. Apenas roles inferiores ao seu (${user.role}) são permitidos.`
+          `Você não pode criar usuários com o cargo ${ROLE_DISPLAY_NAMES[data.role as keyof typeof ROLE_DISPLAY_NAMES]}. Apenas cargos inferiores ao seu (${ROLE_DISPLAY_NAMES[user.role as keyof typeof ROLE_DISPLAY_NAMES]}) são permitidos.`
         )
       );
     }

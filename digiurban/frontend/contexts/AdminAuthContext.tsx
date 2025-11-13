@@ -3,8 +3,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { getFullApiUrl } from '@/lib/api-config'
+import { ROLE_HIERARCHY, ROLE_DISPLAY_NAMES, type UserRoleType } from '@/types/roles'
 
-export type UserRole = 'GUEST' | 'USER' | 'COORDINATOR' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN'
+// ✅ Type exportado agora vem do arquivo centralizado
+export type UserRole = UserRoleType
 
 export interface AdminUser {
   id: string
@@ -259,17 +261,10 @@ export function useAdminPermissions() {
     return permissionList.some(permission => permissions.includes(permission))
   }
 
+  // ✅ Usando ROLE_HIERARCHY centralizado
   const hasMinRole = (minRole: UserRole) => {
-    const roleHierarchy = {
-      GUEST: 0,
-      USER: 1,
-      COORDINATOR: 2,
-      MANAGER: 3,
-      ADMIN: 4,
-      SUPER_ADMIN: 5
-    }
-    const userLevel = roleHierarchy[user?.role as UserRole] ?? 0
-    const requiredLevel = roleHierarchy[minRole] ?? 999
+    const userLevel = ROLE_HIERARCHY[user?.role as keyof typeof ROLE_HIERARCHY] ?? 0
+    const requiredLevel = ROLE_HIERARCHY[minRole as keyof typeof ROLE_HIERARCHY] ?? 999
     return userLevel >= requiredLevel
   }
 
