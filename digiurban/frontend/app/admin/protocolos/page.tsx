@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { CitizenAutocomplete } from '@/components/admin/CitizenAutocomplete'
+import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal'
 import { useToast } from '@/hooks/use-toast'
 import {
   Search,
@@ -70,19 +70,6 @@ interface Protocol {
   }
 }
 
-interface Service {
-  id: string
-  name: string
-  description?: string
-  category?: string
-  departmentId?: string
-  department?: {
-    id: string
-    name: string
-  }
-  isActive: boolean
-}
-
 const statusLabels = {
   VINCULADO: 'Vinculado',
   PROGRESSO: 'Em Progresso',
@@ -115,16 +102,7 @@ export default function ProtocolsPage() {
   const [teamMembers, setTeamMembers] = useState([])
   const [assignComment, setAssignComment] = useState('')
   const [selectedAssignee, setSelectedAssignee] = useState('')
-  const [showNewProtocolDialog, setShowNewProtocolDialog] = useState(false)
-  const [services, setServices] = useState<Service[]>([])
-  const [departments, setDepartments] = useState([])
-  const [selectedCitizen, setSelectedCitizen] = useState<any>(null)
-  const [newProtocol, setNewProtocol] = useState({
-    serviceId: '',
-    departmentId: '',
-    description: '',
-    priority: 3 // Normal = 3
-  })
+  const [showServiceSelectorModal, setShowServiceSelectorModal] = useState(false)
 
   // Carregar protocolos
   const loadProtocols = async () => {
@@ -197,82 +175,6 @@ export default function ProtocolsPage() {
     }
   }
 
-  // Carregar serviços ativos
-  const loadServices = async () => {
-    try {
-      const data = await apiRequest('/api/services?isActive=true')
-      // Filtrar apenas serviços ativos
-      const activeServices = (data.data || []).filter((service: any) => service.isActive)
-      setServices(activeServices)
-    } catch (error) {
-      console.error('Erro ao carregar serviços:', error)
-    }
-  }
-
-  // Carregar departamentos
-  const loadDepartments = async () => {
-    try {
-      const response = await apiRequest('/admin/management/departments')
-      const departmentsData = response.departments || response.data?.departments || []
-      setDepartments(departmentsData)
-    } catch (error) {
-      console.error('Erro ao carregar departamentos:', error)
-    }
-  }
-
-  // Criar novo protocolo
-  const createProtocol = async () => {
-    // Validação dos campos obrigatórios
-    if (!selectedCitizen || !newProtocol.serviceId || !newProtocol.departmentId) {
-      toast({
-        title: 'Campos obrigatórios',
-        description: 'Por favor, selecione o cidadão, serviço e departamento.',
-        variant: 'destructive',
-      })
-      return
-    }
-
-    try {
-      await apiRequest('/api/protocols', {
-        method: 'POST',
-        body: JSON.stringify({
-          serviceId: newProtocol.serviceId,
-          citizenData: {
-            cpf: selectedCitizen.cpf,
-            name: selectedCitizen.name,
-            email: selectedCitizen.email,
-            phone: selectedCitizen.phone
-          },
-          formData: {
-            description: newProtocol.description,
-            priority: newProtocol.priority,
-          }
-        })
-      })
-
-      toast({
-        title: 'Protocolo criado',
-        description: 'O protocolo foi criado com sucesso.',
-      })
-
-      setShowNewProtocolDialog(false)
-      setSelectedCitizen(null)
-      setNewProtocol({
-        serviceId: '',
-        departmentId: '',
-        description: '',
-        priority: 3
-      })
-      await loadProtocols()
-    } catch (error) {
-      console.error('Erro ao criar protocolo:', error)
-      toast({
-        title: 'Erro ao criar protocolo',
-        description: 'Ocorreu um erro ao criar o protocolo. Verifique os dados e tente novamente.',
-        variant: 'destructive',
-      })
-    }
-  }
 
   useEffect(() => {
     // Só carregar dados quando autenticação estiver completa e usuário existir
@@ -284,10 +186,6 @@ export default function ProtocolsPage() {
     loadProtocols()
     if (hasPermission('protocols:assign')) {
       loadTeamMembers()
-    }
-    if (hasPermission('protocols:create')) {
-      loadServices()
-      loadDepartments()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user?.id, searchTerm, statusFilter, priorityFilter])
@@ -314,126 +212,10 @@ export default function ProtocolsPage() {
         </div>
         <div className="flex space-x-2">
           {hasPermission('protocols:create') && (
-            <Dialog open={showNewProtocolDialog} onOpenChange={setShowNewProtocolDialog}>
-              <DialogTrigger asChild>
-                <Button>
-                  <AlertCircle className="h-4 w-4 mr-2" />
-                  Novo Protocolo
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[calc(100vh-4rem)] flex flex-col">
-                <DialogHeader className="flex-shrink-0">
-                  <DialogTitle>Criar Novo Protocolo</DialogTitle>
-                  <DialogDescription>
-                    Preencha os dados para criar um novo protocolo em nome de um cidadão
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4 overflow-y-auto flex-1">
-                  <CitizenAutocomplete
-                    value={selectedCitizen}
-                    onChange={setSelectedCitizen}
-                    label="Cidadão"
-                    placeholder="Digite o nome do cidadão..."
-                    required
-                  />
-
-                  <div className="space-y-2">
-                    <Label htmlFor="serviceId">Serviço *</Label>
-                    <Select
-                      value={newProtocol.serviceId}
-                      onValueChange={(value) => {
-                        // Encontrar o serviço selecionado
-                        const selectedService = services.find((s: any) => s.id === value)
-                        // Auto-preencher o departamento com o departamento do serviço
-                        const deptId = selectedService?.department?.id || selectedService?.departmentId
-                        setNewProtocol({
-                          ...newProtocol,
-                          serviceId: value,
-                          departmentId: deptId || newProtocol.departmentId
-                        })
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={services.length === 0 ? "Nenhum serviço disponível" : "Selecione um serviço"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {services.length === 0 ? (
-                          <div className="p-4 text-sm text-gray-500 text-center">
-                            Nenhum serviço cadastrado. Vá para Catálogo de Serviços para adicionar.
-                          </div>
-                        ) : (
-                          services.map((service: any) => (
-                            <SelectItem key={service.id} value={service.id}>
-                              {service.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    {services.length > 0 && (
-                      <p className="text-xs text-gray-500">{services.length} serviços ativos disponíveis</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="departmentId">Departamento *</Label>
-                    <Select
-                      value={newProtocol.departmentId}
-                      onValueChange={(value) => setNewProtocol({ ...newProtocol, departmentId: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um departamento" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {departments.map((dept: any) => (
-                          <SelectItem key={dept.id} value={dept.id}>
-                            {dept.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="priority">Prioridade</Label>
-                    <Select
-                      value={String(newProtocol.priority)}
-                      onValueChange={(value) => setNewProtocol({ ...newProtocol, priority: parseInt(value) })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">Muito Baixa</SelectItem>
-                        <SelectItem value="2">Baixa</SelectItem>
-                        <SelectItem value="3">Normal</SelectItem>
-                        <SelectItem value="4">Alta</SelectItem>
-                        <SelectItem value="5">Crítica</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Descrição</Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Descreva a solicitação do cidadão..."
-                      value={newProtocol.description}
-                      onChange={(e) => setNewProtocol({ ...newProtocol, description: e.target.value })}
-                      rows={4}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-2 flex-shrink-0 border-t pt-4">
-                  <Button variant="outline" onClick={() => setShowNewProtocolDialog(false)}>
-                    Cancelar
-                  </Button>
-                  <Button onClick={createProtocol}>
-                    Criar Protocolo
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setShowServiceSelectorModal(true)}>
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Novo Protocolo
+            </Button>
           )}
         </div>
       </div>
@@ -654,6 +436,12 @@ export default function ProtocolsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Seleção de Serviços */}
+      <ServiceSelectorModal
+        open={showServiceSelectorModal}
+        onOpenChange={setShowServiceSelectorModal}
+      />
 
       {/* Dialog de Visualização */}
       <Dialog open={!!selectedProtocol && !showAssignDialog} onOpenChange={(open) => !open && setSelectedProtocol(null)}>
