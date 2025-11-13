@@ -22,7 +22,9 @@ interface UserData {
   name: string
   email: string
   role: string
-  departmentId?: string
+  departmentId?: string // ✅ Mantido para compatibilidade
+  departmentIds?: string[] // ✅ NOVO: Múltiplos departamentos
+  primaryDepartmentId?: string // ✅ NOVO: Departamento principal
   isActive?: boolean
 }
 
@@ -51,6 +53,8 @@ export function UserManagementModal({
     email: '',
     role: 'USER',
     departmentId: currentUserDepartmentId,
+    departmentIds: currentUserDepartmentId ? [currentUserDepartmentId] : [], // ✅ NOVO
+    primaryDepartmentId: currentUserDepartmentId, // ✅ NOVO
     isActive: true
   })
   const [password, setPassword] = useState('')
@@ -89,12 +93,18 @@ export function UserManagementModal({
   // Carregar dados do usuário para edição
   useEffect(() => {
     if (user) {
+      // ✅ Priorizar departmentIds (novo schema) sobre departmentId (legado)
+      const deptIds = user.departmentIds || (user.departmentId ? [user.departmentId] : []);
+      const primaryId = user.primaryDepartmentId || user.departmentId;
+
       setFormData({
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
-        departmentId: user.departmentId,
+        departmentId: user.departmentId, // Mantido para compatibilidade
+        departmentIds: deptIds,
+        primaryDepartmentId: primaryId,
         isActive: user.isActive ?? true
       })
     } else {
@@ -103,6 +113,8 @@ export function UserManagementModal({
         email: '',
         role: 'USER',
         departmentId: currentUserDepartmentId,
+        departmentIds: currentUserDepartmentId ? [currentUserDepartmentId] : [],
+        primaryDepartmentId: currentUserDepartmentId,
         isActive: true
       })
       setPassword('')
@@ -203,7 +215,9 @@ export function UserManagementModal({
             name: formData.name,
             email: formData.email,
             role: formData.role,
-            departmentId: formData.departmentId,
+            // ✅ NOVO: Enviar múltiplos departamentos
+            departmentIds: formData.departmentIds,
+            primaryDepartmentId: formData.primaryDepartmentId,
             isActive: formData.isActive
           }
         : {
@@ -211,7 +225,9 @@ export function UserManagementModal({
             email: formData.email,
             password: password,
             role: formData.role,
-            departmentId: formData.departmentId
+            // ✅ NOVO: Enviar múltiplos departamentos
+            departmentIds: formData.departmentIds,
+            primaryDepartmentId: formData.primaryDepartmentId
           }
 
       const response = await fetch(url, {
@@ -399,28 +415,96 @@ export function UserManagementModal({
             </p>
           </div>
 
+          {/* ✅ NOVO: Seleção de múltiplos departamentos com checkboxes */}
           <div className="space-y-2">
-            <Label htmlFor="department">Departamento</Label>
-            <Select
-              value={formData.departmentId || 'none'}
-              onValueChange={(value) => setFormData({ ...formData, departmentId: value === 'none' ? undefined : value })}
-              disabled={loading || loadingDepartments || (currentUserRole !== 'ADMIN' && currentUserRole !== 'SUPER_ADMIN')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um departamento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum departamento</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Departamentos</Label>
+            <div className="border rounded-md p-3 max-h-[200px] overflow-y-auto space-y-2">
+              {loadingDepartments ? (
+                <p className="text-sm text-muted-foreground">Carregando departamentos...</p>
+              ) : departments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum departamento disponível</p>
+              ) : (
+                departments.map((dept) => {
+                  const isSelected = formData.departmentIds?.includes(dept.id) || false;
+                  const isPrimary = formData.primaryDepartmentId === dept.id;
+                  const canSelect = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
+
+                  return (
+                    <div key={dept.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`dept-${dept.id}`}
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (!canSelect) return;
+
+                            const newDeptIds = e.target.checked
+                              ? [...(formData.departmentIds || []), dept.id]
+                              : (formData.departmentIds || []).filter(id => id !== dept.id);
+
+                            // Se desmarcar o primary, atualizar para o primeiro da lista
+                            let newPrimaryId = formData.primaryDepartmentId;
+                            if (!e.target.checked && isPrimary) {
+                              newPrimaryId = newDeptIds[0] || undefined;
+                            }
+                            // Se marcar o primeiro, torná-lo primary automaticamente
+                            if (e.target.checked && newDeptIds.length === 1) {
+                              newPrimaryId = dept.id;
+                            }
+
+                            setFormData({
+                              ...formData,
+                              departmentIds: newDeptIds,
+                              primaryDepartmentId: newPrimaryId,
+                              departmentId: newPrimaryId // Manter compatibilidade
+                            });
+                          }}
+                          disabled={loading || !canSelect}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                        <Label
+                          htmlFor={`dept-${dept.id}`}
+                          className={`cursor-pointer text-sm ${isPrimary ? 'font-semibold' : ''}`}
+                        >
+                          {dept.name}
+                          {isPrimary && <span className="ml-2 text-xs text-primary">★ Principal</span>}
+                        </Label>
+                      </div>
+
+                      {isSelected && !isPrimary && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              primaryDepartmentId: dept.id,
+                              departmentId: dept.id // Manter compatibilidade
+                            });
+                          }}
+                          disabled={loading || !canSelect}
+                          className="h-7 text-xs"
+                        >
+                          Definir como principal
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
             {currentUserRole !== 'ADMIN' && currentUserRole !== 'SUPER_ADMIN' && (
               <p className="text-xs text-muted-foreground">
-                Apenas administradores podem alterar departamento
+                Apenas administradores podem selecionar departamentos
+              </p>
+            )}
+
+            {formData.departmentIds && formData.departmentIds.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {formData.departmentIds.length} departamento(s) selecionado(s)
               </p>
             )}
           </div>
