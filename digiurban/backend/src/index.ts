@@ -68,14 +68,10 @@ app.get('/health', (_req, res: express.Response) => {
 });
 
 // ============================================================
-// INICIALIZAÇÃO DO HANDLER REGISTRY
+// HANDLER REGISTRY - REMOVIDO
 // ============================================================
-console.log('🔧 Inicializando Handler Registry...');
-import { initializeHandlers } from './modules/handlers/registry';
-initializeHandlers().catch(err => {
-  console.error('❌ Erro ao inicializar handlers:', err);
-  // Não bloquear o servidor
-});
+// Sistema de handlers legado foi substituído pelo sistema de templates
+// Handlers não são mais necessários - rotas geradas consomem ServiceSimplified.formSchema dinamicamente
 
 // ============================================================
 // CARREGAMENTO DE ROTAS - Single Tenant Mode (OTIMIZADO)
