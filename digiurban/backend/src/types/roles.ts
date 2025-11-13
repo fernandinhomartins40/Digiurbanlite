@@ -144,10 +144,12 @@ export const ROLE_PERMISSIONS = {
   GUEST: [],
   USER: [
     'protocols:read',
+    'protocols:create',
     'protocols:update_own'
   ],
   COORDINATOR: [
     'protocols:read',
+    'protocols:create',
     'protocols:update',
     'protocols:assign',
     'team:read',
@@ -155,6 +157,7 @@ export const ROLE_PERMISSIONS = {
   ],
   MANAGER: [
     'protocols:read',
+    'protocols:create',
     'protocols:update',
     'protocols:assign',
     'protocols:delete',
