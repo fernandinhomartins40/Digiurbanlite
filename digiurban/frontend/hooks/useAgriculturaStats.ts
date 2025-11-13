@@ -65,17 +65,16 @@ export function useAgriculturaStats() {
       try {
         setLoading(true);
 
-        // Buscar estatísticas consolidadas do dashboard
-        const dashboardResponse = await apiClient.get('/admin/agriculture/dashboard');
+        // ✅ ATUALIZADO: Buscar estatísticas consolidadas do dashboard (rota genérica)
+        const dashboardResponse = await apiClient.get('/agricultura/dashboard');
 
         if (dashboardResponse.data?.success) {
           const data = dashboardResponse.data.data;
 
-          // Buscar estatísticas adicionais em paralelo
-          const [producersStatsRes, propertiesStatsRes, agricultureDept] = await Promise.allSettled([
-            apiClient.get('/admin/agriculture/producers/stats'),
-            apiClient.get('/admin/agriculture/propriedades/stats'),
-            apiClient.get('/departments?code=AGRICULTURA')
+          // Buscar estatísticas adicionais em paralelo (rotas genéricas)
+          const [producersStatsRes, propertiesStatsRes] = await Promise.allSettled([
+            apiClient.get('/agricultura/producers/stats'),
+            apiClient.get('/agricultura/propriedades/stats'),
           ]);
 
           // Combinar dados
@@ -118,46 +117,13 @@ export function useAgriculturaStats() {
             consolidatedStats.properties = propertiesStatsRes.value.data.data;
           }
 
-          // Calcular estatísticas de protocolos baseado no department de agricultura
-          try {
-            // Pegar departmentId de agricultura
-            let departmentId = null;
-            if (agricultureDept.status === 'fulfilled' && agricultureDept.value?.data?.success) {
-              const depts = agricultureDept.value.data.data;
-              departmentId = depts?.[0]?.id;
-            }
-
-            if (departmentId) {
-              const protocolsRes = await apiClient.get(
-                `/admin/protocolos?departmentId=${departmentId}`
-              );
-
-              if (protocolsRes.data?.success && protocolsRes.data?.data) {
-                const protocols = protocolsRes.data.data;
-                consolidatedStats.protocols = {
-                  total: protocols.length,
-                  pending: protocols.filter((p: any) => p.status === 'PENDENCIA').length,
-                  inProgress: protocols.filter((p: any) => p.status === 'PROGRESSO').length,
-                  completed: protocols.filter((p: any) => p.status === 'CONCLUIDO').length
-                };
-              }
-            } else {
-              consolidatedStats.protocols = {
-                total: 0,
-                pending: 0,
-                inProgress: 0,
-                completed: 0
-              };
-            }
-          } catch (e) {
-            // Se falhar, usar valores padrão
-            consolidatedStats.protocols = {
-              total: 0,
-              pending: 0,
-              inProgress: 0,
-              completed: 0
-            };
-          }
+          // Protocolos já vêm do dashboard, não precisa buscar novamente
+          consolidatedStats.protocols = data.protocols || {
+            total: 0,
+            pending: 0,
+            inProgress: 0,
+            completed: 0
+          };
 
           // Adicionar estatísticas de assistência técnica (mock por enquanto)
           consolidatedStats.technicalAssistance = {
