@@ -6,6 +6,7 @@ import { UserRole } from '@prisma/client';
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse } from '../types';
 import { asyncHandler } from '../utils/express-helpers';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
 
 // ===== TIPOS LOCAIS ISOLADOS - SEM DEPENDÊNCIAS CENTRALIZADAS =====
 

@@ -12,6 +12,7 @@ import { UserRole, ProtocolStatus } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { protocolServiceSimplified } from '../services/protocol-simplified.service';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
 
 const router = Router();
 
@@ -442,6 +443,7 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { status, comment, userId } = req.body;
+    const authReq = req as AuthenticatedRequest;
 
     if (!status || !Object.values(ProtocolStatus).includes(status)) {
       return res.status(400).json({
@@ -450,16 +452,21 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
         });
     }
 
-    const protocol = await protocolServiceSimplified.updateStatus({
+    // Usar motor centralizado de status
+    const result = await protocolStatusEngine.updateStatus({
       protocolId: id,
       newStatus: status,
+      actorId: userId || authReq.user.id,
+      actorRole: authReq.user.role,
       comment,
-      userId
-        });
+      metadata: {
+        source: 'protocols-simplified-routes'
+      }
+    });
 
     return res.json({
       success: true,
-      data: protocol,
+      data: result.protocol,
       message: 'Status atualizado com sucesso'
         });
   } catch (error: any) {

@@ -12,6 +12,7 @@ import {
   addDataFilter
         } from '../middleware/admin-auth';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 

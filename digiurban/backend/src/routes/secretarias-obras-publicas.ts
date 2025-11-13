@@ -12,6 +12,7 @@ import {
 import { UserRole, ProtocolStatus } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
 
 const router = Router();
 

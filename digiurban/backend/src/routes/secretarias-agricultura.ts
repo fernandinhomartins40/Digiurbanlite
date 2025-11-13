@@ -13,6 +13,7 @@ import { UserRole, ProtocolStatus } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
 
 const router = Router();
 
@@ -1891,18 +1892,30 @@ router.put(
         }
         });
 
-        // 2. Atualizar protocolo para CONCLUIDO
+        // 2. Atualizar protocolo para CONCLUIDO usando motor centralizado
         if (enrollment.protocolId) {
-          await tx.protocolSimplified.update({
-            where: { id: enrollment.protocolId },
-            data: {
-              status: ProtocolStatus.CONCLUIDO
-        }
-        });
+          // Nota: Executado fora da transação após commit
+          // para permitir validações do engine
         }
 
         return updatedEnrollment;
       });
+
+      // Atualizar status do protocolo usando motor centralizado
+      if (enrollment.protocolId) {
+        await protocolStatusEngine.updateStatus({
+          protocolId: enrollment.protocolId,
+          newStatus: ProtocolStatus.CONCLUIDO,
+          actorId: authReq.user.id,
+          actorRole: authReq.user.role,
+          comment: adminNotes || 'Inscrição aprovada pela secretaria de agricultura',
+          metadata: {
+            enrollmentId: enrollment.id,
+            programId: programId,
+            action: 'enrollment_approval'
+          }
+        });
+      }
 
       return res.json({
         success: true,
@@ -1974,18 +1987,31 @@ router.put(
         }
         });
 
-        // 2. Atualizar protocolo para PENDENCIA
+        // 2. Atualizar protocolo para PENDENCIA usando motor centralizado
         if (enrollment.protocolId) {
-          await tx.protocolSimplified.update({
-            where: { id: enrollment.protocolId },
-            data: {
-              status: ProtocolStatus.PENDENCIA
-        }
-        });
+          // Nota: Executado fora da transação após commit
         }
 
         return updatedEnrollment;
       });
+
+      // Atualizar status do protocolo usando motor centralizado
+      if (enrollment.protocolId) {
+        await protocolStatusEngine.updateStatus({
+          protocolId: enrollment.protocolId,
+          newStatus: ProtocolStatus.PENDENCIA,
+          actorId: authReq.user.id,
+          actorRole: authReq.user.role,
+          comment: `Inscrição rejeitada: ${rejectionReason}`,
+          reason: rejectionReason,
+          metadata: {
+            enrollmentId: enrollment.id,
+            programId: programId,
+            action: 'enrollment_rejection',
+            adminNotes: adminNotes
+          }
+        });
+      }
 
       return res.json({
         success: true,
@@ -2338,11 +2364,19 @@ router.post(
         }
         });
 
-      // Atualizar status do protocolo para PENDENCIA
-      await prisma.protocolSimplified.update({
-        where: { id: enrollment.protocolId },
-        data: { status: 'PENDENCIA' }
-        });
+      // Atualizar status do protocolo para PENDENCIA usando motor centralizado
+      await protocolStatusEngine.updateStatus({
+        protocolId: enrollment.protocolId,
+        newStatus: 'PENDENCIA',
+        actorId: authReq.user.id,
+        actorRole: authReq.user.role,
+        comment: `Pendência criada: ${description}`,
+        metadata: {
+          enrollmentId,
+          pendencyItems: pendencyItems || [],
+          action: 'pendency_created'
+        }
+      });
 
       return res.json({
         success: true,

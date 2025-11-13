@@ -10,6 +10,7 @@ import { prisma } from '../lib/prisma';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import { upload, getFileUrl } from '../config/upload';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
 
 const router = Router();
 
@@ -450,24 +451,21 @@ router.post('/:id/cancel', async (req, res) => {
         });
     }
 
-    // Atualizar status do protocolo para CANCELADO
-    const updatedProtocol = await prisma.protocolSimplified.update({
-      where: { id },
-      data: {
-        status: 'CANCELADO',
-        updatedAt: new Date()
-        }
-        });
+    // Atualizar status do protocolo para CANCELADO usando motor centralizado
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: id,
+      newStatus: 'CANCELADO',
+      actorId: citizenId,
+      actorRole: 'CITIZEN',
+      comment: reason || 'Cancelado a pedido do cidadão',
+      reason: reason,
+      metadata: {
+        source: 'citizen-protocols',
+        action: 'citizen_cancellation'
+      }
+    });
 
-    // Criar registro no histórico
-    await prisma.protocolHistorySimplified.create({
-      data: {
-        protocolId: id,
-        action: 'Protocolo cancelado pelo cidadão',
-        comment: reason || 'Cancelado a pedido do cidadão',
-        timestamp: new Date()
-        }
-        });
+    const updatedProtocol = result.protocol;
 
     // Criar interação informando o cancelamento
     await prisma.protocolInteraction.create({

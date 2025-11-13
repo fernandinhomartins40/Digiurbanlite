@@ -5,10 +5,12 @@
  * Implementa o fluxo completo: criar, atualizar, rotear e gerenciar protocolos
  */
 
-import { ProtocolStatus } from '@prisma/client'
+import { ProtocolStatus, UserRole } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { getModuleEntity, isInformativeModule } from '../config/module-mapping'
 import { generateProtocolNumberSafe } from './protocol-number.service'
+import { protocolStatusEngine } from './protocol-status.engine'
+import { ActorRole } from '../types/protocol-status.types'
 
 // ========================================
 // TYPES & INTERFACES

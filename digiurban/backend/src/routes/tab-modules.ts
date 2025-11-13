@@ -20,6 +20,7 @@ import { UserRole, ProtocolStatus } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { getManagementConfig } from './management-configs';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
 
 const router = Router();
 
@@ -1332,29 +1333,19 @@ router.post(
         });
       }
 
-      // Atualizar status para CONCLUIDO (aprovado)
-      await prisma.protocolSimplified.update({
-        where: { id },
-        data: {
-          status: ProtocolStatus.CONCLUIDO,
-          updatedAt: new Date(),
-        }
-      });
-
-      // Registrar interação
-      await prisma.protocolInteraction.create({
-        data: {
-          protocolId: id,
-          type: 'STATUS_CHANGED',
-          authorType: 'ADMIN',
-          authorName: userName,
-          message: comment || 'Solicitação aprovada',
-          metadata: {
-            previousStatus: protocol.status,
-            newStatus: 'CONCLUIDO',
-            approvedBy: userId,
-            approvedAt: new Date().toISOString(),
-          }
+      // Atualizar status para CONCLUIDO usando motor centralizado
+      const authReq = req as any;
+      await protocolStatusEngine.updateStatus({
+        protocolId: id,
+        newStatus: ProtocolStatus.CONCLUIDO,
+        actorId: authReq.user?.id || 'system',
+        actorRole: authReq.user?.role || 'ADMIN',
+        comment: comment || 'Solicitação aprovada',
+        metadata: {
+          source: 'tab-modules-approval',
+          previousStatus: protocol.status,
+          approvedBy: comment,
+          approvedAt: new Date().toISOString()
         }
       });
 
@@ -1405,30 +1396,20 @@ router.post(
         });
       }
 
-      // Atualizar status para CANCELADO (rejeitado)
-      await prisma.protocolSimplified.update({
-        where: { id },
-        data: {
-          status: ProtocolStatus.CANCELADO,
-          updatedAt: new Date(),
-        }
-      });
-
-      // Registrar interação
-      await prisma.protocolInteraction.create({
-        data: {
-          protocolId: id,
-          type: 'STATUS_CHANGED',
-          authorType: 'ADMIN',
-          authorName: userName,
-          message: `Solicitação rejeitada: ${comment}`,
-          metadata: {
-            previousStatus: protocol.status,
-            newStatus: 'CANCELADO',
-            rejectedBy: userId,
-            rejectedAt: new Date().toISOString(),
-            reason: comment,
-          }
+      // Atualizar status para PENDENCIA usando motor centralizado (rejeição)
+      const authReq = req as any;
+      await protocolStatusEngine.updateStatus({
+        protocolId: id,
+        newStatus: ProtocolStatus.PENDENCIA,
+        actorId: authReq.user?.id || 'system',
+        actorRole: authReq.user?.role || 'ADMIN',
+        comment: `Solicitação rejeitada: ${comment}`,
+        reason: comment,
+        metadata: {
+          source: 'tab-modules-rejection',
+          previousStatus: protocol.status,
+          rejectedBy: authReq.user?.name || userName,
+          rejectedAt: new Date().toISOString()
         }
       });
 
@@ -1615,31 +1596,31 @@ router.put(
         });
       }
 
-      // Atualizar protocolo
+      // Se houver mudança de status, usar motor centralizado
+      if (data.status && data.status !== protocol.status) {
+        const authReq = req as any;
+        await protocolStatusEngine.updateStatus({
+          protocolId: id,
+          newStatus: data.status,
+          actorId: authReq.user?.id || 'system',
+          actorRole: authReq.user?.role || 'ADMIN',
+          comment: 'Registro atualizado',
+          metadata: {
+            source: 'tab-modules-update',
+            changes: data,
+            updatedBy: userName
+          }
+        });
+      }
+
+      // Atualizar outros campos (exceto status, já tratado acima)
       const updated = await prisma.protocolSimplified.update({
         where: { id },
         data: {
           title: data.title,
           description: data.description,
-          status: data.status,
           customData: { ...protocol.customData as object, ...data },
           updatedAt: new Date(),
-        }
-      });
-
-      // Registrar interação
-      await prisma.protocolInteraction.create({
-        data: {
-          protocolId: id,
-          type: 'STATUS_CHANGED',
-          authorType: 'ADMIN',
-          authorName: userName,
-          message: 'Registro atualizado',
-          metadata: {
-            updatedBy: userId,
-            updatedAt: new Date().toISOString(),
-            changes: data,
-          }
         }
       });
 

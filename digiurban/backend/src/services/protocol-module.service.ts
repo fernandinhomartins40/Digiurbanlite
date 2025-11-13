@@ -7,10 +7,11 @@
  * Implementa o fluxo: Protocolo COM_DADOS → Módulo da Secretaria → Aprovação
  */
 
-import { ProtocolStatus, Prisma } from '@prisma/client';
+import { ProtocolStatus, Prisma, UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { getModuleEntity, isInformativeModule } from '../config/module-mapping';
 import { generateProtocolNumberSafe } from './protocol-number.service';
+import { protocolStatusEngine } from './protocol-status.engine';
 
 // ============================================================================
 // TYPES
@@ -242,45 +243,40 @@ export class ProtocolModuleService {
   async approveProtocol(input: ApproveProtocolInput) {
     const { protocolId, userId, comment, additionalData } = input;
 
-    return prisma.$transaction(async (tx) => {
-      const protocol = await tx.protocolSimplified.findUnique({
-        where: { id: protocolId }
-        });
+    // Buscar protocolo
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId },
+      include: { service: true }
+    });
 
-      if (!protocol) {
-        throw new Error('Protocolo não encontrado');
-      }
+    if (!protocol) {
+      throw new Error('Protocolo não encontrado');
+    }
 
-      // Atualizar status para CONCLUIDO (aprovação)
-      await tx.protocolSimplified.update({
-        where: { id: protocolId },
-        data: {
-          status: ProtocolStatus.CONCLUIDO,
-          concludedAt: new Date()
-        }
-        });
-
-      // Ativar entidade do módulo
-      if (protocol.moduleType) {
-        const entityName = getModuleEntity(protocol.moduleType);
+    // Ativar entidade do módulo antes de atualizar status
+    if (protocol.moduleType) {
+      await prisma.$transaction(async (tx) => {
+        const entityName = getModuleEntity(protocol.moduleType!);
         if (entityName) {
           await this.activateModuleEntity(tx, entityName, protocolId);
         }
+      });
+    }
+
+    // Usar motor centralizado de status
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId,
+      newStatus: ProtocolStatus.CONCLUIDO,
+      actorId: userId,
+      actorRole: UserRole.USER,
+      comment: comment || 'Protocolo aprovado e concluído',
+      metadata: {
+        action: 'approval',
+        additionalData
       }
-
-      // Criar histórico
-      await tx.protocolHistorySimplified.create({
-        data: {
-          protocolId,
-          action: 'APPROVED',
-          comment: comment || 'Protocolo aprovado e concluído',
-          newStatus: ProtocolStatus.CONCLUIDO,
-          userId
-        }
-        });
-
-      return protocol;
     });
+
+    return result.protocol;
   }
 
   /**
@@ -289,36 +285,29 @@ export class ProtocolModuleService {
   async rejectProtocol(input: RejectProtocolInput) {
     const { protocolId, userId, reason } = input;
 
-    return prisma.$transaction(async (tx) => {
-      const protocol = await tx.protocolSimplified.findUnique({
-        where: { id: protocolId }
-        });
-
-      if (!protocol) {
-        throw new Error('Protocolo não encontrado');
-      }
-
-      // Usar CANCELADO para rejeição
-      await tx.protocolSimplified.update({
-        where: { id: protocolId },
-        data: {
-          status: ProtocolStatus.CANCELADO
-        }
-        });
-
-      // Criar histórico de rejeição
-      await tx.protocolHistorySimplified.create({
-        data: {
-          protocolId,
-          action: 'REJECTED',
-          comment: reason,
-          newStatus: ProtocolStatus.CANCELADO,
-          userId
-        }
-        });
-
-      return protocol;
+    // Buscar protocolo
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId }
     });
+
+    if (!protocol) {
+      throw new Error('Protocolo não encontrado');
+    }
+
+    // Usar motor centralizado de status (PENDENCIA para rejeição)
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorId: userId,
+      actorRole: UserRole.USER,
+      comment: `Protocolo rejeitado: ${reason}`,
+      reason,
+      metadata: {
+        action: 'rejection'
+      }
+    });
+
+    return result.protocol;
   }
 
   /**

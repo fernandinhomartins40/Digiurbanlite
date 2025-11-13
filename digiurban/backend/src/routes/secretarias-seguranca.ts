@@ -7,6 +7,7 @@ import { AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/express-helpers';
 import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
 
 const router = Router();
 
