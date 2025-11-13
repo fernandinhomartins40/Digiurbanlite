@@ -16,7 +16,8 @@ import {
   Edit,
   Trash2,
   CheckCircle,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -35,83 +36,126 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { UserManagementModal } from '@/components/admin/UserManagementModal'
+import { useToast } from '@/hooks/use-toast'
 
 interface TeamMember {
   id: string
   name: string
   email: string
   role: string
-  department: string
-  status: 'active' | 'inactive'
-  permissions: string[]
+  isActive: boolean
+  department?: {
+    id: string
+    name: string
+    code: string | null
+  }
+  _count?: {
+    assignedProtocolsSimplified: number
+  }
 }
 
 export default function EquipePage() {
-  const { user } = useAdminAuth()
+  const { user, apiRequest } = useAdminAuth()
+  const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<TeamMember | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<TeamMember | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    // Mock data - substituir por chamada real à API
-    const mockData: TeamMember[] = [
-      {
-        id: '1',
-        name: 'João Silva',
-        email: 'joao.silva@cidade.gov.br',
-        role: 'ADMIN',
-        department: 'Secretaria de Saúde',
-        status: 'active',
-        permissions: ['protocols:read', 'protocols:write', 'team:read']
-      },
-      {
-        id: '2',
-        name: 'Maria Santos',
-        email: 'maria.santos@cidade.gov.br',
-        role: 'COORDINATOR',
-        department: 'Secretaria de Educação',
-        status: 'active',
-        permissions: ['protocols:read', 'services:read']
-      },
-      {
-        id: '3',
-        name: 'Pedro Oliveira',
-        email: 'pedro.oliveira@cidade.gov.br',
-        role: 'USER',
-        department: 'Secretaria de Cultura',
-        status: 'active',
-        permissions: ['protocols:read']
-      },
-      {
-        id: '4',
-        name: 'Ana Costa',
-        email: 'ana.costa@cidade.gov.br',
-        role: 'MANAGER',
-        department: 'Secretaria de Assistência Social',
-        status: 'active',
-        permissions: ['protocols:read', 'protocols:write', 'reports:department']
-      },
-      {
-        id: '5',
-        name: 'Carlos Ferreira',
-        email: 'carlos.ferreira@cidade.gov.br',
-        role: 'USER',
-        department: 'Secretaria de Obras',
-        status: 'inactive',
-        permissions: ['protocols:read']
-      }
-    ]
-
-    setTimeout(() => {
-      setTeamMembers(mockData)
-      setLoading(false)
-    }, 500)
+    loadTeamMembers()
   }, [])
+
+  const loadTeamMembers = async () => {
+    setLoading(true)
+    try {
+      const data = await apiRequest('/admin/team')
+      if (data.success && data.data?.teamMembers) {
+        setTeamMembers(data.data.teamMembers)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar equipe:', error)
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar a equipe',
+        variant: 'destructive'
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreateUser = () => {
+    setSelectedUser(null)
+    setModalOpen(true)
+  }
+
+  const handleEditUser = (member: TeamMember) => {
+    setSelectedUser(member)
+    setModalOpen(true)
+  }
+
+  const handleDeleteUser = (member: TeamMember) => {
+    setUserToDelete(member)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return
+
+    setDeleting(true)
+    try {
+      const data = await apiRequest(`/admin/team/${userToDelete.id}`, {
+        method: 'DELETE'
+      })
+
+      toast({
+        title: 'Sucesso',
+        description: data.message || 'Usuário excluído com sucesso'
+      })
+
+      loadTeamMembers()
+    } catch (error) {
+      console.error('Erro ao excluir usuário:', error)
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Não foi possível excluir o usuário',
+        variant: 'destructive'
+      })
+    } finally {
+      setDeleting(false)
+      setDeleteDialogOpen(false)
+      setUserToDelete(null)
+    }
+  }
+
+  const handleModalSuccess = () => {
+    toast({
+      title: 'Sucesso',
+      description: selectedUser ? 'Usuário atualizado com sucesso' : 'Usuário criado com sucesso'
+    })
+    loadTeamMembers()
+  }
 
   const filteredMembers = teamMembers.filter(member =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.department.toLowerCase().includes(searchTerm.toLowerCase())
+    (member.department?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const getRoleBadge = (role: string) => {
@@ -133,8 +177,8 @@ export default function EquipePage() {
     )
   }
 
-  const activeMembers = teamMembers.filter(m => m.status === 'active').length
-  const inactiveMembers = teamMembers.filter(m => m.status === 'inactive').length
+  const activeMembers = teamMembers.filter(m => m.isActive).length
+  const inactiveMembers = teamMembers.filter(m => !m.isActive).length
   const adminCount = teamMembers.filter(m => ['ADMIN', 'SUPER_ADMIN'].includes(m.role)).length
 
   return (
@@ -150,7 +194,7 @@ export default function EquipePage() {
             Gerencie usuários, permissões e acessos do sistema
           </p>
         </div>
-        <Button className="flex items-center">
+        <Button className="flex items-center" onClick={handleCreateUser}>
           <UserPlus className="h-4 w-4 mr-2" />
           Adicionar Membro
         </Button>
@@ -272,12 +316,12 @@ export default function EquipePage() {
                     <TableCell>
                       <div className="flex items-center">
                         <Building2 className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {member.department}
+                        {member.department?.name || 'Sem departamento'}
                       </div>
                     </TableCell>
                     <TableCell>{getRoleBadge(member.role)}</TableCell>
                     <TableCell>
-                      {member.status === 'active' ? (
+                      {member.isActive ? (
                         <Badge variant="outline" className="bg-green-100 text-green-800">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Ativo
@@ -299,20 +343,19 @@ export default function EquipePage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditUser(member)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Shield className="h-4 w-4 mr-2" />
-                            Permissões
                           </DropdownMenuItem>
                           <DropdownMenuItem>
                             <Mail className="h-4 w-4 mr-2" />
                             Enviar Email
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDeleteUser(member)}
+                          >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Remover
                           </DropdownMenuItem>
@@ -326,6 +369,50 @@ export default function EquipePage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Modal de Gerenciamento de Usuário */}
+      <UserManagementModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false)
+          setSelectedUser(null)
+        }}
+        onSuccess={handleModalSuccess}
+        user={selectedUser ? {
+          id: selectedUser.id,
+          name: selectedUser.name,
+          email: selectedUser.email,
+          role: selectedUser.role,
+          departmentId: selectedUser.department?.id,
+          isActive: selectedUser.isActive
+        } : null}
+        currentUserRole={user?.role || 'USER'}
+        currentUserDepartmentId={user?.departmentId}
+      />
+
+      {/* Diálogo de Confirmação de Exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário <strong>{userToDelete?.name}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

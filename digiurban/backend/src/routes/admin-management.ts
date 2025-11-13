@@ -102,6 +102,57 @@ interface ProtocolFilterInput {
 
 // ====================== HELPER FUNCTIONS ======================
 
+// Hierarquia de roles para validação
+const ROLE_HIERARCHY: Record<string, number> = {
+  GUEST: 0,
+  USER: 1,
+  COORDINATOR: 2,
+  MANAGER: 3,
+  ADMIN: 4,
+  SUPER_ADMIN: 5
+};
+
+// ✅ Lista oficial das 13 secretarias do sistema
+const OFFICIAL_DEPARTMENTS = [
+  'Secretaria de Agricultura',
+  'Secretaria de Assistência Social',
+  'Secretaria de Cultura',
+  'Secretaria de Educação',
+  'Secretaria de Esportes',
+  'Secretaria de Habitação',
+  'Secretaria de Meio Ambiente',
+  'Secretaria de Obras Públicas',
+  'Secretaria de Planejamento Urbano',
+  'Secretaria de Saúde',
+  'Secretaria de Segurança Pública',
+  'Secretaria de Serviços Públicos',
+  'Secretaria de Turismo'
+];
+
+function getRoleLevel(role: string): number {
+  return ROLE_HIERARCHY[role] || 0;
+}
+
+function canManageRole(managerRole: string, targetRole: string): boolean {
+  const managerLevel = getRoleLevel(managerRole);
+  const targetLevel = getRoleLevel(targetRole);
+  // Usuário só pode gerenciar roles inferiores ao dele
+  return managerLevel > targetLevel;
+}
+
+async function validateDepartment(departmentId: string): Promise<boolean> {
+  const department = await prisma.department.findFirst({
+    where: {
+      id: departmentId,
+      isActive: true,
+      name: {
+        in: OFFICIAL_DEPARTMENTS
+      }
+    }
+  });
+  return !!department;
+}
+
 function getStringParam(param: string | string[] | undefined): string {
   if (Array.isArray(param)) return param[0] || '';
   if (typeof param === 'string') return param;
@@ -299,14 +350,14 @@ const createUserSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: strongPasswordSchema, // ✅ Validação de senha forte
-  role: z.enum(['USER', 'COORDINATOR', 'MANAGER']),
+  role: z.enum(['GUEST', 'USER', 'COORDINATOR', 'MANAGER', 'ADMIN']),
   departmentId: z.string().optional()
         });
 
 const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
-  role: z.enum(['USER', 'COORDINATOR', 'MANAGER']).optional(),
+  role: z.enum(['GUEST', 'USER', 'COORDINATOR', 'MANAGER', 'ADMIN']).optional(),
   departmentId: z.string().optional(),
   isActive: z.boolean().optional()
         });
@@ -629,6 +680,16 @@ router.post(
     const data = createUserSchema.parse(req.body);
     const { user } = req;
 
+    // ✅ VALIDAÇÃO DE HIERARQUIA: Verificar se o usuário pode criar o role solicitado
+    if (!canManageRole(user.role, data.role)) {
+      return res.status(403).json(
+        createErrorResponse(
+          'FORBIDDEN',
+          `Você não pode criar usuários com role ${data.role}. Apenas roles inferiores ao seu (${user.role}) são permitidos.`
+        )
+      );
+    }
+
     // Verificar se o email já existe
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -648,19 +709,15 @@ router.post(
       departmentId = user.departmentId; // Forçar departamento do usuário
     }
 
-    // Verificar se o departamento existe (se informado)
+    // ✅ VALIDAÇÃO PROFISSIONAL: Verificar se o departamento existe e é oficial
     if (departmentId) {
-      // ✅ Validar departamento global (sem tenantId)
-      const department = await prisma.department.findFirst({
-        where: {
-          id: departmentId,
-          isActive: true
-        }
-        });
-
-      if (!department) {
-        return res.status(404).json(
-          createErrorResponse('NOT_FOUND', 'Departamento não encontrado')
+      const isValid = await validateDepartment(departmentId);
+      if (!isValid) {
+        return res.status(400).json(
+          createErrorResponse(
+            'INVALID_DEPARTMENT',
+            'Departamento inválido ou não encontrado. Apenas as 13 secretarias oficiais podem ser selecionadas.'
+          )
         );
       }
     }
@@ -745,6 +802,26 @@ router.put(
       );
     }
 
+    // ✅ VALIDAÇÃO DE HIERARQUIA: Verificar se o usuário pode gerenciar o role do target
+    if (!canManageRole(user.role, targetUser.role)) {
+      return res.status(403).json(
+        createErrorResponse(
+          'FORBIDDEN',
+          `Você não pode editar usuários com role ${targetUser.role}. Apenas roles inferiores ao seu (${user.role}) são permitidos.`
+        )
+      );
+    }
+
+    // ✅ VALIDAÇÃO DE HIERARQUIA: Se está alterando o role, verificar se pode criar o novo role
+    if (data.role && !canManageRole(user.role, data.role)) {
+      return res.status(403).json(
+        createErrorResponse(
+          'FORBIDDEN',
+          `Você não pode atribuir o role ${data.role}. Apenas roles inferiores ao seu (${user.role}) são permitidos.`
+        )
+      );
+    }
+
     // Verificar se não está tentando alterar seu próprio usuário
     if (targetUser.id === user.id) {
       return res.status(400).json(
@@ -752,18 +829,15 @@ router.put(
       );
     }
 
-    // Verificar se o departamento existe (se informado)
+    // ✅ VALIDAÇÃO PROFISSIONAL: Verificar se o departamento existe e é oficial
     if (data.departmentId) {
-      const department = await prisma.department.findFirst({
-        where: {
-          id: data.departmentId,
-          isActive: true
-        }
-        });
-
-      if (!department) {
-        return res.status(404).json(
-          createErrorResponse('NOT_FOUND', 'Departamento não encontrado')
+      const isValid = await validateDepartment(data.departmentId);
+      if (!isValid) {
+        return res.status(400).json(
+          createErrorResponse(
+            'INVALID_DEPARTMENT',
+            'Departamento inválido ou não encontrado. Apenas as 13 secretarias oficiais podem ser selecionadas.'
+          )
         );
       }
     }
@@ -804,6 +878,101 @@ router.put(
 );
 
 /**
+ * DELETE /api/admin/team/:id - Excluir membro da equipe
+ */
+router.delete(
+  '/team/:id',
+  requirePermission('team:manage'),
+  auditLog('DELETE_TEAM_MEMBER'),
+  handleAsyncRoute(async (req, res) => {
+    const { user } = req;
+    const userId = getStringParam(req.params.id);
+
+    if (!userId) {
+      return res.status(400).json(
+        createErrorResponse('VALIDATION_ERROR', 'ID do usuário é obrigatório')
+      );
+    }
+
+    // Verificar se o usuário existe e tem acesso
+    const userWhereParams: {
+      departmentId?: string;
+      excludeSuperAdmin: boolean;
+    } = {
+      excludeSuperAdmin: true
+        };
+
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.departmentId) {
+      userWhereParams.departmentId = user.departmentId;
+    }
+
+    const targetUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        ...createUserWhereClause(userWhereParams)
+        }
+        });
+
+    if (!targetUser) {
+      return res.status(404).json(
+        createErrorResponse('NOT_FOUND', 'Usuário não encontrado ou sem acesso')
+      );
+    }
+
+    // ✅ VALIDAÇÃO DE HIERARQUIA: Verificar se o usuário pode excluir o role do target
+    if (!canManageRole(user.role, targetUser.role)) {
+      return res.status(403).json(
+        createErrorResponse(
+          'FORBIDDEN',
+          `Você não pode excluir usuários com role ${targetUser.role}. Apenas roles inferiores ao seu (${user.role}) são permitidos.`
+        )
+      );
+    }
+
+    // Verificar se não está tentando excluir seu próprio usuário
+    if (targetUser.id === user.id) {
+      return res.status(400).json(
+        createErrorResponse('VALIDATION_ERROR', 'Você não pode excluir seu próprio usuário')
+      );
+    }
+
+    // Verificar se o usuário tem protocolos atribuídos
+    const assignedProtocolsCount = await prisma.protocolSimplified.count({
+      where: {
+        assignedUserId: userId
+      }
+    });
+
+    if (assignedProtocolsCount > 0) {
+      // Em vez de excluir, apenas desativar o usuário
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          isActive: false,
+          updatedAt: new Date()
+        }
+      });
+
+      return res.json(
+        createSuccessResponse(
+          { userId, assignedProtocols: assignedProtocolsCount },
+          `Usuário desativado pois possui ${assignedProtocolsCount} protocolo(s) atribuído(s). Para preservar o histórico, o usuário foi desativado ao invés de excluído.`
+        )
+      );
+    }
+
+    // Se não tem protocolos, pode excluir
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    return res.json(
+      createSuccessResponse({ userId }, 'Usuário excluído com sucesso')
+    );
+  })
+);
+
+/**
  * GET /api/admin/departments - Listar departamentos
  */
 router.get(
@@ -812,10 +981,13 @@ router.get(
   handleAsyncRoute(async (req, res) => {
     const { user } = req;
 
-    // ✅ Listar departamentos globais (sem filtro de tenant)
+    // ✅ Listar apenas departamentos oficiais ativos
     const departments = await prisma.department.findMany({
       where: {
-        isActive: true
+        isActive: true,
+        name: {
+          in: OFFICIAL_DEPARTMENTS
+        }
         },
       include: {
         _count: {
@@ -839,6 +1011,16 @@ router.get(
       servicesCount: dept._count.servicesSimplified,
       protocolsCount: dept._count.protocolsSimplified
         }));
+
+    // ✅ Log profissional para auditoria
+    console.log(`📊 [DEPARTMENTS] Retornando ${departmentList.length}/${OFFICIAL_DEPARTMENTS.length} departamentos oficiais`);
+
+    if (departmentList.length < OFFICIAL_DEPARTMENTS.length) {
+      console.warn(`⚠️  [DEPARTMENTS] Alguns departamentos oficiais não foram encontrados no banco de dados`);
+      const foundNames = departmentList.map(d => d.name);
+      const missing = OFFICIAL_DEPARTMENTS.filter(name => !foundNames.includes(name));
+      console.warn(`   Departamentos faltando: ${missing.join(', ')}`);
+    }
 
     return res.json(createSuccessResponse({ departments: departmentList }));
   })

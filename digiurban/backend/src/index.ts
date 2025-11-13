@@ -112,6 +112,15 @@ app.use('/api/public', publicRoutes);
 const serviceRoutes = require('./routes/services').default;
 app.use('/api/services', serviceRoutes);
 
+// 📊 ROTAS DE STATS DE DEPARTAMENTOS (antes das rotas genéricas)
+try {
+  const departmentStatsRoutes = require('./routes/department-stats').default;
+  app.use('/api/departments', departmentStatsRoutes);
+  console.log('✅ Rotas de stats de departamentos carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas de stats:', error);
+}
+
 // 🔥 NOVAS ROTAS DINÂMICAS (Sistema Híbrido)
 console.log('🔥 Carregando rotas dinâmicas...');
 try {
@@ -120,6 +129,15 @@ try {
   console.log('✅ Rotas dinâmicas de serviços carregadas!');
 } catch (error) {
   console.error('❌ Erro ao carregar rotas dinâmicas:', error);
+}
+
+// 🔧 ROTAS DE GESTÃO ADMINISTRATIVA (team, departments) - DEVEM VIR PRIMEIRO
+try {
+  const adminManagementRoutes = require('./routes/admin-management').default;
+  app.use('/api/admin', adminManagementRoutes);
+  console.log('✅ Rotas de gestão administrativa carregadas! (team, services, departments)');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas administrativas:', error);
 }
 
 // 🔧 ROTAS ADMIN DINÂMICAS
@@ -131,13 +149,13 @@ try {
   console.error('❌ Erro ao carregar rotas admin dinâmicas:', error);
 }
 
-// 📊 ROTAS DE STATS DE DEPARTAMENTOS
+// 📊 ROTAS DE DASHBOARD DE DEPARTAMENTOS (genérica para todas as secretarias)
 try {
-  const departmentStatsRoutes = require('./routes/department-stats').default;
-  app.use('/api/departments', departmentStatsRoutes);
-  console.log('✅ Rotas de stats de departamentos carregadas!');
+  const departmentDashboardRoutes = require('./routes/department-dashboard').default;
+  app.use('/api/admin', departmentDashboardRoutes);
+  console.log('✅ Rotas de dashboard de departamentos carregadas!');
 } catch (error) {
-  console.error('❌ Erro ao carregar rotas de stats:', error);
+  console.error('❌ Erro ao carregar rotas de dashboard:', error);
 }
 
 // Rota de busca de cidadão (usado por todas as secretarias)
@@ -163,15 +181,6 @@ try {
   console.log('✅ Rotas de protocolos carregadas!');
 } catch (error) {
   console.error('❌ Erro ao carregar rotas de protocolos:', error);
-}
-
-// Rotas administrativas
-try {
-  const adminManagementRoutes = require('./routes/admin-management').default;
-  app.use('/api/admin/management', adminManagementRoutes);
-  console.log('✅ Rotas de gestão administrativa carregadas!');
-} catch (error) {
-  console.error('❌ Erro ao carregar rotas administrativas:', error);
 }
 
 // Carregamento síncrono de todas as rotas ANTES do servidor iniciar
