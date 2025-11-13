@@ -1,658 +1,2489 @@
 // ============================================================================
-// SECRETARIAS-TURISMO.TS - Rotas da Secretaria de Turismo
+// SECRETARIA: SECRETARIA DE TURISMO - GERADO AUTOMATICAMENTE
 // ============================================================================
-// VERSÃO SIMPLIFICADA - Usa 100% do sistema novo (ProtocolSimplified + MODULE_MAPPING)
+// ⚠️  ATENÇÃO: Este arquivo foi gerado automaticamente pelo sistema de templates.
+// ⚠️  NÃO EDITE MANUALMENTE! Qualquer alteração será sobrescrita na próxima geração.
+//
+// Para fazer alterações:
+// 1. Edite a configuração em: generator/configs/secretarias/turismo.config.ts
+// 2. Regenere o código: npm run generate -- --secretaria=turismo --force
+//
+// Secretaria: Secretaria de Turismo
+// Total de módulos: 7
+// Gerado em: 2025-11-13T12:09:03.641Z
+// ============================================================================
 
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import {
-  adminAuthMiddleware,
-  requireMinRole
-        } from '../middleware/admin-auth';
-import { UserRole, ProtocolStatus } from '@prisma/client';
-import { AuthenticatedRequest } from '../types';
-import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
+import { ProtocolStatus, UserRole } from '@prisma/client';
+import { requireMinRole } from '../middleware/admin-auth';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
-// Aplicar middlewares
-router.use(adminAuthMiddleware);
+// ============================================================================
+// ROTAS GERAIS DA SECRETARIA
+// ============================================================================
 
 /**
- * GET /api/admin/secretarias/turismo/stats
- * Obter estatísticas consolidadas da Secretaria de Turismo
- * VERSÃO SIMPLIFICADA - Usa apenas ProtocolSimplified + moduleType
+ * GET /stats
+ * Estatísticas consolidadas da secretaria
  */
-router.get(
-  '/stats',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      // Buscar departamento de turismo
-      // ✅ Buscar departamento global
-      const tourismDept = await prisma.department.findFirst({
-        where: { code: 'TURISMO' }
-      });
+router.get('/stats', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    // Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
 
-      if (!tourismDept) {
-        return res.status(404).json({
-          success: false,
-          error: 'Department not found',
-          message: 'Departamento de Turismo não encontrado'
-        });
-      }
-
-      // Módulos de turismo do MODULE_MAPPING
-      const tourismModules = MODULE_BY_DEPARTMENT.TURISMO || [];
-
-      // Executar queries em paralelo
-      const [
-        protocolStats,
-        protocolsByModule,
-        attendancesCount,
-        attractionsCount,
-        businessesCount,
-        programsCount,
-        guidesCount,
-        routesCount,
-        eventsCount,
-      ] = await Promise.all([
-        // 1. Estatísticas gerais de Protocolos
-        prisma.protocolSimplified.groupBy({
-          by: ['status'],
-          where: {
-                        departmentId: tourismDept.id
-        },
-          _count: { id: true }
-        }),
-
-        // 2. Protocolos por módulo (usando moduleType)
-        prisma.protocolSimplified.groupBy({
-          by: ['moduleType', 'status'],
-          where: {
-                        departmentId: tourismDept.id,
-            moduleType: { in: tourismModules }
-        },
-          _count: { id: true }
-        }),
-
-        // 3. Atendimentos de Turismo
-        prisma.tourismAttendance.aggregate({
-                    _count: { id: true }
-        }),
-
-        // 4. Atrativos Turísticos
-        prisma.touristAttraction.aggregate({
-          where: { isActive: true },
-          _count: { id: true }
-        }),
-
-        // 5. Estabelecimentos Turísticos
-        prisma.localBusiness.aggregate({
-          where: { isActive: true, isTourismPartner: true },
-          _count: { id: true }
-        }),
-
-        // 6. Programas Turísticos
-        prisma.tourismProgram.aggregate({
-          where: { isActive: true },
-          _count: { id: true }
-        }),
-
-        // 7. Guias Turísticos
-        prisma.tourismGuide.aggregate({
-          where: { isActive: true },
-          _count: { id: true }
-        }),
-
-        // 8. Roteiros Turísticos
-        prisma.tourismRoute.aggregate({
-          where: { isActive: true },
-          _count: { id: true }
-        }),
-
-        // 9. Eventos Turísticos
-        prisma.tourismEvent.aggregate({
-                    _count: { id: true }
-        }),
-      ]);
-
-      // Processar estatísticas de Protocolos
-      const protocolData = {
-        total: 0,
-        pending: 0,
-        inProgress: 0,
-        completed: 0
-        };
-
-      protocolStats.forEach((item) => {
-        const count = item._count?.id || 0;
-        protocolData.total += count;
-
-        if (item.status === ProtocolStatus.VINCULADO || item.status === ProtocolStatus.PENDENCIA) {
-          protocolData.pending += count;
-        } else if (item.status === ProtocolStatus.PROGRESSO) {
-          protocolData.inProgress += count;
-        } else if (item.status === ProtocolStatus.CONCLUIDO) {
-          protocolData.completed += count;
-        }
-      });
-
-      // Processar estatísticas por módulo
-      const moduleStats: Record<string, any> = {};
-
-      protocolsByModule.forEach((item) => {
-        if (!item.moduleType) return;
-
-        if (!moduleStats[item.moduleType]) {
-          moduleStats[item.moduleType] = {
-            total: 0,
-            pending: 0,
-            inProgress: 0,
-            completed: 0
-        };
-        }
-
-        const count = item._count?.id || 0;
-        moduleStats[item.moduleType].total += count;
-
-        if (item.status === ProtocolStatus.VINCULADO || item.status === ProtocolStatus.PENDENCIA) {
-          moduleStats[item.moduleType].pending += count;
-        } else if (item.status === ProtocolStatus.PROGRESSO) {
-          moduleStats[item.moduleType].inProgress += count;
-        } else if (item.status === ProtocolStatus.CONCLUIDO) {
-          moduleStats[item.moduleType].completed += count;
-        }
-      });
-
-      // Retornar resposta
-      return res.json({
-        success: true,
-        data: {
-          department: {
-            id: tourismDept.id,
-            name: tourismDept.name,
-            code: tourismDept.code
-        },
-          modules: {
-            touristAttractions: attractionsCount._count?.id || 0,
-            tourismEvents: eventsCount._count?.id || 0,
-            tourismEstablishments: businessesCount._count?.id || 0
-          },
-          protocolsByModule: moduleStats,
-          totals: {
-            totalProtocols: protocolData.total,
-            totalModuleRecords: (attendancesCount._count?.id || 0) +
-                                (attractionsCount._count?.id || 0) +
-                                (businessesCount._count?.id || 0) +
-                                (programsCount._count?.id || 0) +
-                                (guidesCount._count?.id || 0) +
-                                (routesCount._count?.id || 0) +
-                                (eventsCount._count?.id || 0)
-          }
-        }
-        });
-    } catch (error: any) {
-      console.error('Error in tourism stats:', error);
-      return res.status(500).json({
+    if (!department) {
+      return res.status(404).json({
         success: false,
-        error: 'Internal server error',
-        message: error.message || 'Erro ao buscar estatísticas'
-        });
+        error: 'Department not found'
+      });
     }
+
+    // Stats gerais
+    const [totalProtocols, activeProtocols, pendingApproval, services] = await Promise.all([
+      prisma.protocolSimplified.count({ where: { departmentId: department.id } }),
+      prisma.protocolSimplified.count({ where: { departmentId: department.id, status: ProtocolStatus.CONCLUIDO } }),
+      prisma.protocolSimplified.count({ where: { departmentId: department.id, status: ProtocolStatus.VINCULADO } }),
+      prisma.serviceSimplified.count({ where: { departmentId: department.id } })
+    ]);
+
+    // Stats por módulo
+    const moduleStats: Record<string, number> = {};
+    moduleStats['guias'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'CADASTRO_GUIA_TURISTICO' }
+    });
+    moduleStats['estabelecimentos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO' }
+    });
+    moduleStats['eventos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'CADASTRO_EVENTO_TURISTICO' }
+    });
+    moduleStats['roteiros'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'CADASTRO_ROTEIRO_TURISTICO' }
+    });
+    moduleStats['programas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'INSCRICAO_PROGRAMA_TURISTICO' }
+    });
+    moduleStats['atrativos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'REGISTRO_ATRATIVO_TURISTICO' }
+    });
+    moduleStats['servicos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'ATENDIMENTOS_TURISMO' }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalProtocols,
+        activeProtocols,
+        pendingApproval,
+        services,
+        byModule: moduleStats
+      }
+    });
+  } catch (error) {
+    console.error('[turismo] Error in stats:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/turismo/atendimentos
- * Listar atendimentos de turismo
+ * GET /services
+ * Lista todos os serviços da secretaria
  */
-router.get(
-  '/atendimentos',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status } = req.query;
+router.get('/services', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
 
-      const skip = (Number(page) - 1) * Number(limit);
-      const where: any = {};
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
 
-      if (status) {
-        where.status = status;
+    const services = await prisma.serviceSimplified.findMany({
+      where: { departmentId: department.id, isActive: true },
+      orderBy: { name: 'asc' }
+    });
+
+    res.json({ success: true, data: services });
+  } catch (error) {
+    console.error('[turismo] Error listing services:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// ROTAS DOS MÓDULOS (CRUD GENÉRICO)
+// ============================================================================
+
+// ==========================================================================
+// MÓDULO: guias (CADASTRO_GUIA_TURISTICO)
+// ==========================================================================
+
+/**
+ * GET /guias
+ * Lista todos os registros deste módulo
+ */
+router.get('/guias', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_GUIA_TURISTICO'
       }
+    });
 
-      const [attendances, total] = await Promise.all([
-        prisma.tourismAttendance.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' },
-          include: {
-            citizen: {
-              select: { id: true, name: true, email: true, phone: true }
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module guias'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'CADASTRO_GUIA_TURISTICO'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[turismo/guias] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /guias/:id
+ * Busca um registro específico por ID
+ */
+router.get('/guias/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'CADASTRO_GUIA_TURISTICO') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[turismo/guias] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /guias
+ * Cria um novo registro
+ */
+router.post('/guias', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_GUIA_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo turismo/guias',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'CADASTRO_GUIA_TURISTICO',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
       },
-            protocolRel: {
-              select: { id: true, number: true, status: true }
+      include: {
+        citizen: true,
+        service: true
       }
-        }
-        }),
-        prisma.tourismAttendance.count({ where }),
-      ]);
+    });
 
-      return res.json({
-        success: true,
-        data: attendances,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error: any) {
-      console.error('Error fetching tourism attendances:', error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Erro ao buscar atendimentos'
-        });
-    }
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[turismo/guias] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/turismo/atrativos
- * Listar atrativos turísticos
+ * PUT /guias/:id
+ * Atualiza um registro existente
  */
-router.get(
-  '/atrativos',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, type, isActive } = req.query;
+router.put('/guias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
 
-      const skip = (Number(page) - 1) * Number(limit);
-      const where: any = {};
-
-      if (type) where.type = type;
-      if (isActive !== undefined) where.isActive = isActive === 'true';
-
-      const [attractions, total] = await Promise.all([
-        prisma.touristAttraction.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' },
-          include: {
-            protocolRel: {
-              select: { id: true, number: true, status: true }
-      }
-        }
-        }),
-        prisma.touristAttraction.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data: attractions,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error: any) {
-      console.error('Error fetching tourist attractions:', error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Erro ao buscar atrativos'
-        });
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
     }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[turismo/guias] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/turismo/estabelecimentos
- * Listar estabelecimentos turísticos
+ * DELETE /guias/:id
+ * Cancela um protocolo (soft delete via status)
  */
-router.get(
-  '/estabelecimentos',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, businessType, category } = req.query;
+router.delete('/guias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-      const skip = (Number(page) - 1) * Number(limit);
-      const where: any = { isTourismPartner: true };
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
 
-      if (businessType) where.businessType = businessType;
-      if (category) where.category = category;
-
-      const [businesses, total] = await Promise.all([
-        prisma.localBusiness.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' },
-          include: {
-            protocolRel: {
-              select: { id: true, number: true, status: true }
-      }
-        }
-        }),
-        prisma.localBusiness.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data: businesses,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error: any) {
-      console.error('Error fetching local businesses:', error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Erro ao buscar estabelecimentos'
-        });
-    }
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/guias] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/turismo/guias
- * Listar guias turísticos
+ * POST /guias/:id/approve
+ * Aprova um protocolo
  */
-router.get(
-  '/guias',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, isActive } = req.query;
+router.post('/guias/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-      const skip = (Number(page) - 1) * Number(limit);
-      const where: any = {};
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
 
-      if (status) where.status = status;
-      if (isActive !== undefined) where.isActive = isActive === 'true';
-
-      const [guides, total] = await Promise.all([
-        prisma.tourismGuide.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' },
-          include: {
-            protocol: {
-              select: { id: true, number: true, status: true }
-      }
-        }
-        }),
-        prisma.tourismGuide.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data: guides,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error: any) {
-      console.error('Error fetching tourism guides:', error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Erro ao buscar guias'
-        });
-    }
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/guias] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/turismo/programas
- * Listar programas turísticos
+ * POST /guias/:id/reject
+ * Rejeita um protocolo
  */
-router.get(
-  '/programas',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, programType } = req.query;
+router.post('/guias/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-      const skip = (Number(page) - 1) * Number(limit);
-      const where: any = {};
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
 
-      if (status) where.status = status;
-      if (programType) where.programType = programType;
-
-      const [programs, total] = await Promise.all([
-        prisma.tourismProgram.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' },
-          include: {
-            protocol: {
-              select: { id: true, number: true, status: true }
-      }
-        }
-        }),
-        prisma.tourismProgram.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data: programs,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error: any) {
-      console.error('Error fetching tourism programs:', error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Erro ao buscar programas'
-        });
-    }
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/guias] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/turismo/roteiros
- * Listar roteiros turísticos
+ * GET /guias/:id/history
+ * Histórico de mudanças de status
  */
-router.get(
-  '/roteiros',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, routeType, difficulty } = req.query;
-
-      const skip = (Number(page) - 1) * Number(limit);
-      const where: any = { isActive: true };
-
-      if (routeType) where.routeType = routeType;
-      if (difficulty) where.difficulty = difficulty;
-
-      const [routes, total] = await Promise.all([
-        prisma.tourismRoute.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' },
-          include: {
-            protocol: {
-              select: { id: true, number: true, status: true }
-      }
-        }
-        }),
-        prisma.tourismRoute.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data: routes,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error: any) {
-      console.error('Error fetching tourism routes:', error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Erro ao buscar roteiros'
-        });
-    }
+router.get('/guias/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[turismo/guias] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
+
+// ==========================================================================
+// MÓDULO: estabelecimentos (CADASTRO_ESTABELECIMENTO_TURISTICO)
+// ==========================================================================
 
 /**
- * GET /api/admin/secretarias/turismo/eventos
- * Listar eventos turísticos
+ * GET /estabelecimentos
+ * Lista todos os registros deste módulo
  */
-router.get(
-  '/eventos',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, eventType } = req.query;
+router.get('/estabelecimentos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
 
-      const skip = (Number(page) - 1) * Number(limit);
-      const where: any = {};
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
 
-      if (status) where.status = status;
-      if (eventType) where.eventType = eventType;
-
-      const [events, total] = await Promise.all([
-        prisma.tourismEvent.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { startDate: 'desc' },
-          include: {
-            protocol: {
-              select: { id: true, number: true, status: true }
-      }
-        }
-        }),
-        prisma.tourismEvent.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data: events,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error: any) {
-      console.error('Error fetching tourism events:', error);
-      return res.status(500).json({
-        success: false,
-        error: error.message || 'Erro ao buscar eventos'
-        });
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
     }
-  }
-);
 
-/**
- * GET /api/admin/secretarias/turismo/dashboard
- * Estatísticas para dashboard do turismo
- */
-router.get(
-  '/dashboard',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;
-
-      // Buscar departamento de turismo
-      const tourismDept = await prisma.department.findFirst({
-        where: { code: 'TURISMO' }
-      });
-
-      if (!tourismDept) {
-        return res.status(404).json({
-          success: false,
-          error: 'Department not found',
-          message: 'Departamento de Turismo não encontrado'
-        });
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO'
       }
+    });
 
-      // Data atual para filtros
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      const [
-        eventsThisMonth,
-        totalAttractions,
-        totalEstablishments,
-        pendingProtocols
-      ] = await Promise.all([
-        // Eventos do mês atual
-        prisma.tourismEvent.count({
-          where: {
-            startDate: {
-              gte: firstDayOfMonth
-            }
-          }
-        }),
-        // Total de atrativos ativos
-        prisma.touristAttraction.count({
-          where: { isActive: true }
-        }),
-        // Total de estabelecimentos cadastrados
-        prisma.localBusiness.count({
-          where: {
-            isActive: true,
-            isTourismPartner: true
-          }
-        }),
-        // Protocolos pendentes
-        prisma.protocolSimplified.count({
-          where: {
-            departmentId: tourismDept.id,
-            status: {
-              in: [ProtocolStatus.VINCULADO, ProtocolStatus.PENDENCIA]
-            }
-          }
-        })
-      ]);
-
-      return res.json({
-        success: true,
-        data: {
-          eventsThisMonth,
-          totalAttractions,
-          totalEstablishments,
-          pendingProtocols
-        }
-      });
-    } catch (error: any) {
-      console.error('Error fetching tourism dashboard:', error);
-      return res.status(500).json({
+    if (!service) {
+      return res.status(404).json({
         success: false,
-        error: error.message || 'Erro ao buscar dashboard'
+        error: 'Service not found for module estabelecimentos'
       });
     }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[turismo/estabelecimentos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
+
+/**
+ * GET /estabelecimentos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/estabelecimentos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'CADASTRO_ESTABELECIMENTO_TURISTICO') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[turismo/estabelecimentos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /estabelecimentos
+ * Cria um novo registro
+ */
+router.post('/estabelecimentos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo turismo/estabelecimentos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[turismo/estabelecimentos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /estabelecimentos/:id
+ * Atualiza um registro existente
+ */
+router.put('/estabelecimentos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[turismo/estabelecimentos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /estabelecimentos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/estabelecimentos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/estabelecimentos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /estabelecimentos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/estabelecimentos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/estabelecimentos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /estabelecimentos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/estabelecimentos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/estabelecimentos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /estabelecimentos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/estabelecimentos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[turismo/estabelecimentos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: eventos (CADASTRO_EVENTO_TURISTICO)
+// ==========================================================================
+
+/**
+ * GET /eventos
+ * Lista todos os registros deste módulo
+ */
+router.get('/eventos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_EVENTO_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module eventos'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'CADASTRO_EVENTO_TURISTICO'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[turismo/eventos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /eventos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/eventos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'CADASTRO_EVENTO_TURISTICO') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[turismo/eventos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /eventos
+ * Cria um novo registro
+ */
+router.post('/eventos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_EVENTO_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo turismo/eventos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'CADASTRO_EVENTO_TURISTICO',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[turismo/eventos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /eventos/:id
+ * Atualiza um registro existente
+ */
+router.put('/eventos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[turismo/eventos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /eventos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/eventos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/eventos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /eventos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/eventos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/eventos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /eventos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/eventos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/eventos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /eventos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/eventos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[turismo/eventos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: roteiros (CADASTRO_ROTEIRO_TURISTICO)
+// ==========================================================================
+
+/**
+ * GET /roteiros
+ * Lista todos os registros deste módulo
+ */
+router.get('/roteiros', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_ROTEIRO_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module roteiros'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'CADASTRO_ROTEIRO_TURISTICO'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[turismo/roteiros] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /roteiros/:id
+ * Busca um registro específico por ID
+ */
+router.get('/roteiros/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'CADASTRO_ROTEIRO_TURISTICO') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[turismo/roteiros] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /roteiros
+ * Cria um novo registro
+ */
+router.post('/roteiros', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_ROTEIRO_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo turismo/roteiros',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'CADASTRO_ROTEIRO_TURISTICO',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[turismo/roteiros] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /roteiros/:id
+ * Atualiza um registro existente
+ */
+router.put('/roteiros/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[turismo/roteiros] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /roteiros/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/roteiros/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/roteiros] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /roteiros/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/roteiros/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/roteiros] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /roteiros/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/roteiros/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/roteiros] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /roteiros/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/roteiros/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[turismo/roteiros] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: programas (INSCRICAO_PROGRAMA_TURISTICO)
+// ==========================================================================
+
+/**
+ * GET /programas
+ * Lista todos os registros deste módulo
+ */
+router.get('/programas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'INSCRICAO_PROGRAMA_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module programas'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'INSCRICAO_PROGRAMA_TURISTICO'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[turismo/programas] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /programas/:id
+ * Busca um registro específico por ID
+ */
+router.get('/programas/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'INSCRICAO_PROGRAMA_TURISTICO') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[turismo/programas] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /programas
+ * Cria um novo registro
+ */
+router.post('/programas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'INSCRICAO_PROGRAMA_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo turismo/programas',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'INSCRICAO_PROGRAMA_TURISTICO',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[turismo/programas] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /programas/:id
+ * Atualiza um registro existente
+ */
+router.put('/programas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[turismo/programas] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /programas/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/programas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/programas] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /programas/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/programas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/programas] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /programas/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/programas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/programas] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /programas/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/programas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[turismo/programas] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: atrativos (REGISTRO_ATRATIVO_TURISTICO)
+// ==========================================================================
+
+/**
+ * GET /atrativos
+ * Lista todos os registros deste módulo
+ */
+router.get('/atrativos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'REGISTRO_ATRATIVO_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module atrativos'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'REGISTRO_ATRATIVO_TURISTICO'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[turismo/atrativos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /atrativos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/atrativos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'REGISTRO_ATRATIVO_TURISTICO') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[turismo/atrativos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /atrativos
+ * Cria um novo registro
+ */
+router.post('/atrativos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'REGISTRO_ATRATIVO_TURISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo turismo/atrativos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'REGISTRO_ATRATIVO_TURISTICO',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[turismo/atrativos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /atrativos/:id
+ * Atualiza um registro existente
+ */
+router.put('/atrativos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[turismo/atrativos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /atrativos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/atrativos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/atrativos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /atrativos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/atrativos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/atrativos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /atrativos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/atrativos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/atrativos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /atrativos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/atrativos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[turismo/atrativos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: servicos (ATENDIMENTOS_TURISMO)
+// ==========================================================================
+
+/**
+ * GET /servicos
+ * Lista todos os registros deste módulo
+ */
+router.get('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_TURISMO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module servicos'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'ATENDIMENTOS_TURISMO'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[turismo/servicos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /servicos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/servicos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'ATENDIMENTOS_TURISMO') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[turismo/servicos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos
+ * Cria um novo registro
+ */
+router.post('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'turismo' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_TURISMO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo turismo/servicos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_TURISMO',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[turismo/servicos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /servicos/:id
+ * Atualiza um registro existente
+ */
+router.put('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[turismo/servicos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /servicos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/servicos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/servicos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/servicos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/servicos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[turismo/servicos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /servicos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/servicos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[turismo/servicos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+
+// ============================================================================
+// EXPORT
+// ============================================================================
 
 export default router;

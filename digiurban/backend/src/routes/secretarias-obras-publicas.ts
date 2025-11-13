@@ -1,523 +1,1469 @@
 // ============================================================================
-// SECRETARIAS-OBRAS-PUBLICAS.TS - Rotas da Secretaria de Obras Públicas
+// SECRETARIA: SECRETARIA DE OBRAS PÚBLICAS - GERADO AUTOMATICAMENTE
 // ============================================================================
-// VERSÃO SIMPLIFICADA - Usa 100% do sistema novo (ProtocolSimplified + MODULE_MAPPING)
+// ⚠️  ATENÇÃO: Este arquivo foi gerado automaticamente pelo sistema de templates.
+// ⚠️  NÃO EDITE MANUALMENTE! Qualquer alteração será sobrescrita na próxima geração.
+//
+// Para fazer alterações:
+// 1. Edite a configuração em: generator/configs/secretarias/obras-publicas.config.ts
+// 2. Regenere o código: npm run generate -- --secretaria=obras-publicas --force
+//
+// Secretaria: Secretaria de Obras Públicas
+// Total de módulos: 4
+// Gerado em: 2025-11-13T12:09:03.595Z
+// ============================================================================
 
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import {
-  adminAuthMiddleware,
-  requireMinRole
-        } from '../middleware/admin-auth';
-import { UserRole, ProtocolStatus } from '@prisma/client';
-import { AuthenticatedRequest } from '../types';
-import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
+import { ProtocolStatus, UserRole } from '@prisma/client';
+import { requireMinRole } from '../middleware/admin-auth';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
-// Aplicar middlewares
-router.use(adminAuthMiddleware);
+// ============================================================================
+// ROTAS GERAIS DA SECRETARIA
+// ============================================================================
 
 /**
- * GET /api/admin/secretarias/obras-publicas/stats
- * Obter estatísticas consolidadas da Secretaria de Obras Públicas
- * VERSÃO SIMPLIFICADA - Usa apenas ProtocolSimplified + moduleType
+ * GET /stats
+ * Estatísticas consolidadas da secretaria
  */
-router.get(
-  '/stats',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      // Buscar departamento de Obras Públicas
-      const publicWorksDept = await prisma.department.findFirst({
-        where: { code: 'OBRAS_PUBLICAS' }
-        });
+router.get('/stats', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    // Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
 
-      if (!publicWorksDept) {
-        return res.status(404).json({
-          success: false,
-          error: 'Department not found',
-          message: 'Departamento de Obras Públicas não encontrado'
-        });
-      }
-
-      // Módulos de obras públicas do MODULE_MAPPING
-      const publicWorksModules = MODULE_BY_DEPARTMENT.OBRAS_PUBLICAS || [];
-
-      // Executar queries em paralelo
-      const [
-        protocolStats,
-        protocolsByModule,
-        attendancesCount,
-        roadRepairsCount,
-        technicalInspectionsCount,
-        publicWorksCount,
-        workInspectionsCount,
-      ] = await Promise.all([
-        // 1. Estatísticas gerais de Protocolos
-        prisma.protocolSimplified.groupBy({
-          by: ['status'],
-          where: {
-                        departmentId: publicWorksDept.id
-        },
-          _count: { id: true }
-        }),
-
-        // 2. Protocolos por módulo (usando moduleType)
-        prisma.protocolSimplified.groupBy({
-          by: ['moduleType', 'status'],
-          where: {
-                        departmentId: publicWorksDept.id,
-            moduleType: { in: publicWorksModules }
-        },
-          _count: { id: true }
-        }),
-
-        // 3. Atendimentos de Obras Públicas
-        prisma.publicWorksAttendance.aggregate({
-                    _count: { id: true }
-        }),
-
-        // 4. Reparos de Vias
-        prisma.roadRepairRequest.aggregate({
-                    _count: { id: true }
-        }),
-
-        // 5. Vistorias Técnicas
-        prisma.technicalInspection.aggregate({
-                    _count: { id: true }
-        }),
-
-        // 6. Cadastro de Obras
-        prisma.publicWork.aggregate({
-                    _count: { id: true }
-        }),
-
-        // 7. Inspeções de Obras
-        prisma.workInspection.aggregate({
-                    _count: { id: true }
-        }),
-      ]);
-
-      // Processar estatísticas de Protocolos
-      const protocolData = {
-        total: 0,
-        pending: 0,
-        inProgress: 0,
-        completed: 0
-        };
-
-      protocolStats.forEach((item) => {
-        const count = item._count?.id || 0;
-        protocolData.total += count;
-
-        if (item.status === ProtocolStatus.VINCULADO || item.status === ProtocolStatus.PENDENCIA) {
-          protocolData.pending += count;
-        } else if (item.status === ProtocolStatus.PROGRESSO) {
-          protocolData.inProgress += count;
-        } else if (item.status === ProtocolStatus.CONCLUIDO) {
-          protocolData.completed += count;
-        }
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        error: 'Department not found'
       });
+    }
 
-      // Processar estatísticas por módulo
-      const moduleStats: Record<string, any> = {};
+    // Stats gerais
+    const [totalProtocols, activeProtocols, pendingApproval, services] = await Promise.all([
+      prisma.protocolSimplified.count({ where: { departmentId: department.id } }),
+      prisma.protocolSimplified.count({ where: { departmentId: department.id, status: ProtocolStatus.CONCLUIDO } }),
+      prisma.protocolSimplified.count({ where: { departmentId: department.id, status: ProtocolStatus.VINCULADO } }),
+      prisma.serviceSimplified.count({ where: { departmentId: department.id } })
+    ]);
 
-      protocolsByModule.forEach((item) => {
-        if (!item.moduleType) return;
+    // Stats por módulo
+    const moduleStats: Record<string, number> = {};
+    moduleStats['obras'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'CADASTRO_OBRA_PUBLICA' }
+    });
+    moduleStats['inspecoes'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'INSPECAO_OBRA' }
+    });
+    moduleStats['vistorias'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'VISTORIA_TECNICA_OBRAS' }
+    });
+    moduleStats['servicos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'ATENDIMENTOS_OBRAS' }
+    });
 
-        if (!moduleStats[item.moduleType]) {
-          moduleStats[item.moduleType] = {
-            total: 0,
-            pending: 0,
-            inProgress: 0,
-            completed: 0
-        };
-        }
+    res.json({
+      success: true,
+      data: {
+        totalProtocols,
+        activeProtocols,
+        pendingApproval,
+        services,
+        byModule: moduleStats
+      }
+    });
+  } catch (error) {
+    console.error('[obras-publicas] Error in stats:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
 
-        const count = item._count?.id || 0;
-        moduleStats[item.moduleType].total += count;
+/**
+ * GET /services
+ * Lista todos os serviços da secretaria
+ */
+router.get('/services', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
 
-        if (item.status === ProtocolStatus.VINCULADO || item.status === ProtocolStatus.PENDENCIA) {
-          moduleStats[item.moduleType].pending += count;
-        } else if (item.status === ProtocolStatus.PROGRESSO) {
-          moduleStats[item.moduleType].inProgress += count;
-        } else if (item.status === ProtocolStatus.CONCLUIDO) {
-          moduleStats[item.moduleType].completed += count;
-        }
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    const services = await prisma.serviceSimplified.findMany({
+      where: { departmentId: department.id, isActive: true },
+      orderBy: { name: 'asc' }
+    });
+
+    res.json({ success: true, data: services });
+  } catch (error) {
+    console.error('[obras-publicas] Error listing services:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// ROTAS DOS MÓDULOS (CRUD GENÉRICO)
+// ============================================================================
+
+// ==========================================================================
+// MÓDULO: obras (CADASTRO_OBRA_PUBLICA)
+// ==========================================================================
+
+/**
+ * GET /obras
+ * Lista todos os registros deste módulo
+ */
+router.get('/obras', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_OBRA_PUBLICA'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module obras'
       });
-
-      // Montar resposta consolidada
-      const stats = {
-        repairs: {
-          total: roadRepairsCount._count?.id || 0,
-          active: roadRepairsCount._count?.id || 0
-        },
-        inspections: {
-          total: technicalInspectionsCount._count?.id || 0,
-          pending: 0
-        },
-        projects: {
-          total: publicWorksCount._count?.id || 0,
-          active: 0,
-          completed: 0
-        },
-        attendances: {
-          total: attendancesCount._count?.id || 0
-        },
-        workInspections: {
-          total: workInspectionsCount._count?.id || 0
-        },
-        protocols: protocolData,
-        moduleStats, // Estatísticas detalhadas por módulo
-      };
-
-      return res.json({
-        success: true,
-        data: stats
-        });
-    } catch (error) {
-      console.error('Public works stats error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao buscar estatísticas de obras públicas'
-        });
     }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'CADASTRO_OBRA_PUBLICA'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[obras-publicas/obras] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/obras-publicas/services
- * Listar serviços da Secretaria de Obras Públicas
+ * GET /obras/:id
+ * Busca um registro específico por ID
  */
-router.get(
-  '/services',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      // Buscar departamento de Obras Públicas
-      const publicWorksDept = await prisma.department.findFirst({
-        where: { code: 'OBRAS_PUBLICAS' }
-        });
-
-      if (!publicWorksDept) {
-        return res.status(404).json({
-          success: false,
-          error: 'Department not found',
-          message: 'Departamento de Obras Públicas não encontrado'
-        });
+router.get('/obras/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
       }
+    });
 
-      // Buscar serviços simplificados
-      const services = await prisma.serviceSimplified.findMany({
-        where: {
-                    departmentId: publicWorksDept.id,
-          isActive: true
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'CADASTRO_OBRA_PUBLICA') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[obras-publicas/obras] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /obras
+ * Cria um novo registro
+ */
+router.post('/obras', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_OBRA_PUBLICA'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo obras-publicas/obras',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'CADASTRO_OBRA_PUBLICA',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[obras-publicas/obras] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /obras/:id
+ * Atualiza um registro existente
+ */
+router.put('/obras/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[obras-publicas/obras] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /obras/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/obras/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/obras] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /obras/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/obras/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/obras] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /obras/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/obras/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/obras] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /obras/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/obras/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[obras-publicas/obras] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: inspecoes (INSPECAO_OBRA)
+// ==========================================================================
+
+/**
+ * GET /inspecoes
+ * Lista todos os registros deste módulo
+ */
+router.get('/inspecoes', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'INSPECAO_OBRA'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module inspecoes'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'INSPECAO_OBRA'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
         },
-        orderBy: {
-          name: 'asc'
-        }
-        });
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
 
-      return res.json({
-        success: true,
-        data: services
-        });
-    } catch (error) {
-      console.error('Get public works services error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao buscar serviços'
-        });
-    }
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[obras-publicas/inspecoes] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/obras-publicas/atendimentos
- * Listar atendimentos de obras públicas
+ * GET /inspecoes/:id
+ * Busca um registro específico por ID
  */
-router.get(
-  '/atendimentos',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, search } = req.query;
-
-      const skip = (Number(page) - 1) * Number(limit);
-
-      const where: any = {};
-
-      if (status && status !== 'all') {
-        where.status = status;
+router.get('/inspecoes/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
       }
+    });
 
-      if (search) {
-        where.OR = [
-          { citizenName: { contains: search as string } },
-          { protocol: { contains: search as string } },
-        ];
-      }
-
-      const [data, total] = await Promise.all([
-        prisma.publicWorksAttendance.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.publicWorksAttendance.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error) {
-      console.error('Get public works attendances error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-        });
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
     }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'INSPECAO_OBRA') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[obras-publicas/inspecoes] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/obras-publicas/reparos-de-vias
- * Listar reparos de vias
+ * POST /inspecoes
+ * Cria um novo registro
  */
-router.get(
-  '/reparos-de-vias',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, search } = req.query;
+router.post('/inspecoes', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-      const skip = (Number(page) - 1) * Number(limit);
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
 
-      const where: any = {};
-
-      if (status && status !== 'all') {
-        where.status = status;
-      }
-
-      if (search) {
-        where.OR = [
-          { citizenName: { contains: search as string } },
-          { roadName: { contains: search as string } },
-          { protocol: { contains: search as string } },
-        ];
-      }
-
-      const [data, total] = await Promise.all([
-        prisma.roadRepairRequest.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.roadRepairRequest.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error) {
-      console.error('Get road repairs error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-        });
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
     }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'INSPECAO_OBRA'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo obras-publicas/inspecoes',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'INSPECAO_OBRA',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[obras-publicas/inspecoes] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/obras-publicas/vistorias-tecnicas
- * Listar vistorias técnicas
+ * PUT /inspecoes/:id
+ * Atualiza um registro existente
  */
-router.get(
-  '/vistorias-tecnicas',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, search } = req.query;
+router.put('/inspecoes/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
 
-      const skip = (Number(page) - 1) * Number(limit);
-
-      const where: any = {};
-
-      if (status && status !== 'all') {
-        where.status = status;
-      }
-
-      if (search) {
-        where.OR = [
-          { requestorName: { contains: search as string } },
-          { location: { contains: search as string } },
-          { protocol: { contains: search as string } },
-        ];
-      }
-
-      const [data, total] = await Promise.all([
-        prisma.technicalInspection.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.technicalInspection.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error) {
-      console.error('Get technical inspections error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-        });
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
     }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[obras-publicas/inspecoes] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/obras-publicas/cadastro-de-obras
- * Listar cadastro de obras
+ * DELETE /inspecoes/:id
+ * Cancela um protocolo (soft delete via status)
  */
-router.get(
-  '/cadastro-de-obras',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, search } = req.query;
+router.delete('/inspecoes/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-      const skip = (Number(page) - 1) * Number(limit);
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
 
-      const where: any = {};
-
-      if (status && status !== 'all') {
-        where.status = status;
-      }
-
-      if (search) {
-        where.OR = [
-          { title: { contains: search as string } },
-          { contractor: { contains: search as string } },
-          { location: { contains: search as string } },
-        ];
-      }
-
-      const [data, total] = await Promise.all([
-        prisma.publicWork.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.publicWork.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error) {
-      console.error('Get public works error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-        });
-    }
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/inspecoes] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
-);
+});
 
 /**
- * GET /api/admin/secretarias/obras-publicas/inspecao-de-obras
- * Listar inspeções de obras
+ * POST /inspecoes/:id/approve
+ * Aprova um protocolo
  */
-router.get(
-  '/inspecao-de-obras',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, search } = req.query;
+router.post('/inspecoes/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-      const skip = (Number(page) - 1) * Number(limit);
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
 
-      const where: any = {};
-
-      if (status && status !== 'all') {
-        where.status = status;
-      }
-
-      if (search) {
-        where.OR = [
-          { workName: { contains: search as string } },
-          { contractor: { contains: search as string } },
-          { protocol: { contains: search as string } },
-        ];
-      }
-
-      const [data, total] = await Promise.all([
-        prisma.workInspection.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        }),
-        prisma.workInspection.count({ where }),
-      ]);
-
-      return res.json({
-        success: true,
-        data,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error) {
-      console.error('Get work inspections error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-        });
-    }
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/inspecoes] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
-);
+});
+
+/**
+ * POST /inspecoes/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/inspecoes/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/inspecoes] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /inspecoes/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/inspecoes/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[obras-publicas/inspecoes] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: vistorias (VISTORIA_TECNICA_OBRAS)
+// ==========================================================================
+
+/**
+ * GET /vistorias
+ * Lista todos os registros deste módulo
+ */
+router.get('/vistorias', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'VISTORIA_TECNICA_OBRAS'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module vistorias'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'VISTORIA_TECNICA_OBRAS'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[obras-publicas/vistorias] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /vistorias/:id
+ * Busca um registro específico por ID
+ */
+router.get('/vistorias/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'VISTORIA_TECNICA_OBRAS') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[obras-publicas/vistorias] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vistorias
+ * Cria um novo registro
+ */
+router.post('/vistorias', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'VISTORIA_TECNICA_OBRAS'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo obras-publicas/vistorias',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'VISTORIA_TECNICA_OBRAS',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[obras-publicas/vistorias] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /vistorias/:id
+ * Atualiza um registro existente
+ */
+router.put('/vistorias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[obras-publicas/vistorias] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /vistorias/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/vistorias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/vistorias] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vistorias/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/vistorias/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/vistorias] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vistorias/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/vistorias/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/vistorias] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /vistorias/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/vistorias/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[obras-publicas/vistorias] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: servicos (ATENDIMENTOS_OBRAS)
+// ==========================================================================
+
+/**
+ * GET /servicos
+ * Lista todos os registros deste módulo
+ */
+router.get('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_OBRAS'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module servicos'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'ATENDIMENTOS_OBRAS'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[obras-publicas/servicos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /servicos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/servicos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'ATENDIMENTOS_OBRAS') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[obras-publicas/servicos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos
+ * Cria um novo registro
+ */
+router.post('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'obras-publicas' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_OBRAS'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo obras-publicas/servicos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_OBRAS',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[obras-publicas/servicos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /servicos/:id
+ * Atualiza um registro existente
+ */
+router.put('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[obras-publicas/servicos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /servicos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/servicos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/servicos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/servicos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/servicos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[obras-publicas/servicos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /servicos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/servicos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[obras-publicas/servicos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+
+// ============================================================================
+// EXPORT
+// ============================================================================
 
 export default router;

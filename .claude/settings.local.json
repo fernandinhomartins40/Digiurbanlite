@@ -2,7 +2,21 @@
   "permissions": {
     "allow": [
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run validate:*)",
+      "Bash(npm run generate:saude:*)",
+      "Bash(npm run generate:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(for dir in \"c:\\Projetos Cursor\\Digiurbanlite\\digiurban\\backend\\src\\modules\"/*)",
+      "Bash(do if [ -d \"$dir\" ])",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

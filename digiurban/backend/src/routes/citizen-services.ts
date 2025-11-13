@@ -487,8 +487,8 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
         });
 
     console.log(`✅ Protocolo ${result.protocol.number} criado ${result.hasModule ? 'COM módulo' : 'SEM módulo'}`);
-    if (result.hasModule && result.moduleEntity) {
-      console.log(`   Entidade do módulo criada: ${result.protocol.moduleType}`);
+    if (result.hasModule) {
+      console.log(`   Protocolo vinculado ao módulo: ${result.protocol.moduleType}`);
     }
 
     // Buscar protocolo completo

@@ -75,7 +75,6 @@ export const loadCitizenRoutes = () => {
   const citizenAuthRoutes = require('./citizen-auth').default;
   const citizenServicesRoutes = require('./citizen-services').default;
   const citizenProtocolsRoutes = require('./citizen-protocols').default;
-  const citizenProgramsRoutes = require('./citizen-programs').default;
   const citizenFamilyRoutes = require('./citizen-family').default;
   const citizenDocumentsRoutes = require('./citizen-documents').default;
   const citizenNotificationsRoutes = require('./citizen-notifications').default;
@@ -84,7 +83,6 @@ export const loadCitizenRoutes = () => {
   router.use('/auth/citizen', citizenAuthRoutes);
   router.use('/citizen/services', citizenServicesRoutes);
   router.use('/citizen/protocols', citizenProtocolsRoutes);
-  router.use('/citizen', citizenProgramsRoutes);
   router.use('/citizen/family', citizenFamilyRoutes);
   router.use('/citizen/documents', citizenDocumentsRoutes);
   router.use('/citizen/notifications', citizenNotificationsRoutes);
@@ -139,7 +137,7 @@ export const loadSecretariasRoutes = () => {
   const secretariasHabitacaoRoutes = require('./secretarias-habitacao').default;
   const secretariasAgriculturaRoutes = require('./secretarias-agricultura').default;
   const secretariasAgricultureProdutoresRoutes = require('./secretarias-agricultura-produtores').default;
-  const secretariasSegurancaRoutes = require('./secretarias-seguranca').default;
+  const secretariasSegurancaPublicaRoutes = require('./secretarias-seguranca-publica').default;
   const secretariasMeioAmbienteRoutes = require('./secretarias-meio-ambiente').default;
   const secretariasObrasPublicasRoutes = require('./secretarias-obras-publicas').default;
   const secretariasPlanejamentoUrbanoRoutes = require('./secretarias-planejamento-urbano').default;
@@ -155,7 +153,7 @@ export const loadSecretariasRoutes = () => {
   router.use('/secretarias/habitacao', secretariasHabitacaoRoutes);
   router.use('/admin/secretarias/agricultura', secretariasAgriculturaRoutes);
   router.use('/admin/secretarias/agricultura/produtores', secretariasAgricultureProdutoresRoutes);
-  router.use('/secretarias/seguranca-publica', secretariasSegurancaRoutes);
+  router.use('/secretarias/seguranca-publica', secretariasSegurancaPublicaRoutes);
   router.use('/admin/secretarias/meio-ambiente', secretariasMeioAmbienteRoutes);
   router.use('/admin/secretarias/obras-publicas', secretariasObrasPublicasRoutes);
   router.use('/admin/secretarias/planejamento-urbano', secretariasPlanejamentoUrbanoRoutes);
@@ -172,12 +170,10 @@ export const loadSecretariasRoutes = () => {
 export const loadImplementationRoutes = () => {
   const router = Router();
 
-  const adminAgricultureRoutes = require('./admin-agriculture').default;
   const integrationsRoutes = require('./integrations').default;
   const adminEmailRoutes = require('./admin-email').default;
   const municipalityConfigRoutes = require('./municipality-config').default;
 
-  router.use('/admin/agriculture', adminAgricultureRoutes);
   router.use('/integrations', integrationsRoutes);
   router.use('/admin/email', adminEmailRoutes);
   router.use('/municipality', municipalityConfigRoutes);

@@ -94,10 +94,7 @@ router.post('/', requireMinRole(UserRole.USER), async (req, res) => {
       data: {
         protocol: result.protocol,
         hasModule: result.hasModule,
-        moduleEntity: result.moduleEntity ? {
-          id: result.moduleEntity.id,
-          type: result.protocol.moduleType
-        } : null
+        moduleType: result.protocol.moduleType || null
         },
       message: result.hasModule
         ? `Protocolo ${result.protocol.number} criado e vinculado ao módulo`

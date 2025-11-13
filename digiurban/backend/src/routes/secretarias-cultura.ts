@@ -1,1132 +1,2829 @@
-import { Router, Response, NextFunction } from 'express';
-import { z } from 'zod';
+// ============================================================================
+// SECRETARIA: SECRETARIA DE CULTURA - GERADO AUTOMATICAMENTE
+// ============================================================================
+// ⚠️  ATENÇÃO: Este arquivo foi gerado automaticamente pelo sistema de templates.
+// ⚠️  NÃO EDITE MANUALMENTE! Qualquer alteração será sobrescrita na próxima geração.
+//
+// Para fazer alterações:
+// 1. Edite a configuração em: generator/configs/secretarias/cultura.config.ts
+// 2. Regenere o código: npm run generate -- --secretaria=cultura --force
+//
+// Secretaria: Secretaria de Cultura
+// Total de módulos: 8
+// Gerado em: 2025-11-13T12:09:03.543Z
+// ============================================================================
+
+import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
-import { UserRole } from '@prisma/client';
-import { AuthenticatedRequest, SuccessResponse, ErrorResponse } from '../types';
-import { asyncHandler } from '../utils/express-helpers';
-import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { ProtocolStatus, UserRole } from '@prisma/client';
+import { requireMinRole } from '../middleware/admin-auth';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
-
-// ===== TIPOS LOCAIS ISOLADOS - SEM DEPENDÊNCIAS CENTRALIZADAS =====
-
-interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-  total: number;
-  page: number; // Propriedade adicional para compatibilidade
-  limit: number; // Propriedade adicional para compatibilidade
-  totalPages: number; // Propriedade adicional para compatibilidade
-}
-
-// Helper para query params seguros - SEM ANY!
-function getStringParam(param: unknown): string {
-  if (Array.isArray(param)) return String(param[0] || '');
-  if (typeof param === 'string') return param;
-  if (param && typeof param === 'object' && param !== null) {
-    return String(param);
-  }
-  return '';
-}
-
-// Tipo genérico para Where Clause - SEM ANY!
-interface PrismaWhereClause {
-
-  OR?: Array<Record<string, { contains: string; mode: 'insensitive' }>>;
-  status?: string;
-  type?: string;
-  category?: string;
-  [key: string]: unknown;
-}
-
-// Helper para criar where clauses seguras - SEM ANY!
-function createSafeWhereClause(params: {
- // OBRIGATÓRIO!
-  search?: string;
-  status?: string;
-  type?: string;
-  category?: string;
-  searchFields?: string[];
-}): PrismaWhereClause {
-  const where: PrismaWhereClause = {};
-
-  // já é obrigatório na interface
-
-  if (params.search && params.searchFields) {
-    const searchConditions: Array<Record<string, { contains: string; mode: 'insensitive' }>> = [];
-
-    params.searchFields.forEach(field => {
-      searchConditions.push({
-        [field]: { contains: params.search!, mode: 'insensitive' }
-      });
-    });
-
-    if (searchConditions.length > 0) {
-      where.OR = searchConditions;
-    }
-  }
-
-  if (params.status) {
-    where.status = params.status;
-  }
-
-  if (params.type) {
-    where.type = params.type;
-  }
-
-  if (params.category) {
-    where.category = params.category;
-  }
-
-  return where;
-}
-
-// TIPOS ESPECÍFICOS PARA CULTURA - ISOLADOS E LIMPOS
-
-interface ArtisticGroupWhereInput {
-
-  OR?: Array<{
-    name?: { contains: string; mode: 'insensitive' };
-    responsible?: { contains: string; mode: 'insensitive' };
-  }>;
-  category?: string;
-  status?: string;
-}
-
-interface CulturalManifestationWhereInput {
-
-  OR?: Array<{
-    name?: { contains: string; mode: 'insensitive' };
-    description?: { contains: string; mode: 'insensitive' };
-  }>;
-  type?: string;
-  status?: string;
-}
-
-interface CulturalWorkshopWhereInput {
-
-  OR?: Array<{
-    name?: { contains: string; mode: 'insensitive' };
-    instructor?: { contains: string; mode: 'insensitive' };
-  }>;
-  category?: string;
-  status?: string;
-}
-
-interface CulturalProjectWhereInput {
-
-  OR?: Array<{
-    name?: { contains: string; mode: 'insensitive' };
-    responsible?: { contains: string; mode: 'insensitive' };
-  }>;
-  type?: string;
-  currentStatus?: string;
-}
+import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
-// Apply middleware
-// Validation schemas
-const culturalAttendanceSchema = z.object({
-  protocol: z.string().min(1).optional(), // Agora opcional, será gerado automaticamente
-  citizenName: z.string().min(1),
-  contact: z.string().min(1),
-  type: z.enum([
-    'AUTHORIZATION_EVENT',
-    'ARTIST_REGISTRATION',
-    'PUBLIC_NOTICE_REGISTRATION',
-    'CULTURAL_SPACE_USE',
-    'PROJECT_SUPPORT',
-    'ARTISTIC_SUPPORT',
-    'INFORMATION',
-    'GENERAL_INFORMATION',
-    'OTHERS',
-  ]),
-  status: z
-    .enum(['PENDING', 'UNDER_ANALYSIS', 'APPROVED', 'REJECTED', 'COMPLETED', 'CANCELLED', 'OPEN'])
-    .optional(),
-  description: z.string().min(1),
-  observations: z.string().optional(),
-  responsible: z.string().optional(),
-  attachments: z.array(z.object({
-    id: z.string(),
-    fileName: z.string(),
-    fileType: z.string(),
-    fileSize: z.number(),
-    url: z.string(),
-    description: z.string().optional()
-  })).optional(),
-  category: z.string().optional(),
-  requestedLocation: z.string().optional(),
-  eventDate: z.string().datetime().optional(),
-  estimatedAudience: z.number().int().positive().optional(),
-  requestedBudget: z.number().positive().optional(),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional()
-        });
+// ============================================================================
+// ROTAS GERAIS DA SECRETARIA
+// ============================================================================
 
-const artisticGroupSchema = z.object({
-  name: z.string().min(1),
-  category: z.string().min(1),
-  foundationDate: z.string().datetime().optional(),
-  responsible: z.string().min(1),
-  contact: z.string().min(1),
-  members: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    role: z.string(),
-    joinDate: z.string().datetime(),
-    contact: z.string().optional(),
-    isActive: z.boolean()
-  })).optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE']).optional()
-        });
+/**
+ * GET /stats
+ * Estatísticas consolidadas da secretaria
+ */
+router.get('/stats', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    // Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
 
-const culturalManifestationSchema = z.object({
-  name: z.string().min(1),
-  type: z.string().min(1),
-  description: z.string().min(1),
-  currentSituation: z.string().min(1),
-  knowledgeHolders: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    age: z.number().optional(),
-    role: z.string(),
-    contact: z.string(),
-    knowledgeAreas: z.array(z.string()),
-    community: z.string().optional()
-  })).optional(),
-  safeguardActions: z.array(z.object({
-    id: z.string(),
-    type: z.enum(['DOCUMENTATION', 'TRANSMISSION', 'PROMOTION', 'RESEARCH', 'PROTECTION']),
-    title: z.string(),
-    description: z.string(),
-    status: z.enum(['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
-    startDate: z.string().datetime(),
-    endDate: z.string().datetime().optional(),
-    responsible: z.string(),
-    budget: z.number().optional()
-  })).optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE']).optional()
-        });
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        error: 'Department not found'
+      });
+    }
 
-const culturalWorkshopSchema = z.object({
-  name: z.string().min(1),
-  category: z.string().min(1),
-  description: z.string().min(1),
-  instructor: z.string().min(1),
-  startDate: z.string().datetime(),
-  endDate: z.string().datetime(),
-  schedule: z.string().min(1),
-  maxParticipants: z.number().int().positive(),
-  currentParticipants: z.number().int().min(0).optional(),
-  isFree: z.boolean().optional(),
-  status: z.enum(['PLANNED', 'ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
-  // Campos customizáveis para formulário de inscrição
-  customFields: z.any().optional(), // Array de campos adicionais
-  requiredDocuments: z.any().optional(), // Array de documentos necessários
-  enrollmentSettings: z.any().optional(), // Configurações de inscrição
+    // Stats gerais
+    const [totalProtocols, activeProtocols, pendingApproval, services] = await Promise.all([
+      prisma.protocolSimplified.count({ where: { departmentId: department.id } }),
+      prisma.protocolSimplified.count({ where: { departmentId: department.id, status: ProtocolStatus.CONCLUIDO } }),
+      prisma.protocolSimplified.count({ where: { departmentId: department.id, status: ProtocolStatus.VINCULADO } }),
+      prisma.serviceSimplified.count({ where: { departmentId: department.id } })
+    ]);
+
+    // Stats por módulo
+    const moduleStats: Record<string, number> = {};
+    moduleStats['espacos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'RESERVA_ESPACO_CULTURAL' }
+    });
+    moduleStats['oficinas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'INSCRICAO_OFICINA_CULTURAL' }
+    });
+    moduleStats['grupos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'CADASTRO_GRUPO_ARTISTICO' }
+    });
+    moduleStats['projetos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'PROJETO_CULTURAL' }
+    });
+    moduleStats['submissoes'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'SUBMISSAO_PROJETO_CULTURAL' }
+    });
+    moduleStats['eventos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'CADASTRO_EVENTO_CULTURAL' }
+    });
+    moduleStats['manifestacoes'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL' }
+    });
+    moduleStats['servicos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'ATENDIMENTOS_CULTURA' }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalProtocols,
+        activeProtocols,
+        pendingApproval,
+        services,
+        byModule: moduleStats
+      }
+    });
+  } catch (error) {
+    console.error('[cultura] Error in stats:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
 });
 
-const culturalProjectSchema = z.object({
-  name: z.string().min(1),
-  type: z.string().min(1),
-  description: z.string().min(1),
-  responsible: z.string().min(1),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  budget: z.number().positive().optional(),
-  currentStatus: z.enum(['PLANNING', 'ACTIVE', 'COMPLETED', 'CANCELLED']).optional()
-        });
-
-// CULTURAL ATTENDANCE ENDPOINTS
-router.get('/cultural-attendances', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * GET /services
+ * Lista todos os serviços da secretaria
+ */
+router.get('/services', requireMinRole(UserRole.USER), async (req, res) => {
   try {
-    const page = getStringParam(req.query.page) || '1';
-    const limit = getStringParam(req.query.limit) || '10';
-    const search = getStringParam(req.query.search);
-    const status = getStringParam(req.query.status);
-    const type = getStringParam(req.query.type);
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    // Verificação removida (single tenant)
-
-    const where = createSafeWhereClause({
-
-      search,
-      status,
-      type,
-      searchFields: ['citizenName', 'protocol', 'description']
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
     });
 
-    // Criação de where clause compatível com Prisma - SEM ANY!
-    const prismaWhere = {
-      ...(where.status && { status: where.status }),
-      ...(where.type && { type: where.type }),
-      ...(where.OR && { OR: where.OR })
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    const services = await prisma.serviceSimplified.findMany({
+      where: { departmentId: department.id, isActive: true },
+      orderBy: { name: 'asc' }
+    });
+
+    res.json({ success: true, data: services });
+  } catch (error) {
+    console.error('[cultura] Error listing services:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// ROTAS DOS MÓDULOS (CRUD GENÉRICO)
+// ============================================================================
+
+// ==========================================================================
+// MÓDULO: espacos (RESERVA_ESPACO_CULTURAL)
+// ==========================================================================
+
+/**
+ * GET /espacos
+ * Lista todos os registros deste módulo
+ */
+router.get('/espacos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'RESERVA_ESPACO_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module espacos'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'RESERVA_ESPACO_CULTURAL'
     };
 
-    const [attendances, total] = await Promise.all([
-      prisma.culturalAttendance.findMany({
-        where: prismaWhere as any,
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
         skip,
-        take: parseInt(limit),
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
         orderBy: { createdAt: 'desc' }
-        }),
-      prisma.culturalAttendance.count({ where: prismaWhere as any }),
+      }),
+      prisma.protocolSimplified.count({ where })
     ]);
 
-    const response = {
-      data: attendances,
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / parseInt(limit)),
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit))
-        }
-    };
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
 
-    res.json(response);
-  } catch (error) {
-    console.error('Error fetching cultural attendances:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.post('/cultural-attendances', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const validatedData = culturalAttendanceSchema.parse(req.body);
-
-    // Verificação removida (single tenant)
-
-    const result = await prisma.$transaction(async (tx) => {
-      // Gerar número do protocolo - Sistema centralizado com lock
-      const protocolNumber = await generateProtocolNumberSafe(tx);
-
-      // Buscar cidadão pelo nome (cultura não usa CPF)
-      const citizen = await tx.citizen.findFirst({
-        where: { name: validatedData.citizenName }
-      });
-      const citizenId = citizen?.id || validatedData.citizenName; // fallback para nome
-
-      // Buscar um serviço padrão de cultura para o protocolo
-      const defaultService = await tx.serviceSimplified.findFirst({
-        select: { id: true, departmentId: true }
-      });
-
-      if (!defaultService) {
-        throw new Error('Nenhum serviço disponível para criar protocolo');
-      }
-
-      // Criar protocolo
-      const protocol = await tx.protocolSimplified.create({
-        data: {
-  
-          citizenId,
-          serviceId: defaultService.id,
-          departmentId: defaultService.departmentId,
-          number: protocolNumber,
-          title: validatedData.description.substring(0, 100),
-          description: validatedData.description,
-          status: 'VINCULADO' as any,
-          priority: 3
-        }
-        });
-
-      // Criar attendance vinculado ao protocolo
-      const attendance = await tx.culturalAttendance.create({
-        data: {
-          protocol: protocolNumber,
-          citizenName: validatedData.citizenName,
-          contact: validatedData.contact,
-          type: validatedData.type,
-          status: validatedData.status as any,
-          description: validatedData.description,
-          observations: validatedData.observations,
-          eventDate: validatedData.eventDate ? new Date(validatedData.eventDate) : new Date(),
-          category: validatedData.category,
-          priority: validatedData.priority,
-          attachments: validatedData.attachments,
-          requestedBudget: validatedData.requestedBudget
-        }
-        });
-
-      return { protocol, attendance };
-    });
-
-    res.status(201).json({
+    res.json({
       success: true,
-      message: 'Atendimento cultural criado com sucesso',
-      data: {
-        protocol: result.protocol,
-        attendance: result.attendance
-        }
-        });
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error creating cultural attendance:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/espacos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.get('/cultural-attendances/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * GET /espacos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/espacos/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
-    const attendance = await prisma.culturalAttendance.findUnique({
-      where: {
-        id: req.params.id
-        }
-        });
-
-    if (!attendance) {
-      res.status(404).json({ error: 'Cultural attendance not found' });
-      return;
-    }
-
-    res.json(attendance);
-  } catch (error) {
-    console.error('Error fetching cultural attendance:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.put('/cultural-attendances/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const validatedData = culturalAttendanceSchema.partial().parse(req.body);
-
-    const attendance = await prisma.culturalAttendance.update({
-      where: {
-        id: req.params.id
-        },
-      data: {
-        ...validatedData,
-        eventDate: validatedData.eventDate ? new Date(validatedData.eventDate) : undefined
-        }
-        });
-
-    res.json(attendance);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error updating cultural attendance:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.delete('/cultural-attendances/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    await prisma.culturalAttendance.delete({
-      where: {
-        id: req.params.id
-        }
-        });
-
-    res.status(204).send();
-  } catch (error) {
-    console.error('Error deleting cultural attendance:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.get('/cultural-attendances/stats', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const stats = await prisma.culturalAttendance.groupBy({
-      by: ['status'],
-      _count: { _all: true }
-        });
-
-    res.json(stats);
-  } catch (error) {
-    console.error('Error fetching cultural attendance stats:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-// ESTATÍSTICAS GERAIS DA CULTURA
-router.get('/stats', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    // Buscar dados de eventos culturais
-    const totalEvents = await prisma.culturalEvent.count();
-    const eventsThisMonth = await prisma.culturalEvent.count({
-      where: {
-        startDate: {
-          gte: firstDayOfMonth
-        }
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
       }
     });
 
-    // Buscar espaços culturais
-    const totalSpaces = await prisma.culturalSpace.count();
-    const activeSpaces = await prisma.culturalSpace.count({
-      where: { status: 'ACTIVE' }
-    });
-    const reservationsCount = await prisma.culturalSpaceReservation.count();
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
 
-    // Buscar artistas (grupos artísticos)
-    const totalArtists = await prisma.artisticGroup.count();
-    const registeredArtists = await prisma.artisticGroup.count({
-      where: { status: 'ACTIVE' }
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'RESERVA_ESPACO_CULTURAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[cultura/espacos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /espacos
+ * Cria um novo registro
+ */
+router.post('/espacos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
     });
 
-    // Buscar protocolos
-    const totalProtocols = await prisma.culturalAttendance.count();
-    const pendingProtocols = await prisma.culturalAttendance.count({
-      where: { status: 'PENDING' }
-    });
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
 
-    // Buscar oficinas
-    const activeWorkshops = await prisma.culturalWorkshop.count({
-      where: { status: 'ACTIVE' }
-    });
-    const totalStudents = await prisma.culturalWorkshop.aggregate({
-      _sum: {
-        currentParticipants: true
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'RESERVA_ESPACO_CULTURAL'
       }
     });
 
-    // Buscar grupos artísticos
-    const activeGroups = await prisma.artisticGroup.count({
-      where: { status: 'ACTIVE' }
-    });
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
 
-    const stats = {
-      events: {
-        total: totalEvents,
-        thisMonth: eventsThisMonth,
-        monthly: eventsThisMonth,
-        participants: 0, // placeholder
-        upcoming: 0 // placeholder
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo cultura/espacos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'RESERVA_ESPACO_CULTURAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
       },
-      culturalSpaces: {
-        total: totalSpaces,
-        active: activeSpaces
-      },
-      artists: {
-        total: totalArtists,
-        registered: registeredArtists
-      },
-      protocols: {
-        total: totalProtocols,
-        pending: pendingProtocols,
-        inProgress: 0, // placeholder
-        completed: 0 // placeholder
-      },
-      spaces: {
-        total: totalSpaces,
-        reservations: reservationsCount
-      },
-      workshops: {
-        active: activeWorkshops,
-        students: totalStudents._sum.currentParticipants || 0
-      },
-      groups: {
-        active: activeGroups,
-        performances: 0 // placeholder
+      include: {
+        citizen: true,
+        service: true
       }
-    };
-
-    res.json(stats);
-  } catch (error) {
-    console.error('Error fetching cultura stats:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-// DASHBOARD DA CULTURA
-router.get('/dashboard', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    // Buscar eventos recentes
-    const recentEvents = await prisma.culturalEvent.findMany({
-      take: 5,
-      orderBy: { startDate: 'desc' }
     });
 
-    // Buscar oficinas ativas
-    const activeWorkshops = await prisma.culturalWorkshop.findMany({
-      where: { status: 'ACTIVE' },
-      take: 5,
-      orderBy: { startDate: 'desc' }
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[cultura/espacos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /espacos/:id
+ * Atualiza um registro existente
+ */
+router.put('/espacos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
     });
 
-    // Buscar atendimentos recentes
-    const recentAttendances = await prisma.culturalAttendance.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' }
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
     });
 
-    const dashboard = {
-      recentEvents,
-      activeWorkshops,
-      recentAttendances
-    };
-
-    res.json(dashboard);
+    res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('Error fetching cultura dashboard:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/espacos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-// ARTISTIC GROUP ENDPOINTS
-router.get('/artistic-groups', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * DELETE /espacos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/espacos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
-    const page = getStringParam(req.query.page) || '1';
-    const limit = getStringParam(req.query.limit) || '10';
-    const search = getStringParam(req.query.search);
-    const category = getStringParam(req.query.category);
-    const status = getStringParam(req.query.status);
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const authReq = req as AuthenticatedRequest;
 
-    const where: ArtisticGroupWhereInput = {};
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
 
-    if (search) {
-      where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { responsible: { contains: search as string, mode: 'insensitive' } },
-      ];
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/espacos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /espacos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/espacos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/espacos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /espacos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/espacos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/espacos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /espacos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/espacos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[cultura/espacos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: oficinas (INSCRICAO_OFICINA_CULTURAL)
+// ==========================================================================
+
+/**
+ * GET /oficinas
+ * Lista todos os registros deste módulo
+ */
+router.get('/oficinas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
     }
 
-    if (category) where.category = category;
-    if (status) where.status = status;
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'INSCRICAO_OFICINA_CULTURAL'
+      }
+    });
 
-    const [groups, total] = await Promise.all([
-      prisma.artisticGroup.findMany({
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module oficinas'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'INSCRICAO_OFICINA_CULTURAL'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
         where,
         skip,
-        take: parseInt(limit),
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
         orderBy: { createdAt: 'desc' }
-        }),
-      prisma.artisticGroup.count({ where }),
+      }),
+      prisma.protocolSimplified.count({ where })
     ]);
 
-    const response = {
-      data: groups,
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / parseInt(limit)),
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: Number(page),
+        limit: Number(limit),
         total,
-        totalPages: Math.ceil(total / parseInt(limit))
-        }
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[cultura/oficinas] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /oficinas/:id
+ * Busca um registro específico por ID
+ */
+router.get('/oficinas/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'INSCRICAO_OFICINA_CULTURAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
     };
 
-    res.json(response);
+    res.json({ success: true, data });
   } catch (error) {
-    console.error('Error fetching artistic groups:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/oficinas] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.post('/artistic-groups', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * POST /oficinas
+ * Cria um novo registro
+ */
+router.post('/oficinas', requireMinRole(UserRole.USER), async (req, res) => {
   try {
-    const validatedData = artisticGroupSchema.parse(req.body);
+    const authReq = req as AuthenticatedRequest;
 
-    const group = await prisma.artisticGroup.create({
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'INSCRICAO_OFICINA_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
       data: {
-        ...validatedData,
-        foundationDate: validatedData.foundationDate
-          ? new Date(validatedData.foundationDate)
-          : undefined
-        }
-        });
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo cultura/oficinas',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'INSCRICAO_OFICINA_CULTURAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
 
-    res.status(201).json(group);
+    res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error creating artistic group:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/oficinas] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.get('/artistic-groups/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * PUT /oficinas/:id
+ * Atualiza um registro existente
+ */
+router.put('/oficinas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
-    const group = await prisma.artisticGroup.findUnique({
-      where: {
-        id: req.params.id
-        }
-        });
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
 
-    if (!group) {
-      res.status(404).json({ error: 'Artistic group not found' });
-      return;
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
     }
 
-    res.json(group);
-  } catch (error) {
-    console.error('Error fetching artistic group:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
 
-router.put('/artistic-groups/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const validatedData = artisticGroupSchema.partial().parse(req.body);
-
-    const group = await prisma.artisticGroup.update({
-      where: {
-        id: req.params.id
-        },
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
       data: {
-        ...validatedData,
-        foundationDate: validatedData.foundationDate
-          ? new Date(validatedData.foundationDate)
-          : undefined
-        }
-        });
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
 
-    res.json(group);
+    res.json({ success: true, data: updated });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error updating artistic group:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/oficinas] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.delete('/artistic-groups/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * DELETE /oficinas/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/oficinas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
-    await prisma.artisticGroup.delete({
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/oficinas] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /oficinas/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/oficinas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/oficinas] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /oficinas/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/oficinas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/oficinas] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /oficinas/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/oficinas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[cultura/oficinas] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: grupos (CADASTRO_GRUPO_ARTISTICO)
+// ==========================================================================
+
+/**
+ * GET /grupos
+ * Lista todos os registros deste módulo
+ */
+router.get('/grupos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-        id: req.params.id
-        }
-        });
+        departmentId: department.id,
+        moduleType: 'CADASTRO_GRUPO_ARTISTICO'
+      }
+    });
 
-    res.status(204).send();
-  } catch (error) {
-    console.error('Error deleting artistic group:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-// CULTURAL MANIFESTATION ENDPOINTS
-router.get('/cultural-manifestations', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const page = getStringParam(req.query.page) || '1';
-    const limit = getStringParam(req.query.limit) || '10';
-    const search = getStringParam(req.query.search);
-    const type = getStringParam(req.query.type);
-    const status = getStringParam(req.query.status);
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const where: CulturalManifestationWhereInput = {};
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { description: { contains: search as string, mode: 'insensitive' } },
-      ];
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module grupos'
+      });
     }
 
-    if (type) where.type = type;
-    if (status) where.status = status;
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'CADASTRO_GRUPO_ARTISTICO'
+    };
 
-    const [manifestations, total] = await Promise.all([
-      prisma.culturalManifestation.findMany({
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
         where,
         skip,
-        take: parseInt(limit),
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
         orderBy: { createdAt: 'desc' }
-        }),
-      prisma.culturalManifestation.count({ where }),
+      }),
+      prisma.protocolSimplified.count({ where })
     ]);
 
-    const response = {
-      data: manifestations,
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / parseInt(limit)),
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: Number(page),
+        limit: Number(limit),
         total,
-        totalPages: Math.ceil(total / parseInt(limit))
-        }
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[cultura/grupos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /grupos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/grupos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'CADASTRO_GRUPO_ARTISTICO') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
     };
 
-    res.json(response);
+    res.json({ success: true, data });
   } catch (error) {
-    console.error('Error fetching cultural manifestations:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/grupos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.post('/cultural-manifestations', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * POST /grupos
+ * Cria um novo registro
+ */
+router.post('/grupos', requireMinRole(UserRole.USER), async (req, res) => {
   try {
-    const validatedData = culturalManifestationSchema.parse(req.body);
+    const authReq = req as AuthenticatedRequest;
 
-    const manifestation = await prisma.culturalManifestation.create({
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_GRUPO_ARTISTICO'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
       data: {
-        ...validatedData
-        }
-        });
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo cultura/grupos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'CADASTRO_GRUPO_ARTISTICO',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
 
-    res.status(201).json(manifestation);
+    res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error creating cultural manifestation:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/grupos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.get('/cultural-manifestations/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * PUT /grupos/:id
+ * Atualiza um registro existente
+ */
+router.put('/grupos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
-    const manifestation = await prisma.culturalManifestation.findUnique({
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[cultura/grupos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /grupos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/grupos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/grupos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /grupos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/grupos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/grupos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /grupos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/grupos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/grupos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /grupos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/grupos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[cultura/grupos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: projetos (PROJETO_CULTURAL)
+// ==========================================================================
+
+/**
+ * GET /projetos
+ * Lista todos os registros deste módulo
+ */
+router.get('/projetos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-        id: req.params.id
-        }
-        });
+        departmentId: department.id,
+        moduleType: 'PROJETO_CULTURAL'
+      }
+    });
 
-    if (!manifestation) {
-      res.status(404).json({ error: 'Cultural manifestation not found' });
-      return;
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module projetos'
+      });
     }
 
-    res.json(manifestation);
-  } catch (error) {
-    console.error('Error fetching cultural manifestation:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.put('/cultural-manifestations/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const validatedData = culturalManifestationSchema.partial().parse(req.body);
-
-    const manifestation = await prisma.culturalManifestation.update({
-      where: {
-        id: req.params.id
-        },
-      data: validatedData
-        });
-
-    res.json(manifestation);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error updating cultural manifestation:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.delete('/cultural-manifestations/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    await prisma.culturalManifestation.delete({
-      where: {
-        id: req.params.id
-        }
-        });
-
-    res.status(204).send();
-  } catch (error) {
-    console.error('Error deleting cultural manifestation:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-// CULTURAL WORKSHOP ENDPOINTS
-router.get('/cultural-workshops', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const page = getStringParam(req.query.page) || '1';
-    const limit = getStringParam(req.query.limit) || '10';
-    const search = getStringParam(req.query.search);
-    const category = getStringParam(req.query.category);
-    const status = getStringParam(req.query.status);
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const where: CulturalWorkshopWhereInput = {};
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { instructor: { contains: search as string, mode: 'insensitive' } },
-      ];
-    }
-
-    if (category) where.category = category;
-    if (status) where.status = status;
-
-    const [workshops, total] = await Promise.all([
-      prisma.culturalWorkshop.findMany({
-        where,
-        skip,
-        take: parseInt(limit),
-        orderBy: { startDate: 'desc' }
-        }),
-      prisma.culturalWorkshop.count({ where }),
-    ]);
-
-    const response = {
-      data: workshops,
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / parseInt(limit)),
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit))
-        }
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'PROJETO_CULTURAL'
     };
 
-    res.json(response);
-  } catch (error) {
-    console.error('Error fetching cultural workshops:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.post('/cultural-workshops', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const validatedData = culturalWorkshopSchema.parse(req.body);
-
-    const workshop = await prisma.culturalWorkshop.create({
-      data: {
-        ...validatedData,
-        startDate: new Date(validatedData.startDate),
-        endDate: new Date(validatedData.endDate)
-        }
-        });
-
-    res.status(201).json(workshop);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error creating cultural workshop:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.get('/cultural-workshops/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const workshop = await prisma.culturalWorkshop.findUnique({
-      where: {
-        id: req.params.id
-        }
-        });
-
-    if (!workshop) {
-      res.status(404).json({ error: 'Cultural workshop not found' });
-      return;
+    // Filtro por status
+    if (status) {
+      where.status = status;
     }
 
-    res.json(workshop);
-  } catch (error) {
-    console.error('Error fetching cultural workshop:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.put('/cultural-workshops/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const validatedData = culturalWorkshopSchema.partial().parse(req.body);
-
-    const workshop = await prisma.culturalWorkshop.update({
-      where: {
-        id: req.params.id
-        },
-      data: {
-        ...validatedData,
-        startDate: validatedData.startDate ? new Date(validatedData.startDate) : undefined,
-        endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined
-        }
-        });
-
-    res.json(workshop);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error updating cultural workshop:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-router.delete('/cultural-workshops/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    await prisma.culturalWorkshop.delete({
-      where: {
-        id: req.params.id
-        }
-        });
-
-    res.status(204).send();
-  } catch (error) {
-    console.error('Error deleting cultural workshop:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}));
-
-// CULTURAL PROJECT ENDPOINTS
-router.get('/cultural-projects', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const page = getStringParam(req.query.page) || '1';
-    const limit = getStringParam(req.query.limit) || '10';
-    const search = getStringParam(req.query.search);
-    const type = getStringParam(req.query.type);
-    const status = getStringParam(req.query.status);
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const where: CulturalProjectWhereInput = {};
-
-    if (search) {
-      where.OR = [
-        { name: { contains: search as string, mode: 'insensitive' } },
-        { responsible: { contains: search as string, mode: 'insensitive' } },
-      ];
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
     }
 
-    if (type) where.type = type;
-    if (status) where.currentStatus = status;
-
-    const [projects, total] = await Promise.all([
-      prisma.culturalProject.findMany({
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
         where,
         skip,
-        take: parseInt(limit),
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
         orderBy: { createdAt: 'desc' }
-        }),
-      prisma.culturalProject.count({ where }),
+      }),
+      prisma.protocolSimplified.count({ where })
     ]);
 
-    const response = {
-      data: projects,
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / parseInt(limit)),
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: Number(page),
+        limit: Number(limit),
         total,
-        totalPages: Math.ceil(total / parseInt(limit))
-        }
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[cultura/projetos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /projetos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/projetos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'PROJETO_CULTURAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
     };
 
-    res.json(response);
+    res.json({ success: true, data });
   } catch (error) {
-    console.error('Error fetching cultural projects:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/projetos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.post('/cultural-projects', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * POST /projetos
+ * Cria um novo registro
+ */
+router.post('/projetos', requireMinRole(UserRole.USER), async (req, res) => {
   try {
-    const validatedData = culturalProjectSchema.parse(req.body);
+    const authReq = req as AuthenticatedRequest;
 
-    const project = await prisma.culturalProject.create({
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'PROJETO_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
       data: {
-        ...validatedData,
-        startDate: validatedData.startDate ? new Date(validatedData.startDate) : undefined,
-        endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined
-        }
-        });
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo cultura/projetos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'PROJETO_CULTURAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
 
-    res.status(201).json(project);
+    res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error creating cultural project:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/projetos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.get('/cultural-projects/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * PUT /projetos/:id
+ * Atualiza um registro existente
+ */
+router.put('/projetos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
-    const project = await prisma.culturalProject.findUnique({
-      where: {
-        id: req.params.id
-        }
-        });
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
 
-    if (!project) {
-      res.status(404).json({ error: 'Cultural project not found' });
-      return;
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
     }
 
-    res.json(project);
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('Error fetching cultural project:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/projetos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.put('/cultural-projects/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * DELETE /projetos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/projetos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
-    const validatedData = culturalProjectSchema.partial().parse(req.body);
+    const authReq = req as AuthenticatedRequest;
 
-    const project = await prisma.culturalProject.update({
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/projetos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /projetos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/projetos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/projetos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /projetos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/projetos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/projetos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /projetos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/projetos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[cultura/projetos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: submissoes (SUBMISSAO_PROJETO_CULTURAL)
+// ==========================================================================
+
+/**
+ * GET /submissoes
+ * Lista todos os registros deste módulo
+ */
+router.get('/submissoes', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-        id: req.params.id
+        departmentId: department.id,
+        moduleType: 'SUBMISSAO_PROJETO_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module submissoes'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'SUBMISSAO_PROJETO_CULTURAL'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
         },
-      data: {
-        ...validatedData,
-        startDate: validatedData.startDate ? new Date(validatedData.startDate) : undefined,
-        endDate: validatedData.endDate ? new Date(validatedData.endDate) : undefined
-        }
-        });
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
 
-    res.json(project);
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation error', details: error.issues });
-      return;
-    }
-    console.error('Error updating cultural project:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/submissoes] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
 
-router.delete('/cultural-projects/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+/**
+ * GET /submissoes/:id
+ * Busca um registro específico por ID
+ */
+router.get('/submissoes/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
-    await prisma.culturalProject.delete({
-      where: {
-        id: req.params.id
-        }
-        });
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
 
-    res.status(204).send();
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'SUBMISSAO_PROJETO_CULTURAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
   } catch (error) {
-    console.error('Error deleting cultural project:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('[cultura/submissoes] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
-}));
+});
+
+/**
+ * POST /submissoes
+ * Cria um novo registro
+ */
+router.post('/submissoes', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'SUBMISSAO_PROJETO_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo cultura/submissoes',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'SUBMISSAO_PROJETO_CULTURAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[cultura/submissoes] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /submissoes/:id
+ * Atualiza um registro existente
+ */
+router.put('/submissoes/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[cultura/submissoes] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /submissoes/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/submissoes/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/submissoes] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /submissoes/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/submissoes/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/submissoes] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /submissoes/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/submissoes/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/submissoes] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /submissoes/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/submissoes/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[cultura/submissoes] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: eventos (CADASTRO_EVENTO_CULTURAL)
+// ==========================================================================
+
+/**
+ * GET /eventos
+ * Lista todos os registros deste módulo
+ */
+router.get('/eventos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_EVENTO_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module eventos'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'CADASTRO_EVENTO_CULTURAL'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[cultura/eventos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /eventos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/eventos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'CADASTRO_EVENTO_CULTURAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[cultura/eventos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /eventos
+ * Cria um novo registro
+ */
+router.post('/eventos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'CADASTRO_EVENTO_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo cultura/eventos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'CADASTRO_EVENTO_CULTURAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[cultura/eventos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /eventos/:id
+ * Atualiza um registro existente
+ */
+router.put('/eventos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[cultura/eventos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /eventos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/eventos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/eventos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /eventos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/eventos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/eventos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /eventos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/eventos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/eventos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /eventos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/eventos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[cultura/eventos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: manifestacoes (REGISTRO_MANIFESTACAO_CULTURAL)
+// ==========================================================================
+
+/**
+ * GET /manifestacoes
+ * Lista todos os registros deste módulo
+ */
+router.get('/manifestacoes', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module manifestacoes'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[cultura/manifestacoes] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /manifestacoes/:id
+ * Busca um registro específico por ID
+ */
+router.get('/manifestacoes/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'REGISTRO_MANIFESTACAO_CULTURAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[cultura/manifestacoes] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /manifestacoes
+ * Cria um novo registro
+ */
+router.post('/manifestacoes', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo cultura/manifestacoes',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[cultura/manifestacoes] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /manifestacoes/:id
+ * Atualiza um registro existente
+ */
+router.put('/manifestacoes/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[cultura/manifestacoes] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /manifestacoes/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/manifestacoes/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/manifestacoes] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /manifestacoes/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/manifestacoes/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/manifestacoes] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /manifestacoes/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/manifestacoes/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/manifestacoes] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /manifestacoes/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/manifestacoes/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[cultura/manifestacoes] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: servicos (ATENDIMENTOS_CULTURA)
+// ==========================================================================
+
+/**
+ * GET /servicos
+ * Lista todos os registros deste módulo
+ */
+router.get('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_CULTURA'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module servicos'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'ATENDIMENTOS_CULTURA'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[cultura/servicos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /servicos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/servicos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'ATENDIMENTOS_CULTURA') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[cultura/servicos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos
+ * Cria um novo registro
+ */
+router.post('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'cultura' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_CULTURA'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo cultura/servicos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_CULTURA',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[cultura/servicos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /servicos/:id
+ * Atualiza um registro existente
+ */
+router.put('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[cultura/servicos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /servicos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/servicos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/servicos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/servicos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/servicos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[cultura/servicos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /servicos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/servicos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[cultura/servicos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+
+// ============================================================================
+// EXPORT
+// ============================================================================
 
 export default router;

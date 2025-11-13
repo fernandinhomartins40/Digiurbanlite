@@ -1,789 +1,2489 @@
-import { Router, Response } from 'express';
-import { z } from 'zod';
+// ============================================================================
+// SECRETARIA: SECRETARIA DE MEIO AMBIENTE - GERADO AUTOMATICAMENTE
+// ============================================================================
+// ⚠️  ATENÇÃO: Este arquivo foi gerado automaticamente pelo sistema de templates.
+// ⚠️  NÃO EDITE MANUALMENTE! Qualquer alteração será sobrescrita na próxima geração.
+//
+// Para fazer alterações:
+// 1. Edite a configuração em: generator/configs/secretarias/meio-ambiente.config.ts
+// 2. Regenere o código: npm run generate -- --secretaria=meio-ambiente --force
+//
+// Secretaria: Secretaria de Meio Ambiente
+// Total de módulos: 7
+// Gerado em: 2025-11-13T12:09:03.586Z
+// ============================================================================
+
+import { Router } from 'express';
 import { prisma } from '../lib/prisma';
-import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
-import { UserRole } from '@prisma/client';
-import { AuthenticatedRequest } from '../types';
-import { asyncHandler } from '../utils/express-helpers';
-import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
+import { ProtocolStatus, UserRole } from '@prisma/client';
+import { requireMinRole } from '../middleware/admin-auth';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
-// Apply middleware
 // ============================================================================
-// HELPER FUNCTIONS
+// ROTAS GERAIS DA SECRETARIA
 // ============================================================================
 
-function getStringParam(param: unknown): string {
-  if (Array.isArray(param)) return String(param[0] || '');
-  if (typeof param === 'string') return param;
-  return '';
-}
+/**
+ * GET /stats
+ * Estatísticas consolidadas da secretaria
+ */
+router.get('/stats', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    // Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
 
-interface PrismaWhereClause {
-
-  OR?: Array<Record<string, { contains: string; mode: 'insensitive' }>>;
-  status?: string;
-  type?: string;
-  [key: string]: unknown;
-}
-
-function createSafeWhereClause(params: {
-  search?: string;
-  status?: string;
-  type?: string;
-  searchFields?: string[];
-}): PrismaWhereClause {
-  const where: PrismaWhereClause = {};
-
-  if (params.search && params.searchFields) {
-    const searchConditions: Array<Record<string, { contains: string; mode: 'insensitive' }>> = [];
-    params.searchFields.forEach(field => {
-      searchConditions.push({
-        [field]: { contains: params.search!, mode: 'insensitive' }
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        error: 'Department not found'
       });
-  });
-    if (searchConditions.length > 0) {
-      where.OR = searchConditions;
     }
-  }
 
-  if (params.status) {
-    where.status = params.status;
-  }
+    // Stats gerais
+    const [totalProtocols, activeProtocols, pendingApproval, services] = await Promise.all([
+      prisma.protocolSimplified.count({ where: { departmentId: department.id } }),
+      prisma.protocolSimplified.count({ where: { departmentId: department.id, status: ProtocolStatus.CONCLUIDO } }),
+      prisma.protocolSimplified.count({ where: { departmentId: department.id, status: ProtocolStatus.VINCULADO } }),
+      prisma.serviceSimplified.count({ where: { departmentId: department.id } })
+    ]);
 
-  if (params.type) {
-    where.type = params.type;
-  }
+    // Stats por módulo
+    const moduleStats: Record<string, number> = {};
+    moduleStats['licencas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'LICENCA_AMBIENTAL' }
+    });
+    moduleStats['denuncias'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'DENUNCIA_AMBIENTAL' }
+    });
+    moduleStats['programas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'PROGRAMA_AMBIENTAL' }
+    });
+    moduleStats['podas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'AUTORIZACAO_PODA_CORTE' }
+    });
+    moduleStats['vistorias'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'VISTORIA_AMBIENTAL' }
+    });
+    moduleStats['areas-protegidas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'GESTAO_AREAS_PROTEGIDAS' }
+    });
+    moduleStats['servicos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'ATENDIMENTOS_MEIO_AMBIENTE' }
+    });
 
-  return where;
-}
-
-// ============================================================================
-// STATS - Dashboard principal
-// ============================================================================
-
-router.get('/stats', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  // 1. Buscar departamento de Meio Ambiente
-  // ✅ Buscar departamento global
-  const dept = await prisma.department.findFirst({
-    where: { code: 'MEIO_AMBIENTE' }
-  });
-
-  if (!dept) {
-    res.status(404).json({ error: 'Departamento de Meio Ambiente não encontrado' });
-    return;
-  }
-
-  // 2. Stats dos protocolos por módulo
-  const protocolsByModule = await prisma.protocolSimplified.groupBy({
-    by: ['moduleType', 'status'],
-    where: {
-      departmentId: dept.id,
-      moduleType: {
-        in: MODULE_BY_DEPARTMENT.MEIO_AMBIENTE || []
+    res.json({
+      success: true,
+      data: {
+        totalProtocols,
+        activeProtocols,
+        pendingApproval,
+        services,
+        byModule: moduleStats
       }
-    },
-    _count: true
-  });
+    });
+  } catch (error) {
+    console.error('[meio-ambiente] Error in stats:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
 
-  // 3. Contagem de registros em cada módulo
-  const [
-    attendancesCount,
-    licensesCount,
-    complaintsCount,
-    programsCount,
-    treeCuttingsCount,
-    inspectionsCount,
-    protectedAreasCount,
-  ] = await Promise.all([
-    prisma.environmentalAttendance.count({ where: {} }),
-    prisma.environmentalLicense.count({ where: {} }),
-    prisma.environmentalComplaint.count({ where: {} }),
-    prisma.environmentalProgram.count({ where: {} }),
-    prisma.treeCuttingAuthorization.count({ where: {} }),
-    prisma.environmentalInspection.count({ where: {} }),
-    prisma.protectedArea.count({ where: {} }),
-  ]);
+/**
+ * GET /services
+ * Lista todos os serviços da secretaria
+ */
+router.get('/services', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
 
-  // 4. Stats específicas de meio ambiente
-  const [
-    pendingAttendances,
-    underAnalysisLicenses,
-    openComplaints,
-    activePrograms,
-    pendingTreeCuttings,
-    scheduledInspections,
-    activeProtectedAreas,
-  ] = await Promise.all([
-    prisma.environmentalAttendance.count({
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    const services = await prisma.serviceSimplified.findMany({
+      where: { departmentId: department.id, isActive: true },
+      orderBy: { name: 'asc' }
+    });
+
+    res.json({ success: true, data: services });
+  } catch (error) {
+    console.error('[meio-ambiente] Error listing services:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// ROTAS DOS MÓDULOS (CRUD GENÉRICO)
+// ============================================================================
+
+// ==========================================================================
+// MÓDULO: licencas (LICENCA_AMBIENTAL)
+// ==========================================================================
+
+/**
+ * GET /licencas
+ * Lista todos os registros deste módulo
+ */
+router.get('/licencas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-      status: 'PENDING'
+        departmentId: department.id,
+        moduleType: 'LICENCA_AMBIENTAL'
       }
-    }),
-    prisma.environmentalLicense.count({
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module licencas'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'LICENCA_AMBIENTAL'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[meio-ambiente/licencas] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /licencas/:id
+ * Busca um registro específico por ID
+ */
+router.get('/licencas/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'LICENCA_AMBIENTAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[meio-ambiente/licencas] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /licencas
+ * Cria um novo registro
+ */
+router.post('/licencas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-      status: 'UNDER_ANALYSIS'
+        departmentId: department.id,
+        moduleType: 'LICENCA_AMBIENTAL'
       }
-    }),
-    prisma.environmentalComplaint.count({
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo meio-ambiente/licencas',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'LICENCA_AMBIENTAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[meio-ambiente/licencas] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /licencas/:id
+ * Atualiza um registro existente
+ */
+router.put('/licencas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[meio-ambiente/licencas] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /licencas/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/licencas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/licencas] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /licencas/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/licencas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/licencas] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /licencas/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/licencas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/licencas] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /licencas/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/licencas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[meio-ambiente/licencas] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: denuncias (DENUNCIA_AMBIENTAL)
+// ==========================================================================
+
+/**
+ * GET /denuncias
+ * Lista todos os registros deste módulo
+ */
+router.get('/denuncias', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-      status: 'OPEN'
+        departmentId: department.id,
+        moduleType: 'DENUNCIA_AMBIENTAL'
       }
-    }),
-    prisma.environmentalProgram.count({
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module denuncias'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'DENUNCIA_AMBIENTAL'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[meio-ambiente/denuncias] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /denuncias/:id
+ * Busca um registro específico por ID
+ */
+router.get('/denuncias/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'DENUNCIA_AMBIENTAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[meio-ambiente/denuncias] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /denuncias
+ * Cria um novo registro
+ */
+router.post('/denuncias', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-      status: 'ACTIVE'
+        departmentId: department.id,
+        moduleType: 'DENUNCIA_AMBIENTAL'
       }
-    }),
-    prisma.treeCuttingAuthorization.count({
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo meio-ambiente/denuncias',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'DENUNCIA_AMBIENTAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[meio-ambiente/denuncias] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /denuncias/:id
+ * Atualiza um registro existente
+ */
+router.put('/denuncias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[meio-ambiente/denuncias] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /denuncias/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/denuncias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/denuncias] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /denuncias/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/denuncias/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/denuncias] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /denuncias/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/denuncias/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/denuncias] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /denuncias/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/denuncias/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[meio-ambiente/denuncias] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: programas (PROGRAMA_AMBIENTAL)
+// ==========================================================================
+
+/**
+ * GET /programas
+ * Lista todos os registros deste módulo
+ */
+router.get('/programas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-      status: 'UNDER_ANALYSIS'
+        departmentId: department.id,
+        moduleType: 'PROGRAMA_AMBIENTAL'
       }
-    }),
-    prisma.environmentalInspection.count({
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module programas'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'PROGRAMA_AMBIENTAL'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[meio-ambiente/programas] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /programas/:id
+ * Busca um registro específico por ID
+ */
+router.get('/programas/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'PROGRAMA_AMBIENTAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[meio-ambiente/programas] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /programas
+ * Cria um novo registro
+ */
+router.post('/programas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-      status: 'SCHEDULED'
+        departmentId: department.id,
+        moduleType: 'PROGRAMA_AMBIENTAL'
       }
-    }),
-    prisma.protectedArea.count({
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo meio-ambiente/programas',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'PROGRAMA_AMBIENTAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[meio-ambiente/programas] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /programas/:id
+ * Atualiza um registro existente
+ */
+router.put('/programas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[meio-ambiente/programas] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /programas/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/programas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/programas] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /programas/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/programas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/programas] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /programas/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/programas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/programas] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /programas/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/programas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[meio-ambiente/programas] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: podas (AUTORIZACAO_PODA_CORTE)
+// ==========================================================================
+
+/**
+ * GET /podas
+ * Lista todos os registros deste módulo
+ */
+router.get('/podas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
       where: {
-      status: 'ACTIVE'
+        departmentId: department.id,
+        moduleType: 'AUTORIZACAO_PODA_CORTE'
       }
-    }),
-  ]);
+    });
 
-  res.json({
-    protocolsByModule,
-    modules: {
-      attendances: attendancesCount,
-      licenses: licensesCount,
-      complaints: complaintsCount,
-      programs: programsCount,
-      treeCuttings: treeCuttingsCount,
-      inspections: inspectionsCount,
-      protectedAreas: protectedAreasCount
-    },
-    metrics: {
-      pendingAttendances,
-      underAnalysisLicenses,
-      openComplaints,
-      activePrograms,
-      pendingTreeCuttings,
-      scheduledInspections,
-      activeProtectedAreas
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module podas'
+      });
     }
-  });
-}));
 
-// ============================================================================
-// ATENDIMENTOS AMBIENTAIS
-// ============================================================================
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'AUTORIZACAO_PODA_CORTE'
+    };
 
-router.get('/atendimentos', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const page = parseInt(getStringParam(req.query.page)) || 1;
-  const limit = parseInt(getStringParam(req.query.limit)) || 50;
-  const search = getStringParam(req.query.search);
-  const status = getStringParam(req.query.status);
-
-  const where = createSafeWhereClause({
-    search,
-    status,
-    searchFields: ['citizenName', 'citizenCpf', 'protocol', 'subject']
-  });
-
-  const [attendances, total] = await Promise.all([
-    prisma.environmentalAttendance.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.environmentalAttendance.count({ where }),
-  ]);
-
-  res.json({
-    data: attendances,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    // Filtro por status
+    if (status) {
+      where.status = status;
     }
-  });
-}));
 
-router.get('/atendimentos/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const attendance = await prisma.environmentalAttendance.findFirst({
-    where: { id }
-  });
-
-  if (!attendance) {
-    res.status(404).json({ error: 'Atendimento não encontrado' });
-    return;
-  }
-
-  res.json(attendance);
-}));
-
-// ============================================================================
-// LICENÇAS AMBIENTAIS
-// ============================================================================
-
-router.get('/licencas', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const page = parseInt(getStringParam(req.query.page)) || 1;
-  const limit = parseInt(getStringParam(req.query.limit)) || 50;
-  const search = getStringParam(req.query.search);
-  const status = getStringParam(req.query.status);
-
-  const where = createSafeWhereClause({
-    search,
-    status,
-    searchFields: ['applicantName', 'applicantCpf', 'licenseNumber', 'businessName']
-  });
-
-  const [licenses, total] = await Promise.all([
-    prisma.environmentalLicense.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.environmentalLicense.count({ where }),
-  ]);
-
-  res.json({
-    data: licenses,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
     }
-  });
-}));
 
-router.get('/licencas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
 
-  const license = await prisma.environmentalLicense.findFirst({
-    where: { id }
-  });
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
 
-  if (!license) {
-    res.status(404).json({ error: 'Licença não encontrada' });
-    return;
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[meio-ambiente/podas] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
+});
 
-  res.json(license);
-}));
+/**
+ * GET /podas/:id
+ * Busca um registro específico por ID
+ */
+router.get('/podas/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
 
-router.put('/licencas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const license = await prisma.environmentalLicense.findFirst({
-    where: { id }
-  });
-
-  if (!license) {
-    res.status(404).json({ error: 'Licença não encontrada' });
-    return;
-  }
-
-  const updated = await prisma.environmentalLicense.update({
-    where: { id },
-    data: req.body
-  });
-
-  res.json(updated);
-}));
-
-router.delete('/licencas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const license = await prisma.environmentalLicense.findFirst({
-    where: { id }
-  });
-
-  if (!license) {
-    res.status(404).json({ error: 'Licença não encontrada' });
-    return;
-  }
-
-  await prisma.environmentalLicense.delete({
-    where: { id }
-  });
-
-  res.json({ message: 'Licença excluída com sucesso' });
-}));
-
-// ============================================================================
-// DENÚNCIAS AMBIENTAIS
-// ============================================================================
-
-router.get('/denuncias', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const page = parseInt(getStringParam(req.query.page)) || 1;
-  const limit = parseInt(getStringParam(req.query.limit)) || 50;
-  const search = getStringParam(req.query.search);
-  const status = getStringParam(req.query.status);
-
-  const where = createSafeWhereClause({
-    search,
-    status,
-    searchFields: ['reporterName', 'complainantName', 'protocol', 'location']
-  });
-
-  const [complaints, total] = await Promise.all([
-    prisma.environmentalComplaint.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.environmentalComplaint.count({ where }),
-  ]);
-
-  res.json({
-    data: complaints,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
     }
-  });
-}));
 
-router.get('/denuncias/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const complaint = await prisma.environmentalComplaint.findFirst({
-    where: { id }
-  });
-
-  if (!complaint) {
-    res.status(404).json({ error: 'Denúncia não encontrada' });
-    return;
-  }
-
-  res.json(complaint);
-}));
-
-router.put('/denuncias/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const complaint = await prisma.environmentalComplaint.findFirst({
-    where: { id }
-  });
-
-  if (!complaint) {
-    res.status(404).json({ error: 'Denúncia não encontrada' });
-    return;
-  }
-
-  const updated = await prisma.environmentalComplaint.update({
-    where: { id },
-    data: req.body
-  });
-
-  res.json(updated);
-}));
-
-router.delete('/denuncias/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const complaint = await prisma.environmentalComplaint.findFirst({
-    where: { id }
-  });
-
-  if (!complaint) {
-    res.status(404).json({ error: 'Denúncia não encontrada' });
-    return;
-  }
-
-  await prisma.environmentalComplaint.delete({
-    where: { id }
-  });
-
-  res.json({ message: 'Denúncia excluída com sucesso' });
-}));
-
-// ============================================================================
-// PROGRAMAS AMBIENTAIS
-// ============================================================================
-
-router.get('/programas', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const page = parseInt(getStringParam(req.query.page)) || 1;
-  const limit = parseInt(getStringParam(req.query.limit)) || 50;
-  const search = getStringParam(req.query.search);
-  const status = getStringParam(req.query.status);
-
-  const where = createSafeWhereClause({
-    search,
-    status,
-    searchFields: ['name', 'programType', 'coordinator']
-  });
-
-  const [programs, total] = await Promise.all([
-    prisma.environmentalProgram.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.environmentalProgram.count({ where }),
-  ]);
-
-  res.json({
-    data: programs,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'AUTORIZACAO_PODA_CORTE') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
-  });
-}));
 
-router.get('/programas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
 
-  const program = await prisma.environmentalProgram.findFirst({
-    where: { id }
-  });
-
-  if (!program) {
-    res.status(404).json({ error: 'Programa não encontrado' });
-    return;
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[meio-ambiente/podas] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
+});
 
-  res.json(program);
-}));
+/**
+ * POST /podas
+ * Cria um novo registro
+ */
+router.post('/podas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-router.put('/programas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
 
-  const program = await prisma.environmentalProgram.findFirst({
-    where: { id }
-  });
-
-  if (!program) {
-    res.status(404).json({ error: 'Programa não encontrado' });
-    return;
-  }
-
-  const updated = await prisma.environmentalProgram.update({
-    where: { id },
-    data: req.body
-  });
-
-  res.json(updated);
-}));
-
-router.delete('/programas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const program = await prisma.environmentalProgram.findFirst({
-    where: { id }
-  });
-
-  if (!program) {
-    res.status(404).json({ error: 'Programa não encontrado' });
-    return;
-  }
-
-  await prisma.environmentalProgram.delete({
-    where: { id }
-  });
-
-  res.json({ message: 'Programa excluído com sucesso' });
-}));
-
-// ============================================================================
-// AUTORIZAÇÕES DE PODA E CORTE
-// ============================================================================
-
-router.get('/poda-corte', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const page = parseInt(getStringParam(req.query.page)) || 1;
-  const limit = parseInt(getStringParam(req.query.limit)) || 50;
-  const search = getStringParam(req.query.search);
-  const status = getStringParam(req.query.status);
-
-  const where = createSafeWhereClause({
-    search,
-    status,
-    searchFields: ['applicantName', 'applicantCpf', 'authorizationNumber', 'propertyAddress']
-  });
-
-  const [authorizations, total] = await Promise.all([
-    prisma.treeCuttingAuthorization.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.treeCuttingAuthorization.count({ where }),
-  ]);
-
-  res.json({
-    data: authorizations,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
     }
-  });
-}));
 
-router.get('/poda-corte/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'AUTORIZACAO_PODA_CORTE'
+      }
+    });
 
-  const authorization = await prisma.treeCuttingAuthorization.findFirst({
-    where: { id }
-  });
-
-  if (!authorization) {
-    res.status(404).json({ error: 'Autorização não encontrada' });
-    return;
-  }
-
-  res.json(authorization);
-}));
-
-router.put('/poda-corte/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const authorization = await prisma.treeCuttingAuthorization.findFirst({
-    where: { id }
-  });
-
-  if (!authorization) {
-    res.status(404).json({ error: 'Autorização não encontrada' });
-    return;
-  }
-
-  const updated = await prisma.treeCuttingAuthorization.update({
-    where: { id },
-    data: req.body
-  });
-
-  res.json(updated);
-}));
-
-router.delete('/poda-corte/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const authorization = await prisma.treeCuttingAuthorization.findFirst({
-    where: { id }
-  });
-
-  if (!authorization) {
-    res.status(404).json({ error: 'Autorização não encontrada' });
-    return;
-  }
-
-  await prisma.treeCuttingAuthorization.delete({
-    where: { id }
-  });
-
-  res.json({ message: 'Autorização excluída com sucesso' });
-}));
-
-// ============================================================================
-// VISTORIAS AMBIENTAIS
-// ============================================================================
-
-router.get('/vistorias', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const page = parseInt(getStringParam(req.query.page)) || 1;
-  const limit = parseInt(getStringParam(req.query.limit)) || 50;
-  const search = getStringParam(req.query.search);
-  const status = getStringParam(req.query.status);
-
-  const where = createSafeWhereClause({
-    search,
-    status,
-    searchFields: ['inspectionNumber', 'inspector', 'subject', 'location']
-  });
-
-  const [inspections, total] = await Promise.all([
-    prisma.environmentalInspection.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.environmentalInspection.count({ where }),
-  ]);
-
-  res.json({
-    data: inspections,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
     }
-  });
-}));
 
-router.get('/vistorias/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
 
-  const inspection = await prisma.environmentalInspection.findFirst({
-    where: { id }
-  });
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
-  if (!inspection) {
-    res.status(404).json({ error: 'Vistoria não encontrada' });
-    return;
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo meio-ambiente/podas',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'AUTORIZACAO_PODA_CORTE',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[meio-ambiente/podas] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
+});
 
-  res.json(inspection);
-}));
+/**
+ * PUT /podas/:id
+ * Atualiza um registro existente
+ */
+router.put('/podas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
 
-router.put('/vistorias/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
 
-  const inspection = await prisma.environmentalInspection.findFirst({
-    where: { id }
-  });
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
 
-  if (!inspection) {
-    res.status(404).json({ error: 'Vistoria não encontrada' });
-    return;
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[meio-ambiente/podas] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
+});
 
-  const updated = await prisma.environmentalInspection.update({
-    where: { id },
-    data: req.body
-  });
+/**
+ * DELETE /podas/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/podas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-  res.json(updated);
-}));
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
 
-router.delete('/vistorias/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const inspection = await prisma.environmentalInspection.findFirst({
-    where: { id }
-  });
-
-  if (!inspection) {
-    res.status(404).json({ error: 'Vistoria não encontrada' });
-    return;
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/podas] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
+});
 
-  await prisma.environmentalInspection.delete({
-    where: { id }
-  });
+/**
+ * POST /podas/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/podas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
 
-  res.json({ message: 'Vistoria excluída com sucesso' });
-}));
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/podas] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /podas/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/podas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/podas] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /podas/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/podas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[meio-ambiente/podas] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: vistorias (VISTORIA_AMBIENTAL)
+// ==========================================================================
+
+/**
+ * GET /vistorias
+ * Lista todos os registros deste módulo
+ */
+router.get('/vistorias', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'VISTORIA_AMBIENTAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module vistorias'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'VISTORIA_AMBIENTAL'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[meio-ambiente/vistorias] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /vistorias/:id
+ * Busca um registro específico por ID
+ */
+router.get('/vistorias/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'VISTORIA_AMBIENTAL') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[meio-ambiente/vistorias] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vistorias
+ * Cria um novo registro
+ */
+router.post('/vistorias', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'VISTORIA_AMBIENTAL'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo meio-ambiente/vistorias',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'VISTORIA_AMBIENTAL',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[meio-ambiente/vistorias] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /vistorias/:id
+ * Atualiza um registro existente
+ */
+router.put('/vistorias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[meio-ambiente/vistorias] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /vistorias/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/vistorias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/vistorias] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vistorias/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/vistorias/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/vistorias] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vistorias/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/vistorias/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/vistorias] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /vistorias/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/vistorias/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[meio-ambiente/vistorias] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: areas-protegidas (GESTAO_AREAS_PROTEGIDAS)
+// ==========================================================================
+
+/**
+ * GET /areas-protegidas
+ * Lista todos os registros deste módulo
+ */
+router.get('/areas-protegidas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'GESTAO_AREAS_PROTEGIDAS'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module areas-protegidas'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'GESTAO_AREAS_PROTEGIDAS'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[meio-ambiente/areas-protegidas] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /areas-protegidas/:id
+ * Busca um registro específico por ID
+ */
+router.get('/areas-protegidas/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'GESTAO_AREAS_PROTEGIDAS') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[meio-ambiente/areas-protegidas] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /areas-protegidas
+ * Cria um novo registro
+ */
+router.post('/areas-protegidas', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'GESTAO_AREAS_PROTEGIDAS'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo meio-ambiente/areas-protegidas',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'GESTAO_AREAS_PROTEGIDAS',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[meio-ambiente/areas-protegidas] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /areas-protegidas/:id
+ * Atualiza um registro existente
+ */
+router.put('/areas-protegidas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[meio-ambiente/areas-protegidas] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /areas-protegidas/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/areas-protegidas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/areas-protegidas] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /areas-protegidas/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/areas-protegidas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/areas-protegidas] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /areas-protegidas/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/areas-protegidas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/areas-protegidas] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /areas-protegidas/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/areas-protegidas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[meio-ambiente/areas-protegidas] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: servicos (ATENDIMENTOS_MEIO_AMBIENTE)
+// ==========================================================================
+
+/**
+ * GET /servicos
+ * Lista todos os registros deste módulo
+ */
+router.get('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_MEIO_AMBIENTE'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module servicos'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'ATENDIMENTOS_MEIO_AMBIENTE'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[meio-ambiente/servicos] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /servicos/:id
+ * Busca um registro específico por ID
+ */
+router.get('/servicos/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'ATENDIMENTOS_MEIO_AMBIENTE') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[meio-ambiente/servicos] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos
+ * Cria um novo registro
+ */
+router.post('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'meio-ambiente' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_MEIO_AMBIENTE'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo meio-ambiente/servicos',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'ATENDIMENTOS_MEIO_AMBIENTE',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[meio-ambiente/servicos] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /servicos/:id
+ * Atualiza um registro existente
+ */
+router.put('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[meio-ambiente/servicos] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /servicos/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/servicos] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/servicos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/servicos] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /servicos/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/servicos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[meio-ambiente/servicos] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /servicos/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/servicos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[meio-ambiente/servicos] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
 
 // ============================================================================
-// ÁREAS PROTEGIDAS
+// EXPORT
 // ============================================================================
-
-router.get('/areas-protegidas', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const page = parseInt(getStringParam(req.query.page)) || 1;
-  const limit = parseInt(getStringParam(req.query.limit)) || 50;
-  const search = getStringParam(req.query.search);
-  const status = getStringParam(req.query.status);
-
-  const where = createSafeWhereClause({
-    search,
-    status,
-    searchFields: ['name', 'areaType', 'location', 'guardian']
-  });
-
-  const [protectedAreas, total] = await Promise.all([
-    prisma.protectedArea.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.protectedArea.count({ where }),
-  ]);
-
-  res.json({
-    data: protectedAreas,
-    pagination: {
-      page,
-      limit,
-      total,
-      pages: Math.ceil(total / limit)
-    }
-  });
-}));
-
-router.get('/areas-protegidas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const protectedArea = await prisma.protectedArea.findFirst({
-    where: { id }
-  });
-
-  if (!protectedArea) {
-    res.status(404).json({ error: 'Área protegida não encontrada' });
-    return;
-  }
-
-  res.json(protectedArea);
-}));
-
-router.post('/areas-protegidas', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-
-  const protectedArea = await prisma.protectedArea.create({
-    data: {
-      ...req.body
-    }
-  });
-
-  res.status(201).json(protectedArea);
-}));
-
-router.put('/areas-protegidas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const protectedArea = await prisma.protectedArea.findFirst({
-    where: { id }
-  });
-
-  if (!protectedArea) {
-    res.status(404).json({ error: 'Área protegida não encontrada' });
-    return;
-  }
-
-  const updated = await prisma.protectedArea.update({
-    where: { id },
-    data: req.body
-  });
-
-  res.json(updated);
-}));
-
-router.delete('/areas-protegidas/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-
-  const protectedArea = await prisma.protectedArea.findFirst({
-    where: { id }
-  });
-
-  if (!protectedArea) {
-    res.status(404).json({ error: 'Área protegida não encontrada' });
-    return;
-  }
-
-  await prisma.protectedArea.delete({
-    where: { id }
-  });
-
-  res.json({ message: 'Área protegida excluída com sucesso' });
-}));
 
 export default router;

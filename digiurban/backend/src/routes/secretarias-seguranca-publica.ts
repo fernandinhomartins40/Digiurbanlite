@@ -1,16 +1,16 @@
 // ============================================================================
-// SECRETARIA: SECRETARIA DE SERVIÇOS PÚBLICOS - GERADO AUTOMATICAMENTE
+// SECRETARIA: SECRETARIA DE SEGURANÇA PÚBLICA - GERADO AUTOMATICAMENTE
 // ============================================================================
 // ⚠️  ATENÇÃO: Este arquivo foi gerado automaticamente pelo sistema de templates.
 // ⚠️  NÃO EDITE MANUALMENTE! Qualquer alteração será sobrescrita na próxima geração.
 //
 // Para fazer alterações:
-// 1. Edite a configuração em: generator/configs/secretarias/servicos-publicos.config.ts
-// 2. Regenere o código: npm run generate -- --secretaria=servicos-publicos --force
+// 1. Edite a configuração em: generator/configs/secretarias/seguranca-publica.config.ts
+// 2. Regenere o código: npm run generate -- --secretaria=seguranca-publica --force
 //
-// Secretaria: Secretaria de Serviços Públicos
-// Total de módulos: 9
-// Gerado em: 2025-11-13T12:09:03.631Z
+// Secretaria: Secretaria de Segurança Pública
+// Total de módulos: 10
+// Gerado em: 2025-11-13T12:09:03.622Z
 // ============================================================================
 
 import { Router } from 'express';
@@ -34,7 +34,7 @@ router.get('/stats', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     // Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -54,32 +54,35 @@ router.get('/stats', requireMinRole(UserRole.USER), async (req, res) => {
 
     // Stats por módulo
     const moduleStats: Record<string, number> = {};
-    moduleStats['limpeza'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'LIMPEZA_URBANA' }
+    moduleStats['ocorrencias'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'REGISTRO_OCORRENCIA' }
     });
-    moduleStats['iluminacao'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'ILUMINACAO_PUBLICA' }
+    moduleStats['denuncias'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'DENUNCIA_ANONIMA' }
     });
-    moduleStats['coleta-especial'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'COLETA_ESPECIAL' }
+    moduleStats['rondas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'SOLICITACAO_RONDA' }
     });
-    moduleStats['podas'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'SOLICITACAO_PODA' }
+    moduleStats['cameras'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'SOLICITACAO_CAMERA_SEGURANCA' }
     });
-    moduleStats['capina'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'SOLICITACAO_CAPINA' }
+    moduleStats['pontos-criticos'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'CADASTRO_PONTO_CRITICO' }
     });
-    moduleStats['reparo-vias'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'SOLICITACAO_REPARO_VIA' }
+    moduleStats['alertas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'ALERTA_SEGURANCA' }
     });
-    moduleStats['desobstrucao'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'SOLICITACAO_DESOBSTRUCAO' }
+    moduleStats['patrulhas'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'REGISTRO_PATRULHA' }
     });
-    moduleStats['gestao-equipes'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'GESTAO_EQUIPES_SERVICOS' }
+    moduleStats['gestao-guarda'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'GESTAO_GUARDA_MUNICIPAL' }
+    });
+    moduleStats['vigilancia'] = await prisma.protocolSimplified.count({
+      where: { departmentId: department.id, moduleType: 'GESTAO_VIGILANCIA' }
     });
     moduleStats['servicos'] = await prisma.protocolSimplified.count({
-      where: { departmentId: department.id, moduleType: 'ATENDIMENTOS_SERVICOS_PUBLICOS' }
+      where: { departmentId: department.id, moduleType: 'ATENDIMENTOS_SEGURANCA' }
     });
 
     res.json({
@@ -93,7 +96,7 @@ router.get('/stats', requireMinRole(UserRole.USER), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos] Error in stats:', error);
+    console.error('[seguranca-publica] Error in stats:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -105,7 +108,7 @@ router.get('/stats', requireMinRole(UserRole.USER), async (req, res) => {
 router.get('/services', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -119,7 +122,7 @@ router.get('/services', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.json({ success: true, data: services });
   } catch (error) {
-    console.error('[servicos-publicos] Error listing services:', error);
+    console.error('[seguranca-publica] Error listing services:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -129,21 +132,21 @@ router.get('/services', requireMinRole(UserRole.USER), async (req, res) => {
 // ============================================================================
 
 // ==========================================================================
-// MÓDULO: limpeza (LIMPEZA_URBANA)
+// MÓDULO: ocorrencias (REGISTRO_OCORRENCIA)
 // ==========================================================================
 
 /**
- * GET /limpeza
+ * GET /ocorrencias
  * Lista todos os registros deste módulo
  */
-router.get('/limpeza', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/ocorrencias', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -154,21 +157,21 @@ router.get('/limpeza', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'LIMPEZA_URBANA'
+        moduleType: 'REGISTRO_OCORRENCIA'
       }
     });
 
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'Service not found for module limpeza'
+        error: 'Service not found for module ocorrencias'
       });
     }
 
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'LIMPEZA_URBANA'
+      moduleType: 'REGISTRO_OCORRENCIA'
     };
 
     // Filtro por status
@@ -221,16 +224,16 @@ router.get('/limpeza', requireMinRole(UserRole.USER), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/limpeza] Error listing:', error);
+    console.error('[seguranca-publica/ocorrencias] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * GET /limpeza/:id
+ * GET /ocorrencias/:id
  * Busca um registro específico por ID
  */
-router.get('/limpeza/:id', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/ocorrencias/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -246,7 +249,7 @@ router.get('/limpeza/:id', requireMinRole(UserRole.USER), async (req, res) => {
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'LIMPEZA_URBANA') {
+    if (protocol.moduleType !== 'REGISTRO_OCORRENCIA') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -266,22 +269,22 @@ router.get('/limpeza/:id', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/limpeza] Error getting by ID:', error);
+    console.error('[seguranca-publica/ocorrencias] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * POST /limpeza
+ * POST /ocorrencias
  * Cria um novo registro
  */
-router.post('/limpeza', requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/ocorrencias', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -292,7 +295,7 @@ router.post('/limpeza', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'LIMPEZA_URBANA'
+        moduleType: 'REGISTRO_OCORRENCIA'
       }
     });
 
@@ -314,12 +317,12 @@ router.post('/limpeza', requireMinRole(UserRole.USER), async (req, res) => {
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/limpeza',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/ocorrencias',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'LIMPEZA_URBANA',
+        moduleType: 'REGISTRO_OCORRENCIA',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -334,16 +337,16 @@ router.post('/limpeza', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/limpeza] Error creating:', error);
+    console.error('[seguranca-publica/ocorrencias] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * PUT /limpeza/:id
+ * PUT /ocorrencias/:id
  * Atualiza um registro existente
  */
-router.put('/limpeza/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.put('/ocorrencias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -372,16 +375,16 @@ router.put('/limpeza/:id', requireMinRole(UserRole.MANAGER), async (req, res) =>
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/limpeza] Error updating:', error);
+    console.error('[seguranca-publica/ocorrencias] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * DELETE /limpeza/:id
+ * DELETE /ocorrencias/:id
  * Cancela um protocolo (soft delete via status)
  */
-router.delete('/limpeza/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.delete('/ocorrencias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -397,16 +400,16 @@ router.delete('/limpeza/:id', requireMinRole(UserRole.MANAGER), async (req, res)
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/limpeza] Error deleting:', error);
+    console.error('[seguranca-publica/ocorrencias] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /limpeza/:id/approve
+ * POST /ocorrencias/:id/approve
  * Aprova um protocolo
  */
-router.post('/limpeza/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/ocorrencias/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -421,16 +424,16 @@ router.post('/limpeza/:id/approve', requireMinRole(UserRole.MANAGER), async (req
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/limpeza] Error approving:', error);
+    console.error('[seguranca-publica/ocorrencias] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /limpeza/:id/reject
+ * POST /ocorrencias/:id/reject
  * Rejeita um protocolo
  */
-router.post('/limpeza/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/ocorrencias/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -446,41 +449,41 @@ router.post('/limpeza/:id/reject', requireMinRole(UserRole.MANAGER), async (req,
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/limpeza] Error rejecting:', error);
+    console.error('[seguranca-publica/ocorrencias] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * GET /limpeza/:id/history
+ * GET /ocorrencias/:id/history
  * Histórico de mudanças de status
  */
-router.get('/limpeza/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/ocorrencias/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/limpeza] Error getting history:', error);
+    console.error('[seguranca-publica/ocorrencias] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 // ==========================================================================
-// MÓDULO: iluminacao (ILUMINACAO_PUBLICA)
+// MÓDULO: denuncias (DENUNCIA_ANONIMA)
 // ==========================================================================
 
 /**
- * GET /iluminacao
+ * GET /denuncias
  * Lista todos os registros deste módulo
  */
-router.get('/iluminacao', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/denuncias', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -491,21 +494,21 @@ router.get('/iluminacao', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'ILUMINACAO_PUBLICA'
+        moduleType: 'DENUNCIA_ANONIMA'
       }
     });
 
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'Service not found for module iluminacao'
+        error: 'Service not found for module denuncias'
       });
     }
 
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'ILUMINACAO_PUBLICA'
+      moduleType: 'DENUNCIA_ANONIMA'
     };
 
     // Filtro por status
@@ -558,16 +561,16 @@ router.get('/iluminacao', requireMinRole(UserRole.USER), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/iluminacao] Error listing:', error);
+    console.error('[seguranca-publica/denuncias] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * GET /iluminacao/:id
+ * GET /denuncias/:id
  * Busca um registro específico por ID
  */
-router.get('/iluminacao/:id', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/denuncias/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -583,7 +586,7 @@ router.get('/iluminacao/:id', requireMinRole(UserRole.USER), async (req, res) =>
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'ILUMINACAO_PUBLICA') {
+    if (protocol.moduleType !== 'DENUNCIA_ANONIMA') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -603,22 +606,22 @@ router.get('/iluminacao/:id', requireMinRole(UserRole.USER), async (req, res) =>
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/iluminacao] Error getting by ID:', error);
+    console.error('[seguranca-publica/denuncias] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * POST /iluminacao
+ * POST /denuncias
  * Cria um novo registro
  */
-router.post('/iluminacao', requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/denuncias', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -629,7 +632,7 @@ router.post('/iluminacao', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'ILUMINACAO_PUBLICA'
+        moduleType: 'DENUNCIA_ANONIMA'
       }
     });
 
@@ -651,12 +654,12 @@ router.post('/iluminacao', requireMinRole(UserRole.USER), async (req, res) => {
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/iluminacao',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/denuncias',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'ILUMINACAO_PUBLICA',
+        moduleType: 'DENUNCIA_ANONIMA',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -671,16 +674,16 @@ router.post('/iluminacao', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/iluminacao] Error creating:', error);
+    console.error('[seguranca-publica/denuncias] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * PUT /iluminacao/:id
+ * PUT /denuncias/:id
  * Atualiza um registro existente
  */
-router.put('/iluminacao/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.put('/denuncias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -709,16 +712,16 @@ router.put('/iluminacao/:id', requireMinRole(UserRole.MANAGER), async (req, res)
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/iluminacao] Error updating:', error);
+    console.error('[seguranca-publica/denuncias] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * DELETE /iluminacao/:id
+ * DELETE /denuncias/:id
  * Cancela um protocolo (soft delete via status)
  */
-router.delete('/iluminacao/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.delete('/denuncias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -734,16 +737,16 @@ router.delete('/iluminacao/:id', requireMinRole(UserRole.MANAGER), async (req, r
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/iluminacao] Error deleting:', error);
+    console.error('[seguranca-publica/denuncias] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /iluminacao/:id/approve
+ * POST /denuncias/:id/approve
  * Aprova um protocolo
  */
-router.post('/iluminacao/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/denuncias/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -758,16 +761,16 @@ router.post('/iluminacao/:id/approve', requireMinRole(UserRole.MANAGER), async (
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/iluminacao] Error approving:', error);
+    console.error('[seguranca-publica/denuncias] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /iluminacao/:id/reject
+ * POST /denuncias/:id/reject
  * Rejeita um protocolo
  */
-router.post('/iluminacao/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/denuncias/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -783,41 +786,41 @@ router.post('/iluminacao/:id/reject', requireMinRole(UserRole.MANAGER), async (r
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/iluminacao] Error rejecting:', error);
+    console.error('[seguranca-publica/denuncias] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * GET /iluminacao/:id/history
+ * GET /denuncias/:id/history
  * Histórico de mudanças de status
  */
-router.get('/iluminacao/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/denuncias/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/iluminacao] Error getting history:', error);
+    console.error('[seguranca-publica/denuncias] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 // ==========================================================================
-// MÓDULO: coleta-especial (COLETA_ESPECIAL)
+// MÓDULO: rondas (SOLICITACAO_RONDA)
 // ==========================================================================
 
 /**
- * GET /coleta-especial
+ * GET /rondas
  * Lista todos os registros deste módulo
  */
-router.get('/coleta-especial', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/rondas', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -828,21 +831,21 @@ router.get('/coleta-especial', requireMinRole(UserRole.USER), async (req, res) =
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'COLETA_ESPECIAL'
+        moduleType: 'SOLICITACAO_RONDA'
       }
     });
 
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'Service not found for module coleta-especial'
+        error: 'Service not found for module rondas'
       });
     }
 
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'COLETA_ESPECIAL'
+      moduleType: 'SOLICITACAO_RONDA'
     };
 
     // Filtro por status
@@ -895,16 +898,16 @@ router.get('/coleta-especial', requireMinRole(UserRole.USER), async (req, res) =
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/coleta-especial] Error listing:', error);
+    console.error('[seguranca-publica/rondas] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * GET /coleta-especial/:id
+ * GET /rondas/:id
  * Busca um registro específico por ID
  */
-router.get('/coleta-especial/:id', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/rondas/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -920,7 +923,7 @@ router.get('/coleta-especial/:id', requireMinRole(UserRole.USER), async (req, re
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'COLETA_ESPECIAL') {
+    if (protocol.moduleType !== 'SOLICITACAO_RONDA') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -940,22 +943,22 @@ router.get('/coleta-especial/:id', requireMinRole(UserRole.USER), async (req, re
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/coleta-especial] Error getting by ID:', error);
+    console.error('[seguranca-publica/rondas] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * POST /coleta-especial
+ * POST /rondas
  * Cria um novo registro
  */
-router.post('/coleta-especial', requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/rondas', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -966,7 +969,7 @@ router.post('/coleta-especial', requireMinRole(UserRole.USER), async (req, res) 
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'COLETA_ESPECIAL'
+        moduleType: 'SOLICITACAO_RONDA'
       }
     });
 
@@ -988,12 +991,12 @@ router.post('/coleta-especial', requireMinRole(UserRole.USER), async (req, res) 
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/coleta-especial',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/rondas',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'COLETA_ESPECIAL',
+        moduleType: 'SOLICITACAO_RONDA',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -1008,16 +1011,16 @@ router.post('/coleta-especial', requireMinRole(UserRole.USER), async (req, res) 
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/coleta-especial] Error creating:', error);
+    console.error('[seguranca-publica/rondas] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * PUT /coleta-especial/:id
+ * PUT /rondas/:id
  * Atualiza um registro existente
  */
-router.put('/coleta-especial/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.put('/rondas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -1046,16 +1049,16 @@ router.put('/coleta-especial/:id', requireMinRole(UserRole.MANAGER), async (req,
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/coleta-especial] Error updating:', error);
+    console.error('[seguranca-publica/rondas] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * DELETE /coleta-especial/:id
+ * DELETE /rondas/:id
  * Cancela um protocolo (soft delete via status)
  */
-router.delete('/coleta-especial/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.delete('/rondas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1071,16 +1074,16 @@ router.delete('/coleta-especial/:id', requireMinRole(UserRole.MANAGER), async (r
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/coleta-especial] Error deleting:', error);
+    console.error('[seguranca-publica/rondas] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /coleta-especial/:id/approve
+ * POST /rondas/:id/approve
  * Aprova um protocolo
  */
-router.post('/coleta-especial/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/rondas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1095,16 +1098,16 @@ router.post('/coleta-especial/:id/approve', requireMinRole(UserRole.MANAGER), as
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/coleta-especial] Error approving:', error);
+    console.error('[seguranca-publica/rondas] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /coleta-especial/:id/reject
+ * POST /rondas/:id/reject
  * Rejeita um protocolo
  */
-router.post('/coleta-especial/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/rondas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1120,41 +1123,41 @@ router.post('/coleta-especial/:id/reject', requireMinRole(UserRole.MANAGER), asy
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/coleta-especial] Error rejecting:', error);
+    console.error('[seguranca-publica/rondas] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * GET /coleta-especial/:id/history
+ * GET /rondas/:id/history
  * Histórico de mudanças de status
  */
-router.get('/coleta-especial/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/rondas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/coleta-especial] Error getting history:', error);
+    console.error('[seguranca-publica/rondas] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 // ==========================================================================
-// MÓDULO: podas (SOLICITACAO_PODA)
+// MÓDULO: cameras (SOLICITACAO_CAMERA_SEGURANCA)
 // ==========================================================================
 
 /**
- * GET /podas
+ * GET /cameras
  * Lista todos os registros deste módulo
  */
-router.get('/podas', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/cameras', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -1165,21 +1168,21 @@ router.get('/podas', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_PODA'
+        moduleType: 'SOLICITACAO_CAMERA_SEGURANCA'
       }
     });
 
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'Service not found for module podas'
+        error: 'Service not found for module cameras'
       });
     }
 
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'SOLICITACAO_PODA'
+      moduleType: 'SOLICITACAO_CAMERA_SEGURANCA'
     };
 
     // Filtro por status
@@ -1232,16 +1235,16 @@ router.get('/podas', requireMinRole(UserRole.USER), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/podas] Error listing:', error);
+    console.error('[seguranca-publica/cameras] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * GET /podas/:id
+ * GET /cameras/:id
  * Busca um registro específico por ID
  */
-router.get('/podas/:id', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/cameras/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -1257,7 +1260,7 @@ router.get('/podas/:id', requireMinRole(UserRole.USER), async (req, res) => {
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'SOLICITACAO_PODA') {
+    if (protocol.moduleType !== 'SOLICITACAO_CAMERA_SEGURANCA') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -1277,22 +1280,22 @@ router.get('/podas/:id', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/podas] Error getting by ID:', error);
+    console.error('[seguranca-publica/cameras] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * POST /podas
+ * POST /cameras
  * Cria um novo registro
  */
-router.post('/podas', requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/cameras', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -1303,7 +1306,7 @@ router.post('/podas', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_PODA'
+        moduleType: 'SOLICITACAO_CAMERA_SEGURANCA'
       }
     });
 
@@ -1325,12 +1328,12 @@ router.post('/podas', requireMinRole(UserRole.USER), async (req, res) => {
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/podas',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/cameras',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_PODA',
+        moduleType: 'SOLICITACAO_CAMERA_SEGURANCA',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -1345,16 +1348,16 @@ router.post('/podas', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/podas] Error creating:', error);
+    console.error('[seguranca-publica/cameras] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * PUT /podas/:id
+ * PUT /cameras/:id
  * Atualiza um registro existente
  */
-router.put('/podas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.put('/cameras/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -1383,16 +1386,16 @@ router.put('/podas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/podas] Error updating:', error);
+    console.error('[seguranca-publica/cameras] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * DELETE /podas/:id
+ * DELETE /cameras/:id
  * Cancela um protocolo (soft delete via status)
  */
-router.delete('/podas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.delete('/cameras/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1408,16 +1411,16 @@ router.delete('/podas/:id', requireMinRole(UserRole.MANAGER), async (req, res) =
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/podas] Error deleting:', error);
+    console.error('[seguranca-publica/cameras] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /podas/:id/approve
+ * POST /cameras/:id/approve
  * Aprova um protocolo
  */
-router.post('/podas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/cameras/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1432,16 +1435,16 @@ router.post('/podas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, 
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/podas] Error approving:', error);
+    console.error('[seguranca-publica/cameras] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /podas/:id/reject
+ * POST /cameras/:id/reject
  * Rejeita um protocolo
  */
-router.post('/podas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/cameras/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1457,41 +1460,41 @@ router.post('/podas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, r
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/podas] Error rejecting:', error);
+    console.error('[seguranca-publica/cameras] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * GET /podas/:id/history
+ * GET /cameras/:id/history
  * Histórico de mudanças de status
  */
-router.get('/podas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/cameras/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/podas] Error getting history:', error);
+    console.error('[seguranca-publica/cameras] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 // ==========================================================================
-// MÓDULO: capina (SOLICITACAO_CAPINA)
+// MÓDULO: pontos-criticos (CADASTRO_PONTO_CRITICO)
 // ==========================================================================
 
 /**
- * GET /capina
+ * GET /pontos-criticos
  * Lista todos os registros deste módulo
  */
-router.get('/capina', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/pontos-criticos', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -1502,21 +1505,21 @@ router.get('/capina', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_CAPINA'
+        moduleType: 'CADASTRO_PONTO_CRITICO'
       }
     });
 
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'Service not found for module capina'
+        error: 'Service not found for module pontos-criticos'
       });
     }
 
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'SOLICITACAO_CAPINA'
+      moduleType: 'CADASTRO_PONTO_CRITICO'
     };
 
     // Filtro por status
@@ -1569,16 +1572,16 @@ router.get('/capina', requireMinRole(UserRole.USER), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/capina] Error listing:', error);
+    console.error('[seguranca-publica/pontos-criticos] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * GET /capina/:id
+ * GET /pontos-criticos/:id
  * Busca um registro específico por ID
  */
-router.get('/capina/:id', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/pontos-criticos/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -1594,7 +1597,7 @@ router.get('/capina/:id', requireMinRole(UserRole.USER), async (req, res) => {
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'SOLICITACAO_CAPINA') {
+    if (protocol.moduleType !== 'CADASTRO_PONTO_CRITICO') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -1614,22 +1617,22 @@ router.get('/capina/:id', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/capina] Error getting by ID:', error);
+    console.error('[seguranca-publica/pontos-criticos] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * POST /capina
+ * POST /pontos-criticos
  * Cria um novo registro
  */
-router.post('/capina', requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/pontos-criticos', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -1640,7 +1643,7 @@ router.post('/capina', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_CAPINA'
+        moduleType: 'CADASTRO_PONTO_CRITICO'
       }
     });
 
@@ -1662,12 +1665,12 @@ router.post('/capina', requireMinRole(UserRole.USER), async (req, res) => {
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/capina',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/pontos-criticos',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_CAPINA',
+        moduleType: 'CADASTRO_PONTO_CRITICO',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -1682,16 +1685,16 @@ router.post('/capina', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/capina] Error creating:', error);
+    console.error('[seguranca-publica/pontos-criticos] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * PUT /capina/:id
+ * PUT /pontos-criticos/:id
  * Atualiza um registro existente
  */
-router.put('/capina/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.put('/pontos-criticos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -1720,16 +1723,16 @@ router.put('/capina/:id', requireMinRole(UserRole.MANAGER), async (req, res) => 
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/capina] Error updating:', error);
+    console.error('[seguranca-publica/pontos-criticos] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * DELETE /capina/:id
+ * DELETE /pontos-criticos/:id
  * Cancela um protocolo (soft delete via status)
  */
-router.delete('/capina/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.delete('/pontos-criticos/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1745,16 +1748,16 @@ router.delete('/capina/:id', requireMinRole(UserRole.MANAGER), async (req, res) 
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/capina] Error deleting:', error);
+    console.error('[seguranca-publica/pontos-criticos] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /capina/:id/approve
+ * POST /pontos-criticos/:id/approve
  * Aprova um protocolo
  */
-router.post('/capina/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/pontos-criticos/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1769,16 +1772,16 @@ router.post('/capina/:id/approve', requireMinRole(UserRole.MANAGER), async (req,
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/capina] Error approving:', error);
+    console.error('[seguranca-publica/pontos-criticos] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /capina/:id/reject
+ * POST /pontos-criticos/:id/reject
  * Rejeita um protocolo
  */
-router.post('/capina/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/pontos-criticos/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -1794,41 +1797,41 @@ router.post('/capina/:id/reject', requireMinRole(UserRole.MANAGER), async (req, 
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/capina] Error rejecting:', error);
+    console.error('[seguranca-publica/pontos-criticos] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * GET /capina/:id/history
+ * GET /pontos-criticos/:id/history
  * Histórico de mudanças de status
  */
-router.get('/capina/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/pontos-criticos/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/capina] Error getting history:', error);
+    console.error('[seguranca-publica/pontos-criticos] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 // ==========================================================================
-// MÓDULO: reparo-vias (SOLICITACAO_REPARO_VIA)
+// MÓDULO: alertas (ALERTA_SEGURANCA)
 // ==========================================================================
 
 /**
- * GET /reparo-vias
+ * GET /alertas
  * Lista todos os registros deste módulo
  */
-router.get('/reparo-vias', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/alertas', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -1839,21 +1842,21 @@ router.get('/reparo-vias', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_REPARO_VIA'
+        moduleType: 'ALERTA_SEGURANCA'
       }
     });
 
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'Service not found for module reparo-vias'
+        error: 'Service not found for module alertas'
       });
     }
 
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'SOLICITACAO_REPARO_VIA'
+      moduleType: 'ALERTA_SEGURANCA'
     };
 
     // Filtro por status
@@ -1906,16 +1909,16 @@ router.get('/reparo-vias', requireMinRole(UserRole.USER), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/reparo-vias] Error listing:', error);
+    console.error('[seguranca-publica/alertas] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * GET /reparo-vias/:id
+ * GET /alertas/:id
  * Busca um registro específico por ID
  */
-router.get('/reparo-vias/:id', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/alertas/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -1931,7 +1934,7 @@ router.get('/reparo-vias/:id', requireMinRole(UserRole.USER), async (req, res) =
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'SOLICITACAO_REPARO_VIA') {
+    if (protocol.moduleType !== 'ALERTA_SEGURANCA') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -1951,22 +1954,22 @@ router.get('/reparo-vias/:id', requireMinRole(UserRole.USER), async (req, res) =
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/reparo-vias] Error getting by ID:', error);
+    console.error('[seguranca-publica/alertas] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * POST /reparo-vias
+ * POST /alertas
  * Cria um novo registro
  */
-router.post('/reparo-vias', requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/alertas', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -1977,7 +1980,7 @@ router.post('/reparo-vias', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_REPARO_VIA'
+        moduleType: 'ALERTA_SEGURANCA'
       }
     });
 
@@ -1999,12 +2002,12 @@ router.post('/reparo-vias', requireMinRole(UserRole.USER), async (req, res) => {
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/reparo-vias',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/alertas',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_REPARO_VIA',
+        moduleType: 'ALERTA_SEGURANCA',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -2019,16 +2022,16 @@ router.post('/reparo-vias', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/reparo-vias] Error creating:', error);
+    console.error('[seguranca-publica/alertas] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * PUT /reparo-vias/:id
+ * PUT /alertas/:id
  * Atualiza um registro existente
  */
-router.put('/reparo-vias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.put('/alertas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -2057,16 +2060,16 @@ router.put('/reparo-vias/:id', requireMinRole(UserRole.MANAGER), async (req, res
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/reparo-vias] Error updating:', error);
+    console.error('[seguranca-publica/alertas] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * DELETE /reparo-vias/:id
+ * DELETE /alertas/:id
  * Cancela um protocolo (soft delete via status)
  */
-router.delete('/reparo-vias/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.delete('/alertas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2082,16 +2085,16 @@ router.delete('/reparo-vias/:id', requireMinRole(UserRole.MANAGER), async (req, 
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/reparo-vias] Error deleting:', error);
+    console.error('[seguranca-publica/alertas] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /reparo-vias/:id/approve
+ * POST /alertas/:id/approve
  * Aprova um protocolo
  */
-router.post('/reparo-vias/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/alertas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2106,16 +2109,16 @@ router.post('/reparo-vias/:id/approve', requireMinRole(UserRole.MANAGER), async 
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/reparo-vias] Error approving:', error);
+    console.error('[seguranca-publica/alertas] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /reparo-vias/:id/reject
+ * POST /alertas/:id/reject
  * Rejeita um protocolo
  */
-router.post('/reparo-vias/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/alertas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2131,41 +2134,41 @@ router.post('/reparo-vias/:id/reject', requireMinRole(UserRole.MANAGER), async (
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/reparo-vias] Error rejecting:', error);
+    console.error('[seguranca-publica/alertas] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * GET /reparo-vias/:id/history
+ * GET /alertas/:id/history
  * Histórico de mudanças de status
  */
-router.get('/reparo-vias/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/alertas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/reparo-vias] Error getting history:', error);
+    console.error('[seguranca-publica/alertas] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 // ==========================================================================
-// MÓDULO: desobstrucao (SOLICITACAO_DESOBSTRUCAO)
+// MÓDULO: patrulhas (REGISTRO_PATRULHA)
 // ==========================================================================
 
 /**
- * GET /desobstrucao
+ * GET /patrulhas
  * Lista todos os registros deste módulo
  */
-router.get('/desobstrucao', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/patrulhas', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -2176,21 +2179,21 @@ router.get('/desobstrucao', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_DESOBSTRUCAO'
+        moduleType: 'REGISTRO_PATRULHA'
       }
     });
 
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'Service not found for module desobstrucao'
+        error: 'Service not found for module patrulhas'
       });
     }
 
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'SOLICITACAO_DESOBSTRUCAO'
+      moduleType: 'REGISTRO_PATRULHA'
     };
 
     // Filtro por status
@@ -2243,16 +2246,16 @@ router.get('/desobstrucao', requireMinRole(UserRole.USER), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/desobstrucao] Error listing:', error);
+    console.error('[seguranca-publica/patrulhas] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * GET /desobstrucao/:id
+ * GET /patrulhas/:id
  * Busca um registro específico por ID
  */
-router.get('/desobstrucao/:id', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/patrulhas/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -2268,7 +2271,7 @@ router.get('/desobstrucao/:id', requireMinRole(UserRole.USER), async (req, res) 
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'SOLICITACAO_DESOBSTRUCAO') {
+    if (protocol.moduleType !== 'REGISTRO_PATRULHA') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -2288,22 +2291,22 @@ router.get('/desobstrucao/:id', requireMinRole(UserRole.USER), async (req, res) 
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/desobstrucao] Error getting by ID:', error);
+    console.error('[seguranca-publica/patrulhas] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * POST /desobstrucao
+ * POST /patrulhas
  * Cria um novo registro
  */
-router.post('/desobstrucao', requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/patrulhas', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -2314,7 +2317,7 @@ router.post('/desobstrucao', requireMinRole(UserRole.USER), async (req, res) => 
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_DESOBSTRUCAO'
+        moduleType: 'REGISTRO_PATRULHA'
       }
     });
 
@@ -2336,12 +2339,12 @@ router.post('/desobstrucao', requireMinRole(UserRole.USER), async (req, res) => 
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/desobstrucao',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/patrulhas',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'SOLICITACAO_DESOBSTRUCAO',
+        moduleType: 'REGISTRO_PATRULHA',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -2356,16 +2359,16 @@ router.post('/desobstrucao', requireMinRole(UserRole.USER), async (req, res) => 
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/desobstrucao] Error creating:', error);
+    console.error('[seguranca-publica/patrulhas] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * PUT /desobstrucao/:id
+ * PUT /patrulhas/:id
  * Atualiza um registro existente
  */
-router.put('/desobstrucao/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.put('/patrulhas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -2394,16 +2397,16 @@ router.put('/desobstrucao/:id', requireMinRole(UserRole.MANAGER), async (req, re
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/desobstrucao] Error updating:', error);
+    console.error('[seguranca-publica/patrulhas] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * DELETE /desobstrucao/:id
+ * DELETE /patrulhas/:id
  * Cancela um protocolo (soft delete via status)
  */
-router.delete('/desobstrucao/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.delete('/patrulhas/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2419,16 +2422,16 @@ router.delete('/desobstrucao/:id', requireMinRole(UserRole.MANAGER), async (req,
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/desobstrucao] Error deleting:', error);
+    console.error('[seguranca-publica/patrulhas] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /desobstrucao/:id/approve
+ * POST /patrulhas/:id/approve
  * Aprova um protocolo
  */
-router.post('/desobstrucao/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/patrulhas/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2443,16 +2446,16 @@ router.post('/desobstrucao/:id/approve', requireMinRole(UserRole.MANAGER), async
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/desobstrucao] Error approving:', error);
+    console.error('[seguranca-publica/patrulhas] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /desobstrucao/:id/reject
+ * POST /patrulhas/:id/reject
  * Rejeita um protocolo
  */
-router.post('/desobstrucao/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/patrulhas/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2468,41 +2471,41 @@ router.post('/desobstrucao/:id/reject', requireMinRole(UserRole.MANAGER), async 
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/desobstrucao] Error rejecting:', error);
+    console.error('[seguranca-publica/patrulhas] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * GET /desobstrucao/:id/history
+ * GET /patrulhas/:id/history
  * Histórico de mudanças de status
  */
-router.get('/desobstrucao/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/patrulhas/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/desobstrucao] Error getting history:', error);
+    console.error('[seguranca-publica/patrulhas] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 // ==========================================================================
-// MÓDULO: gestao-equipes (GESTAO_EQUIPES_SERVICOS)
+// MÓDULO: gestao-guarda (GESTAO_GUARDA_MUNICIPAL)
 // ==========================================================================
 
 /**
- * GET /gestao-equipes
+ * GET /gestao-guarda
  * Lista todos os registros deste módulo
  */
-router.get('/gestao-equipes', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/gestao-guarda', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { page = 1, limit = 20, search, status } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -2513,21 +2516,21 @@ router.get('/gestao-equipes', requireMinRole(UserRole.USER), async (req, res) =>
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'GESTAO_EQUIPES_SERVICOS'
+        moduleType: 'GESTAO_GUARDA_MUNICIPAL'
       }
     });
 
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'Service not found for module gestao-equipes'
+        error: 'Service not found for module gestao-guarda'
       });
     }
 
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'GESTAO_EQUIPES_SERVICOS'
+      moduleType: 'GESTAO_GUARDA_MUNICIPAL'
     };
 
     // Filtro por status
@@ -2580,16 +2583,16 @@ router.get('/gestao-equipes', requireMinRole(UserRole.USER), async (req, res) =>
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/gestao-equipes] Error listing:', error);
+    console.error('[seguranca-publica/gestao-guarda] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * GET /gestao-equipes/:id
+ * GET /gestao-guarda/:id
  * Busca um registro específico por ID
  */
-router.get('/gestao-equipes/:id', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/gestao-guarda/:id', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -2605,7 +2608,7 @@ router.get('/gestao-equipes/:id', requireMinRole(UserRole.USER), async (req, res
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'GESTAO_EQUIPES_SERVICOS') {
+    if (protocol.moduleType !== 'GESTAO_GUARDA_MUNICIPAL') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -2625,22 +2628,22 @@ router.get('/gestao-equipes/:id', requireMinRole(UserRole.USER), async (req, res
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/gestao-equipes] Error getting by ID:', error);
+    console.error('[seguranca-publica/gestao-guarda] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * POST /gestao-equipes
+ * POST /gestao-guarda
  * Cria um novo registro
  */
-router.post('/gestao-equipes', requireMinRole(UserRole.USER), async (req, res) => {
+router.post('/gestao-guarda', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -2651,7 +2654,7 @@ router.post('/gestao-equipes', requireMinRole(UserRole.USER), async (req, res) =
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'GESTAO_EQUIPES_SERVICOS'
+        moduleType: 'GESTAO_GUARDA_MUNICIPAL'
       }
     });
 
@@ -2673,12 +2676,12 @@ router.post('/gestao-equipes', requireMinRole(UserRole.USER), async (req, res) =
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/gestao-equipes',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/gestao-guarda',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'GESTAO_EQUIPES_SERVICOS',
+        moduleType: 'GESTAO_GUARDA_MUNICIPAL',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -2693,16 +2696,16 @@ router.post('/gestao-equipes', requireMinRole(UserRole.USER), async (req, res) =
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/gestao-equipes] Error creating:', error);
+    console.error('[seguranca-publica/gestao-guarda] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * PUT /gestao-equipes/:id
+ * PUT /gestao-guarda/:id
  * Atualiza um registro existente
  */
-router.put('/gestao-equipes/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.put('/gestao-guarda/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: req.params.id },
@@ -2731,16 +2734,16 @@ router.put('/gestao-equipes/:id', requireMinRole(UserRole.MANAGER), async (req, 
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/gestao-equipes] Error updating:', error);
+    console.error('[seguranca-publica/gestao-guarda] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 /**
- * DELETE /gestao-equipes/:id
+ * DELETE /gestao-guarda/:id
  * Cancela um protocolo (soft delete via status)
  */
-router.delete('/gestao-equipes/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.delete('/gestao-guarda/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2756,16 +2759,16 @@ router.delete('/gestao-equipes/:id', requireMinRole(UserRole.MANAGER), async (re
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/gestao-equipes] Error deleting:', error);
+    console.error('[seguranca-publica/gestao-guarda] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /gestao-equipes/:id/approve
+ * POST /gestao-guarda/:id/approve
  * Aprova um protocolo
  */
-router.post('/gestao-equipes/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/gestao-guarda/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2780,16 +2783,16 @@ router.post('/gestao-equipes/:id/approve', requireMinRole(UserRole.MANAGER), asy
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/gestao-equipes] Error approving:', error);
+    console.error('[seguranca-publica/gestao-guarda] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * POST /gestao-equipes/:id/reject
+ * POST /gestao-guarda/:id/reject
  * Rejeita um protocolo
  */
-router.post('/gestao-equipes/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+router.post('/gestao-guarda/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
   try {
     const authReq = req as AuthenticatedRequest;
 
@@ -2805,27 +2808,364 @@ router.post('/gestao-equipes/:id/reject', requireMinRole(UserRole.MANAGER), asyn
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/gestao-equipes] Error rejecting:', error);
+    console.error('[seguranca-publica/gestao-guarda] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
 
 /**
- * GET /gestao-equipes/:id/history
+ * GET /gestao-guarda/:id/history
  * Histórico de mudanças de status
  */
-router.get('/gestao-equipes/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+router.get('/gestao-guarda/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/gestao-equipes] Error getting history:', error);
+    console.error('[seguranca-publica/gestao-guarda] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 
 // ==========================================================================
-// MÓDULO: servicos (ATENDIMENTOS_SERVICOS_PUBLICOS)
+// MÓDULO: vigilancia (GESTAO_VIGILANCIA)
+// ==========================================================================
+
+/**
+ * GET /vigilancia
+ * Lista todos os registros deste módulo
+ */
+router.get('/vigilancia', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'seguranca-publica' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service com este moduleType
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'GESTAO_VIGILANCIA'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        error: 'Service not found for module vigilancia'
+      });
+    }
+
+    // 3. Construir filtros
+    const where: any = {
+      serviceId: service.id,
+      moduleType: 'GESTAO_VIGILANCIA'
+    };
+
+    // Filtro por status
+    if (status) {
+      where.status = status;
+    }
+
+    // Busca textual (simples, no customData genérico)
+    if (search && typeof search === 'string') {
+      // Busca no JSON customData - Prisma suporta via JSON path
+      // Nota: A busca exata depende da estrutura, mas fazemos uma tentativa genérica
+    }
+
+    // 4. Buscar protocolos
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: Number(limit),
+        include: {
+          citizen: {
+            select: { id: true, name: true, cpf: true, email: true, phone: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // 5. Transformar dados: expandir customData
+    const data = protocols.map(p => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      citizen: p.citizen,
+      // ✅ Dados dinâmicos do formSchema salvos em customData
+      ...(p.customData as object || {})
+    }));
+
+    res.json({
+      success: true,
+      data,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('[seguranca-publica/vigilancia] Error listing:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * GET /vigilancia/:id
+ * Busca um registro específico por ID
+ */
+router.get('/vigilancia/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: {
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Verificar se é do módulo correto
+    if (protocol.moduleType !== 'GESTAO_VIGILANCIA') {
+      return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
+    }
+
+    const data = {
+      id: protocol.id,
+      protocolNumber: protocol.number,
+      status: protocol.status,
+      createdAt: protocol.createdAt,
+      updatedAt: protocol.updatedAt,
+      concludedAt: protocol.concludedAt,
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      // ✅ Dados dinâmicos
+      ...(protocol.customData as object || {})
+    };
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('[seguranca-publica/vigilancia] Error getting by ID:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vigilancia
+ * Cria um novo registro
+ */
+router.post('/vigilancia', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // 1. Buscar department
+    const department = await prisma.department.findFirst({
+      where: { id: 'seguranca-publica' }
+    });
+
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // 2. Buscar service
+    const service = await prisma.serviceSimplified.findFirst({
+      where: {
+        departmentId: department.id,
+        moduleType: 'GESTAO_VIGILANCIA'
+      }
+    });
+
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Service not found' });
+    }
+
+    // 3. Validar com formSchema do service (se existir)
+    // TODO: Implementar validação dinâmica com JSON Schema
+    // if (service.formSchema) {
+    //   const valid = validateWithSchema(req.body, service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // 4. Gerar número único do protocolo
+    const protocolNumber = `${department.code || department.id.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // 5. Criar protocolo com customData
+    const protocol = await prisma.protocolSimplified.create({
+      data: {
+        number: protocolNumber,
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/vigilancia',
+        description: req.body.description || service.description || undefined,
+        serviceId: service.id,
+        citizenId: req.body.citizenId,
+        departmentId: department.id,
+        moduleType: 'GESTAO_VIGILANCIA',
+        status: ProtocolStatus.VINCULADO,
+        priority: req.body.priority || 3,
+        // ✅ Salvar TODOS os dados do formulário em customData
+        customData: req.body.formData || req.body,
+        createdById: authReq.user?.id
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    res.status(201).json({ success: true, data: protocol });
+  } catch (error) {
+    console.error('[seguranca-publica/vigilancia] Error creating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * PUT /vigilancia/:id
+ * Atualiza um registro existente
+ */
+router.put('/vigilancia/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: req.params.id },
+      include: { service: true }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ success: false, error: 'Protocol not found' });
+    }
+
+    // Validar com formSchema (se existir)
+    // if (protocol.service.formSchema) {
+    //   const valid = validateWithSchema(req.body, protocol.service.formSchema);
+    //   if (!valid) return res.status(400).json({ error: 'Validation error' });
+    // }
+
+    // Atualizar customData
+    const updated = await prisma.protocolSimplified.update({
+      where: { id: req.params.id },
+      data: {
+        customData: req.body.formData || req.body,
+        updatedAt: new Date()
+      },
+      include: { citizen: true, service: true }
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error('[seguranca-publica/vigilancia] Error updating:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+/**
+ * DELETE /vigilancia/:id
+ * Cancela um protocolo (soft delete via status)
+ */
+router.delete('/vigilancia/:id', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos para cancelar
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.CANCELADO,
+      actorRole: authReq.user?.role || UserRole.USER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Cancelado pelo usuário',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[seguranca-publica/vigilancia] Error deleting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vigilancia/:id/approve
+ * Aprova um protocolo
+ */
+router.post('/vigilancia/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.comment || 'Aprovado'
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[seguranca-publica/vigilancia] Error approving:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * POST /vigilancia/:id/reject
+ * Rejeita um protocolo
+ */
+router.post('/vigilancia/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+
+    // ✅ Usa o motor de protocolos
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: req.params.id,
+      newStatus: ProtocolStatus.PENDENCIA,
+      actorRole: authReq.user?.role || UserRole.MANAGER,
+      actorId: authReq.user?.id || '',
+      comment: req.body.reason || 'Rejeitado',
+      reason: req.body.reason
+    });
+
+    res.json({ success: true, data: result.protocol });
+  } catch (error: any) {
+    console.error('[seguranca-publica/vigilancia] Error rejecting:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
+/**
+ * GET /vigilancia/:id/history
+ * Histórico de mudanças de status
+ */
+router.get('/vigilancia/:id/history', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const history = await protocolStatusEngine.getStatusHistory(req.params.id);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    console.error('[seguranca-publica/vigilancia] Error getting history:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// ==========================================================================
+// MÓDULO: servicos (ATENDIMENTOS_SEGURANCA)
 // ==========================================================================
 
 /**
@@ -2839,7 +3179,7 @@ router.get('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -2850,7 +3190,7 @@ router.get('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'ATENDIMENTOS_SERVICOS_PUBLICOS'
+        moduleType: 'ATENDIMENTOS_SEGURANCA'
       }
     });
 
@@ -2864,7 +3204,7 @@ router.get('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
     // 3. Construir filtros
     const where: any = {
       serviceId: service.id,
-      moduleType: 'ATENDIMENTOS_SERVICOS_PUBLICOS'
+      moduleType: 'ATENDIMENTOS_SEGURANCA'
     };
 
     // Filtro por status
@@ -2917,7 +3257,7 @@ router.get('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[servicos-publicos/servicos] Error listing:', error);
+    console.error('[seguranca-publica/servicos] Error listing:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -2942,7 +3282,7 @@ router.get('/servicos/:id', requireMinRole(UserRole.USER), async (req, res) => {
     }
 
     // Verificar se é do módulo correto
-    if (protocol.moduleType !== 'ATENDIMENTOS_SERVICOS_PUBLICOS') {
+    if (protocol.moduleType !== 'ATENDIMENTOS_SEGURANCA') {
       return res.status(400).json({ success: false, error: 'Protocol does not belong to this module' });
     }
 
@@ -2962,7 +3302,7 @@ router.get('/servicos/:id', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.json({ success: true, data });
   } catch (error) {
-    console.error('[servicos-publicos/servicos] Error getting by ID:', error);
+    console.error('[seguranca-publica/servicos] Error getting by ID:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -2977,7 +3317,7 @@ router.post('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
 
     // 1. Buscar department
     const department = await prisma.department.findFirst({
-      where: { id: 'servicos-publicos' }
+      where: { id: 'seguranca-publica' }
     });
 
     if (!department) {
@@ -2988,7 +3328,7 @@ router.post('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         departmentId: department.id,
-        moduleType: 'ATENDIMENTOS_SERVICOS_PUBLICOS'
+        moduleType: 'ATENDIMENTOS_SEGURANCA'
       }
     });
 
@@ -3010,12 +3350,12 @@ router.post('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
-        title: req.body.title || service.name || 'Protocolo servicos-publicos/servicos',
+        title: req.body.title || service.name || 'Protocolo seguranca-publica/servicos',
         description: req.body.description || service.description || undefined,
         serviceId: service.id,
         citizenId: req.body.citizenId,
         departmentId: department.id,
-        moduleType: 'ATENDIMENTOS_SERVICOS_PUBLICOS',
+        moduleType: 'ATENDIMENTOS_SEGURANCA',
         status: ProtocolStatus.VINCULADO,
         priority: req.body.priority || 3,
         // ✅ Salvar TODOS os dados do formulário em customData
@@ -3030,7 +3370,7 @@ router.post('/servicos', requireMinRole(UserRole.USER), async (req, res) => {
 
     res.status(201).json({ success: true, data: protocol });
   } catch (error) {
-    console.error('[servicos-publicos/servicos] Error creating:', error);
+    console.error('[seguranca-publica/servicos] Error creating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -3068,7 +3408,7 @@ router.put('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res) =
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    console.error('[servicos-publicos/servicos] Error updating:', error);
+    console.error('[seguranca-publica/servicos] Error updating:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
@@ -3093,7 +3433,7 @@ router.delete('/servicos/:id', requireMinRole(UserRole.MANAGER), async (req, res
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/servicos] Error deleting:', error);
+    console.error('[seguranca-publica/servicos] Error deleting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
@@ -3117,7 +3457,7 @@ router.post('/servicos/:id/approve', requireMinRole(UserRole.MANAGER), async (re
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/servicos] Error approving:', error);
+    console.error('[seguranca-publica/servicos] Error approving:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
@@ -3142,7 +3482,7 @@ router.post('/servicos/:id/reject', requireMinRole(UserRole.MANAGER), async (req
 
     res.json({ success: true, data: result.protocol });
   } catch (error: any) {
-    console.error('[servicos-publicos/servicos] Error rejecting:', error);
+    console.error('[seguranca-publica/servicos] Error rejecting:', error);
     res.status(500).json({ success: false, error: error.message || 'Internal server error' });
   }
 });
@@ -3156,7 +3496,7 @@ router.get('/servicos/:id/history', requireMinRole(UserRole.USER), async (req, r
     const history = await protocolStatusEngine.getStatusHistory(req.params.id);
     res.json({ success: true, data: history });
   } catch (error) {
-    console.error('[servicos-publicos/servicos] Error getting history:', error);
+    console.error('[seguranca-publica/servicos] Error getting history:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });

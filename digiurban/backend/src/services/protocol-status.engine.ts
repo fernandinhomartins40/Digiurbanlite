@@ -177,10 +177,10 @@ export class ProtocolStatusEngine {
 
       // Serviços COM_DADOS podem requerer aprovação específica
       if (validation.requiresApproval && newStatus === ProtocolStatus.CONCLUIDO) {
-        // Permitir conclusão direta apenas de status aprovados
-        if (!validation.approvalStatuses.includes(currentStatus)) {
+        // Permitir conclusão direta apenas de status aprovados (PROGRESSO)
+        if (currentStatus !== ProtocolStatus.PROGRESSO && currentStatus !== ProtocolStatus.CONCLUIDO) {
           throw new InvalidTransitionError(
-            `Serviços COM_DADOS devem passar por aprovação antes de concluir`,
+            `Serviços COM_DADOS devem estar em PROGRESSO antes de concluir`,
             currentStatus,
             newStatus,
             actorRole
@@ -247,42 +247,10 @@ export class ProtocolStatusEngine {
   ): Promise<void> {
     const moduleType = protocol.moduleType;
 
-    try {
-      // Módulos de Agricultura
-      if (moduleType === 'INSCRICAO_PROGRAMA_RURAL') {
-        await tx.ruralProgramEnrollment.updateMany({
-          where: { protocolId: protocol.id },
-          data: { status: 'APPROVED', approvedDate: new Date() }
-        });
-      }
-
-      if (moduleType === 'INSCRICAO_CURSO_RURAL') {
-        await tx.ruralCourseEnrollment.updateMany({
-          where: { protocolId: protocol.id },
-          data: { status: 'APPROVED', approvedDate: new Date() }
-        });
-      }
-
-      // Módulos de Saúde
-      if (moduleType === 'AGENDAMENTO_CONSULTA') {
-        await tx.healthAppointment.updateMany({
-          where: { protocolId: protocol.id },
-          data: { status: 'CONFIRMED' }
-        });
-      }
-
-      // Módulos de Educação
-      if (moduleType === 'MATRICULA_ESCOLAR') {
-        await tx.student.updateMany({
-          where: { protocolId: protocol.id },
-          data: { isActive: true }
-        });
-      }
-
-      console.log(`✓ Entidade ativada para módulo ${moduleType}`);
-    } catch (error) {
-      console.error(`❌ Erro ao ativar entidade do módulo ${moduleType}:`, error);
-      // Não bloqueamos a transação se hook falhar
+    if (moduleType) {
+      console.log(`✓ Protocolo aprovado para módulo ${moduleType} - dados em customData`);
+      // Com o novo sistema de templates, não há tabelas específicas de módulos
+      // Os dados ficam em ProtocolSimplified.customData
     }
   }
 
@@ -295,24 +263,8 @@ export class ProtocolStatusEngine {
   ): Promise<void> {
     const moduleType = protocol.moduleType;
 
-    try {
-      if (moduleType === 'INSCRICAO_PROGRAMA_RURAL') {
-        await tx.ruralProgramEnrollment.updateMany({
-          where: { protocolId: protocol.id },
-          data: { status: 'COMPLETED', completedDate: new Date() }
-        });
-      }
-
-      if (moduleType === 'AGENDAMENTO_CONSULTA') {
-        await tx.healthAppointment.updateMany({
-          where: { protocolId: protocol.id },
-          data: { status: 'COMPLETED' }
-        });
-      }
-
-      console.log(`✓ Entidade concluída para módulo ${moduleType}`);
-    } catch (error) {
-      console.error(`❌ Erro ao concluir entidade do módulo ${moduleType}:`, error);
+    if (moduleType) {
+      console.log(`✓ Protocolo concluído para módulo ${moduleType} - dados em customData`);
     }
   }
 
@@ -325,24 +277,8 @@ export class ProtocolStatusEngine {
   ): Promise<void> {
     const moduleType = protocol.moduleType;
 
-    try {
-      if (moduleType === 'INSCRICAO_PROGRAMA_RURAL') {
-        await tx.ruralProgramEnrollment.updateMany({
-          where: { protocolId: protocol.id },
-          data: { status: 'CANCELLED' }
-        });
-      }
-
-      if (moduleType === 'MATRICULA_ESCOLAR') {
-        await tx.student.updateMany({
-          where: { protocolId: protocol.id },
-          data: { isActive: false }
-        });
-      }
-
-      console.log(`✓ Entidade desativada para módulo ${moduleType}`);
-    } catch (error) {
-      console.error(`❌ Erro ao desativar entidade do módulo ${moduleType}:`, error);
+    if (moduleType) {
+      console.log(`✓ Protocolo cancelado para módulo ${moduleType} - dados em customData`);
     }
   }
 
@@ -355,17 +291,8 @@ export class ProtocolStatusEngine {
   ): Promise<void> {
     const moduleType = protocol.moduleType;
 
-    try {
-      if (moduleType === 'INSCRICAO_PROGRAMA_RURAL') {
-        await tx.ruralProgramEnrollment.updateMany({
-          where: { protocolId: protocol.id },
-          data: { status: 'PENDING' }
-        });
-      }
-
-      console.log(`✓ Entidade marcada como pendente para módulo ${moduleType}`);
-    } catch (error) {
-      console.error(`❌ Erro ao marcar entidade como pendente do módulo ${moduleType}:`, error);
+    if (moduleType) {
+      console.log(`✓ Protocolo com pendência para módulo ${moduleType} - dados em customData`);
     }
   }
 
@@ -423,16 +350,7 @@ export class ProtocolStatusEngine {
   async getStatusHistory(protocolId: string) {
     return prisma.protocolHistorySimplified.findMany({
       where: { protocolId },
-      orderBy: { timestamp: 'desc' },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
+      orderBy: { timestamp: 'desc' }
     });
   }
 }

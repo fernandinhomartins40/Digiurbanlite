@@ -1,13 +1,12 @@
 /**
- * PROTOCOL SERVICE - VERS\u00c3O SIMPLIFICADA
+ * PROTOCOL SERVICE - VERSÃO SIMPLIFICADA
  *
- * Servi\u00e7o centralizado para gest\u00e3o de protocolos no sistema simplificado
+ * Serviço centralizado para gestão de protocolos no sistema simplificado
  * Implementa o fluxo completo: criar, atualizar, rotear e gerenciar protocolos
  */
 
 import { ProtocolStatus, UserRole } from '@prisma/client'
 import { prisma } from '../lib/prisma'
-import { getModuleEntity, isInformativeModule } from '../config/module-mapping'
 import { generateProtocolNumberSafe } from './protocol-number.service'
 import { protocolStatusEngine } from './protocol-status.engine'
 import { ActorRole } from '../types/protocol-status.types'
@@ -17,17 +16,17 @@ import { ActorRole } from '../types/protocol-status.types'
 // ========================================
 
 export interface CreateProtocolInput {
-  // Dados b\u00e1sicos
+  // Dados básicos
   title: string
   description?: string
   citizenId: string
   serviceId: string
   priority?: number
 
-  // Dados do formul\u00e1rio (para servi\u00e7os COM_DADOS)
+  // Dados do formulário (para serviços COM_DADOS)
   formData?: Record<string, any>
 
-  // Geolocaliza\u00e7\u00e3o
+  // Geolocalização
   latitude?: number
   longitude?: number
   address?: string
@@ -36,7 +35,7 @@ export interface CreateProtocolInput {
   documents?: any
   attachments?: string
 
-  // Gest\u00e3o
+  // Gestão
   assignedUserId?: string
   createdById?: string
   dueDate?: Date
@@ -70,26 +69,26 @@ export class ProtocolServiceSimplified {
    * Criar novo protocolo
    *
    * Fluxo:
-   * 1. Busca informa\u00e7\u00f5es do servi\u00e7o
-   * 2. Determina se \u00e9 INFORMATIVO ou COM_DADOS
+   * 1. Busca informações do serviço
+   * 2. Determina se é INFORMATIVO ou COM_DADOS
    * 3. Cria o protocolo com dados apropriados
-   * 4. Se COM_DADOS, roteia para o m\u00f3dulo correspondente
-   * 5. Cria entrada no hist\u00f3rico
+   * 4. Se COM_DADOS, vincula ao módulo via moduleType
+   * 5. Cria entrada no histórico
    */
   async createProtocol(data: CreateProtocolInput) {
     const { citizenId, serviceId, formData, ...rest } = data
 
-    // 1. Buscar servi\u00e7o para determinar tipo
+    // 1. Buscar serviço para determinar tipo
     const service = await prisma.serviceSimplified.findUnique({
       where: { id: serviceId },
       include: { department: true }
       })
 
     if (!service) {
-      throw new Error('Servi\u00e7o n\u00e3o encontrado')
+      throw new Error('Serviço não encontrado')
     }
 
-    // 2. Gerar n\u00famero do protocolo
+    // 2. Gerar número do protocolo
     const protocolNumber = await generateProtocolNumberSafe()
 
     // 3. Criar protocolo
@@ -102,7 +101,7 @@ export class ProtocolServiceSimplified {
         departmentId: service.departmentId,
         status: 'VINCULADO',
 
-        // Se servi\u00e7o COM_DADOS, adicionar dados e moduleType
+        // Se serviço COM_DADOS, adicionar dados e moduleType
         ...(service.serviceType === 'COM_DADOS' && {
           moduleType: service.moduleType,
           customData: formData
@@ -115,83 +114,23 @@ export class ProtocolServiceSimplified {
       }
       })
 
-    // 4. Se COM_DADOS, rotear para m\u00f3dulo
+    // 4. Se COM_DADOS, módulo já está vinculado via moduleType
     if (service.serviceType === 'COM_DADOS' && service.moduleType) {
-      await this.routeToModule(protocol)
+      console.log(`✓ Protocolo ${protocol.number} vinculado ao módulo: ${service.moduleType}`)
     }
 
-    // 5. Criar hist\u00f3rico
+    // 5. Criar histórico
     await prisma.protocolHistorySimplified.create({
       data: {
         protocolId: protocol.id,
         action: 'CRIADO',
         newStatus: 'VINCULADO',
-        comment: 'Protocolo criado pelo cidad\u00e3o',
+        comment: 'Protocolo criado pelo cidadão',
         userId: data.createdById
       }
     })
 
     return protocol
-  }
-
-  /**
-   * Rotear dados do protocolo para o m\u00f3dulo correspondente
-   *
-   * Esta fun\u00e7\u00e3o cria um registro no m\u00f3dulo espec\u00edfico (ex: HealthAttendance, Student, etc)
-   * vinculando-o ao protocolo para que o setor possa gerenciar os dados
-   */
-  private async routeToModule(protocol: any) {
-    if (!protocol.moduleType) {
-      console.warn(`Protocolo ${protocol.number} sem moduleType definido`)
-      return
-    }
-
-    // Verificar se \u00e9 m\u00f3dulo informativo
-    if (isInformativeModule(protocol.moduleType)) {
-      console.log(`M\u00f3dulo ${protocol.moduleType} \u00e9 informativo - sem roteamento`)
-      return
-    }
-
-    const moduleEntity = getModuleEntity(protocol.moduleType)
-
-    if (!moduleEntity) {
-      console.warn(`M\u00f3dulo ${protocol.moduleType} n\u00e3o mapeado`)
-      return
-    }
-
-    try {
-      // Preparar dados para o m\u00f3dulo
-      const moduleData = {
-        ...protocol.customData,
-        protocolId: protocol.id,
-        protocolNumber: protocol.number,
-        citizenId: protocol.citizenId,
-        departmentId: protocol.departmentId,
-        status: 'PENDING',
-        createdAt: new Date()
-      }
-
-      // Criar registro no m\u00f3dulo
-      // Nota: Isso requer que o schema Prisma tenha as entidades dos m\u00f3dulos
-      // await prisma[moduleEntity.toLowerCase()].create({ data: moduleData })
-
-      console.log(`\u2713 Dados roteados para m\u00f3dulo: ${moduleEntity} (Protocolo: ${protocol.number})`)
-
-      // Atualizar metadados do protocolo
-      await prisma.protocolSimplified.update({
-        where: { id: protocol.id },
-        data: {
-          customData: {
-            ...protocol.customData,
-            _routedToModule: moduleEntity,
-            _routedAt: new Date().toISOString()
-          }
-        }
-      })
-    } catch (error) {
-      console.error(`Erro ao rotear para m\u00f3dulo ${moduleEntity}:`, error)
-      throw error
-    }
   }
 
   /**
@@ -205,7 +144,7 @@ export class ProtocolServiceSimplified {
     })
 
     if (!protocol) {
-      throw new Error('Protocolo n\u00e3o encontrado')
+      throw new Error('Protocolo não encontrado')
     }
 
     const oldStatus = protocol.status
@@ -219,7 +158,7 @@ export class ProtocolServiceSimplified {
       }
     })
 
-    // Registrar hist\u00f3rico
+    // Registrar histórico
     await prisma.protocolHistorySimplified.create({
       data: {
         protocolId,
@@ -235,7 +174,7 @@ export class ProtocolServiceSimplified {
   }
 
   /**
-   * Adicionar coment\u00e1rio ao protocolo
+   * Adicionar comentário ao protocolo
    */
   async addComment(protocolId: string, comment: string, userId?: string) {
     await prisma.protocolHistorySimplified.create({
@@ -249,7 +188,7 @@ export class ProtocolServiceSimplified {
   }
 
   /**
-   * Atribuir protocolo a um usu\u00e1rio
+   * Atribuir protocolo a um usuário
    */
   async assignProtocol(protocolId: string, assignedUserId: string, userId?: string) {
     const protocol = await prisma.protocolSimplified.findUnique({
@@ -257,7 +196,7 @@ export class ProtocolServiceSimplified {
     })
 
     if (!protocol) {
-      throw new Error('Protocolo n\u00e3o encontrado')
+      throw new Error('Protocolo não encontrado')
     }
 
     const updated = await prisma.protocolSimplified.update({
@@ -269,7 +208,7 @@ export class ProtocolServiceSimplified {
       data: {
         protocolId,
         action: 'ATRIBUIDO',
-        comment: `Protocolo atribu\u00eddo ao usu\u00e1rio ${assignedUserId}`,
+        comment: `Protocolo atribuído ao usuário ${assignedUserId}`,
         userId
       }
     })
@@ -320,7 +259,7 @@ export class ProtocolServiceSimplified {
   }
 
   /**
-   * Listar protocolos por m\u00f3dulo
+   * Listar protocolos por módulo
    */
   async listByModule(departmentId: string, moduleType: string) {
     return prisma.protocolSimplified.findMany({
@@ -348,7 +287,7 @@ export class ProtocolServiceSimplified {
   }
 
   /**
-   * Listar protocolos do cidad\u00e3o
+   * Listar protocolos do cidadão
    */
   async listByCitizen(citizenId: string) {
     return prisma.protocolSimplified.findMany({
@@ -376,7 +315,7 @@ export class ProtocolServiceSimplified {
   }
 
   /**
-   * Buscar protocolo por n\u00famero
+   * Buscar protocolo por número
    */
   async findByNumber(number: string) {
     return prisma.protocolSimplified.findUnique({
@@ -437,17 +376,17 @@ export class ProtocolServiceSimplified {
    * Avaliar protocolo
    */
   async evaluateProtocol(protocolId: string, rating: number, comment?: string, wouldRecommend = true) {
-    // Verificar se protocolo est\u00e1 conclu\u00eddo
+    // Verificar se protocolo está concluído
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: protocolId }
     })
 
     if (!protocol) {
-      throw new Error('Protocolo n\u00e3o encontrado')
+      throw new Error('Protocolo não encontrado')
     }
 
     if (protocol.status !== 'CONCLUIDO') {
-      throw new Error('Apenas protocolos conclu\u00eddos podem ser avaliados')
+      throw new Error('Apenas protocolos concluídos podem ser avaliados')
     }
 
     return prisma.protocolEvaluationSimplified.create({
@@ -461,7 +400,7 @@ export class ProtocolServiceSimplified {
   }
 
   /**
-   * Obter hist\u00f3rico completo do protocolo
+   * Obter histórico completo do protocolo
    */
   async getHistory(protocolId: string) {
     return prisma.protocolHistorySimplified.findMany({
@@ -471,7 +410,7 @@ export class ProtocolServiceSimplified {
   }
 
   /**
-   * Estat\u00edsticas de protocolos por departamento
+   * Estatísticas de protocolos por departamento
    */
   async getDepartmentStats(departmentId: string, startDate?: Date, endDate?: Date) {
     const where: any = { departmentId }
@@ -493,7 +432,7 @@ export class ProtocolServiceSimplified {
         _count: true
       }),
 
-      // Por m\u00f3dulo
+      // Por módulo
       prisma.protocolSimplified.groupBy({
         by: ['moduleType'],
         where,
@@ -509,5 +448,5 @@ export class ProtocolServiceSimplified {
   }
 }
 
-// Exportar inst\u00e2ncia singleton
+// Exportar instância singleton
 export const protocolServiceSimplified = new ProtocolServiceSimplified()
