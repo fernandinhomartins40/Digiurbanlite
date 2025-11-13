@@ -26,6 +26,7 @@ import { NewProtocolModal } from '@/components/admin/NewProtocolModal';
 import { useRouter } from 'next/navigation';
 import { useSecretariaServices } from '@/hooks/useSecretariaServices';
 import { useAssistenciaSocialStats } from '@/hooks/useAssistenciaSocialStats';
+import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 
 export default function SecretariaAssistenciaSocialPage() {
   useAdminAuth();
@@ -37,6 +38,25 @@ export default function SecretariaAssistenciaSocialPage() {
 
   // Buscar estatísticas da secretaria
   const { stats, loading: statsLoading, error: statsError } = useAssistenciaSocialStats();
+
+  // ✅ NOVO: Buscar módulos dinâmicos do backend
+  const {
+    stats: departmentStats,
+    loading: departmentLoading,
+  } = useDepartmentStats('assistencia-social');
+
+  const modules = departmentStats?.services.filter(
+    (s: any) => s.serviceType === 'COM_DADOS' && s.moduleType
+  ) || [];
+
+  const moduleColors = [
+    { border: 'border-red-200', bg: 'bg-red-50/50', icon: 'text-red-600' },
+    { border: 'border-blue-200', bg: 'bg-blue-50/50', icon: 'text-blue-600' },
+    { border: 'border-purple-200', bg: 'bg-purple-50/50', icon: 'text-purple-600' },
+    { border: 'border-green-200', bg: 'bg-green-50/50', icon: 'text-green-600' },
+    { border: 'border-pink-200', bg: 'bg-pink-50/50', icon: 'text-pink-600' },
+    { border: 'border-orange-200', bg: 'bg-orange-50/50', icon: 'text-orange-600' },
+  ];
 
   // Separar serviços com e sem módulo
   const servicesWithModule = services.filter((s: any) => s.moduleType);
@@ -175,7 +195,7 @@ export default function SecretariaAssistenciaSocialPage() {
         </CardContent>
       </Card>
 
-      {/* Módulos Padrões - Base de dados do sistema */}
+      {/* 🔥 Módulos Padrões - DINÂMICO (backend gera cards automaticamente) */}
       <div>
         <div className="mb-6">
           <h2 className="text-2xl font-semibold">Módulos Padrões</h2>
@@ -185,265 +205,68 @@ export default function SecretariaAssistenciaSocialPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Famílias Vulneráveis */}
-          <Card className="border-red-200 bg-red-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/familias-vulneraveis')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5 text-red-600" />
-                Famílias Vulneráveis
-              </CardTitle>
-              <CardDescription>
-                Cadastro e acompanhamento de famílias
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.families.vulnerable || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Alto Risco:</span>
-                    <span className="font-medium text-red-600">{stats?.families.highRisk || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Equipamentos */}
-          <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/equipamentos')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Home className="h-5 w-5 text-blue-600" />
-                Equipamentos
-              </CardTitle>
-              <CardDescription>
-                CRAS, CREAS e equipamentos SUAS
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">CRAS:</span>
-                    <span className="font-medium">{stats?.units.cras || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">CREAS:</span>
-                    <span className="font-medium">{stats?.units.creas || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Atendimentos */}
-          <Card className="border-purple-200 bg-purple-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/atendimentos')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5 text-purple-600" />
-                Atendimentos
-              </CardTitle>
-              <CardDescription>
-                Registro de atendimentos sociais
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Este mês:</span>
-                    <span className="font-medium">{stats?.attendances.thisMonth || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.attendances.total || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Inscrições em Programas */}
-          <Card className="border-green-200 bg-green-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/inscricoes-programas')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Gift className="h-5 w-5 text-green-600" />
-                Programas Sociais
-              </CardTitle>
-              <CardDescription>
-                Programas e inscrições ativas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ativos:</span>
-                    <span className="font-medium">{stats?.programs?.active || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.programs?.total || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Benefícios */}
-          <Card className="border-pink-200 bg-pink-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/solicitacoes-beneficios')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Heart className="h-5 w-5 text-pink-600" />
-                Solicitações de Benefícios
-              </CardTitle>
-              <CardDescription>
-                Controle de benefícios eventuais
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pendentes:</span>
-                    <span className="font-medium">{stats?.benefits?.pending || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Aprovados:</span>
-                    <span className="font-medium text-green-600">{stats?.benefits?.approved || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Entregas Emergenciais */}
-          <Card className="border-orange-200 bg-orange-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/entregas-emergenciais')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Package className="h-5 w-5 text-orange-600" />
-                Entregas Emergenciais
-              </CardTitle>
-              <CardDescription>
-                Cestas básicas e kits de higiene
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pendentes:</span>
-                    <span className="font-medium">{stats?.deliveries?.pending || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Entregues:</span>
-                    <span className="font-medium text-green-600">{stats?.deliveries?.delivered || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Grupos e Oficinas */}
-          <Card className="border-indigo-200 bg-indigo-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/grupos-oficinas')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <UsersRound className="h-5 w-5 text-indigo-600" />
-                Grupos e Oficinas
-              </CardTitle>
-              <CardDescription>
-                Inscrições em grupos e oficinas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Inscritos:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Visitas Domiciliares */}
-          <Card className="border-teal-200 bg-teal-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/visitas-domiciliares')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-teal-600" />
-                Visitas Domiciliares
-              </CardTitle>
-              <CardDescription>
-                Agendamento e registro de visitas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Agendadas:</span>
-                    <span className="font-medium">{stats?.visits?.scheduled || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Concluídas:</span>
-                    <span className="font-medium text-green-600">{stats?.visits?.completed || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Agendamentos */}
-          <Card className="border-cyan-200 bg-cyan-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/assistencia-social/agendamentos')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-cyan-600" />
-                Agendamentos
-              </CardTitle>
-              <CardDescription>
-                Agendamento de atendimento social
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Próximos:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {departmentLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : modules.length > 0 ? (
+            modules.map((module: any, index: number) => {
+              const colors = moduleColors[index % moduleColors.length];
+              return (
+                <Card
+                  key={module.id}
+                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
+                  onClick={() => router.push(`/admin/secretarias/assistencia-social/${module.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <HandHeart className={`h-5 w-5 ${colors.icon}`} />
+                      {module.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {module.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-medium">{module.stats?.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pendentes:</span>
+                        <span className="font-medium">{module.stats?.pending || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Aprovados:</span>
+                        <span className="font-medium text-green-600">{module.stats?.approved || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="col-span-full border-dashed border-2">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <HandHeart className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum módulo cadastrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Os módulos aparecem automaticamente quando o admin cria serviços COM_DADOS com moduleType
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

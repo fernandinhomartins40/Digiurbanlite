@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { NewProtocolModal } from '@/components/admin/NewProtocolModal';
 import { useRouter } from 'next/navigation';
+import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 
 export default function SecretariaObrasPublicasPage() {
   const { user } = useAdminAuth();
@@ -36,6 +37,25 @@ export default function SecretariaObrasPublicasPage() {
 
   // Buscar estatísticas
   const { stats, loading: statsLoading, error: statsError } = useObrasPublicasStats();
+
+  // ✅ NOVO: Buscar módulos dinâmicos do backend
+  const {
+    stats: departmentStats,
+    loading: departmentLoading,
+  } = useDepartmentStats('obras-publicas');
+
+  const modules = departmentStats?.services.filter(
+    (s: any) => s.serviceType === 'COM_DADOS' && s.moduleType
+  ) || [];
+
+  const moduleColors = [
+    { border: 'border-orange-200', bg: 'bg-orange-50/50', icon: 'text-orange-600' },
+    { border: 'border-yellow-200', bg: 'bg-yellow-50/50', icon: 'text-yellow-600' },
+    { border: 'border-blue-200', bg: 'bg-blue-50/50', icon: 'text-blue-600' },
+    { border: 'border-gray-200', bg: 'bg-gray-50/50', icon: 'text-gray-600' },
+    { border: 'border-red-200', bg: 'bg-red-50/50', icon: 'text-red-600' },
+    { border: 'border-green-200', bg: 'bg-green-50/50', icon: 'text-green-600' },
+  ];
 
   // Todos os serviços
   const servicesComDados = services;
@@ -179,7 +199,7 @@ export default function SecretariaObrasPublicasPage() {
         </CardContent>
       </Card>
 
-      {/* Módulos Padrões - Base de dados do sistema */}
+      {/* 🔥 Módulos Padrões - DINÂMICO (backend gera cards automaticamente) */}
       <div>
         <div className="mb-6">
           <h2 className="text-2xl font-semibold">Módulos Padrões</h2>
@@ -189,140 +209,68 @@ export default function SecretariaObrasPublicasPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Atendimentos */}
-          <Card className="border-amber-200 bg-amber-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/obras-publicas/atendimentos-obras-publicas')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Headset className="h-5 w-5 text-amber-600" />
-                Atendimentos
-              </CardTitle>
-              <CardDescription>
-                Solicitações e atendimentos gerais
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ativos:</span>
-                    <span className="font-medium">0</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">0</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Reparos de Vias */}
-          <Card className="border-orange-200 bg-orange-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/obras-publicas/reparos-de-vias')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Construction className="h-5 w-5 text-orange-600" />
-                Reparos de Vias
-              </CardTitle>
-              <CardDescription>
-                Solicitações de reparos em vias públicas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">0</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pendentes:</span>
-                    <span className="font-medium">0</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Vistorias Técnicas */}
-          <Card className="border-purple-200 bg-purple-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/obras-publicas/vistorias-tecnicas')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5 text-purple-600" />
-                Vistorias Técnicas
-              </CardTitle>
-              <CardDescription>
-                Solicitações de vistorias em imóveis e obras
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Ativas:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Cadastro de Obras */}
-          <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/obras-publicas/cadastro-de-obras')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-blue-600" />
-                Cadastro de Obras
-              </CardTitle>
-              <CardDescription>
-                Acompanhamento de obras em andamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Em andamento:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Inspeção de Obras */}
-          <Card className="border-red-200 bg-red-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/obras-publicas/inspecao-de-obras')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Shield className="h-5 w-5 text-red-600" />
-                Inspeção de Obras
-              </CardTitle>
-              <CardDescription>
-                Inspeções e fiscalizações de obras
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pendentes:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {departmentLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : modules.length > 0 ? (
+            modules.map((module: any, index: number) => {
+              const colors = moduleColors[index % moduleColors.length];
+              return (
+                <Card
+                  key={module.id}
+                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
+                  onClick={() => router.push(`/admin/secretarias/obras-publicas/${module.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Construction className={`h-5 w-5 ${colors.icon}`} />
+                      {module.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {module.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-medium">{module.stats?.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pendentes:</span>
+                        <span className="font-medium">{module.stats?.pending || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Aprovados:</span>
+                        <span className="font-medium text-green-600">{module.stats?.approved || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="col-span-full border-dashed border-2">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <Construction className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum módulo cadastrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Os módulos aparecem automaticamente quando o admin cria serviços COM_DADOS com moduleType
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

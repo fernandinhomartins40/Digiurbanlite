@@ -30,6 +30,7 @@ import {
 import { NewProtocolModal } from '@/components/admin/NewProtocolModal';
 import { useRouter } from 'next/navigation';
 import { useEducacaoStats } from '@/hooks/useEducacaoStats';
+import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 
 export default function SecretariaEducacaoPage() {
   useAdminAuth();
@@ -39,6 +40,25 @@ export default function SecretariaEducacaoPage() {
   // Buscar serviços e estatísticas
   const { services, loading: servicesLoading, error: servicesError } = useSecretariaServices('educacao');
   const { stats, loading: statsLoading, error: statsError } = useEducacaoStats();
+
+  // ✅ NOVO: Buscar módulos dinâmicos do backend
+  const {
+    stats: departmentStats,
+    loading: departmentLoading,
+  } = useDepartmentStats('educacao');
+
+  const modules = departmentStats?.services.filter(
+    (s: any) => s.serviceType === 'COM_DADOS' && s.moduleType
+  ) || [];
+
+  const moduleColors = [
+    { border: 'border-blue-200', bg: 'bg-blue-50/50', icon: 'text-blue-600' },
+    { border: 'border-green-200', bg: 'bg-green-50/50', icon: 'text-green-600' },
+    { border: 'border-yellow-200', bg: 'bg-yellow-50/50', icon: 'text-yellow-600' },
+    { border: 'border-orange-200', bg: 'bg-orange-50/50', icon: 'text-orange-600' },
+    { border: 'border-cyan-200', bg: 'bg-cyan-50/50', icon: 'text-cyan-600' },
+    { border: 'border-emerald-200', bg: 'bg-emerald-50/50', icon: 'text-emerald-600' },
+  ];
 
   // Separar serviços com e sem módulo
   const servicesWithModule = services.filter((s: any) => s.moduleType);
@@ -177,7 +197,7 @@ export default function SecretariaEducacaoPage() {
         </CardContent>
       </Card>
 
-      {/* Módulos Padrões - Base de dados do sistema */}
+      {/* 🔥 Módulos Padrões - DINÂMICO (backend gera cards automaticamente) */}
       <div>
         <div className="mb-6">
           <h2 className="text-2xl font-semibold">Módulos Padrões</h2>
@@ -187,271 +207,68 @@ export default function SecretariaEducacaoPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Atendimentos Educacionais */}
-          <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/education-attendances')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                Atendimentos
-              </CardTitle>
-              <CardDescription>
-                Atendimentos educacionais gerais
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.educationAttendances || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Matrículas de Alunos */}
-          <Card className="border-green-200 bg-green-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/students')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5 text-green-600" />
-                Alunos
-              </CardTitle>
-              <CardDescription>
-                Matrículas e cadastro de alunos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.students || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Transporte Escolar */}
-          <Card className="border-yellow-200 bg-yellow-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/school-transports')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Bus className="h-5 w-5 text-yellow-600" />
-                Transporte
-              </CardTitle>
-              <CardDescription>
-                Rotas e gestão de transporte escolar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rotas:</span>
-                    <span className="font-medium">{stats?.modules.schoolTransports || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Merenda Escolar */}
-          <Card className="border-orange-200 bg-orange-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/school-meals')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Utensils className="h-5 w-5 text-orange-600" />
-                Merenda
-              </CardTitle>
-              <CardDescription>
-                Gestão de alimentação escolar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.schoolMeals || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Segunda linha de módulos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-          {/* Frequência */}
-          <Card className="border-cyan-200 bg-cyan-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/attendance-records')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-cyan-600" />
-                Frequência
-              </CardTitle>
-              <CardDescription>
-                Controle de presença de alunos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Registros:</span>
-                    <span className="font-medium">{stats?.modules.attendanceRecords || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Notas */}
-          <Card className="border-emerald-200 bg-emerald-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/grade-records')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <BarChart className="h-5 w-5 text-emerald-600" />
-                Notas
-              </CardTitle>
-              <CardDescription>
-                Registro de avaliações e notas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Registros:</span>
-                    <span className="font-medium">{stats?.modules.gradeRecords || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Transferências */}
-          <Card className="border-indigo-200 bg-indigo-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/student-transfers')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <ArrowRightLeft className="h-5 w-5 text-indigo-600" />
-                Transferências
-              </CardTitle>
-              <CardDescription>
-                Gestão de transferências de alunos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.studentTransfers || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Ocorrências Disciplinares */}
-          <Card className="border-red-200 bg-red-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/disciplinary-records')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                Ocorrências
-              </CardTitle>
-              <CardDescription>
-                Registro de ocorrências disciplinares
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.disciplinaryRecords || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Terceira linha de módulos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-          {/* Documentos Escolares */}
-          <Card className="border-purple-200 bg-purple-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/school-documents')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5 text-purple-600" />
-                Documentos
-              </CardTitle>
-              <CardDescription>
-                Históricos e documentos escolares
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.schoolDocuments || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Gestão Escolar */}
-          <Card className="border-slate-200 bg-slate-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/educacao/school-management')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Building className="h-5 w-5 text-slate-600" />
-                Gestão Escolar
-              </CardTitle>
-              <CardDescription>
-                Administração e gestão de escolas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Registros:</span>
-                    <span className="font-medium">{stats?.modules.schoolManagements || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {departmentLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : modules.length > 0 ? (
+            modules.map((module: any, index: number) => {
+              const colors = moduleColors[index % moduleColors.length];
+              return (
+                <Card
+                  key={module.id}
+                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
+                  onClick={() => router.push(`/admin/secretarias/educacao/${module.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <GraduationCap className={`h-5 w-5 ${colors.icon}`} />
+                      {module.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {module.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-medium">{module.stats?.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pendentes:</span>
+                        <span className="font-medium">{module.stats?.pending || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Aprovados:</span>
+                        <span className="font-medium text-green-600">{module.stats?.approved || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="col-span-full border-dashed border-2">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <GraduationCap className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum módulo cadastrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Os módulos aparecem automaticamente quando o admin cria serviços COM_DADOS com moduleType
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

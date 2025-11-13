@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { NewProtocolModal } from '@/components/admin/NewProtocolModal';
 import { useRouter } from 'next/navigation';
+import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 
 export default function SecretariaServicosPublicosPage() {
   const router = useRouter();
@@ -35,6 +36,25 @@ export default function SecretariaServicosPublicosPage() {
 
   // Buscar estatísticas
   const { stats, loading: statsLoading, error: statsError } = useServicosPublicosStats();
+
+  // ✅ NOVO: Buscar módulos dinâmicos do backend
+  const {
+    stats: departmentStats,
+    loading: departmentLoading,
+  } = useDepartmentStats('servicos-publicos');
+
+  const modules = departmentStats?.services.filter(
+    (s: any) => s.serviceType === 'COM_DADOS' && s.moduleType
+  ) || [];
+
+  const moduleColors = [
+    { border: 'border-blue-200', bg: 'bg-blue-50/50', icon: 'text-blue-600' },
+    { border: 'border-green-200', bg: 'bg-green-50/50', icon: 'text-green-600' },
+    { border: 'border-yellow-200', bg: 'bg-yellow-50/50', icon: 'text-yellow-600' },
+    { border: 'border-purple-200', bg: 'bg-purple-50/50', icon: 'text-purple-600' },
+    { border: 'border-teal-200', bg: 'bg-teal-50/50', icon: 'text-teal-600' },
+    { border: 'border-orange-200', bg: 'bg-orange-50/50', icon: 'text-orange-600' },
+  ];
 
   // Separar serviços com e sem módulo
   const servicesWithModule = services.filter((s: any) => s.moduleType);
@@ -175,7 +195,7 @@ export default function SecretariaServicosPublicosPage() {
         </CardContent>
       </Card>
 
-      {/* Módulos Padrões - Base de dados do sistema */}
+      {/* 🔥 Módulos Padrões - DINÂMICO (backend gera cards automaticamente) */}
       <div>
         <div className="mb-6">
           <h2 className="text-2xl font-semibold">Módulos Padrões</h2>
@@ -185,245 +205,68 @@ export default function SecretariaServicosPublicosPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Atendimentos de Serviços Públicos */}
-          <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/public-service-attendance')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Wrench className="h-5 w-5 text-blue-600" />
-                Atendimentos
-              </CardTitle>
-              <CardDescription>
-                Registro e gestão de solicitações de serviços públicos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.publicServiceAttendances?.total || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Protocolos:</span>
-                    <span className="font-medium">{stats?.moduleStats?.['public-service-attendance']?.total || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Iluminação Pública */}
-          <Card className="border-yellow-200 bg-yellow-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/street-lighting')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Lightbulb className="h-5 w-5 text-yellow-600" />
-                Iluminação Pública
-              </CardTitle>
-              <CardDescription>
-                Gestão de pontos de iluminação e manutenção
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.streetLighting?.total || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Protocolos:</span>
-                    <span className="font-medium">{stats?.moduleStats?.['street-lighting']?.total || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Limpeza Urbana */}
-          <Card className="border-purple-200 bg-purple-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/cleaning-schedule')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                Limpeza Urbana
-              </CardTitle>
-              <CardDescription>
-                Programação e controle de limpeza urbana
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Agendadas:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Coleta Especial */}
-          <Card className="border-orange-200 bg-orange-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/special-collection')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Trash2 className="h-5 w-5 text-orange-600" />
-                Coleta Especial
-              </CardTitle>
-              <CardDescription>
-                Agendamento e gestão de coletas especiais
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Agendadas:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Gestão de Equipes */}
-          <Card className="border-indigo-200 bg-indigo-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/team-schedule')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5 text-indigo-600" />
-                Gestão de Equipes
-              </CardTitle>
-              <CardDescription>
-                Gerenciamento de equipes e escalas de trabalho
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ativas:</span>
-                    <span className="font-medium">{stats?.teams.active || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.teams.total || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Registro de Problemas */}
-          <Card className="border-red-200 bg-red-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/public-problem-report')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                Registro de Problemas
-              </CardTitle>
-              <CardDescription>
-                Registro e acompanhamento de problemas urbanos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Abertos:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Capina */}
-          <Card className="border-green-200 bg-green-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/weeding-request')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Leaf className="h-5 w-5 text-green-600" />
-                Capina
-              </CardTitle>
-              <CardDescription>
-                Solicitações e agendamento de serviços de capina
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pendentes:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Desobstrução */}
-          <Card className="border-teal-200 bg-teal-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/drainage-request')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Droplets className="h-5 w-5 text-teal-600" />
-                Desobstrução
-              </CardTitle>
-              <CardDescription>
-                Solicitações de desobstrução de vias e drenagem
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pendentes:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Poda de Árvores */}
-          <Card className="border-emerald-200 bg-emerald-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/servicos-publicos/tree-pruning-request')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TreeDeciduous className="h-5 w-5 text-emerald-600" />
-                Poda de Árvores
-              </CardTitle>
-              <CardDescription>
-                Solicitações e controle de poda de árvores
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pendentes:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {departmentLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : modules.length > 0 ? (
+            modules.map((module: any, index: number) => {
+              const colors = moduleColors[index % moduleColors.length];
+              return (
+                <Card
+                  key={module.id}
+                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
+                  onClick={() => router.push(`/admin/secretarias/servicos-publicos/${module.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Wrench className={`h-5 w-5 ${colors.icon}`} />
+                      {module.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {module.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-medium">{module.stats?.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pendentes:</span>
+                        <span className="font-medium">{module.stats?.pending || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Aprovados:</span>
+                        <span className="font-medium text-green-600">{module.stats?.approved || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="col-span-full border-dashed border-2">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <Wrench className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum módulo cadastrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Os módulos aparecem automaticamente quando o admin cria serviços COM_DADOS com moduleType
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

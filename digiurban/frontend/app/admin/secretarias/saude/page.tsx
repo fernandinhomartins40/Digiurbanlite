@@ -30,6 +30,7 @@ import { NewProtocolModal } from '@/components/admin/NewProtocolModal';
 import { useRouter } from 'next/navigation';
 import { useSecretariaServices } from '@/hooks/useSecretariaServices';
 import { useSaudeStats } from '@/hooks/useSaudeStats';
+import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 
 export default function SecretariaSaudePage() {
   const { user } = useAdminAuth();
@@ -41,6 +42,27 @@ export default function SecretariaSaudePage() {
 
   // Buscar estatísticas reais
   const { stats: saudeStats, dashboard, healthUnitsStats, loading: statsLoading, error: statsError } = useSaudeStats();
+
+  // ✅ NOVO: Buscar módulos dinâmicos do backend
+  const {
+    stats: departmentStats,
+    loading: departmentLoading,
+  } = useDepartmentStats('saude');
+
+  // ✅ Módulos dinâmicos COM_DADOS (vêm do backend)
+  const modules = departmentStats?.services.filter(
+    (s: any) => s.serviceType === 'COM_DADOS' && s.moduleType
+  ) || [];
+
+  // Cores para os cards dos módulos
+  const moduleColors = [
+    { border: 'border-red-200', bg: 'bg-red-50/50', icon: 'text-red-600' },
+    { border: 'border-pink-200', bg: 'bg-pink-50/50', icon: 'text-pink-600' },
+    { border: 'border-blue-200', bg: 'bg-blue-50/50', icon: 'text-blue-600' },
+    { border: 'border-purple-200', bg: 'bg-purple-50/50', icon: 'text-purple-600' },
+    { border: 'border-emerald-200', bg: 'bg-emerald-50/50', icon: 'text-emerald-600' },
+    { border: 'border-cyan-200', bg: 'bg-cyan-50/50', icon: 'text-cyan-600' },
+  ];
 
   // Estatísticas consolidadas usando dados reais
   const stats = {
@@ -202,7 +224,7 @@ export default function SecretariaSaudePage() {
         </CardContent>
       </Card>
 
-      {/* Módulos Padrões - Base de dados do sistema */}
+      {/* Módulos Padrões - ✅ AGORA DINÂMICO DO BACKEND */}
       <div>
         <div className="mb-6">
           <h2 className="text-2xl font-semibold">Módulos Padrões</h2>
@@ -212,13 +234,158 @@ export default function SecretariaSaudePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Atendimentos */}
-          <Card className="border-amber-200 bg-amber-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/saude/atendimentos')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5 text-amber-600" />
-                Atendimentos
+          {departmentLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-12 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : modules.length > 0 ? (
+            modules.map((module: any, index: number) => {
+              const colors = moduleColors[index % moduleColors.length];
+              return (
+                <Card
+                  key={module.id}
+                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
+                  onClick={() => router.push(`/admin/secretarias/saude/${module.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className={`h-5 w-5 ${colors.icon}`} />
+                      {module.name}
+                    </CardTitle>
+                    <CardDescription>
+                      {module.description || 'Módulo de gestão'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-medium">{module.stats?.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pendentes:</span>
+                        <span className="font-medium">{module.stats?.pending || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Aprovados:</span>
+                        <span className="font-medium">{module.stats?.approved || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="col-span-full border-red-200 bg-red-50">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <FileText className="h-16 w-16 text-red-400 mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum módulo cadastrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Configure serviços COM_DADOS com moduleType no admin
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Certidões, Declarações e Documentos (SEM_DADOS) */}
+      <div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold">Certidões, Declarações e Documentos</h2>
+          <p className="text-sm text-muted-foreground">
+            Serviços que geram protocolos para emissão de documentos oficiais
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {servicesLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : (
+            <>
+              {/* Filtrar apenas serviços SEM_DADOS */}
+              {services
+                .filter((s: any) => s.serviceType === 'SEM_DADOS')
+                .map((service: any) => (
+                  <Card
+                    key={service.id}
+                    className="hover:shadow-lg transition-shadow cursor-pointer border-red-200 bg-red-50/50"
+                    onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-red-600" />
+                        {service.name}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2">
+                        {service.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="text-sm text-muted-foreground">
+                          ⏱️ Prazo: {service.estimatedDays} dias
+                        </div>
+                        <div className="text-sm">
+                          <Badge variant="outline" className="bg-red-100">
+                            {service.category}
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="w-full bg-red-600 hover:bg-red-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/admin/servicos/${service.id}/solicitar`);
+                          }}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Solicitar
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </>
+          )}
+        </div>
+        {!servicesLoading && services.filter((s: any) => s.serviceType === 'SEM_DADOS').length === 0 && (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+              <FileText className="h-16 w-16 text-red-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum serviço de documentos cadastrado</h3>
+              <p className="text-sm text-muted-foreground">
+                Execute o seed do banco de dados para carregar os serviços SEM_DADOS
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* CONTINUAÇÃO DO ARQUIVO - NÃO ALTERAR ABAIXO */}
+      {/* Placeholder temporário - buscar próxima seção */}
+      <div className="TEMP_MARKER_DO_NOT_DELETE"
               </CardTitle>
               <CardDescription>
                 Registro de atendimentos de saúde

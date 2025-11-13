@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { NewProtocolModal } from '@/components/admin/NewProtocolModal';
 import { useRouter } from 'next/navigation';
+import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 
 export default function SecretariaSegurancaPublicaPage() {
   useAdminAuth();
@@ -37,6 +38,25 @@ export default function SecretariaSegurancaPublicaPage() {
 
   // Buscar estatísticas
   const { stats, loading: statsLoading, error: statsError } = useSegurancaPublicaStats();
+
+  // ✅ NOVO: Buscar módulos dinâmicos do backend
+  const {
+    stats: departmentStats,
+    loading: departmentLoading,
+  } = useDepartmentStats('seguranca-publica');
+
+  const modules = departmentStats?.services.filter(
+    (s: any) => s.serviceType === 'COM_DADOS' && s.moduleType
+  ) || [];
+
+  const moduleColors = [
+    { border: 'border-red-200', bg: 'bg-red-50/50', icon: 'text-red-600' },
+    { border: 'border-blue-200', bg: 'bg-blue-50/50', icon: 'text-blue-600' },
+    { border: 'border-orange-200', bg: 'bg-orange-50/50', icon: 'text-orange-600' },
+    { border: 'border-yellow-200', bg: 'bg-yellow-50/50', icon: 'text-yellow-600' },
+    { border: 'border-purple-200', bg: 'bg-purple-50/50', icon: 'text-purple-600' },
+    { border: 'border-gray-200', bg: 'bg-gray-50/50', icon: 'text-gray-600' },
+  ];
 
   // Separar serviços por tipo
   const servicesWithModule = services.filter((s: any) => s.moduleType);
@@ -175,7 +195,7 @@ export default function SecretariaSegurancaPublicaPage() {
         </CardContent>
       </Card>
 
-      {/* Módulos Padrões - Base de dados do sistema */}
+      {/* 🔥 Módulos Padrões - DINÂMICO (backend gera cards automaticamente) */}
       <div>
         <div className="mb-6">
           <h2 className="text-2xl font-semibold">Módulos Padrões</h2>
@@ -185,362 +205,68 @@ export default function SecretariaSegurancaPublicaPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Atendimentos */}
-          <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/atendimentos')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                Atendimentos
-              </CardTitle>
-              <CardDescription>
-                Gestão de solicitações e demandas de segurança
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.attendances || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Protocolos:</span>
-                    <span className="font-medium">{stats?.protocols.total || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Ocorrências */}
-          <Card className="border-red-200 bg-red-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/ocorrencias')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                Registro de Ocorrências
-              </CardTitle>
-              <CardDescription>
-                Registro e acompanhamento de ocorrências
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.occurrences || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Em andamento:</span>
-                    <span className="font-medium">{stats?.highlights.openOccurrences || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Apoio Guarda Municipal */}
-          <Card className="border-indigo-200 bg-indigo-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/apoio-guarda')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Shield className="h-5 w-5 text-indigo-600" />
-                Apoio Guarda Municipal
-              </CardTitle>
-              <CardDescription>
-                Gestão e alocação da guarda municipal
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Guardas:</span>
-                    <span className="font-medium">{stats?.modules.guards || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Patrulhas:</span>
-                    <span className="font-medium">{stats?.modules.patrols || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Pontos Críticos */}
-          <Card className="border-orange-200 bg-orange-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/pontos-criticos')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-orange-600" />
-                Pontos Críticos
-              </CardTitle>
-              <CardDescription>
-                Mapeamento de áreas de risco e vulnerabilidade
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.criticalPoints || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Alto risco:</span>
-                    <span className="font-medium">{stats?.highlights.highRiskPoints || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Alertas */}
-          <Card className="border-yellow-200 bg-yellow-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/alertas')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Bell className="h-5 w-5 text-yellow-600" />
-                Alertas de Segurança
-              </CardTitle>
-              <CardDescription>
-                Sistema de alertas e notificações
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ativos:</span>
-                    <span className="font-medium">{stats?.modules.alerts || 0}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Sistema de alertas
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Estatísticas */}
-          <Card className="border-purple-200 bg-purple-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/estatisticas')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileBarChart className="h-5 w-5 text-purple-600" />
-                Estatísticas Regionais
-              </CardTitle>
-              <CardDescription>
-                Análise de dados por região
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ocorrências:</span>
-                    <span className="font-medium">{stats?.modules.occurrences || 0}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Análise regional
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Vigilância */}
-          <Card className="border-teal-200 bg-teal-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/vigilancia')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Eye className="h-5 w-5 text-teal-600" />
-                Vigilância Integrada
-              </CardTitle>
-              <CardDescription>
-                Monitoramento e videovigilância
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Sistemas:</span>
-                    <span className="font-medium">{stats?.modules.surveillanceSystems || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Câmeras:</span>
-                    <span className="font-medium">{stats?.modules.surveillanceSystems || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Dashboard */}
-          <Card className="border-green-200 bg-green-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/dashboard')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-                Dashboard Segurança
-              </CardTitle>
-              <CardDescription>
-                Indicadores e métricas de segurança
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Protocolos:</span>
-                    <span className="font-medium">{stats?.protocols.total || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pendentes:</span>
-                    <span className="font-medium">{stats?.protocols.pending || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Denúncia Anônima */}
-          <Card className="border-pink-200 bg-pink-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/denuncia-anonima')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-pink-600" />
-                Denúncia Anônima
-              </CardTitle>
-              <CardDescription>
-                Recebimento e gestão de denúncias anônimas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.anonymousTips || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Recentes:</span>
-                    <span className="font-medium">{stats?.highlights.recentTips || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Registro de Patrulha */}
-          <Card className="border-cyan-200 bg-cyan-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/registro-patrulha')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Radio className="h-5 w-5 text-cyan-600" />
-                Registro de Patrulha
-              </CardTitle>
-              <CardDescription>
-                Controle de patrulhamento e rondas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.patrols || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ativos:</span>
-                    <span className="font-medium">{stats?.highlights.activePatrols || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Solicitação de Câmera */}
-          <Card className="border-violet-200 bg-violet-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/solicitacao-camera')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Camera className="h-5 w-5 text-violet-600" />
-                Solicitação de Câmera
-              </CardTitle>
-              <CardDescription>
-                Pedidos de instalação de câmeras
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.cameraRequests || 0}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Solicitações
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Solicitação de Ronda */}
-          <Card className="border-amber-200 bg-amber-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/seguranca-publica/solicitacao-ronda')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Shield className="h-5 w-5 text-amber-600" />
-                Solicitação de Ronda
-              </CardTitle>
-              <CardDescription>
-                Pedidos de ronda especial ou emergencial
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.modules.patrolRequests || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Pendentes:</span>
-                    <span className="font-medium">{stats?.highlights.pendingPatrolRequests || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {departmentLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : modules.length > 0 ? (
+            modules.map((module: any, index: number) => {
+              const colors = moduleColors[index % moduleColors.length];
+              return (
+                <Card
+                  key={module.id}
+                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
+                  onClick={() => router.push(`/admin/secretarias/seguranca-publica/${module.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Shield className={`h-5 w-5 ${colors.icon}`} />
+                      {module.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {module.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-medium">{module.stats?.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pendentes:</span>
+                        <span className="font-medium">{module.stats?.pending || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Aprovados:</span>
+                        <span className="font-medium text-green-600">{module.stats?.approved || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="col-span-full border-dashed border-2">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <Shield className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum módulo cadastrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Os módulos aparecem automaticamente quando o admin cria serviços COM_DADOS com moduleType
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
