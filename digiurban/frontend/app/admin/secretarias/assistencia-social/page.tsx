@@ -480,7 +480,7 @@ export default function SecretariaAssistenciaSocialPage() {
                   <Card
                     key={service.id}
                     className="hover:shadow-lg transition-shadow cursor-pointer border-blue-200 bg-blue-50/50"
-                    onClick={() => setShowNewProtocolModal(true)}
+                    onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
                   >
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
@@ -506,7 +506,7 @@ export default function SecretariaAssistenciaSocialPage() {
                           className="w-full bg-blue-600 hover:bg-blue-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setShowNewProtocolModal(true);
+                            router.push(`/admin/servicos/${service.id}/solicitar`);
                           }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
@@ -574,6 +574,7 @@ export default function SecretariaAssistenciaSocialPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {services
+              .filter((s: any) => s.serviceType === 'COM_DADOS')
               .map((service) => (
               <Card key={service.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -605,7 +606,7 @@ export default function SecretariaAssistenciaSocialPage() {
                       <Button
                         size="sm"
                         className="flex-1"
-                        onClick={() => setShowNewProtocolModal(true)}
+                        onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
                       >
                         <Plus className="h-3 w-3 mr-1" />
                         Criar Protocolo

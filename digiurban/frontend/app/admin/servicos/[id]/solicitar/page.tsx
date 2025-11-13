@@ -1,16 +1,15 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
-import { CitizenLayout } from '@/components/citizen/CitizenLayout';
+import { useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Send, Loader2, CheckCircle, FileText, Clock, UserCheck, Info, File, Upload, X, FileCheck, Search, User } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, CheckCircle, FileText, Clock, UserCheck, Upload, Search, User } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { api } from '@/lib/services/api';
 import { useFormPrefill } from '@/hooks/useFormPrefill';
 import { ProgramSelector } from '@/components/citizen/ProgramSelector';
@@ -52,11 +51,11 @@ const MODULE_TO_API_TYPE: Record<string, string> = {
   INSCRICAO_OFICINA_CULTURAL: 'oficinas-culturais',
 };
 
-export default function SolicitarServicoPage() {
+export default function AdminSolicitarServicoPage() {
   const router = useRouter();
   const params = useParams();
   const serviceId = params.id as string;
-  const { apiRequest, citizen } = useCitizenAuth();
+  const { user, apiRequest } = useAdminAuth();
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,14 +64,18 @@ export default function SolicitarServicoPage() {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
 
+  // Estados para seleção de cidadão
+  const [selectedCitizen, setSelectedCitizen] = useState<any>(null);
+  const [cpfSearch, setCpfSearch] = useState('');
+  const [searchingCitizen, setSearchingCitizen] = useState(false);
+
   // Determinar quais campos usar: do programa selecionado ou do serviço
-  // useMemo para evitar recriar array em cada render
   const activeFormFields = useMemo(() => {
     const rawFormFields = selectedProgram?.formSchema || service?.formSchema?.fields || [];
     return Array.isArray(rawFormFields) ? rawFormFields : [];
   }, [selectedProgram?.formSchema, service?.formSchema?.fields]);
 
-  // Hook de pré-preenchimento (será inicializado depois que o serviço carregar)
+  // Hook de pré-preenchimento
   const {
     formData: customFormData,
     updateField,
@@ -95,28 +98,20 @@ export default function SolicitarServicoPage() {
 
   const loadService = async () => {
     try {
-      // ✅ SEGURANÇA: Usar apiRequest do context (httpOnly cookies)
       const data = await apiRequest(`/citizen/services/${serviceId}`);
-
-      // Garantir que requiredDocuments seja um array
       data.service.requiredDocuments = normalizeRequiredDocuments(data.service.requiredDocuments);
 
-      console.log('📄 Serviço carregado:', {
+      console.log('📄 Serviço carregado (Admin):', {
         name: data.service.name,
         requiresDocuments: data.service.requiresDocuments,
         requiredDocuments: data.service.requiredDocuments,
-        isArray: Array.isArray(data.service.requiredDocuments),
-        length: data.service.requiredDocuments?.length
       });
 
       setService(data.service);
-
-      // ✅ O pré-preenchimento será feito automaticamente pelo hook useFormPrefill
-      // quando o service.formSchema.fields estiver disponível
     } catch (error) {
       console.error('Erro ao carregar serviço:', error);
       toast.error('Erro ao carregar serviço');
-      router.push('/cidadao/servicos');
+      router.push('/admin/dashboard');
     } finally {
       setLoading(false);
     }
@@ -143,8 +138,42 @@ export default function SolicitarServicoPage() {
     toast.info('Arquivo removido');
   };
 
+  const handleSearchCitizen = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const cleanCpf = cpfSearch.replace(/\D/g, '');
+    if (cleanCpf.length !== 11) {
+      toast.error('CPF inválido. Digite 11 dígitos.');
+      return;
+    }
+
+    setSearchingCitizen(true);
+    try {
+      const response = await api.get(`/admin/citizens/search?q=${cleanCpf}`);
+
+      if (response.data.success && response.data.data && response.data.data.length > 0) {
+        const foundCitizen = response.data.data[0];
+        setSelectedCitizen(foundCitizen);
+        toast.success(`Cidadão encontrado: ${foundCitizen.name}`);
+      } else {
+        toast.error('Cidadão não encontrado. Verifique o CPF digitado.');
+      }
+    } catch (error: any) {
+      console.error('Erro ao buscar cidadão:', error);
+      toast.error(error.response?.data?.message || 'Erro ao buscar cidadão');
+    } finally {
+      setSearchingCitizen(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validar cidadão selecionado (obrigatório para admin)
+    if (!selectedCitizen) {
+      toast.error('Por favor, busque e selecione um cidadão antes de continuar');
+      return;
+    }
 
     // Se for inscrição em programa, validar se programa foi selecionado
     if (isProgramEnrollment && !selectedProgram) {
@@ -153,11 +182,11 @@ export default function SolicitarServicoPage() {
     }
 
     if (!description.trim()) {
-      toast.error('Por favor, descreva sua solicitação');
+      toast.error('Por favor, descreva a solicitação');
       return;
     }
 
-    // Validar campos obrigatórios do formulário customizado (usar campos ativos)
+    // Validar campos obrigatórios do formulário customizado
     if (activeFormFields && activeFormFields.length > 0) {
       for (const field of activeFormFields) {
         if (field.required && !customFormData[field.id]) {
@@ -170,14 +199,8 @@ export default function SolicitarServicoPage() {
     // Validar documentos obrigatórios do serviço
     if (!selectedProgram && service?.requiresDocuments && service?.requiredDocuments) {
       const docs = normalizeRequiredDocuments(service.requiredDocuments);
-      console.log('🔍 Validando documentos do serviço:', {
-        requiresDocuments: service.requiresDocuments,
-        docs,
-        uploadedFiles: Object.keys(uploadedFiles)
-      });
-
       const requiredDocs = docs.filter((doc: any) => {
-        if (typeof doc === 'string') return true; // Strings são sempre obrigatórias
+        if (typeof doc === 'string') return true;
         return doc.required;
       });
 
@@ -206,12 +229,11 @@ export default function SolicitarServicoPage() {
     setSubmitting(true);
 
     try {
-      // Preparar FormData para upload de arquivos
       const formData = new FormData();
       formData.append('description', description);
       formData.append('priority', '3');
+      formData.append('adminCitizenId', selectedCitizen.id);
 
-      // Preparar customFormData incluindo programId se houver
       const finalCustomFormData = { ...customFormData };
       if (selectedProgram?.id) {
         finalCustomFormData.programId = selectedProgram.id;
@@ -221,27 +243,23 @@ export default function SolicitarServicoPage() {
         formData.append('customFormData', JSON.stringify(finalCustomFormData));
       }
 
-      // Adicionar arquivos
       const documentIds: string[] = [];
       Object.entries(uploadedFiles).forEach(([docId, file]) => {
         formData.append('documents', file);
         documentIds.push(docId);
       });
 
-      // Adicionar IDs dos documentos
       documentIds.forEach(id => {
         formData.append('documentIds[]', id);
       });
 
-      console.log('📤 Enviando solicitação com', Object.keys(uploadedFiles).length, 'arquivo(s)');
+      console.log('📤 Admin enviando solicitação com', Object.keys(uploadedFiles).length, 'arquivo(s)');
 
-      // ✅ SEGURANÇA: Fazer request com FormData
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
       const response = await fetch(`${apiUrl}/citizen/services/${serviceId}/request`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
-        // Não definir Content-Type para que o navegador defina automaticamente com boundary
       });
 
       if (!response.ok) {
@@ -252,10 +270,10 @@ export default function SolicitarServicoPage() {
       const data = await response.json();
 
       toast.success('Solicitação enviada com sucesso!', {
-        description: `Protocolo ${data.protocol.number} gerado`,
+        description: `Protocolo ${data.protocol.number} gerado para ${selectedCitizen.name}`,
       });
 
-      router.push('/cidadao/protocolos');
+      router.push('/admin/protocolos');
     } catch (error) {
       console.error('Erro ao solicitar serviço:', error);
       toast.error(
@@ -270,34 +288,33 @@ export default function SolicitarServicoPage() {
 
   if (loading) {
     return (
-      <CitizenLayout>
+      <div className="container mx-auto p-6">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <span className="ml-2 text-gray-600">Carregando serviço...</span>
         </div>
-      </CitizenLayout>
+      </div>
     );
   }
 
   if (!service) {
     return (
-      <CitizenLayout>
+      <div className="container mx-auto p-6">
         <div className="text-center py-12">
           <p className="text-gray-600">Serviço não encontrado</p>
-          <Button className="mt-4" onClick={() => router.push('/cidadao/servicos')}>
-            Voltar para serviços
+          <Button className="mt-4" onClick={() => router.push('/admin/dashboard')}>
+            Voltar para Dashboard
           </Button>
         </div>
-      </CitizenLayout>
+      </div>
     );
   }
 
-  // Verificar se é um serviço de inscrição em programas
   const isProgramEnrollment = service?.moduleType && MODULE_TO_API_TYPE[service.moduleType];
   const programApiType = isProgramEnrollment && service?.moduleType ? MODULE_TO_API_TYPE[service.moduleType] : null;
 
   return (
-    <CitizenLayout>
+    <div className="container mx-auto p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
         <div>
@@ -311,13 +328,21 @@ export default function SolicitarServicoPage() {
             Voltar
           </Button>
 
+          {/* Badge indicando modo admin */}
+          {user && (
+            <div className="mb-3 inline-flex items-center gap-2 px-3 py-1.5 bg-orange-100 text-orange-800 rounded-lg text-sm font-medium">
+              <UserCheck className="h-4 w-4" />
+              Modo Administrador - {user.name}
+            </div>
+          )}
+
           <h1 className="text-2xl font-bold text-gray-900">
-            {isProgramEnrollment && !selectedProgram ? 'Selecione o Programa' : 'Solicitar Serviço'}
+            {isProgramEnrollment && !selectedProgram ? 'Selecione o Programa' : 'Solicitar Serviço para Cidadão'}
           </h1>
           <p className="text-gray-600 mt-1">
             {isProgramEnrollment && !selectedProgram
-              ? 'Escolha o programa em que deseja se inscrever'
-              : 'Preencha os dados para solicitar este serviço'}
+              ? 'Escolha o programa em que deseja inscrever o cidadão'
+              : 'Preencha os dados para solicitar este serviço em nome do cidadão'}
           </p>
         </div>
 
@@ -347,7 +372,87 @@ export default function SolicitarServicoPage() {
           </CardHeader>
         </Card>
 
-        {/* Seletor de Programas - Mostrar se for serviço de inscrição e programa não foi selecionado */}
+        {/* Busca de Cidadão - SEMPRE VISÍVEL para admin */}
+        {!selectedCitizen && (
+          <Card className="border-orange-200 bg-orange-50/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-900">
+                <Search className="h-5 w-5" />
+                Buscar Cidadão
+              </CardTitle>
+              <CardDescription className="text-orange-700">
+                Digite o CPF do cidadão para o qual você está solicitando este serviço
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSearchCitizen} className="flex gap-3">
+                <div className="flex-1">
+                  <Input
+                    type="text"
+                    value={cpfSearch}
+                    onChange={(e) => setCpfSearch(e.target.value)}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    disabled={searchingCitizen}
+                    className="bg-white"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={searchingCitizen}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {searchingCitizen ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Buscando...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="h-4 w-4 mr-2" />
+                      Buscar
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Cidadão Selecionado */}
+        {selectedCitizen && (
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-lg text-green-900 flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Cidadão Selecionado
+                  </CardTitle>
+                  <div className="mt-3 space-y-1 text-sm text-green-800">
+                    <p><strong>Nome:</strong> {selectedCitizen.name}</p>
+                    <p><strong>CPF:</strong> {selectedCitizen.cpf}</p>
+                    {selectedCitizen.email && <p><strong>Email:</strong> {selectedCitizen.email}</p>}
+                    {selectedCitizen.phone && <p><strong>Telefone:</strong> {selectedCitizen.phone}</p>}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedCitizen(null);
+                    setCpfSearch('');
+                  }}
+                  className="text-green-700 hover:text-green-900"
+                >
+                  Alterar
+                </Button>
+              </div>
+            </CardHeader>
+          </Card>
+        )}
+
+        {/* Seletor de Programas */}
         {isProgramEnrollment && !selectedProgram && programApiType && (
           <ProgramSelector
             serviceType={programApiType}
@@ -355,7 +460,7 @@ export default function SolicitarServicoPage() {
           />
         )}
 
-        {/* Programa Selecionado - Mostrar resumo se programa foi selecionado */}
+        {/* Programa Selecionado */}
         {isProgramEnrollment && selectedProgram && (
           <Card className="border-green-200 bg-green-50">
             <CardHeader>
@@ -379,14 +484,14 @@ export default function SolicitarServicoPage() {
           </Card>
         )}
 
-        {/* Formulário de Solicitação - Mostrar só se não for inscrição OU se programa foi selecionado */}
+        {/* Formulário de Solicitação */}
         {(!isProgramEnrollment || selectedProgram) && (
           <form onSubmit={handleSubmit}>
             <Card>
             <CardHeader>
               <CardTitle>Dados da Solicitação</CardTitle>
               <CardDescription>
-                Forneça os detalhes da sua solicitação
+                Forneça os detalhes da solicitação em nome do cidadão
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -412,7 +517,7 @@ export default function SolicitarServicoPage() {
                 </Label>
                 <Textarea
                   id="description"
-                  placeholder="Descreva detalhadamente sua solicitação..."
+                  placeholder="Descreva detalhadamente a solicitação..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   required
@@ -432,14 +537,12 @@ export default function SolicitarServicoPage() {
                     Documentos Necessários
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Faça o upload dos documentos solicitados para completar sua solicitação
+                    Faça o upload dos documentos solicitados para completar a solicitação
                   </p>
 
                   {service.requiredDocuments.map((doc: any, index: number) => {
                     const docId = typeof doc === 'string' ? doc : (doc.id || doc.name || `doc-${index}`);
                     const uploadedFile = uploadedFiles[docId];
-
-                    // Normalizar configuração do documento
                     const documentConfig = normalizeDocumentConfig(doc);
 
                     return (
@@ -469,14 +572,12 @@ export default function SolicitarServicoPage() {
                     Documentos Necessários
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Faça o upload dos documentos solicitados para completar sua inscrição
+                    Faça o upload dos documentos solicitados para completar a inscrição
                   </p>
 
                   {selectedProgram.requiredDocuments.map((doc: any, index: number) => {
                     const docId = doc.id || doc.name || `doc-${index}`;
                     const uploadedFile = uploadedFiles[docId];
-
-                    // Normalizar configuração do documento
                     const documentConfig = normalizeDocumentConfig(doc);
 
                     return (
@@ -503,7 +604,6 @@ export default function SolicitarServicoPage() {
                 <div className="space-y-4 pt-4 border-t">
                   <h3 className="font-medium text-gray-900">Dados Básicos do Inscrito</h3>
 
-                  {/* Nome Completo */}
                   <div className="space-y-2">
                     <Label htmlFor="applicantName">
                       Nome Completo <span className="text-red-500">*</span>
@@ -511,14 +611,13 @@ export default function SolicitarServicoPage() {
                     <Input
                       id="applicantName"
                       type="text"
-                      value={customFormData.applicantName || citizen?.name || ''}
+                      value={customFormData.applicantName || selectedCitizen?.name || ''}
                       onChange={(e) => updateField('applicantName', e.target.value)}
-                      placeholder="Seu nome completo"
+                      placeholder="Nome completo do cidadão"
                       required
                     />
                   </div>
 
-                  {/* CPF */}
                   <div className="space-y-2">
                     <Label htmlFor="applicantCpf">
                       CPF <span className="text-red-500">*</span>
@@ -526,14 +625,13 @@ export default function SolicitarServicoPage() {
                     <MaskedInput
                       id="applicantCpf"
                       type="cpf"
-                      value={customFormData.applicantCpf || citizen?.cpf || ''}
+                      value={customFormData.applicantCpf || selectedCitizen?.cpf || ''}
                       onChange={(e) => updateField('applicantCpf', e.target.value)}
                       placeholder={getMaskPlaceholder('cpf')}
                       required
                     />
                   </div>
 
-                  {/* Email */}
                   <div className="space-y-2">
                     <Label htmlFor="applicantEmail">
                       E-mail <span className="text-red-500">*</span>
@@ -541,14 +639,13 @@ export default function SolicitarServicoPage() {
                     <Input
                       id="applicantEmail"
                       type="email"
-                      value={customFormData.applicantEmail || citizen?.email || ''}
+                      value={customFormData.applicantEmail || selectedCitizen?.email || ''}
                       onChange={(e) => updateField('applicantEmail', e.target.value)}
-                      placeholder="seu@email.com"
+                      placeholder="email@example.com"
                       required
                     />
                   </div>
 
-                  {/* Telefone */}
                   <div className="space-y-2">
                     <Label htmlFor="applicantPhone">
                       Telefone <span className="text-red-500">*</span>
@@ -556,7 +653,7 @@ export default function SolicitarServicoPage() {
                     <MaskedInput
                       id="applicantPhone"
                       type="phone"
-                      value={customFormData.applicantPhone || citizen?.phone || ''}
+                      value={customFormData.applicantPhone || selectedCitizen?.phone || ''}
                       onChange={(e) => updateField('applicantPhone', e.target.value)}
                       placeholder={getMaskPlaceholder('phone')}
                       required
@@ -565,7 +662,7 @@ export default function SolicitarServicoPage() {
                 </div>
               )}
 
-              {/* Campos do Formulário Customizado (programa ou serviço) */}
+              {/* Campos do Formulário Customizado */}
               {activeFormFields && activeFormFields.length > 0 && (
                 <div className="space-y-4 pt-4 border-t">
                   <h3 className="font-medium text-gray-900">
@@ -695,18 +792,18 @@ export default function SolicitarServicoPage() {
         </form>
         )}
 
-        {/* Avisos - Mostrar só se não for inscrição OU se programa foi selecionado */}
+        {/* Avisos */}
         {(!isProgramEnrollment || selectedProgram) && (
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="p-4">
               <div className="flex gap-3">
                 <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-blue-900">
-                  <p className="font-medium mb-1">Após enviar sua solicitação:</p>
+                  <p className="font-medium mb-1">Após enviar a solicitação:</p>
                   <ul className="list-disc list-inside space-y-1 text-blue-800">
-                    <li>Você receberá um número de protocolo</li>
-                    <li>Poderá acompanhar o andamento na página de protocolos</li>
-                    <li>Será notificado sobre atualizações</li>
+                    <li>Um número de protocolo será gerado</li>
+                    <li>O cidadão poderá acompanhar o andamento</li>
+                    <li>Notificações serão enviadas sobre atualizações</li>
                   </ul>
                 </div>
               </div>
@@ -714,6 +811,6 @@ export default function SolicitarServicoPage() {
           </Card>
         )}
       </div>
-    </CitizenLayout>
+    </div>
   );
 }

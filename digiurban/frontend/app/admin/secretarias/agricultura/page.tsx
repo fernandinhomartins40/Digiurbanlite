@@ -164,7 +164,7 @@ export default function SecretariaAgriculturaPage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => setShowNewProtocolModal(true)}
+              onClick={() => router.push('/cidadao/servicos?asAdmin=true&departamento=agricultura')}
             >
               <Plus className="h-6 w-6 mb-2" />
               <span>Novo Protocolo</span>
@@ -391,7 +391,7 @@ export default function SecretariaAgriculturaPage() {
                   <Card
                     key={service.id}
                     className="hover:shadow-lg transition-shadow cursor-pointer border-green-200 bg-green-50/50"
-                    onClick={() => setShowNewProtocolModal(true)}
+                    onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
                   >
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
@@ -417,7 +417,7 @@ export default function SecretariaAgriculturaPage() {
                           className="w-full bg-green-600 hover:bg-green-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setShowNewProtocolModal(true);
+                            router.push(`/admin/servicos/${service.id}/solicitar`);
                           }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
@@ -440,6 +440,86 @@ export default function SecretariaAgriculturaPage() {
               </p>
             </CardContent>
           </Card>
+        )}
+      </div>
+
+      {/* Serviços COM_DADOS - Com formulários e dados estruturados */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-6">Serviços com Coleta de Dados</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Serviços que coletam dados estruturados através de formulários completos
+        </p>
+
+        {servicesLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-full mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : services.filter((s: any) => s.serviceType === 'COM_DADOS').length === 0 ? (
+          <Card className="border-gray-200 bg-gray-50">
+            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+              <FileText className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum serviço COM_DADOS cadastrado</h3>
+              <p className="text-sm text-muted-foreground">
+                Execute o seed do banco de dados para carregar os serviços COM_DADOS
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {services
+              .filter((s: any) => s.serviceType === 'COM_DADOS')
+              .map((service) => (
+              <Card key={service.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-2">
+                    <CardTitle className="text-lg">{service.name}</CardTitle>
+                    {service.moduleType && (
+                      <Badge className="bg-green-600">
+                        Motor
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription className="line-clamp-2">
+                    {service.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {service.requiresDocuments && (
+                      <div className="text-sm text-muted-foreground">
+                        📎 Requer documentação
+                      </div>
+                    )}
+                    {service.estimatedDays && (
+                      <div className="text-sm text-muted-foreground">
+                        ⏱️ Prazo: {service.estimatedDays} dias
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Criar Protocolo
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
 
@@ -511,7 +591,7 @@ export default function SecretariaAgriculturaPage() {
                       <Button
                         size="sm"
                         className="flex-1"
-                        onClick={() => setShowNewProtocolModal(true)}
+                        onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
                       >
                         <Plus className="h-3 w-3 mr-1" />
                         Criar Protocolo
