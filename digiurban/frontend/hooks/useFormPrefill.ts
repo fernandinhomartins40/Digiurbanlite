@@ -36,6 +36,7 @@ interface UseFormPrefillOptions {
   fields: FormField[];
   onPrefillComplete?: (prefilledCount: number) => void;
   validateOnMount?: boolean;
+  citizenData?: any; // Permitir passar dados do cidadão externamente (para admin)
 }
 
 interface UseFormPrefillReturn {
@@ -69,8 +70,18 @@ interface UseFormPrefillReturn {
  * ```
  */
 export function useFormPrefill(options: UseFormPrefillOptions): UseFormPrefillReturn {
-  const { fields, onPrefillComplete, validateOnMount = true } = options;
-  const { citizen } = useCitizenAuth();
+  const { fields, onPrefillComplete, validateOnMount = true, citizenData } = options;
+
+  // Usar citizenData se fornecido (para admin), caso contrário usar contexto (para cidadão)
+  let contextCitizen = null;
+  try {
+    const auth = useCitizenAuth();
+    contextCitizen = auth.citizen;
+  } catch (error) {
+    // Ignorar erro se não estiver em contexto de cidadão
+  }
+
+  const citizen = citizenData || contextCitizen;
 
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isInitialized, setIsInitialized] = useState(false);

@@ -85,6 +85,7 @@ export default function AdminSolicitarServicoPage() {
     prefilledCount
   } = useFormPrefill({
     fields: activeFormFields,
+    citizenData: selectedCitizen, // Passar dados do cidadão selecionado
     onPrefillComplete: (count) => {
       if (count > 0) {
         console.log(`✓ ${count} campos pré-preenchidos automaticamente`);
