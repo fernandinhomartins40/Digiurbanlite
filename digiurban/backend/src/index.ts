@@ -5,6 +5,8 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import path from 'path';
+import http from 'http';
+import { initializeSocket } from './socket';
 
 // Load environment variables
 dotenv.config();
@@ -110,6 +112,25 @@ app.use('/api/public', publicRoutes);
 const serviceRoutes = require('./routes/services').default;
 app.use('/api/services', serviceRoutes);
 
+// 🔥 NOVAS ROTAS DINÂMICAS (Sistema Híbrido)
+console.log('🔥 Carregando rotas dinâmicas...');
+try {
+  const dynamicServicesRoutes = require('./routes/dynamic-services').default;
+  app.use('/api', dynamicServicesRoutes);
+  console.log('✅ Rotas dinâmicas de serviços carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas dinâmicas:', error);
+}
+
+// 🔧 ROTAS ADMIN DINÂMICAS
+try {
+  const adminDynamicServicesRoutes = require('./routes/admin-dynamic-services').default;
+  app.use('/api/admin', adminDynamicServicesRoutes);
+  console.log('✅ Rotas admin dinâmicas carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas admin dinâmicas:', error);
+}
+
 // Rota de busca de cidadão (usado por todas as secretarias)
 const citizenLookupRoutes = require('./routes/admin-citizen-lookup').default;
 app.use('/api/admin/citizen-lookup', citizenLookupRoutes);
@@ -156,7 +177,8 @@ try { console.log('   → citizens...'); app.use('/api/citizens', require('./rou
 // Portal do cidadão
 try { console.log('   → citizen-services...'); app.use('/api/citizen/services', require('./routes/citizen-services').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-services:', e); }
 try { console.log('   → citizen-protocols...'); app.use('/api/citizen/protocols', require('./routes/citizen-protocols').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-protocols:', e); }
-try { console.log('   → citizen-programs...'); app.use('/api/citizen', require('./routes/citizen-programs').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-programs:', e); }
+// DIA 3: DISABLED - arquivo não existe
+// try { console.log('   → citizen-programs...'); app.use('/api/citizen', require('./routes/citizen-programs').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-programs:', e); }
 try { console.log('   → citizen-family...'); app.use('/api/citizen/family', require('./routes/citizen-family').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-family:', e); }
 try { console.log('   → citizen-documents...'); app.use('/api/citizen/documents', require('./routes/citizen-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-documents:', e); }
 try { console.log('   → citizen-notifications...'); app.use('/api/citizen/notifications', require('./routes/citizen-notifications').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-notifications:', e); }
@@ -191,7 +213,8 @@ try { console.log('   → templates...'); app.use('/api/admin/templates', requir
 try { console.log('   → email...'); app.use('/api/admin/email', require('./routes/admin-email').default); console.log('   ✓'); } catch (e) { console.error('❌ email:', e); }
 try { console.log('   → integrations...'); app.use('/api/integrations', require('./routes/integrations').default); console.log('   ✓'); } catch (e) { console.error('❌ integrations:', e); }
 try { console.log('   → municipality...'); app.use('/api/municipality', require('./routes/municipality-config').default); console.log('   ✓'); } catch (e) { console.error('❌ municipality:', e); }
-try { console.log('   → admin-agriculture...'); app.use('/api/admin/agriculture', require('./routes/admin-agriculture').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-agriculture:', e); }
+// DIA 3: DISABLED - arquivo não existe
+// try { console.log('   → admin-agriculture...'); app.use('/api/admin/agriculture', require('./routes/admin-agriculture').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-agriculture:', e); }
 
 // Workflows
 try { console.log('   → workflows...'); app.use('/api/workflows', require('./routes/module-workflows').default); console.log('   ✓'); } catch (e) { console.error('❌ workflows:', e); }
@@ -215,9 +238,23 @@ app.use((_req, res: express.Response) => {
 // registerAllHandlers();
 console.log('⚠️  Module handlers DESABILITADOS temporariamente');
 
-const server = app.listen(PORT, () => {
+// ============================================================
+// 🔥 INICIALIZAR SERVIDOR COM WEBSOCKET
+// ============================================================
+const httpServer = http.createServer(app);
+
+// Inicializa WebSocket
+try {
+  initializeSocket(httpServer);
+  console.log('✅ WebSocket inicializado com sucesso!');
+} catch (error) {
+  console.warn('⚠️  Erro ao inicializar WebSocket (não crítico):', error);
+}
+
+const server = httpServer.listen(PORT, () => {
   console.log(`🚀 DigiUrban Backend server running on port ${PORT}`);
   console.log(`📱 API Documentation: http://localhost:${PORT}/health`);
+  console.log(`🔌 WebSocket disponível em: ws://localhost:${PORT}/api/socket`);
   console.log(`⏰ Server is now listening and will stay alive...`);
 });
 

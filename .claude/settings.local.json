@@ -16,7 +16,18 @@
       "Bash(done)",
       "Bash(ls:*)",
       "Bash(cat:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm start)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx prisma db seed:*)",
+      "Bash(sqlite3:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npm run:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
