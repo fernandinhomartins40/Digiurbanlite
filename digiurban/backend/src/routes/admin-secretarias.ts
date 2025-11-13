@@ -2,41 +2,97 @@
  * ROTAS ADMIN SECRETARIAS
  * Conforme PLANO_IMPLEMENTACAO_COMPLETO.md Fase 8.2
  *
- * Estas rotas fornecem acesso direto aos dados do Prisma para painéis administrativos.
- * NÃO são rotas de processamento de serviços (isso é feito pelos Handlers via ModuleHandler).
+ * ATUALIZADO: Após migração para entidades virtuais, todos os dados agora
+ * são acessados através de ProtocolSimplified.customData
  */
 
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
+import { ProtocolStatus } from '@prisma/client';
+
 const router = Router();
+
+// ============================================================
+// HELPER: Buscar protocolos por módulo
+// ============================================================
+
+interface GetProtocolsByModuleParams {
+  moduleType: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+async function getProtocolsByModule({
+  moduleType,
+  status,
+  page = 1,
+  limit = 20
+}: GetProtocolsByModuleParams) {
+  const where: any = {
+    moduleType: moduleType.toUpperCase()
+  };
+
+  if (status && status !== 'all') {
+    where.status = status;
+  }
+
+  const skip = (Number(page) - 1) * Number(limit);
+  const take = Number(limit);
+
+  const [total, protocols] = await Promise.all([
+    prisma.protocolSimplified.count({ where }),
+    prisma.protocolSimplified.findMany({
+      where,
+      skip,
+      take,
+      include: {
+        citizen: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            email: true
+          }
+        },
+        service: true
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+  ]);
+
+  // Transformar protocolos para formato legado (compatibilidade)
+  const data = protocols.map(p => ({
+    id: p.id,
+    protocolNumber: p.number,
+    status: p.status,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+    citizen: p.citizen,
+    service: p.service,
+    ...p.customData as object
+  }));
+
+  return { data, total, page: Number(page), limit: Number(limit) };
+}
 
 // ============================================================
 // EDUCAÇÃO
 // ============================================================
 
 router.get('/educacao/matriculas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, source, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-      if (source) where.source = source;
-
-      const [total, enrollments] = await Promise.all([
-        prisma.studentEnrollment.count({ where }),
-        prisma.studentEnrollment.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: enrollments, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'CADASTRO_ESTUDANTE',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -44,26 +100,17 @@ router.get('/educacao/matriculas',
 );
 
 router.get('/educacao/transportes',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, transports] = await Promise.all([
-        prisma.schoolTransport.count({ where }),
-        prisma.schoolTransport.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: transports, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'TRANSPORTE_ESCOLAR',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -71,26 +118,17 @@ router.get('/educacao/transportes',
 );
 
 router.get('/educacao/merenda',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, meals] = await Promise.all([
-        prisma.schoolMeal.count({ where }),
-        prisma.schoolMeal.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: meals, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'MERENDA_ESCOLAR',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -102,26 +140,17 @@ router.get('/educacao/merenda',
 // ============================================================
 
 router.get('/saude/consultas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, appointments] = await Promise.all([
-        prisma.healthAppointment.count({ where }),
-        prisma.healthAppointment.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: appointments, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'AGENDAMENTO_CONSULTA',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -129,26 +158,17 @@ router.get('/saude/consultas',
 );
 
 router.get('/saude/exames',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, exams] = await Promise.all([
-        prisma.healthAppointment.count({ where }),
-        prisma.healthAppointment.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: exams, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_EXAME',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -156,26 +176,17 @@ router.get('/saude/exames',
 );
 
 router.get('/saude/medicamentos',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, medications] = await Promise.all([
-        prisma.medicationDispensing.count({ where }),
-        prisma.medicationDispensing.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: medications, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_MEDICAMENTO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -183,26 +194,17 @@ router.get('/saude/medicamentos',
 );
 
 router.get('/saude/vacinas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, vaccinations] = await Promise.all([
-        prisma.vaccination.count({ where }),
-        prisma.vaccination.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: vaccinations, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'VACINACAO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -214,26 +216,17 @@ router.get('/saude/vacinas',
 // ============================================================
 
 router.get('/assistencia-social/beneficios',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, benefits] = await Promise.all([
-        prisma.socialProgram.count({ where }),
-        prisma.socialProgram.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: benefits, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_BENEFICIO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -241,26 +234,17 @@ router.get('/assistencia-social/beneficios',
 );
 
 router.get('/assistencia-social/programas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, programs] = await Promise.all([
-        prisma.socialProgram.count({ where }),
-        prisma.socialProgram.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: programs, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'INSCRICAO_PROGRAMA_SOCIAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -268,26 +252,17 @@ router.get('/assistencia-social/programas',
 );
 
 router.get('/assistencia-social/visitas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, visits] = await Promise.all([
-        prisma.homeVisit.count({ where }),
-        prisma.homeVisit.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: visits, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'VISITA_DOMICILIAR',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -299,26 +274,17 @@ router.get('/assistencia-social/visitas',
 // ============================================================
 
 router.get('/cultura/eventos',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, events] = await Promise.all([
-        prisma.culturalEvent.count({ where }),
-        prisma.culturalEvent.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: events, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'EVENTO_CULTURAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -326,26 +292,17 @@ router.get('/cultura/eventos',
 );
 
 router.get('/cultura/espacos',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, spaces] = await Promise.all([
-        prisma.culturalSpace.count({ where }),
-        prisma.culturalSpace.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: spaces, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'ESPACO_CULTURAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -353,26 +310,17 @@ router.get('/cultura/espacos',
 );
 
 router.get('/cultura/projetos',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, projects] = await Promise.all([
-        prisma.culturalProject.count({ where }),
-        prisma.culturalProject.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: projects, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'PROJETO_CULTURAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -384,26 +332,17 @@ router.get('/cultura/projetos',
 // ============================================================
 
 router.get('/esportes/inscricoes',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, enrollments] = await Promise.all([
-        prisma.sportsAttendance.count({ where }),
-        prisma.sportsAttendance.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: enrollments, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'INSCRICAO_ESCOLINHA',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -411,26 +350,17 @@ router.get('/esportes/inscricoes',
 );
 
 router.get('/esportes/reservas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, reservations] = await Promise.all([
-        prisma.sportsAttendance.count({ where }),
-        prisma.sportsAttendance.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: reservations, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'RESERVA_ESPACO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -442,26 +372,17 @@ router.get('/esportes/reservas',
 // ============================================================
 
 router.get('/turismo/atrativos',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, attractions] = await Promise.all([
-        prisma.touristAttraction.count({ where }),
-        prisma.touristAttraction.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: attractions, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'CADASTRO_ATRATIVO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -469,26 +390,17 @@ router.get('/turismo/atrativos',
 );
 
 router.get('/turismo/eventos',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, events] = await Promise.all([
-        prisma.tourismAttendance.count({ where }),
-        prisma.tourismAttendance.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: events, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'EVENTO_TURISTICO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -500,26 +412,17 @@ router.get('/turismo/eventos',
 // ============================================================
 
 router.get('/habitacao/lotes',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, lots] = await Promise.all([
-        prisma.housingApplication.count({ where }),
-        prisma.housingApplication.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: lots, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'INSCRICAO_FILA_HABITACAO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -527,26 +430,17 @@ router.get('/habitacao/lotes',
 );
 
 router.get('/habitacao/mcmv',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, mcmv] = await Promise.all([
-        prisma.housingApplication.count({ where }),
-        prisma.housingApplication.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: mcmv, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'PROGRAMA_HABITACIONAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -554,26 +448,17 @@ router.get('/habitacao/mcmv',
 );
 
 router.get('/habitacao/regularizacao',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, regularizations] = await Promise.all([
-        prisma.landRegularization.count({ where }),
-        prisma.landRegularization.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: regularizations, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'REGULARIZACAO_FUNDIARIA',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -585,26 +470,17 @@ router.get('/habitacao/regularizacao',
 // ============================================================
 
 router.get('/obras-publicas/problemas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, issues] = await Promise.all([
-        prisma.publicWorksAttendance.count({ where }),
-        prisma.publicWorksAttendance.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: issues, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'REGISTRO_PROBLEMA_INFRAESTRUTURA',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -612,26 +488,17 @@ router.get('/obras-publicas/problemas',
 );
 
 router.get('/obras-publicas/manutencao',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, maintenance] = await Promise.all([
-        prisma.publicWorksAttendance.count({ where }),
-        prisma.publicWorksAttendance.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: maintenance, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_MANUTENCAO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -643,26 +510,17 @@ router.get('/obras-publicas/manutencao',
 // ============================================================
 
 router.get('/servicos-publicos/limpeza',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, cleaning] = await Promise.all([
-        prisma.publicServiceRequest.count({ where }),
-        prisma.publicServiceRequest.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: cleaning, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_LIMPEZA',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -670,26 +528,17 @@ router.get('/servicos-publicos/limpeza',
 );
 
 router.get('/servicos-publicos/poda',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, pruning] = await Promise.all([
-        prisma.publicServiceRequest.count({ where }),
-        prisma.publicServiceRequest.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: pruning, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_PODA_ARVORES',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -697,26 +546,17 @@ router.get('/servicos-publicos/poda',
 );
 
 router.get('/servicos-publicos/entulho',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, debris] = await Promise.all([
-        prisma.publicServiceRequest.count({ where }),
-        prisma.publicServiceRequest.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: debris, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_COLETA_ESPECIAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -728,26 +568,17 @@ router.get('/servicos-publicos/entulho',
 // ============================================================
 
 router.get('/meio-ambiente/licencas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, licenses] = await Promise.all([
-        prisma.environmentalLicense.count({ where }),
-        prisma.environmentalLicense.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: licenses, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_LICENCA_AMBIENTAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -755,26 +586,17 @@ router.get('/meio-ambiente/licencas',
 );
 
 router.get('/meio-ambiente/arvores',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, authorizations] = await Promise.all([
-        prisma.treeAuthorization.count({ where }),
-        prisma.treeAuthorization.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: authorizations, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_PODA_CORTE',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -782,26 +604,17 @@ router.get('/meio-ambiente/arvores',
 );
 
 router.get('/meio-ambiente/denuncias',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, complaints] = await Promise.all([
-        prisma.environmentalComplaint.count({ where }),
-        prisma.environmentalComplaint.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: complaints, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'DENUNCIA_AMBIENTAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -813,26 +626,17 @@ router.get('/meio-ambiente/denuncias',
 // ============================================================
 
 router.get('/agricultura/assistencias',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, assistances] = await Promise.all([
-        prisma.technicalAssistance.count({ where }),
-        prisma.technicalAssistance.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: assistances, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'ASSISTENCIA_TECNICA_RURAL',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -840,26 +644,17 @@ router.get('/agricultura/assistencias',
 );
 
 router.get('/agricultura/sementes',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, distributions] = await Promise.all([
-        prisma.seedDistribution.count({ where }),
-        prisma.seedDistribution.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: distributions, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'DISTRIBUICAO_SEMENTES',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -871,26 +666,17 @@ router.get('/agricultura/sementes',
 // ============================================================
 
 router.get('/planejamento-urbano/alvaras',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, permits] = await Promise.all([
-        prisma.buildingPermit.count({ where }),
-        prisma.buildingPermit.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: permits, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_ALVARA_CONSTRUCAO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -898,26 +684,17 @@ router.get('/planejamento-urbano/alvaras',
 );
 
 router.get('/planejamento-urbano/certidoes',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, certificates] = await Promise.all([
-        prisma.urbanCertificate.count({ where }),
-        prisma.urbanCertificate.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: certificates, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_CERTIDAO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -925,26 +702,17 @@ router.get('/planejamento-urbano/certidoes',
 );
 
 router.get('/planejamento-urbano/numeracao',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, numberings] = await Promise.all([
-        prisma.propertyNumbering.count({ where }),
-        prisma.propertyNumbering.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: numberings, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_NUMERACAO',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -956,26 +724,17 @@ router.get('/planejamento-urbano/numeracao',
 // ============================================================
 
 router.get('/seguranca-publica/ocorrencias',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, occurrences] = await Promise.all([
-        prisma.securityOccurrence.count({ where }),
-        prisma.securityOccurrence.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: occurrences, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'REGISTRO_OCORRENCIA',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -983,26 +742,17 @@ router.get('/seguranca-publica/ocorrencias',
 );
 
 router.get('/seguranca-publica/rondas',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, patrols] = await Promise.all([
-        prisma.securityPatrol.count({ where }),
-        prisma.securityPatrol.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: patrols, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'SOLICITACAO_RONDA',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -1010,26 +760,17 @@ router.get('/seguranca-publica/rondas',
 );
 
 router.get('/seguranca-publica/denuncias',
-  
   adminAuthMiddleware,
   async (req: any, res) => {
     try {
       const { status, page = 1, limit = 20 } = req.query;
-
-      const where: any = {};
-      if (status) where.status = status;
-
-      const [total, reports] = await Promise.all([
-        prisma.securityOccurrence.count({ where }),
-        prisma.securityOccurrence.findMany({
-          where,
-          skip: (Number(page) - 1) * Number(limit),
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' }
-        })
-      ]);
-
-      res.json({ data: reports, total, page: Number(page), limit: Number(limit) });
+      const result = await getProtocolsByModule({
+        moduleType: 'DENUNCIA_ANONIMA',
+        status,
+        page,
+        limit
+      });
+      res.json(result);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

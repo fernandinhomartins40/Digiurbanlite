@@ -3,13 +3,12 @@
  * PROTOCOL-MODULE SERVICE - Integração Protocolos ↔ Módulos
  * ============================================================================
  *
- * Conecta protocolos simplificados aos módulos padrões das secretarias.
- * Implementa o fluxo: Protocolo COM_DADOS → Módulo da Secretaria → Aprovação
+ * Conecta protocolos simplificados aos módulos usando entidades virtuais em customData.
+ * Implementa o fluxo: Protocolo COM_DADOS → customData (entidade virtual) → Aprovação
  */
 
 import { ProtocolStatus, Prisma, UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
-import { getModuleEntity, isInformativeModule } from '../config/module-mapping';
 import { generateProtocolNumberSafe } from './protocol-number.service';
 import { protocolStatusEngine } from './protocol-status.engine';
 
@@ -48,8 +47,8 @@ export interface RejectProtocolInput {
 
 export class ProtocolModuleService {
   /**
-   * Criar protocolo e vincular ao módulo apropriado
-   * Fluxo: ServiceSimplified → ProtocolSimplified → Módulo Padrão
+   * Criar protocolo COM_DADOS com entidade virtual em customData
+   * ou SEM_DADOS apenas com protocolo de acompanhamento
    */
   async createProtocolWithModule(input: CreateProtocolWithModuleInput) {
     const { citizenId, serviceId, formData, description, createdById, ...rest } = input;
@@ -58,7 +57,7 @@ export class ProtocolModuleService {
     const service = await prisma.serviceSimplified.findUnique({
       where: { id: serviceId },
       include: { department: true }
-      });
+    });
 
     if (!service) {
       throw new Error('Serviço não encontrado');
@@ -68,8 +67,8 @@ export class ProtocolModuleService {
       throw new Error('Serviço inativo');
     }
 
-    // 2. Verificar se serviço tem módulo
-    const hasModule = service.moduleType && !isInformativeModule(service.moduleType);
+    // 2. Verificar tipo de serviço
+    const isComDados = service.serviceType === 'COM_DADOS';
 
     // 3. Criar protocolo em transação
     const result = await prisma.$transaction(async (tx) => {
@@ -80,6 +79,23 @@ export class ProtocolModuleService {
       const attachmentsData = rest.attachments
         ? (Array.isArray(rest.attachments) ? JSON.stringify(rest.attachments) : rest.attachments)
         : undefined;
+
+      // Preparar customData com metadados da entidade virtual
+      const customDataPayload = isComDados && service.moduleType
+        ? {
+            // Dados do formulário
+            ...formData,
+            // Metadados da entidade virtual
+            _meta: {
+              entityType: service.moduleType,
+              status: 'PENDING_APPROVAL',
+              isActive: false,
+              createdAt: new Date().toISOString(),
+              approvedAt: null,
+              approvedBy: null
+            }
+          }
+        : formData;
 
       // Criar protocolo
       const protocol = await tx.protocolSimplified.create({
@@ -92,54 +108,37 @@ export class ProtocolModuleService {
           departmentId: service.departmentId,
           status: ProtocolStatus.VINCULADO,
           moduleType: service.moduleType || null,
-          customData: formData as Prisma.JsonObject,
+          customData: customDataPayload as Prisma.JsonObject,
           createdById,
           latitude: rest.latitude,
           longitude: rest.longitude,
           address: rest.address,
           attachments: attachmentsData
         }
-        });
-
-      // Se tem módulo, criar entrada pendente
-      let moduleEntity = null;
-      if (hasModule && service.moduleType) {
-        const entityName = getModuleEntity(service.moduleType);
-
-        if (entityName) {
-          moduleEntity = await this.createModuleEntity(
-            tx,
-            entityName,
-            {
-              protocolId: protocol.id,
-              protocolNumber: protocol.number,
-              formData,
-              status: 'PENDING_APPROVAL'
-        }
-          );
-        }
-      }
+      });
 
       // Criar histórico
       await tx.protocolHistorySimplified.create({
         data: {
           protocolId: protocol.id,
           action: 'CREATED',
-          comment: 'Protocolo criado',
+          comment: isComDados
+            ? 'Protocolo COM_DADOS criado - aguardando aprovação'
+            : 'Protocolo SEM_DADOS criado',
           newStatus: ProtocolStatus.VINCULADO,
           userId: createdById
         }
-        });
+      });
 
       return {
         protocol,
-        moduleEntity,
-        hasModule
-        };
+        isComDados,
+        hasModule: isComDados && !!service.moduleType
+      };
     });
 
     // ============================================================================
-    // FASE 3: APLICAR WORKFLOW E SLA (FORA DA TRANSAÇÃO)
+    // APLICAR WORKFLOW E SLA (FORA DA TRANSAÇÃO)
     // ============================================================================
 
     // Aplicar workflow se houver moduleType
@@ -156,7 +155,7 @@ export class ProtocolModuleService {
   }
 
   /**
-   * FASE 3: Aplicar workflow ao protocolo
+   * Aplicar workflow ao protocolo
    */
   private async applyWorkflowToProtocol(protocolId: string, moduleType: string) {
     try {
@@ -178,7 +177,7 @@ export class ProtocolModuleService {
             await slaService.createSLA({
               protocolId,
               workingDays: genericWorkflow.defaultSLA
-        });
+            });
           }
         }
         return;
@@ -203,42 +202,7 @@ export class ProtocolModuleService {
   }
 
   /**
-   * Criar entidade no módulo apropriado
-   */
-  private async createModuleEntity(
-    tx: Prisma.TransactionClient,
-    entityName: string,
-    data: {
-      protocolId: string;
-      protocolNumber: string;
-      formData: Record<string, any>;
-      status: string;
-    }
-  ) {
-    const { protocolId, protocolNumber, formData } = data;
-
-    // Import handlers helpers
-    const { entityHandlers } = await import('./entity-handlers');
-
-    // Se existe handler específico, usar
-    if (entityHandlers[entityName]) {
-      return entityHandlers[entityName]({
-        protocolId,
-        protocolNumber,
-        formData,
-        tx
-        });
-    }
-
-    // Se chegou aqui, o handler não está em entity-handlers.ts
-    throw new Error(
-      `Handler não encontrado para entidade: ${entityName}. ` +
-      `Verifique se o handler está implementado em entity-handlers.ts`
-    );
-  }
-
-  /**
-   * Aprovar protocolo e ativar entidade do módulo
+   * Aprovar protocolo e ativar entidade virtual
    */
   async approveProtocol(input: ApproveProtocolInput) {
     const { protocolId, userId, comment, additionalData } = input;
@@ -253,13 +217,30 @@ export class ProtocolModuleService {
       throw new Error('Protocolo não encontrado');
     }
 
-    // Ativar entidade do módulo antes de atualizar status
-    if (protocol.moduleType) {
+    // Ativar entidade virtual no customData se for COM_DADOS
+    if (protocol.service.serviceType === 'COM_DADOS' && protocol.customData) {
       await prisma.$transaction(async (tx) => {
-        const entityName = getModuleEntity(protocol.moduleType!);
-        if (entityName) {
-          await this.activateModuleEntity(tx, entityName, protocolId);
-        }
+        const customData = protocol.customData as Record<string, any>;
+
+        // Atualizar metadados da entidade virtual
+        const updatedCustomData = {
+          ...customData,
+          _meta: {
+            ...(customData._meta || {}),
+            status: 'ACTIVE',
+            isActive: true,
+            approvedAt: new Date().toISOString(),
+            approvedBy: userId
+          }
+        };
+
+        // Atualizar protocolo com customData atualizado
+        await tx.protocolSimplified.update({
+          where: { id: protocolId },
+          data: {
+            customData: updatedCustomData as Prisma.JsonObject
+          }
+        });
       });
     }
 
@@ -311,61 +292,6 @@ export class ProtocolModuleService {
   }
 
   /**
-   * Ativar entidade do módulo após aprovação
-   *
-   * Ativa a entidade vinculada ao protocolo, alterando status e isActive.
-   * Cada modelo pode ter campos diferentes para ativação.
-   */
-  private async activateModuleEntity(
-    tx: Prisma.TransactionClient,
-    entityName: string,
-    protocolId: string
-  ) {
-    // Mapeamento de modelos para suas estruturas de ativação
-    const activationStrategies: Record<string, () => Promise<any>> = {
-      // Modelos com status e isActive
-      RuralProducer: () => tx.ruralProducer.updateMany({
-        where: { protocolId },
-        data: { status: 'ACTIVE', isActive: true }
-        }),
-      Patient: () => tx.patient.updateMany({
-        where: { protocolId },
-        data: { status: 'ACTIVE' }
-        }),
-      Student: () => tx.student.updateMany({
-        where: { protocolId },
-        data: { isActive: true }
-        }),
-
-      // Modelos apenas com isActive
-      SchoolTransport: () => tx.schoolTransport.updateMany({
-        where: { protocolId },
-        data: { isActive: true }
-        }),
-
-      // Modelos apenas com status
-      HealthAttendance: () => tx.healthAttendance.updateMany({
-        where: { protocolId },
-        data: { status: 'COMPLETED' }
-        }),
-      HealthAppointment: () => tx.healthAppointment.updateMany({
-        where: { protocolId },
-        data: { status: 'CONFIRMED' }
-        }),
-
-      // Adicione mais conforme necessário...
-    };
-
-    const strategy = activationStrategies[entityName];
-    if (strategy) {
-      await strategy();
-    } else {
-      // Log para debug - não bloqueia se não tiver estratégia específica
-      console.log(`Nenhuma estratégia de ativação definida para: ${entityName}`);
-    }
-  }
-
-  /**
    * Buscar protocolos pendentes por tipo de módulo
    */
   async getPendingProtocolsByModule(
@@ -388,33 +314,33 @@ export class ProtocolModuleService {
               name: true,
               cpf: true,
               email: true
-        }
-      },
+            }
+          },
           service: {
             select: {
               id: true,
               name: true
-        }
-      },
+            }
+          },
           department: {
             select: {
               id: true,
               name: true
-        }
-      }
+            }
+          }
         },
         orderBy: {
           createdAt: 'desc'
         },
         skip,
         take: limit
-        }),
+      }),
       prisma.protocolSimplified.count({
         where: {
           moduleType,
           status: ProtocolStatus.VINCULADO
         }
-        }),
+      }),
     ]);
 
     return {
@@ -424,8 +350,95 @@ export class ProtocolModuleService {
         limit,
         total,
         pages: Math.ceil(total / limit)
-        }
-        };
+      }
+    };
+  }
+
+  /**
+   * Buscar dados da entidade virtual de um protocolo
+   */
+  async getVirtualEntity(protocolId: string) {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId },
+      include: {
+        service: true,
+        citizen: true
+      }
+    });
+
+    if (!protocol) {
+      throw new Error('Protocolo não encontrado');
+    }
+
+    if (!protocol.customData) {
+      return null;
+    }
+
+    const customData = protocol.customData as Record<string, any>;
+    const { _meta, ...entityData } = customData;
+
+    return {
+      protocolId: protocol.id,
+      protocolNumber: protocol.number,
+      entityType: protocol.moduleType,
+      entityData,
+      meta: _meta,
+      service: protocol.service,
+      citizen: {
+        id: protocol.citizen.id,
+        name: protocol.citizen.name,
+        cpf: protocol.citizen.cpf
+      }
+    };
+  }
+
+  /**
+   * Atualizar dados da entidade virtual
+   */
+  async updateVirtualEntity(
+    protocolId: string,
+    updates: Record<string, any>,
+    userId: string
+  ) {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId }
+    });
+
+    if (!protocol) {
+      throw new Error('Protocolo não encontrado');
+    }
+
+    const customData = (protocol.customData as Record<string, any>) || {};
+    const { _meta, ...currentData } = customData;
+
+    const updatedCustomData = {
+      ...currentData,
+      ...updates,
+      _meta: {
+        ...(_meta || {}),
+        updatedAt: new Date().toISOString(),
+        updatedBy: userId
+      }
+    };
+
+    const updatedProtocol = await prisma.protocolSimplified.update({
+      where: { id: protocolId },
+      data: {
+        customData: updatedCustomData as Prisma.JsonObject
+      }
+    });
+
+    // Criar histórico
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId,
+        action: 'ENTITY_UPDATED',
+        comment: 'Dados da entidade virtual atualizados',
+        userId
+      }
+    });
+
+    return updatedProtocol;
   }
 }
 
