@@ -23,14 +23,14 @@ import {
   Search,
   Copy,
 } from 'lucide-react';
-import { NewProtocolModal } from '@/components/admin/NewProtocolModal';
+import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
 import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 
 export default function SecretariaObrasPublicasPage() {
   const { user } = useAdminAuth();
   const router = useRouter();
-  const [showNewProtocolModal, setShowNewProtocolModal] = useState(false);
+  const [showServiceSelectorModal, setShowServiceSelectorModal] = useState(false);
 
   // Buscar serviços da secretaria
   const { services, loading: servicesLoading, error: servicesError } = useSecretariaServices('obras-publicas');
@@ -176,7 +176,7 @@ export default function SecretariaObrasPublicasPage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => setShowNewProtocolModal(true)}
+              onClick={() => setShowServiceSelectorModal(true)}
             >
               <Plus className="h-6 w-6 mb-2" />
               <span>Novo Protocolo</span>
@@ -438,15 +438,11 @@ export default function SecretariaObrasPublicasPage() {
         )}
       </div>
 
-      {/* Modal de Novo Protocolo */}
-      <NewProtocolModal
-        open={showNewProtocolModal}
-        onOpenChange={setShowNewProtocolModal}
-        services={services}
-        onSuccess={() => {
-          // Recarregar estatísticas após criar protocolo
-          window.location.reload();
-        }}
+      {/* Modal de Seleção de Serviços */}
+      <ServiceSelectorModal
+        open={showServiceSelectorModal}
+        onOpenChange={setShowServiceSelectorModal}
+        departmentFilter="obras-publicas"
       />
     </div>
   );

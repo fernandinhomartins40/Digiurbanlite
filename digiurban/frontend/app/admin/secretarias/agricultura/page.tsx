@@ -24,7 +24,7 @@ import {
   CalendarCheck,
   Award,
 } from 'lucide-react';
-import { NewProtocolModal } from '@/components/admin/NewProtocolModal';
+import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
 // ✅ NOVOS HOOKS PARA CARREGAR DADOS REAIS
 import { useSecretariaServices } from '@/hooks/useSecretariaServices';
@@ -34,7 +34,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 export default function SecretariaAgriculturaPage() {
   const { user } = useAdminAuth();
   const router = useRouter();
-  const [showNewProtocolModal, setShowNewProtocolModal] = useState(false);
+  const [showServiceSelectorModal, setShowServiceSelectorModal] = useState(false);
 
   // ✅ CARREGAR SERVIÇOS E ESTATÍSTICAS REAIS
   const {
@@ -186,7 +186,7 @@ export default function SecretariaAgriculturaPage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => router.push('/cidadao/servicos?asAdmin=true&departamento=agricultura')}
+              onClick={() => setShowServiceSelectorModal(true)}
             >
               <Plus className="h-6 w-6 mb-2" />
               <span>Novo Protocolo</span>
@@ -744,15 +744,11 @@ export default function SecretariaAgriculturaPage() {
         </Card>
       </div>
 
-      {/* Modal de Novo Protocolo */}
-      <NewProtocolModal
-        open={showNewProtocolModal}
-        onOpenChange={setShowNewProtocolModal}
-        services={services}
-        onSuccess={() => {
-          // Recarregar estatísticas após criar protocolo
-          window.location.reload();
-        }}
+      {/* Modal de Seleção de Serviços */}
+      <ServiceSelectorModal
+        open={showServiceSelectorModal}
+        onOpenChange={setShowServiceSelectorModal}
+        departmentFilter="agricultura"
       />
     </div>
   );
