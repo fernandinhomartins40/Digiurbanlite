@@ -1013,38 +1013,29 @@ router.post(
 
       console.log('[POST /programas] ✅ Validação passou - criando programa...');
 
-      // Criar programa rural
-      const program = await prisma.ruralProgram.create({
-        data: {
-                    name,
-          programType,
-          description,
-          objectives: objectives || {},
-          targetAudience: targetAudience || '',
-          requirements: requirements || {},
-          benefits: benefits || {},
-          startDate: new Date(startDate),
-          endDate: endDate ? new Date(endDate) : null,
-          budget: budget ? parseFloat(budget) : null,
-          coordinator,
-          maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
-          applicationPeriod: applicationPeriod || null,
-          selectionCriteria: selectionCriteria || null,
-          partners: partners || null,
-          status: status || 'ACTIVE', // Padrão ACTIVE para aparecer no catálogo do cidadão
-          customFields: formSchema || null, // Salvar formSchema como customFields
-          requiredDocuments: requiredDocuments || null
-        }
-        });
+      // Buscar departamento
+      const dept = await prisma.department.findFirst({
+        where: { code: 'AGRICULTURA' }
+      });
 
-      console.log('[POST /programas] ✅ Programa criado com sucesso:', program.id);
-      console.log('========== FIM POST /programas ==========\n');
-
-      return res.status(201).json({
-        success: true,
-        data: program,
-        message: 'Programa rural criado com sucesso'
+      if (!dept) {
+        return res.status(404).json({
+          success: false,
+          error: 'Department not found'
         });
+      }
+
+      // Programas rurais são entidades administrativas, não protocolos de cidadãos
+      // Vamos criar como registros administrativos usando customData table ou retornar erro
+      // Por enquanto, retornar resposta indicando que deve usar nova API
+      console.log('[POST /programas] ⚠️  Programas rurais devem ser criados via nova API de gerenciamento');
+
+      return res.status(501).json({
+        success: false,
+        error: 'Not implemented',
+        message: 'Programas rurais devem ser gerenciados via /api/admin/tab-modules/agricultura/PROGRAMA_RURAL',
+        migrationNote: 'Esta funcionalidade foi migrada para o sistema unificado de gerenciamento'
+      });
     } catch (error) {
       console.error('[POST /programas] ❌ ERROR:', error);
       return res.status(500).json({
@@ -1065,25 +1056,36 @@ router.get(
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, trainingType } = req.query;
+      const authReq = req as AuthenticatedRequest;
+      const { page = 1, limit = 20, trainingType } = req.query;
 
       const skip = (Number(page) - 1) * Number(limit);
 
-      const where: any = {};
+      const where: any = {
+        moduleType: 'INSCRICAO_CURSO_RURAL'
+      };
 
-      if (trainingType && trainingType !== 'all') {
-        where.trainingType = trainingType;
-      }
-
-      const [data, total] = await Promise.all([
-        prisma.ruralTraining.findMany({
+      const [protocols, total] = await Promise.all([
+        prisma.protocolSimplified.findMany({
           where,
           skip,
           take: Number(limit),
-          orderBy: { startDate: 'desc' }
+          orderBy: { createdAt: 'desc' },
+          include: {
+            citizen: true
+          }
         }),
-        prisma.ruralTraining.count({ where }),
+        prisma.protocolSimplified.count({ where }),
       ]);
+
+      const data = protocols.map(p => ({
+        id: p.id,
+        protocolNumber: p.number,
+        status: p.status,
+        createdAt: p.createdAt,
+        citizen: p.citizen,
+        ...(p.customData as object)
+      }));
 
       return res.json({
         success: true,
@@ -1097,7 +1099,7 @@ router.get(
           total,
           pages: Math.ceil(total / Number(limit))
         }
-        });
+      });
     } catch (error) {
       console.error('Get rural trainings error:', error);
       return res.status(500).json({
@@ -1164,38 +1166,75 @@ router.post(
 
       console.log('[POST /capacitacoes] ✅ Validação passou - criando capacitação...');
 
-      // Criar capacitação rural
-      const training = await prisma.ruralTraining.create({
+      // Criar protocolo com dados da capacitação em customData
+      const protocol = await prisma.protocolSimplified.create({
         data: {
-                    title,
-          trainingType,
-          description,
-          objectives: objectives || {},
-          targetAudience: targetAudience || '',
-          requirements: requirements || '',
-          certificate: certificate !== undefined ? certificate : false,
-          startDate: new Date(startDate),
-          endDate: endDate ? new Date(endDate) : null,
-          duration: duration ? parseInt(duration) : 0,
-          schedule: schedule || {},
-          content: content || {},
-          instructor,
-          maxParticipants: maxParticipants ? parseInt(maxParticipants) : 0,
-          location: location || '',
-          materials: materials || null,
-          cost: cost ? parseFloat(cost) : null,
-          status: status || 'ACTIVE',
-          customFields: formSchema || null,
-          requiredDocuments: requiredDocuments || null
+          citizenId: authReq.user!.id,
+          serviceId: 'agricultura-capacitacao',
+          departmentId: 'agricultura',
+          number: `AGRI-CAP-${Date.now()}`,
+          title: `Capacitação Rural - ${title}`,
+          moduleType: 'INSCRICAO_CURSO_RURAL',
+          status: ProtocolStatus.CONCLUIDO,
+          customData: {
+            title,
+            trainingType,
+            description,
+            objectives: objectives || {},
+            targetAudience: targetAudience || '',
+            requirements: requirements || '',
+            certificate: certificate !== undefined ? certificate : false,
+            startDate: new Date(startDate).toISOString(),
+            endDate: endDate ? new Date(endDate).toISOString() : null,
+            duration: duration ? parseInt(duration) : 0,
+            schedule: schedule || {},
+            content: content || {},
+            instructor,
+            maxParticipants: maxParticipants ? parseInt(maxParticipants) : 0,
+            location: location || '',
+            materials: materials || null,
+            cost: cost ? parseFloat(cost) : null,
+            status: status || 'ACTIVE',
+            customFields: formSchema || null,
+            requiredDocuments: requiredDocuments || null,
+            _meta: {
+              entityType: 'INSCRICAO_CURSO_RURAL',
+              status: 'ACTIVE',
+              isActive: true,
+              createdAt: new Date().toISOString(),
+              createdBy: authReq.user?.id
+            }
+          }
+        },
+        include: {
+          citizen: {
+            select: {
+              id: true,
+              name: true,
+              cpf: true,
+              email: true,
+              phone: true
+            }
+          }
         }
-        });
+      });
 
-      console.log('[POST /capacitacoes] ✅ Capacitação criada com sucesso:', training.id);
+      console.log('[POST /capacitacoes] ✅ Capacitação criada com sucesso:', protocol.id);
       console.log('========== FIM POST /capacitacoes ==========\n');
+
+      const trainingData = {
+        id: protocol.id,
+        protocolNumber: protocol.number,
+        status: protocol.status,
+        createdAt: protocol.createdAt,
+        updatedAt: protocol.updatedAt,
+        citizen: protocol.citizen,
+        ...(protocol.customData as object)
+      };
 
       return res.status(201).json({
         success: true,
-        data: training,
+        data: trainingData,
         message: 'Capacitação rural criada com sucesso'
         });
     } catch (error) {
@@ -1220,22 +1259,45 @@ router.get(
     try {
       const authReq = req as AuthenticatedRequest;      const { id } = req.params;
 
-      const training = await prisma.ruralTraining.findFirst({
+      const protocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'INSCRICAO_CURSO_RURAL'
+        },
+        include: {
+          citizen: {
+            select: {
+              id: true,
+              name: true,
+              cpf: true,
+              email: true,
+              phone: true
+            }
+          },
+          service: true
         }
-        });
+      });
 
-      if (!training) {
+      if (!protocol) {
         return res.status(404).json({
           success: false,
           error: 'Training not found'
         });
       }
 
+      const trainingData = {
+        id: protocol.id,
+        protocolNumber: protocol.number,
+        status: protocol.status,
+        createdAt: protocol.createdAt,
+        updatedAt: protocol.updatedAt,
+        citizen: protocol.citizen,
+        ...(protocol.customData as object)
+      };
+
       return res.json({
         success: true,
-        data: training
+        data: trainingData
         });
     } catch (error) {
       console.error('Get training error:', error);
@@ -1263,14 +1325,15 @@ router.put(
       console.log('[PUT /capacitacoes] ID:', id);
       console.log('[PUT /capacitacoes] Body:', JSON.stringify(req.body, null, 2));
 
-      // Verificar se a capacitação existe
-      const existingTraining = await prisma.ruralTraining.findFirst({
+      // Verificar se o protocolo existe
+      const existingProtocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'INSCRICAO_CURSO_RURAL'
         }
-        });
+      });
 
-      if (!existingTraining) {
+      if (!existingProtocol) {
         console.log('[PUT /capacitacoes] ❌ Capacitação não encontrada');
         return res.status(404).json({
           success: false,
@@ -1303,39 +1366,77 @@ router.put(
 
       console.log('[PUT /capacitacoes] ✅ Capacitação encontrada - atualizando...');
 
-      // Atualizar capacitação
-      const training = await prisma.ruralTraining.update({
+      // Preparar dados de atualização
+      const currentData = (existingProtocol.customData as Record<string, any>) || {};
+      const updateData: Record<string, any> = {};
+
+      if (title !== undefined) updateData.title = title;
+      if (trainingType !== undefined) updateData.trainingType = trainingType;
+      if (description !== undefined) updateData.description = description;
+      if (objectives !== undefined) updateData.objectives = objectives;
+      if (targetAudience !== undefined) updateData.targetAudience = targetAudience;
+      if (requirements !== undefined) updateData.requirements = requirements;
+      if (certificate !== undefined) updateData.certificate = certificate;
+      if (startDate !== undefined) updateData.startDate = new Date(startDate).toISOString();
+      if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate).toISOString() : null;
+      if (duration !== undefined) updateData.duration = parseInt(duration);
+      if (schedule !== undefined) updateData.schedule = schedule;
+      if (content !== undefined) updateData.content = content;
+      if (instructor !== undefined) updateData.instructor = instructor;
+      if (maxParticipants !== undefined) updateData.maxParticipants = parseInt(maxParticipants);
+      if (location !== undefined) updateData.location = location;
+      if (materials !== undefined) updateData.materials = materials;
+      if (cost !== undefined) updateData.cost = cost ? parseFloat(cost) : null;
+      if (status !== undefined) updateData.status = status;
+      if (formSchema !== undefined) updateData.customFields = formSchema;
+      if (requiredDocuments !== undefined) updateData.requiredDocuments = requiredDocuments;
+
+      const updatedCustomData = {
+        ...currentData,
+        ...updateData,
+        _meta: {
+          ...(currentData._meta || {}),
+          updatedAt: new Date().toISOString(),
+          updatedBy: authReq.user?.id
+        }
+      };
+
+      // Atualizar protocolo
+      const protocol = await prisma.protocolSimplified.update({
         where: { id },
         data: {
-          title: title !== undefined ? title : existingTraining.title,
-          trainingType: trainingType !== undefined ? trainingType : existingTraining.trainingType,
-          description: description !== undefined ? description : existingTraining.description,
-          objectives: objectives !== undefined ? objectives : existingTraining.objectives,
-          targetAudience: targetAudience !== undefined ? targetAudience : existingTraining.targetAudience,
-          requirements: requirements !== undefined ? requirements : existingTraining.requirements,
-          certificate: certificate !== undefined ? certificate : existingTraining.certificate,
-          startDate: startDate !== undefined ? new Date(startDate) : existingTraining.startDate,
-          endDate: endDate !== undefined ? (endDate ? new Date(endDate) : null) : existingTraining.endDate,
-          duration: duration !== undefined ? parseInt(duration) : existingTraining.duration,
-          schedule: schedule !== undefined ? schedule : existingTraining.schedule,
-          content: content !== undefined ? content : existingTraining.content,
-          instructor: instructor !== undefined ? instructor : existingTraining.instructor,
-          maxParticipants: maxParticipants !== undefined ? parseInt(maxParticipants) : existingTraining.maxParticipants,
-          location: location !== undefined ? location : existingTraining.location,
-          materials: materials !== undefined ? materials : existingTraining.materials,
-          cost: cost !== undefined ? (cost ? parseFloat(cost) : null) : existingTraining.cost,
-          status: status !== undefined ? status : existingTraining.status,
-          customFields: formSchema !== undefined ? formSchema : existingTraining.customFields,
-          requiredDocuments: requiredDocuments !== undefined ? requiredDocuments : existingTraining.requiredDocuments
+          customData: updatedCustomData,
+          title: title ? `Capacitação Rural - ${title}` : existingProtocol.title
+        },
+        include: {
+          citizen: {
+            select: {
+              id: true,
+              name: true,
+              cpf: true,
+              email: true,
+              phone: true
+            }
+          }
         }
-        });
+      });
 
-      console.log('[PUT /capacitacoes] ✅ Capacitação atualizada com sucesso:', training.id);
+      console.log('[PUT /capacitacoes] ✅ Capacitação atualizada com sucesso:', protocol.id);
       console.log('========== FIM PUT /capacitacoes ==========\n');
+
+      const trainingData = {
+        id: protocol.id,
+        protocolNumber: protocol.number,
+        status: protocol.status,
+        createdAt: protocol.createdAt,
+        updatedAt: protocol.updatedAt,
+        citizen: protocol.citizen,
+        ...(protocol.customData as object)
+      };
 
       return res.json({
         success: true,
-        data: training,
+        data: trainingData,
         message: 'Capacitação rural atualizada com sucesso'
         });
     } catch (error) {
@@ -1361,23 +1462,27 @@ router.delete(
       const authReq = req as AuthenticatedRequest;      const { id } = req.params;
 
       // Verificar se existe
-      const training = await prisma.ruralTraining.findFirst({
+      const protocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'INSCRICAO_CURSO_RURAL'
         }
-        });
+      });
 
-      if (!training) {
+      if (!protocol) {
         return res.status(404).json({
           success: false,
           error: 'Training not found'
         });
       }
 
-      // Deletar
-      await prisma.ruralTraining.delete({
-        where: { id }
-        });
+      // Cancelar protocolo (soft delete)
+      await prisma.protocolSimplified.update({
+        where: { id },
+        data: {
+          status: ProtocolStatus.CANCELADO
+        }
+      });
 
       return res.json({
         success: true,
@@ -1410,14 +1515,10 @@ router.get(
       console.log('[GET /pending] TenantId:');
       console.log('[GET /pending] Page:', page, 'Limit:', limit);
 
-      // Buscar protocolos VINCULADOS (protocolo criado + entidade criada)
-      // que têm produtor rural com status PENDING_APPROVAL
-      const protocolsData = await prisma.protocolSimplified.findMany({
+      // Buscar protocolos de produtores com status PENDING_APPROVAL em customData._meta
+      const allProtocols = await prisma.protocolSimplified.findMany({
         where: {
-                    moduleType: 'CADASTRO_PRODUTOR',
-          status: {
-            in: [ProtocolStatus.VINCULADO, ProtocolStatus.ATUALIZACAO], // Protocolos aguardando aprovação
-          }
+          moduleType: 'CADASTRO_PRODUTOR'
         },
         include: {
           citizen: {
@@ -1426,53 +1527,33 @@ router.get(
               name: true,
               cpf: true,
               email: true
-        }
-      },
+            }
+          },
           service: {
             select: {
               id: true,
               name: true
-        }
-      }
+            }
+          }
         },
         orderBy: {
           createdAt: 'desc'
         }
-        });
-
-      console.log(`[GET /pending] Found ${protocolsData.length} protocols with VINCULADO/ATUALIZACAO status`);
-
-      // Filtrar apenas protocolos cujo produtor rural está PENDING
-      const protocolIds = protocolsData.map(p => p.id);
-      console.log('[GET /pending] Protocol IDs:', protocolIds);
-
-      const pendingProducers = await prisma.ruralProducer.findMany({
-        where: {
-          protocolId: { in: protocolIds },
-          status: 'PENDING',
-          isActive: false, // Ainda não ativado
-        },
-        select: {
-          protocolId: true,
-          name: true,
-          status: true,
-          isActive: true
-        }
       });
 
-      console.log('[GET /pending] Pending producers found:', pendingProducers);
+      console.log(`[GET /pending] Found ${allProtocols.length} CADASTRO_PRODUTOR protocols`);
 
-      const pendingProtocolIds = new Set(pendingProducers.map(p => p.protocolId));
-      const protocols = protocolsData.filter(p => pendingProtocolIds.has(p.id));
+      // Filtrar apenas protocolos cujo _meta.status é PENDING_APPROVAL
+      const pendingProtocols = allProtocols.filter(p => {
+        const customData = p.customData as any;
+        return customData?._meta?.status === 'PENDING_APPROVAL' && customData?._meta?.isActive === false;
+      });
+
+      console.log(`[GET /pending] Found ${pendingProtocols.length} pending producers`);
 
       // Paginar os resultados
-      const total = protocols.length;
-      const paginatedProtocols = protocols.slice(skip, skip + limit);
-
-      const [_, totalCount] = await Promise.all([
-        Promise.resolve(paginatedProtocols),
-        Promise.resolve(total),
-      ]);
+      const total = pendingProtocols.length;
+      const paginatedProtocols = pendingProtocols.slice(skip, skip + limit);
 
       console.log(`[GET /pending] Final result: ${paginatedProtocols.length} pending protocols (total: ${total})`);
 
@@ -1490,926 +1571,6 @@ router.get(
       return res.status(500).json({
         success: false,
         error: 'Internal server error'
-        });
-    }
-  }
-);
-
-// ============================================================================
-// PROGRAMAS RURAIS - CRUD COMPLETO
-// ============================================================================
-
-/**
- * GET /api/admin/secretarias/agricultura/programas
- * Listar todos os programas rurais
- */
-router.get(
-  '/programas',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const programs = await prisma.ruralProgram.findMany({
-                orderBy: { createdAt: 'desc' }
-        });
-
-      return res.json({
-        success: true,
-        data: programs,
-        total: programs.length
-        });
-    } catch (error) {
-      console.error('Erro ao listar programas:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-        });
-    }
-  }
-);
-
-/**
- * GET /api/admin/secretarias/agricultura/programas/:id
- * Visualizar programa rural individual
- */
-router.get(
-  '/programas/:id',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
-
-      const program = await prisma.ruralProgram.findFirst({
-        where: {
-          id
-        }
-        });
-
-      if (!program) {
-        return res.status(404).json({
-          success: false,
-          error: 'Programa não encontrado'
-        });
-      }
-
-      return res.json({
-        success: true,
-        data: program
-        });
-    } catch (error) {
-      console.error('Erro ao buscar programa:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-        });
-    }
-  }
-);
-
-/**
- * POST /api/admin/secretarias/agricultura/programas
- * Criar novo programa rural
- */
-router.post(
-  '/programas',
-  requireMinRole(UserRole.ADMIN),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const {
-        name,
-        programType,
-        description,
-        startDate,
-        endDate,
-        budget,
-        coordinator,
-        targetAudience,
-        maxParticipants,
-        status,
-        formSchema,
-        requiredDocuments,
-        enrollmentSettings
-        } = req.body;
-
-      // Validações básicas
-      if (!name || !programType || !description || !startDate || !coordinator) {
-        return res.status(400).json({
-          success: false,
-          error: 'Campos obrigatórios faltando',
-          message: 'Nome, tipo, descrição, data de início e coordenador são obrigatórios'
-        });
-      }
-
-      // Criar programa
-      const program = await prisma.ruralProgram.create({
-        data: {
-                    name,
-          programType,
-          description,
-          objectives: {}, // JSON vazio por padrão
-          targetAudience: targetAudience || '',
-          requirements: {}, // JSON vazio por padrão
-          benefits: {}, // JSON vazio por padrão
-          startDate: new Date(startDate),
-          endDate: endDate ? new Date(endDate) : null,
-          budget: budget || null,
-          coordinator,
-          maxParticipants: maxParticipants || null,
-          currentParticipants: 0,
-          status: status || 'PLANNED',
-          customFields: formSchema || null, // Salvar formSchema como customFields
-          requiredDocuments: requiredDocuments || null,
-          enrollmentSettings: enrollmentSettings || null
-        }
-        });
-
-      console.log('✅ Programa criado:', program.id);
-      console.log('   - Nome:', program.name);
-      console.log('   - Campos personalizados:', formSchema ? formSchema.length : 0);
-      console.log('   - Documentos exigidos:', requiredDocuments ? requiredDocuments.length : 0);
-
-      return res.status(201).json({
-        success: true,
-        data: program,
-        message: 'Programa criado com sucesso'
-        });
-    } catch (error) {
-      console.error('Erro ao criar programa:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao criar programa'
-        });
-    }
-  }
-);
-
-/**
- * PUT /api/admin/secretarias/agricultura/programas/:id
- * Atualizar programa rural existente
- */
-router.put(
-  '/programas/:id',
-  requireMinRole(UserRole.ADMIN),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
-
-      const {
-        name,
-        programType,
-        description,
-        startDate,
-        endDate,
-        budget,
-        coordinator,
-        targetAudience,
-        maxParticipants,
-        status,
-        formSchema,
-        requiredDocuments,
-        enrollmentSettings
-        } = req.body;
-
-      // Verificar se programa existe
-      const existing = await prisma.ruralProgram.findFirst({
-        where: { id }
-        });
-
-      if (!existing) {
-        return res.status(404).json({
-          success: false,
-          error: 'Programa não encontrado'
-        });
-      }
-
-      // Atualizar programa
-      const program = await prisma.ruralProgram.update({
-        where: { id },
-        data: {
-          name: name || existing.name,
-          programType: programType || existing.programType,
-          description: description || existing.description,
-          targetAudience: targetAudience !== undefined ? targetAudience : existing.targetAudience,
-          startDate: startDate ? new Date(startDate) : existing.startDate,
-          endDate: endDate !== undefined ? (endDate ? new Date(endDate) : null) : existing.endDate,
-          budget: budget !== undefined ? budget : existing.budget,
-          coordinator: coordinator || existing.coordinator,
-          maxParticipants: maxParticipants !== undefined ? maxParticipants : existing.maxParticipants,
-          status: status || existing.status,
-          customFields: formSchema !== undefined ? formSchema : existing.customFields,
-          requiredDocuments: requiredDocuments !== undefined ? requiredDocuments : existing.requiredDocuments,
-          enrollmentSettings: enrollmentSettings !== undefined ? enrollmentSettings : existing.enrollmentSettings
-        }
-        });
-
-      console.log('✅ Programa atualizado:', program.id);
-      console.log('   - Nome:', program.name);
-      console.log('   - Campos personalizados:', formSchema ? formSchema.length : 'não alterado');
-      console.log('   - Documentos exigidos:', requiredDocuments ? requiredDocuments.length : 'não alterado');
-
-      return res.json({
-        success: true,
-        data: program,
-        message: 'Programa atualizado com sucesso'
-        });
-    } catch (error) {
-      console.error('Erro ao atualizar programa:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao atualizar programa'
-        });
-    }
-  }
-);
-
-/**
- * DELETE /api/admin/secretarias/agricultura/programas/:id
- * Excluir programa rural
- */
-router.delete(
-  '/programas/:id',
-  requireMinRole(UserRole.ADMIN),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
-
-      // Verificar se programa existe
-      const existing = await prisma.ruralProgram.findFirst({
-        where: { id }
-        });
-
-      if (!existing) {
-        return res.status(404).json({
-          success: false,
-          error: 'Programa não encontrado'
-        });
-      }
-
-      // Deletar programa
-      await prisma.ruralProgram.delete({
-        where: { id }
-        });
-
-      console.log('✅ Programa deletado:', id);
-
-      return res.json({
-        success: true,
-        message: 'Programa excluído com sucesso'
-        });
-    } catch (error) {
-      console.error('Erro ao deletar programa:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao deletar programa'
-        });
-    }
-  }
-);
-
-// ============================================================================
-// INSCRIÇÕES EM PROGRAMAS - GESTÃO
-// ============================================================================
-
-/**
- * GET /api/admin/secretarias/agricultura/programas/:id/enrollments
- * Listar inscrições de um programa com filtros
- */
-router.get(
-  '/programas/:id/enrollments',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { id: programId } = req.params;
-      const { status, page = 1, limit = 20 } = req.query;
-
-      const skip = (Number(page) - 1) * Number(limit);
-      const where: any = { programId };
-
-      if (status && status !== 'all') {
-        where.status = status;
-      }
-
-      const [enrollments, total, stats] = await Promise.all([
-        prisma.ruralProgramEnrollment.findMany({
-          where,
-          skip,
-          take: Number(limit),
-          orderBy: { createdAt: 'desc' },
-          include: {
-            citizen: {
-              select: {
-                id: true,
-                name: true,
-                cpf: true,
-                email: true,
-                phone: true
-        }
-      },
-            protocol: {
-              select: {
-                id: true,
-                number: true,
-                status: true,
-                createdAt: true
-        }
-      }
-        }
-        }),
-        prisma.ruralProgramEnrollment.count({ where }),
-        prisma.ruralProgramEnrollment.groupBy({
-          by: ['status'],
-          where: { programId },
-          _count: { id: true }
-        }),
-      ]);
-
-      const statusCount = {
-        total,
-        pending: 0,
-        approved: 0,
-        rejected: 0,
-        cancelled: 0
-        };
-
-      stats.forEach((s) => {
-        const count = s._count?.id || 0;
-        if (s.status === 'PENDING') statusCount.pending = count;
-        else if (s.status === 'APPROVED') statusCount.approved = count;
-        else if (s.status === 'REJECTED') statusCount.rejected = count;
-        else if (s.status === 'CANCELLED') statusCount.cancelled = count;
-      });
-
-      return res.json({
-        success: true,
-        data: enrollments,
-        stats: statusCount,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-        });
-    } catch (error) {
-      console.error('Get program enrollments error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao buscar inscrições'
-        });
-    }
-  }
-);
-
-/**
- * PUT /api/admin/secretarias/agricultura/programas/:programId/enrollments/:enrollmentId/approve
- * Aprovar inscrição em programa
- */
-router.put(
-  '/programas/:programId/enrollments/:enrollmentId/approve',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { programId, enrollmentId } = req.params;
-      const { adminNotes, startDate } = req.body;
-
-      // Verificar se inscrição existe
-      const enrollment = await prisma.ruralProgramEnrollment.findFirst({
-        where: {
-          id: enrollmentId,
-          programId
-        },
-        include: {
-          protocol: true
-        }
-      });
-
-      if (!enrollment) {
-        return res.status(404).json({
-          success: false,
-          error: 'Inscrição não encontrada'
-        });
-      }
-
-      if (enrollment.status !== 'PENDING') {
-        return res.status(400).json({
-          success: false,
-          error: 'Inscrição não está pendente'
-        });
-      }
-
-      // Atualizar inscrição e protocolo em transação
-      const result = await prisma.$transaction(async (tx) => {
-        // 1. Atualizar inscrição
-        const updatedEnrollment = await tx.ruralProgramEnrollment.update({
-          where: { id: enrollmentId },
-          data: {
-            status: 'APPROVED',
-            approvedDate: new Date(),
-            adminNotes: adminNotes || null,
-            startDate: startDate ? new Date(startDate) : null
-        }
-        });
-
-        // 2. Atualizar protocolo para CONCLUIDO usando motor centralizado
-        if (enrollment.protocolId) {
-          // Nota: Executado fora da transação após commit
-          // para permitir validações do engine
-        }
-
-        return updatedEnrollment;
-      });
-
-      // Atualizar status do protocolo usando motor centralizado
-      if (enrollment.protocolId) {
-        await protocolStatusEngine.updateStatus({
-          protocolId: enrollment.protocolId,
-          newStatus: ProtocolStatus.CONCLUIDO,
-          actorId: authReq.user.id,
-          actorRole: authReq.user.role,
-          comment: adminNotes || 'Inscrição aprovada pela secretaria de agricultura',
-          metadata: {
-            enrollmentId: enrollment.id,
-            programId: programId,
-            action: 'enrollment_approval'
-          }
-        });
-      }
-
-      return res.json({
-        success: true,
-        data: result,
-        message: 'Inscrição aprovada com sucesso'
-        });
-    } catch (error) {
-      console.error('Approve enrollment error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao aprovar inscrição'
-        });
-    }
-  }
-);
-
-/**
- * PUT /api/admin/secretarias/agricultura/programas/:programId/enrollments/:enrollmentId/reject
- * Rejeitar inscrição em programa
- */
-router.put(
-  '/programas/:programId/enrollments/:enrollmentId/reject',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { programId, enrollmentId } = req.params;
-      const { rejectionReason, adminNotes } = req.body;
-
-      if (!rejectionReason) {
-        return res.status(400).json({
-          success: false,
-          error: 'Motivo da rejeição é obrigatório'
-        });
-      }
-
-      // Verificar se inscrição existe
-      const enrollment = await prisma.ruralProgramEnrollment.findFirst({
-        where: {
-          id: enrollmentId,
-          programId
-        }
-        });
-
-      if (!enrollment) {
-        return res.status(404).json({
-          success: false,
-          error: 'Inscrição não encontrada'
-        });
-      }
-
-      if (enrollment.status !== 'PENDING') {
-        return res.status(400).json({
-          success: false,
-          error: 'Inscrição não está pendente'
-        });
-      }
-
-      // Atualizar inscrição e protocolo em transação
-      const result = await prisma.$transaction(async (tx) => {
-        // 1. Atualizar inscrição
-        const updatedEnrollment = await tx.ruralProgramEnrollment.update({
-          where: { id: enrollmentId },
-          data: {
-            status: 'REJECTED',
-            rejectedDate: new Date(),
-            rejectionReason,
-            adminNotes: adminNotes || null
-        }
-        });
-
-        // 2. Atualizar protocolo para PENDENCIA usando motor centralizado
-        if (enrollment.protocolId) {
-          // Nota: Executado fora da transação após commit
-        }
-
-        return updatedEnrollment;
-      });
-
-      // Atualizar status do protocolo usando motor centralizado
-      if (enrollment.protocolId) {
-        await protocolStatusEngine.updateStatus({
-          protocolId: enrollment.protocolId,
-          newStatus: ProtocolStatus.PENDENCIA,
-          actorId: authReq.user.id,
-          actorRole: authReq.user.role,
-          comment: `Inscrição rejeitada: ${rejectionReason}`,
-          reason: rejectionReason,
-          metadata: {
-            enrollmentId: enrollment.id,
-            programId: programId,
-            action: 'enrollment_rejection',
-            adminNotes: adminNotes
-          }
-        });
-      }
-
-      return res.json({
-        success: true,
-        data: result,
-        message: 'Inscrição rejeitada'
-        });
-    } catch (error) {
-      console.error('Reject enrollment error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao rejeitar inscrição'
-        });
-    }
-  }
-);
-
-/**
- * GET /api/admin/secretarias/agricultura/programas/:programId/enrollments/:enrollmentId
- * Visualizar detalhes de uma inscrição
- */
-router.get(
-  '/programas/:programId/enrollments/:enrollmentId',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { programId, enrollmentId } = req.params;
-
-      const enrollment = await prisma.ruralProgramEnrollment.findFirst({
-        where: {
-          id: enrollmentId,
-          programId
-        },
-        include: {
-          citizen: {
-            select: {
-              id: true,
-              name: true,
-              cpf: true,
-              email: true,
-              phone: true
-        }
-      },
-          protocol: {
-            include: {
-              documentFiles: {
-                orderBy: { createdAt: 'desc' }
-      },
-              interactions: {
-                where: { type: 'PENDING_CREATED' },
-                orderBy: { createdAt: 'desc' },
-                take: 10
-        }
-        }
-        },
-          program: {
-            select: {
-              id: true,
-              name: true,
-              programType: true,
-              customFields: true,
-              requiredDocuments: true
-        }
-      }
-        }
-        });
-
-      if (!enrollment) {
-        return res.status(404).json({
-          success: false,
-          error: 'Inscrição não encontrada'
-        });
-      }
-
-      return res.json({
-        success: true,
-        data: enrollment
-        });
-    } catch (error) {
-      console.error('Get enrollment details error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao buscar detalhes da inscrição'
-        });
-    }
-  }
-);
-
-/**
- * GET /api/admin/secretarias/agricultura/programas/:id/enrollments/export
- * Exportar relatório de inscrições em CSV/Excel
- */
-router.get(
-  '/programas/:id/enrollments/export',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { id: programId } = req.params;
-      const { format = 'csv', status } = req.query;
-
-      const where: any = { programId };
-      if (status && status !== 'all') {
-        where.status = status;
-      }
-
-      const enrollments = await prisma.ruralProgramEnrollment.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          citizen: {
-            select: {
-              name: true,
-              cpf: true,
-              email: true,
-              phone: true
-        }
-      },
-          protocol: {
-            select: {
-              number: true,
-              status: true
-        }
-      }
-        }
-        });
-
-      // Gerar CSV
-      const csvHeader = 'Nome,CPF,Email,Telefone,Status,Protocolo,Data Inscrição,Data Aprovação\n';
-      const csvRows = enrollments.map((e) => {
-        return [
-          e.citizen?.name || '',
-          e.citizen?.cpf || '',
-          e.citizen?.email || '',
-          e.citizen?.phone || '',
-          e.status,
-          e.protocol?.number || '',
-          new Date(e.enrollmentDate).toLocaleDateString('pt-BR'),
-          e.approvedDate ? new Date(e.approvedDate).toLocaleDateString('pt-BR') : '',
-        ].join(',');
-      }).join('\n');
-
-      const csv = csvHeader + csvRows;
-
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename=inscricoes-programa-${programId}.csv`);
-      return res.send(csv);
-    } catch (error) {
-      console.error('Export enrollments error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao exportar inscrições'
-        });
-    }
-  }
-);
-
-/**
- * PUT /api/admin/secretarias/agricultura/programas/:programId/enrollments/:enrollmentId/documents/:documentId/approve
- * Aprovar documento individual
- */
-router.put(
-  '/programas/:programId/enrollments/:enrollmentId/documents/:documentId/approve',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { programId, enrollmentId, documentId } = req.params;
-      const { notes } = req.body;
-
-      // Verificar se a inscrição existe
-      const enrollment = await prisma.ruralProgramEnrollment.findFirst({
-        where: { id: enrollmentId, programId },
-        include: { protocol: true }
-      });
-
-      if (!enrollment || !enrollment.protocolId) {
-        return res.status(404).json({
-          success: false,
-          error: 'Inscrição não encontrada'
-        });
-      }
-
-      // Aprovar documento
-      const document = await prisma.protocolDocument.update({
-        where: { id: documentId },
-        data: {
-          status: 'APPROVED',
-          validatedAt: new Date(),
-          validatedBy: authReq.user?.id ?? undefined
-        }
-        });
-
-      // Registrar interação no protocolo
-      await prisma.protocolInteraction.create({
-        data: {
-          protocolId: enrollment.protocolId,
-          type: 'NOTE',
-          authorType: 'SERVER',
-          authorId: authReq.user?.id ?? undefined,
-          authorName: authReq.user?.name || 'Sistema',
-          message: `Documento aprovado: ${document.documentType}${notes ? ` - ${notes}` : ''}`,
-          metadata: {
-            documentId,
-            documentType: document.documentType,
-            action: 'APPROVE',
-            notes
-        }
-        }
-        });
-
-      return res.json({
-        success: true,
-        message: 'Documento aprovado com sucesso',
-        data: document
-        });
-    } catch (error) {
-      console.error('Approve document error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao aprovar documento'
-        });
-    }
-  }
-);
-
-/**
- * PUT /api/admin/secretarias/agricultura/programas/:programId/enrollments/:enrollmentId/documents/:documentId/reject
- * Rejeitar documento individual
- */
-router.put(
-  '/programas/:programId/enrollments/:enrollmentId/documents/:documentId/reject',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { programId, enrollmentId, documentId } = req.params;
-      const { reason } = req.body;
-
-      if (!reason) {
-        return res.status(400).json({
-          success: false,
-          error: 'Motivo da rejeição é obrigatório'
-        });
-      }
-
-      // Verificar se a inscrição existe
-      const enrollment = await prisma.ruralProgramEnrollment.findFirst({
-        where: { id: enrollmentId, programId },
-        include: { protocol: true }
-      });
-
-      if (!enrollment || !enrollment.protocolId) {
-        return res.status(404).json({
-          success: false,
-          error: 'Inscrição não encontrada'
-        });
-      }
-
-      // Rejeitar documento
-      const document = await prisma.protocolDocument.update({
-        where: { id: documentId },
-        data: {
-          status: 'REJECTED',
-          rejectedAt: new Date(),
-          rejectionReason: reason
-        }
-        });
-
-      // Registrar interação no protocolo
-      await prisma.protocolInteraction.create({
-        data: {
-          protocolId: enrollment.protocolId,
-          type: 'NOTE',
-          authorType: 'SERVER',
-          authorId: authReq.user?.id ?? undefined,
-          authorName: authReq.user?.name || 'Sistema',
-          message: `Documento rejeitado: ${document.documentType} - Motivo: ${reason}`,
-          metadata: {
-            documentId,
-            documentType: document.documentType,
-            action: 'REJECT',
-            reason
-        }
-        }
-        });
-
-      return res.json({
-        success: true,
-        message: 'Documento rejeitado',
-        data: document
-        });
-    } catch (error) {
-      console.error('Reject document error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao rejeitar documento'
-        });
-    }
-  }
-);
-
-/**
- * POST /api/admin/secretarias/agricultura/programas/:programId/enrollments/:enrollmentId/pendency
- * Criar pendência no protocolo
- */
-router.post(
-  '/programas/:programId/enrollments/:enrollmentId/pendency',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;      const { programId, enrollmentId } = req.params;
-      const { description, pendencyItems } = req.body;
-
-      if (!description) {
-        return res.status(400).json({
-          success: false,
-          error: 'Descrição da pendência é obrigatória'
-        });
-      }
-
-      // Verificar se a inscrição existe
-      const enrollment = await prisma.ruralProgramEnrollment.findFirst({
-        where: { id: enrollmentId, programId },
-        include: { protocol: true }
-      });
-
-      if (!enrollment || !enrollment.protocolId) {
-        return res.status(404).json({
-          success: false,
-          error: 'Inscrição não encontrada'
-        });
-      }
-
-      // Criar pendência como interação
-      const interaction = await prisma.protocolInteraction.create({
-        data: {
-          protocolId: enrollment.protocolId,
-          type: 'PENDING_CREATED',
-          authorType: 'SERVER',
-          authorId: authReq.user?.id ?? undefined,
-          authorName: authReq.user?.name || 'Sistema',
-          message: description,
-          metadata: {
-            enrollmentId,
-            pendencyItems: pendencyItems || [],
-            createdBy: authReq.user?.name || 'Admin'
-        }
-        }
-        });
-
-      // Atualizar status do protocolo para PENDENCIA usando motor centralizado
-      await protocolStatusEngine.updateStatus({
-        protocolId: enrollment.protocolId,
-        newStatus: 'PENDENCIA',
-        actorId: authReq.user.id,
-        actorRole: authReq.user.role,
-        comment: `Pendência criada: ${description}`,
-        metadata: {
-          enrollmentId,
-          pendencyItems: pendencyItems || [],
-          action: 'pendency_created'
-        }
-      });
-
-      return res.json({
-        success: true,
-        message: 'Pendência criada com sucesso',
-        data: interaction
-        });
-    } catch (error) {
-      console.error('Create pendency error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error',
-        message: 'Erro ao criar pendência'
         });
     }
   }
