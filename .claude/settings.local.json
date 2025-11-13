@@ -1,16 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(done)",
-      "Bash(for file in \"secretarias-esportes.ts\" \"secretarias-habitacao.ts\" \"secretarias-obras-publicas.ts\" \"secretarias-servicos-publicos.ts\" \"secretarias-turismo.ts\" \"secretarias-seguranca.ts\")",
-      "Bash(do echo \"Processando: $file\")",
-      "Bash(head -20 \"C:\\Projetos Cursor\\Digiurbanlite\\digiurban\\backend\\src\\routes$file\")",
-      "Bash(awk:*)",
-      "Bash(sort:*)",
-      "Bash(npx prisma migrate dev:*)",
-      "Bash(npx prisma migrate reset:*)",
-      "Bash(npx tsc:*)",
-      "Bash(git add:*)"
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

@@ -11,9 +11,16 @@ import {
         } from '../middleware/admin-auth';
 import { UserRole, ProtocolStatus } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
-import { MODULE_BY_DEPARTMENT } from '../config/module-mapping';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+
+// Módulos de agricultura (migrado de module-mapping)
+const AGRICULTURE_MODULES = [
+  'CADASTRO_PRODUTOR',
+  'CADASTRO_PROPRIEDADE_RURAL',
+  'ASSISTENCIA_TECNICA_RURAL',
+  'DISTRIBUICAO_SEMENTES'
+];
 
 const router = Router();
 
@@ -44,8 +51,8 @@ router.get(
         });
       }
 
-      // Módulos de agricultura do MODULE_MAPPING
-      const agricultureModules = MODULE_BY_DEPARTMENT.AGRICULTURA || [];
+      // Módulos de agricultura
+      const agricultureModules = AGRICULTURE_MODULES;
 
       // Executar queries em paralelo
       const [
@@ -75,25 +82,40 @@ router.get(
           _count: { id: true }
         }),
 
-        // 3. Produtores Rurais
-        prisma.ruralProducer.aggregate({
-                    _count: { id: true }
+        // 3. Produtores Rurais (via ProtocolSimplified)
+        prisma.protocolSimplified.count({
+          where: {
+            departmentId: agricultureDept.id,
+            moduleType: 'CADASTRO_PRODUTOR',
+            status: ProtocolStatus.CONCLUIDO
+          }
         }),
 
-        // 4. Propriedades Rurais
-        prisma.ruralProperty.aggregate({
-                    _count: { id: true },
-          _sum: { size: true }
+        // 4. Propriedades Rurais (via ProtocolSimplified)
+        prisma.protocolSimplified.count({
+          where: {
+            departmentId: agricultureDept.id,
+            moduleType: 'CADASTRO_PROPRIEDADE_RURAL',
+            status: ProtocolStatus.CONCLUIDO
+          }
         }),
 
-        // 5. Programas Rurais
-        prisma.ruralProgram.aggregate({
-                    _count: { id: true }
+        // 5. Programas Rurais (via ProtocolSimplified)
+        prisma.protocolSimplified.count({
+          where: {
+            departmentId: agricultureDept.id,
+            moduleType: 'INSCRICAO_PROGRAMA_RURAL',
+            status: ProtocolStatus.CONCLUIDO
+          }
         }),
 
-        // 6. Capacitações
-        prisma.ruralTraining.aggregate({
-                    _count: { id: true }
+        // 6. Capacitações (via ProtocolSimplified)
+        prisma.protocolSimplified.count({
+          where: {
+            departmentId: agricultureDept.id,
+            moduleType: 'INSCRICAO_CURSO_RURAL',
+            status: ProtocolStatus.CONCLUIDO
+          }
         }),
       ]);
 
@@ -156,19 +178,19 @@ router.get(
       // Montar resposta consolidada
       const stats = {
         producers: {
-          total: producersCount._count?.id || 0,
-          active: producersCount._count?.id || 0,
+          total: producersCount || 0,
+          active: producersCount || 0,
           inactive: 0
         },
         properties: {
-          total: propertiesCount._count?.id || 0,
-          totalArea: propertiesCount._sum?.size || 0
+          total: propertiesCount || 0,
+          totalArea: 0 // Não podemos mais somar áreas sem tabela específica
         },
         programs: {
-          total: programsCount._count?.id || 0
+          total: programsCount || 0
         },
         trainings: {
-          total: trainingsCount._count?.id || 0
+          total: trainingsCount || 0
         },
         technicalAssistance: {
           totalActive: technicalAssistanceStats.pending + technicalAssistanceStats.inProgress,
@@ -278,41 +300,36 @@ router.get(
 
 /**
  * GET /api/admin/secretarias/agricultura/propriedades/:id
- * Visualizar propriedade rural individual
+ * Visualizar propriedade rural individual (via ProtocolSimplified)
  */
 router.get(
   '/propriedades/:id',
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
+      const authReq = req as AuthenticatedRequest;
+      const { id } = req.params;
 
-      const property = await prisma.ruralProperty.findFirst({
+      const protocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'CADASTRO_PROPRIEDADE_RURAL'
         },
         include: {
-          producer: {
+          citizen: {
             select: {
               id: true,
               name: true,
-              document: true,
+              cpf: true,
               email: true,
               phone: true
+            }
+          },
+          service: true
         }
-      },
-          protocol: {
-            select: {
-              id: true,
-              number: true,
-              status: true,
-              createdAt: true
-        }
-      }
-        }
-        });
+      });
 
-      if (!property) {
+      if (!protocol) {
         return res.status(404).json({
           success: false,
           error: 'Property not found',
@@ -320,41 +337,54 @@ router.get(
         });
       }
 
+      // Extrair dados da propriedade do customData
+      const propertyData = {
+        id: protocol.id,
+        protocolNumber: protocol.number,
+        status: protocol.status,
+        createdAt: protocol.createdAt,
+        updatedAt: protocol.updatedAt,
+        citizen: protocol.citizen,
+        ...(protocol.customData as object)
+      };
+
       return res.json({
         success: true,
-        data: property
-        });
+        data: propertyData
+      });
     } catch (error) {
       console.error('Get rural property error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error',
         message: 'Erro ao buscar propriedade'
-        });
+      });
     }
   }
 );
 
 /**
  * PUT /api/admin/secretarias/agricultura/propriedades/:id
- * Atualizar propriedade rural
+ * Atualizar propriedade rural (via ProtocolSimplified)
  */
 router.put(
   '/propriedades/:id',
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
-      const { name, producerId, size, location, plantedArea, mainCrops, status } = req.body;
+      const authReq = req as AuthenticatedRequest;
+      const { id } = req.params;
+      const updateData = req.body;
 
-      // Verificar se a propriedade existe e pertence ao tenant
-      const existingProperty = await prisma.ruralProperty.findFirst({
+      // Verificar se o protocolo existe
+      const existingProtocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'CADASTRO_PROPRIEDADE_RURAL'
         }
-        });
+      });
 
-      if (!existingProperty) {
+      if (!existingProtocol) {
         return res.status(404).json({
           success: false,
           error: 'Property not found',
@@ -362,57 +392,41 @@ router.put(
         });
       }
 
-      // Se está mudando o produtor, verificar se o novo produtor existe
-      if (producerId && producerId !== existingProperty.producerId) {
-        const producer = await prisma.ruralProducer.findFirst({
-          where: {
-            id: producerId
+      // Mesclar dados existentes com novos dados
+      const currentData = (existingProtocol.customData as Record<string, any>) || {};
+      const updatedCustomData = {
+        ...currentData,
+        ...updateData,
+        _meta: {
+          ...(currentData._meta || {}),
+          updatedAt: new Date().toISOString(),
+          updatedBy: authReq.user?.id
         }
-        });
+      };
 
-        if (!producer) {
-          return res.status(404).json({
-            success: false,
-            error: 'Producer not found',
-            message: 'Produtor não encontrado'
-        });
-        }
-      }
-
-      // Atualizar propriedade
-      const property = await prisma.ruralProperty.update({
+      // Atualizar protocolo
+      const updatedProtocol = await prisma.protocolSimplified.update({
         where: { id },
         data: {
-          name: name || existingProperty.name,
-          producerId: producerId || existingProperty.producerId,
-          size: size ? parseFloat(size) : existingProperty.size,
-          location: location || existingProperty.location,
-          plantedArea: plantedArea !== undefined ? (plantedArea ? parseFloat(plantedArea) : null) : existingProperty.plantedArea,
-          mainCrops: mainCrops !== undefined ? mainCrops : existingProperty.mainCrops,
-          status: status || existingProperty.status
+          customData: updatedCustomData
         },
         include: {
-          producer: {
-            select: {
-              id: true,
-              name: true
+          citizen: true,
+          service: true
         }
-      },
-          protocol: {
-            select: {
-              id: true,
-              number: true,
-              status: true
-        }
-      }
-        }
-        });
+      });
 
       return res.json({
         success: true,
-        data: property,
+        data: {
+          id: updatedProtocol.id,
+          protocolNumber: updatedProtocol.number,
+          status: updatedProtocol.status,
+          citizen: updatedProtocol.citizen,
+          ...updatedCustomData
+        },
         message: 'Propriedade atualizada com sucesso'
-        });
+      });
     } catch (error) {
       console.error('Update rural property error:', error);
       return res.status(500).json({
@@ -426,23 +440,25 @@ router.put(
 
 /**
  * DELETE /api/admin/secretarias/agricultura/propriedades/:id
- * Excluir propriedade rural
+ * Excluir propriedade rural (via ProtocolSimplified)
  */
 router.delete(
   '/propriedades/:id',
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
+      const authReq = req as AuthenticatedRequest;
+      const { id } = req.params;
 
-      // Verificar se a propriedade existe e pertence ao tenant
-      const property = await prisma.ruralProperty.findFirst({
+      // Verificar se o protocolo existe
+      const protocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'CADASTRO_PROPRIEDADE_RURAL'
         }
-        });
+      });
 
-      if (!property) {
+      if (!protocol) {
         return res.status(404).json({
           success: false,
           error: 'Property not found',
@@ -450,40 +466,46 @@ router.delete(
         });
       }
 
-      // Excluir propriedade
-      await prisma.ruralProperty.delete({
-        where: { id }
-        });
+      // Cancelar protocolo ao invés de deletar
+      await prisma.protocolSimplified.update({
+        where: { id },
+        data: {
+          status: ProtocolStatus.CANCELADO
+        }
+      });
 
       return res.json({
         success: true,
         message: 'Propriedade excluída com sucesso'
-        });
+      });
     } catch (error) {
       console.error('Delete rural property error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error',
         message: 'Erro ao excluir propriedade'
-        });
+      });
     }
   }
 );
 
 /**
  * GET /api/admin/secretarias/agricultura/propriedades
- * Listar propriedades rurais
+ * Listar propriedades rurais (via ProtocolSimplified)
  */
 router.get(
   '/propriedades',
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, search } = req.query;
+      const authReq = req as AuthenticatedRequest;
+      const { page = 1, limit = 20, status, search } = req.query;
 
       const skip = (Number(page) - 1) * Number(limit);
 
-      const where: any = {};
+      const where: any = {
+        moduleType: 'CADASTRO_PROPRIEDADE_RURAL'
+      };
 
       if (status && status !== 'all') {
         where.status = status;
@@ -491,40 +513,49 @@ router.get(
 
       if (search) {
         where.OR = [
-          { name: { contains: search as string } },
-          { location: { contains: search as string } },
+          { title: { contains: search as string, mode: 'insensitive' } },
+          { description: { contains: search as string, mode: 'insensitive' } }
         ];
       }
 
-      const [data, total, areaSum] = await Promise.all([
-        prisma.ruralProperty.findMany({
+      const [protocols, total] = await Promise.all([
+        prisma.protocolSimplified.findMany({
           where,
           skip,
           take: Number(limit),
           orderBy: { createdAt: 'desc' },
           include: {
-            producer: {
+            citizen: {
               select: {
                 id: true,
-                name: true
-        }
-      }
-        }
+                name: true,
+                cpf: true
+              }
+            },
+            service: true
+          }
         }),
-        prisma.ruralProperty.count({ where }),
-        prisma.ruralProperty.aggregate({
-          where,
-          _sum: { size: true, plantedArea: true }
-        }),
+        prisma.protocolSimplified.count({ where })
       ]);
+
+      // Transformar protocolos para formato de propriedades
+      const data = protocols.map(p => ({
+        id: p.id,
+        protocolNumber: p.number,
+        status: p.status,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        citizen: p.citizen,
+        ...(p.customData as object)
+      }));
 
       return res.json({
         success: true,
         data,
         stats: {
           total,
-          totalArea: areaSum._sum?.size || 0,
-          totalPlantedArea: areaSum._sum?.plantedArea || 0
+          totalArea: 0, // Não podemos somar sem fazer scan completo
+          totalPlantedArea: 0
         },
         pagination: {
           page: Number(page),
@@ -532,21 +563,20 @@ router.get(
           total,
           pages: Math.ceil(total / Number(limit))
         }
-        });
+      });
     } catch (error) {
       console.error('Get rural properties error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error'
-        });
+      });
     }
   }
 );
 
 /**
  * POST /api/admin/secretarias/agricultura/propriedades
- * Criar nova propriedade rural
- * ✅ GERA PROTOCOLO CONCLUÍDO para o cidadão vinculado ao produtor
+ * Criar nova propriedade rural (via ProtocolSimplified)
  */
 router.post(
   '/propriedades',
@@ -554,32 +584,27 @@ router.post(
   async (req, res) => {
     try {
       const authReq = req as AuthenticatedRequest;
-      const { name, producerId, size, location, plantedArea, mainCrops, status } = req.body;
+      const { citizenId, name, size, location, plantedArea, mainCrops, status } = req.body;
 
       // Validar campos obrigatórios
-      if (!name || !producerId || !size || !location) {
+      if (!citizenId || !name || !size || !location) {
         return res.status(400).json({
           success: false,
           error: 'Missing required fields',
-          message: 'Nome, produtor, tamanho e localização são obrigatórios'
+          message: 'Cidadão, nome, tamanho e localização são obrigatórios'
         });
       }
 
-      // Verificar se o produtor existe e pertence ao tenant
-      const producer = await prisma.ruralProducer.findFirst({
-        where: {
-          id: producerId
-        },
-        include: {
-          citizen: true
-        }
+      // Verificar se o cidadão existe
+      const citizen = await prisma.citizen.findUnique({
+        where: { id: citizenId }
       });
 
-      if (!producer) {
+      if (!citizen) {
         return res.status(404).json({
           success: false,
-          error: 'Producer not found',
-          message: 'Produtor não encontrado'
+          error: 'Citizen not found',
+          message: 'Cidadão não encontrado'
         });
       }
 
@@ -596,36 +621,34 @@ router.post(
         });
       }
 
-      // Buscar ou criar serviço de cadastro de propriedade rural
+      // Buscar ou criar serviço
       let service = await prisma.serviceSimplified.findFirst({
         where: {
-                    departmentId: agricultureDept.id,
+          departmentId: agricultureDept.id,
           moduleType: 'CADASTRO_PROPRIEDADE_RURAL'
         }
-        });
+      });
 
       if (!service) {
-        // Criar serviço se não existir
         service = await prisma.serviceSimplified.create({
           data: {
-                        departmentId: agricultureDept.id,
+            departmentId: agricultureDept.id,
             name: 'Cadastro de Propriedade Rural',
             description: 'Cadastro manual de propriedade rural pelo sistema administrativo',
             serviceType: 'COM_DADOS',
             moduleType: 'CADASTRO_PROPRIEDADE_RURAL',
             isActive: true
-        }
+          }
         });
       }
 
-      // Usar transação para criar propriedade + protocolo
+      // Criar protocolo com dados em customData
       const result = await prisma.$transaction(async (tx) => {
-        // Gerar número de protocolo - Sistema centralizado com lock
         const protocolNumber = await generateProtocolNumberSafe(tx);
-        // 1. Criar protocolo concluído
+
         const protocol = await tx.protocolSimplified.create({
           data: {
-                        citizenId: producer.citizenId,
+            citizenId,
             serviceId: service.id,
             departmentId: agricultureDept.id,
             number: protocolNumber,
@@ -635,69 +658,47 @@ router.post(
             status: ProtocolStatus.CONCLUIDO,
             customData: {
               name,
-              producerId,
-              producerName: producer.name,
-              size,
+              size: parseFloat(size),
               location,
-              plantedArea,
-              mainCrops,
-              registeredBy: 'admin',
-              registeredAt: new Date().toISOString()
-        }
-        }
-        });
-
-        // 2. Criar propriedade vinculada ao protocolo
-        const citizenId = producer.citizenId;
-        const property = await tx.ruralProperty.create({
-          data: {
-            citizenId: citizenId,
-            name,
-            producerId,
-            protocolId: protocol.id,
-            totalArea: parseFloat(size),
-            location,
-            plantedArea: plantedArea ? parseFloat(plantedArea) : null,
-            mainCrops: mainCrops || null,
-            status: status || 'ACTIVE'
-        } as any,
+              plantedArea: plantedArea ? parseFloat(plantedArea) : null,
+              mainCrops: mainCrops || null,
+              status: status || 'ACTIVE',
+              _meta: {
+                entityType: 'CADASTRO_PROPRIEDADE_RURAL',
+                status: 'ACTIVE',
+                isActive: true,
+                createdAt: new Date().toISOString(),
+                createdBy: authReq.user?.id,
+                registeredBy: 'admin'
+              }
+            }
+          },
           include: {
-            producer: {
-              select: {
-                id: true,
-                name: true
-        }
-      },
-            protocol: {
-              select: {
-                id: true,
-                number: true,
-                status: true
-        }
-      }
-        }
+            citizen: true
+          }
         });
 
-        return { property, protocol };
+        return { protocol };
       });
 
       return res.status(201).json({
         success: true,
-        data: result.property,
-        protocol: {
+        data: {
           id: result.protocol.id,
-          number: result.protocol.number,
-          status: result.protocol.status
+          protocolNumber: result.protocol.number,
+          status: result.protocol.status,
+          citizen: result.protocol.citizen,
+          ...(result.protocol.customData as object)
         },
-        message: 'Propriedade criada com sucesso e protocolo gerado'
-        });
+        message: 'Propriedade criada com sucesso'
+      });
     } catch (error) {
       console.error('Create rural property error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error',
         message: 'Erro ao criar propriedade'
-        });
+      });
     }
   }
 );
@@ -709,22 +710,28 @@ router.post(
 
 /**
  * GET /api/admin/secretarias/agricultura/programas/:id
- * Visualizar programa rural individual
+ * Visualizar programa rural individual (via ProtocolSimplified)
  */
 router.get(
   '/programas/:id',
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
+      const authReq = req as AuthenticatedRequest;
+      const { id } = req.params;
 
-      const program = await prisma.ruralProgram.findFirst({
+      const protocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'INSCRICAO_PROGRAMA_RURAL'
+        },
+        include: {
+          citizen: true,
+          service: true
         }
-        });
+      });
 
-      if (!program) {
+      if (!protocol) {
         return res.status(404).json({
           success: false,
           error: 'Program not found',
@@ -734,58 +741,47 @@ router.get(
 
       return res.json({
         success: true,
-        data: program
-        });
+        data: {
+          id: protocol.id,
+          protocolNumber: protocol.number,
+          status: protocol.status,
+          citizen: protocol.citizen,
+          ...(protocol.customData as object)
+        }
+      });
     } catch (error) {
       console.error('Get rural program error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error',
         message: 'Erro ao buscar programa'
-        });
+      });
     }
   }
 );
 
 /**
  * PUT /api/admin/secretarias/agricultura/programas/:id
- * Atualizar programa rural
+ * Atualizar programa rural (via ProtocolSimplified)
  */
 router.put(
   '/programas/:id',
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
-      const {
-        name,
-        programType,
-        description,
-        objectives,
-        targetAudience,
-        requirements,
-        benefits,
-        startDate,
-        endDate,
-        budget,
-        coordinator,
-        maxParticipants,
-        applicationPeriod,
-        selectionCriteria,
-        partners,
-        status,
-        formSchema,
-        requiredDocuments
-        } = req.body;
+      const authReq = req as AuthenticatedRequest;
+      const { id } = req.params;
+      const updateData = req.body;
 
-      // Verificar se o programa existe e pertence ao tenant
-      const existingProgram = await prisma.ruralProgram.findFirst({
+      // Verificar se o protocolo existe
+      const existingProtocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'INSCRICAO_PROGRAMA_RURAL'
         }
-        });
+      });
 
-      if (!existingProgram) {
+      if (!existingProtocol) {
         return res.status(404).json({
           success: false,
           error: 'Program not found',
@@ -793,66 +789,72 @@ router.put(
         });
       }
 
-      // Atualizar programa
-      const program = await prisma.ruralProgram.update({
+      // Mesclar dados
+      const currentData = (existingProtocol.customData as Record<string, any>) || {};
+      const updatedCustomData = {
+        ...currentData,
+        ...updateData,
+        _meta: {
+          ...(currentData._meta || {}),
+          updatedAt: new Date().toISOString(),
+          updatedBy: authReq.user?.id
+        }
+      };
+
+      // Atualizar protocolo
+      const updatedProtocol = await prisma.protocolSimplified.update({
         where: { id },
         data: {
-          name: name || existingProgram.name,
-          programType: programType || existingProgram.programType,
-          description: description || existingProgram.description,
-          objectives: objectives !== undefined ? objectives : existingProgram.objectives,
-          targetAudience: targetAudience !== undefined ? targetAudience : existingProgram.targetAudience,
-          requirements: requirements !== undefined ? requirements : existingProgram.requirements,
-          benefits: benefits !== undefined ? benefits : existingProgram.benefits,
-          startDate: startDate ? new Date(startDate) : existingProgram.startDate,
-          endDate: endDate !== undefined ? (endDate ? new Date(endDate) : null) : existingProgram.endDate,
-          budget: budget !== undefined ? (budget ? parseFloat(budget) : null) : existingProgram.budget,
-          coordinator: coordinator || existingProgram.coordinator,
-          maxParticipants: maxParticipants !== undefined ? (maxParticipants ? parseInt(maxParticipants) : null) : existingProgram.maxParticipants,
-          applicationPeriod: applicationPeriod !== undefined ? applicationPeriod : existingProgram.applicationPeriod,
-          selectionCriteria: selectionCriteria !== undefined ? selectionCriteria : existingProgram.selectionCriteria,
-          partners: partners !== undefined ? partners : existingProgram.partners,
-          status: status || existingProgram.status,
-          customFields: formSchema !== undefined ? formSchema : existingProgram.customFields,
-          requiredDocuments: requiredDocuments !== undefined ? requiredDocuments : existingProgram.requiredDocuments
+          customData: updatedCustomData
+        },
+        include: {
+          citizen: true
         }
-        });
+      });
 
       return res.json({
         success: true,
-        data: program,
+        data: {
+          id: updatedProtocol.id,
+          protocolNumber: updatedProtocol.number,
+          status: updatedProtocol.status,
+          citizen: updatedProtocol.citizen,
+          ...updatedCustomData
+        },
         message: 'Programa atualizado com sucesso'
-        });
+      });
     } catch (error) {
       console.error('Update rural program error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error',
         message: 'Erro ao atualizar programa'
-        });
+      });
     }
   }
 );
 
 /**
  * DELETE /api/admin/secretarias/agricultura/programas/:id
- * Excluir programa rural
+ * Excluir programa rural (via ProtocolSimplified)
  */
 router.delete(
   '/programas/:id',
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { id } = req.params;
+      const authReq = req as AuthenticatedRequest;
+      const { id } = req.params;
 
-      // Verificar se o programa existe e pertence ao tenant
-      const program = await prisma.ruralProgram.findFirst({
+      // Verificar se o protocolo existe
+      const protocol = await prisma.protocolSimplified.findFirst({
         where: {
-          id
+          id,
+          moduleType: 'INSCRICAO_PROGRAMA_RURAL'
         }
-        });
+      });
 
-      if (!program) {
+      if (!protocol) {
         return res.status(404).json({
           success: false,
           error: 'Program not found',
@@ -860,59 +862,78 @@ router.delete(
         });
       }
 
-      // Excluir programa
-      await prisma.ruralProgram.delete({
-        where: { id }
-        });
+      // Cancelar protocolo
+      await prisma.protocolSimplified.update({
+        where: { id },
+        data: {
+          status: ProtocolStatus.CANCELADO
+        }
+      });
 
       return res.json({
         success: true,
         message: 'Programa excluído com sucesso'
-        });
+      });
     } catch (error) {
       console.error('Delete rural program error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error',
         message: 'Erro ao excluir programa'
-        });
+      });
     }
   }
 );
 
 /**
  * GET /api/admin/secretarias/agricultura/programas
- * Listar programas rurais
+ * Listar programas rurais (via ProtocolSimplified)
  */
 router.get(
   '/programas',
   requireMinRole(UserRole.USER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;      const { page = 1, limit = 20, status, programType } = req.query;
+      const authReq = req as AuthenticatedRequest;
+      const { page = 1, limit = 20, status, programType } = req.query;
 
       const skip = (Number(page) - 1) * Number(limit);
 
-      const where: any = {};
+      const where: any = {
+        moduleType: 'INSCRICAO_PROGRAMA_RURAL'
+      };
 
       if (status && status !== 'all') {
         where.status = status;
       }
 
-      if (programType && programType !== 'all') {
-        where.programType = programType;
-      }
-
-      const [data, total, activeCount] = await Promise.all([
-        prisma.ruralProgram.findMany({
+      const [protocols, total, activeCount] = await Promise.all([
+        prisma.protocolSimplified.findMany({
           where,
           skip,
           take: Number(limit),
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
+          include: {
+            citizen: true
+          }
         }),
-        prisma.ruralProgram.count({ where }),
-        prisma.ruralProgram.count({ where: { status: 'ACTIVE' } }),
+        prisma.protocolSimplified.count({ where }),
+        prisma.protocolSimplified.count({
+          where: {
+            moduleType: 'INSCRICAO_PROGRAMA_RURAL',
+            status: ProtocolStatus.CONCLUIDO
+          }
+        }),
       ]);
+
+      const data = protocols.map(p => ({
+        id: p.id,
+        protocolNumber: p.number,
+        status: p.status,
+        createdAt: p.createdAt,
+        citizen: p.citizen,
+        ...(p.customData as object)
+      }));
 
       return res.json({
         success: true,
@@ -927,13 +948,13 @@ router.get(
           total,
           pages: Math.ceil(total / Number(limit))
         }
-        });
+      });
     } catch (error) {
       console.error('Get rural programs error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error'
-        });
+      });
     }
   }
 );
