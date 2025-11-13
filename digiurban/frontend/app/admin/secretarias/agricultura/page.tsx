@@ -29,6 +29,7 @@ import { useRouter } from 'next/navigation';
 // ✅ NOVOS HOOKS PARA CARREGAR DADOS REAIS
 import { useSecretariaServices } from '@/hooks/useSecretariaServices';
 import { useAgriculturaStats } from '@/hooks/useAgriculturaStats';
+import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 
 export default function SecretariaAgriculturaPage() {
   const { user } = useAdminAuth();
@@ -48,9 +49,30 @@ export default function SecretariaAgriculturaPage() {
     error: statsError
   } = useAgriculturaStats();
 
+  // ✅ NOVO: Buscar módulos dinâmicos do backend
+  const {
+    stats: departmentStats,
+    loading: departmentLoading,
+  } = useDepartmentStats('agricultura');
+
   // Separar serviços com e sem módulo
   const servicesWithModule = services.filter((s: any) => s.moduleType);
   const allServices = services;
+
+  // ✅ Módulos dinâmicos COM_DADOS (vêm do backend)
+  const modules = departmentStats?.services.filter(
+    (s: any) => s.serviceType === 'COM_DADOS' && s.moduleType
+  ) || [];
+
+  // Cores para os cards dos módulos (mesmas cores hardcoded para manter visual)
+  const moduleColors = [
+    { border: 'border-amber-200', bg: 'bg-amber-50/50', icon: 'text-amber-600' },
+    { border: 'border-green-200', bg: 'bg-green-50/50', icon: 'text-green-600' },
+    { border: 'border-blue-200', bg: 'bg-blue-50/50', icon: 'text-blue-600' },
+    { border: 'border-purple-200', bg: 'bg-purple-50/50', icon: 'text-purple-600' },
+    { border: 'border-emerald-200', bg: 'bg-emerald-50/50', icon: 'text-emerald-600' },
+    { border: 'border-teal-200', bg: 'bg-teal-50/50', icon: 'text-teal-600' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -187,7 +209,7 @@ export default function SecretariaAgriculturaPage() {
         </CardContent>
       </Card>
 
-      {/* Módulos Padrões - Base de dados do sistema */}
+      {/* Módulos Padrões - ✅ AGORA DINÂMICO DO BACKEND */}
       <div>
         <div className="mb-6">
           <h2 className="text-2xl font-semibold">Módulos Padrões</h2>
@@ -197,165 +219,68 @@ export default function SecretariaAgriculturaPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Produtores Rurais */}
-          <Card className="border-amber-200 bg-amber-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/agricultura/produtores')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5 text-amber-600" />
-                Produtores Rurais
-              </CardTitle>
-              <CardDescription>
-                Cadastro de produtores e agricultores familiares
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ativos:</span>
-                    <span className="font-medium">{stats?.producers?.active || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.producers?.total || 0}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Propriedades Rurais */}
-          <Card className="border-green-200 bg-green-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/agricultura/propriedades')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-green-600" />
-                Propriedades Rurais
-              </CardTitle>
-              <CardDescription>
-                Cadastro e mapeamento de propriedades
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {statsLoading ? (
-                <Skeleton className="h-12 w-full" />
-              ) : (
-                <div className="text-sm space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">{stats?.properties?.total || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Área:</span>
-                    <span className="font-medium">{stats?.properties?.totalArea || 0} ha</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Assistência Técnica */}
-          <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/agricultura/assistencia-tecnica')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileBarChart className="h-5 w-5 text-blue-600" />
-                Assistência Técnica
-              </CardTitle>
-              <CardDescription>
-                Atendimentos técnicos rurais
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Ativos:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Atendimentos */}
-          <Card className="border-purple-200 bg-purple-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/agricultura/atendimentos')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5 text-purple-600" />
-                Atendimentos
-              </CardTitle>
-              <CardDescription>
-                Atendimentos da agricultura
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Agendadas:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Inscrição em Curso Rural */}
-          <Card className="border-emerald-200 bg-emerald-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/agricultura/cursos')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-emerald-600" />
-                Cursos Rurais
-              </CardTitle>
-              <CardDescription>
-                Inscrições em capacitações e treinamentos
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Inscritos:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Inscrição em Programa Rural */}
-          <Card className="border-teal-200 bg-teal-50/50 hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => router.push('/admin/secretarias/agricultura/programas')}>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileCheck className="h-5 w-5 text-teal-600" />
-                Programas Rurais
-              </CardTitle>
-              <CardDescription>
-                PRONAF, PAA, PNAE e outros programas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Inscrições:</span>
-                  <span className="font-medium">0</span>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Em desenvolvimento
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {departmentLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-12 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : modules.length > 0 ? (
+            modules.map((module: any, index: number) => {
+              const colors = moduleColors[index % moduleColors.length];
+              return (
+                <Card
+                  key={module.id}
+                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
+                  onClick={() => router.push(`/admin/secretarias/agricultura/${module.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className={`h-5 w-5 ${colors.icon}`} />
+                      {module.name}
+                    </CardTitle>
+                    <CardDescription>
+                      {module.description || 'Módulo de gestão'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-medium">{module.stats?.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pendentes:</span>
+                        <span className="font-medium">{module.stats?.pending || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Aprovados:</span>
+                        <span className="font-medium">{module.stats?.approved || 0}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
+            <Card className="col-span-full border-amber-200 bg-amber-50">
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <FileText className="h-16 w-16 text-amber-400 mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum módulo cadastrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Configure serviços COM_DADOS com moduleType no admin
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

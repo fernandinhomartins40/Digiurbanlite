@@ -131,6 +131,15 @@ try {
   console.error('❌ Erro ao carregar rotas admin dinâmicas:', error);
 }
 
+// 📊 ROTAS DE STATS DE DEPARTAMENTOS
+try {
+  const departmentStatsRoutes = require('./routes/department-stats').default;
+  app.use('/api/departments', departmentStatsRoutes);
+  console.log('✅ Rotas de stats de departamentos carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas de stats:', error);
+}
+
 // Rota de busca de cidadão (usado por todas as secretarias)
 const citizenLookupRoutes = require('./routes/admin-citizen-lookup').default;
 app.use('/api/admin/citizen-lookup', citizenLookupRoutes);
