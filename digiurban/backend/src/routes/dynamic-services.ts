@@ -82,19 +82,19 @@ async function deleteCache(key: string): Promise<void> {
 // ============================================================
 function slugToDepartmentName(slug: string): string {
   const mapping: Record<string, string> = {
-    'agricultura': 'Agricultura',
-    'saude': 'Saúde',
-    'educacao': 'Educação',
-    'assistencia-social': 'Assistência Social',
-    'cultura': 'Cultura',
-    'esportes': 'Esportes',
-    'habitacao': 'Habitação',
-    'meio-ambiente': 'Meio Ambiente',
-    'obras-publicas': 'Obras Públicas',
-    'planejamento-urbano': 'Planejamento Urbano',
-    'seguranca-publica': 'Segurança Pública',
-    'servicos-publicos': 'Serviços Públicos',
-    'turismo': 'Turismo'
+    'agricultura': 'Secretaria de Agricultura',
+    'saude': 'Secretaria de Saúde',
+    'educacao': 'Secretaria de Educação',
+    'assistencia-social': 'Secretaria de Assistência Social',
+    'cultura': 'Secretaria de Cultura',
+    'esportes': 'Secretaria de Esportes',
+    'habitacao': 'Secretaria de Habitação',
+    'meio-ambiente': 'Secretaria de Meio Ambiente',
+    'obras-publicas': 'Secretaria de Obras Públicas',
+    'planejamento-urbano': 'Secretaria de Planejamento Urbano',
+    'seguranca-publica': 'Secretaria de Segurança Pública',
+    'servicos-publicos': 'Secretaria de Serviços Públicos',
+    'turismo': 'Secretaria de Turismo'
   };
   return mapping[slug] || slug;
 }

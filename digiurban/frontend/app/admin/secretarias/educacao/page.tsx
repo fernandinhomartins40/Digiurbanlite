@@ -228,7 +228,7 @@ export default function SecretariaEducacaoPage() {
                 <Card
                   key={module.id}
                   className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
-                  onClick={() => router.push(`/admin/secretarias/educacao/${module.slug}`)}
+                  onClick={() => router.push(`/admin/secretarias/educacao/${module.moduleType}`)}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">

@@ -230,7 +230,7 @@ export default function SecretariaObrasPublicasPage() {
                 <Card
                   key={module.id}
                   className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
-                  onClick={() => router.push(`/admin/secretarias/obras-publicas/${module.slug}`)}
+                  onClick={() => router.push(`/admin/secretarias/obras-publicas/${module.moduleType}`)}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">

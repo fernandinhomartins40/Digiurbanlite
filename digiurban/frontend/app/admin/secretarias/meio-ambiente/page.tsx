@@ -221,7 +221,7 @@ export default function SecretariaMeioAmbientePage() {
                 <Card
                   key={module.id}
                   className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
-                  onClick={() => router.push(`/admin/secretarias/meio-ambiente/${module.slug}`)}
+                  onClick={() => router.push(`/admin/secretarias/meio-ambiente/${module.moduleType}`)}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">

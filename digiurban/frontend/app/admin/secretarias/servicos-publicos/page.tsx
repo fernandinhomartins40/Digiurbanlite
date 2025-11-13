@@ -226,7 +226,7 @@ export default function SecretariaServicosPublicosPage() {
                 <Card
                   key={module.id}
                   className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
-                  onClick={() => router.push(`/admin/secretarias/servicos-publicos/${module.slug}`)}
+                  onClick={() => router.push(`/admin/secretarias/servicos-publicos/${module.moduleType}`)}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">

@@ -226,7 +226,7 @@ export default function SecretariaAssistenciaSocialPage() {
                 <Card
                   key={module.id}
                   className={`${colors.border} ${colors.bg} hover:shadow-lg transition-shadow cursor-pointer`}
-                  onClick={() => router.push(`/admin/secretarias/assistencia-social/${module.slug}`)}
+                  onClick={() => router.push(`/admin/secretarias/assistencia-social/${module.moduleType}`)}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">

@@ -16,29 +16,39 @@ const prisma = new PrismaClient();
 // Mapping de slugs para nomes de departamentos
 function departmentSlugToName(slug: string): string {
   const mapping: Record<string, string> = {
-    'agricultura': 'Agricultura',
-    'saude': 'Saúde',
-    'educacao': 'Educação',
-    'esportes': 'Esportes',
-    'assistencia-social': 'Assistência Social',
-    'cultura': 'Cultura',
-    'meio-ambiente': 'Meio Ambiente',
-    'obras-publicas': 'Obras Públicas',
-    'planejamento-urbano': 'Planejamento Urbano',
-    'habitacao': 'Habitação',
-    'seguranca-publica': 'Segurança Pública',
-    'servicos-publicos': 'Serviços Públicos',
-    'turismo': 'Turismo',
+    'agricultura': 'Secretaria de Agricultura',
+    'saude': 'Secretaria de Saúde',
+    'educacao': 'Secretaria de Educação',
+    'esportes': 'Secretaria de Esportes',
+    'assistencia-social': 'Secretaria de Assistência Social',
+    'cultura': 'Secretaria de Cultura',
+    'meio-ambiente': 'Secretaria de Meio Ambiente',
+    'obras-publicas': 'Secretaria de Obras Públicas',
+    'planejamento-urbano': 'Secretaria de Planejamento Urbano',
+    'habitacao': 'Secretaria de Habitação',
+    'seguranca-publica': 'Secretaria de Segurança Pública',
+    'servicos-publicos': 'Secretaria de Serviços Públicos',
+    'turismo': 'Secretaria de Turismo',
+    'fazenda': 'Secretaria de Fazenda',
   };
   return mapping[slug] || slug;
 }
+
+// DEBUG: Rota de teste SEM auth
+router.get('/:department/test', async (req, res) => {
+  res.json({ message: 'Rota department-stats funcionando!', department: req.params.department });
+});
 
 router.get('/:department/stats', authenticateToken, async (req, res) => {
   try {
     const { department: departmentSlug } = req.params;
 
+    console.log(`\n🔍 [DEPARTMENT-STATS] GET /:department/stats`);
+    console.log(`   Slug recebido: ${departmentSlug}`);
+
     // Converte slug para nome do departamento
     const departmentName = departmentSlugToName(departmentSlug);
+    console.log(`   Nome convertido: ${departmentName}`);
 
     // Busca o departamento
     const department = await prisma.department.findFirst({
@@ -46,8 +56,11 @@ router.get('/:department/stats', authenticateToken, async (req, res) => {
     });
 
     if (!department) {
+      console.log(`   ❌ Departamento não encontrado!`);
       return res.status(404).json({ error: 'Departamento não encontrado' });
     }
+
+    console.log(`   ✅ Departamento encontrado: ${department.name} (ID: ${department.id})`);
 
     // Busca todos os serviços do departamento
     const services = await prisma.serviceSimplified.findMany({
@@ -64,6 +77,10 @@ router.get('/:department/stats', authenticateToken, async (req, res) => {
         formSchema: true,
       },
     });
+
+    console.log(`   📦 Total de serviços encontrados: ${services.length}`);
+    console.log(`   🎯 Serviços COM_DADOS: ${services.filter(s => s.serviceType === 'COM_DADOS').length}`);
+    console.log(`   🔧 Serviços com moduleType: ${services.filter(s => s.moduleType).length}`);
 
     // Para cada serviço COM_DADOS, busca stats de protocolos
     const servicesWithStats = await Promise.all(
