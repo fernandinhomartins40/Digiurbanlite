@@ -62,6 +62,14 @@ export default function SecretariaSaudePage() {
     loading: departmentLoading,
   } = useDepartmentStats('saude');
 
+  // ✅ Buscar sugestões inteligentes de serviços
+  const {
+    displayedSuggestions,
+    hasMore,
+    totalAvailable,
+    isLoading: suggestionsLoading
+  } = useServiceSuggestions('saude');
+
   // Separar serviços com e sem módulo
   const servicesWithModule = services.filter((s: any) => s.moduleType);
   const allServices = services;
@@ -797,7 +805,7 @@ export default function SecretariaSaudePage() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-semibold">Sugestões de Serviços COM_DADOS</h2>
+            <h2 className="text-2xl font-semibold">Sugestões de Serviços com Dados</h2>
             <p className="text-sm text-muted-foreground">
               Crie serviços com formulários dinâmicos baseados em sugestões inteligentes
             </p>
@@ -811,7 +819,8 @@ export default function SecretariaSaudePage() {
         </div>
 
         {suggestionsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Skeleton className="h-64" />
             <Skeleton className="h-64" />
             <Skeleton className="h-64" />
           </div>
@@ -833,7 +842,7 @@ export default function SecretariaSaudePage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayedSuggestions.map((suggestion) => (
               <Card key={suggestion.id} className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -884,6 +893,29 @@ export default function SecretariaSaudePage() {
                 </CardContent>
               </Card>
             ))}
+
+            {/* Card Ver Todas as Sugestões */}
+            {hasMore && (
+              <Card className="border-dashed border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-indigo-50 hover:shadow-lg transition-all">
+                <CardContent className="flex flex-col items-center justify-center p-12 h-full min-h-[300px]">
+                  <div className="rounded-full bg-blue-100 p-4 mb-4">
+                    <FileCheck className="h-8 w-8 text-blue-600" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2 text-center">Ver Todas as Sugestões</h3>
+                  <p className="text-sm text-muted-foreground text-center mb-4">
+                    {totalAvailable - displayedSuggestions.length} sugestões adicionais disponíveis
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                    onClick={() => router.push(`/admin/secretarias/saude/sugestoes`)}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Ver Todas ({totalAvailable})
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
