@@ -40,8 +40,10 @@ router.get(
       if (departmentId) {
         whereClause.departmentId = departmentId;
       } else if (departmentCode) {
+        // Converter slug (assistencia-social) para code (ASSISTENCIA_SOCIAL)
+        const code = (departmentCode as string).replace(/-/g, '_').toUpperCase();
         whereClause.department = {
-          code: (departmentCode as string).toUpperCase()
+          code: code
         };
       }
 
