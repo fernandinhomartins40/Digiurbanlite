@@ -5,15 +5,14 @@
 
 'use client';
 
-import { use } from 'react';
 import { NoDataServicesView } from '@/components/admin/modules/NoDataServicesView';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface PageProps {
-  params: Promise<{
+  params: {
     department: string;
-  }>;
+  };
 }
 
 // Mapeamento de slugs para nomes dos departamentos
@@ -34,7 +33,7 @@ const DEPARTMENT_NAMES: Record<string, string> = {
 };
 
 export default function ServicosGeraisPage({ params }: PageProps) {
-  const { department } = use(params);
+  const { department } = params;
   const departmentName = DEPARTMENT_NAMES[department] || department;
 
   return (
