@@ -277,47 +277,47 @@ export default function SecretariaTurismoPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* ✅ NOVO: Card Especial para View Agregada de Serviços Gerais */}
-          <Card
-            className="hover:shadow-lg transition-shadow cursor-pointer border-primary bg-primary/5 col-span-full"
-            onClick={() => router.push('/admin/secretarias/turismo/servicos-gerais')}
-          >
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileBarChart className="h-5 w-5 text-primary" />
-                Gerenciar Todos os Serviços Gerais
-              </CardTitle>
-              <CardDescription>
-                Visão consolidada de todos os protocolos de serviços SEM_DADOS em um único painel
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground">
-                Acesse o painel agregado para visualizar e gerenciar protocolos de múltiplos serviços simultaneamente
-              </div>
-            </CardContent>
-          </Card>
+        {servicesLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="border-cyan-200 bg-cyan-50/50">
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-8 w-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* ✅ NOVO: Card Especial para View Agregada de Serviços Gerais */}
+              <Card
+                className="hover:shadow-lg transition-shadow cursor-pointer border-primary bg-primary/5 col-span-full"
+                onClick={() => router.push('/admin/secretarias/turismo/servicos-gerais')}
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileBarChart className="h-5 w-5 text-primary" />
+                    Gerenciar Todos os Serviços Gerais
+                  </CardTitle>
+                  <CardDescription>
+                    Visão consolidada de todos os protocolos de serviços SEM_DADOS em um único painel
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">
+                    Acesse o painel agregado para visualizar e gerenciar protocolos de múltiplos serviços simultaneamente
+                  </div>
+                </CardContent>
+              </Card>
 
-          {servicesLoading ? (
-            <>
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="border-cyan-200 bg-cyan-50/50">
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-2/3" />
-                      <Skeleton className="h-8 w-full" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </>
-          ) : (
-            <>
               {services
                 .filter((s: any) => s.serviceType === 'SEM_DADOS')
                 .map((service: any) => (
