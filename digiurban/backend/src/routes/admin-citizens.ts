@@ -580,18 +580,6 @@ router.get(
       }
         }
         },
-        vulnerableFamilyData: {
-          include: {
-            benefitRequests: {
-              orderBy: { requestDate: 'desc' },
-              take: 5
-        },
-            homeVisits: {
-              orderBy: { visitDate: 'desc' },
-              take: 5
-        }
-        }
-        },
         protocolsSimplified: {
           orderBy: { createdAt: 'desc' },
           take: 10,
@@ -802,7 +790,14 @@ router.post(
       observations
         } = authReq.body;
 
-    // Validar que o cidadão existe e não tem vulnerabilidade
+    // Funcionalidade de vulnerabilidade foi removida do schema
+    res.status(501).json({
+      success: false,
+      error: 'Funcionalidade de vulnerabilidade não implementada'
+    });
+    return;
+
+    /* CÓDIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
     const citizen = await prisma.citizen.findFirst({
       where: {
         id
@@ -855,6 +850,7 @@ router.post(
       message: 'Dados de vulnerabilidade adicionados',
       data: { vulnerability }
         });
+    */
   })
 );
 
@@ -863,6 +859,14 @@ router.put(
   '/:id/vulnerability',
   requirePermission('social-assistance:update'),
   asyncHandler(async (req, res: Response): Promise<void> => {
+    // Funcionalidade de vulnerabilidade foi removida do schema
+    res.status(501).json({
+      success: false,
+      error: 'Funcionalidade de vulnerabilidade não implementada'
+    });
+    return;
+
+    /* CÓDIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
     const updateData = authReq.body;
@@ -894,6 +898,7 @@ router.put(
       message: 'Dados atualizados',
       data: { vulnerability: updated }
         });
+    */
   })
 );
 
@@ -902,6 +907,14 @@ router.get(
   '/vulnerable',
   requirePermission('social-assistance:read'),
   asyncHandler(async (req, res: Response): Promise<void> => {
+    // Funcionalidade de vulnerabilidade foi removida do schema
+    res.status(501).json({
+      success: false,
+      error: 'Funcionalidade de vulnerabilidade não implementada'
+    });
+    return;
+
+    /* CÓDIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
     const authReq = req as AuthenticatedRequest;
     const { riskLevel, status } = authReq.query;
 
@@ -951,6 +964,7 @@ router.get(
         total: vulnerableFamilies.length
         }
         });
+    */
   })
 );
 

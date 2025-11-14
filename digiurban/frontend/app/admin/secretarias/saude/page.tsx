@@ -70,8 +70,7 @@ export default function SecretariaSaudePage() {
     isLoading: suggestionsLoading
   } = useServiceSuggestions('saude');
 
-  // Separar serviços com e sem módulo
-  const servicesWithModule = services.filter((s: any) => s.moduleType);
+  // Todos os serviços
   const allServices = services;
 
   // ✅ Módulos dinâmicos COM_DADOS (vêm do backend)
@@ -132,26 +131,7 @@ export default function SecretariaSaudePage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtores Ativos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.producers?.active || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.producers?.total || 0} cadastrados
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Propriedades</CardTitle>
+            <CardTitle className="text-sm font-medium">Unidades de Saúde</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -159,9 +139,9 @@ export default function SecretariaSaudePage() {
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{stats?.properties?.total || 0}</div>
+                <div className="text-2xl font-bold">{stats?.healthUnits?.active || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  {stats?.properties?.totalArea || 0} hectares totais
+                  {stats?.healthUnits?.total || 0} unidades totais
                 </p>
               </>
             )}
@@ -170,8 +150,27 @@ export default function SecretariaSaudePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assistências Ativas</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Consultas este Mês</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {statsLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats?.appointments?.monthly || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Atendimentos agendados
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Profissionais de Saúde</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {statsLoading ? (
@@ -179,10 +178,10 @@ export default function SecretariaSaudePage() {
             ) : (
               <>
                 <div className="text-2xl font-bold">
-                  {stats?.technicalAssistance?.totalActive || 0}
+                  {stats?.professionals?.total || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {stats?.technicalAssistance?.completedThisMonth || 0} concluídas este mês
+                  Agentes de saúde ativos
                 </p>
               </>
             )}
@@ -191,17 +190,17 @@ export default function SecretariaSaudePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protocolos Pendentes</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total de Protocolos</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             {statsLoading ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{stats?.protocols?.pending || 0}</div>
+                <div className="text-2xl font-bold">{stats?.protocols?.total || 0}</div>
                 <p className="text-xs text-muted-foreground">
-                  {stats?.protocols?.total || 0} total
+                  {stats?.protocols?.pending || 0} pendentes
                 </p>
               </>
             )}
@@ -586,96 +585,6 @@ export default function SecretariaSaudePage() {
           </div>
         )}
       </div>
-
-      {/* Serviços com Captura de Dados */}
-      {servicesWithModule.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-semibold mb-6">Serviços com Captura de Dados</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Serviços que capturam dados estruturados através de formulários dinâmicos
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {servicesWithModule.map((service) => (
-              <Card key={service.id} className="border-red-200 bg-red-50/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Heart className="h-5 w-5 text-red-600" />
-                      {service.name}
-                    </CardTitle>
-                    <Badge className="bg-red-600">
-                      {service.moduleType}
-                    </Badge>
-                  </div>
-                  <CardDescription>{service.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {statsLoading ? (
-                      <Skeleton className="h-16 w-full" />
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        {service.moduleType === 'TechnicalAssistance' && stats?.technicalAssistance && (
-                          <>
-                            <div>
-                              <span className="text-muted-foreground">Pendentes:</span>
-                              <span className="font-medium ml-2">
-                                {stats.technicalAssistance.pending}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Em andamento:</span>
-                              <span className="font-medium ml-2">
-                                {stats.technicalAssistance.inProgress}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                        {service.moduleType === 'SeedDistribution' && stats?.seedDistribution && (
-                          <>
-                            <div>
-                              <span className="text-muted-foreground">Ativas:</span>
-                              <span className="font-medium ml-2">
-                                {stats.seedDistribution.activeRequests}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Concluídas:</span>
-                              <span className="font-medium ml-2">
-                                {stats.seedDistribution.completedThisMonth}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                        {service.moduleType === 'SoilAnalysis' && stats?.soilAnalysis && (
-                          <>
-                            <div>
-                              <span className="text-muted-foreground">Pendentes:</span>
-                              <span className="font-medium ml-2">
-                                {stats.soilAnalysis.pending}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Concluídas:</span>
-                              <span className="font-medium ml-2">
-                                {stats.soilAnalysis.completedThisMonth}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                    <div className="pt-2 text-xs text-muted-foreground">
-                      ✅ Integrado ao motor de protocolos
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Sugestões Inteligentes de Serviços com Dados */}
       <div>
