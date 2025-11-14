@@ -24,6 +24,7 @@ import {
   Copy,
   FileBarChart,
   HardHat,
+  Calendar,
   Info,
   Award,
 } from 'lucide-react';
