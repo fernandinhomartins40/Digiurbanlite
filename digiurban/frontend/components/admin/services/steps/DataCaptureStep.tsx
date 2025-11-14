@@ -62,17 +62,6 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
     formData.requiredDocuments || []
   )
 
-  const handleModuleTypeChange = (value: string) => {
-    onChange('moduleType', value)
-
-    // Sugerir campos básicos baseados no tipo de módulo
-    if (value && fields.length === 0) {
-      const suggestedFields = getSuggestedFields(value)
-      setFields(suggestedFields)
-      updateFormSchema(suggestedFields)
-    }
-  }
-
   const getSuggestedFields = (moduleType: string): FormField[] => {
     const baseFields: Record<string, FormField[]> = {
       MATRICULA_ALUNO: [
@@ -215,22 +204,13 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
     'Certidão Negativa de Débitos',
   ]
 
-  // Verificar se é um serviço de inscrição (programa/curso/capacitação)
-  const isEnrollmentService = formData.moduleType && [
-    'INSCRICAO_PROGRAMA_RURAL',
-    'INSCRICAO_CURSO_RURAL',
-    'INSCRICAO_OFICINA_CULTURAL',
-    'INSCRICAO_ATIVIDADE_ESPORTIVA',
-    'INSCRICAO_CAPACITACAO',
-  ].includes(formData.moduleType)
-
-  if (formData.serviceType === 'INFORMATIVO') {
+  if (formData.serviceType === 'SEM_DADOS') {
     return (
       <Card className="bg-gray-50">
         <CardContent className="p-6 text-center">
           <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">
-            Serviços informativos não capturam dados estruturados.
+            Serviços sem captura de dados não precisam de formulário estruturado.
           </p>
           <p className="text-sm text-gray-500 mt-2">
             Volte ao passo anterior se deseja criar um serviço com captura de dados.
@@ -242,39 +222,8 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
 
   return (
     <div className="space-y-6">
-      {/* Seleção do Tipo de Módulo */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tipo de Módulo</CardTitle>
-          <CardDescription>
-            Selecione para qual módulo este serviço irá enviar os dados capturados
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="moduleType">Módulo de Destino *</Label>
-            <Select value={formData.moduleType} onValueChange={handleModuleTypeChange}>
-              <SelectTrigger id="moduleType">
-                <SelectValue placeholder="Selecione o módulo..." />
-              </SelectTrigger>
-              <SelectContent>
-                {MODULE_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500">
-              Os dados capturados serão salvos e poderão ser consultados no módulo selecionado
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Construtor de Formulário */}
-      {formData.moduleType && (
-        <Card>
+      <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -399,7 +348,6 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
             )}
           </CardContent>
         </Card>
-      )}
 
       {/* Preview */}
       {fields.length > 0 && (
@@ -440,9 +388,8 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
         </Card>
       )}
 
-      {/* Seção de Documentos Necessários - Mostrar para serviços de inscrição */}
-      {isEnrollmentService && (
-        <Card>
+      {/* Seção de Documentos Necessários */}
+      <Card>
           <CardHeader>
             <div className="flex items-start gap-3">
               <FileText className="h-5 w-5 text-amber-600 mt-1" />
@@ -545,7 +492,6 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
             )}
           </CardContent>
         </Card>
-      )}
     </div>
   )
 }

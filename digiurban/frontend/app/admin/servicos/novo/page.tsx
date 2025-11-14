@@ -38,14 +38,14 @@ interface ServiceFormData {
   color: string
 
   // NOVO: Tipo simplificado (alinhado com backend)
-  serviceType: 'INFORMATIVO' | 'COM_DADOS'
+  serviceType: 'SEM_DADOS' | 'COM_DADOS'
 
   // Documentos
   requiresDocuments: boolean
   requiredDocuments: string[]
 
-  // NOVO: Campos para serviços COM_DADOS
-  moduleType: string // Ex: "MATRICULA_ALUNO", "ATENDIMENTOS_SAUDE"
+  // NOVO: Campos para serviços COM_DADOS (gerado automaticamente)
+  moduleType: string // Gerado automaticamente baseado no nome
   formSchema: any // JSON Schema do formulário customizado
 }
 
@@ -69,10 +69,10 @@ export default function NewServicePage() {
     priority: 3,
     icon: '',
     color: '#3b82f6',
-    serviceType: 'INFORMATIVO', // Padrão: serviço informativo
+    serviceType: 'SEM_DADOS', // Padrão: serviço sem dados
     requiresDocuments: false,
     requiredDocuments: [],
-    moduleType: '', // Vazio por padrão
+    moduleType: '', // Gerado automaticamente
     formSchema: null, // Vazio por padrão
   })
 
@@ -107,7 +107,7 @@ export default function NewServicePage() {
       description: 'Informativo ou com dados',
       icon: <Layers className="h-5 w-5" />,
       isValid: () => {
-        return formData.serviceType === 'INFORMATIVO' || formData.serviceType === 'COM_DADOS'
+        return formData.serviceType === 'SEM_DADOS' || formData.serviceType === 'COM_DADOS'
       },
     },
     {
@@ -115,10 +115,10 @@ export default function NewServicePage() {
       title: 'Captura de Dados',
       description: 'Configure o formulário',
       icon: <Database className="h-5 w-5" />,
-      isOptional: formData.serviceType === 'INFORMATIVO',
+      isOptional: formData.serviceType === 'SEM_DADOS',
       isValid: () => {
-        if (formData.serviceType === 'INFORMATIVO') return true
-        return formData.moduleType !== '' && formData.formSchema !== null
+        if (formData.serviceType === 'SEM_DADOS') return true
+        return formData.formSchema !== null && formData.formSchema.fields?.length > 0
       },
     },
     {
@@ -265,7 +265,16 @@ export default function NewServicePage() {
 
       // Adicionar campos de captura de dados se COM_DADOS
       if (formData.serviceType === 'COM_DADOS') {
-        payload.moduleType = formData.moduleType
+        // Gerar moduleType automaticamente baseado no nome do serviço
+        const moduleType = formData.name
+          .toUpperCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+          .replace(/[^A-Z0-9]/g, '_') // Substitui não alfanuméricos por underscore
+          .replace(/_+/g, '_') // Remove underscores duplicados
+          .replace(/^_|_$/g, '') // Remove underscores no início/fim
+
+        payload.moduleType = moduleType
         payload.formSchema = formData.formSchema
       }
 
@@ -377,13 +386,21 @@ export default function NewServicePage() {
                 <div className="flex justify-between">
                   <dt className="text-gray-600">Tipo:</dt>
                   <dd className="font-medium">
-                    {formData.serviceType === 'INFORMATIVO' ? 'Informativo' : 'Com Captura de Dados'}
+                    {formData.serviceType === 'SEM_DADOS' ? 'Sem Captura de Dados' : 'Com Captura de Dados'}
                   </dd>
                 </div>
                 {formData.serviceType === 'COM_DADOS' && (
                   <div className="flex justify-between">
                     <dt className="text-gray-600">Módulo:</dt>
-                    <dd className="font-medium">{formData.moduleType}</dd>
+                    <dd className="font-medium text-xs bg-gray-100 px-2 py-1 rounded">
+                      {formData.name
+                        .toUpperCase()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^A-Z0-9]/g, '_')
+                        .replace(/_+/g, '_')
+                        .replace(/^_|_$/g, '') || 'GERADO_AUTOMATICAMENTE'}
+                    </dd>
                   </div>
                 )}
               </dl>
