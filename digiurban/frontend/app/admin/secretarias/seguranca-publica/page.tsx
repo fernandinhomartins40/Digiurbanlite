@@ -535,12 +535,12 @@ export default function SecretariaSegurancaPublicaPage() {
         )}
       </div>
 
-      {/* Módulos Especializados */}
+      {/* Serviços com Captura de Dados */}
       {servicesWithModule.length > 0 && (
         <div>
-          <h2 className="text-2xl font-semibold mb-6">Módulos Especializados</h2>
+          <h2 className="text-2xl font-semibold mb-6">Serviços com Captura de Dados</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            Serviços integrados com o motor de protocolos e tabelas especializadas
+            Serviços que capturam dados estruturados através de formulários dinâmicos
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
