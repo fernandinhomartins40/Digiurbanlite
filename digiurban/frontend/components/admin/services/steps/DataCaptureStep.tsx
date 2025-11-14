@@ -421,19 +421,113 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
                           </div>
 
                           {field.type === 'select' && (
-                            <div className="col-span-3 space-y-2">
-                              <Label>Opções (separadas por vírgula)</Label>
-                              <Input
-                                value={field.options?.join(', ') || ''}
-                                onChange={(e) =>
-                                  updateField(index, {
-                                    options: e.target.value
-                                      .split(',')
-                                      .map((s) => s.trim()),
-                                  })
-                                }
-                                placeholder="Opção 1, Opção 2, Opção 3"
-                              />
+                            <div className="col-span-3 space-y-3">
+                              <Label>Opções da Seleção</Label>
+                              <div className="space-y-2">
+                                {field.options && field.options.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {field.options.map((option, optIndex) => (
+                                      <div key={optIndex} className="flex items-center gap-2">
+                                        <Input
+                                          value={option}
+                                          onChange={(e) => {
+                                            const newOptions = [...(field.options || [])]
+                                            newOptions[optIndex] = e.target.value
+                                            updateField(index, { options: newOptions })
+                                          }}
+                                          placeholder={`Opção ${optIndex + 1}`}
+                                          className="flex-1"
+                                        />
+                                        <Button
+                                          type="button"
+                                          onClick={() => {
+                                            const newOptions = field.options?.filter((_, i) => i !== optIndex) || []
+                                            updateField(index, { options: newOptions })
+                                          }}
+                                          size="sm"
+                                          variant="ghost"
+                                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhuma opção adicionada</p>
+                                )}
+                                <Button
+                                  type="button"
+                                  onClick={() => {
+                                    const newOptions = [...(field.options || []), '']
+                                    updateField(index, { options: newOptions })
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Adicionar Opção
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+
+                          {field.type === 'checkbox' && (
+                            <div className="col-span-3 space-y-3">
+                              <div className="space-y-2">
+                                <Label>Opções do Checkbox</Label>
+                                <p className="text-xs text-gray-500">
+                                  Deixe vazio para um checkbox simples (Sim/Não). Adicione opções para permitir múltiplas seleções.
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                {field.options && field.options.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {field.options.map((option, optIndex) => (
+                                      <div key={optIndex} className="flex items-center gap-2">
+                                        <Input
+                                          value={option}
+                                          onChange={(e) => {
+                                            const newOptions = [...(field.options || [])]
+                                            newOptions[optIndex] = e.target.value
+                                            updateField(index, { options: newOptions })
+                                          }}
+                                          placeholder={`Opção ${optIndex + 1}`}
+                                          className="flex-1"
+                                        />
+                                        <Button
+                                          type="button"
+                                          onClick={() => {
+                                            const newOptions = field.options?.filter((_, i) => i !== optIndex) || []
+                                            updateField(index, { options: newOptions })
+                                          }}
+                                          size="sm"
+                                          variant="ghost"
+                                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                          <X className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhuma opção adicionada (checkbox simples)</p>
+                                )}
+                                <Button
+                                  type="button"
+                                  onClick={() => {
+                                    const newOptions = [...(field.options || []), '']
+                                    updateField(index, { options: newOptions })
+                                  }}
+                                  size="sm"
+                                  variant="outline"
+                                  className="w-full"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Adicionar Opção
+                                </Button>
+                              </div>
                             </div>
                           )}
 
@@ -540,12 +634,36 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
                         <SelectTrigger className="text-sm bg-white">
                           <SelectValue placeholder="Selecione..." />
                         </SelectTrigger>
+                        <SelectContent>
+                          {field.options && field.options.length > 0 ? (
+                            field.options.map((option, idx) => (
+                              <SelectItem key={idx} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="placeholder" disabled>
+                              Nenhuma opção configurada
+                            </SelectItem>
+                          )}
+                        </SelectContent>
                       </Select>
                     ) : field.type === 'checkbox' ? (
-                      <div className="flex items-center gap-2">
-                        <input type="checkbox" disabled className="rounded" />
-                        <span className="text-xs text-gray-600">{field.label}</span>
-                      </div>
+                      field.options && field.options.length > 0 ? (
+                        <div className="space-y-2">
+                          {field.options.map((option, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <input type="checkbox" disabled className="rounded" />
+                              <span className="text-xs text-gray-600">{option}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <input type="checkbox" disabled className="rounded" />
+                          <span className="text-xs text-gray-600">{field.label}</span>
+                        </div>
+                      )
                     ) : (
                       <Input
                         type={field.type}
