@@ -10,10 +10,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria (Sub-10, Sub-12, etc.)', required: true },
       { name: 'experiencia', type: 'select', label: 'Experiência Prévia', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -28,10 +25,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'altura', type: 'number', label: 'Altura (cm)', required: false },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
@@ -46,10 +40,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'altura', type: 'number', label: 'Altura (cm)', required: false },
       { name: 'categoria_idade', type: 'select', label: 'Categoria de Idade', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
@@ -64,10 +55,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel_natacao', type: 'select', label: 'Nível de Natação', required: true },
       { name: 'restricao_saude', type: 'textarea', label: 'Restrições de Saúde', required: false },
       { name: 'turma_preferencia', type: 'select', label: 'Turma de Preferência', required: true },
@@ -82,9 +70,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'objetivo', type: 'select', label: 'Objetivo', required: true },
@@ -100,9 +85,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'restricao_medica', type: 'textarea', label: 'Restrições Médicas', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -117,9 +99,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 2,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_campo', type: 'select', label: 'Tipo de Campo', required: true },
       { name: 'data_uso', type: 'date', label: 'Data do Uso', required: true },
       { name: 'horario_inicio', type: 'text', label: 'Horário de Início', required: true },
@@ -136,9 +115,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 2,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'quadra_desejada', type: 'select', label: 'Quadra Desejada', required: true },
       { name: 'modalidade', type: 'select', label: 'Modalidade Esportiva', required: true },
       { name: 'data_reserva', type: 'date', label: 'Data da Reserva', required: true },
@@ -154,9 +130,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'organizacao', type: 'text', label: 'Organização/Instituição', required: false },
       { name: 'tipo_evento', type: 'select', label: 'Tipo de Evento', required: true },
       { name: 'data_evento', type: 'date', label: 'Data do Evento', required: true },
@@ -173,10 +146,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_equipe', type: 'text', label: 'Nome da Equipe', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'modalidade', type: 'select', label: 'Modalidade', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria', required: true },
       { name: 'num_atletas', type: 'number', label: 'Número de Atletas', required: true },
@@ -191,9 +160,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_atleta', type: 'text', label: 'Nome do Atleta', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'modalidade', type: 'select', label: 'Modalidade Esportiva', required: true },
       { name: 'categoria_atleta', type: 'select', label: 'Categoria de Atleta', required: true },
       { name: 'titulos_recentes', type: 'textarea', label: 'Títulos e Conquistas Recentes', required: true },
@@ -210,9 +176,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'polo_preferencia', type: 'select', label: 'Polo de Preferência', required: true },
       { name: 'atividade_interesse', type: 'select', label: 'Atividade de Interesse', required: true },
@@ -228,9 +191,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -246,9 +206,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'evento', type: 'select', label: 'Evento', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria', required: true },
@@ -264,10 +221,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'modalidade', type: 'select', label: 'Modalidade', required: true },
       { name: 'nivel_certificacao', type: 'select', label: 'Nível de Certificação', required: true },
       { name: 'tempo_experiencia', type: 'number', label: 'Tempo de Experiência (anos)', required: true },
@@ -282,10 +235,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'registro_cref', type: 'text', label: 'Registro CREF', required: true },
       { name: 'especialidade', type: 'select', label: 'Especialidade', required: true },
       { name: 'formacao', type: 'select', label: 'Formação', required: true },
@@ -300,10 +249,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria por Idade', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -317,10 +263,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
     ]
@@ -334,10 +277,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -351,10 +291,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'faixa_atual', type: 'select', label: 'Faixa Atual', required: false },
       { name: 'experiencia_previa', type: 'select', label: 'Experiência Prévia', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -369,10 +306,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'faixa_graduacao', type: 'select', label: 'Faixa/Graduação', required: false },
       { name: 'turma', type: 'select', label: 'Turma', required: true },
     ]
@@ -386,10 +320,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'prova_interesse', type: 'select', label: 'Prova de Interesse', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -403,9 +334,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_bike', type: 'select', label: 'Tipo de Bike', required: true },
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'dia_preferencia', type: 'select', label: 'Dia de Preferência', required: true },
@@ -420,9 +348,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -437,9 +362,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF (ou do Responsável)', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
@@ -454,10 +376,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'modalidade', type: 'select', label: 'Modalidade', required: true },
       { name: 'possui_patins', type: 'select', label: 'Possui Patins Próprios', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
@@ -472,10 +391,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'possui_equipamento', type: 'select', label: 'Possui Skate e Equipamentos', required: true },
     ]
@@ -489,9 +405,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'experiencia_yoga', type: 'select', label: 'Experiência com Yoga', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
       { name: 'local', type: 'select', label: 'Local', required: true },
@@ -506,9 +419,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'objetivo', type: 'select', label: 'Objetivo', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
@@ -523,9 +433,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'ritmo_interesse', type: 'select', label: 'Ritmo de Interesse', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -540,9 +447,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'objetivo', type: 'select', label: 'Objetivo', required: true },
       { name: 'horario_treino', type: 'select', label: 'Horário de Treino', required: true },
@@ -558,9 +462,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'objetivo_avaliacao', type: 'select', label: 'Objetivo da Avaliação', required: true },
       { name: 'pratica_atividade', type: 'select', label: 'Pratica Atividade Física', required: true },
@@ -575,10 +476,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'possui_raquete', type: 'select', label: 'Possui Raquete', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
@@ -593,9 +491,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF (ou do Responsável)', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -610,10 +505,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'corda_graduacao', type: 'text', label: 'Corda/Graduação (se houver)', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -627,9 +519,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: false },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -644,9 +533,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel_habilidade', type: 'select', label: 'Nível de Habilidade', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
     ]
@@ -660,9 +546,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'possui_raquete', type: 'select', label: 'Possui Raquete', required: false },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -677,9 +560,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel_condicionamento', type: 'select', label: 'Nível de Condicionamento', required: true },
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -694,9 +574,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'local', type: 'select', label: 'Local', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -711,9 +588,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'experiencia', type: 'select', label: 'Experiência', required: true },
       { name: 'dia_atividade', type: 'select', label: 'Dia da Atividade', required: true },
     ]
@@ -727,9 +601,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF (ou do Responsável)', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -744,10 +615,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluna', type: 'text', label: 'Nome da Aluna', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -761,10 +629,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'genero', type: 'select', label: 'Gênero', required: true },
       { name: 'experiencia', type: 'select', label: 'Experiência', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
@@ -779,10 +644,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'arma_interesse', type: 'select', label: 'Arma de Interesse', required: false },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
     ]
@@ -796,10 +658,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF (ou do Responsável)', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'experiencia', type: 'select', label: 'Experiência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
@@ -813,10 +672,7 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_aluno', type: 'text', label: 'Nome do Aluno', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -830,9 +686,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -847,9 +700,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'local', type: 'select', label: 'Local', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -864,11 +714,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_organizador', type: 'text', label: 'Nome do Organizador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
-      { name: 'nome_evento', type: 'text', label: 'Nome do Evento', required: true },
       { name: 'modalidade', type: 'select', label: 'Modalidade', required: true },
       { name: 'data_evento', type: 'date', label: 'Data do Evento', required: true },
       { name: 'local_desejado', type: 'select', label: 'Local Desejado', required: true },
@@ -885,9 +730,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'material_solicitado', type: 'select', label: 'Material Solicitado', required: true },
       { name: 'quantidade', type: 'number', label: 'Quantidade', required: true },
       { name: 'data_retirada', type: 'date', label: 'Data de Retirada', required: true },

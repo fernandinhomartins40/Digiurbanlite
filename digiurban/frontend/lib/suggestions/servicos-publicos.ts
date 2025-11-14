@@ -10,10 +10,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_titular', type: 'text', label: 'Nome do Titular', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'mes_referencia', type: 'text', label: 'Mês de Referência', required: true },
@@ -28,10 +24,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 2,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_titular', type: 'text', label: 'Nome do Titular', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'num_protocolo_pagamento', type: 'text', label: 'Protocolo de Pagamento', required: true },
@@ -46,10 +38,7 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
       { name: 'area_construida', type: 'number', label: 'Área Construída (m²)', required: true },
@@ -65,8 +54,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_titular', type: 'text', label: 'Nome do Titular', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço', required: true },
       { name: 'motivo_solicitacao', type: 'select', label: 'Motivo da Solicitação', required: true },
@@ -82,8 +69,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_vazamento', type: 'text', label: 'Local do Vazamento', required: true },
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
       { name: 'intensidade', type: 'select', label: 'Intensidade do Vazamento', required: true },
@@ -99,9 +84,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_servico', type: 'text', label: 'Endereço do Serviço', required: true },
       { name: 'tipo_fossa', type: 'select', label: 'Tipo de Fossa', required: true },
       { name: 'capacidade_estimada', type: 'text', label: 'Capacidade Estimada', required: false },
@@ -117,8 +99,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_obstrucao', type: 'text', label: 'Local da Obstrução', required: true },
       { name: 'tipo_rede', type: 'select', label: 'Tipo de Rede', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
@@ -133,9 +113,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_coleta', type: 'text', label: 'Endereço da Coleta', required: true },
       { name: 'tipo_material', type: 'select', label: 'Tipo de Material', required: true },
       { name: 'volume_estimado', type: 'select', label: 'Volume Estimado', required: true },
@@ -151,8 +128,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Localização do Terreno', required: true },
       { name: 'area_estimada', type: 'text', label: 'Área Estimada', required: false },
       { name: 'descricao_situacao', type: 'textarea', label: 'Descrição da Situação', required: true },
@@ -167,8 +142,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_coleta', type: 'text', label: 'Endereço da Coleta', required: true },
       { name: 'descricao_itens', type: 'textarea', label: 'Descrição dos Itens', required: true },
       { name: 'quantidade_itens', type: 'number', label: 'Quantidade de Itens', required: true },
@@ -184,8 +157,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 2,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_denunciante', type: 'text', label: 'Nome (Opcional)', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_descarte', type: 'text', label: 'Local do Descarte Irregular', required: true },
       { name: 'tipo_material', type: 'select', label: 'Tipo de Material', required: true },
       { name: 'volume_estimado', type: 'select', label: 'Volume Estimado', required: false },
@@ -201,8 +172,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_poste', type: 'text', label: 'Endereço/Localização do Poste', required: true },
       { name: 'numero_poste', type: 'text', label: 'Número do Poste (se houver)', required: false },
       { name: 'tipo_problema', type: 'select', label: 'Tipo de Problema', required: true },
@@ -218,8 +187,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_solicitacao', type: 'text', label: 'Local Solicitado', required: true },
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -234,10 +201,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'cemiterio_pretendido', type: 'select', label: 'Cemitério Pretendido', required: true },
       { name: 'tipo_sepultura', type: 'select', label: 'Tipo de Sepultura', required: true },
       { name: 'tipo_concessao', type: 'select', label: 'Tipo de Concessão', required: true },
@@ -252,11 +215,7 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'grau_parentesco', type: 'text', label: 'Grau de Parentesco com o Falecido', required: true },
-      { name: 'nome_falecido', type: 'text', label: 'Nome do Falecido', required: true },
       { name: 'cemiterio', type: 'text', label: 'Cemitério', required: true },
       { name: 'quadra_sepultura', type: 'text', label: 'Quadra/Sepultura', required: true },
       { name: 'data_falecimento', type: 'date', label: 'Data do Falecimento', required: true },
@@ -272,9 +231,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_concessionario', type: 'text', label: 'Nome do Concessionário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'cemiterio', type: 'text', label: 'Cemitério', required: true },
       { name: 'quadra_sepultura', type: 'text', label: 'Quadra/Sepultura', required: true },
       { name: 'num_concessao_anterior', type: 'text', label: 'Número da Concessão Anterior', required: true },
@@ -290,9 +246,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_feirante', type: 'text', label: 'Nome do Feirante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_residencia', type: 'text', label: 'Endereço Residencial', required: true },
       { name: 'feira_pretendida', type: 'select', label: 'Feira Pretendida', required: true },
       { name: 'tipo_produto', type: 'select', label: 'Tipo de Produto a Vender', required: true },
@@ -309,10 +262,7 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'mercado_pretendido', type: 'select', label: 'Mercado Pretendido', required: true },
       { name: 'ramo_atividade', type: 'select', label: 'Ramo de Atividade', required: true },
       { name: 'area_box_pretendida', type: 'text', label: 'Área de Box Pretendida (m²)', required: false },
@@ -328,9 +278,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_contribuinte', type: 'text', label: 'Nome do Contribuinte', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'inscricao_imobiliaria', type: 'text', label: 'Inscrição Imobiliária', required: true },
       { name: 'motivo_isencao', type: 'select', label: 'Motivo da Isenção', required: true },
@@ -346,13 +293,9 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_novo_titular', type: 'text', label: 'Nome do Novo Titular', required: true },
       { name: 'cpf_novo_titular', type: 'cpf', label: 'CPF do Novo Titular', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
-      { name: 'nome_titular_anterior', type: 'text', label: 'Nome do Titular Anterior', required: true },
       { name: 'motivo_alteracao', type: 'select', label: 'Motivo da Alteração', required: true },
     ]
   },
@@ -365,8 +308,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
       { name: 'capacidade_caixa', type: 'text', label: 'Capacidade da Caixa (litros)', required: false },
@@ -382,8 +323,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_bueiro', type: 'text', label: 'Localização do Bueiro', required: true },
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
       { name: 'tipo_problema', type: 'select', label: 'Tipo de Problema', required: true },
@@ -399,8 +338,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_caixa', type: 'text', label: 'Localização da Caixa', required: true },
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
@@ -415,8 +352,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_arvore', type: 'text', label: 'Localização da Árvore', required: true },
       { name: 'tipo_arvore', type: 'text', label: 'Tipo de Árvore (se souber)', required: false },
       { name: 'motivo_poda', type: 'select', label: 'Motivo da Poda', required: true },
@@ -432,10 +367,7 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_organizador', type: 'text', label: 'Nome do Organizador', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'tipo_evento', type: 'text', label: 'Tipo de Evento', required: true },
       { name: 'local_pretendido', type: 'select', label: 'Local Pretendido', required: true },
       { name: 'data_evento', type: 'date', label: 'Data do Evento', required: true },
@@ -453,8 +385,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_rua', type: 'text', label: 'Endereço da Rua', required: true },
       { name: 'trecho', type: 'text', label: 'Trecho (entre quais ruas)', required: false },
       { name: 'motivo', type: 'textarea', label: 'Motivo da Solicitação', required: true },
@@ -469,10 +399,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_titular', type: 'text', label: 'Nome do Titular', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'valor_total_debito', type: 'text', label: 'Valor Total do Débito', required: true },
       { name: 'num_parcelas_desejadas', type: 'number', label: 'Número de Parcelas Desejadas', required: true },
@@ -488,9 +414,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Endereço do Terreno', required: true },
       { name: 'area_terreno', type: 'text', label: 'Área do Terreno (m²)', required: true },
       { name: 'tipo_material_queimar', type: 'text', label: 'Tipo de Material a Queimar', required: true },
@@ -507,9 +430,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_feirante', type: 'text', label: 'Nome do Feirante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_permissao_atual', type: 'text', label: 'Número da Permissão Atual', required: true },
       { name: 'feira_atual', type: 'text', label: 'Feira Atual', required: true },
       { name: 'ponto_atual', type: 'text', label: 'Ponto Atual', required: true },
@@ -526,8 +446,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_representante', type: 'text', label: 'Nome do Representante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_comunidade', type: 'select', label: 'Tipo de Comunidade', required: true },
       { name: 'endereco_caixa', type: 'text', label: 'Localização da Caixa d\'Água', required: true },
       { name: 'num_familias_beneficiadas', type: 'number', label: 'Número de Famílias Beneficiadas', required: true },
@@ -543,10 +461,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'finalidade_certidao', type: 'select', label: 'Finalidade da Certidão', required: true },
@@ -561,9 +475,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_residencia', type: 'text', label: 'Endereço Residencial', required: true },
       { name: 'feira_trabalho', type: 'select', label: 'Feira onde Trabalha', required: true },
       { name: 'possui_carrinho_proprio', type: 'select', label: 'Possui Carrinho Próprio?', required: true },
@@ -579,8 +490,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_boca_lobo', type: 'text', label: 'Localização da Boca de Lobo', required: true },
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
       { name: 'nivel_obstrucao', type: 'select', label: 'Nível de Obstrução', required: true },
@@ -596,8 +505,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_solicitado', type: 'text', label: 'Local Solicitado', required: true },
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -612,9 +519,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_reclamante', type: 'text', label: 'Nome do Reclamante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'horario_atual_coleta', type: 'text', label: 'Horário Atual da Coleta', required: true },
       { name: 'problema_horario', type: 'textarea', label: 'Problema com o Horário', required: true },
       { name: 'horario_sugerido', type: 'text', label: 'Horário Sugerido', required: false },
@@ -629,8 +533,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: false },
       { name: 'motivo_analise', type: 'select', label: 'Motivo da Análise', required: true },
@@ -646,8 +548,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_denunciante', type: 'text', label: 'Nome (Opcional)', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel com Irregularidade', required: true },
       { name: 'tipo_irregularidade', type: 'select', label: 'Tipo de Irregularidade', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
@@ -662,8 +562,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_bebedouro', type: 'text', label: 'Localização do Bebedouro', required: true },
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
@@ -678,9 +576,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_representante', type: 'text', label: 'Nome do Representante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_horta', type: 'text', label: 'Nome da Horta Comunitária', required: true },
       { name: 'endereco_horta', type: 'text', label: 'Endereço da Horta', required: true },
       { name: 'num_participantes', type: 'number', label: 'Número de Participantes', required: true },
       { name: 'quantidade_necessaria', type: 'text', label: 'Quantidade Necessária (kg ou m³)', required: true },
@@ -696,12 +591,7 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco_completo', type: 'text', label: 'Endereço Completo', required: true },
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
     ]
   },
@@ -714,9 +604,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_residencia', type: 'text', label: 'Endereço Residencial', required: true },
       { name: 'tipo_veiculo', type: 'select', label: 'Tipo de Veículo de Coleta', required: true },
       { name: 'area_atuacao', type: 'text', label: 'Área de Atuação', required: true },
@@ -733,9 +620,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_comerciante', type: 'text', label: 'Nome do Comerciante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_comercio', type: 'text', label: 'Endereço do Comércio', required: true },
       { name: 'feira', type: 'select', label: 'Feira', required: true },
       { name: 'dias_semana', type: 'text', label: 'Dias da Semana', required: true },
@@ -752,9 +636,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_titular', type: 'text', label: 'Nome do Titular', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'data_inicio_suspensao', type: 'date', label: 'Data de Início da Suspensão', required: true },
@@ -771,10 +652,7 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_organizador', type: 'text', label: 'Nome do Organizador', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'tipo_desfile', type: 'select', label: 'Tipo de Desfile', required: true },
       { name: 'data_evento', type: 'date', label: 'Data do Evento', required: true },
       { name: 'horario_inicio', type: 'text', label: 'Horário de Início', required: true },
@@ -793,9 +671,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'instituicao', type: 'text', label: 'Nome da Instituição', required: true },
       { name: 'tipo_instituicao', type: 'select', label: 'Tipo de Instituição', required: true },
       { name: 'local_visita', type: 'select', label: 'Local da Visita', required: true },
@@ -814,9 +689,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_denunciante', type: 'text', label: 'Nome (Opcional)', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_orgao_publico', type: 'text', label: 'Nome do Órgão Público', required: true },
       { name: 'endereco_orgao', type: 'text', label: 'Endereço do Órgão', required: true },
       { name: 'tipo_desperdicio', type: 'select', label: 'Tipo de Desperdício', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição Detalhada', required: true },
@@ -831,11 +703,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_atual_titular', type: 'text', label: 'Nome do Atual Titular', required: true },
       { name: 'cpf_atual_titular', type: 'cpf', label: 'CPF do Atual Titular', required: true },
-      { name: 'nome_novo_titular', type: 'text', label: 'Nome do Novo Titular', required: true },
       { name: 'cpf_novo_titular', type: 'cpf', label: 'CPF do Novo Titular', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'cemiterio', type: 'text', label: 'Cemitério', required: true },
       { name: 'quadra_jazigo', type: 'text', label: 'Quadra/Jazigo', required: true },
       { name: 'num_concessao', type: 'text', label: 'Número da Concessão', required: true },
@@ -851,8 +720,6 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     estimatedDays: 2,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_abastecimento', type: 'text', label: 'Endereço para Abastecimento', required: true },
       { name: 'tipo_solicitante', type: 'select', label: 'Tipo de Solicitante', required: true },
       { name: 'motivo_solicitacao', type: 'select', label: 'Motivo da Solicitação', required: true },

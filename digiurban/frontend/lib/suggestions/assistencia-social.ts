@@ -10,12 +10,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável Familiar', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'rg', type: 'text', label: 'RG', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco_completo', type: 'text', label: 'Endereço Completo', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar Mensal (R$)', required: true },
     ]
@@ -29,10 +24,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço para Entrega', required: true },
       { name: 'num_pessoas_familia', type: 'number', label: 'Número de Pessoas na Família', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'situacao_vulnerabilidade', type: 'textarea', label: 'Descrição da Situação de Vulnerabilidade', required: true },
@@ -47,10 +38,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_beneficiario', type: 'text', label: 'Nome do Beneficiário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_beneficio', type: 'select', label: 'Tipo de Benefício', required: true },
       { name: 'possui_deficiencia', type: 'checkbox', label: 'Possui Deficiência', required: false },
       { name: 'idoso_65_mais', type: 'checkbox', label: 'Idoso com 65 anos ou mais', required: false },
@@ -66,10 +54,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_beneficiario', type: 'text', label: 'Nome do Beneficiário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_deficiencia', type: 'select', label: 'Tipo de Deficiência', required: true },
       { name: 'laudo_medico', type: 'checkbox', label: 'Anexar Laudo Médico', required: true },
       { name: 'necessita_acompanhante', type: 'checkbox', label: 'Necessita Acompanhante', required: false },
@@ -84,9 +69,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_atual', type: 'text', label: 'Endereço Atual', required: true },
       { name: 'valor_aluguel', type: 'number', label: 'Valor do Aluguel (R$)', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -103,9 +85,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_paciente', type: 'text', label: 'Nome do Paciente', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'motivo_atendimento', type: 'textarea', label: 'Motivo do Atendimento', required: true },
       { name: 'cras_referencia', type: 'select', label: 'CRAS de Referência', required: true },
@@ -121,11 +100,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável Familiar', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco_completo', type: 'text', label: 'Endereço Completo', required: true },
       { name: 'num_membros_familia', type: 'number', label: 'Número de Membros da Família', required: true },
       { name: 'renda_total', type: 'number', label: 'Renda Total Familiar (R$)', required: true },
     ]
@@ -139,12 +114,9 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 2,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_acolhido', type: 'text', label: 'Nome da Pessoa a ser Acolhida', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'tipo_acolhimento', type: 'select', label: 'Tipo de Acolhimento', required: true },
       { name: 'motivo', type: 'textarea', label: 'Motivo do Acolhimento', required: true },
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone para Contato', required: true },
       { name: 'situacao_emergencia', type: 'checkbox', label: 'Situação de Emergência', required: false },
     ]
   },
@@ -157,12 +129,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_crianca', type: 'text', label: 'Nome da Criança', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'cadastro_unico', type: 'checkbox', label: 'Possui Cadastro Único', required: true },
     ]
   },
@@ -175,9 +142,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_vitima', type: 'text', label: 'Nome da Vítima (opcional)', required: false },
       { name: 'idade', type: 'number', label: 'Idade', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone para Contato', required: true },
       { name: 'tipo_violacao', type: 'select', label: 'Tipo de Violação', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
       { name: 'anonimo', type: 'checkbox', label: 'Denúncia Anônima', required: false },
@@ -193,11 +158,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_mae', type: 'text', label: 'Nome da Mãe', required: true },
       { name: 'cpf_mae', type: 'cpf', label: 'CPF da Mãe', required: true },
       { name: 'data_nascimento_bebe', type: 'date', label: 'Data de Nascimento do Bebê', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
   },
@@ -210,12 +172,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_falecido', type: 'text', label: 'Nome do Falecido', required: true },
       { name: 'data_obito', type: 'date', label: 'Data do Óbito', required: true },
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf_solicitante', type: 'cpf', label: 'CPF do Solicitante', required: true },
       { name: 'parentesco', type: 'select', label: 'Parentesco com o Falecido', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
   },
@@ -228,10 +186,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -246,11 +201,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_idoso', type: 'text', label: 'Nome do Idoso', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'atividades_interesse', type: 'textarea', label: 'Atividades de Interesse', required: false },
       { name: 'restricao_saude', type: 'textarea', label: 'Restrições de Saúde', required: false },
     ]
@@ -264,9 +215,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_pessoas', type: 'number', label: 'Número de Pessoas', required: true },
       { name: 'tem_criancas', type: 'checkbox', label: 'Há Crianças no Grupo', required: false },
       { name: 'tem_idosos', type: 'checkbox', label: 'Há Idosos no Grupo', required: false },
@@ -282,8 +230,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_vitima', type: 'text', label: 'Nome da Vítima (opcional)', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone para Contato', required: true },
       { name: 'tipo_violencia', type: 'select', label: 'Tipo de Violência', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
       { name: 'tem_criancas', type: 'checkbox', label: 'Há Crianças Envolvidas', required: false },
@@ -300,9 +246,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_titular', type: 'text', label: 'Nome do Titular', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'numero_instalacao', type: 'text', label: 'Número da Instalação (Conta de Luz)', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
@@ -318,9 +261,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'estado_civil', type: 'select', label: 'Estado Civil', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
@@ -336,9 +276,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'motivo_atendimento', type: 'textarea', label: 'Motivo do Atendimento', required: true },
       { name: 'cras_preferencia', type: 'select', label: 'CRAS de Preferência', required: true },
       { name: 'urgente', type: 'checkbox', label: 'Situação Urgente', required: false },
@@ -353,10 +290,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'num_criancas_0_6', type: 'number', label: 'Crianças de 0 a 6 anos', required: true },
       { name: 'gestante', type: 'checkbox', label: 'Há Gestante na Família', required: false },
       { name: 'renda_per_capita', type: 'number', label: 'Renda Per Capita (R$)', required: true },
@@ -371,10 +304,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'num_pessoas_familia', type: 'number', label: 'Número de Pessoas na Família', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
@@ -388,10 +317,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço Completo', required: true },
       { name: 'estado_civil', type: 'select', label: 'Estado Civil', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -407,10 +332,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_adolescente', type: 'text', label: 'Nome do Adolescente', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'turno_escola', type: 'select', label: 'Turno da Escola', required: true },
@@ -425,10 +347,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'situacao_vulnerabilidade', type: 'textarea', label: 'Descrição da Situação', required: true },
       { name: 'num_pessoas_afetadas', type: 'number', label: 'Número de Pessoas Afetadas', required: true },
       { name: 'renda_atual', type: 'number', label: 'Renda Atual (R$)', required: true },
@@ -443,9 +361,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
       { name: 'data_necessidade', type: 'date', label: 'Data da Necessidade', required: true },
       { name: 'horario', type: 'text', label: 'Horário', required: true },
@@ -461,9 +376,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'documento_solicitado', type: 'select', label: 'Documento a Solicitar', required: true },
       { name: 'primeira_via', type: 'checkbox', label: 'Primeira Via', required: false },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: false },
@@ -478,9 +391,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'concurso_prova', type: 'text', label: 'Concurso/Prova', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
@@ -495,12 +405,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_crianca', type: 'text', label: 'Nome da Criança', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf_responsavel', type: 'cpf', label: 'CPF do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'turno_disponivel', type: 'select', label: 'Turno Disponível', required: true },
     ]
   },
@@ -513,11 +418,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_adolescente', type: 'text', label: 'Nome do Adolescente', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'atividades_interesse', type: 'textarea', label: 'Atividades de Interesse', required: false },
     ]
@@ -531,9 +432,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_trabalhador', type: 'text', label: 'Nome do Trabalhador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_residencia', type: 'text', label: 'Endereço de Residência', required: true },
       { name: 'endereco_trabalho', type: 'text', label: 'Endereço do Trabalho', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -549,9 +447,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_artesao', type: 'text', label: 'Nome do Artesão', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_artesanato', type: 'select', label: 'Tipo de Artesanato', required: true },
       { name: 'tempo_atuacao', type: 'number', label: 'Tempo de Atuação (anos)', required: false },
       { name: 'interesse_cooperativa', type: 'checkbox', label: 'Interesse em Cooperativa', required: false },
@@ -566,8 +461,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_conflito', type: 'select', label: 'Tipo de Conflito', required: true },
       { name: 'descricao_breve', type: 'textarea', label: 'Descrição Breve', required: true },
       { name: 'num_envolvidos', type: 'number', label: 'Número de Pessoas Envolvidas', required: false },
@@ -582,10 +475,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'experiencia_profissional', type: 'textarea', label: 'Experiência Profissional', required: false },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
@@ -600,10 +490,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'experiencia_anterior', type: 'checkbox', label: 'Possui Experiência Anterior', required: false },
       { name: 'disponibilidade', type: 'select', label: 'Disponibilidade de Horário', required: true },
@@ -621,7 +508,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_animal', type: 'select', label: 'Tipo de Animal', required: true },
       { name: 'local_ocorrencia', type: 'text', label: 'Local da Ocorrência', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
-      { name: 'telefone_contato', type: 'tel', label: 'Telefone para Contato', required: false },
       { name: 'denuncia_anonima', type: 'checkbox', label: 'Denúncia Anônima', required: false },
     ]
   },
@@ -634,9 +520,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_direito', type: 'select', label: 'Área do Direito', required: true },
       { name: 'descricao_caso', type: 'textarea', label: 'Descrição do Caso', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -651,11 +534,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_pescador', type: 'text', label: 'Nome do Pescador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'rg_pescador', type: 'text', label: 'RG de Pescador Profissional', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'colonia_pescadores', type: 'text', label: 'Colônia de Pescadores', required: false },
     ]
   },
@@ -668,10 +547,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_sanguineo', type: 'select', label: 'Tipo Sanguíneo', required: false },
       { name: 'peso', type: 'number', label: 'Peso (kg)', required: true },
       { name: 'ja_doou_antes', type: 'checkbox', label: 'Já Doou Antes', required: false },
@@ -686,9 +562,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_terreno', type: 'number', label: 'Área do Terreno (m²)', required: true },
       { name: 'possui_poco', type: 'checkbox', label: 'Possui Poço', required: false },
@@ -704,9 +577,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_gestante', type: 'text', label: 'Nome da Gestante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_prevista_parto', type: 'date', label: 'Data Prevista do Parto', required: true },
       { name: 'primeira_gestacao', type: 'checkbox', label: 'Primeira Gestação', required: false },
       { name: 'cras_referencia', type: 'select', label: 'CRAS de Referência', required: true },
@@ -721,10 +591,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento em Informática', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -739,9 +606,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_oficina', type: 'select', label: 'Tipo de Oficina', required: true },
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -756,12 +620,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_mae', type: 'text', label: 'Nome da Mãe', required: true },
       { name: 'cpf_mae', type: 'cpf', label: 'CPF da Mãe', required: true },
-      { name: 'nome_crianca', type: 'text', label: 'Nome da Criança', required: true },
       { name: 'data_nascimento_crianca', type: 'date', label: 'Data de Nascimento da Criança', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_suposto_pai', type: 'text', label: 'Nome do Suposto Pai', required: false },
     ]
   },
   {
@@ -773,10 +633,7 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'data_saida', type: 'date', label: 'Data de Saída do Sistema', required: true },
       { name: 'tem_familia', type: 'checkbox', label: 'Possui Família de Referência', required: false },
       { name: 'necessidades', type: 'textarea', label: 'Necessidades Principais', required: true },
@@ -791,13 +648,10 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_crianca', type: 'text', label: 'Nome da Criança', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'caracteristicas', type: 'textarea', label: 'Características Físicas', required: true },
       { name: 'local_desaparecimento', type: 'text', label: 'Local do Desaparecimento', required: true },
       { name: 'data_desaparecimento', type: 'date', label: 'Data do Desaparecimento', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone para Contato', required: true },
     ]
   },
   {
@@ -809,9 +663,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_estudante', type: 'text', label: 'Nome do Estudante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'instituicao', type: 'text', label: 'Instituição de Ensino', required: true },
       { name: 'curso', type: 'text', label: 'Curso', required: true },
       { name: 'semestre', type: 'number', label: 'Semestre Atual', required: true },
@@ -828,10 +679,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco_completo', type: 'text', label: 'Endereço Completo', required: true },
       { name: 'tempo_residencia', type: 'text', label: 'Tempo de Residência no Endereço', required: true },
       { name: 'finalidade', type: 'text', label: 'Finalidade do Atestado', required: true },
     ]

@@ -10,9 +10,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
       { name: 'tipo_obra', type: 'select', label: 'Tipo de Obra', required: true },
       { name: 'area_construir', type: 'number', label: 'Área a Construir (m²)', required: true },
@@ -29,9 +27,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: false },
       { name: 'finalidade_certidao', type: 'select', label: 'Finalidade da Certidão', required: true },
@@ -46,10 +42,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_empreendedor', type: 'text', label: 'Nome do Empreendedor', required: true },
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'area_gleba', type: 'number', label: 'Área da Gleba (m²)', required: true },
       { name: 'num_lotes', type: 'number', label: 'Número de Lotes Projetados', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
@@ -64,9 +57,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
       { name: 'num_alvara', type: 'text', label: 'Número do Alvará de Construção', required: true },
       { name: 'data_conclusao', type: 'date', label: 'Data de Conclusão da Obra', required: true },
@@ -82,9 +73,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Endereço do Terreno', required: true },
       { name: 'area_total', type: 'number', label: 'Área Total (m²)', required: true },
       { name: 'num_lotes_resultantes', type: 'number', label: 'Número de Lotes Resultantes', required: true },
@@ -100,9 +89,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_lotes', type: 'text', label: 'Endereço dos Lotes', required: true },
       { name: 'num_lotes_unificar', type: 'number', label: 'Número de Lotes a Unificar', required: true },
       { name: 'area_total_resultante', type: 'number', label: 'Área Total Resultante (m²)', required: true },
@@ -117,9 +104,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_interessado', type: 'text', label: 'Nome do Interessado', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Endereço do Terreno', required: true },
       { name: 'tipo_empreendimento', type: 'select', label: 'Tipo de Empreendimento', required: true },
       { name: 'area_terreno', type: 'number', label: 'Área do Terreno (m²)', required: true },
@@ -135,9 +120,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_demolicao', type: 'select', label: 'Tipo de Demolição', required: true },
       { name: 'motivo_demolicao', type: 'textarea', label: 'Motivo da Demolição', required: true },
@@ -153,9 +136,6 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel (sem número)', required: true },
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
       { name: 'possui_habite_se', type: 'select', label: 'Possui Habite-se?', required: true },
@@ -170,9 +150,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Endereço do Terreno', required: true },
       { name: 'area_terreno', type: 'number', label: 'Área do Terreno (m²)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
@@ -187,9 +165,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
       { name: 'tipo_projeto', type: 'select', label: 'Tipo de Projeto', required: true },
       { name: 'area_construir', type: 'number', label: 'Área a Construir (m²)', required: true },
@@ -207,9 +183,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_processo_original', type: 'text', label: 'Número do Processo Original', required: true },
       { name: 'descricao_alteracoes', type: 'textarea', label: 'Descrição das Alterações', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
@@ -224,9 +198,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_irregularidade', type: 'select', label: 'Tipo de Irregularidade', required: true },
       { name: 'area_irregular', type: 'number', label: 'Área Irregular (m²)', required: true },
@@ -243,9 +215,6 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_interessado', type: 'text', label: 'Nome do Interessado', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'endereco_consulta', type: 'text', label: 'Endereço para Consulta', required: true },
       { name: 'finalidade_consulta', type: 'textarea', label: 'Finalidade da Consulta', required: true },
     ]
@@ -259,9 +228,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'inscricao_municipal', type: 'text', label: 'Inscrição Municipal (se souber)', required: false },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
@@ -276,9 +243,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'razao_social', type: 'text', label: 'Razão Social', required: true },
       { name: 'endereco_estabelecimento', type: 'text', label: 'Endereço do Estabelecimento', required: true },
       { name: 'atividade_principal', type: 'select', label: 'Atividade Principal', required: true },
@@ -295,9 +260,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_reforma', type: 'select', label: 'Tipo de Reforma', required: true },
       { name: 'area_reforma', type: 'number', label: 'Área da Reforma (m²)', required: true },
@@ -314,9 +277,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Endereço do Terreno', required: true },
       { name: 'volume_movimentacao', type: 'number', label: 'Volume de Movimentação (m³)', required: true },
       { name: 'tipo_movimento', type: 'select', label: 'Tipo de Movimento', required: true },
@@ -332,9 +293,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_instalacao', type: 'text', label: 'Endereço da Instalação', required: true },
       { name: 'tipo_publicidade', type: 'select', label: 'Tipo de Publicidade', required: true },
       { name: 'dimensoes', type: 'text', label: 'Dimensões (LxAxP)', required: true },
@@ -350,9 +309,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'motivo_baixa', type: 'select', label: 'Motivo da Baixa', required: true },
       { name: 'possui_demolicao', type: 'select', label: 'Possui Alvará de Demolição?', required: true },
@@ -367,9 +324,6 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_interessado', type: 'text', label: 'Nome do Interessado', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'assunto_consulta', type: 'textarea', label: 'Assunto da Consulta', required: true },
       { name: 'area_interesse', type: 'text', label: 'Área de Interesse (se aplicável)', required: false },
     ]
@@ -383,9 +337,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_cadastrada', type: 'number', label: 'Área Cadastrada Atualmente (m²)', required: true },
       { name: 'area_real', type: 'number', label: 'Área Real Medida (m²)', required: true },
@@ -401,9 +353,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'matricula_origem', type: 'text', label: 'Matrícula de Origem', required: true },
       { name: 'num_lotes_resultantes', type: 'number', label: 'Número de Lotes Resultantes', required: true },
@@ -418,9 +368,6 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_lote', type: 'text', label: 'Endereço do Lote', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
@@ -434,10 +381,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_empreendedor', type: 'text', label: 'Nome do Empreendedor', required: true },
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'area_total', type: 'number', label: 'Área Total (m²)', required: true },
       { name: 'num_unidades', type: 'number', label: 'Número de Unidades', required: true },
       { name: 'tipo_condominio', type: 'select', label: 'Tipo de Condomínio', required: true },
@@ -453,9 +397,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 25,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_existente', type: 'number', label: 'Área Existente (m²)', required: true },
       { name: 'area_ampliar', type: 'number', label: 'Área a Ampliar (m²)', required: true },
@@ -472,9 +414,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_perfuracao', type: 'text', label: 'Endereço da Perfuração', required: true },
       { name: 'finalidade_uso', type: 'select', label: 'Finalidade do Uso', required: true },
       { name: 'profundidade_prevista', type: 'number', label: 'Profundidade Prevista (metros)', required: true },
@@ -489,10 +429,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_loteamento', type: 'text', label: 'Nome do Loteamento', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
   },
@@ -505,11 +442,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_cedente', type: 'text', label: 'Nome do Cedente', required: true },
       { name: 'cpf_cnpj_cedente', type: 'text', label: 'CPF/CNPJ Cedente', required: true },
-      { name: 'nome_cessionario', type: 'text', label: 'Nome do Cessionário', required: true },
       { name: 'cpf_cnpj_cessionario', type: 'text', label: 'CPF/CNPJ Cessionário', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'imovel_cedente', type: 'text', label: 'Endereço Imóvel Cedente', required: true },
       { name: 'imovel_receptor', type: 'text', label: 'Endereço Imóvel Receptor', required: true },
       { name: 'area_transferir', type: 'number', label: 'Área a Transferir (m²)', required: true },
@@ -524,9 +458,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_edificacao', type: 'text', label: 'Endereço da Edificação', required: true },
       { name: 'motivo_baixa', type: 'select', label: 'Motivo da Baixa', required: true },
       { name: 'data_demolicao', type: 'date', label: 'Data da Demolição', required: false },
@@ -541,9 +473,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_ocupacao', type: 'text', label: 'Endereço da Ocupação', required: true },
       { name: 'finalidade_ocupacao', type: 'select', label: 'Finalidade da Ocupação', required: true },
       { name: 'data_inicio', type: 'date', label: 'Data de Início', required: true },
@@ -560,9 +490,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'lotes_rememorar', type: 'textarea', label: 'Identificação dos Lotes a Remembrar', required: true },
       { name: 'area_total_resultante', type: 'number', label: 'Área Total Resultante (m²)', required: true },
     ]
@@ -576,9 +504,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
@@ -592,10 +518,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_adicional', type: 'number', label: 'Área Adicional Solicitada (m²)', required: true },
       { name: 'finalidade_uso', type: 'select', label: 'Finalidade do Uso', required: true },
@@ -610,9 +533,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_lote', type: 'text', label: 'Endereço do Lote', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
@@ -626,9 +547,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
       { name: 'num_pavimentos', type: 'number', label: 'Número de Pavimentos', required: true },
       { name: 'num_vagas', type: 'number', label: 'Número de Vagas', required: true },
@@ -645,10 +564,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_empresa', type: 'text', label: 'Nome da Empresa', required: true },
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'endereco_instalacao', type: 'text', label: 'Endereço da Instalação', required: true },
       { name: 'tipo_antena', type: 'select', label: 'Tipo de Antena/Torre', required: true },
       { name: 'altura_estrutura', type: 'number', label: 'Altura da Estrutura (metros)', required: true },
@@ -664,11 +580,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_lote', type: 'text', label: 'Endereço do Lote', required: true },
-      { name: 'nome_loteamento', type: 'text', label: 'Nome do Loteamento', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
   },
@@ -681,9 +593,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_mezanino', type: 'number', label: 'Área do Mezanino (m²)', required: true },
       { name: 'pe_direito', type: 'number', label: 'Pé-Direito (metros)', required: true },
@@ -700,8 +610,6 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
       { name: 'extensao_tapume', type: 'number', label: 'Extensão do Tapume (metros)', required: true },
       { name: 'num_alvara', type: 'text', label: 'Número do Alvará de Construção', required: false },
@@ -717,9 +625,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
       { name: 'num_alvara_original', type: 'text', label: 'Número do Alvará Original', required: true },
       { name: 'percentual_executado', type: 'number', label: 'Percentual Executado (%)', required: true },
@@ -735,10 +641,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_artista', type: 'text', label: 'Nome do Artista/Responsável', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local da Instalação', required: true },
       { name: 'tipo_obra', type: 'select', label: 'Tipo de Obra', required: true },
       { name: 'dimensoes_obra', type: 'text', label: 'Dimensões da Obra', required: true },
@@ -754,9 +657,6 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_ocupacao', type: 'text', label: 'Endereço da Ocupação', required: true },
       { name: 'tempo_ocupacao', type: 'number', label: 'Tempo de Ocupação (anos)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade da Certidão', required: true },
@@ -771,9 +671,6 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_piscina', type: 'select', label: 'Tipo de Piscina', required: true },
       { name: 'dimensoes', type: 'text', label: 'Dimensões (CxLxP)', required: true },
@@ -789,9 +686,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
@@ -805,8 +700,6 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
       { name: 'altura_andaime', type: 'number', label: 'Altura do Andaime (metros)', required: true },
       { name: 'area_ocupacao_calcada', type: 'number', label: 'Área de Ocupação da Calçada (m²)', required: true },
@@ -822,9 +715,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'area_construida', type: 'number', label: 'Área Construída (m²)', required: true },

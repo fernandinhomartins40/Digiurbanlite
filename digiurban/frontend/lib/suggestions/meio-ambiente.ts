@@ -10,9 +10,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_atividade', type: 'select', label: 'Tipo de Atividade', required: true },
       { name: 'area_atividade', type: 'number', label: 'Área da Atividade (m²)', required: true },
       { name: 'endereco_atividade', type: 'text', label: 'Endereço da Atividade', required: true },
@@ -28,9 +26,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_arvore', type: 'text', label: 'Endereço da Árvore', required: true },
       { name: 'motivo_poda', type: 'select', label: 'Motivo da Poda', required: true },
       { name: 'tipo_arvore', type: 'text', label: 'Tipo/Espécie da Árvore (se souber)', required: false },
@@ -46,8 +41,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_denunciante', type: 'text', label: 'Nome do Denunciante (opcional)', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone para Contato', required: true },
       { name: 'tipo_denuncia', type: 'select', label: 'Tipo de Infração', required: true },
       { name: 'local_ocorrencia', type: 'text', label: 'Local da Ocorrência', required: true },
       { name: 'data_ocorrencia', type: 'date', label: 'Data da Ocorrência', required: true },
@@ -64,9 +57,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_residencia', type: 'text', label: 'Endereço Residencial', required: true },
       { name: 'tipo_residencia', type: 'select', label: 'Tipo de Residência', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
@@ -82,9 +72,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_residuo', type: 'select', label: 'Tipo de Resíduo', required: true },
       { name: 'volume_estimado', type: 'number', label: 'Volume Estimado (m³)', required: true },
       { name: 'endereco_origem', type: 'text', label: 'Endereço de Origem', required: true },
@@ -100,9 +88,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_plantio', type: 'text', label: 'Endereço para Plantio', required: true },
       { name: 'largura_calcada', type: 'number', label: 'Largura da Calçada (metros)', required: true },
       { name: 'possui_fiacao', type: 'select', label: 'Possui Fiação Aérea?', required: true },
@@ -118,9 +103,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_propriedade', type: 'number', label: 'Área da Propriedade (hectares)', required: true },
       { name: 'area_queima', type: 'number', label: 'Área para Queima (hectares)', required: true },
       { name: 'finalidade_queima', type: 'select', label: 'Finalidade da Queima', required: true },
@@ -137,9 +120,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_propriedade', type: 'number', label: 'Área da Propriedade (hectares)', required: true },
       { name: 'num_nascentes', type: 'number', label: 'Número de Nascentes', required: true },
       { name: 'estado_nascentes', type: 'select', label: 'Estado das Nascentes', required: true },
@@ -156,9 +136,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_entrega', type: 'text', label: 'Endereço para Entrega', required: true },
       { name: 'tipo_residencia', type: 'select', label: 'Tipo de Residência', required: true },
       { name: 'tem_quintal', type: 'select', label: 'Possui Quintal?', required: true },
@@ -174,10 +151,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
       { name: 'instituicao', type: 'text', label: 'Instituição/Escola', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'tema_interesse', type: 'select', label: 'Tema de Interesse', required: true },
       { name: 'publico_alvo', type: 'select', label: 'Público-Alvo', required: true },
       { name: 'num_participantes', type: 'number', label: 'Número de Participantes', required: true },
@@ -193,9 +167,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_arvore', type: 'text', label: 'Endereço da Árvore', required: true },
       { name: 'especie_arvore', type: 'text', label: 'Espécie da Árvore', required: true },
       { name: 'dap', type: 'number', label: 'DAP - Diâmetro (cm)', required: false },
@@ -212,8 +184,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_denunciante', type: 'text', label: 'Nome (opcional)', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_ocorrencia', type: 'text', label: 'Endereço da Ocorrência', required: true },
       { name: 'tipo_estabelecimento', type: 'select', label: 'Tipo de Estabelecimento', required: true },
       { name: 'horario_barulho', type: 'text', label: 'Horário do Barulho', required: true },
@@ -230,9 +200,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_captacao', type: 'select', label: 'Tipo de Captação', required: true },
       { name: 'finalidade_uso', type: 'select', label: 'Finalidade do Uso', required: true },
       { name: 'vazao_pretendida', type: 'number', label: 'Vazão Pretendida (m³/h)', required: true },
@@ -248,9 +216,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_perfuracao', type: 'text', label: 'Endereço da Perfuração', required: true },
       { name: 'finalidade_uso', type: 'select', label: 'Finalidade do Uso', required: true },
       { name: 'profundidade_estimada', type: 'number', label: 'Profundidade Estimada (metros)', required: true },
@@ -266,9 +232,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_propriedade', type: 'number', label: 'Área Total da Propriedade (hectares)', required: true },
       { name: 'area_app', type: 'number', label: 'Área de APP (hectares)', required: true },
       { name: 'tipo_app', type: 'select', label: 'Tipo de APP', required: true },
@@ -284,9 +248,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_propriedade', type: 'number', label: 'Área Total (hectares)', required: true },
       { name: 'area_reserva', type: 'number', label: 'Área de Reserva Legal (hectares)', required: true },
       { name: 'percentual_reserva', type: 'number', label: 'Percentual de Reserva (%)', required: true },
@@ -302,10 +264,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'local_sugerido', type: 'text', label: 'Local Sugerido', required: true },
       { name: 'num_familias_beneficiadas', type: 'number', label: 'Famílias Beneficiadas (estimativa)', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -320,9 +278,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'quantidade_estimada', type: 'select', label: 'Quantidade Estimada', required: true },
       { name: 'frequencia_descarte', type: 'select', label: 'Frequência de Descarte', required: true },
     ]
@@ -336,8 +291,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_coleta', type: 'text', label: 'Endereço para Coleta', required: true },
       { name: 'tipo_equipamento', type: 'select', label: 'Tipo de Equipamento', required: true },
       { name: 'quantidade_itens', type: 'number', label: 'Quantidade de Itens', required: true },
@@ -353,10 +306,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'experiencia_cultivo', type: 'select', label: 'Experiência com Cultivo', required: false },
       { name: 'disponibilidade_horas', type: 'number', label: 'Disponibilidade (horas/semana)', required: true },
       { name: 'interesse_organico', type: 'select', label: 'Interesse em Cultivo Orgânico', required: true },
@@ -371,9 +320,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_inspecao', type: 'text', label: 'Endereço para Inspeção', required: true },
       { name: 'motivo_inspecao', type: 'select', label: 'Motivo da Inspeção', required: true },
       { name: 'descricao_solicitacao', type: 'textarea', label: 'Descrição da Solicitação', required: true },
@@ -388,8 +335,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_animal', type: 'text', label: 'Localização do Animal', required: true },
       { name: 'tipo_animal', type: 'select', label: 'Tipo de Animal', required: true },
       { name: 'condicao_animal', type: 'select', label: 'Condição do Animal', required: true },
@@ -406,8 +351,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_local', type: 'text', label: 'Endereço do Local', required: true },
       { name: 'tipo_praga', type: 'select', label: 'Tipo de Praga', required: true },
       { name: 'nivel_infestacao', type: 'select', label: 'Nível de Infestação', required: true },
@@ -423,8 +366,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Endereço do Terreno', required: true },
       { name: 'area_estimada', type: 'number', label: 'Área Estimada (m²)', required: false },
       { name: 'situacao_terreno', type: 'select', label: 'Situação do Terreno', required: true },
@@ -440,9 +381,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_atividade', type: 'select', label: 'Tipo de Atividade', required: true },
       { name: 'endereco_atividade', type: 'text', label: 'Endereço da Atividade', required: true },
       { name: 'descricao_atividade', type: 'textarea', label: 'Descrição da Atividade', required: true },
@@ -457,9 +396,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_plantio', type: 'text', label: 'Endereço do Plantio', required: true },
       { name: 'quantidade_mudas', type: 'number', label: 'Quantidade de Mudas', required: true },
       { name: 'tipo_area', type: 'select', label: 'Tipo de Área', required: true },
@@ -475,10 +411,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'instituicao', type: 'text', label: 'Instituição/Escola', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'num_visitantes', type: 'number', label: 'Número de Visitantes', required: true },
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'data_preferencia', type: 'date', label: 'Data de Preferência', required: true },
@@ -493,9 +426,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_poco', type: 'text', label: 'Endereço do Poço', required: true },
       { name: 'tipo_poco', type: 'select', label: 'Tipo de Poço', required: true },
       { name: 'finalidade_agua', type: 'select', label: 'Finalidade da Água', required: true },
@@ -511,10 +441,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'finalidade_mudas', type: 'select', label: 'Finalidade das Mudas', required: true },
       { name: 'area_plantio', type: 'number', label: 'Área de Plantio (m²)', required: true },
     ]
@@ -528,10 +454,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_propriedade', type: 'text', label: 'Nome da Propriedade', required: true },
       { name: 'area_total', type: 'number', label: 'Área Total (hectares)', required: true },
       { name: 'possui_matricula', type: 'select', label: 'Possui Matrícula do Imóvel?', required: true },
       { name: 'possui_geo', type: 'select', label: 'Possui Georreferenciamento?', required: true },
@@ -546,10 +469,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'disponibilidade', type: 'textarea', label: 'Disponibilidade', required: true },
@@ -564,9 +483,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_atividade', type: 'select', label: 'Tipo de Atividade', required: true },
       { name: 'area_atividade', type: 'number', label: 'Área da Atividade (hectares)', required: true },
       { name: 'compromissos', type: 'textarea', label: 'Compromissos a Serem Assumidos', required: true },
@@ -581,8 +498,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_denunciante', type: 'text', label: 'Nome (opcional)', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_ocorrencia', type: 'text', label: 'Local da Ocorrência', required: true },
       { name: 'tipo_animal', type: 'select', label: 'Tipo de Animal', required: true },
       { name: 'tipo_maus_tratos', type: 'select', label: 'Tipo de Maus-Tratos', required: true },
@@ -599,9 +514,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_degradada', type: 'number', label: 'Área Degradada (hectares)', required: true },
       { name: 'tipo_degradacao', type: 'select', label: 'Tipo de Degradação', required: true },
       { name: 'metodologia', type: 'textarea', label: 'Metodologia de Recuperação', required: true },
@@ -617,8 +530,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_denunciante', type: 'text', label: 'Nome (opcional)', required: false },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_ocorrencia', type: 'text', label: 'Endereço da Ocorrência', required: true },
       { name: 'tipo_animal', type: 'select', label: 'Tipo de Animal', required: true },
       { name: 'quantidade_estimada', type: 'number', label: 'Quantidade Estimada', required: false },
@@ -634,9 +545,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_interessado', type: 'text', label: 'Nome do Interessado', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
       { name: 'consumo_medio', type: 'number', label: 'Consumo Médio Mensal (kWh)', required: true },
       { name: 'area_telhado', type: 'number', label: 'Área Disponível no Telhado (m²)', required: false },
@@ -652,9 +561,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_empresa', type: 'text', label: 'Nome da Empresa', required: true },
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_empreendimento', type: 'select', label: 'Tipo de Empreendimento', required: true },
       { name: 'area_impactada', type: 'number', label: 'Área Impactada (hectares)', required: true },
       { name: 'tipo_compensacao', type: 'select', label: 'Tipo de Compensação', required: true },
@@ -670,9 +577,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável Técnico', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'registro_profissional', type: 'text', label: 'Registro Profissional', required: true },
       { name: 'especies_alvo', type: 'textarea', label: 'Espécies-Alvo', required: true },
       { name: 'tipo_manejo', type: 'select', label: 'Tipo de Manejo', required: true },
@@ -688,8 +592,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_monitoramento', type: 'text', label: 'Endereço para Monitoramento', required: true },
       { name: 'motivo_solicitacao', type: 'select', label: 'Motivo da Solicitação', required: true },
       { name: 'fonte_suspeita', type: 'text', label: 'Fonte Suspeita de Poluição', required: false },
@@ -705,9 +607,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_supressao', type: 'number', label: 'Área de Supressão (hectares)', required: true },
       { name: 'tipo_vegetacao', type: 'select', label: 'Tipo de Vegetação', required: true },
       { name: 'finalidade_supressao', type: 'select', label: 'Finalidade da Supressão', required: true },
@@ -723,9 +623,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_requerente', type: 'text', label: 'Nome do Requerente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_atividade', type: 'select', label: 'Tipo de Atividade', required: true },
       { name: 'possui_licencas', type: 'select', label: 'Possui Todas as Licenças?', required: true },
       { name: 'finalidade_certificado', type: 'select', label: 'Finalidade do Certificado', required: true },
@@ -740,10 +638,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_participante', type: 'text', label: 'Nome do Participante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'tipo_participacao', type: 'select', label: 'Tipo de Participação', required: true },
       { name: 'disponibilidade_horario', type: 'select', label: 'Disponibilidade de Horário', required: true },
       { name: 'experiencia_plantio', type: 'select', label: 'Experiência com Plantio', required: false },
@@ -758,9 +652,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_empresa', type: 'text', label: 'Nome da Empresa', required: true },
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
       { name: 'tipo_empreendimento', type: 'select', label: 'Tipo de Empreendimento', required: true },
       { name: 'area_influencia', type: 'number', label: 'Área de Influência (km²)', required: true },
@@ -776,9 +668,6 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_participante', type: 'text', label: 'Nome do Participante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'tipo_oficina', type: 'select', label: 'Tipo de Oficina', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -794,9 +683,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_empresa', type: 'text', label: 'Nome da Empresa', required: true },
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'ramo_atividade', type: 'select', label: 'Ramo de Atividade', required: true },
       { name: 'num_funcionarios', type: 'number', label: 'Número de Funcionários', required: true },
       { name: 'praticas_sustentaveis', type: 'textarea', label: 'Práticas Sustentáveis Adotadas', required: true },
@@ -812,9 +699,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_reflorestamento', type: 'number', label: 'Área de Reflorestamento (hectares)', required: true },
       { name: 'especies_nativas', type: 'textarea', label: 'Espécies Nativas Propostas', required: true },
       { name: 'densidade_plantio', type: 'number', label: 'Densidade de Plantio (mudas/hectare)', required: true },

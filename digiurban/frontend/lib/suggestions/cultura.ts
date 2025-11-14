@@ -10,10 +10,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'instrumento_interesse', type: 'select', label: 'Instrumento de Interesse', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -28,10 +25,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'estilo_danca', type: 'select', label: 'Estilo de Dança', required: true },
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -46,10 +40,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'experiencia_teatro', type: 'select', label: 'Experiência em Teatro', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -64,10 +55,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'modalidade_arte', type: 'select', label: 'Modalidade de Arte', required: true },
       { name: 'nivel_habilidade', type: 'select', label: 'Nível de Habilidade', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -82,11 +70,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_artistico', type: 'text', label: 'Nome Artístico', required: true },
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'area_atuacao', type: 'select', label: 'Área de Atuação', required: true },
       { name: 'tempo_atuacao', type: 'number', label: 'Tempo de Atuação (anos)', required: true },
       { name: 'portfolio_link', type: 'text', label: 'Link do Portfólio', required: false },
@@ -101,11 +84,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
-      { name: 'nome_grupo', type: 'text', label: 'Nome do Grupo/Organização', required: false },
       { name: 'tipo_evento', type: 'select', label: 'Tipo de Evento', required: true },
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
       { name: 'duracao_evento', type: 'text', label: 'Duração do Evento', required: true },
@@ -122,10 +100,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'tipo_espaco', type: 'select', label: 'Tipo de Espaço', required: true },
       { name: 'data_uso', type: 'date', label: 'Data de Uso', required: true },
       { name: 'horario_inicio', type: 'text', label: 'Horário de Início', required: true },
@@ -142,10 +116,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proponente', type: 'text', label: 'Nome do Proponente', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'titulo_projeto', type: 'text', label: 'Título do Projeto', required: true },
       { name: 'area_cultural', type: 'select', label: 'Área Cultural', required: true },
       { name: 'valor_solicitado', type: 'number', label: 'Valor Solicitado (R$)', required: true },
@@ -162,12 +133,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'tipo_bem', type: 'select', label: 'Tipo de Bem', required: true },
-      { name: 'nome_bem', type: 'text', label: 'Nome do Bem', required: true },
       { name: 'localizacao', type: 'text', label: 'Localização', required: true },
       { name: 'periodo_historico', type: 'text', label: 'Período Histórico', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa do Tombamento', required: true },
@@ -182,12 +148,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
-      { name: 'endereco', type: 'text', label: 'Endereço Completo', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: false },
     ]
   },
@@ -200,9 +161,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
       { name: 'tipo_visita', type: 'select', label: 'Tipo de Visita', required: true },
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
       { name: 'horario_preferencial', type: 'text', label: 'Horário Preferencial', required: true },
@@ -219,10 +177,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_artista', type: 'text', label: 'Nome do Artista/Grupo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'festival_interesse', type: 'select', label: 'Festival de Interesse', required: true },
       { name: 'modalidade_artistica', type: 'select', label: 'Modalidade Artística', required: true },
       { name: 'num_integrantes', type: 'number', label: 'Número de Integrantes', required: true },
@@ -239,11 +193,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_grupo', type: 'text', label: 'Nome do Grupo', required: true },
-      { name: 'nome_diretor', type: 'text', label: 'Nome do Diretor', required: true },
       { name: 'cpf_diretor', type: 'cpf', label: 'CPF do Diretor', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'ano_fundacao', type: 'number', label: 'Ano de Fundação', required: false },
       { name: 'num_integrantes', type: 'number', label: 'Número de Integrantes', required: true },
       { name: 'genero_teatral', type: 'select', label: 'Gênero Teatral', required: true },
@@ -258,12 +208,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_iniciativa', type: 'text', label: 'Nome da Iniciativa', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
-      { name: 'endereco_completo', type: 'text', label: 'Endereço Completo', required: true },
       { name: 'area_atuacao', type: 'select', label: 'Área de Atuação', required: true },
       { name: 'publico_atendido', type: 'number', label: 'Público Atendido (mensal)', required: false },
       { name: 'descricao_atividades', type: 'textarea', label: 'Descrição das Atividades', required: true },
@@ -278,9 +222,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'possui_camera', type: 'select', label: 'Possui Câmera Própria', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -295,9 +236,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'experiencia_previa', type: 'select', label: 'Experiência Prévia', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -312,10 +250,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'modalidade_interesse', type: 'select', label: 'Modalidade de Interesse', required: true },
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -330,10 +265,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
       { name: 'genero_interesse', type: 'select', label: 'Gênero de Interesse', required: true },
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -348,10 +279,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'graduacao_capoeira', type: 'text', label: 'Graduação (se houver)', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
@@ -365,10 +293,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
       { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'experiencia_grafite', type: 'select', label: 'Experiência com Grafite', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
@@ -382,9 +307,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_artesanato', type: 'select', label: 'Tipo de Artesanato', required: true },
       { name: 'nivel_habilidade', type: 'select', label: 'Nível de Habilidade', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -399,9 +321,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tessiture_voz', type: 'select', label: 'Tessitura de Voz', required: true },
       { name: 'experiencia_coral', type: 'select', label: 'Experiência em Coral', required: true },
       { name: 'disponibilidade_ensaios', type: 'select', label: 'Disponibilidade para Ensaios', required: true },
@@ -416,9 +335,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'instrumento', type: 'select', label: 'Instrumento', required: true },
       { name: 'tempo_experiencia', type: 'number', label: 'Tempo de Experiência (anos)', required: true },
       { name: 'disponibilidade_ensaios', type: 'select', label: 'Disponibilidade para Ensaios', required: true },
@@ -433,8 +349,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'organizacao', type: 'text', label: 'Organização/Comunidade', required: false },
       { name: 'local_exibicao', type: 'text', label: 'Local da Exibição', required: true },
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
@@ -451,10 +365,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_artista', type: 'text', label: 'Nome do Artista', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'titulo_exposicao', type: 'text', label: 'Título da Exposição', required: true },
       { name: 'tipo_arte', type: 'select', label: 'Tipo de Arte', required: true },
       { name: 'num_obras', type: 'number', label: 'Número de Obras', required: true },
@@ -471,9 +381,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'estilo_interesse', type: 'select', label: 'Estilo de Interesse', required: true },
       { name: 'nivel_desenho', type: 'select', label: 'Nível de Desenho', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -488,8 +395,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_artista', type: 'text', label: 'Nome do Artista', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_apresentacao', type: 'select', label: 'Tipo de Apresentação', required: true },
       { name: 'duracao_aprox', type: 'text', label: 'Duração Aproximada', required: true },
       { name: 'mes_interesse', type: 'select', label: 'Mês de Interesse', required: true },
@@ -505,9 +410,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'experiencia_musica', type: 'select', label: 'Experiência com Música', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -522,9 +424,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -539,10 +438,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_grupo', type: 'text', label: 'Nome do Grupo', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_manifestacao', type: 'select', label: 'Tipo de Manifestação Cultural', required: true },
       { name: 'num_integrantes', type: 'number', label: 'Número de Integrantes', required: true },
       { name: 'tempo_atuacao', type: 'number', label: 'Tempo de Atuação (anos)', required: false },
@@ -558,10 +453,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_manifestacao', type: 'text', label: 'Nome da Manifestação', required: true },
-      { name: 'nome_proponente', type: 'text', label: 'Nome do Proponente', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_manifestacao', type: 'select', label: 'Tipo de Manifestação', required: true },
       { name: 'tempo_tradicao', type: 'text', label: 'Tempo de Tradição', required: false },
       { name: 'area_abrangencia', type: 'text', label: 'Área de Abrangência', required: true },
@@ -577,9 +468,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'publico_alvo_interesse', type: 'select', label: 'Público-alvo de Interesse', required: true },
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -594,9 +482,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'experiencia_comunicacao', type: 'select', label: 'Experiência em Comunicação', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -611,9 +496,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_obra', type: 'select', label: 'Tipo de Obra', required: true },
       { name: 'descricao_obra', type: 'textarea', label: 'Descrição da Obra', required: true },
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
@@ -629,9 +511,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
@@ -645,9 +524,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'modalidade_interesse', type: 'select', label: 'Modalidade de Interesse', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
@@ -661,9 +537,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
@@ -677,9 +550,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_culinaria', type: 'select', label: 'Tipo de Culinária', required: true },
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -694,9 +564,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'software_interesse', type: 'select', label: 'Software de Interesse', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -711,10 +578,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_artista', type: 'text', label: 'Nome do Artista', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'local_proposto', type: 'text', label: 'Local Proposto', required: true },
       { name: 'tema_mural', type: 'text', label: 'Tema do Mural', required: true },
       { name: 'dimensoes_aprox', type: 'text', label: 'Dimensões Aproximadas', required: true },
@@ -730,9 +593,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_grupo', type: 'text', label: 'Nome do Grupo/Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_apresentacao', type: 'select', label: 'Tipo de Apresentação', required: true },
       { name: 'num_participantes', type: 'number', label: 'Número de Participantes', required: true },
       { name: 'necessita_espaco', type: 'select', label: 'Necessita Espaço para Ensaio', required: false },
@@ -747,10 +607,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_bloco', type: 'text', label: 'Nome do Bloco', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'ano_fundacao', type: 'number', label: 'Ano de Fundação', required: false },
       { name: 'num_integrantes', type: 'number', label: 'Número de Integrantes', required: true },
       { name: 'estilo_musical', type: 'select', label: 'Estilo Musical', required: true },
@@ -766,10 +622,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_evento', type: 'text', label: 'Nome do Evento', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_manifestacao', type: 'text', label: 'Tipo de Manifestação', required: true },
       { name: 'data_evento', type: 'date', label: 'Data do Evento', required: true },
       { name: 'publico_esperado', type: 'number', label: 'Público Esperado', required: true },
@@ -785,9 +637,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_artesao', type: 'text', label: 'Nome do Artesão', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_artesanato', type: 'select', label: 'Tipo de Artesanato', required: true },
       { name: 'tamanho_estande', type: 'select', label: 'Tamanho de Estande Desejado', required: true },
       { name: 'descricao_produtos', type: 'textarea', label: 'Descrição dos Produtos', required: true },
@@ -802,10 +651,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_organizacao', type: 'text', label: 'Nome da Organização Solicitante', required: true },
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_evento', type: 'text', label: 'Tipo de Evento', required: true },
       { name: 'data_solicitada', type: 'date', label: 'Data Solicitada', required: true },
       { name: 'local_apresentacao', type: 'text', label: 'Local da Apresentação', required: true },
@@ -821,10 +666,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_pesquisador', type: 'text', label: 'Nome do Pesquisador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'instituicao_vinculo', type: 'text', label: 'Instituição de Vínculo', required: false },
       { name: 'tema_pesquisa', type: 'text', label: 'Tema da Pesquisa', required: true },
       { name: 'periodo_interesse', type: 'text', label: 'Período de Interesse', required: false },
@@ -840,10 +681,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
       { name: 'genero_literario', type: 'select', label: 'Gênero Literário de Preferência', required: true },
       { name: 'disponibilidade_encontros', type: 'select', label: 'Disponibilidade para Encontros', required: true },
     ]
@@ -857,9 +694,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_doador', type: 'text', label: 'Nome do Doador', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
       { name: 'quantidade_livros', type: 'number', label: 'Quantidade de Livros', required: true },
       { name: 'tipo_livros', type: 'select', label: 'Tipo de Livros', required: true },
       { name: 'forma_entrega', type: 'select', label: 'Forma de Entrega', required: true },
@@ -874,9 +708,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'localizacao_lampiao', type: 'text', label: 'Localização do Lampião', required: true },
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
       { name: 'tipo_solicitacao', type: 'select', label: 'Tipo de Solicitação', required: true },

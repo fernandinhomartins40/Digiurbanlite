@@ -10,10 +10,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'situacao_moradia', type: 'select', label: 'Situação Atual de Moradia', required: true },
@@ -29,9 +25,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'estado_civil', type: 'select', label: 'Estado Civil', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
@@ -48,9 +41,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_terreno', type: 'number', label: 'Área do Terreno (m²)', required: true },
       { name: 'tempo_ocupacao', type: 'number', label: 'Tempo de Ocupação (anos)', required: true },
@@ -66,9 +56,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_atual', type: 'text', label: 'Endereço Atual', required: true },
       { name: 'valor_aluguel', type: 'number', label: 'Valor do Aluguel (R$)', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -84,9 +71,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_reforma', type: 'select', label: 'Tipo de Reforma Necessária', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -102,9 +86,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'estado_civil', type: 'select', label: 'Estado Civil', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'possui_imovel', type: 'select', label: 'Possui Outro Imóvel', required: true },
@@ -120,9 +101,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Endereço do Terreno', required: true },
       { name: 'area_terreno', type: 'number', label: 'Área do Terreno (m²)', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -138,9 +116,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 120,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_possuidor', type: 'text', label: 'Nome do Possuidor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_imovel', type: 'number', label: 'Área do Imóvel (m²)', required: true },
       { name: 'tempo_posse', type: 'number', label: 'Tempo de Posse (anos)', required: true },
@@ -156,9 +131,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_melhoria', type: 'select', label: 'Tipo de Melhoria', required: true },
       { name: 'possui_banheiro', type: 'select', label: 'Possui Banheiro', required: true },
@@ -174,9 +146,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_beneficiario', type: 'text', label: 'Nome do Beneficiário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_entrega', type: 'text', label: 'Endereço de Entrega', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -191,9 +160,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'localizacao_propriedade', type: 'text', label: 'Localização da Propriedade', required: true },
       { name: 'area_propriedade', type: 'number', label: 'Área da Propriedade (hectares)', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -209,9 +175,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno', type: 'text', label: 'Endereço do Terreno', required: true },
       { name: 'area_construir', type: 'number', label: 'Área a Construir (m²)', required: true },
       { name: 'num_comodos', type: 'number', label: 'Número de Cômodos Desejado', required: true },
@@ -227,9 +190,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_assistencia', type: 'select', label: 'Tipo de Assistência', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
@@ -244,11 +204,7 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 180,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_morador', type: 'text', label: 'Nome do Morador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_ocupacao', type: 'text', label: 'Endereço da Ocupação', required: true },
-      { name: 'nome_nucleo', type: 'text', label: 'Nome do Núcleo/Comunidade', required: false },
       { name: 'tempo_ocupacao', type: 'number', label: 'Tempo de Ocupação (anos)', required: true },
     ]
   },
@@ -261,9 +217,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_telhado', type: 'select', label: 'Tipo de Telhado', required: true },
       { name: 'conta_energia_media', type: 'number', label: 'Valor Médio Conta de Energia (R$)', required: false },
@@ -278,9 +231,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_telhado', type: 'number', label: 'Área do Telhado (m²)', required: false },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
@@ -295,9 +245,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_beneficiario', type: 'text', label: 'Nome do Beneficiário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_deficiencia', type: 'select', label: 'Tipo de Deficiência', required: true },
       { name: 'adaptacoes_necessarias', type: 'textarea', label: 'Adaptações Necessárias', required: true },
@@ -312,9 +259,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'disponibilidade_trabalho', type: 'select', label: 'Disponibilidade para Trabalho', required: true },
       { name: 'habilidade_construcao', type: 'select', label: 'Possui Habilidade em Construção', required: false },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
@@ -329,9 +273,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_atual', type: 'text', label: 'Endereço Atual', required: true },
       { name: 'area_risco', type: 'select', label: 'Tipo de Área de Risco', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
@@ -346,9 +287,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'motivo_desapropriacao', type: 'textarea', label: 'Motivo da Desapropriação', required: false },
       { name: 'tipo_compensacao', type: 'select', label: 'Tipo de Compensação Desejada', required: true },
@@ -363,9 +301,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_beneficiario', type: 'text', label: 'Nome do Beneficiário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'aldeia_comunidade', type: 'text', label: 'Aldeia/Comunidade', required: true },
       { name: 'etnia', type: 'text', label: 'Etnia', required: false },
       { name: 'num_familia', type: 'number', label: 'Número de Membros da Família', required: true },
@@ -380,9 +315,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_beneficiario', type: 'text', label: 'Nome do Beneficiário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'comunidade', type: 'text', label: 'Comunidade Quilombola', required: true },
       { name: 'possui_certidao', type: 'select', label: 'Possui Certidão Quilombola', required: false },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
@@ -397,9 +329,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'motivo_vistoria', type: 'select', label: 'Motivo da Vistoria', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: false },
@@ -414,9 +343,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'finalidade_laudo', type: 'select', label: 'Finalidade do Laudo', required: true },
     ]
@@ -430,9 +356,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_morador', type: 'text', label: 'Nome do Morador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_risco', type: 'select', label: 'Tipo de Risco Observado', required: true },
       { name: 'descricao_situacao', type: 'textarea', label: 'Descrição da Situação', required: true },
@@ -447,9 +370,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_vitima', type: 'text', label: 'Nome da Vítima', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_anterior', type: 'text', label: 'Endereço Anterior', required: true },
       { name: 'tipo_desastre', type: 'select', label: 'Tipo de Desastre', required: true },
       { name: 'num_desabrigados', type: 'number', label: 'Número de Desabrigados', required: true },
@@ -464,9 +384,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
       { name: 'conjunto_preferencia', type: 'select', label: 'Conjunto de Preferência', required: false },
@@ -482,9 +399,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_comprador', type: 'text', label: 'Nome do Comprador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'identificacao_lote', type: 'text', label: 'Identificação do Lote', required: true },
       { name: 'valor_lote', type: 'number', label: 'Valor do Lote (R$)', required: true },
       { name: 'renda_mensal', type: 'number', label: 'Renda Mensal (R$)', required: true },
@@ -500,9 +414,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'area_construida', type: 'number', label: 'Área Construída (m²)', required: true },
       { name: 'ano_construcao', type: 'number', label: 'Ano da Construção', required: true },
@@ -517,9 +428,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_possuidor', type: 'text', label: 'Nome do Possuidor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tempo_posse', type: 'number', label: 'Tempo de Posse (anos)', required: true },
       { name: 'finalidade_certidao', type: 'select', label: 'Finalidade da Certidão', required: true },
@@ -534,9 +442,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
       { name: 'situacao_moradia_atual', type: 'select', label: 'Situação de Moradia Atual', required: true },
@@ -552,9 +457,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_terreno_atual', type: 'text', label: 'Endereço do Terreno Atual', required: true },
       { name: 'area_terreno_atual', type: 'number', label: 'Área do Terreno Atual (m²)', required: true },
       { name: 'motivo_permuta', type: 'textarea', label: 'Motivo da Permuta', required: true },
@@ -569,9 +471,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'valor_imovel', type: 'number', label: 'Valor do Imóvel (R$)', required: true },
       { name: 'valor_entrada', type: 'number', label: 'Valor de Entrada (R$)', required: true },
@@ -587,9 +486,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'capacidade_pagamento', type: 'number', label: 'Capacidade de Pagamento Mensal (R$)', required: true },
@@ -604,9 +500,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_beneficiario', type: 'text', label: 'Nome do Beneficiário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_deficiencia', type: 'select', label: 'Tipo de Deficiência', required: true },
       { name: 'area_instalar', type: 'textarea', label: 'Área a Instalar', required: true },
@@ -621,9 +514,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_beneficiario', type: 'text', label: 'Nome do Beneficiário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_mobilidade', type: 'select', label: 'Tipo de Mobilidade Reduzida', required: true },
       { name: 'local_rampa', type: 'select', label: 'Local da Rampa', required: true },
@@ -638,9 +528,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
       { name: 'num_pavimentos', type: 'number', label: 'Número de Pavimentos', required: false },
@@ -655,9 +542,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'gasto_energia_mensal', type: 'number', label: 'Gasto Médio Mensal com Energia (R$)', required: false },
     ]
@@ -671,9 +555,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_morador', type: 'text', label: 'Nome do Morador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'conjunto_habitacional', type: 'select', label: 'Conjunto Habitacional', required: true },
       { name: 'area_disponivel', type: 'number', label: 'Área Disponível (m²)', required: false },
       { name: 'num_interessados', type: 'number', label: 'Número de Interessados', required: false },
@@ -688,11 +569,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_sindico', type: 'text', label: 'Nome do Síndico/Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_condominio', type: 'text', label: 'Nome do Condomínio', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'num_unidades', type: 'number', label: 'Número de Unidades', required: true },
     ]
   },
@@ -705,9 +581,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'tipo_conflito', type: 'select', label: 'Tipo de Conflito', required: true },
       { name: 'descricao_conflito', type: 'textarea', label: 'Descrição do Conflito', required: true },
@@ -722,9 +595,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'conjunto_habitacional', type: 'text', label: 'Conjunto Habitacional', required: false },
       { name: 'tempo_sindico', type: 'select', label: 'Tempo como Síndico', required: false },
     ]
@@ -738,9 +608,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
@@ -754,10 +621,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco_completo', type: 'text', label: 'Endereço Completo', required: true },
       { name: 'tempo_residencia', type: 'number', label: 'Tempo de Residência (anos)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
@@ -771,10 +634,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'valor_credito_desejado', type: 'number', label: 'Valor de Crédito Desejado (R$)', required: true },
       { name: 'capacidade_parcela', type: 'number', label: 'Capacidade de Parcela Mensal (R$)', required: true },
@@ -789,9 +648,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'conjunto_habitacional', type: 'select', label: 'Conjunto Habitacional', required: true },
       { name: 'unidade_bloco', type: 'text', label: 'Unidade/Bloco', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
@@ -806,9 +662,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_morador', type: 'text', label: 'Nome do Morador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'unidade_atual', type: 'text', label: 'Unidade Atual', required: true },
       { name: 'motivo_transferencia', type: 'textarea', label: 'Motivo da Transferência', required: true },
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: false },
@@ -823,9 +676,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_contratante', type: 'text', label: 'Nome do Contratante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'numero_contrato', type: 'text', label: 'Número do Contrato Original', required: false },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
     ]
@@ -839,9 +689,6 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'numero_contrato', type: 'text', label: 'Número do Contrato', required: true },
       { name: 'valor_quitacao', type: 'number', label: 'Valor de Quitação (R$)', required: false },

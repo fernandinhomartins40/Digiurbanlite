@@ -10,10 +10,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: false },
       { name: 'endereco_propriedade', type: 'text', label: 'Endereço da Propriedade', required: true },
       { name: 'tamanho_propriedade', type: 'number', label: 'Tamanho da Propriedade (hectares)', required: true },
       { name: 'tipo_producao', type: 'select', label: 'Tipo de Produção', required: true },
@@ -29,9 +25,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_propriedade', type: 'text', label: 'Endereço da Propriedade', required: true },
       { name: 'area_total', type: 'number', label: 'Área Total (hectares)', required: true },
       { name: 'renda_bruta_anual', type: 'number', label: 'Renda Bruta Anual Estimada (R$)', required: true },
@@ -48,9 +41,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_maquina', type: 'select', label: 'Tipo de Máquina/Implemento', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade do Uso', required: true },
       { name: 'area_trabalhar', type: 'number', label: 'Área a Trabalhar (hectares)', required: true },
@@ -67,12 +57,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_cooperativa', type: 'text', label: 'Nome da Cooperativa', required: true },
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'nome_presidente', type: 'text', label: 'Nome do Presidente', required: true },
       { name: 'cpf_presidente', type: 'cpf', label: 'CPF do Presidente', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'num_cooperados', type: 'number', label: 'Número de Cooperados', required: true },
       { name: 'area_atuacao', type: 'select', label: 'Área de Atuação', required: true },
     ]
@@ -86,9 +72,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_produto', type: 'select', label: 'Tipo de Produto', required: true },
       { name: 'endereco_agroindustria', type: 'text', label: 'Endereço da Agroindústria', required: true },
       { name: 'producao_mensal', type: 'number', label: 'Produção Mensal Estimada (kg)', required: false },
@@ -104,9 +87,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_apicultor', type: 'text', label: 'Nome do Apicultor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_colmeias', type: 'number', label: 'Número de Colmeias', required: true },
       { name: 'local_apiario', type: 'text', label: 'Localização do Apiário', required: true },
       { name: 'producao_anual', type: 'number', label: 'Produção Anual Estimada (kg)', required: false },
@@ -122,9 +102,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_fonte', type: 'select', label: 'Tipo de Fonte de Água', required: true },
       { name: 'vazao_pretendida', type: 'number', label: 'Vazão Pretendida (L/h)', required: true },
       { name: 'area_irrigar', type: 'number', label: 'Área a Irrigar (hectares)', required: true },
@@ -141,9 +118,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_propriedade', type: 'text', label: 'Endereço da Propriedade', required: true },
       { name: 'tipo_poco', type: 'select', label: 'Tipo de Poço', required: true },
       { name: 'profundidade_estimada', type: 'number', label: 'Profundidade Estimada (metros)', required: true },
@@ -160,9 +134,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_estabelecimento', type: 'select', label: 'Tipo de Estabelecimento', required: true },
       { name: 'tipo_produto', type: 'select', label: 'Tipo de Produto', required: true },
       { name: 'endereco_estabelecimento', type: 'text', label: 'Endereço do Estabelecimento', required: true },
@@ -178,9 +149,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_propriedade', type: 'text', label: 'Endereço da Propriedade', required: true },
       { name: 'tipo_assistencia', type: 'select', label: 'Tipo de Assistência Solicitada', required: true },
       { name: 'cultura_atividade', type: 'select', label: 'Cultura/Atividade', required: true },
@@ -196,9 +164,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_coleta', type: 'text', label: 'Local da Coleta', required: true },
       { name: 'area_analisar', type: 'number', label: 'Área a Analisar (hectares)', required: true },
       { name: 'cultura_pretendida', type: 'select', label: 'Cultura Pretendida', required: true },
@@ -214,9 +179,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_semente_muda', type: 'select', label: 'Tipo de Semente/Muda', required: true },
       { name: 'quantidade_solicitada', type: 'number', label: 'Quantidade Solicitada', required: true },
       { name: 'area_plantio', type: 'number', label: 'Área de Plantio (hectares)', required: true },
@@ -232,9 +194,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_credito', type: 'select', label: 'Tipo de Crédito Desejado', required: true },
       { name: 'finalidade_credito', type: 'select', label: 'Finalidade do Crédito', required: true },
       { name: 'valor_estimado', type: 'number', label: 'Valor Estimado (R$)', required: false },
@@ -250,9 +209,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'inscricao_estadual', type: 'text', label: 'Inscrição Estadual (se houver)', required: false },
       { name: 'produtos_comercializar', type: 'textarea', label: 'Produtos a Comercializar', required: true },
       { name: 'volume_mensal', type: 'text', label: 'Volume Mensal Estimado', required: false },
@@ -267,9 +223,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_producao', type: 'text', label: 'Local de Produção', required: true },
       { name: 'num_tanques', type: 'number', label: 'Número de Tanques', required: true },
       { name: 'area_total', type: 'number', label: 'Área Total de Lâmina d\'água (m²)', required: true },
@@ -285,9 +238,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_produtos', type: 'select', label: 'Tipo de Produtos', required: true },
       { name: 'lista_produtos', type: 'textarea', label: 'Lista de Produtos', required: true },
       { name: 'dia_preferencia', type: 'select', label: 'Dia de Preferência', required: true },
@@ -303,10 +253,7 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_fornecedor', type: 'text', label: 'Nome do Fornecedor', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'produtos_oferecer', type: 'textarea', label: 'Produtos a Oferecer', required: true },
       { name: 'capacidade_fornecimento', type: 'text', label: 'Capacidade de Fornecimento', required: true },
       { name: 'possui_dap', type: 'select', label: 'Possui DAP', required: true },
@@ -321,9 +268,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_organica', type: 'number', label: 'Área de Produção Orgânica (hectares)', required: true },
       { name: 'produtos_organicos', type: 'textarea', label: 'Produtos Orgânicos', required: true },
       { name: 'tempo_transicao', type: 'number', label: 'Tempo em Transição (meses)', required: false },
@@ -339,9 +283,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_servico', type: 'text', label: 'Local do Serviço', required: true },
       { name: 'tipo_servico', type: 'select', label: 'Tipo de Serviço', required: true },
       { name: 'area_trabalhar', type: 'number', label: 'Área a Trabalhar (hectares)', required: true },
@@ -357,9 +298,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_criador', type: 'text', label: 'Nome do Criador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_animal', type: 'select', label: 'Tipo de Animal', required: true },
       { name: 'num_animais', type: 'number', label: 'Número de Animais', required: true },
       { name: 'tipo_vacina', type: 'select', label: 'Tipo de Vacina', required: true },
@@ -375,9 +313,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_animal', type: 'select', label: 'Tipo/Espécie Animal', required: true },
       { name: 'num_animais', type: 'number', label: 'Número de Animais', required: true },
       { name: 'origem', type: 'text', label: 'Origem (Propriedade)', required: true },
@@ -394,9 +329,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -411,9 +343,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'horta_interesse', type: 'select', label: 'Horta de Interesse', required: true },
       { name: 'experiencia_agricultura', type: 'select', label: 'Experiência em Agricultura', required: true },
       { name: 'disponibilidade_semanal', type: 'select', label: 'Disponibilidade Semanal', required: true },
@@ -428,9 +357,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_propriedade', type: 'text', label: 'Local da Propriedade', required: true },
       { name: 'area_suprimir', type: 'number', label: 'Área a Suprimir (hectares)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade da Supressão', required: true },
@@ -446,10 +372,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_propriedade', type: 'text', label: 'Nome da Propriedade', required: false },
       { name: 'area_total', type: 'number', label: 'Área Total (hectares)', required: true },
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'possui_app', type: 'select', label: 'Possui APP (Área de Preservação Permanente)', required: false },
@@ -464,9 +386,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'cultura', type: 'select', label: 'Cultura', required: true },
       { name: 'area_aplicacao', type: 'number', label: 'Área de Aplicação (hectares)', required: true },
       { name: 'praga_doenca', type: 'textarea', label: 'Praga/Doença a Controlar', required: true },
@@ -481,9 +400,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_adubo', type: 'select', label: 'Tipo de Adubo Orgânico', required: true },
       { name: 'quantidade_solicitada', type: 'number', label: 'Quantidade Solicitada (m³ ou kg)', required: true },
       { name: 'cultura_destino', type: 'select', label: 'Cultura de Destino', required: true },
@@ -499,9 +415,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_aplicar', type: 'number', label: 'Área a Aplicar (hectares)', required: true },
       { name: 'analise_solo', type: 'select', label: 'Possui Análise de Solo Recente', required: true },
       { name: 'cultura_pretendida', type: 'select', label: 'Cultura Pretendida', required: true },
@@ -517,9 +430,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_construcao', type: 'text', label: 'Local da Construção', required: true },
       { name: 'dimensoes_tanque', type: 'text', label: 'Dimensões do Tanque (m²)', required: true },
       { name: 'fonte_agua', type: 'select', label: 'Fonte de Água', required: true },
@@ -535,9 +445,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_irrigar', type: 'number', label: 'Área a Irrigar (hectares)', required: true },
       { name: 'fonte_agua', type: 'select', label: 'Fonte de Água Disponível', required: true },
       { name: 'tipo_cultura', type: 'select', label: 'Tipo de Cultura', required: true },
@@ -553,9 +460,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_criacao', type: 'select', label: 'Tipo de Criação', required: true },
       { name: 'area_propriedade', type: 'number', label: 'Área da Propriedade (hectares)', required: false },
       { name: 'experiencia_cerca', type: 'select', label: 'Experiência com Cerca Elétrica', required: true },
@@ -570,9 +474,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_silagem', type: 'select', label: 'Tipo de Silagem', required: true },
       { name: 'volume_produzir', type: 'number', label: 'Volume a Produzir (toneladas)', required: true },
       { name: 'num_animais', type: 'number', label: 'Número de Animais', required: true },
@@ -587,9 +488,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_criador', type: 'text', label: 'Nome do Criador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_femeas', type: 'number', label: 'Número de Fêmeas', required: true },
       { name: 'raca_desejada', type: 'select', label: 'Raça Desejada', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade (Leite/Corte)', required: true },
@@ -604,9 +502,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_castanha', type: 'select', label: 'Tipo de Castanha', required: true },
       { name: 'area_plantada', type: 'number', label: 'Área Plantada (hectares)', required: false },
       { name: 'num_arvores', type: 'number', label: 'Número de Árvores', required: true },
@@ -622,9 +517,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_fruta', type: 'select', label: 'Tipo de Fruta', required: true },
       { name: 'num_mudas', type: 'number', label: 'Número de Mudas Desejadas', required: true },
       { name: 'area_plantio', type: 'number', label: 'Área de Plantio (hectares)', required: true },
@@ -640,9 +532,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_disponivel', type: 'number', label: 'Área Disponível (m² ou hectares)', required: true },
       { name: 'tipo_cultivo', type: 'select', label: 'Tipo de Cultivo', required: true },
       { name: 'possui_irrigacao', type: 'select', label: 'Possui Irrigação', required: true },
@@ -658,9 +547,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'quantidade_mandioca', type: 'number', label: 'Quantidade de Mandioca (kg)', required: true },
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
       { name: 'produto_final', type: 'select', label: 'Produto Final Desejado', required: true },
@@ -675,9 +561,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_vacas_ordenha', type: 'number', label: 'Número de Vacas em Ordenha', required: true },
       { name: 'producao_diaria', type: 'number', label: 'Produção Diária (litros)', required: true },
       { name: 'possui_energia', type: 'select', label: 'Possui Energia Elétrica', required: true },
@@ -693,9 +576,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_aves', type: 'number', label: 'Número de Aves Pretendido', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
       { name: 'area_disponivel', type: 'number', label: 'Área Disponível (m²)', required: true },
@@ -710,9 +590,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_criador', type: 'text', label: 'Nome do Criador', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_suinos', type: 'number', label: 'Número de Suínos', required: true },
       { name: 'tipo_criacao', type: 'select', label: 'Tipo de Criação', required: true },
       { name: 'problema_encontrado', type: 'textarea', label: 'Problema/Dúvida', required: false },
@@ -727,9 +604,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_implantar', type: 'number', label: 'Área a Implantar (hectares)', required: true },
       { name: 'tipo_solo', type: 'select', label: 'Tipo de Solo', required: false },
       { name: 'especies_interesse', type: 'textarea', label: 'Espécies de Interesse', required: true },
@@ -744,9 +618,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_organica', type: 'number', label: 'Área em Produção Orgânica (hectares)', required: true },
       { name: 'produtos_organicos', type: 'textarea', label: 'Produtos Orgânicos Cultivados', required: true },
       { name: 'tipo_certificacao', type: 'select', label: 'Possui Certificação', required: false },
@@ -761,9 +632,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_apicultor', type: 'text', label: 'Nome do Apicultor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'num_enxames', type: 'number', label: 'Número de Enxames Desejados', required: true },
       { name: 'tipo_abelha', type: 'select', label: 'Tipo de Abelha', required: true },
       { name: 'possui_colmeias', type: 'select', label: 'Possui Colmeias', required: true },
@@ -779,9 +647,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_transicao', type: 'number', label: 'Área em Transição (hectares)', required: true },
       { name: 'sistema_atual', type: 'select', label: 'Sistema de Produção Atual', required: true },
       { name: 'metas_transicao', type: 'textarea', label: 'Metas da Transição', required: true },
@@ -796,9 +661,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_produtor', type: 'text', label: 'Nome do Produtor', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_cultivo', type: 'number', label: 'Área de Cultivo (m²)', required: true },
       { name: 'plantas_interesse', type: 'textarea', label: 'Plantas de Interesse', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
@@ -813,10 +675,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'area_disponivel', type: 'number', label: 'Área Disponível (m²)', required: true },
       { name: 'tipo_producao', type: 'select', label: 'Tipo de Produção Desejada', required: true },
     ]
@@ -830,9 +688,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'tipo_producao', type: 'select', label: 'Tipo de Produção', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
     ]
@@ -846,9 +701,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
       { name: 'area_interesse', type: 'number', label: 'Área de Interesse (m²)', required: false },
     ]
@@ -862,9 +714,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_completo', type: 'text', label: 'Nome Completo', required: true },
-      { name: 'cpf', type: 'cpf', label: 'CPF', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'area_irrigar', type: 'number', label: 'Área a Irrigar (hectares)', required: false },
       { name: 'cultura_pretendida', type: 'select', label: 'Cultura Pretendida', required: true },
     ]

@@ -10,8 +10,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_buraco', type: 'text', label: 'Endereço/Localização do Buraco', required: true },
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
       { name: 'tamanho_estimado', type: 'select', label: 'Tamanho Estimado', required: true },
@@ -28,8 +26,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_poste', type: 'text', label: 'Endereço do Poste', required: true },
       { name: 'numero_poste', type: 'text', label: 'Número do Poste (se visível)', required: false },
       { name: 'tipo_problema', type: 'select', label: 'Tipo de Problema', required: true },
@@ -45,8 +41,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_local', type: 'text', label: 'Endereço do Local', required: true },
       { name: 'tipo_limpeza', type: 'select', label: 'Tipo de Limpeza', required: true },
       { name: 'tipo_residuo', type: 'select', label: 'Tipo de Resíduo', required: true },
@@ -62,9 +56,7 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_proprietario', type: 'text', label: 'Nome do Proprietário', required: true },
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'metragem_calcada', type: 'number', label: 'Metragem da Calçada (m²)', required: true },
       { name: 'situacao_atual', type: 'select', label: 'Situação Atual da Calçada', required: true },
@@ -80,8 +72,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_problema', type: 'text', label: 'Endereço do Problema', required: true },
       { name: 'tipo_estrutura', type: 'select', label: 'Tipo de Estrutura', required: true },
       { name: 'problema_identificado', type: 'select', label: 'Problema Identificado', required: true },
@@ -98,11 +88,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_representante', type: 'text', label: 'Nome do Representante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
-      { name: 'nome_rua', type: 'text', label: 'Nome da Rua', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores Beneficiados', required: false },
       { name: 'tipo_pavimento_desejado', type: 'select', label: 'Tipo de Pavimento Desejado', required: false },
@@ -117,8 +102,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_local', type: 'text', label: 'Endereço/Cruzamento', required: true },
       { name: 'tipo_sinalizacao', type: 'select', label: 'Tipo de Sinalização', required: true },
       { name: 'tipo_solicitacao', type: 'select', label: 'Tipo de Solicitação', required: true },
@@ -134,8 +117,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_faixa', type: 'text', label: 'Endereço da Faixa', required: true },
       { name: 'tipo_faixa', type: 'select', label: 'Tipo de Faixa', required: true },
       { name: 'situacao_atual', type: 'select', label: 'Situação Atual', required: true },
@@ -151,8 +132,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_instalacao', type: 'text', label: 'Endereço para Instalação', required: true },
       { name: 'tipo_redutor', type: 'select', label: 'Tipo de Redutor', required: true },
       { name: 'motivo_solicitacao', type: 'select', label: 'Motivo da Solicitação', required: true },
@@ -169,9 +148,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'endereco_cruzamento', type: 'text', label: 'Endereço do Cruzamento', required: true },
       { name: 'ruas_envolvidas', type: 'text', label: 'Ruas Envolvidas no Cruzamento', required: true },
       { name: 'fluxo_veiculos', type: 'select', label: 'Fluxo de Veículos', required: true },
@@ -188,8 +164,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_local', type: 'text', label: 'Endereço do Local', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
       { name: 'motivo', type: 'select', label: 'Motivo da Solicitação', required: true },
@@ -204,9 +178,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_ponte', type: 'text', label: 'Nome da Ponte/Viaduto', required: true },
       { name: 'localizacao', type: 'text', label: 'Localização', required: true },
       { name: 'tipo_problema', type: 'select', label: 'Tipo de Problema', required: true },
       { name: 'nivel_gravidade', type: 'select', label: 'Nível de Gravidade', required: true },
@@ -222,9 +193,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_rua', type: 'text', label: 'Nome da Rua', required: true },
       { name: 'trecho_inicio', type: 'text', label: 'Trecho Início', required: true },
       { name: 'trecho_fim', type: 'text', label: 'Trecho Fim', required: true },
       { name: 'estado_pavimento', type: 'select', label: 'Estado do Pavimento', required: true },
@@ -240,8 +208,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_instalacao', type: 'text', label: 'Endereço para Instalação', required: true },
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'publico_beneficiado', type: 'textarea', label: 'Público Beneficiado', required: true },
@@ -256,10 +222,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_praca', type: 'text', label: 'Nome da Praça', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'itens_reforma', type: 'textarea', label: 'Itens que Necessitam Reforma', required: true },
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
     ]
@@ -273,10 +235,7 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_sugerido', type: 'text', label: 'Local Sugerido', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'num_criancas_beneficiadas', type: 'number', label: 'Número de Crianças Beneficiadas (estimativa)', required: false },
       { name: 'possui_area_disponivel', type: 'select', label: 'Área Possui Espaço Disponível?', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -291,10 +250,7 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'publico_alvo', type: 'select', label: 'Público-Alvo', required: true },
       { name: 'possui_iluminacao', type: 'select', label: 'Local Possui Iluminação?', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -309,11 +265,7 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 180,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_representante', type: 'text', label: 'Nome do Representante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'local_construcao', type: 'text', label: 'Local para Construção', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'area_disponivel', type: 'number', label: 'Área Disponível (m²)', required: false },
       { name: 'tipo_quadra', type: 'select', label: 'Tipo de Quadra', required: true },
       { name: 'num_beneficiados', type: 'number', label: 'Número de Beneficiados (estimativa)', required: false },
@@ -328,8 +280,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_instalacao', type: 'text', label: 'Endereço para Instalação', required: true },
       { name: 'linha_onibus', type: 'text', label: 'Linha(s) de Ônibus', required: true },
       { name: 'num_usuarios_diarios', type: 'number', label: 'Número de Usuários Diários (estimativa)', required: false },
@@ -345,9 +295,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'trecho_sugerido', type: 'text', label: 'Trecho Sugerido', required: true },
       { name: 'tipo_via', type: 'select', label: 'Tipo de Via', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (km)', required: false },
@@ -363,10 +310,7 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'rua_implantacao', type: 'text', label: 'Rua para Implantação', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'numero_vagas', type: 'number', label: 'Número de Vagas (estimativa)', required: false },
       { name: 'motivo', type: 'select', label: 'Motivo da Solicitação', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -381,8 +325,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_instalacao', type: 'text', label: 'Endereço para Instalação', required: true },
       { name: 'motivo_instalacao', type: 'select', label: 'Motivo da Instalação', required: true },
       { name: 'frequencia_alagamento', type: 'select', label: 'Frequência de Alagamentos', required: true },
@@ -398,8 +340,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_local', type: 'text', label: 'Endereço do Local', required: true },
       { name: 'altura_estimada', type: 'number', label: 'Altura Estimada (metros)', required: false },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
@@ -416,10 +356,7 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 120,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_representante', type: 'text', label: 'Nome do Representante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'rua_implantacao', type: 'text', label: 'Rua para Implantação', required: true },
-      { name: 'bairro', type: 'text', label: 'Bairro', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
       { name: 'problema_drenagem', type: 'textarea', label: 'Descrição do Problema de Drenagem', required: true },
       { name: 'frequencia_alagamento', type: 'select', label: 'Frequência de Alagamentos', required: true },
@@ -434,9 +371,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 180,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'local_construcao', type: 'text', label: 'Local para Construção', required: true },
       { name: 'tipo_passarela', type: 'select', label: 'Tipo de Passarela', required: true },
       { name: 'fluxo_pedestres', type: 'select', label: 'Fluxo de Pedestres', required: true },
@@ -453,8 +387,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_cruzamento', type: 'text', label: 'Local do Cruzamento', required: true },
       { name: 'ruas_envolvidas', type: 'text', label: 'Ruas Envolvidas', required: true },
       { name: 'problema_atual', type: 'select', label: 'Problema Atual', required: true },
@@ -470,8 +402,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_sugerido', type: 'text', label: 'Local Sugerido', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
       { name: 'possui_iluminacao', type: 'select', label: 'Local Possui Iluminação?', required: true },
@@ -487,8 +417,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 120,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_construcao', type: 'text', label: 'Local para Construção', required: true },
       { name: 'caracteristicas_local', type: 'textarea', label: 'Características do Local', required: true },
       { name: 'possui_acesso', type: 'select', label: 'Local Possui Acesso?', required: true },
@@ -504,8 +432,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'fluxo_pessoas', type: 'select', label: 'Fluxo de Pessoas', required: true },
       { name: 'tipo_area', type: 'select', label: 'Tipo de Área', required: true },
@@ -521,8 +447,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'possui_rede_agua', type: 'select', label: 'Local Possui Rede de Água?', required: true },
@@ -537,8 +461,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_instalacao', type: 'text', label: 'Endereço para Instalação', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
       { name: 'problema_atual', type: 'select', label: 'Problema Atual', required: true },
@@ -554,8 +476,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_construcao', type: 'text', label: 'Local para Construção', required: true },
       { name: 'desnivel_estimado', type: 'number', label: 'Desnível Estimado (metros)', required: false },
       { name: 'num_usuarios_diarios', type: 'number', label: 'Usuários Diários (estimativa)', required: false },
@@ -571,8 +491,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 60,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_implantacao', type: 'text', label: 'Local para Implantação', required: true },
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'area_estimada', type: 'number', label: 'Área Estimada (m²)', required: false },
@@ -588,8 +506,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'tipo_cerca', type: 'select', label: 'Tipo de Cerca', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
@@ -605,10 +521,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'nome_edificio', type: 'text', label: 'Nome do Edifício', required: true },
-      { name: 'endereco', type: 'text', label: 'Endereço', required: true },
       { name: 'tipo_edificio', type: 'select', label: 'Tipo de Edifício', required: true },
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
     ]
@@ -622,8 +534,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 90,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_campo', type: 'text', label: 'Local do Campo', required: true },
       { name: 'capacidade_arquibancada', type: 'number', label: 'Capacidade da Arquibancada', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -638,8 +548,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'tipo_equipamento', type: 'select', label: 'Tipo de Equipamento Público', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -654,8 +562,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'num_vagas', type: 'number', label: 'Número de Vagas Sugerido', required: false },
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
@@ -671,9 +577,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_artista', type: 'text', label: 'Nome do Artista/Coletivo', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'local_mural', type: 'text', label: 'Local do Mural', required: true },
       { name: 'dimensoes', type: 'text', label: 'Dimensões (altura x largura)', required: true },
       { name: 'tema_obra', type: 'textarea', label: 'Tema da Obra', required: true },
@@ -689,8 +592,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'tipo_area', type: 'select', label: 'Tipo de Área', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -705,8 +606,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'tipo_informacao', type: 'select', label: 'Tipo de Informação', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -721,8 +620,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'quantidade_bancos', type: 'number', label: 'Quantidade de Bancos', required: false },
       { name: 'motivo', type: 'textarea', label: 'Motivo da Solicitação', required: true },
@@ -737,8 +634,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'tipo_lixeira', type: 'select', label: 'Tipo de Lixeira', required: true },
       { name: 'quantidade', type: 'number', label: 'Quantidade', required: false },
@@ -754,8 +649,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'endereco_ponto', type: 'text', label: 'Endereço do Ponto', required: true },
       { name: 'linha_onibus', type: 'text', label: 'Linha(s) de Ônibus', required: true },
       { name: 'num_usuarios', type: 'number', label: 'Usuários Diários (estimativa)', required: false },
@@ -771,8 +664,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
@@ -788,8 +679,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 45,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'tipo_area', type: 'select', label: 'Tipo de Área', required: true },
       { name: 'motivo_solicitacao', type: 'select', label: 'Motivo da Solicitação', required: true },
@@ -805,8 +694,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'nome_solicitante', type: 'text', label: 'Nome do Solicitante', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
       { name: 'local_instalacao', type: 'text', label: 'Local para Instalação', required: true },
       { name: 'numero_vagas', type: 'number', label: 'Número de Vagas', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
@@ -821,9 +708,6 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     estimatedDays: 120,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'nome_responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'telefone', type: 'tel', label: 'Telefone', required: true },
-      { name: 'email', type: 'email', label: 'E-mail', required: true },
       { name: 'endereco_edificio', type: 'text', label: 'Endereço do Edifício', required: true },
       { name: 'ano_construcao', type: 'number', label: 'Ano de Construção (aproximado)', required: false },
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
