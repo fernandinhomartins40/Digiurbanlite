@@ -10,7 +10,12 @@ import { UserWithRelations, JWTPayload, AuthenticatedRequest } from '../types';
 export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    let token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    // Se não tiver no header, tentar pegar do cookie httpOnly
+    if (!token && req.cookies) {
+      token = req.cookies.digiurban_admin_token || req.cookies.digiurban_citizen_token;
+    }
 
     if (!token) {
       res.status(401).json({
@@ -178,7 +183,12 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
 export const authenticateAdmin: RequestHandler = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    let token = authHeader && authHeader.split(' ')[1];
+
+    // Se não tiver no header, tentar pegar do cookie httpOnly
+    if (!token && req.cookies) {
+      token = req.cookies.digiurban_admin_token || req.cookies.digiurban_citizen_token;
+    }
 
     if (!token) {
       res.status(401).json({
@@ -267,7 +277,12 @@ export const authenticateAdmin: RequestHandler = async (req, res, next) => {
 export const authenticateCitizen: RequestHandler = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    let token = authHeader && authHeader.split(' ')[1];
+
+    // Se não tiver no header, tentar pegar do cookie httpOnly
+    if (!token && req.cookies) {
+      token = req.cookies.digiurban_admin_token || req.cookies.digiurban_citizen_token;
+    }
 
     if (!token) {
       res.status(401).json({

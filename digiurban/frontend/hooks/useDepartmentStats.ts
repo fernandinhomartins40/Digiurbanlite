@@ -65,11 +65,23 @@ export function useDepartmentStats(department: string) {
       setError(null);
 
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+
+      // Busca o token do localStorage (admin) ou sessionStorage (citizen)
+      const token = typeof window !== 'undefined'
+        ? localStorage.getItem('token') || sessionStorage.getItem('token')
+        : null;
+
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch(`${backendUrl}/api/departments/${department}/stats`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include', // Envia cookies httpOnly automaticamente
+        headers,
       });
 
       if (!res.ok) {

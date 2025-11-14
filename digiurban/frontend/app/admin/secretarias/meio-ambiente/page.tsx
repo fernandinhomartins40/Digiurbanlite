@@ -212,7 +212,7 @@ export default function SecretariaMeioAmbientePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {departmentLoading ? (
             <>
               {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -286,7 +286,7 @@ export default function SecretariaMeioAmbientePage() {
             Serviços que geram protocolos para emissão de documentos oficiais
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* ✅ NOVO: Card Especial para View Agregada de Serviços Gerais */}
           <Card
             className="hover:shadow-lg transition-shadow cursor-pointer border-primary bg-primary/5 col-span-full"
@@ -391,7 +391,7 @@ export default function SecretariaMeioAmbientePage() {
         </p>
 
         {servicesLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i}>
                 <CardHeader>
@@ -415,7 +415,7 @@ export default function SecretariaMeioAmbientePage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {services
               .filter((s: any) => s.serviceType === 'COM_DADOS')
               .map((service) => (
@@ -468,7 +468,7 @@ export default function SecretariaMeioAmbientePage() {
         <h2 className="text-2xl font-semibold mb-6">Serviços Disponíveis</h2>
 
         {servicesLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i}>
                 <CardHeader>
@@ -499,7 +499,7 @@ export default function SecretariaMeioAmbientePage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {allServices.map((service) => (
               <Card key={service.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -563,7 +563,7 @@ export default function SecretariaMeioAmbientePage() {
         </div>
 
         {suggestionsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Skeleton className="h-64" />
             <Skeleton className="h-64" />
             <Skeleton className="h-64" />
@@ -586,7 +586,7 @@ export default function SecretariaMeioAmbientePage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {displayedSuggestions.map((suggestion) => (
               <Card key={suggestion.id} className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow">
                 <CardHeader>
