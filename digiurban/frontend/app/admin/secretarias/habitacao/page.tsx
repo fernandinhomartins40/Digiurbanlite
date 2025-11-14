@@ -19,6 +19,8 @@ import {
   DollarSign,
   FileCheck,
   List,
+  Info,
+  ClipboardCheck,
 } from 'lucide-react';
 import { useHabitacaoStats } from '@/hooks/useHabitacaoStats';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
@@ -586,90 +588,103 @@ export default function SecretariaHabitacaoPage() {
         </div>
       )}
 
-      {/* Módulos Customizados */}
+      {
+      {/* Criar Serviço com Captura de Dados */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-semibold">Módulos Customizados</h2>
+            <h2 className="text-2xl font-semibold">Criar Serviço com Captura de Dados</h2>
             <p className="text-sm text-muted-foreground">
-              Crie tabelas personalizadas para dados específicos da habitação
+              Crie serviços que capturam informações estruturadas através de formulários dinâmicos
             </p>
           </div>
           <Button
-            onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=housing')}
+            onClick={() => router.push('/admin/servicos/novo?departmentCode=habitacao&serviceType=COM_DADOS')}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Novo Módulo Customizado
+            Novo Serviço COM_DADOS
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card exemplo: Vistorias */}
+          {/* Card exemplo 1 */}
           <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <FileCheck className="h-5 w-5 text-blue-600" />
-                Vistorias
+                <Home className="h-5 w-5 text-blue-600" />
+                Inscrição em Programa Habitacional
               </CardTitle>
               <CardDescription>
-                Exemplo: registro de vistorias em unidades habitacionais
+                Solicite inscrição em programas de habitação popular
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="text-xs text-muted-foreground">
-                  <strong>Campos possíveis:</strong> Data, Endereço, Situação, Responsável, Observações
+                  <strong>Campos sugeridos:</strong>
+                  <ul className="mt-2 space-y-1">
+                    <li>• Renda familiar</li>
+                    <li>• Número de dependentes</li>
+                    <li>• Situação atual</li>
+                    <li>• Comprovantes</li>
+                  </ul>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=housing&template=vistorias')}
+                  onClick={() => router.push('/admin/servicos/novo?departmentCode=habitacao&serviceType=COM_DADOS&template=inscricao-habitacao')}
                 >
-                  Criar este Módulo
+                  Criar este Serviço
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Card exemplo: Manutenções */}
+          {/* Card exemplo 2 */}
           <Card className="border-green-200 bg-green-50/50 hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Building className="h-5 w-5 text-green-600" />
-                Manutenções
+                <ClipboardCheck className="h-5 w-5 text-green-600" />
+                Solicitação de Vistoria
               </CardTitle>
               <CardDescription>
-                Exemplo: controle de manutenções em unidades
+                Solicite vistoria técnica em imóvel
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="text-xs text-muted-foreground">
-                  <strong>Campos possíveis:</strong> Tipo, Prioridade, Status, Data início, Data conclusão
+                  <strong>Campos sugeridos:</strong>
+                  <ul className="mt-2 space-y-1">
+                    <li>• Endereço do imóvel</li>
+                    <li>• Tipo de vistoria</li>
+                    <li>• Motivo</li>
+                    <li>• Documentação</li>
+                  </ul>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=housing&template=manutencoes')}
+                  onClick={() => router.push('/admin/servicos/novo?departmentCode=habitacao&serviceType=COM_DADOS&template=solicitacao-vistoria')}
                 >
-                  Criar este Módulo
+                  Criar este Serviço
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Card: Ver todos os módulos */}
+          {/* Card: Ver todos os serviços COM_DADOS */}
           <Card className="border-dashed border-2 border-gray-300 hover:border-blue-500 transition-colors">
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
               <FileBarChart className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="font-semibold mb-2">Gerenciar Módulos</h3>
+              <h3 className="font-semibold mb-2">Ver Serviços COM_DADOS</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Ver todos os módulos customizados criados para habitação
+                Visualizar todos os serviços com captura de dados já criados
               </p>
               <Button
                 variant="outline"
-                onClick={() => router.push('/admin/modulos-customizados?moduleType=housing')}
+                onClick={() => router.push('/admin/servicos?serviceType=COM_DADOS&departmentCode=habitacao')}
               >
                 Ver Todos
               </Button>
@@ -677,40 +692,41 @@ export default function SecretariaHabitacaoPage() {
           </Card>
         </div>
 
-        {/* Info sobre módulos customizados */}
-        <Card className="mt-6 border-gray-200 bg-gray-50/50">
+        {/* Info sobre serviços COM_DADOS */}
+        <Card className="mt-6 border-blue-200 bg-blue-50/50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-blue-600" />
-              O que são Módulos Customizados?
+              <Info className="h-5 w-5 text-blue-600" />
+              Como funcionam os Serviços COM_DADOS?
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Funcionalidades:</h4>
-                <ul className="space-y-1">
-                  <li>✅ Defina campos personalizados (texto, número, data, etc)</li>
-                  <li>✅ Vincule automaticamente a protocolos</li>
-                  <li>✅ Exporte dados para Excel/CSV</li>
-                  <li>✅ Crie relatórios personalizados</li>
+                <h4 className="font-medium text-gray-900 mb-2">🎯 Recursos:</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>✅ Formulários dinâmicos e customizáveis</li>
+                  <li>✅ Validação automática de campos</li>
+                  <li>✅ Dados armazenados em JSON estruturado</li>
+                  <li>✅ Workflows e SLA configuráveis</li>
+                  <li>✅ Aprovação/Rejeição integrada</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Exemplos de uso:</h4>
-                <ul className="space-y-1">
-                  <li>• Controle de vistorias habitacionais</li>
-                  <li>• Registro de manutenções</li>
-                  <li>• Acompanhamento de beneficiários</li>
-                  <li>• Cadastro de documentos pendentes</li>
+                <h4 className="font-medium text-gray-900 mb-2">💡 Quando usar:</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Coleta de informações específicas</li>
+                  <li>• Cadastros e registros</li>
+                  <li>• Solicitações com dados estruturados</li>
+                  <li>• Denúncias e monitoramentos</li>
+                  <li>• Qualquer serviço que precise de formulário</li>
                 </ul>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Modal de Seleção de Serviços */}
+{/* Modal de Seleção de Serviços */}
       <ServiceSelectorModal
         open={showServiceSelectorModal}
         onOpenChange={setShowServiceSelectorModal}

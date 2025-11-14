@@ -19,6 +19,7 @@ import {
   AlertCircle,
   Droplet,
   Recycle,
+  Info,
 } from 'lucide-react';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
@@ -533,21 +534,21 @@ export default function SecretariaMeioAmbientePage() {
         )}
       </div>
 
-      {/* Módulos Customizados */}
+      {/* Criar Serviço com Captura de Dados */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-semibold">Módulos Customizados</h2>
+            <h2 className="text-2xl font-semibold">Criar Serviço com Captura de Dados</h2>
             <p className="text-sm text-muted-foreground">
-              Crie tabelas personalizadas para dados específicos de meio ambiente
+              Crie serviços que capturam informações estruturadas através de formulários dinâmicos
             </p>
           </div>
           <Button
-            onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=environment')}
+            onClick={() => router.push('/admin/servicos/novo?departmentCode=meio-ambiente&serviceType=COM_DADOS')}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Novo Módulo Customizado
+            Novo Serviço COM_DADOS
           </Button>
         </div>
 
@@ -557,66 +558,78 @@ export default function SecretariaMeioAmbientePage() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Droplet className="h-5 w-5 text-blue-600" />
-                Qualidade da Água
+                Monitoramento de Qualidade da Água
               </CardTitle>
               <CardDescription>
-                Exemplo: monitorar parâmetros de qualidade de rios e córregos
+                Serviço para registrar análises de parâmetros de qualidade
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="text-xs text-muted-foreground">
-                  <strong>Campos possíveis:</strong> Local, pH, Oxigênio dissolvido, Temperatura, Data da coleta
+                  <strong>Campos sugeridos:</strong>
+                  <ul className="mt-2 space-y-1">
+                    <li>• Local da coleta</li>
+                    <li>• pH, Oxigênio dissolvido</li>
+                    <li>• Temperatura da água</li>
+                    <li>• Data e hora da coleta</li>
+                  </ul>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=environment&template=agua')}
+                  onClick={() => router.push('/admin/servicos/novo?departmentCode=meio-ambiente&serviceType=COM_DADOS&template=qualidade-agua')}
                 >
-                  Criar este Módulo
+                  Criar este Serviço
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Card exemplo: Controle de Resíduos */}
+          {/* Card exemplo: Denúncia Ambiental */}
           <Card className="border-green-200 bg-green-50/50 hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Recycle className="h-5 w-5 text-green-600" />
-                Controle de Resíduos
+                <AlertTriangle className="h-5 w-5 text-green-600" />
+                Denúncia Ambiental
               </CardTitle>
               <CardDescription>
-                Exemplo: gestão de coleta e destinação de resíduos
+                Receba e gerencie denúncias de crimes ambientais
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="text-xs text-muted-foreground">
-                  <strong>Campos possíveis:</strong> Tipo de resíduo, Volume, Origem, Destinação, Data
+                  <strong>Campos sugeridos:</strong>
+                  <ul className="mt-2 space-y-1">
+                    <li>• Tipo de ocorrência</li>
+                    <li>• Localização (mapa)</li>
+                    <li>• Descrição detalhada</li>
+                    <li>• Fotos/evidências</li>
+                  </ul>
                 </div>
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=environment&template=residuos')}
+                  onClick={() => router.push('/admin/servicos/novo?departmentCode=meio-ambiente&serviceType=COM_DADOS&template=denuncia-ambiental')}
                 >
-                  Criar este Módulo
+                  Criar este Serviço
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Card: Ver todos os módulos */}
+          {/* Card: Ver todos os serviços COM_DADOS */}
           <Card className="border-dashed border-2 border-gray-300 hover:border-blue-500 transition-colors">
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
               <FileBarChart className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="font-semibold mb-2">Gerenciar Módulos</h3>
+              <h3 className="font-semibold mb-2">Ver Serviços COM_DADOS</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Ver todos os módulos customizados criados para meio ambiente
+                Visualizar todos os serviços com captura de dados já criados
               </p>
               <Button
                 variant="outline"
-                onClick={() => router.push('/admin/modulos-customizados?moduleType=environment')}
+                onClick={() => router.push('/admin/servicos?serviceType=COM_DADOS&departmentCode=meio-ambiente')}
               >
                 Ver Todos
               </Button>
@@ -624,32 +637,34 @@ export default function SecretariaMeioAmbientePage() {
           </Card>
         </div>
 
-        {/* Info sobre módulos customizados */}
-        <Card className="mt-6 border-gray-200 bg-gray-50/50">
+        {/* Info sobre serviços COM_DADOS */}
+        <Card className="mt-6 border-blue-200 bg-blue-50/50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-blue-600" />
-              O que são Módulos Customizados?
+              <Info className="h-5 w-5 text-blue-600" />
+              Como funcionam os Serviços COM_DADOS?
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Funcionalidades:</h4>
-                <ul className="space-y-1">
-                  <li>✅ Defina campos personalizados (texto, número, data, etc)</li>
-                  <li>✅ Vincule automaticamente a protocolos</li>
-                  <li>✅ Exporte dados para Excel/CSV</li>
-                  <li>✅ Crie relatórios personalizados</li>
+                <h4 className="font-medium text-gray-900 mb-2">🎯 Recursos:</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>✅ Formulários dinâmicos e customizáveis</li>
+                  <li>✅ Validação automática de campos</li>
+                  <li>✅ Dados armazenados em JSON estruturado</li>
+                  <li>✅ Workflows e SLA configuráveis</li>
+                  <li>✅ Aprovação/Rejeição integrada</li>
                 </ul>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Exemplos de uso:</h4>
-                <ul className="space-y-1">
-                  <li>• Monitoramento de qualidade da água</li>
-                  <li>• Controle de resíduos e reciclagem</li>
-                  <li>• Registro de plantio de mudas</li>
-                  <li>• Cadastro de nascentes e mananciais</li>
+                <h4 className="font-medium text-gray-900 mb-2">💡 Quando usar:</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Coleta de informações específicas</li>
+                  <li>• Cadastros e registros ambientais</li>
+                  <li>• Solicitações com dados estruturados</li>
+                  <li>• Denúncias e monitoramentos</li>
+                  <li>• Qualquer serviço que precise de formulário</li>
                 </ul>
               </div>
             </div>
