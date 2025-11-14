@@ -21,9 +21,7 @@ import {
   List,
   Info,
   ClipboardCheck,
-} fr,
   Award,
-  FileCheck,
 } from 'lucide-react';
 import { useHabitacaoStats } from '@/hooks/useHabitacaoStats';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';

@@ -25,7 +25,7 @@ import {
   FileBarChart,
   HardHat,
   Info,
-} fr,
+,
   Award,
   FileCheck,
 } from 'lucide-react';

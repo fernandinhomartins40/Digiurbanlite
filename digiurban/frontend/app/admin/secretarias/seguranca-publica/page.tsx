@@ -25,7 +25,7 @@ import {
   FileText,
   Car,
   Info,
-} fr,
+,
   Award,
   FileCheck,
 } from 'lucide-react';

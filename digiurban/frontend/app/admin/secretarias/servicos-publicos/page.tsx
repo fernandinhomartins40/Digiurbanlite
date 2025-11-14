@@ -25,7 +25,7 @@ import {
   Info,
   Construction,
   TreePine,
-} fr,
+,
   Award,
   FileCheck,
 } from 'lucide-react';

@@ -24,7 +24,7 @@ import {
   AlertCircle,
   Building2,
   Info,
-} fr,
+,
   Award,
   FileCheck,
 } from 'lucide-react';
