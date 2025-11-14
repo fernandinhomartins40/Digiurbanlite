@@ -129,6 +129,7 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
       search,
       departmentId,
       serviceId,
+      serviceIds,  // ✅ NOVO: suporte para múltiplos serviceIds
       assignedUserId,
       page = '1',
       limit = '50'
@@ -153,6 +154,14 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
     // ✅ FILTRO POR SERVIÇO (para módulos específicos)
     if (serviceId) {
       where.serviceId = serviceId;
+    }
+
+    // ✅ NOVO: Filtro por múltiplos serviços (para view agregada SEM_DADOS)
+    if (serviceIds) {
+      const ids = (serviceIds as string).split(',').filter(id => id.trim());
+      if (ids.length > 0) {
+        where.serviceId = { in: ids };
+      }
     }
 
     if (assignedUserId) {

@@ -19,6 +19,7 @@ class ValidationError extends Error {
 
 const router = Router();
 
+
 // GET /api/services - Listar serviços ativos
 router.get('/', async (req, res) => {
   try {
@@ -157,6 +158,58 @@ router.get('/popular', async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar serviços populares:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// GET /api/citizen/services/departments/:department/no-data - Buscar serviços SEM_DADOS de um departamento
+router.get('/departments/:department/no-data', async (req, res) => {
+  try {
+    const { department } = req.params;
+
+    // Buscar departamento pelo slug
+    const dept = await prisma.department.findUnique({
+      where: { slug: department }
+    });
+
+    if (!dept) {
+      return res.status(404).json({
+        success: false,
+        error: 'Departamento não encontrado'
+      });
+    }
+
+    // Buscar serviços SEM_DADOS do departamento
+    const services = await prisma.serviceSimplified.findMany({
+      where: {
+        departmentId: dept.id,
+        serviceType: 'SEM_DADOS',
+        isActive: true
+      },
+      include: {
+        department: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true
+          }
+        }
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+
+    return res.json({
+      success: true,
+      services
+    });
+  } catch (error) {
+    console.error('Erro ao buscar serviços SEM_DADOS:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
   }
 });
 
