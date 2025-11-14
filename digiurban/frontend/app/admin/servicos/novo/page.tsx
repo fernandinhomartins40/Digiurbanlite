@@ -139,7 +139,7 @@ export default function NewServicePage() {
   // Carregar departamentos
   const loadDepartments = async () => {
     try {
-      const response = await apiRequest('/api/admin/management/departments')
+      const response = await apiRequest('/api/admin/departments')
       setDepartments(response.departments || response.data?.departments || [])
     } catch (error) {
       console.error('Erro ao carregar departamentos:', error)
