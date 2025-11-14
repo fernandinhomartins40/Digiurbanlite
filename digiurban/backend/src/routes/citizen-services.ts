@@ -166,9 +166,9 @@ router.get('/departments/:department/no-data', async (req, res) => {
   try {
     const { department } = req.params;
 
-    // Buscar departamento pelo slug
+    // Buscar departamento pelo code
     const dept = await prisma.department.findUnique({
-      where: { slug: department }
+      where: { code: department }
     });
 
     if (!dept) {
@@ -190,8 +190,7 @@ router.get('/departments/:department/no-data', async (req, res) => {
           select: {
             id: true,
             name: true,
-            slug: true,
-            icon: true
+            code: true
           }
         }
       },
