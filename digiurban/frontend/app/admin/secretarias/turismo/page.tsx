@@ -21,10 +21,15 @@ import {
   FileBarChart,
   AlertCircle,
   FileText,
+} fr,
+  Award,
+  FileCheck,
 } from 'lucide-react';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
 import { useDepartmentStats } from '@/hooks/useDepartmentStats';
+import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
+import { buildServiceCreationUrl } from '@/utils/service-prefill';;
 
 export default function SecretariaTurismoPage() {
   const { user } = useAdminAuth();
@@ -588,108 +593,99 @@ export default function SecretariaTurismoPage() {
       )}
 
 
-      {/* Criar Serviço com Captura de Dados */}
+      {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-semibold">Criar Serviço com Captura de Dados</h2>
+            <h2 className="text-2xl font-semibold">Sugestões de Serviços COM_DADOS</h2>
             <p className="text-sm text-muted-foreground">
-              Crie serviços que capturam informações estruturadas através de formulários dinâmicos
+              Crie serviços com formulários dinâmicos baseados em sugestões inteligentes
             </p>
+            {totalAvailable > 0 && (
+              <p className="text-xs text-blue-600 mt-1">
+                {totalAvailable} {totalAvailable === 1 ? 'sugestão disponível' : 'sugestões disponíveis'}
+                {hasMore && ' (mostrando 2 primeiras)'}
+              </p>
+            )}
           </div>
-          <Button
-            onClick={() => router.push('/admin/servicos/novo?departmentCode=turismo&serviceType=COM_DADOS')}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Serviço COM_DADOS
-          </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card exemplo 1 */}
-          <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-blue-600" />
-                Cadastro de Ponto Turístico
-              </CardTitle>
-              <CardDescription>
-                Registre novos pontos turísticos do município
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="text-xs text-muted-foreground">
-                  <strong>Campos sugeridos:</strong>
-                  <ul className="mt-2 space-y-1">
-                    <li>• Nome do local</li>
-                    <li>• Localização (mapa)</li>
-                    <li>• Descrição</li>
-                    <li>• Fotos</li>
-                  </ul>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => router.push('/admin/servicos/novo?departmentCode=turismo&serviceType=COM_DADOS&template=cadastro-ponto-turistico')}
-                >
-                  Criar este Serviço
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card exemplo 2 */}
-          <Card className="border-green-200 bg-green-50/50 hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5 text-green-600" />
-                Cadastro de Guia Turístico
-              </CardTitle>
-              <CardDescription>
-                Registre-se como guia turístico oficial
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="text-xs text-muted-foreground">
-                  <strong>Campos sugeridos:</strong>
-                  <ul className="mt-2 space-y-1">
-                    <li>• Dados pessoais</li>
-                    <li>• Certificações</li>
-                    <li>• Idiomas</li>
-                    <li>• Experiência</li>
-                  </ul>
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => router.push('/admin/servicos/novo?departmentCode=turismo&serviceType=COM_DADOS&template=cadastro-guia')}
-                >
-                  Criar este Serviço
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card: Ver todos os serviços COM_DADOS */}
-          <Card className="border-dashed border-2 border-gray-300 hover:border-blue-500 transition-colors">
+        {suggestionsLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Skeleton className="h-64" />
+            <Skeleton className="h-64" />
+          </div>
+        ) : displayedSuggestions.length === 0 ? (
+          <Card className="border-green-200 bg-green-50/50">
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <FileBarChart className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="font-semibold mb-2">Ver Serviços COM_DADOS</h3>
+              <Award className="h-12 w-12 text-green-600 mb-4" />
+              <h3 className="font-semibold text-lg mb-2">Parabéns! Todas as sugestões foram criadas</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Visualizar todos os serviços com captura de dados já criados
+                Você já criou todos os serviços sugeridos para esta secretaria.
               </p>
               <Button
-                variant="outline"
-                onClick={() => router.push('/admin/servicos?serviceType=COM_DADOS&departmentCode=turismo')}
+                onClick={() => router.push('/admin/servicos/novo?departmentCode=turismo&serviceType=COM_DADOS')}
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                Ver Todos
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Novo Serviço Personalizado
               </Button>
             </CardContent>
           </Card>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {displayedSuggestions.map((suggestion) => (
+              <Card key={suggestion.id} className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileCheck className="h-5 w-5 text-blue-600" />
+                    {suggestion.name}
+                  </CardTitle>
+                  <CardDescription>{suggestion.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {suggestion.estimatedDays} dias
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {suggestion.category}
+                      </Badge>
+                      {suggestion.requiresDocuments && (
+                        <Badge variant="secondary" className="text-xs">
+                          Requer Docs
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="text-xs text-muted-foreground">
+                      <strong>Campos incluídos:</strong>
+                      <ul className="mt-2 space-y-1">
+                        {suggestion.suggestedFields.slice(0, 4).map((field, idx) => (
+                          <li key={idx}>• {field.label}</li>
+                        ))}
+                        {suggestion.suggestedFields.length > 4 && (
+                          <li className="text-blue-600">+ {suggestion.suggestedFields.length - 4} campos adicionais</li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <Button
+                      variant="default"
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => router.push(buildServiceCreationUrl('turismo', suggestion))}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar este Serviço
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Info sobre serviços COM_DADOS */}
         <Card className="mt-6 border-blue-200 bg-blue-50/50">
@@ -712,13 +708,12 @@ export default function SecretariaTurismoPage() {
                 </ul>
               </div>
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">💡 Quando usar:</h4>
+                <h4 className="font-medium text-gray-900 mb-2">💡 Como usar as sugestões:</h4>
                 <ul className="space-y-1 text-muted-foreground">
-                  <li>• Coleta de informações específicas</li>
-                  <li>• Cadastros e registros</li>
-                  <li>• Solicitações com dados estruturados</li>
-                  <li>• Denúncias e monitoramentos</li>
-                  <li>• Qualquer serviço que precise de formulário</li>
+                  <li>• Clique em "Criar este Serviço" para pré-preencher o formulário</li>
+                  <li>• Todos os campos sugeridos serão incluídos automaticamente</li>
+                  <li>• Você pode editar e personalizar conforme necessário</li>
+                  <li>• Após criar, a próxima sugestão aparecerá automaticamente</li>
                 </ul>
               </div>
             </div>

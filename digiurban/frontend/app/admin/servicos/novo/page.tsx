@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
+import { readPrefillParams, hasPrefillData } from '@/utils/service-prefill'
 import { ServiceFormWizard, WizardStep } from '@/components/admin/services/ServiceFormWizard'
 import { BasicInfoStep } from '@/components/admin/services/steps/BasicInfoStep'
 import { ServiceTypeStep } from '@/components/admin/services/steps/ServiceTypeStep'
@@ -50,6 +51,7 @@ interface ServiceFormData {
 
 export default function NewServicePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
 
@@ -153,6 +155,54 @@ export default function NewServicePage() {
     loadDepartments()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // ✅ NOVO: Ler parâmetros de pré-preenchimento da URL
+  useEffect(() => {
+    if (!searchParams || !hasPrefillData(searchParams)) {
+      return
+    }
+
+    const prefillData = readPrefillParams(searchParams)
+
+    // Aplicar dados de pré-preenchimento ao formData
+    setFormData((prev) => {
+      const updated: any = { ...prev }
+
+      if (prefillData.name) updated.name = prefillData.name
+      if (prefillData.description) updated.description = prefillData.description
+      if (prefillData.category) updated.category = prefillData.category
+      if (prefillData.estimatedDays) updated.estimatedDays = prefillData.estimatedDays.toString()
+      if (prefillData.requiresDocuments !== undefined) updated.requiresDocuments = prefillData.requiresDocuments
+      if (prefillData.formSchema) updated.formSchema = prefillData.formSchema
+
+      return updated
+    })
+
+    // Mostrar notificação de pré-preenchimento
+    toast({
+      title: 'Formulário pré-preenchido',
+      description: 'Os campos foram preenchidos automaticamente com base na sugestão selecionada.',
+    })
+  }, [searchParams, toast])
+
+  // ✅ NOVO: Aplicar departmentCode da URL ao departmentId quando os departamentos carregarem
+  useEffect(() => {
+    if (departments.length === 0 || !searchParams) return
+
+    const departmentCode = searchParams.get('departmentCode')
+    const serviceType = searchParams.get('serviceType')
+
+    if (departmentCode) {
+      const department = departments.find((d) => d.code === departmentCode)
+      if (department) {
+        setFormData((prev) => ({ ...prev, departmentId: department.id }))
+      }
+    }
+
+    if (serviceType === 'COM_DADOS') {
+      setFormData((prev) => ({ ...prev, serviceType: 'COM_DADOS' }))
+    }
+  }, [departments, searchParams])
 
   const handleFieldChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
