@@ -587,7 +587,7 @@ export default function SecretariaTurismoPage() {
         </div>
       )}
 
-      {
+
       {/* Criar Serviço com Captura de Dados */}
       <div>
         <div className="flex items-center justify-between mb-6">

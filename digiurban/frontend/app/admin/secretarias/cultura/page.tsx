@@ -586,7 +586,6 @@ export default function SecretariaCulturaPage() {
         </div>
       )}
 
-      {
       {/* Criar Serviço com Captura de Dados */}
       <div>
         <div className="flex items-center justify-between mb-6">
