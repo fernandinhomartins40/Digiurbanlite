@@ -3,6 +3,16 @@ import { ServiceSuggestion } from '@/lib/service-suggestions';
 /**
  * Constrói URL para página de criação de serviço com dados pré-preenchidos
  */
+/**
+ * Converte código de departamento de formato de URL para formato do banco
+ * Exemplo: 'assistencia-social' -> 'ASSISTENCIA_SOCIAL'
+ */
+function urlCodeToDbCode(urlCode: string): string {
+  return urlCode
+    .toUpperCase()
+    .replace(/-/g, '_');
+}
+
 export function buildServiceCreationUrl(
   departmentCode: string,
   suggestion: ServiceSuggestion
@@ -19,8 +29,11 @@ export function buildServiceCreationUrl(
     }))
   };
 
+  // Converter código de URL para formato do banco (ex: 'saude' -> 'SAUDE')
+  const dbCode = urlCodeToDbCode(departmentCode);
+
   const params = new URLSearchParams({
-    departmentCode,
+    departmentCode: dbCode,
     serviceType: 'COM_DADOS',
     // Dados básicos do serviço
     prefill_name: suggestion.name,
@@ -28,6 +41,7 @@ export function buildServiceCreationUrl(
     prefill_category: suggestion.category,
     prefill_estimatedDays: suggestion.estimatedDays.toString(),
     prefill_requiresDocuments: suggestion.requiresDocuments.toString(),
+    prefill_icon: suggestion.icon,
     // Schema de formulário sugerido (JSON stringificado)
     prefill_formSchema: JSON.stringify(formSchema),
   });

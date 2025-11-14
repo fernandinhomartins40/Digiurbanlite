@@ -173,6 +173,7 @@ export default function NewServicePage() {
       if (prefillData.category) updated.category = prefillData.category
       if (prefillData.estimatedDays) updated.estimatedDays = prefillData.estimatedDays.toString()
       if (prefillData.requiresDocuments !== undefined) updated.requiresDocuments = prefillData.requiresDocuments
+      if (prefillData.icon) updated.icon = prefillData.icon
       if (prefillData.formSchema) updated.formSchema = prefillData.formSchema
 
       return updated
