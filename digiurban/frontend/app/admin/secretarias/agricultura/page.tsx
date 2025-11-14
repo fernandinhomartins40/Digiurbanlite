@@ -67,8 +67,7 @@ export default function SecretariaAgriculturaPage() {
     isLoading: suggestionsLoading
   } = useServiceSuggestions('agricultura');
 
-  // Separar serviços com e sem módulo
-  const servicesWithModule = services.filter((s: any) => s.moduleType);
+  // Todos os serviços
   const allServices = services;
 
   // ✅ Módulos dinâmicos COM_DADOS (vêm do backend)
@@ -562,96 +561,6 @@ export default function SecretariaAgriculturaPage() {
           </div>
         )}
       </div>
-
-      {/* Serviços com Captura de Dados */}
-      {servicesWithModule.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-semibold mb-6">Serviços com Captura de Dados</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Serviços que capturam dados estruturados através de formulários dinâmicos
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {servicesWithModule.map((service) => (
-              <Card key={service.id} className="border-green-200 bg-green-50/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Sprout className="h-5 w-5 text-green-600" />
-                      {service.name}
-                    </CardTitle>
-                    <Badge className="bg-green-600">
-                      {service.moduleType}
-                    </Badge>
-                  </div>
-                  <CardDescription>{service.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {statsLoading ? (
-                      <Skeleton className="h-16 w-full" />
-                    ) : (
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        {service.moduleType === 'TechnicalAssistance' && stats?.technicalAssistance && (
-                          <>
-                            <div>
-                              <span className="text-muted-foreground">Pendentes:</span>
-                              <span className="font-medium ml-2">
-                                {stats.technicalAssistance.pending}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Em andamento:</span>
-                              <span className="font-medium ml-2">
-                                {stats.technicalAssistance.inProgress}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                        {service.moduleType === 'SeedDistribution' && stats?.seedDistribution && (
-                          <>
-                            <div>
-                              <span className="text-muted-foreground">Ativas:</span>
-                              <span className="font-medium ml-2">
-                                {stats.seedDistribution.activeRequests}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Concluídas:</span>
-                              <span className="font-medium ml-2">
-                                {stats.seedDistribution.completedThisMonth}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                        {service.moduleType === 'SoilAnalysis' && stats?.soilAnalysis && (
-                          <>
-                            <div>
-                              <span className="text-muted-foreground">Pendentes:</span>
-                              <span className="font-medium ml-2">
-                                {stats.soilAnalysis.pending}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Concluídas:</span>
-                              <span className="font-medium ml-2">
-                                {stats.soilAnalysis.completedThisMonth}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
-                    <div className="pt-2 text-xs text-muted-foreground">
-                      ✅ Integrado ao motor de protocolos
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>

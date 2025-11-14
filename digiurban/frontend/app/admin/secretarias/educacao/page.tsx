@@ -72,8 +72,7 @@ export default function SecretariaEducacaoPage() {
     { border: 'border-emerald-200', bg: 'bg-emerald-50/50', icon: 'text-emerald-600' },
   ];
 
-  // Separar serviços com e sem módulo
-  const servicesWithModule = services.filter((s: any) => s.moduleType);
+  // Todos os serviços
   const allServices = services;
 
   return (

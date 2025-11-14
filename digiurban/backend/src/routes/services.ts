@@ -32,6 +32,8 @@ router.get(
     try {
       const { departmentId, departmentCode, search, includeFeatures } = req.query;
 
+      console.log('[GET /api/services] Query params:', { departmentId, departmentCode, search });
+
       let whereClause: WhereCondition = {
         isActive: true
         };
@@ -42,6 +44,7 @@ router.get(
       } else if (departmentCode) {
         // Converter slug (assistencia-social) para code (ASSISTENCIA_SOCIAL)
         const code = (departmentCode as string).replace(/-/g, '_').toUpperCase();
+        console.log('[GET /api/services] Converted code:', code);
         whereClause.department = {
           code: code
         };
@@ -53,6 +56,8 @@ router.get(
           { description: { contains: search as string } },
         ];
       }
+
+      console.log('[GET /api/services] WhereClause:', JSON.stringify(whereClause, null, 2));
 
       // Include condicional baseado em flags
       const services = await prisma.serviceSimplified.findMany({
@@ -67,6 +72,8 @@ router.get(
         },
         orderBy: [{ priority: 'desc' }, { name: 'asc' }]
         });
+
+      console.log('[GET /api/services] Services found:', services.length);
 
       res.json({ data: services, success: true });
     } catch (error) {

@@ -69,8 +69,7 @@ export default function SecretariaEsportesPage() {
     { border: 'border-purple-200', bg: 'bg-purple-50/50', icon: 'text-purple-600' },
   ];
 
-  // Separar serviços por tipo
-  const servicesWithModule = services.filter((s: any) => s.moduleType);
+  // Todos os serviços
   const allServices = services;
 
   return (
@@ -547,42 +546,6 @@ export default function SecretariaEsportesPage() {
           </div>
         )}
       </div>
-
-      {/* Serviços com Captura de Dados */}
-      {servicesWithModule.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-semibold mb-6">Serviços com Captura de Dados</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Serviços que capturam dados estruturados através de formulários dinâmicos
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {servicesWithModule.map((service) => (
-              <Card key={service.id} className="border-yellow-200 bg-yellow-50/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-yellow-600" />
-                      {service.name}
-                    </CardTitle>
-                    <Badge className="bg-yellow-600">
-                      {service.moduleEntity}
-                    </Badge>
-                  </div>
-                  <CardDescription>{service.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="pt-2 text-xs text-muted-foreground">
-                      ✅ Integrado ao motor de protocolos
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>

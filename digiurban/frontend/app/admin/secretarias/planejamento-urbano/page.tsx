@@ -72,7 +72,6 @@ export default function SecretariaPlanejamentoUrbanoPage() {
   ];
 
   // Todos os serviços
-  const servicesWithModule = services;
   const allServices = services;
 
   return (
@@ -549,40 +548,6 @@ export default function SecretariaPlanejamentoUrbanoPage() {
           </div>
         )}
       </div>
-
-      {/* Serviços com Captura de Dados */}
-      {servicesWithModule.length > 0 && (
-        <div>
-          <h2 className="text-2xl font-semibold mb-6">Serviços com Captura de Dados</h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Serviços que capturam dados estruturados através de formulários dinâmicos
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {servicesWithModule.map((service) => (
-              <Card key={service.id} className="border-blue-200 bg-blue-50/50">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Building className="h-5 w-5 text-blue-600" />
-                      {service.name}
-                    </CardTitle>
-                    <Badge className="bg-blue-600">
-                      {service.moduleEntity}
-                    </Badge>
-                  </div>
-                  <CardDescription>{service.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="pt-2 text-xs text-muted-foreground">
-                    ✅ Integrado ao motor de protocolos
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>
