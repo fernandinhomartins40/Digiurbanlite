@@ -315,7 +315,11 @@ router.get('/:id', async (req, res) => {
           mask: prop.mask || undefined
         }));
 
-      formSchemaConverted = { fields };
+      // ✅ CRÍTICO: Preservar citizenFields ao converter properties -> fields
+      formSchemaConverted = {
+        fields,
+        citizenFields: (service.formSchema as any).citizenFields || []
+      };
     }
 
     // Normalizar requiredDocuments para array
