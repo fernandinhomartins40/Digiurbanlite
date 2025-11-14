@@ -22,6 +22,7 @@ import {
   FileCheck,
   Search,
   Copy,
+  FileBarChart,
 } from 'lucide-react';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
@@ -283,6 +284,27 @@ export default function SecretariaObrasPublicasPage() {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* ✅ NOVO: Card Especial para View Agregada de Serviços Gerais */}
+          <Card
+            className="hover:shadow-lg transition-shadow cursor-pointer border-primary bg-primary/5 col-span-full"
+            onClick={() => router.push('/admin/secretarias/obras-publicas/servicos-gerais')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileBarChart className="h-5 w-5 text-primary" />
+                Gerenciar Todos os Serviços Gerais
+              </CardTitle>
+              <CardDescription>
+                Visão consolidada de todos os protocolos de serviços SEM_DADOS em um único painel
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                Acesse o painel agregado para visualizar e gerenciar protocolos de múltiplos serviços simultaneamente
+              </div>
+            </CardContent>
+          </Card>
+
           {servicesLoading ? (
             <>
               {[1, 2, 3, 4, 5, 6].map((i) => (

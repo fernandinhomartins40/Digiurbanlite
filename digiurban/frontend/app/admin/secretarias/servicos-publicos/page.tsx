@@ -270,44 +270,70 @@ export default function SecretariaServicosPublicosPage() {
         </div>
       </div>
 
-      {/* Serviços Disponíveis */}
+      {/* Certidões, Declarações e Documentos (SEM_DADOS) */}
       <div>
-        <h2 className="text-2xl font-semibold mb-6">Serviços Disponíveis</h2>
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold">Certidões, Declarações e Documentos</h2>
+          <p className="text-sm text-muted-foreground">
+            Serviços que geram protocolos para emissão de documentos oficiais
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* ✅ NOVO: Card Especial para View Agregada de Serviços Gerais */}
+          <Card
+            className="hover:shadow-lg transition-shadow cursor-pointer border-primary bg-primary/5 col-span-full"
+            onClick={() => router.push('/admin/secretarias/servicos-publicos/servicos-gerais')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileBarChart className="h-5 w-5 text-primary" />
+                Gerenciar Todos os Serviços Gerais
+              </CardTitle>
+              <CardDescription>
+                Visão consolidada de todos os protocolos de serviços SEM_DADOS em um único painel
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground">
+                Acesse o painel agregado para visualizar e gerenciar protocolos de múltiplos serviços simultaneamente
+              </div>
+            </CardContent>
+          </Card>
 
-        {servicesLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-6 w-48" />
-                  <Skeleton className="h-4 w-full mt-2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : servicesError ? (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="flex items-center gap-3 p-6">
-              <AlertCircle className="h-5 w-5 text-red-600" />
-              <p className="text-red-800">Erro ao carregar serviços</p>
-            </CardContent>
-          </Card>
-        ) : allServices.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <Wrench className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum serviço cadastrado</h3>
-              <p className="text-sm text-muted-foreground">
-                Configure serviços para a Secretaria de Serviços Públicos
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allServices.map((service) => (
+          {servicesLoading ? (
+            <>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i}>
+                  <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : servicesError ? (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="flex items-center gap-3 p-6">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <p className="text-red-800">Erro ao carregar serviços</p>
+              </CardContent>
+            </Card>
+          ) : allServices.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <Wrench className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum serviço cadastrado</h3>
+                <p className="text-sm text-muted-foreground">
+                  Configure serviços para a Secretaria de Serviços Públicos
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {allServices.map((service) => (
               <Card key={service.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between mb-2">
