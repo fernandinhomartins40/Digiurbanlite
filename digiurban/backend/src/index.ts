@@ -150,13 +150,14 @@ try {
 }
 
 // 📊 ROTAS DE DASHBOARD DE DEPARTAMENTOS (genérica para todas as secretarias)
-try {
-  const departmentDashboardRoutes = require('./routes/department-dashboard').default;
-  app.use('/api/admin', departmentDashboardRoutes);
-  console.log('✅ Rotas de dashboard de departamentos carregadas!');
-} catch (error) {
-  console.error('❌ Erro ao carregar rotas de dashboard:', error);
-}
+// COMENTADO TEMPORARIAMENTE - arquivo não existe
+// try {
+//   const departmentDashboardRoutes = require('./routes/department-dashboard').default;
+//   app.use('/api/admin', departmentDashboardRoutes);
+//   console.log('✅ Rotas de dashboard de departamentos carregadas!');
+// } catch (error) {
+//   console.error('❌ Erro ao carregar rotas de dashboard:', error);
+// }
 
 // Rota de busca de cidadão (usado por todas as secretarias)
 const citizenLookupRoutes = require('./routes/admin-citizen-lookup').default;

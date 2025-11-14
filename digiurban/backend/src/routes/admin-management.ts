@@ -16,12 +16,19 @@ import {
   getRoleLevel,
   isTeamRole
 } from '../types/roles';
-import {
-  getUserDepartments,
-  getPrimaryDepartment,
-  getUserDepartmentIds,
-  syncUserDepartments
-} from '../types/user-departments';
+// COMENTADO TEMPORARIAMENTE - arquivo não existe
+// import {
+//   getUserDepartments,
+//   getPrimaryDepartment,
+//   getUserDepartmentIds,
+//   syncUserDepartments
+// } from '../types/user-departments';
+
+// Helpers temporários
+const getUserDepartments = async (userId: string) => [];
+const getPrimaryDepartment = async (userId: string) => null;
+const getUserDepartmentIds = async (userId: string): Promise<string[]> => [];
+const syncUserDepartments = async (userId: string, departmentIds: string[], primaryDeptId?: string) => {};
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 

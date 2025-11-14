@@ -72,6 +72,46 @@ export default function SolicitarServicoPage() {
     return Array.isArray(rawFormFields) ? rawFormFields : [];
   }, [selectedProgram?.formSchema, service?.formSchema?.fields]);
 
+  // Converter citizenFields em FormField objects
+  const citizenFormFields = useMemo(() => {
+    const citizenFields = service?.formSchema?.citizenFields || [];
+    if (!Array.isArray(citizenFields) || citizenFields.length === 0) return [];
+
+    // Mapeamento de citizenFields para labels e tipos
+    const fieldMapping: Record<string, { label: string; type: string; mask?: string }> = {
+      citizen_name: { label: 'Nome Completo', type: 'text' },
+      citizen_cpf: { label: 'CPF', type: 'text', mask: 'cpf' },
+      citizen_rg: { label: 'RG', type: 'text' },
+      citizen_birthDate: { label: 'Data de Nascimento', type: 'date' },
+      citizen_phone: { label: 'Telefone', type: 'text', mask: 'phone' },
+      citizen_email: { label: 'E-mail', type: 'email' },
+      citizen_address: { label: 'Endereço', type: 'text' },
+      citizen_addressNumber: { label: 'Número', type: 'text' },
+      citizen_addressComplement: { label: 'Complemento', type: 'text' },
+      citizen_neighborhood: { label: 'Bairro', type: 'text' },
+      citizen_city: { label: 'Cidade', type: 'text' },
+      citizen_state: { label: 'Estado (UF)', type: 'text' },
+      citizen_zipCode: { label: 'CEP', type: 'text', mask: 'cep' },
+    };
+
+    return citizenFields.map((fieldId: string) => {
+      const mapping = fieldMapping[fieldId] || { label: fieldId, type: 'text' };
+      return {
+        id: fieldId,
+        label: mapping.label,
+        type: mapping.type,
+        mask: mapping.mask,
+        required: true,
+        placeholder: mapping.label
+      };
+    });
+  }, [service?.formSchema?.citizenFields]);
+
+  // Combinar todos os campos para o hook de pré-preenchimento
+  const allFormFields = useMemo(() => {
+    return [...citizenFormFields, ...activeFormFields];
+  }, [citizenFormFields, activeFormFields]);
+
   // Hook de pré-preenchimento (será inicializado depois que o serviço carregar)
   const {
     formData: customFormData,
@@ -81,7 +121,7 @@ export default function SolicitarServicoPage() {
     hasPrefilledData,
     prefilledCount
   } = useFormPrefill({
-    fields: activeFormFields,
+    fields: allFormFields,
     onPrefillComplete: (count) => {
       if (count > 0) {
         console.log(`✓ ${count} campos pré-preenchidos automaticamente`);
@@ -565,6 +605,92 @@ export default function SolicitarServicoPage() {
                 </div>
               )}
 
+              {/* Campos do Cidadão (selecionados na criação do serviço) */}
+              {citizenFormFields && citizenFormFields.length > 0 && (
+                <div className="space-y-4 pt-4 border-t">
+                  <h3 className="font-medium text-gray-900">Dados Pessoais</h3>
+                  <p className="text-sm text-gray-600">
+                    Estes dados serão preenchidos automaticamente com suas informações cadastradas
+                  </p>
+                  {citizenFormFields.map((field: any) => {
+                    const isPrefilled = isFieldPrefilled(field.id);
+
+                    return (
+                      <div key={field.id} className="space-y-2">
+                        <Label htmlFor={field.id} className="flex items-center gap-2">
+                          {field.label}
+                          {field.required && <span className="text-red-500">*</span>}
+                          {isPrefilled && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full">
+                              <CheckCircle className="h-3 w-3" />
+                              Auto-preenchido
+                            </span>
+                          )}
+                        </Label>
+
+                        {field.mask === 'cpf' ? (
+                          <MaskedInput
+                            id={field.id}
+                            type="cpf"
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+                            required={field.required}
+                          />
+                        ) : field.mask === 'phone' ? (
+                          <MaskedInput
+                            id={field.id}
+                            type="phone"
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+                            required={field.required}
+                          />
+                        ) : field.mask === 'cep' ? (
+                          <MaskedInput
+                            id={field.id}
+                            type="cep"
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+                            required={field.required}
+                          />
+                        ) : field.type === 'date' ? (
+                          <Input
+                            id={field.id}
+                            type="date"
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+                            required={field.required}
+                          />
+                        ) : field.type === 'email' ? (
+                          <Input
+                            id={field.id}
+                            type="email"
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+                            placeholder={field.placeholder}
+                            required={field.required}
+                          />
+                        ) : (
+                          <Input
+                            id={field.id}
+                            type="text"
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+                            placeholder={field.placeholder}
+                            required={field.required}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* Campos do Formulário Customizado (programa ou serviço) */}
               {activeFormFields && activeFormFields.length > 0 && (
                 <div className="space-y-4 pt-4 border-t">
@@ -587,39 +713,69 @@ export default function SolicitarServicoPage() {
                           )}
                         </Label>
 
-                        {field.type === 'text' ? (
-                          <input
+                        {field.type === 'text' && (
+                          <Input
                             id={field.id}
                             type="text"
                             required={field.required}
                             value={customFormData[field.id] || ''}
                             onChange={(e) => updateField(field.id, e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            className={
                               isPrefilled
                                 ? 'border-green-300 bg-green-50/30'
-                                : 'border-gray-300'
-                            }`}
-                            placeholder={field.placeholder}
-                          />
-                        ) : null}
-
-                        {field.type === 'number' && (
-                          <input
-                            id={field.id}
-                            type="number"
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, parseInt(e.target.value) || 0)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : 'border-gray-300'
-                            }`}
+                                : ''
+                            }
                             placeholder={field.placeholder}
                           />
                         )}
 
-                        {field.type === 'select' && field.options && (
+                        {field.type === 'date' && (
+                          <Input
+                            id={field.id}
+                            type="date"
+                            required={field.required}
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            className={
+                              isPrefilled
+                                ? 'border-green-300 bg-green-50/30'
+                                : ''
+                            }
+                          />
+                        )}
+
+                        {field.type === 'number' && (
+                          <Input
+                            id={field.id}
+                            type="number"
+                            required={field.required}
+                            value={customFormData[field.id] || ''}
+                            onChange={(e) => updateField(field.id, e.target.value)}
+                            className={
+                              isPrefilled
+                                ? 'border-green-300 bg-green-50/30'
+                                : ''
+                            }
+                            placeholder={field.placeholder}
+                          />
+                        )}
+
+                        {field.type === 'checkbox' && (
+                          <div className="flex items-center gap-2">
+                            <input
+                              id={field.id}
+                              type="checkbox"
+                              checked={customFormData[field.id] === true || customFormData[field.id] === 'true'}
+                              onChange={(e) => updateField(field.id, e.target.checked)}
+                              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <Label htmlFor={field.id} className="font-normal cursor-pointer">
+                              {field.placeholder || field.label}
+                            </Label>
+                          </div>
+                        )}
+
+                        {field.type === 'select' && (
                           <select
                               id={field.id}
                               required={field.required}
@@ -632,7 +788,7 @@ export default function SolicitarServicoPage() {
                               }`}
                             >
                               <option value="">Selecione...</option>
-                              {field.options.map((option: string) => (
+                              {field.options && field.options.map((option: string) => (
                                 <option key={option} value={option}>
                                   {option}
                                 </option>
