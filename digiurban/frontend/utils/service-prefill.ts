@@ -26,7 +26,23 @@ export function buildServiceCreationUrl(
       type: field.type,
       required: field.required,
       placeholder: field.label,
-    }))
+    })),
+    // ✅ CRÍTICO: Adicionar citizenFields para habilitar auto-preenchimento de dados do cidadão
+    citizenFields: [
+      'citizen_name',
+      'citizen_cpf',
+      'citizen_rg',
+      'citizen_birthDate',
+      'citizen_phone',
+      'citizen_email',
+      'citizen_address',
+      'citizen_addressNumber',
+      'citizen_addressComplement',
+      'citizen_neighborhood',
+      'citizen_city',
+      'citizen_state',
+      'citizen_zipCode',
+    ]
   };
 
   // Converter código de URL para formato do banco (ex: 'saude' -> 'SAUDE')
