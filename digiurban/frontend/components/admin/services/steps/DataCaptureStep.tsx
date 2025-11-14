@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Trash2, GripVertical, AlertCircle, FileText, X } from 'lucide-react'
+import { Plus, Trash2, GripVertical, AlertCircle, FileText, X, User, CheckCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
@@ -53,6 +53,22 @@ const MODULE_TYPES = [
   { value: 'CUSTOM', label: '🔧 Customizado (Definir Manualmente)' },
 ]
 
+// Campos disponíveis do perfil do cidadão
+const CITIZEN_PROFILE_FIELDS = [
+  { id: 'citizen_name', label: 'Nome Completo', type: 'text' as const, description: 'Nome cadastrado no perfil' },
+  { id: 'citizen_cpf', label: 'CPF', type: 'text' as const, description: 'CPF do cidadão' },
+  { id: 'citizen_rg', label: 'RG', type: 'text' as const, description: 'RG do cidadão' },
+  { id: 'citizen_email', label: 'E-mail', type: 'email' as const, description: 'E-mail cadastrado' },
+  { id: 'citizen_phone', label: 'Telefone', type: 'tel' as const, description: 'Telefone principal' },
+  { id: 'citizen_phoneSecondary', label: 'Telefone Secundário', type: 'tel' as const, description: 'Telefone alternativo' },
+  { id: 'citizen_birthDate', label: 'Data de Nascimento', type: 'date' as const, description: 'Data de nascimento' },
+  { id: 'citizen_address', label: 'Endereço Completo', type: 'textarea' as const, description: 'Endereço do cidadão' },
+  { id: 'citizen_motherName', label: 'Nome da Mãe', type: 'text' as const, description: 'Nome completo da mãe' },
+  { id: 'citizen_maritalStatus', label: 'Estado Civil', type: 'text' as const, description: 'Estado civil' },
+  { id: 'citizen_occupation', label: 'Profissão', type: 'text' as const, description: 'Ocupação profissional' },
+  { id: 'citizen_familyIncome', label: 'Renda Familiar', type: 'text' as const, description: 'Faixa de renda familiar' },
+]
+
 export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
   const [fields, setFields] = useState<FormField[]>(
     formData.formSchema?.fields || []
@@ -60,6 +76,9 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
   const [documentInput, setDocumentInput] = useState('')
   const [requiredDocuments, setRequiredDocuments] = useState<string[]>(
     formData.requiredDocuments || []
+  )
+  const [selectedCitizenFields, setSelectedCitizenFields] = useState<string[]>(
+    formData.formSchema?.citizenFields || []
   )
 
   const getSuggestedFields = (moduleType: string): FormField[] => {
@@ -126,7 +145,32 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
     const schema = {
       type: 'object',
       fields: updatedFields,
+      citizenFields: selectedCitizenFields, // ✅ Incluir campos do cidadão
       properties: updatedFields.reduce((acc, field) => {
+        acc[field.id] = {
+          type: field.type === 'number' ? 'number' : 'string',
+          title: field.label,
+          required: field.required,
+          ...(field.options && { enum: field.options }),
+        }
+        return acc
+      }, {} as Record<string, any>),
+    }
+    onChange('formSchema', schema)
+  }
+
+  const toggleCitizenField = (fieldId: string) => {
+    const updated = selectedCitizenFields.includes(fieldId)
+      ? selectedCitizenFields.filter(id => id !== fieldId)
+      : [...selectedCitizenFields, fieldId]
+
+    setSelectedCitizenFields(updated)
+    // Atualizar formSchema imediatamente
+    const schema = {
+      type: 'object',
+      fields: fields,
+      citizenFields: updated,
+      properties: fields.reduce((acc, field) => {
         acc[field.id] = {
           type: field.type === 'number' ? 'number' : 'string',
           title: field.label,
@@ -222,6 +266,82 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
 
   return (
     <div className="space-y-6">
+      {/* Campos do Perfil do Cidadão */}
+      <Card className="border-blue-200 bg-blue-50/30">
+        <CardHeader>
+          <div className="flex items-start gap-3">
+            <User className="h-5 w-5 text-blue-600 mt-1" />
+            <div>
+              <CardTitle className="text-lg">Campos do Perfil do Cidadão</CardTitle>
+              <CardDescription>
+                Selecione quais campos do perfil do cidadão devem ser incluídos neste serviço.
+                Estes campos serão pré-preenchidos automaticamente com os dados do perfil.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {CITIZEN_PROFILE_FIELDS.map((field) => {
+              const isSelected = selectedCitizenFields.includes(field.id)
+              return (
+                <Card
+                  key={field.id}
+                  className={cn(
+                    'cursor-pointer transition-all hover:shadow-md',
+                    isSelected
+                      ? 'border-blue-500 bg-blue-100/50 ring-2 ring-blue-500'
+                      : 'border-gray-200 hover:border-blue-300'
+                  )}
+                  onClick={() => toggleCitizenField(field.id)}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-sm truncate">{field.label}</h4>
+                          {isSelected && (
+                            <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">{field.description}</p>
+                        <Badge variant="outline" className="text-xs mt-2">
+                          {field.type}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          {selectedCitizenFields.length > 0 ? (
+            <div className="p-4 bg-blue-100 border border-blue-300 rounded-md">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-900">
+                  {selectedCitizenFields.length} {selectedCitizenFields.length === 1 ? 'campo selecionado' : 'campos selecionados'}
+                </span>
+              </div>
+              <p className="text-xs text-blue-700">
+                Estes campos serão automaticamente preenchidos com os dados do perfil do cidadão ao abrir o formulário.
+              </p>
+            </div>
+          ) : (
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-md text-center">
+              <User className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600">
+                Nenhum campo do perfil selecionado
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Clique nos cards acima para selecionar campos que devem ser pré-preenchidos
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Construtor de Formulário */}
       <Card>
           <CardHeader>
@@ -350,40 +470,94 @@ export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {
         </Card>
 
       {/* Preview */}
-      {fields.length > 0 && (
+      {(selectedCitizenFields.length > 0 || fields.length > 0) && (
         <Card className="bg-blue-50 border-blue-200">
           <CardHeader>
             <CardTitle className="text-sm">Preview do Formulário</CardTitle>
+            <CardDescription className="text-xs">
+              Assim será a experiência do cidadão ao preencher este serviço
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {fields.map((field) => (
-              <div key={field.id} className="space-y-1">
-                <Label className="text-xs">
-                  {field.label} {field.required && <span className="text-red-500">*</span>}
-                </Label>
-                {field.type === 'textarea' ? (
-                  <Textarea disabled placeholder={field.placeholder} className="text-sm bg-white" />
-                ) : field.type === 'select' ? (
-                  <Select disabled>
-                    <SelectTrigger className="text-sm bg-white">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                  </Select>
-                ) : field.type === 'checkbox' ? (
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" disabled className="rounded" />
-                    <span className="text-xs text-gray-600">{field.label}</span>
-                  </div>
-                ) : (
-                  <Input
-                    type={field.type}
-                    disabled
-                    placeholder={field.placeholder}
-                    className="text-sm bg-white"
-                  />
-                )}
+          <CardContent className="space-y-4">
+            {/* Campos do Perfil do Cidadão */}
+            {selectedCitizenFields.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-blue-300">
+                  <User className="h-4 w-4 text-blue-600" />
+                  <span className="text-xs font-semibold text-blue-900 uppercase">
+                    Campos Pré-preenchidos do Perfil
+                  </span>
+                </div>
+                {selectedCitizenFields.map((fieldId) => {
+                  const citizenField = CITIZEN_PROFILE_FIELDS.find(f => f.id === fieldId)
+                  if (!citizenField) return null
+                  return (
+                    <div key={fieldId} className="space-y-1">
+                      <Label className="text-xs flex items-center gap-2">
+                        {citizenField.label}
+                        <Badge variant="secondary" className="text-xs">Auto-preenchido</Badge>
+                      </Label>
+                      {citizenField.type === 'textarea' ? (
+                        <Textarea
+                          disabled
+                          placeholder="Dados do perfil do cidadão"
+                          className="text-sm bg-blue-100 border-blue-300"
+                        />
+                      ) : (
+                        <Input
+                          type={citizenField.type}
+                          disabled
+                          placeholder="Dados do perfil do cidadão"
+                          className="text-sm bg-blue-100 border-blue-300"
+                        />
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-            ))}
+            )}
+
+            {/* Campos Customizados */}
+            {fields.length > 0 && (
+              <div className="space-y-3">
+                {selectedCitizenFields.length > 0 && (
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-300">
+                    <FileText className="h-4 w-4 text-gray-600" />
+                    <span className="text-xs font-semibold text-gray-900 uppercase">
+                      Campos Customizados
+                    </span>
+                  </div>
+                )}
+                {fields.map((field) => (
+                  <div key={field.id} className="space-y-1">
+                    <Label className="text-xs">
+                      {field.label} {field.required && <span className="text-red-500">*</span>}
+                    </Label>
+                    {field.type === 'textarea' ? (
+                      <Textarea disabled placeholder={field.placeholder} className="text-sm bg-white" />
+                    ) : field.type === 'select' ? (
+                      <Select disabled>
+                        <SelectTrigger className="text-sm bg-white">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                      </Select>
+                    ) : field.type === 'checkbox' ? (
+                      <div className="flex items-center gap-2">
+                        <input type="checkbox" disabled className="rounded" />
+                        <span className="text-xs text-gray-600">{field.label}</span>
+                      </div>
+                    ) : (
+                      <Input
+                        type={field.type}
+                        disabled
+                        placeholder={field.placeholder}
+                        className="text-sm bg-white"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
