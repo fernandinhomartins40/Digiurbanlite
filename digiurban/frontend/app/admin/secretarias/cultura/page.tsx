@@ -21,6 +21,7 @@ import {
   FileBarChart,
   AlertCircle,
   FileBadge,
+  FileCheck,
   Info,
 } from 'lucide-react';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
