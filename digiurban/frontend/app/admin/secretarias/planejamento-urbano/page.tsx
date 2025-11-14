@@ -24,9 +24,7 @@ import {
   AlertCircle,
   Building2,
   Info,
-,
   Award,
-  FileCheck,
 } from 'lucide-react';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';

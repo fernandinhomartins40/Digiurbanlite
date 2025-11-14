@@ -21,7 +21,6 @@ import {
   FileBarChart,
   AlertCircle,
   FileText,
-,
   Award,
   FileCheck,
 } from 'lucide-react';
