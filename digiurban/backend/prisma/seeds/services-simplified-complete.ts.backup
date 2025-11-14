@@ -67,66 +67,149 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     icon: 'Activity',
     color: '#10b981',
     formSchema: {
-      type: 'object',
-      properties: {
-        // ========== BLOCO 1: IDENTIFICAÇÃO DO PACIENTE ==========
-        nome: { type: 'string', title: 'Nome Completo do Paciente', minLength: 3, maxLength: 200 },
-        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11, mask: 'cpf' },
-        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20, mask: 'rg' },
-        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento', mask: 'date' },
-
-        // ========== BLOCO 2: CONTATO ==========
-        email: { type: 'string', format: 'email', title: 'E-mail' },
-        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', mask: 'phone' },
-        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', mask: 'phone' },
-
-        // ========== BLOCO 3: ENDEREÇO ==========
-        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', mask: 'cep' },
-        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-        numero: { type: 'string', title: 'Número', maxLength: 10 },
-        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
-
-        // ========== BLOCO 4: COMPLEMENTARES ==========
-        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
-        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
-
-        // ========== BLOCO 5: DADOS DE SAÚDE ==========
-        cartaoSUS: { type: 'string', title: 'Cartão SUS (CNS)', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
-        tipoSanguineo: { type: 'string', title: 'Tipo Sanguíneo', enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Não sei'] },
-
-        // ========== BLOCO 6: DADOS DO ATENDIMENTO ==========
-        tipoAtendimento: {
-          type: 'string',
-          title: 'Tipo de Atendimento',
-          enum: ['Consulta', 'Emergência', 'Retorno', 'Preventivo', 'Vacinação', 'Exame']
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
         },
-        unidadeSaude: { type: 'string', title: 'Unidade de Saúde', minLength: 3, maxLength: 200 },
-        dataAtendimento: { type: 'string', format: 'date', title: 'Data do Atendimento' },
-        horaAtendimento: { type: 'string', title: 'Hora do Atendimento', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
-        profissionalResponsavel: { type: 'string', title: 'Profissional Responsável', minLength: 3, maxLength: 200 },
-        cnsProfissional: { type: 'string', title: 'CNS do Profissional', maxLength: 20 },
-        especialidade: { type: 'string', title: 'Especialidade', maxLength: 100 },
-        descricao: { type: 'string', title: 'Descrição/Queixa Principal', minLength: 10, maxLength: 2000 },
-        diagnostico: { type: 'string', title: 'Diagnóstico/CID', maxLength: 500 },
-        procedimentosRealizados: { type: 'string', title: 'Procedimentos Realizados', maxLength: 1000 },
-        prescricoes: { type: 'string', title: 'Prescrições/Orientações Médicas', maxLength: 1000 },
-        prioridade: {
-          type: 'string',
-          title: 'Prioridade',
-          enum: ['BAIXA', 'NORMAL', 'ALTA', 'URGENTE'],
-          default: 'NORMAL'
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
         },
-        encaminhamento: { type: 'boolean', title: 'Houve Encaminhamento?', default: false },
-        especialidadeEncaminhamento: { type: 'string', title: 'Especialidade do Encaminhamento', maxLength: 200 }
-      },
-      required: [
-        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
-        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
-        'cartaoSUS', 'tipoAtendimento', 'unidadeSaude', 'dataAtendimento', 'descricao'
+        {
+          id: 'tipoSanguineo',
+          label: 'Tipo Sanguíneo',
+          type: 'select',
+          options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Não sei'],
+          required: false
+        },
+        {
+          id: 'tipoAtendimento',
+          label: 'Tipo de Atendimento',
+          type: 'select',
+          options: ['Consulta', 'Emergência', 'Retorno', 'Preventivo', 'Vacinação', 'Exame'],
+          required: true
+        },
+        {
+          id: 'unidadeSaude',
+          label: 'Unidade de Saúde',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataAtendimento',
+          label: 'Data do Atendimento',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'horaAtendimento',
+          label: 'Hora do Atendimento',
+          type: 'text',
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
+          required: false
+        },
+        {
+          id: 'profissionalResponsavel',
+          label: 'Profissional Responsável',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cnsProfissional',
+          label: 'CNS do Profissional',
+          type: 'text',
+          maxLength: 20,
+          required: false
+        },
+        {
+          id: 'especialidade',
+          label: 'Especialidade',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'descricao',
+          label: 'Descrição/Queixa Principal',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 2000,
+          required: true
+        },
+        {
+          id: 'diagnostico',
+          label: 'Diagnóstico/CID',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'procedimentosRealizados',
+          label: 'Procedimentos Realizados',
+          type: 'textarea',
+          maxLength: 1000,
+          required: false
+        },
+        {
+          id: 'prescricoes',
+          label: 'Prescrições/Orientações Médicas',
+          type: 'textarea',
+          maxLength: 1000,
+          required: false
+        },
+        {
+          id: 'prioridade',
+          label: 'Prioridade',
+          type: 'select',
+          options: ['BAIXA', 'NORMAL', 'ALTA', 'URGENTE'],
+          defaultValue: 'NORMAL',
+          required: false
+        },
+        {
+          id: 'encaminhamento',
+          label: 'Houve Encaminhamento?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'especialidadeEncaminhamento',
+          label: 'Especialidade do Encaminhamento',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        }
       ]
     }
   },
@@ -144,45 +227,133 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     icon: 'Calendar',
     color: '#3b82f6',
     formSchema: {
-      type: 'object',
-      properties: {
-        // BLOCO 1: IDENTIFICAÇÃO
-        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
-        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
-        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
-        // BLOCO 2: CONTATO
-        email: { type: 'string', format: 'email', title: 'E-mail' },
-        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
-        // BLOCO 3: ENDEREÇO
-        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-        numero: { type: 'string', title: 'Número', maxLength: 10 },
-        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
-        // BLOCO 4: COMPLEMENTARES
-        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
-        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-        // DADOS DE SAÚDE
-        cartaoSUS: { type: 'string', title: 'Cartão SUS (CNS)', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
-        alergiasMedicamentos: { type: 'string', title: 'Alergias a Medicamentos (se houver)', maxLength: 500 },
-        necessidadesEspeciais: { type: 'string', title: 'Necessidades Especiais', enum: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'] },
-        possuiConvenio: { type: 'boolean', title: 'Possui Convênio Particular?', default: false },
-        nomeConvenio: { type: 'string', title: 'Nome do Convênio', maxLength: 100 },
-        // DADOS DO AGENDAMENTO
-        especialidade: { type: 'string', title: 'Especialidade', enum: ['Clínico Geral', 'Pediatria', 'Ginecologia', 'Cardiologia', 'Ortopedia', 'Dermatologia', 'Oftalmologia', 'Odontologia', 'Psicologia', 'Nutrição'] },
-        unidadePreferencial: { type: 'string', title: 'Unidade de Saúde Preferencial', minLength: 3, maxLength: 200 },
-        dataPreferencial: { type: 'string', format: 'date', title: 'Data Preferencial' },
-        turnoPreferencial: { type: 'string', title: 'Turno Preferencial', enum: ['Manhã', 'Tarde', 'Qualquer'] },
-        motivoConsulta: { type: 'string', title: 'Motivo da Consulta', minLength: 10, maxLength: 500 },
-        primeiraConsulta: { type: 'boolean', title: 'Primeira Consulta na Especialidade?', default: false },
-        urgencia: { type: 'boolean', title: 'Caso Urgente?', default: false },
-        justificativaUrgencia: { type: 'string', title: 'Justificativa da Urgência', minLength: 20, maxLength: 500 },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
-      },
-      required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'cartaoSUS', 'especialidade', 'unidadePreferencial', 'motivoConsulta']
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'alergiasMedicamentos',
+          label: 'Alergias a Medicamentos (se houver)',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'necessidadesEspeciais',
+          label: 'Necessidades Especiais',
+          type: 'select',
+          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'],
+          required: false
+        },
+        {
+          id: 'possuiConvenio',
+          label: 'Possui Convênio Particular?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'nomeConvenio',
+          label: 'Nome do Convênio',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'especialidade',
+          label: 'Especialidade',
+          type: 'select',
+          options: ['Clínico Geral', 'Pediatria', 'Ginecologia', 'Cardiologia', 'Ortopedia', 'Dermatologia', 'Oftalmologia', 'Odontologia', 'Psicologia', 'Nutrição'],
+          required: true
+        },
+        {
+          id: 'unidadePreferencial',
+          label: 'Unidade de Saúde Preferencial',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataPreferencial',
+          label: 'Data Preferencial',
+          type: 'date',
+          required: false
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde', 'Qualquer'],
+          required: false
+        },
+        {
+          id: 'motivoConsulta',
+          label: 'Motivo da Consulta',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 500,
+          required: true
+        },
+        {
+          id: 'primeiraConsulta',
+          label: 'Primeira Consulta na Especialidade?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'urgencia',
+          label: 'Caso Urgente?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'justificativaUrgencia',
+          label: 'Justificativa da Urgência',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
     }
   },
   {
@@ -199,50 +370,102 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     icon: 'Pill',
     color: '#ef4444',
     formSchema: {
-      type: 'object',
-      properties: {
-        // ========== BLOCO 1: IDENTIFICAÇÃO ==========
-        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
-        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
-        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
-
-        // ========== BLOCO 2: CONTATO ==========
-        email: { type: 'string', format: 'email', title: 'E-mail' },
-        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
-
-        // ========== BLOCO 3: ENDEREÇO ==========
-        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-        numero: { type: 'string', title: 'Número', maxLength: 10 },
-        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
-
-        // ========== BLOCO 4: COMPLEMENTARES ==========
-        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
-        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
-
-        // ========== BLOCO 5: DADOS DE SAÚDE ==========
-        cartaoSUS: { type: 'string', title: 'Cartão SUS (CNS)', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
-        alergiasMedicamentos: { type: 'string', title: 'Alergias a Medicamentos (se houver)', maxLength: 500 },
-        necessidadesEspeciais: { type: 'string', title: 'Necessidades Especiais', enum: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'] },
-        dificuldadeLocomocao: { type: 'boolean', title: 'Possui Dificuldade de Locomoção?', default: false },
-
-        // ========== BLOCO 6: DADOS DA RECEITA ==========
-        numeroReceita: { type: 'string', title: 'Número da Receita', minLength: 5, maxLength: 50 },
-        dataReceita: { type: 'string', format: 'date', title: 'Data da Receita' },
-        nomeMedico: { type: 'string', title: 'Nome do Médico', minLength: 3, maxLength: 200 },
-        crmMedico: { type: 'string', title: 'CRM do Médico', pattern: '^\\d{4,8}$' },
-        especialidadeMedico: { type: 'string', title: 'Especialidade do Médico', maxLength: 100 },
-
-        // ========== BLOCO 7: MEDICAMENTOS ==========
-        medicamentos: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'alergiasMedicamentos',
+          label: 'Alergias a Medicamentos (se houver)',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'necessidadesEspeciais',
+          label: 'Necessidades Especiais',
+          type: 'select',
+          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'],
+          required: false
+        },
+        {
+          id: 'dificuldadeLocomocao',
+          label: 'Possui Dificuldade de Locomoção?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'numeroReceita',
+          label: 'Número da Receita',
+          type: 'text',
+          minLength: 5,
+          maxLength: 50,
+          required: true
+        },
+        {
+          id: 'dataReceita',
+          label: 'Data da Receita',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'nomeMedico',
+          label: 'Nome do Médico',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'crmMedico',
+          label: 'CRM do Médico',
+          type: 'text',
+          pattern: '^\\d{4,8}$',
+          required: true
+        },
+        {
+          id: 'especialidadeMedico',
+          label: 'Especialidade do Médico',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'medicamentos',
+          label: 'Medicamentos Solicitados',
           type: 'array',
-          title: 'Medicamentos Solicitados',
           items: {
             type: 'object',
             properties: {
@@ -255,28 +478,83 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
             },
             required: ['nome', 'dosagem', 'quantidade']
           },
-          minItems: 1
+          minItems: 1,
+          required: true
         },
-        usoContínuo: { type: 'boolean', title: 'Uso Contínuo (mais de 3 meses)', default: false },
-
-        // ========== BLOCO 8: RETIRADA E LOGÍSTICA ==========
-        unidadeRetirada: { type: 'string', title: 'Unidade de Retirada Preferencial', minLength: 3, maxLength: 200 },
-        horarioPreferencialRetirada: { type: 'string', title: 'Horário Preferencial', enum: ['Manhã (08:00-12:00)', 'Tarde (13:00-17:00)', 'Qualquer'] },
-        solicitaEntregaDomiciliar: { type: 'boolean', title: 'Solicita Entrega Domiciliar?', default: false },
-        justificativaEntregaDomiciliar: { type: 'string', title: 'Justificativa para Entrega Domiciliar', maxLength: 500 },
-        autorizaFamiliarRetirar: { type: 'boolean', title: 'Autoriza Familiar a Retirar?', default: false },
-        nomeFamiliarAutorizado: { type: 'string', title: 'Nome do Familiar Autorizado', minLength: 3, maxLength: 200 },
-        cpfFamiliarAutorizado: { type: 'string', title: 'CPF do Familiar Autorizado', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-        parentescoFamiliar: { type: 'string', title: 'Grau de Parentesco', enum: ['Cônjuge', 'Filho(a)', 'Pai/Mãe', 'Irmão(ã)', 'Neto(a)', 'Outro'] },
-
-        // ========== BLOCO 9: OBSERVAÇÕES ==========
-        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 500 }
-      },
-      required: [
-        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
-        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
-        'cartaoSUS', 'numeroReceita', 'dataReceita', 'nomeMedico', 'crmMedico',
-        'medicamentos', 'unidadeRetirada'
+        {
+          id: 'usoContínuo',
+          label: 'Uso Contínuo (mais de 3 meses)',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'unidadeRetirada',
+          label: 'Unidade de Retirada Preferencial',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'horarioPreferencialRetirada',
+          label: 'Horário Preferencial',
+          type: 'select',
+          options: ['Manhã (08:00-12:00)', 'Tarde (13:00-17:00)', 'Qualquer'],
+          required: false
+        },
+        {
+          id: 'solicitaEntregaDomiciliar',
+          label: 'Solicita Entrega Domiciliar?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'justificativaEntregaDomiciliar',
+          label: 'Justificativa para Entrega Domiciliar',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'autorizaFamiliarRetirar',
+          label: 'Autoriza Familiar a Retirar?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'nomeFamiliarAutorizado',
+          label: 'Nome do Familiar Autorizado',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cpfFamiliarAutorizado',
+          label: 'CPF do Familiar Autorizado',
+          type: 'text',
+          pattern: '^\\d{11}$',
+          minLength: 11,
+          maxLength: 11,
+          required: false
+        },
+        {
+          id: 'parentescoFamiliar',
+          label: 'Grau de Parentesco',
+          type: 'select',
+          options: ['Cônjuge', 'Filho(a)', 'Pai/Mãe', 'Irmão(ã)', 'Neto(a)', 'Outro'],
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações Gerais',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
       ]
     }
   },
@@ -293,74 +571,78 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     category: 'Prevenção',
     icon: 'Syringe',
     color: '#8b5cf6',
-    formSchema: {
-      type: 'object',
-      properties: {
-        // ========== BLOCO 1: IDENTIFICAÇÃO ==========
-        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
-        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
-        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+    citizenFields: [
+      'citizen_name',
+      'citizen_cpf',
+      'citizen_rg',
+      'citizen_birthDate',
+      'citizen_email',
+      'citizen_phone',
+      'citizen_phoneSecondary',
+      'citizen_zipCode',
+      'citizen_address',
+      'citizen_addressNumber',
+      'citizen_addressComplement',
+      'citizen_neighborhood',
+      'citizen_motherName',
+      'citizen_maritalStatus',
+      'citizen_occupation',
+      'citizen_familyIncome'
+    ],
+    fields: [
+      // ========== BLOCO 1: ENDEREÇO COMPLEMENTAR ==========
+      { name: 'pontoReferencia', type: 'text', label: 'Ponto de Referência (opcional)', required: false, maxLength: 200 },
 
-        // ========== BLOCO 2: CONTATO ==========
-        email: { type: 'string', format: 'email', title: 'E-mail' },
-        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
-
-        // ========== BLOCO 3: ENDEREÇO ==========
-        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-        numero: { type: 'string', title: 'Número', maxLength: 10 },
-        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
-
-        // ========== BLOCO 4: COMPLEMENTARES ==========
-        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
-        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
-
-        // ========== BLOCO 5: DADOS DE SAÚDE ==========
-        cartaoSUS: { type: 'string', title: 'Cartão SUS (CNS)', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
-        possuiCartaoVacina: { type: 'boolean', title: 'Possui Cartão de Vacina?', default: false },
-        numeroCartaoVacina: { type: 'string', title: 'Número do Cartão de Vacina', maxLength: 50 },
-        alergiasMedicamentos: { type: 'string', title: 'Alergias a Medicamentos/Vacinas (se houver)', maxLength: 500 },
-        necessidadesEspeciais: { type: 'string', title: 'Necessidades Especiais', enum: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'] },
-
-        // ========== BLOCO 6: DADOS DA CAMPANHA ==========
-        tipoCampanha: {
-          type: 'string',
-          title: 'Tipo de Campanha/Vacina',
-          enum: ['Gripe', 'COVID-19', 'Sarampo', 'Pólio', 'Multivacinação', 'HPV', 'Meningite', 'Febre Amarela', 'Hepatite', 'Tétano', 'Pneumonia', 'Outras']
-        },
-        grupoRisco: {
-          type: 'string',
-          title: 'Grupo de Risco',
-          enum: ['Criança (0-11 anos)', 'Adolescente (12-18 anos)', 'Adulto (19-59 anos)', 'Idoso (60+ anos)', 'Gestante', 'Puérpera', 'Profissional de Saúde', 'Professor', 'Portador de Comorbidade', 'Não se aplica']
-        },
-        gestante: { type: 'boolean', title: 'É Gestante?', default: false },
-        semanasGestacao: { type: 'integer', title: 'Semanas de Gestação', minimum: 1, maximum: 42 },
-        possuiComorbidade: { type: 'boolean', title: 'Possui Comorbidade?', default: false },
-        descricaoComorbidade: { type: 'string', title: 'Descrição da Comorbidade', maxLength: 500 },
-
-        // ========== BLOCO 7: AGENDAMENTO/LOCAL ==========
-        unidadePreferencial: { type: 'string', title: 'Unidade de Saúde Preferencial', minLength: 3, maxLength: 200 },
-        dataPreferencial: { type: 'string', format: 'date', title: 'Data Preferencial' },
-        turnoPreferencial: { type: 'string', title: 'Turno Preferencial', enum: ['Manhã', 'Tarde', 'Qualquer'] },
-        temDificuldadeLocomocao: { type: 'boolean', title: 'Possui Dificuldade de Locomoção?', default: false },
-        solicitaVacinacaoDomiciliar: { type: 'boolean', title: 'Solicita Vacinação Domiciliar?', default: false },
-        justificativaVacinacaoDomiciliar: { type: 'string', title: 'Justificativa para Vacinação Domiciliar', maxLength: 500 },
-
-        // ========== BLOCO 8: OBSERVAÇÕES ==========
-        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 500 }
+      // ========== BLOCO 2: DADOS DE SAÚDE ==========
+      { name: 'cartaoSUS', type: 'text', label: 'Cartão SUS (CNS)', required: true, pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
+      { name: 'possuiCartaoVacina', type: 'checkbox', label: 'Possui Cartão de Vacina?', required: false, defaultValue: false },
+      { name: 'numeroCartaoVacina', type: 'text', label: 'Número do Cartão de Vacina', required: false, maxLength: 50 },
+      { name: 'alergiasMedicamentos', type: 'textarea', label: 'Alergias a Medicamentos/Vacinas (se houver)', required: false, maxLength: 500 },
+      {
+        name: 'necessidadesEspeciais',
+        type: 'select',
+        label: 'Necessidades Especiais',
+        required: false,
+        options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra']
       },
-      required: [
-        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
-        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
-        'cartaoSUS', 'tipoCampanha', 'grupoRisco', 'unidadePreferencial'
-      ]
-    }
+
+      // ========== BLOCO 3: DADOS DA CAMPANHA ==========
+      {
+        name: 'tipoCampanha',
+        type: 'select',
+        label: 'Tipo de Campanha/Vacina',
+        required: true,
+        options: ['Gripe', 'COVID-19', 'Sarampo', 'Pólio', 'Multivacinação', 'HPV', 'Meningite', 'Febre Amarela', 'Hepatite', 'Tétano', 'Pneumonia', 'Outras']
+      },
+      {
+        name: 'grupoRisco',
+        type: 'select',
+        label: 'Grupo de Risco',
+        required: true,
+        options: ['Criança (0-11 anos)', 'Adolescente (12-18 anos)', 'Adulto (19-59 anos)', 'Idoso (60+ anos)', 'Gestante', 'Puérpera', 'Profissional de Saúde', 'Professor', 'Portador de Comorbidade', 'Não se aplica']
+      },
+      { name: 'gestante', type: 'checkbox', label: 'É Gestante?', required: false, defaultValue: false },
+      { name: 'semanasGestacao', type: 'number', label: 'Semanas de Gestação', required: false, minimum: 1, maximum: 42 },
+      { name: 'possuiComorbidade', type: 'checkbox', label: 'Possui Comorbidade?', required: false, defaultValue: false },
+      { name: 'descricaoComorbidade', type: 'textarea', label: 'Descrição da Comorbidade', required: false, maxLength: 500 },
+
+      // ========== BLOCO 4: AGENDAMENTO/LOCAL ==========
+      { name: 'unidadePreferencial', type: 'text', label: 'Unidade de Saúde Preferencial', required: true, minLength: 3, maxLength: 200 },
+      { name: 'dataPreferencial', type: 'date', label: 'Data Preferencial', required: false },
+      {
+        name: 'turnoPreferencial',
+        type: 'select',
+        label: 'Turno Preferencial',
+        required: false,
+        options: ['Manhã', 'Tarde', 'Qualquer']
+      },
+      { name: 'temDificuldadeLocomocao', type: 'checkbox', label: 'Possui Dificuldade de Locomoção?', required: false, defaultValue: false },
+      { name: 'solicitaVacinacaoDomiciliar', type: 'checkbox', label: 'Solicita Vacinação Domiciliar?', required: false, defaultValue: false },
+      { name: 'justificativaVacinacaoDomiciliar', type: 'textarea', label: 'Justificativa para Vacinação Domiciliar', required: false, maxLength: 500 },
+
+      // ========== BLOCO 5: OBSERVAÇÕES ==========
+      { name: 'observacoes', type: 'textarea', label: 'Observações Gerais', required: false, maxLength: 500 }
+    ]
   },
   {
     name: 'Programas de Saúde',
@@ -375,85 +657,88 @@ const HEALTH_SERVICES: ServiceDefinition[] = [
     category: 'Programas',
     icon: 'Heart',
     color: '#ec4899',
-    formSchema: {
-      type: 'object',
-      properties: {
-        // ========== BLOCO 1: IDENTIFICAÇÃO ==========
-        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
-        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
-        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+    citizenFields: [
+      'citizen_name',
+      'citizen_cpf',
+      'citizen_rg',
+      'citizen_birthDate',
+      'citizen_email',
+      'citizen_phone',
+      'citizen_phoneSecondary',
+      'citizen_zipCode',
+      'citizen_address',
+      'citizen_addressNumber',
+      'citizen_addressComplement',
+      'citizen_neighborhood',
+      'citizen_motherName',
+      'citizen_maritalStatus',
+      'citizen_occupation',
+      'citizen_familyIncome'
+    ],
+    fields: [
+      // ========== BLOCO 1: ENDEREÇO COMPLEMENTAR ==========
+      { name: 'pontoReferencia', type: 'text', label: 'Ponto de Referência (opcional)', required: false, maxLength: 200 },
 
-        // ========== BLOCO 2: CONTATO ==========
-        email: { type: 'string', format: 'email', title: 'E-mail' },
-        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
-
-        // ========== BLOCO 3: ENDEREÇO ==========
-        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-        numero: { type: 'string', title: 'Número', maxLength: 10 },
-        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-        bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
-
-        // ========== BLOCO 4: COMPLEMENTARES ==========
-        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
-        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
-
-        // ========== BLOCO 5: DADOS DE SAÚDE ==========
-        cartaoSUS: { type: 'string', title: 'Cartão SUS (CNS)', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
-        alergiasMedicamentos: { type: 'string', title: 'Alergias a Medicamentos (se houver)', maxLength: 500 },
-        necessidadesEspeciais: { type: 'string', title: 'Necessidades Especiais', enum: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'] },
-        peso: { type: 'number', title: 'Peso (kg)', minimum: 1, maximum: 300 },
-        altura: { type: 'number', title: 'Altura (cm)', minimum: 40, maximum: 250 },
-
-        // ========== BLOCO 6: DADOS DO PROGRAMA ==========
-        tipoPrograma: {
-          type: 'string',
-          title: 'Tipo de Programa',
-          enum: ['Hipertensão', 'Diabetes', 'Gestante', 'Saúde Mental', 'Idoso', 'Pré-Natal', 'Criança Saudável', 'Obesidade', 'Tabagismo', 'Alcoolismo', 'Hanseníase', 'Tuberculose', 'Outro']
-        },
-        motivoInscricao: { type: 'string', title: 'Motivo da Inscrição no Programa', minLength: 10, maxLength: 500 },
-        diagnostico: { type: 'string', title: 'Diagnóstico Principal (CID-10)', minLength: 3, maxLength: 500 },
-        possuiDiagnosticoMedico: { type: 'boolean', title: 'Possui Diagnóstico Médico Formal?', default: false },
-        comorbidades: { type: 'string', title: 'Comorbidades (outras doenças)', maxLength: 500 },
-
-        // ========== BLOCO 7: MÉDICO RESPONSÁVEL ==========
-        nomeMedico: { type: 'string', title: 'Nome do Médico Responsável', minLength: 3, maxLength: 200 },
-        crmMedico: { type: 'string', title: 'CRM do Médico', pattern: '^\\d{4,8}$' },
-        especialidadeMedico: { type: 'string', title: 'Especialidade do Médico', maxLength: 100 },
-        dataUltimaConsulta: { type: 'string', format: 'date', title: 'Data da Última Consulta' },
-
-        // ========== BLOCO 8: ACOMPANHAMENTO ==========
-        dataInicio: { type: 'string', format: 'date', title: 'Data de Início no Programa' },
-        unidadeAcompanhamento: { type: 'string', title: 'Unidade de Saúde para Acompanhamento', minLength: 3, maxLength: 200 },
-        frequenciaConsultas: {
-          type: 'string',
-          title: 'Frequência de Consultas',
-          enum: ['Semanal', 'Quinzenal', 'Mensal', 'Bimestral', 'Trimestral', 'Semestral']
-        },
-        horarioPreferencial: { type: 'string', title: 'Horário Preferencial', enum: ['Manhã', 'Tarde', 'Qualquer'] },
-        necessitaAcompanhante: { type: 'boolean', title: 'Necessita Acompanhante?', default: false },
-
-        // ========== BLOCO 9: MEDICAMENTOS E TRATAMENTO ==========
-        fazUsoMedicamentoContinuo: { type: 'boolean', title: 'Faz Uso de Medicamento Contínuo?', default: false },
-        medicamentosUso: { type: 'string', title: 'Medicamentos em Uso Contínuo', maxLength: 1000 },
-        possuiDificuldadeObterMedicamento: { type: 'boolean', title: 'Possui Dificuldade em Obter Medicamento?', default: false },
-        retiraraMedicamentoFarmaciaBasica: { type: 'boolean', title: 'Retirará Medicamentos na Farmácia Básica?', default: false },
-
-        // ========== BLOCO 10: OBSERVAÇÕES ==========
-        observacoes: { type: 'string', title: 'Observações Gerais', maxLength: 1000 }
+      // ========== BLOCO 2: DADOS DE SAÚDE ==========
+      { name: 'cartaoSUS', type: 'text', label: 'Cartão SUS (CNS)', required: true, pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
+      { name: 'alergiasMedicamentos', type: 'textarea', label: 'Alergias a Medicamentos (se houver)', required: false, maxLength: 500 },
+      {
+        name: 'necessidadesEspeciais',
+        type: 'select',
+        label: 'Necessidades Especiais',
+        required: false,
+        options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra']
       },
-      required: [
-        'nome', 'cpf', 'dataNascimento', 'email', 'telefone',
-        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae',
-        'cartaoSUS', 'tipoPrograma', 'motivoInscricao', 'diagnostico',
-        'nomeMedico', 'crmMedico', 'dataInicio', 'unidadeAcompanhamento', 'frequenciaConsultas'
-      ]
-    }
+      { name: 'peso', type: 'number', label: 'Peso (kg)', required: false, minimum: 1, maximum: 300 },
+      { name: 'altura', type: 'number', label: 'Altura (cm)', required: false, minimum: 40, maximum: 250 },
+
+      // ========== BLOCO 3: DADOS DO PROGRAMA ==========
+      {
+        name: 'tipoPrograma',
+        type: 'select',
+        label: 'Tipo de Programa',
+        required: true,
+        options: ['Hipertensão', 'Diabetes', 'Gestante', 'Saúde Mental', 'Idoso', 'Pré-Natal', 'Criança Saudável', 'Obesidade', 'Tabagismo', 'Alcoolismo', 'Hanseníase', 'Tuberculose', 'Outro']
+      },
+      { name: 'motivoInscricao', type: 'textarea', label: 'Motivo da Inscrição no Programa', required: true, minLength: 10, maxLength: 500 },
+      { name: 'diagnostico', type: 'textarea', label: 'Diagnóstico Principal (CID-10)', required: true, minLength: 3, maxLength: 500 },
+      { name: 'possuiDiagnosticoMedico', type: 'checkbox', label: 'Possui Diagnóstico Médico Formal?', required: false, defaultValue: false },
+      { name: 'comorbidades', type: 'textarea', label: 'Comorbidades (outras doenças)', required: false, maxLength: 500 },
+
+      // ========== BLOCO 4: MÉDICO RESPONSÁVEL ==========
+      { name: 'nomeMedico', type: 'text', label: 'Nome do Médico Responsável', required: true, minLength: 3, maxLength: 200 },
+      { name: 'crmMedico', type: 'text', label: 'CRM do Médico', required: true, pattern: '^\\d{4,8}$' },
+      { name: 'especialidadeMedico', type: 'text', label: 'Especialidade do Médico', required: false, maxLength: 100 },
+      { name: 'dataUltimaConsulta', type: 'date', label: 'Data da Última Consulta', required: false },
+
+      // ========== BLOCO 5: ACOMPANHAMENTO ==========
+      { name: 'dataInicio', type: 'date', label: 'Data de Início no Programa', required: true },
+      { name: 'unidadeAcompanhamento', type: 'text', label: 'Unidade de Saúde para Acompanhamento', required: true, minLength: 3, maxLength: 200 },
+      {
+        name: 'frequenciaConsultas',
+        type: 'select',
+        label: 'Frequência de Consultas',
+        required: true,
+        options: ['Semanal', 'Quinzenal', 'Mensal', 'Bimestral', 'Trimestral', 'Semestral']
+      },
+      {
+        name: 'horarioPreferencial',
+        type: 'select',
+        label: 'Horário Preferencial',
+        required: false,
+        options: ['Manhã', 'Tarde', 'Qualquer']
+      },
+      { name: 'necessitaAcompanhante', type: 'checkbox', label: 'Necessita Acompanhante?', required: false, defaultValue: false },
+
+      // ========== BLOCO 6: MEDICAMENTOS E TRATAMENTO ==========
+      { name: 'fazUsoMedicamentoContinuo', type: 'checkbox', label: 'Faz Uso de Medicamento Contínuo?', required: false, defaultValue: false },
+      { name: 'medicamentosUso', type: 'textarea', label: 'Medicamentos em Uso Contínuo', required: false, maxLength: 1000 },
+      { name: 'possuiDificuldadeObterMedicamento', type: 'checkbox', label: 'Possui Dificuldade em Obter Medicamento?', required: false, defaultValue: false },
+      { name: 'retiraraMedicamentoFarmaciaBasica', type: 'checkbox', label: 'Retirará Medicamentos na Farmácia Básica?', required: false, defaultValue: false },
+
+      // ========== BLOCO 7: OBSERVAÇÕES ==========
+      { name: 'observacoes', type: 'textarea', label: 'Observações Gerais', required: false, maxLength: 1000 }
+    ]
   },
   {
     name: 'Encaminhamento TFD (Tratamento Fora do Domicílio)',
