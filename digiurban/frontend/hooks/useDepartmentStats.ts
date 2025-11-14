@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { getSocket } from '@/lib/socket-manager';
 
 interface DepartmentStats {
   department: string;
@@ -28,30 +28,6 @@ interface DepartmentStats {
       inProgress: number;
     };
   }>;
-}
-
-let socketInstance: Socket | null = null;
-
-function getSocket(): Socket {
-  if (!socketInstance) {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-    socketInstance = io(backendUrl, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
-    });
-
-    socketInstance.on('connect', () => {
-      console.log('🔌 WebSocket connected (useDepartmentStats)');
-    });
-
-    socketInstance.on('disconnect', () => {
-      console.log('🔌 WebSocket disconnected (useDepartmentStats)');
-    });
-  }
-
-  return socketInstance;
 }
 
 export function useDepartmentStats(department: string) {
@@ -106,29 +82,35 @@ export function useDepartmentStats(department: string) {
     // ✅ WebSocket: atualiza stats quando protocolo muda
     const socket = getSocket();
 
-    const handleProtocolCreated = (data: any) => {
-      console.log('📝 Protocol created, refreshing stats...');
-      fetchStats();
-    };
-
     const handleProtocolUpdated = (data: any) => {
-      console.log('✏️ Protocol updated, refreshing stats...');
+      console.log('📝 Protocol updated, refreshing stats...', data);
       fetchStats();
     };
 
     const handleServiceUpdated = (data: any) => {
-      console.log('⚙️ Service updated, refreshing stats...');
+      console.log('⚙️ Service updated, refreshing stats...', data);
       fetchStats();
     };
 
-    socket.on('protocol.created', handleProtocolCreated);
+    // Escuta eventos genéricos (formato antigo - compatibilidade)
+    socket.on('protocol.created', handleProtocolUpdated);
     socket.on('protocol.updated', handleProtocolUpdated);
     socket.on('service.updated', handleServiceUpdated);
 
+    // Escuta eventos específicos do departamento (formato novo)
+    const protocolEventName = `protocol:updated:${department}`;
+    const serviceEventName = `service:updated:${department}`;
+
+    socket.on(protocolEventName, handleProtocolUpdated);
+    socket.on(serviceEventName, handleServiceUpdated);
+
     return () => {
-      socket.off('protocol.created', handleProtocolCreated);
+      // Cleanup: remove todos os listeners
+      socket.off('protocol.created', handleProtocolUpdated);
       socket.off('protocol.updated', handleProtocolUpdated);
       socket.off('service.updated', handleServiceUpdated);
+      socket.off(protocolEventName, handleProtocolUpdated);
+      socket.off(serviceEventName, handleServiceUpdated);
     };
   }, [department]);
 

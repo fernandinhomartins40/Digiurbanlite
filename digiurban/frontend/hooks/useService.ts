@@ -6,8 +6,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { Socket } from 'socket.io-client';
 import { toast } from 'sonner';
+import { getSocket, joinRoom, leaveRoom } from '@/lib/socket-manager';
 
 // ============================================================
 // TYPES
@@ -101,34 +102,27 @@ export function useService(department: string, module: string): UseServiceResult
     // Fetch initial data
     fetchService();
 
-    // Setup WebSocket for real-time updates
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    // Setup WebSocket for real-time updates using centralized manager
+    const socketInstance = getSocket();
 
-    const socketInstance = io(backendUrl, {
-      path: '/api/socket',
-      transports: ['websocket', 'polling'],
-      withCredentials: true
-    });
+    // Join module-specific room when connected
+    const handleConnect = () => {
+      console.log('✅ WebSocket conectado (useService)');
+      joinRoom(department, module);
+    };
 
-    // Connection handlers
-    socketInstance.on('connect', () => {
-      console.log('✅ WebSocket conectado');
-      // Join module-specific room
-      socketInstance.emit('join:module', { department, module });
-    });
+    // If already connected, join immediately
+    if (socketInstance.connected) {
+      joinRoom(department, module);
+    }
 
-    socketInstance.on('connect_error', (err) => {
-      console.warn('⚠️  Erro ao conectar WebSocket (não crítico):', err.message);
-    });
-
-    socketInstance.on('disconnect', () => {
-      console.log('❌ WebSocket desconectado');
-    });
+    // Listen for connection events
+    socketInstance.on('connect', handleConnect);
 
     // Listen for service updates
     const eventName = `service:updated:${department}:${module}`;
 
-    socketInstance.on(eventName, (data: any) => {
+    const handleServiceUpdate = (data: any) => {
       console.log('🔥 Service atualizado via WebSocket:', data);
 
       if (data.service) {
@@ -140,14 +134,18 @@ export function useService(department: string, module: string): UseServiceResult
           duration: 5000
         });
       }
-    });
+    };
+
+    socketInstance.on(eventName, handleServiceUpdate);
 
     setSocket(socketInstance);
 
     // Cleanup on unmount
     return () => {
-      socketInstance.emit('leave:module', { department, module });
-      socketInstance.disconnect();
+      socketInstance.off('connect', handleConnect);
+      socketInstance.off(eventName, handleServiceUpdate);
+      leaveRoom(department, module);
+      // Don't disconnect - socket is shared across app
     };
   }, [department, module, fetchService]);
 
