@@ -128,6 +128,7 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
       priority,
       search,
       departmentId,
+      serviceId,
       assignedUserId,
       page = '1',
       limit = '50'
@@ -147,6 +148,11 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
 
     if (departmentId) {
       where.departmentId = departmentId;
+    }
+
+    // ✅ FILTRO POR SERVIÇO (para módulos específicos)
+    if (serviceId) {
+      where.serviceId = serviceId;
     }
 
     if (assignedUserId) {

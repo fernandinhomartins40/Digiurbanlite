@@ -15,8 +15,7 @@ import {
   MapPin,
   Image as ImageIcon,
   Eye,
-  CheckCircle,
-  XCircle
+  CheckCircle
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -74,19 +73,23 @@ export function ApprovalQueue({
   const handleApprove = async (protocolId: string, notes?: string) => {
     setProcessingId(protocolId);
     try {
+      // Usar fetch diretamente com credentials para garantir que o cookie seja enviado
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/protocols/${protocolId}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ notes })
+      const response = await fetch(`${backendUrl}/api/protocols-simplified/${protocolId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // Importante: envia cookies de autenticação
+        body: JSON.stringify({ comment: notes })
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao aprovar protocolo');
+        const error = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(error.error || `Erro ao aprovar protocolo (${response.status})`);
       }
 
+      const result = await response.json();
       toast.success('Protocolo aprovado com sucesso!');
       onRefresh?.();
     } catch (error: any) {
@@ -101,19 +104,23 @@ export function ApprovalQueue({
   const handleReject = async (protocolId: string, reason: string) => {
     setProcessingId(protocolId);
     try {
+      // Usar fetch diretamente com credentials para garantir que o cookie seja enviado
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-      const response = await fetch(`${backendUrl}/api/protocols/${protocolId}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+      const response = await fetch(`${backendUrl}/api/protocols-simplified/${protocolId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // Importante: envia cookies de autenticação
         body: JSON.stringify({ reason })
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao rejeitar protocolo');
+        const error = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+        throw new Error(error.error || `Erro ao rejeitar protocolo (${response.status})`);
       }
 
+      const result = await response.json();
       toast.success('Protocolo rejeitado');
       onRefresh?.();
     } catch (error: any) {

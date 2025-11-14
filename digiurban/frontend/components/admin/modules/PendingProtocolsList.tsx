@@ -130,7 +130,7 @@ export function PendingProtocolsList({
     setIsApproving(true);
     try {
       await apiRequest(
-        `/api/protocols/${selectedProtocol.id}/approve`,
+        `/api/protocols-simplified/${selectedProtocol.id}/approve`,
         {
           method: 'PUT',
           body: JSON.stringify({
@@ -165,7 +165,7 @@ export function PendingProtocolsList({
     setIsRejecting(true);
     try {
       await apiRequest(
-        `/api/protocols/${selectedProtocol.id}/reject`,
+        `/api/protocols-simplified/${selectedProtocol.id}/reject`,
         {
           method: 'PUT',
           body: JSON.stringify({

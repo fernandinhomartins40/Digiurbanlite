@@ -109,11 +109,11 @@ export function ProtocolDetailModal({
   // ✅ Aprovar protocolo
   const handleApprove = async (id: string, notes?: string) => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-    const response = await fetch(`${backendUrl}/api/protocols/${id}/approve`, {
-      method: 'POST',
+    const response = await fetch(`${backendUrl}/api/protocols-simplified/${id}/approve`, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ notes })
+      body: JSON.stringify({ comment: notes })
     });
 
     if (!response.ok) throw new Error('Erro ao aprovar protocolo');
@@ -125,8 +125,8 @@ export function ProtocolDetailModal({
   // ❌ Rejeitar protocolo
   const handleReject = async (id: string, reason: string) => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-    const response = await fetch(`${backendUrl}/api/protocols/${id}/reject`, {
-      method: 'POST',
+    const response = await fetch(`${backendUrl}/api/protocols-simplified/${id}/reject`, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ reason })
