@@ -20,7 +20,6 @@ import {
   Droplet,
   Recycle,
   Info,
-} fr,
   Award,
   FileCheck,
 } from 'lucide-react';
