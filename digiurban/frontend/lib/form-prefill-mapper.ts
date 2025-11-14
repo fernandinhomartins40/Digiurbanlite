@@ -272,6 +272,7 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // NOME DA MÃE - Todas as variações
   // ============================================================================
+  'citizen_mothername': (c) => c.motherName || '',
   'nomemae': (c) => c.motherName || '',
   'nome_mae': (c) => c.motherName || '',
   'mothername': (c) => c.motherName || '',
@@ -287,6 +288,7 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // ESTADO CIVIL - Todas as variações
   // ============================================================================
+  'citizen_maritalstatus': (c) => c.maritalStatus || '',
   'estadocivil': (c) => c.maritalStatus || '',
   'estado_civil': (c) => c.maritalStatus || '',
   'maritalstatus': (c) => c.maritalStatus || '',
@@ -297,6 +299,7 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // PROFISSÃO/OCUPAÇÃO - Todas as variações
   // ============================================================================
+  'citizen_occupation': (c) => c.occupation || '',
   'profissao': (c) => c.occupation || '',
   'ocupacao': (c) => c.occupation || '',
   'occupation': (c) => c.occupation || '',
@@ -309,6 +312,7 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // RENDA FAMILIAR - Todas as variações
   // ============================================================================
+  'citizen_familyincome': (c) => c.familyIncome || '',
   'rendafamiliar': (c) => {
     console.log('🔍 [RENDA FAMILIAR PREFILL] Valor:', c.familyIncome);
     return c.familyIncome || '';
@@ -324,23 +328,24 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // TELEFONE SECUNDÁRIO - Todas as variações
   // ============================================================================
-  'telefonesecundario': (c) => c.phoneSecondary || '',
-  'telefone_secundario': (c) => c.phoneSecondary || '',
-  'secondaryphone': (c) => c.phoneSecondary || '',
-  'secondary_phone': (c) => c.phoneSecondary || '',
-  'telefone2': (c) => c.phoneSecondary || '',
-  'telefone_2': (c) => c.phoneSecondary || '',
-  'phone2': (c) => c.phoneSecondary || '',
-  'phone_2': (c) => c.phoneSecondary || '',
-  'celular2': (c) => c.phoneSecondary || '',
-  'celular_2': (c) => c.phoneSecondary || '',
-  'telefone_alternativo': (c) => c.phoneSecondary || '',
-  'telefonealternativo': (c) => c.phoneSecondary || '',
-  'alternativephone': (c) => c.phoneSecondary || '',
-  'alternative_phone': (c) => c.phoneSecondary || '',
-  'phonesecondary': (c) => c.phoneSecondary || '',
-  'applicantphonesecondary': (c) => c.phoneSecondary || '',
-  'requesterphonesecondary': (c) => c.phoneSecondary || '',
+  'citizen_phonesecondary': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'telefonesecundario': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'telefone_secundario': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'secondaryphone': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'secondary_phone': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'telefone2': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'telefone_2': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'phone2': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'phone_2': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'celular2': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'celular_2': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'telefone_alternativo': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'telefonealternativo': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'alternativephone': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'alternative_phone': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'phonesecondary': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'applicantphonesecondary': (c) => formatValue(c.phoneSecondary || '', 'phone'),
+  'requesterphonesecondary': (c) => formatValue(c.phoneSecondary || '', 'phone'),
 
   // ============================================================================
   // EMAIL - Todas as variações
