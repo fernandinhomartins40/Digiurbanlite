@@ -1,71 +1,53 @@
 /**
  * ============================================================================
- * MAPEADOR INTELIGENTE DE PRÉ-PREENCHIMENTO DE FORMULÁRIOS
+ * MAPEADOR DE PRÉ-PREENCHIMENTO DE FORMULÁRIOS
  * ============================================================================
  *
- * Sistema de pré-preenchimento automático de formulários com 3 níveis de detecção:
+ * Sistema de pré-preenchimento automático APENAS para campos de perfil do cidadão.
  *
- * ## NÍVEL 1: Mapeamento Direto (200+ variações)
- * - Mapeamento explícito de IDs de campos comuns
- * - Cobre variações como: nome/name/fullName/applicantName/requesterName, etc
- * - Suporta CPF/CNPJ (preenche com CPF do cidadão quando é pessoa física)
- * - Inclui todas as variações de email, telefone e endereço
+ * ## REGRA PRINCIPAL:
+ * - ✅ APENAS campos com prefixo `citizen_*` são pré-preenchidos
+ * - ❌ Campos customizados do serviço NUNCA são pré-preenchidos
  *
- * ## NÍVEL 2: Detecção Semântica Inteligente
- * - Para campos não mapeados diretamente, analisa o ID normalizado
- * - Detecta padrões semânticos (ex: qualquer campo terminado em "Name" = nome)
- * - Identifica palavras-chave (solicitante, requerente, responsável, etc)
- * - Funciona mesmo com IDs novos não previstos
+ * ## Por quê?
+ * Evita pré-preencher campos específicos do serviço com dados do cidadão logado.
+ * Exemplo: Um campo "nomeResponsavel" em um serviço de obras NÃO deve ser
+ * preenchido com o nome do cidadão, pois refere-se ao responsável técnico.
  *
- * ## NÍVEL 3: Fallback
- * - Inicializa campos não reconhecidos com valores vazios apropriados
+ * ## Campos Citizen_* Suportados:
+ * - citizen_name, citizen_cpf (com máscara), citizen_rg
+ * - citizen_birthdate (formato yyyy-MM-dd), citizen_email
+ * - citizen_phone (com máscara), citizen_address
+ * - citizen_addressnumber, citizen_addresscomplement
+ * - citizen_neighborhood, citizen_city, citizen_state
+ * - citizen_zipcode (com máscara CEP)
+ *
+ * ## Estratégia de Mapeamento:
+ * 1. Verificar se campo começa com `citizen_`
+ * 2. Se SIM: buscar mapeamento direto e pré-preencher
+ * 3. Se NÃO: inicializar vazio (campo customizado do serviço)
  *
  * ## Exemplos de Mapeamento:
  *
- * NOME:
- * - requesterName → João Silva (Nome do Solicitante)
- * - applicantName → João Silva (Nome do Requerente)
- * - reporterName → João Silva (Nome do Denunciante)
- * - ownerName → João Silva (Nome do Proprietário)
- * - athleteName → João Silva (Nome do Atleta)
- * - [qualquerCoisa]Name → João Silva (detecção semântica)
+ * ✅ CAMPOS CITIZEN_* (PRÉ-PREENCHIDOS):
+ * - citizen_name → "João Silva"
+ * - citizen_cpf → "123.456.789-00" (com máscara)
+ * - citizen_email → "joao@email.com"
+ * - citizen_phone → "(11) 98765-4321" (com máscara)
+ * - citizen_birthdate → "1990-01-15" (formato yyyy-MM-dd)
+ * - citizen_address → "Rua ABC"
+ * - citizen_zipcode → "12345-678" (com máscara)
  *
- * CPF/CNPJ:
- * - applicantCpf → 123.456.789-00 (CPF do Solicitante)
- * - cpf_cnpj → 123.456.789-00 ⭐ (CPF/CNPJ preenche com CPF)
- * - cpfcnpj → 123.456.789-00
- * - documento → 123.456.789-00
+ * ❌ CAMPOS CUSTOMIZADOS (NÃO PRÉ-PREENCHIDOS):
+ * - nomeResponsavel → "" (vazio - específico do serviço)
+ * - cpfProprietario → "" (vazio - específico do serviço)
+ * - emailContato → "" (vazio - específico do serviço)
+ * - telefoneEmergencia → "" (vazio - específico do serviço)
+ * - enderecoObra → "" (vazio - específico do serviço)
  *
- * EMAIL:
- * - requesterEmail → joao@email.com
- * - contactEmail → joao@email.com
- * - [qualquerCoisa]Email → joao@email.com (detecção semântica)
- *
- * TELEFONE:
- * - requesterPhone → (11) 98765-4321
- * - contactPhone → (11) 98765-4321
- * - parentPhone → (11) 98765-4321
- * - [qualquerCoisa]Phone → (11) 98765-4321 (detecção semântica)
- *
- * ENDEREÇO (Nomenclatura Padrão do Banco):
- * - address → Rua ABC, 123, Centro, São Paulo, SP (completo)
- * - logradouro → Rua ABC (rua/avenida)
- * - numero → 123
- * - bairro → Centro
- * - cidade → São Paulo
- * - uf → SP
- * - cep → 12345-678
- *
- * ## Normalização:
- * - Remove acentos: "endereço" → "endereco"
- * - Lowercase: "NomeSolicitante" → "nomesolicitante"
- * - Remove caracteres especiais: "nome-do-solicitante" → "nome_do_solicitante"
- *
- * ## Cobertura:
- * - 200+ mapeamentos diretos explícitos
- * - Detecção semântica para campos não mapeados
- * - Suporte a 603 IDs únicos de campos dos templates
- * - Taxa de acerto estimada: >95% dos campos de dados pessoais
+ * ## Por quê separar?
+ * Campos customizados podem se referir a OUTRAS pessoas ou entidades,
+ * não ao cidadão logado. Ex: responsável técnico, proprietário do imóvel, etc.
  *
  * ## PADRONIZAÇÃO:
  * ✅ Nomenclatura de endereço ALINHADA com o banco de dados PostgreSQL
@@ -158,6 +140,9 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // NOME COMPLETO - Todas as variações possíveis
   // ============================================================================
+  // IDs citizen_* (novos campos do cidadão)
+  'citizen_name': (c) => c.name,
+
   // IDs diretos
   'nome': (c) => c.name,
   'name': (c) => c.name,
@@ -204,6 +189,9 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // CPF - Todas as variações (incluindo CPF/CNPJ para cidadãos)
   // ============================================================================
+  // IDs citizen_* (novos campos do cidadão) - ✅ COM MÁSCARA
+  'citizen_cpf': (c) => formatValue(c.cpf || '', 'cpf'),
+
   // IDs diretos - ✅ COM MÁSCARA
   'cpf': (c) => formatValue(c.cpf || '', 'cpf'),
   'documento': (c) => formatValue(c.cpf || '', 'cpf'),
@@ -239,6 +227,10 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // RG - Todas as variações
   // ============================================================================
+  // IDs citizen_* (novos campos do cidadão)
+  'citizen_rg': (c) => c.rg || '',
+
+  // IDs diretos
   'rg': (c) => c.rg || '',
   'identidade': (c) => c.rg || '',
   'carteira_identidade': (c) => c.rg || '',
@@ -259,6 +251,10 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ✅ IMPORTANTE: Usa formatDateForInput (yyyy-MM-dd) para inputs type="date" HTML5
   // O formato brasileiro DD/MM/YYYY será aplicado via ModernMaskedInput quando necessário
   // ============================================================================
+  // IDs citizen_* (novos campos do cidadão)
+  'citizen_birthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+
+  // IDs diretos
   'datanascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
   'data_nascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
   'birthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
@@ -349,6 +345,9 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // EMAIL - Todas as variações
   // ============================================================================
+  // IDs citizen_* (novos campos do cidadão)
+  'citizen_email': (c) => c.email,
+
   // IDs diretos
   'email': (c) => c.email,
   'e-mail': (c) => c.email,
@@ -383,6 +382,9 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ============================================================================
   // TELEFONE - Todas as variações
   // ============================================================================
+  // IDs citizen_* (novos campos do cidadão) - ✅ COM MÁSCARA
+  'citizen_phone': (c) => formatValue(c.phone || '', 'phone'),
+
   // IDs diretos - ✅ COM MÁSCARA
   'telefone': (c) => formatValue(c.phone || '', 'phone'),
   'phone': (c) => formatValue(c.phone || '', 'phone'),
@@ -422,6 +424,9 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ENDEREÇO COMPLETO - Quando é um campo único
   // ✅ PADRONIZADO: Usa nomenclatura do banco (logradouro, numero, bairro, cidade, uf, cep)
   // ============================================================================
+  // IDs citizen_* (novos campos do cidadão)
+  'citizen_address': (c) => c.address?.logradouro || '',
+
   'endereco': (c) => {
     if (!c.address) return '';
     const parts = [
@@ -499,6 +504,7 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ✅ Suporta aliases em inglês por compatibilidade, mas retorna dados do padrão PT
   // ============================================================================
   // Rua/Logradouro
+  'citizen_address': (c) => c.address?.logradouro || '',  // citizen_address mapeia para logradouro
   'rua': (c) => c.address?.logradouro || '',
   'logradouro': (c) => c.address?.logradouro || '',
   'street': (c) => c.address?.logradouro || '', // Alias para logradouro
@@ -506,18 +512,21 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   'via': (c) => c.address?.logradouro || '',
 
   // Número
+  'citizen_addressnumber': (c) => c.address?.numero || '',
   'numero': (c) => c.address?.numero || '',
   'number': (c) => c.address?.numero || '', // Alias para numero
   'endereco_numero': (c) => c.address?.numero || '',
   'num': (c) => c.address?.numero || '',
 
   // Complemento
+  'citizen_addresscomplement': (c) => c.address?.complemento || '',
   'complemento': (c) => c.address?.complemento || '',
   'complement': (c) => c.address?.complemento || '', // Alias para complemento
   'endereco_complemento': (c) => c.address?.complemento || '',
   'compl': (c) => c.address?.complemento || '',
 
   // Bairro
+  'citizen_neighborhood': (c) => c.address?.bairro || '',
   'bairro': (c) => c.address?.bairro || '',
   'neighborhood': (c) => c.address?.bairro || '', // Alias para bairro
   'endereco_bairro': (c) => c.address?.bairro || '',
@@ -525,6 +534,7 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   'distrito': (c) => c.address?.bairro || '',
 
   // Cidade
+  'citizen_city': (c) => c.address?.cidade || '',
   'cidade': (c) => c.address?.cidade || '',
   'city': (c) => c.address?.cidade || '', // Alias para cidade
   'municipio': (c) => c.address?.cidade || '',
@@ -532,18 +542,20 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   'localidade': (c) => c.address?.cidade || '',
 
   // Estado
+  'citizen_state': (c) => c.address?.uf || '',
   'estado': (c) => c.address?.uf || '',
   'state': (c) => c.address?.uf || '', // Alias para uf
   'uf': (c) => c.address?.uf || '',
   'endereco_estado': (c) => c.address?.uf || '',
 
-  // CEP
-  'cep': (c) => c.address?.cep || '',
-  'zipcode': (c) => c.address?.cep || '', // Alias para cep
-  'zip_code': (c) => c.address?.cep || '', // Alias para cep
-  'codigo_postal': (c) => c.address?.cep || '',
-  'endereco_cep': (c) => c.address?.cep || '',
-  'postalcode': (c) => c.address?.cep || '', // Alias para cep
+  // CEP - ✅ COM MÁSCARA
+  'citizen_zipcode': (c) => formatValue(c.address?.cep || '', 'cep'),
+  'cep': (c) => formatValue(c.address?.cep || '', 'cep'),
+  'zipcode': (c) => formatValue(c.address?.cep || '', 'cep'), // Alias para cep
+  'zip_code': (c) => formatValue(c.address?.cep || '', 'cep'), // Alias para cep
+  'codigo_postal': (c) => formatValue(c.address?.cep || '', 'cep'),
+  'endereco_cep': (c) => formatValue(c.address?.cep || '', 'cep'),
+  'postalcode': (c) => formatValue(c.address?.cep || '', 'cep'), // Alias para cep
 
   // Ponto de Referência
   'pontoreferencia': (c) => c.address?.pontoReferencia || '',
@@ -586,10 +598,29 @@ export function prefillFormData(
   let prefilledCount = 0;
 
   fields.forEach(field => {
+    // ============================================================================
+    // REGRA IMPORTANTE: Apenas campos citizen_* são pré-preenchidos automaticamente
+    // Campos customizados do serviço NÃO devem ser pré-preenchidos, mesmo que
+    // tenham nomes semelhantes (ex: nomeResponsavel, cpfProprietario, etc)
+    // ============================================================================
+
+    const isCitizenField = field.id.toLowerCase().startsWith('citizen_');
+
+    if (!isCitizenField) {
+      // Campo customizado do serviço - SEMPRE inicializar vazio
+      formData[field.id] = getDefaultValueForType(field.type);
+      console.log(`⚪ [CAMPO CUSTOMIZADO] "${field.id}" → inicializado vazio (não pré-preencher)`);
+      return;
+    }
+
+    // ============================================================================
+    // CAMPOS CITIZEN_* - Aplicar pré-preenchimento
+    // ============================================================================
+
     // Normalizar o ID do campo para lowercase e remover acentos
     const normalizedId = normalizeFieldId(field.id);
 
-    // ESTRATÉGIA DE 3 NÍVEIS:
+    // ESTRATÉGIA DE 3 NÍVEIS (APENAS PARA CAMPOS CITIZEN_*):
     // 1. Tentar mapeamento direto
     const mapper = FIELD_MAPPINGS[normalizedId];
 
@@ -610,34 +641,15 @@ export function prefillFormData(
           console.log(`   Opções: [${field.options.map(o => `"${o}"`).join(', ')}]`);
           console.log(`   Match encontrado: ${matchFound ? '✅ SIM' : '❌ NÃO'}`);
         } else {
-          console.log(`✅ [MAPEAMENTO DIRETO] "${field.id}" (${normalizedId}) → ${String(value).substring(0, 50)}`);
+          console.log(`✅ [CITIZEN FIELD] "${field.id}" → ${String(value).substring(0, 50)}`);
         }
       } else {
         formData[field.id] = getDefaultValueForType(field.type);
       }
     } else {
-      // 2. Tentar detecção semântica inteligente
-      const semanticValue = trySemanticMapping(normalizedId, citizenData);
-
-      if (semanticValue !== null && semanticValue !== undefined && semanticValue !== '') {
-        formData[field.id] = semanticValue;
-        prefilledCount++;
-
-        // Log especial para campos select
-        if (field.type === 'select' && field.options) {
-          const matchFound = field.options.includes(semanticValue);
-          console.log(`✅ [SEMÂNTICO SELECT] "${field.id}" (${normalizedId})`);
-          console.log(`   Valor: "${semanticValue}"`);
-          console.log(`   Opções: [${field.options.map(o => `"${o}"`).join(', ')}]`);
-          console.log(`   Match encontrado: ${matchFound ? '✅ SIM' : '❌ NÃO'}`);
-        } else {
-          console.log(`✅ [SEMÂNTICO] "${field.id}" (${normalizedId}) → ${String(semanticValue).substring(0, 50)}`);
-        }
-      } else {
-        // 3. Inicializar vazio (campo não reconhecido)
-        formData[field.id] = getDefaultValueForType(field.type);
-        console.log(`⚪ [NÃO RECONHECIDO] "${field.id}" (${normalizedId})`);
-      }
+      // 2. Campo citizen_* sem mapeamento encontrado - inicializar vazio
+      formData[field.id] = getDefaultValueForType(field.type);
+      console.log(`⚠️ [CITIZEN FIELD SEM MAPEAMENTO] "${field.id}" (${normalizedId})`);
     }
   });
 
