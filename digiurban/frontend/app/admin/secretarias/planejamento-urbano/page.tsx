@@ -23,6 +23,7 @@ import {
   FileBarChart,
   AlertCircle,
   Building2,
+  Calendar,
   Info,
   Award,
 } from 'lucide-react';
@@ -582,130 +583,6 @@ export default function SecretariaPlanejamentoUrbanoPage() {
           </div>
         </div>
       )}
-
-      {/* Módulos Customizados */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold">Módulos Customizados</h2>
-            <p className="text-sm text-muted-foreground">
-              Crie tabelas personalizadas para dados específicos do planejamento urbano
-            </p>
-          </div>
-          <Button
-            onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=urban-planning')}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Módulo Customizado
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card exemplo: Registro de Obras */}
-          <Card className="border-blue-200 bg-blue-50/50 hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Hammer className="h-5 w-5 text-blue-600" />
-                Registro de Obras
-              </CardTitle>
-              <CardDescription>
-                Exemplo: acompanhamento detalhado de obras em andamento
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="text-xs text-muted-foreground">
-                  <strong>Campos possíveis:</strong> Endereço, Responsável técnico, Status da obra, Percentual concluído
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=urban-planning&template=obras')}
-                >
-                  Criar este Módulo
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card exemplo: Fiscalização */}
-          <Card className="border-red-200 bg-red-50/50 hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                Vistorias de Fiscalização
-              </CardTitle>
-              <CardDescription>
-                Exemplo: registro detalhado de vistorias realizadas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="text-xs text-muted-foreground">
-                  <strong>Campos possíveis:</strong> Local, Fiscal responsável, Data vistoria, Irregularidades encontradas
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => router.push('/admin/modulos-customizados/novo?moduleType=urban-planning&template=fiscalizacao')}
-                >
-                  Criar este Módulo
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Card: Ver todos os módulos */}
-          <Card className="border-dashed border-2 border-gray-300 hover:border-blue-500 transition-colors">
-            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-              <FileBarChart className="h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="font-semibold mb-2">Gerenciar Módulos</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Ver todos os módulos customizados criados para planejamento urbano
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => router.push('/admin/modulos-customizados?moduleType=urban-planning')}
-              >
-                Ver Todos
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Info sobre módulos customizados */}
-        <Card className="mt-6 border-gray-200 bg-gray-50/50">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-blue-600" />
-              O que são Módulos Customizados?
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">Funcionalidades:</h4>
-                <ul className="space-y-1">
-                  <li>✅ Defina campos personalizados (texto, número, data, etc)</li>
-                  <li>✅ Vincule automaticamente a protocolos</li>
-                  <li>✅ Exporte dados para Excel/CSV</li>
-                  <li>✅ Crie relatórios personalizados</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">Exemplos de uso:</h4>
-                <ul className="space-y-1">
-                  <li>• Controle detalhado de obras</li>
-                  <li>• Registro de vistorias técnicas</li>
-                  <li>• Histórico de alterações em imóveis</li>
-                  <li>• Gestão de taxas e tributos urbanos</li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>
