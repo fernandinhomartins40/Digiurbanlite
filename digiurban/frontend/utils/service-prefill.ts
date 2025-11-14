@@ -20,7 +20,7 @@ export function buildServiceCreationUrl(
   // Converter suggestedFields para o formato esperado pelo formSchema
   const formSchema = {
     fields: suggestion.suggestedFields.map((field, index) => ({
-      id: `field_${index}`,
+      id: field.name, // ✅ IMPORTANTE: Usar field.name como ID para permitir pré-preenchimento automático
       name: field.name,
       label: field.label,
       type: field.type,
