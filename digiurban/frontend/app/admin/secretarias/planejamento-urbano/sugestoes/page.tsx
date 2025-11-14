@@ -15,6 +15,7 @@ import {
   Filter
 } from 'lucide-react';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
+import { buildServiceCreationUrl } from '@/utils/service-prefill';
 
 export default function PlanejamentoUrbanoSugestoesPage() {
   const router = useRouter();
@@ -32,20 +33,6 @@ export default function PlanejamentoUrbanoSugestoesPage() {
 
   // Obter categorias únicas
   const categories = Array.from(new Set(suggestions.map(s => s.category)));
-
-  const buildServiceCreationUrl = (suggestion: any) => {
-    const params = new URLSearchParams({
-      departmentCode: 'planejamento-urbano',
-      serviceType: 'COM_DADOS',
-      suggestionId: suggestion.id,
-      name: suggestion.name,
-      description: suggestion.description,
-      estimatedDays: suggestion.estimatedDays.toString(),
-      requiresDocuments: suggestion.requiresDocuments.toString(),
-      suggestedFields: JSON.stringify(suggestion.suggestedFields)
-    });
-    return `/admin/servicos/novo?${params.toString()}`;
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -166,7 +153,7 @@ export default function PlanejamentoUrbanoSugestoesPage() {
                   <Button
                     variant="default"
                     className="w-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => router.push(buildServiceCreationUrl(suggestion))}
+                    onClick={() => router.push(buildServiceCreationUrl('planejamento-urbano', suggestion))}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Criar este Serviço

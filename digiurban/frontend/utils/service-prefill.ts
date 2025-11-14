@@ -7,6 +7,18 @@ export function buildServiceCreationUrl(
   departmentCode: string,
   suggestion: ServiceSuggestion
 ): string {
+  // Converter suggestedFields para o formato esperado pelo formSchema
+  const formSchema = {
+    fields: suggestion.suggestedFields.map((field, index) => ({
+      id: `field_${index}`,
+      name: field.name,
+      label: field.label,
+      type: field.type,
+      required: field.required,
+      placeholder: field.label,
+    }))
+  };
+
   const params = new URLSearchParams({
     departmentCode,
     serviceType: 'COM_DADOS',
@@ -17,7 +29,7 @@ export function buildServiceCreationUrl(
     prefill_estimatedDays: suggestion.estimatedDays.toString(),
     prefill_requiresDocuments: suggestion.requiresDocuments.toString(),
     // Schema de formulário sugerido (JSON stringificado)
-    prefill_formSchema: JSON.stringify(suggestion.suggestedFields),
+    prefill_formSchema: JSON.stringify(formSchema),
   });
 
   return `/admin/servicos/novo?${params.toString()}`;
