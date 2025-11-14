@@ -464,6 +464,88 @@ export default function SecretariaAssistenciaSocialPage() {
         )}
       </div>
 
+      {/* Serviços Disponíveis */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-6">Serviços Disponíveis</h2>
+
+        {servicesLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-full mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-20 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : servicesError ? (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="flex items-center gap-3 p-6">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-red-800">Erro ao carregar serviços</p>
+            </CardContent>
+          </Card>
+        ) : allServices.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+              <HandHeart className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum serviço cadastrado</h3>
+              <p className="text-sm text-muted-foreground">
+                Configure serviços para a Secretaria de Assistência Social
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {allServices.map((service) => (
+              <Card key={service.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-2">
+                    <CardTitle className="text-lg">{service.name}</CardTitle>
+                    {service.moduleType && (
+                      <Badge className="bg-pink-600">
+                        Motor
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription className="line-clamp-2">
+                    {service.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {service.requiresDocuments && (
+                      <div className="text-sm text-muted-foreground">
+                        📎 Requer documentação
+                      </div>
+                    )}
+                    {service.estimatedDays && (
+                      <div className="text-sm text-muted-foreground">
+                        ⏱️ Prazo: {service.estimatedDays} dias
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Criar Protocolo
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Módulos Especializados */}
       {servicesWithModule.length > 0 && (
         <div>
