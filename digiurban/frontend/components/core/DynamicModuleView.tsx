@@ -296,14 +296,93 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
         {/* ABA 4: DOCUMENTOS */}
         <TabsContent value="documents" className="space-y-4">
           <h2 className="text-xl font-semibold">Gestão de Documentos</h2>
-          <Card>
-            <CardContent className="py-12 text-center">
-              <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground">
-                Selecione uma solicitação na aba "Solicitações" para gerenciar documentos
-              </p>
-            </CardContent>
-          </Card>
+
+          {protocols.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-muted-foreground">
+                  Nenhuma solicitação criada ainda. Crie uma solicitação para gerenciar documentos.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {protocols.map((protocol) => {
+                // Extrair documentos do campo JSON
+                const protocolDocs = protocol.documents && Array.isArray(protocol.documents)
+                  ? protocol.documents
+                  : [];
+
+                return (
+                  <Card key={protocol.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg">
+                            Protocolo: {protocol.number}
+                          </CardTitle>
+                          <CardDescription>
+                            {protocol.title || service.name}
+                          </CardDescription>
+                        </div>
+                        <Badge variant={
+                          protocol.status === 'CONCLUIDO' ? 'default' :
+                          protocol.status === 'PROGRESSO' ? 'secondary' :
+                          protocol.status === 'VINCULADO' ? 'outline' : 'destructive'
+                        }>
+                          {protocol.status}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {protocolDocs.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">Nenhum documento enviado ainda</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {protocolDocs.map((doc: any, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
+                            >
+                              <div className="flex items-center gap-3">
+                                <FileText className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {doc.originalName || doc.filename}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {doc.mimetype} • {(doc.size / 1024).toFixed(2)} KB
+                                    {doc.uploadedAt && ` • ${new Date(doc.uploadedAt).toLocaleDateString('pt-BR')}`}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Download do documento
+                                  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+                                  const downloadUrl = `${backendUrl}/uploads/${doc.path || doc.filename}`;
+                                  window.open(downloadUrl, '_blank');
+                                }}
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Baixar
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </TabsContent>
 
         {/* ABA 5: RECURSOS AVANÇADOS (Mapa, Imagens, Calendário) */}

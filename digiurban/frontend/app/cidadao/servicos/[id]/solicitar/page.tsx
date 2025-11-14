@@ -14,7 +14,7 @@ import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { api } from '@/lib/services/api';
 import { useFormPrefill } from '@/hooks/useFormPrefill';
 import { ProgramSelector } from '@/components/citizen/ProgramSelector';
-import { MaskedInput, getMaskPlaceholder } from '@/components/ui/masked-input';
+import { ModernMaskedInput as MaskedInput, getMaskPlaceholder } from '@/components/ui/modern-masked-input';
 import { normalizeRequiredDocuments } from '@/lib/normalize-documents'
 import { DocumentUpload } from '@/components/common/DocumentUpload'
 import { normalizeDocumentConfig } from '@/lib/document-utils';
@@ -638,14 +638,17 @@ export default function SolicitarServicoPage() {
                             required={field.required}
                           />
                         ) : field.mask === 'phone' ? (
-                          <MaskedInput
-                            id={field.id}
-                            type="phone"
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
-                            required={field.required}
-                          />
+                          <>
+                            {field.id === 'citizen_phone' && console.log('🔍 [RENDER PHONE] customFormData:', customFormData[field.id], 'isPrefilled:', isPrefilled)}
+                            <MaskedInput
+                              id={field.id}
+                              type="phone"
+                              value={customFormData[field.id] || ''}
+                              onChange={(e) => updateField(field.id, e.target.value)}
+                              className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+                              required={field.required}
+                            />
+                          </>
                         ) : field.mask === 'cep' ? (
                           <MaskedInput
                             id={field.id}

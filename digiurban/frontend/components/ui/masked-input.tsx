@@ -35,6 +35,19 @@ export function MaskedInput({
   className
 }: MaskedInputProps) {
 
+  // Debug para citizen_phone
+  if (id === 'citizen_phone') {
+    console.log('📱 [MASKED INPUT] Recebeu:', { value, type: typeof value });
+  }
+
+  // ✅ FIX: react-input-mask não funciona bem com valores pré-formatados
+  // Extrair apenas números do valor para garantir que a máscara seja aplicada corretamente
+  const cleanValue = value ? value.replace(/\D/g, '') : '';
+
+  if (id === 'citizen_phone') {
+    console.log('📱 [MASKED INPUT] Limpou para:', cleanValue);
+  }
+
   // Definir máscara baseado no tipo
   const getMask = (): string | ((value: string) => string) => {
     switch (type) {
@@ -102,7 +115,7 @@ export function MaskedInput({
     <InputMask
       id={id}
       mask={mask}
-      value={value || ''}
+      value={cleanValue}
       onChange={onChange}
       onBlur={onBlur}
       disabled={disabled}

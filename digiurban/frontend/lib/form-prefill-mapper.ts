@@ -388,7 +388,13 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // TELEFONE - Todas as variações
   // ============================================================================
   // IDs citizen_* (novos campos do cidadão) - ✅ COM MÁSCARA
-  'citizen_phone': (c) => formatValue(c.phone || '', 'phone'),
+  'citizen_phone': (c) => {
+    console.log('🔍 [CITIZEN_PHONE DEBUG]', {
+      phone: c.phone,
+      formatted: formatValue(c.phone || '', 'phone')
+    });
+    return formatValue(c.phone || '', 'phone');
+  },
 
   // IDs diretos - ✅ COM MÁSCARA
   'telefone': (c) => formatValue(c.phone || '', 'phone'),
@@ -588,16 +594,11 @@ export function prefillFormData(
 
   console.log('🔍 [PREFILL] Dados do cidadão:', {
     name: citizenData.name,
-    cpf: citizenData.cpf,
-    rg: citizenData.rg,
     phone: citizenData.phone,
-    phoneSecondary: citizenData.phoneSecondary,
-    birthDate: citizenData.birthDate,
-    motherName: citizenData.motherName,
-    maritalStatus: citizenData.maritalStatus,
-    occupation: citizenData.occupation,
-    familyIncome: citizenData.familyIncome
+    birthDate: citizenData.birthDate
   });
+
+  console.log('🔍 [PREFILL] Campos a preencher:', fields.map(f => ({ id: f.id, type: f.type })));
 
   const formData: Record<string, any> = {};
   let prefilledCount = 0;
@@ -614,7 +615,6 @@ export function prefillFormData(
     if (!isCitizenField) {
       // Campo customizado do serviço - SEMPRE inicializar vazio
       formData[field.id] = getDefaultValueForType(field.type);
-      console.log(`⚪ [CAMPO CUSTOMIZADO] "${field.id}" → inicializado vazio (não pré-preencher)`);
       return;
     }
 
@@ -638,23 +638,26 @@ export function prefillFormData(
         formData[field.id] = value;
         prefilledCount++;
 
-        // Log especial para campos select
-        if (field.type === 'select' && field.options) {
-          const matchFound = field.options.includes(value);
-          console.log(`✅ [MAPEAMENTO DIRETO SELECT] "${field.id}" (${normalizedId})`);
-          console.log(`   Valor: "${value}"`);
-          console.log(`   Opções: [${field.options.map(o => `"${o}"`).join(', ')}]`);
-          console.log(`   Match encontrado: ${matchFound ? '✅ SIM' : '❌ NÃO'}`);
-        } else {
-          console.log(`✅ [CITIZEN FIELD] "${field.id}" → ${String(value).substring(0, 50)}`);
+        // Log apenas para telefone e data
+        if (field.id === 'citizen_phone' || field.id === 'citizen_birthDate') {
+          console.log(`✅ [CITIZEN FIELD] "${field.id}" → "${value}"`);
         }
       } else {
         formData[field.id] = getDefaultValueForType(field.type);
+
+        // Log de erro apenas para telefone e data vazios
+        if (field.id === 'citizen_phone' || field.id === 'citizen_birthDate') {
+          console.log(`❌ [CITIZEN FIELD VAZIO] "${field.id}" - valor retornado: ${value}`);
+        }
       }
     } else {
       // 2. Campo citizen_* sem mapeamento encontrado - inicializar vazio
       formData[field.id] = getDefaultValueForType(field.type);
-      console.log(`⚠️ [CITIZEN FIELD SEM MAPEAMENTO] "${field.id}" (${normalizedId})`);
+
+      // Log apenas se for telefone ou data
+      if (field.id === 'citizen_phone' || field.id === 'citizen_birthDate') {
+        console.log(`⚠️ [CITIZEN FIELD SEM MAPEAMENTO] "${field.id}" (${normalizedId})`);
+      }
     }
   });
 

@@ -62,7 +62,8 @@
       "Bash(then)",
       "Bash(else)",
       "Bash(do echo \"===== $sec =====\")",
-      "Bash(/dev/null)"
+      "Bash(/dev/null)",
+      "Bash(del check-documents.js check-protocol-docs.js check-all-data.js)"
     ],
     "deny": [],
     "ask": []

@@ -38,6 +38,11 @@ export function ModernMaskedInput({
   className
 }: ModernMaskedInputProps) {
 
+  // Debug apenas para citizen_phone
+  if (id === 'citizen_phone') {
+    console.log('📱 [MASKED INPUT] Recebeu value:', value, 'type:', typeof value);
+  }
+
   // Função para aplicar máscara ao valor
   const applyMask = (rawValue: string, maskType: string): string => {
     // Remove tudo que não é número
