@@ -214,9 +214,15 @@ export class LeadNotificationService {
 
   /**
    * Adiciona lead à lista interna de marketing
+   * TODO: Implementar quando o modelo EmailSubscription for criado no schema.prisma
    */
   private async addToInternalMarketingList(lead: LeadData): Promise<void> {
     try {
+      // TEMPORARIAMENTE DESABILITADO: modelo EmailSubscription não existe no schema
+      console.log('addToInternalMarketingList: Funcionalidade desabilitada temporariamente');
+      return;
+
+      /* TODO: Descomentar quando EmailSubscription for adicionado ao schema.prisma
       // Verifica se já existe
       const existingSubscription = await prisma.emailSubscription.findUnique({
         where: {
@@ -244,6 +250,7 @@ export class LeadNotificationService {
         }
         });
       }
+      */
     } catch (error) {
       console.error('Erro ao adicionar à lista interna:', error);
       throw error;
