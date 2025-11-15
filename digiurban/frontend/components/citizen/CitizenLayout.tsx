@@ -21,6 +21,8 @@ import { useCitizenAuth, useCitizenProtectedRoute } from '@/contexts/CitizenAuth
 import { RegistrationLevelBadge } from './RegistrationLevelBadge';
 import { LevelUpgradeModal } from './LevelUpgradeModal';
 import { mapVerificationStatusToLevel } from '@/lib/citizen-utils';
+import { BottomNavigation } from './mobile/BottomNavigation';
+import { MobileTopBar } from './mobile/MobileTopBar';
 
 interface CitizenLayoutProps {
   children: React.ReactNode;
@@ -83,6 +85,9 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      {/* Mobile Top Bar - Apenas Mobile */}
+      <MobileTopBar />
+
       {/* Sidebar Desktop - Fixa */}
       <aside className="hidden lg:block fixed left-0 top-0 z-30 w-64 h-screen bg-white border-r border-gray-200">
         <div className="flex flex-col h-full">
@@ -307,12 +312,15 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
         </header>
 
         {/* Main content */}
-        <main className="min-h-[calc(100vh-4rem)]">
+        <main className="min-h-[calc(100vh-4rem)] pb-20 lg:pb-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Bottom Navigation - Apenas Mobile */}
+      <BottomNavigation />
 
       {/* Modal de Upgrade de Nível */}
       <LevelUpgradeModal
