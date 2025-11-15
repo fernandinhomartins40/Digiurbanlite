@@ -68,6 +68,11 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
       name: 'Perfil',
       href: '/cidadao/perfil',
       icon: User
+    },
+    {
+      name: 'Mais',
+      href: '/cidadao/mais',
+      icon: Menu
     }
   ];
 

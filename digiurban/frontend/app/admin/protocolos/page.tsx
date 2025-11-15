@@ -128,7 +128,7 @@ export default function ProtocolsPage() {
   // Carregar membros da equipe para atribuição
   const loadTeamMembers = async () => {
     try {
-      const response = await apiRequest('/admin/management/team')
+      const response = await apiRequest('/api/admin/team')
       const teamData = response.teamMembers || response.data?.teamMembers || []
       setTeamMembers(teamData)
     } catch (error) {

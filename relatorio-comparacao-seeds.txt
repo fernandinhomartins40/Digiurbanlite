@@ -1,0 +1,273 @@
+===============================================
+RELATÓRIO DE COMPARAÇÃO DE SERVIÇOS
+===============================================
+
+
+## AGRICULTURA
+--------------------------------------------------
+Total no arquivo original: 12
+Total no seed modular: 6
+Serviços faltando: 10
+
+Serviços que estão faltando:
+  1. Atendimentos - Agricultura
+  2. Assistência Técnica Rural
+  3. Inscrição em Curso Rural
+  4. Inscrição em Programa Rural
+  5. Cadastro de Propriedade Rural
+  6. Declaração de Atividade Agrícola
+  7. Guia de Transporte Vegetal
+  8. Segunda Via de Cadastro de Produtor
+  9. Consulta de Situação Cadastral
+  10. Atestado de Área Cultivada
+
+## ASSISTÊNCIA SOCIAL
+--------------------------------------------------
+Total no arquivo original: 15
+Total no seed modular: 9
+Serviços faltando: 14
+
+Serviços que estão faltando:
+  1. Atendimentos - Assistência Social
+  2. Solicitação de Benefício Social
+  3. Entrega Emergencial (Cesta Básica)
+  4. Inscrição em Grupo ou Oficina Social
+  5. Visitas Domiciliares
+  6. Inscrição em Programa Social
+  7. Agendamento de Atendimento Social
+  8. Gestão CRAS/CREAS
+  9. Certidão de Família em Situação de Vulnerabilidade
+  10. Declaração de Atendimento Social
+  11. Guia de Encaminhamento para Serviços
+  12. Segunda Via de Documentos Sociais
+  13. Consulta de Situação Cadastral (CadÚnico)
+  14. Declaração de Participação em Programa Social
+
+## CULTURA
+--------------------------------------------------
+Total no arquivo original: 15
+Total no seed modular: 9
+Serviços faltando: 15
+
+Serviços que estão faltando:
+  1. Atendimentos - Cultura
+  2. Reserva de Espaço Cultural
+  3. Inscrição em Oficina Cultural
+  4. Cadastro de Grupo Artístico
+  5. Projeto Cultural
+  6. Submissão de Projeto Cultural (Lei de Incentivo)
+  7. Cadastro de Evento Cultural
+  8. Registro de Manifestação Cultural
+  9. Agenda de Eventos Culturais
+  10. Certidão de Artista Local
+  11. Declaração de Participação em Evento Cultural
+  12. Guia de Utilização de Espaço Cultural
+  13. Atestado de Grupo Artístico
+  14. Consulta de Agenda Cultural
+  15. Segunda Via de Cadastro Cultural
+
+## EDUCAÇÃO
+--------------------------------------------------
+Total no arquivo original: 23
+Total no seed modular: 11
+Serviços faltando: 17
+
+Serviços que estão faltando:
+  1. Histórico Escolar
+  2. Atestado de Frequência Escolar
+  3. Declaração de Conclusão
+  4. Segunda Via de Documentos Escolares
+  5. Certidão de Escolaridade
+  6. Atendimentos - Educação
+  7. Matrícula de Aluno
+  8. Transporte Escolar
+  9. Registro de Ocorrência Escolar
+  10. Solicitação de Documento Escolar
+  11. Consulta de Frequência
+  12. Consulta de Notas e Boletim
+  13. Gestão Escolar
+  14. Histórico Escolar
+  15. Declaração de Conclusão
+  16. Segunda Via de Documentos Escolares
+  17. Certidão de Escolaridade
+
+## ESPORTES
+--------------------------------------------------
+Total no arquivo original: 15
+Total no seed modular: 9
+Serviços faltando: 14
+
+Serviços que estão faltando:
+  1. Atendimentos - Esportes
+  2. Inscrição em Escolinha Esportiva
+  3. Cadastro de Atleta
+  4. Reserva de Espaço Esportivo
+  5. Inscrição em Competição
+  6. Cadastro de Equipe Esportiva
+  7. Inscrição em Torneio
+  8. Cadastro de Modalidade Esportiva
+  9. Certidão de Atleta Municipal
+  10. Declaração de Participação em Competição
+  11. Atestado de Inscrição em Escolinha
+  12. Comprovante de Reserva de Quadra
+  13. Segunda Via de Carteira de Atleta
+  14. Consulta de Calendário Esportivo
+
+## HABITAÇÃO
+--------------------------------------------------
+Total no arquivo original: 13
+Total no seed modular: 7
+Serviços faltando: 12
+
+Serviços que estão faltando:
+  1. Atendimentos - Habitação
+  2. Inscrição em Programa Habitacional
+  3. Solicitação de Auxílio Aluguel
+  4. Cadastro de Unidade Habitacional
+  5. Inscrição na Fila de Habitação
+  6. Consulta de Programas Habitacionais
+  7. Certidão de Inscrição Habitacional
+  8. Declaração de Moradia
+  9. Atestado de Regularização Fundiária
+  10. Consulta de Situação no Programa
+  11. Segunda Via de Contrato Habitacional
+  12. Comprovante de Cadastro Habitacional
+
+## MEIO AMBIENTE
+--------------------------------------------------
+Total no arquivo original: 13
+Total no seed modular: 7
+Serviços faltando: 13
+
+Serviços que estão faltando:
+  1. Atendimentos - Meio Ambiente
+  2. Licença Ambiental
+  3. Denúncia Ambiental
+  4. Programa Ambiental
+  5. Autorização de Poda ou Corte de Árvore
+  6. Vistoria Ambiental
+  7. Gestão de Áreas Protegidas
+  8. Certidão de Conformidade Ambiental
+  9. Declaração de Área Verde
+  10. Guia de Poda de Árvore
+  11. Atestado de Coleta Seletiva
+  12. Consulta de Licença Ambiental
+  13. Segunda Via de Autorização Ambiental
+
+## OBRAS PÚBLICAS
+--------------------------------------------------
+Total no arquivo original: 13
+Total no seed modular: 8
+Serviços faltando: 13
+
+Serviços que estão faltando:
+  1. Atendimentos - Obras Públicas
+  2. Solicitação de Reparo de Via
+  3. Vistoria Técnica de Obras
+  4. Cadastro de Obra Pública
+  5. Inspeção de Obra
+  6. Acompanhamento de Obras
+  7. Mapa de Obras
+  8. Certidão de Obra Pública
+  9. Declaração de Manutenção Realizada
+  10. Atestado de Vistoria de Obras
+  11. Guia de Ocupação de Via
+  12. Consulta de Status de Obra
+  13. Segunda Via de Documentos de Obras
+
+## PLANEJAMENTO_URBANO
+--------------------------------------------------
+Total no arquivo original: 15
+Total no seed modular: 0
+Serviços faltando: 15
+
+Serviços que estão faltando:
+  1. Atendimentos - Planejamento Urbano
+  2. Aprovação de Projeto Arquitetônico
+  3. Alvará de Construção
+  4. Alvará de Funcionamento
+  5. Solicitação de Certidão Municipal
+  6. Denúncia de Construção Irregular
+  7. Cadastro de Loteamento
+  8. Consultas Públicas (Plano Diretor)
+  9. Mapa Urbano (Zoneamento)
+  10. Certidão de Uso do Solo
+  11. Certidão de Zoneamento
+  12. Certidão de Viabilidade de Construção
+  13. Declaração de Conformidade Urbanística
+  14. Atestado de Regularidade de Obra
+  15. Laudo de Vistoria Técnica
+
+## SAÚDE
+--------------------------------------------------
+Total no arquivo original: 17
+Total no seed modular: 8
+Serviços faltando: 9
+
+Serviços que estão faltando:
+  1. Cartão Nacional de Saúde (Cartão SUS)
+  2. Registro de Vacinação
+  3. Gestão de Agentes Comunitários de Saúde (ACS)
+  4. Certidão de Atendimento
+  5. Declaração de Vacinação
+  6. Atestado de Acompanhamento em Programa
+  7. Segunda Via de Cartão SUS
+  8. Consulta de Histórico de Atendimentos
+  9. Declaração de Participação em Programa de Saúde
+
+## SEGURANCA_PUBLICA
+--------------------------------------------------
+Total no arquivo original: 17
+Total no seed modular: 0
+Serviços faltando: 17
+
+Serviços que estão faltando:
+  1. Atendimentos - Segurança Pública
+  2. Registro de Ocorrência (BO)
+  3. Solicitação de Ronda Policial
+  4. Solicitação de Câmera de Segurança
+  5. Denúncia Anônima (Disque Denúncia)
+  6. Cadastro de Ponto Crítico
+  7. Alerta de Segurança
+  8. Registro de Patrulha
+  9. Gestão da Guarda Municipal
+  10. Gestão de Vigilância (Central de Operações)
+  11. Estatísticas de Segurança
+  12. Certidão de Antecedentes Criminais
+  13. Certidão de Ocorrência Policial
+  14. Declaração de Comparecimento a Delegacia
+  15. Atestado de Bons Antecedentes
+  16. Laudo de Vistoria de Segurança
+  17. Autorização para Evento com Aglomeração
+
+## SERVIÇOS PÚBLICOS
+--------------------------------------------------
+Total no arquivo original: 15
+Total no seed modular: 10
+Serviços faltando: 6
+
+Serviços que estão faltando:
+  1. Atendimentos - Serviços Públicos
+  2. Iluminação Pública (Poste Queimado)
+  3. Limpeza Urbana (Coleta de Lixo)
+  4. Coleta Especial (Entulho e Móveis)
+  5. Solicitação de Capina
+  6. Solicitação de Desobstrução (Bueiro Entupido)
+
+## TURISMO
+--------------------------------------------------
+Total no arquivo original: 15
+Total no seed modular: 15
+Serviços faltando: 0
+✓ Todos os serviços estão presentes no seed modular
+
+
+===============================================
+RESUMO GERAL
+===============================================
+Total de serviços no arquivo original: 198
+Total de serviços nos seeds modulares: 99
+Total de serviços faltando: 155
+Percentual de completude: 50.00%
+===============================================
+

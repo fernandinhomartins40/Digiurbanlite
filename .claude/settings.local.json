@@ -71,7 +71,8 @@
       "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" update-seeds-with-missing.py)",
       "Bash(tsx prisma/seed-consolidated.ts:*)",
       "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" check-duplicates-in-seeds.py)",
-      "Bash(del /f /q .next 2)"
+      "Bash(del /f /q .next 2)",
+      "Bash(del \"digiurban\\frontend\\nul\")"
     ],
     "deny": [],
     "ask": []
