@@ -47,8 +47,8 @@ npx prisma migrate deploy || {
 # Verificar se precisa executar seed
 echo "🔍 Verificando se banco precisa de seed..."
 
-# Criar script inline para verificação
-cat > /tmp/check-db.js <<'CHECKSCRIPT'
+# Criar script inline para verificação NO DIRETÓRIO DO BACKEND
+cat > check-db.js <<'CHECKSCRIPT'
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
@@ -69,11 +69,11 @@ async function check() {
 check();
 CHECKSCRIPT
 
-# Executar verificação (timeout de 10s)
+# Executar verificação (timeout de 10s) NO DIRETÓRIO CORRETO
 echo "Verificando existência de dados..."
-INTEGRITY_RESULT=$(timeout 10 node /tmp/check-db.js 2>&1 || echo "timeout_or_error")
+INTEGRITY_RESULT=$(timeout 10 node check-db.js 2>&1 || echo "timeout_or_error")
 INTEGRITY_EXIT_CODE=$?
-rm -f /tmp/check-db.js
+rm -f check-db.js
 
 echo "📋 Resultado: $INTEGRITY_RESULT"
 
