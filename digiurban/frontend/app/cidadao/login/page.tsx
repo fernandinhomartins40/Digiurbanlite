@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
-import { LogIn, UserPlus, AlertCircle, User, CheckCircle, MapPin, Eye, EyeOff } from 'lucide-react'
+import { LogIn, UserPlus, AlertCircle, Users, CheckCircle, MapPin, Eye, EyeOff, Building2, Lock, Mail, Phone, User, IdCard } from 'lucide-react'
 import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator'
 import Link from 'next/link'
 
@@ -271,12 +271,14 @@ export default function CitizenLoginPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f6fbe] via-[#0f6fbe] to-[#193642] p-4">
+        <Card className="w-full max-w-md border-0 shadow-2xl">
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
-              <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
-              <h2 className="text-2xl font-bold text-green-900">Cadastro Realizado!</h2>
+              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#0fffbf] to-[#a7dbc9] flex items-center justify-center">
+                <CheckCircle className="h-10 w-10 text-[#193642]" />
+              </div>
+              <h2 className="text-2xl font-bold text-[#193642]">Cadastro Realizado!</h2>
               <p className="text-gray-600">
                 Seu cadastro foi criado com sucesso. Você será redirecionado para o portal.
               </p>
@@ -288,25 +290,41 @@ export default function CitizenLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <User className="h-12 w-12 text-blue-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f6fbe] via-[#0f6fbe] to-[#193642] p-4 relative overflow-hidden">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-[#0fffbf] rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-[#a7dbc9] rounded-full blur-3xl"></div>
+      </div>
+
+      <Card className="w-full max-w-md border-0 shadow-2xl relative z-10 backdrop-blur-sm bg-white/95">
+        <CardHeader className="text-center space-y-4 pb-6">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#0f6fbe] to-[#0fffbf] flex items-center justify-center shadow-lg">
+              <Users className="h-8 w-8 text-white" />
+            </div>
           </div>
-          <CardTitle className="text-2xl">Portal do Cidadão</CardTitle>
-          <CardDescription>
-            Acesse ou crie sua conta para utilizar os serviços municipais
-          </CardDescription>
+          <div>
+            <CardTitle className="text-3xl font-bold text-[#193642]">Portal do Cidadão</CardTitle>
+            <CardDescription className="text-base text-gray-600 mt-2">
+              Acesse ou crie sua conta para utilizar os serviços municipais
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1">
+              <TabsTrigger
+                value="login"
+                className="data-[state=active]:bg-[#0f6fbe] data-[state=active]:text-white"
+              >
                 <LogIn className="h-4 w-4 mr-2" />
                 Entrar
               </TabsTrigger>
-              <TabsTrigger value="register">
+              <TabsTrigger
+                value="register"
+                className="data-[state=active]:bg-[#0f6fbe] data-[state=active]:text-white"
+              >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Cadastrar
               </TabsTrigger>
@@ -322,24 +340,29 @@ export default function CitizenLoginPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-cpf">CPF</Label>
-                  <Input
-                    id="login-cpf"
-                    placeholder="000.000.000-00"
-                    value={loginData.cpf}
-                    onChange={(e) => setLoginData({ ...loginData, cpf: formatCPF(e.target.value) })}
-                    maxLength={14}
-                    required
-                    autoFocus
-                  />
+                  <Label htmlFor="login-cpf" className="text-[#193642] font-medium">CPF</Label>
+                  <div className="relative">
+                    <IdCard className="absolute left-3 top-3 h-4 w-4 text-[#0f6fbe]" />
+                    <Input
+                      id="login-cpf"
+                      placeholder="000.000.000-00"
+                      value={loginData.cpf}
+                      onChange={(e) => setLoginData({ ...loginData, cpf: formatCPF(e.target.value) })}
+                      maxLength={14}
+                      required
+                      autoFocus
+                      className="pl-10 border-gray-200 focus:border-[#0f6fbe] focus:ring-[#0f6fbe]"
+                    />
+                  </div>
                   <p className="text-xs text-gray-500">
                     Digite seu CPF cadastrado
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Senha</Label>
+                  <Label htmlFor="login-password" className="text-[#193642] font-medium">Senha</Label>
                   <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-[#0f6fbe]" />
                     <Input
                       id="login-password"
                       type={showLoginPassword ? "text" : "password"}
@@ -347,12 +370,12 @@ export default function CitizenLoginPage() {
                       value={loginData.password}
                       onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                       required
-                      className="pr-10"
+                      className="pl-10 pr-10 border-gray-200 focus:border-[#0f6fbe] focus:ring-[#0f6fbe]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#0f6fbe]"
                     >
                       {showLoginPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -368,16 +391,21 @@ export default function CitizenLoginPage() {
                     id="remember-me"
                     checked={rememberMe}
                     onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    className="border-[#0f6fbe] data-[state=checked]:bg-[#0f6fbe]"
                   />
                   <label
                     htmlFor="remember-me"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-gray-700"
                   >
                     Lembrar meu CPF
                   </label>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full bg-[#0fffbf] hover:bg-[#0de6a9] text-[#193642] font-semibold py-6 text-base shadow-lg hover:shadow-xl transition-all"
+                  disabled={isLoading}
+                >
                   {isLoading ? 'Entrando...' : 'Entrar'}
                 </Button>
               </form>
@@ -385,11 +413,11 @@ export default function CitizenLoginPage() {
 
             <TabsContent value="register" className="mt-6">
               <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
-                  <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-blue-800">
+                <div className="bg-[#a7dbc9]/20 border border-[#a7dbc9] rounded-lg p-3 flex items-start gap-2">
+                  <MapPin className="h-5 w-5 text-[#0f6fbe] flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-[#193642]">
                     <p className="font-medium mb-1">Selecione seu município</p>
-                    <p className="text-blue-700">
+                    <p className="text-gray-700">
                       Caso seu município ainda não utilize o DigiUrban, ele será cadastrado automaticamente após seu registro.
                     </p>
                   </div>
@@ -403,71 +431,87 @@ export default function CitizenLoginPage() {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-cpf">CPF *</Label>
-                  <Input
-                    id="register-cpf"
-                    placeholder="000.000.000-00"
-                    value={registerData.cpf}
-                    onChange={(e) => setRegisterData({ ...registerData, cpf: formatCPF(e.target.value) })}
-                    maxLength={14}
-                    required
-                  />
+                  <Label htmlFor="register-cpf" className="text-[#193642] font-medium">CPF *</Label>
+                  <div className="relative">
+                    <IdCard className="absolute left-3 top-3 h-4 w-4 text-[#0f6fbe]" />
+                    <Input
+                      id="register-cpf"
+                      placeholder="000.000.000-00"
+                      value={registerData.cpf}
+                      onChange={(e) => setRegisterData({ ...registerData, cpf: formatCPF(e.target.value) })}
+                      maxLength={14}
+                      required
+                      className="pl-10 border-gray-200 focus:border-[#0f6fbe] focus:ring-[#0f6fbe]"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-name">Nome Completo *</Label>
-                  <Input
-                    id="register-name"
-                    placeholder="Seu nome completo"
-                    value={registerData.name}
-                    onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
-                    required
-                  />
+                  <Label htmlFor="register-name" className="text-[#193642] font-medium">Nome Completo *</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-[#0f6fbe]" />
+                    <Input
+                      id="register-name"
+                      placeholder="Seu nome completo"
+                      value={registerData.name}
+                      onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                      required
+                      className="pl-10 border-gray-200 focus:border-[#0f6fbe] focus:ring-[#0f6fbe]"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-email">E-mail *</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={registerData.email}
-                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                    required
-                  />
+                  <Label htmlFor="register-email" className="text-[#193642] font-medium">E-mail *</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-[#0f6fbe]" />
+                    <Input
+                      id="register-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={registerData.email}
+                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                      required
+                      className="pl-10 border-gray-200 focus:border-[#0f6fbe] focus:ring-[#0f6fbe]"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-phone">Telefone</Label>
-                  <Input
-                    id="register-phone"
-                    placeholder="(00) 00000-0000"
-                    value={registerData.phone}
-                    onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
-                  />
+                  <Label htmlFor="register-phone" className="text-[#193642] font-medium">Telefone</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-[#0f6fbe]" />
+                    <Input
+                      id="register-phone"
+                      placeholder="(00) 00000-0000"
+                      value={registerData.phone}
+                      onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                      className="pl-10 border-gray-200 focus:border-[#0f6fbe] focus:ring-[#0f6fbe]"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-municipio">Município</Label>
+                  <Label htmlFor="register-municipio" className="text-[#193642] font-medium">Município</Label>
                   {loadingMunicipioConfig ? (
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
-                      <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                      <div className="animate-spin h-4 w-4 border-2 border-[#0f6fbe] border-t-transparent rounded-full" />
                       <span className="text-sm text-gray-600">Carregando município...</span>
                     </div>
                   ) : municipioConfig ? (
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                      <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <div className="flex items-center gap-3 p-3 bg-[#a7dbc9]/20 border border-[#a7dbc9] rounded-lg">
+                      <MapPin className="h-5 w-5 text-[#0f6fbe] flex-shrink-0" />
                       <div className="text-sm">
-                        <span className="font-semibold text-blue-900">
+                        <span className="font-semibold text-[#193642]">
                           {municipioConfig.nomeMunicipio} - {municipioConfig.ufMunicipio}
                         </span>
-                        <p className="text-xs text-blue-700 mt-0.5">
+                        <p className="text-xs text-gray-700 mt-0.5">
                           Sistema exclusivo para cidadãos deste município
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
                       <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
                       <span className="text-sm text-red-700">
                         Não foi possível carregar o município
@@ -477,8 +521,9 @@ export default function CitizenLoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-password">Senha *</Label>
+                  <Label htmlFor="register-password" className="text-[#193642] font-medium">Senha *</Label>
                   <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-[#0f6fbe]" />
                     <Input
                       id="register-password"
                       type={showRegisterPassword ? "text" : "password"}
@@ -486,12 +531,12 @@ export default function CitizenLoginPage() {
                       value={registerData.password}
                       onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                       required
-                      className="pr-10"
+                      className="pl-10 pr-10 border-gray-200 focus:border-[#0f6fbe] focus:ring-[#0f6fbe]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#0f6fbe]"
                     >
                       {showRegisterPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -503,8 +548,9 @@ export default function CitizenLoginPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-confirm">Confirmar Senha *</Label>
+                  <Label htmlFor="register-confirm" className="text-[#193642] font-medium">Confirmar Senha *</Label>
                   <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-[#0f6fbe]" />
                     <Input
                       id="register-confirm"
                       type={showRegisterConfirmPassword ? "text" : "password"}
@@ -512,12 +558,12 @@ export default function CitizenLoginPage() {
                       value={registerData.confirmPassword}
                       onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
                       required
-                      className="pr-10"
+                      className="pl-10 pr-10 border-gray-200 focus:border-[#0f6fbe] focus:ring-[#0f6fbe]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowRegisterConfirmPassword(!showRegisterConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#0f6fbe]"
                     >
                       {showRegisterConfirmPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -537,7 +583,11 @@ export default function CitizenLoginPage() {
                   />
                 )}
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full bg-[#0fffbf] hover:bg-[#0de6a9] text-[#193642] font-semibold py-6 text-base shadow-lg hover:shadow-xl transition-all"
+                  disabled={isLoading}
+                >
                   {isLoading ? 'Criando cadastro...' : 'Criar Cadastro'}
                 </Button>
               </form>
@@ -546,10 +596,10 @@ export default function CitizenLoginPage() {
 
           <div className="mt-6 pt-4 border-t border-gray-200 text-center">
             <Link
-              href="/login"
-              className="text-sm text-gray-600 hover:text-gray-900 hover:underline"
+              href="/landing"
+              className="text-sm text-[#0f6fbe] hover:text-[#0fffbf] font-medium hover:underline transition-colors"
             >
-              Acessar área administrativa
+              ← Voltar para página inicial
             </Link>
           </div>
         </CardContent>

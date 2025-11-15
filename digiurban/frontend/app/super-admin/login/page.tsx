@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react'
 import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext'
+import Link from 'next/link'
 
 export default function SuperAdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -58,42 +59,51 @@ export default function SuperAdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-indigo-50 p-4">
-      <Card className="w-full max-w-md border-2 border-purple-200 shadow-2xl">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-full p-4 shadow-lg">
-              <Shield className="h-8 w-8 text-white" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#193642] via-[#193642] to-[#0f6fbe] p-4 relative overflow-hidden">
+      {/* Decorative elements with darker theme */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-20 right-20 w-96 h-96 bg-[#0fffbf] rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-[#a7dbc9] rounded-full blur-3xl"></div>
+      </div>
+
+      <Card className="w-full max-w-md border-0 shadow-2xl relative z-10 backdrop-blur-sm bg-white/95">
+        <CardHeader className="space-y-4 pb-6">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#193642] to-[#0f6fbe] flex items-center justify-center shadow-lg relative">
+              <Shield className="h-8 w-8 text-white relative z-10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#0fffbf]/20 to-transparent rounded-2xl"></div>
             </div>
           </div>
-          <CardTitle className="text-3xl text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-extrabold">
-            Super Admin
-          </CardTitle>
-          <CardDescription className="text-center text-base">
-            Acesso exclusivo à gestão SaaS da plataforma
-          </CardDescription>
+          <div className="text-center">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#193642] to-[#0f6fbe] bg-clip-text text-transparent">
+              Super Admin
+            </CardTitle>
+            <CardDescription className="text-base text-gray-600 mt-2">
+              Acesso exclusivo à gestão SaaS da plataforma
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           {(error || contextError) && (
-            <Alert className="mb-4" variant="destructive">
-              <AlertDescription>{error || contextError}</AlertDescription>
+            <Alert className="mb-4 border-red-200 bg-red-50" variant="destructive">
+              <AlertDescription className="text-red-800">{error || contextError}</AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="text-sm font-medium text-[#193642]">
                 Email do Super Admin
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-purple-500" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#193642]" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="superadmin@digiurban.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                  className="pl-10 border-gray-200 focus:border-[#193642] focus:ring-[#193642]"
                   autoComplete="username"
                   required
                   disabled={loading}
@@ -102,18 +112,18 @@ export default function SuperAdminLoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="text-sm font-medium text-[#193642]">
                 Senha Mestra
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-purple-500" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-[#193642]" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Digite sua senha mestra"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 border-purple-200 focus:border-purple-500 focus:ring-purple-500"
+                  className="pl-10 pr-10 border-gray-200 focus:border-[#193642] focus:ring-[#193642]"
                   autoComplete="current-password"
                   required
                   disabled={loading}
@@ -121,7 +131,7 @@ export default function SuperAdminLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#193642]"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -138,6 +148,7 @@ export default function SuperAdminLoginPage() {
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked === true)}
                 disabled={loading}
+                className="border-[#193642] data-[state=checked]:bg-[#193642]"
               />
               <label
                 htmlFor="remember-superadmin"
@@ -149,7 +160,7 @@ export default function SuperAdminLoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-6 text-lg shadow-lg hover:shadow-xl transition-all"
+              className="w-full bg-gradient-to-r from-[#193642] to-[#0f6fbe] hover:from-[#0f2832] hover:to-[#0d5fa0] text-white font-bold py-6 text-base shadow-lg hover:shadow-xl transition-all"
               disabled={loading || !email || !password}
             >
               {loading ? (
@@ -166,27 +177,42 @@ export default function SuperAdminLoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-            <p className="text-xs text-purple-900 font-semibold mb-2 flex items-center">
+          <div className="mt-6 p-4 bg-[#193642]/5 rounded-lg border border-[#193642]/20">
+            <p className="text-xs text-[#193642] font-semibold mb-2 flex items-center">
               <Shield className="h-3 w-3 mr-1" />
               Acesso de Alto Privilégio
             </p>
-            <ul className="text-xs text-purple-700 space-y-1">
-              <li>• Gerenciamento de todos os tenants (municípios)</li>
-              <li>• Configuração global da plataforma SaaS</li>
-              <li>• Monitoramento de infraestrutura e performance</li>
-              <li>• Controle de billing e assinaturas</li>
-              <li>• Analytics consolidados multi-tenant</li>
+            <ul className="text-xs text-gray-700 space-y-1">
+              <li className="flex items-start gap-1">
+                <span className="text-[#0fffbf] mt-1">•</span>
+                <span>Gerenciamento de todos os tenants (municípios)</span>
+              </li>
+              <li className="flex items-start gap-1">
+                <span className="text-[#0fffbf] mt-1">•</span>
+                <span>Configuração global da plataforma SaaS</span>
+              </li>
+              <li className="flex items-start gap-1">
+                <span className="text-[#0fffbf] mt-1">•</span>
+                <span>Monitoramento de infraestrutura e performance</span>
+              </li>
+              <li className="flex items-start gap-1">
+                <span className="text-[#0fffbf] mt-1">•</span>
+                <span>Controle de billing e assinaturas</span>
+              </li>
+              <li className="flex items-start gap-1">
+                <span className="text-[#0fffbf] mt-1">•</span>
+                <span>Analytics consolidados multi-tenant</span>
+              </li>
             </ul>
           </div>
 
-          <div className="mt-4 text-center">
-            <a
+          <div className="mt-6 pt-4 border-t border-gray-200 text-center">
+            <Link
               href="/landing"
-              className="text-sm text-purple-600 hover:text-purple-800 font-medium hover:underline"
+              className="text-sm text-[#0f6fbe] hover:text-[#0fffbf] font-medium hover:underline transition-colors"
             >
               ← Voltar para página inicial
-            </a>
+            </Link>
           </div>
         </CardContent>
       </Card>
