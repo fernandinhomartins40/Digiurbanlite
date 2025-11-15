@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/super-admin/users/admins - Listar super admins
 export async function GET(request: NextRequest) {
   try {
