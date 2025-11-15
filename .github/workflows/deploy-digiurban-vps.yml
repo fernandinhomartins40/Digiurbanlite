@@ -34,27 +34,28 @@ jobs:
 
             # Diretório da aplicação
             APP_DIR="/root/digiurban"
+            REPO_URL="https://github.com/fernandinhomartins40/Digiurbanlite.git"
 
-            # Criar diretório se não existir
-            mkdir -p $APP_DIR
-            cd $APP_DIR
-
-            # Clonar ou atualizar repositório
-            if [ -d ".git" ]; then
-              echo "Atualizando repositório..."
-              # Configurar git para usar HTTPS sem autenticação (repositório público)
-              git config --global credential.helper store
-              git remote set-url origin https://github.com/fernandinhomartins40/Digiurbanlite.git
-              git fetch origin
-              git reset --hard origin/main
-              git clean -fd
-              echo "Verificando integridade do repositório..."
-              git status
-              git log --oneline -5
-            else
-              echo "Clonando repositório..."
-              git clone https://github.com/fernandinhomartins40/Digiurbanlite.git .
+            # Backup de volumes Docker persistentes antes de remover código
+            echo "Fazendo backup de dados persistentes..."
+            if [ -d "$APP_DIR" ]; then
+              # Parar containers antes do backup
+              cd $APP_DIR && docker-compose -f docker-compose.vps.yml down || true
             fi
+
+            # Remover código antigo completamente (mas preservar volumes Docker)
+            echo "Removendo código antigo..."
+            rm -rf $APP_DIR
+            mkdir -p $APP_DIR
+
+            # Clonar repositório sempre do zero
+            echo "Clonando repositório..."
+            cd $APP_DIR
+            git clone $REPO_URL .
+
+            echo "Verificando código clonado..."
+            git log --oneline -5
+            echo "Branch atual: $(git branch --show-current)"
 
             # Criar arquivo .env
             echo "Criando arquivo .env..."
@@ -93,10 +94,6 @@ jobs:
             # Build
             BUILD_TIMESTAMP=$(date +%s)
             EOF
-
-            # Parar container existente
-            echo "Parando container existente..."
-            docker-compose -f docker-compose.vps.yml down || true
 
             # ⚠️ CRÍTICO: Remover TODOS os arquivos .db ANTES do build
             echo "Removendo arquivos .db do código-fonte..."
