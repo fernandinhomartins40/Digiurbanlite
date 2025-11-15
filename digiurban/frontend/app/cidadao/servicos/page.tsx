@@ -1,38 +1,32 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   FileText,
   Search,
   Clock,
   ArrowRight,
-  Filter,
   Loader2,
   Building2,
-  Grid3x3,
-  List,
-  ChevronDown,
-  ChevronRight
+  X,
+  TrendingUp
 } from 'lucide-react';
 import { useCitizenServices, CitizenService } from '@/hooks/useCitizenServices';
 import { getDepartmentTheme, getCategoryColor } from '@/lib/department-colors';
 import { Badge } from '@/components/ui/badge';
-
-type ViewMode = 'grid' | 'list' | 'grouped';
 
 export default function ServicosPage() {
   const router = useRouter();
   const { services, loading, error } = useCitizenServices();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('todos');
-  const [selectedCategory, setSelectedCategory] = useState('todos');
-  const [viewMode, setViewMode] = useState<ViewMode>('grouped');
-  const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(new Set());
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleSolicitar = (serviceId: string) => {
     router.push(`/cidadao/servicos/${serviceId}/solicitar`);
@@ -58,27 +52,15 @@ export default function ServicosPage() {
     });
 
     return [
-      { id: 'todos', name: 'Todas as Secretarias', count: services.length },
-      ...Array.from(uniqueDepts.values()).sort((a, b) => a.name.localeCompare(b.name))
+      { id: 'todos', name: 'Todos', icon: '📋', count: services.length },
+      ...Array.from(uniqueDepts.values())
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(dept => ({
+          ...dept,
+          icon: '🏛️'
+        }))
     ];
   }, [services]);
-
-  // Extrair categorias únicas
-  const categories = useMemo(() => {
-    const uniqueCategories = new Set(
-      services
-        .filter(s => s.category && (selectedDepartment === 'todos' || s.departmentId === selectedDepartment))
-        .map(s => s.category as string)
-    );
-
-    return [
-      { id: 'todos', name: 'Todas as Categorias' },
-      ...Array.from(uniqueCategories).sort().map(cat => ({
-        id: cat,
-        name: cat
-      }))
-    ];
-  }, [services, selectedDepartment]);
 
   // Filtrar serviços
   const filteredServices = useMemo(() => {
@@ -87,117 +69,107 @@ export default function ServicosPage() {
                            (service.description?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
                            service.department?.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesDepartment = selectedDepartment === 'todos' || service.departmentId === selectedDepartment;
-      const matchesCategory = selectedCategory === 'todos' || service.category === selectedCategory;
-      return matchesSearch && matchesDepartment && matchesCategory;
+      return matchesSearch && matchesDepartment;
     });
-  }, [services, searchTerm, selectedDepartment, selectedCategory]);
+  }, [services, searchTerm, selectedDepartment]);
 
-  // Agrupar por departamento e categoria
-  const groupedServices = useMemo(() => {
-    const groups = new Map<string, Map<string, CitizenService[]>>();
+  // Agrupar serviços por categoria (para o slider)
+  const servicesByCategory = useMemo(() => {
+    const groups = new Map<string, CitizenService[]>();
 
     filteredServices.forEach(service => {
-      const deptId = service.departmentId;
-      const category = service.category || 'Sem Categoria';
-
-      if (!groups.has(deptId)) {
-        groups.set(deptId, new Map());
+      const category = service.category || 'Outros';
+      if (!groups.has(category)) {
+        groups.set(category, []);
       }
-
-      const deptGroups = groups.get(deptId)!;
-      if (!deptGroups.has(category)) {
-        deptGroups.set(category, []);
-      }
-
-      deptGroups.get(category)!.push(service);
+      groups.get(category)!.push(service);
     });
 
-    return groups;
+    return Array.from(groups.entries())
+      .sort((a, b) => b[1].length - a[1].length); // Ordenar por quantidade
   }, [filteredServices]);
 
-  const toggleDepartment = (deptId: string) => {
-    setExpandedDepartments(prev => {
-      const next = new Set(prev);
-      if (next.has(deptId)) {
-        next.delete(deptId);
-      } else {
-        next.add(deptId);
-      }
-      return next;
-    });
-  };
+  // Serviços mais populares (mock - em produção viria do backend)
+  const popularServices = useMemo(() => {
+    return filteredServices.slice(0, 6);
+  }, [filteredServices]);
 
-  // Expandir todos os departamentos ao carregar no modo agrupado
-  useMemo(() => {
-    if (viewMode === 'grouped' && groupedServices.size > 0 && expandedDepartments.size === 0) {
-      setExpandedDepartments(new Set(Array.from(groupedServices.keys())));
-    }
-  }, [viewMode, groupedServices]);
-
-  const ServiceCard = ({ service }: { service: CitizenService }) => {
-    const deptTheme = getDepartmentTheme(service.department?.name || '');
-    // Usar cor da categoria para o card, mantendo secretaria no badge
-    const categoryColor = service.category ? getCategoryColor(service.category) : deptTheme;
+  // Card compacto para slider horizontal
+  const ServiceCard = ({ service, variant = 'default' }: { service: CitizenService; variant?: 'default' | 'compact' }) => {
+    const categoryColor = service.category ? getCategoryColor(service.category) : getDepartmentTheme(service.department?.name || '');
+    const isCompact = variant === 'compact';
 
     return (
       <Card
-        className={`hover:shadow-md transition-all duration-200 border-l-4 ${categoryColor.borderClass} group cursor-pointer`}
+        className={cn(
+          "flex-shrink-0 hover:shadow-lg transition-all duration-200 cursor-pointer group border-0",
+          isCompact ? "w-[280px]" : "w-full"
+        )}
         onClick={() => handleSolicitar(service.id)}
       >
-        <CardContent className="p-4">
-          {/* Header */}
+        <CardContent className={cn("p-4", isCompact && "p-3")}>
+          {/* Header com ícone e título */}
           <div className="flex items-start gap-3 mb-3">
-            <div className={`${categoryColor.bgClass} p-2 rounded flex-shrink-0`}>
-              <FileText className={`h-4 w-4 ${categoryColor.textClass}`} />
+            <div className={cn(
+              "rounded-lg flex-shrink-0",
+              categoryColor.bgClass,
+              isCompact ? "p-2" : "p-2.5"
+            )}>
+              <FileText className={cn(categoryColor.textClass, isCompact ? "h-4 w-4" : "h-5 w-5")} />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:underline">
+              <h3 className={cn(
+                "font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors",
+                isCompact ? "text-sm mb-1" : "text-base mb-1.5"
+              )}>
                 {service.name}
               </h3>
-              <div className="flex flex-wrap gap-1.5">
-                {service.category && (
-                  <Badge variant="outline" className={`text-xs px-2 py-0 text-gray-700 ${categoryColor.borderClass}`}>
-                    {service.category}
-                  </Badge>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-gray-600 font-normal border-gray-300",
+                  isCompact ? "text-[10px] px-1.5 py-0" : "text-xs px-2 py-0.5"
                 )}
-                <Badge variant="outline" className={`text-xs px-2 py-0 text-gray-700 ${deptTheme.borderClass}`}>
-                  {service.department?.name}
-                </Badge>
-              </div>
+              >
+                {service.department?.name}
+              </Badge>
             </div>
           </div>
 
-          {/* Descrição */}
-          {service.description && (
+          {/* Descrição (apenas em cards normais) */}
+          {!isCompact && service.description && (
             <p className="text-xs text-gray-600 mb-3 line-clamp-2">
               {service.description}
             </p>
           )}
 
-          {/* Info footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex items-center gap-3 text-xs text-gray-500">
+          {/* Footer com info e botão */}
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                <span>{service.estimatedDays ? `${service.estimatedDays}d` : 'A definir'}</span>
+                <span>{service.estimatedDays ? `${service.estimatedDays}d` : '-'}</span>
               </div>
               {service.requiredDocuments && Array.isArray(service.requiredDocuments) && service.requiredDocuments.length > 0 && (
                 <div className="flex items-center gap-1">
                   <FileText className="h-3 w-3" />
-                  <span>{service.requiredDocuments.length} doc{service.requiredDocuments.length > 1 ? 's' : ''}</span>
+                  <span>{service.requiredDocuments.length}</span>
                 </div>
               )}
             </div>
             <Button
               size="sm"
-              className={`h-7 text-xs px-3 text-gray-700 hover:bg-gray-50 border ${categoryColor.borderClass}`}
-              variant="outline"
+              className={cn(
+                "text-white group-hover:shadow-md",
+                categoryColor.bgClass.replace('bg-opacity-10', ''),
+                isCompact ? "h-7 text-xs px-2" : "h-8 text-sm px-3"
+              )}
               onClick={(e) => {
                 e.stopPropagation();
                 handleSolicitar(service.id);
               }}
             >
-              Solicitar
+              {isCompact ? "Ver" : "Solicitar"}
               <ArrowRight className="ml-1 h-3 w-3" />
             </Button>
           </div>
@@ -208,236 +180,153 @@ export default function ServicosPage() {
 
   return (
     <CitizenLayout>
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-lg p-4 text-white shadow-lg">
-          <h1 className="text-xl sm:text-2xl font-bold mb-1">Catálogo de Serviços</h1>
-          <p className="text-sm text-blue-100">Encontre e solicite os serviços municipais disponíveis</p>
+      <div className="space-y-5 animate-fade-in">
+        {/* Header Compacto */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Serviços</h1>
+            <p className="text-sm text-gray-600 mt-0.5">
+              {filteredServices.length} disponíveis
+            </p>
+          </div>
         </div>
 
-        {/* Busca e Filtros */}
-        <Card>
-          <CardContent className="p-3 space-y-3">
-            {/* Busca */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Buscar serviços..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-10 text-sm"
-              />
-            </div>
+        {/* Busca */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar serviços..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 pr-10 h-11 text-sm border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
-            {/* Filtros */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              {/* Secretaria */}
-              <div className="flex-1">
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  <Building2 className="h-3 w-3 inline mr-1" />
-                  Secretaria
-                </label>
-                <select
-                  value={selectedDepartment}
-                  onChange={(e) => {
-                    setSelectedDepartment(e.target.value);
-                    setSelectedCategory('todos');
-                  }}
-                  className="w-full h-9 rounded-md border border-gray-300 px-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {departments.map(dept => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name} ({dept.count})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Categoria */}
-              <div className="flex-1">
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  <Filter className="h-3 w-3 inline mr-1" />
-                  Categoria
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full h-9 rounded-md border border-gray-300 px-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={categories.length === 1}
-                >
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Modo de visualização */}
-              <div className="sm:w-auto">
-                <label className="text-xs font-semibold text-gray-600 mb-1 block">
-                  Visualização
-                </label>
-                <div className="flex gap-1 bg-gray-100 p-0.5 rounded">
-                  <Button
-                    size="sm"
-                    variant={viewMode === 'grouped' ? 'default' : 'ghost'}
-                    onClick={() => setViewMode('grouped')}
-                    className="h-8 px-2"
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                    onClick={() => setViewMode('grid')}
-                    className="h-8 px-2"
-                  >
-                    <Grid3x3 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Chips de Departamento - Scroll Horizontal */}
+        <div className="relative">
+          <div
+            ref={scrollContainerRef}
+            className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {departments.map((dept) => (
+              <button
+                key={dept.id}
+                onClick={() => setSelectedDepartment(dept.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all snap-start flex-shrink-0",
+                  selectedDepartment === dept.id
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-white text-gray-700 border border-gray-300 hover:border-blue-300 hover:bg-blue-50"
+                )}
+              >
+                <span>{dept.icon}</span>
+                <span>{dept.name}</span>
+                <span className={cn(
+                  "text-xs px-1.5 py-0.5 rounded-full",
+                  selectedDepartment === dept.id
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100 text-gray-600"
+                )}>
+                  {dept.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Loading */}
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-            <span className="ml-2 text-gray-600">Carregando serviços...</span>
+          <div className="flex flex-col items-center justify-center py-16">
+            <Loader2 className="h-10 w-10 text-blue-600 animate-spin mb-3" />
+            <span className="text-gray-600">Carregando serviços...</span>
           </div>
         )}
 
         {/* Error */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">{error}</p>
+            <p className="text-sm text-red-800">{error}</p>
           </div>
         )}
 
-        {/* Estatísticas */}
-        {!loading && !error && (
-          <div className="grid grid-cols-3 gap-3">
-            <Card className="border-l-4 border-l-blue-500">
-              <CardContent className="p-3">
-                <p className="text-xs text-gray-600 mb-0.5">Serviços</p>
-                <p className="text-2xl font-bold text-gray-900">{services.length}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-green-500">
-              <CardContent className="p-3">
-                <p className="text-xs text-gray-600 mb-0.5">Secretarias</p>
-                <p className="text-2xl font-bold text-gray-900">{departments.length - 1}</p>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-purple-500">
-              <CardContent className="p-3">
-                <p className="text-xs text-gray-600 mb-0.5">Resultados</p>
-                <p className="text-2xl font-bold text-gray-900">{filteredServices.length}</p>
-              </CardContent>
-            </Card>
+        {/* Serviços Populares - Slider Horizontal */}
+        {!loading && !error && popularServices.length > 0 && searchTerm === '' && selectedDepartment === 'todos' && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-orange-500" />
+              <h2 className="text-lg font-bold text-gray-900">Mais Procurados</h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+              {popularServices.map(service => (
+                <ServiceCard key={service.id} service={service} variant="compact" />
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Lista de Serviços - Modo Agrupado */}
-        {!loading && !error && viewMode === 'grouped' && (
-          <div className="space-y-4">
-            {Array.from(groupedServices.entries()).map(([deptId, categories]) => {
-              const service = filteredServices.find(s => s.departmentId === deptId);
-              if (!service?.department) return null;
-
-              const theme = getDepartmentTheme(service.department.name);
-              const isExpanded = expandedDepartments.has(deptId);
+        {/* Serviços por Categoria - Sliders Horizontais */}
+        {!loading && !error && servicesByCategory.length > 0 && (
+          <div className="space-y-6">
+            {servicesByCategory.map(([categoryName, categoryServices]) => {
+              const categoryColor = getCategoryColor(categoryName);
 
               return (
-                <Card key={deptId} className={`border-l-4 ${theme.borderClass}`}>
-                  <CardContent className="p-0">
-                    {/* Header da Secretaria */}
-                    <button
-                      onClick={() => toggleDepartment(deptId)}
-                      className={`w-full p-3 flex items-center justify-between hover:${theme.bgClass} transition-colors border-b`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className={`${theme.bgClass} p-2 rounded`}>
-                          <Building2 className={`h-5 w-5 ${theme.textClass}`} />
-                        </div>
-                        <div className="text-left">
-                          <h2 className={`text-base font-bold ${theme.textClass}`}>
-                            {service.department.name}
-                          </h2>
-                          <p className="text-xs text-gray-500">
-                            {Array.from(categories.values()).reduce((acc, services) => acc + services.length, 0)} serviço(s)
-                          </p>
-                        </div>
+                <div key={categoryName} className="space-y-3">
+                  {/* Header da Categoria */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-1 h-6 rounded-full",
+                        categoryColor.bgClass.replace('bg-opacity-10', '')
+                      )} />
+                      <div>
+                        <h2 className="text-base font-bold text-gray-900">{categoryName}</h2>
+                        <p className="text-xs text-gray-500">{categoryServices.length} serviços</p>
                       </div>
-                      {isExpanded ? (
-                        <ChevronDown className={`h-5 w-5 ${theme.textClass}`} />
-                      ) : (
-                        <ChevronRight className={`h-5 w-5 ${theme.textClass}`} />
-                      )}
-                    </button>
+                    </div>
+                  </div>
 
-                    {/* Categorias e Serviços */}
-                    {isExpanded && (
-                      <div className="p-3 space-y-4 bg-gray-50">
-                        {Array.from(categories.entries()).map(([categoryName, categoryServices]) => {
-                          const categoryColor = getCategoryColor(categoryName);
-
-                          return (
-                            <div key={categoryName}>
-                              <div className="flex items-center gap-2 mb-2 pb-1 border-b">
-                                <div className={`w-3 h-3 rounded-full ${categoryColor.bgClass} border-2 ${categoryColor.borderClass}`} />
-                                <h3 className="text-sm font-semibold text-gray-800">
-                                  {categoryName}
-                                </h3>
-                                <span className="text-xs text-gray-500">({categoryServices.length})</span>
-                              </div>
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {categoryServices.map(service => (
-                                  <ServiceCard key={service.id} service={service} />
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                  {/* Slider de Cards */}
+                  <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+                    {categoryServices.map(service => (
+                      <ServiceCard key={service.id} service={service} variant="compact" />
+                    ))}
+                  </div>
+                </div>
               );
             })}
           </div>
         )}
 
-        {/* Lista de Serviços - Modo Grid */}
-        {!loading && !error && viewMode === 'grid' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {filteredServices.map(service => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
-          </div>
-        )}
-
         {/* Mensagem de nenhum resultado */}
         {!loading && !error && filteredServices.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Search className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <h3 className="text-base font-semibold text-gray-900 mb-2">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-12 text-center">
+              <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="h-10 w-10 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
                 Nenhum serviço encontrado
               </h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Tente ajustar os filtros ou realizar uma nova busca
+              <p className="text-sm text-gray-600 mb-4 max-w-sm mx-auto">
+                Não encontramos serviços que correspondam à sua busca. Tente usar termos diferentes ou limpar os filtros.
               </p>
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => {
                   setSearchTerm('');
                   setSelectedDepartment('todos');
-                  setSelectedCategory('todos');
                 }}
+                className="mx-auto"
               >
                 Limpar Filtros
               </Button>
@@ -445,6 +334,17 @@ export default function ServicosPage() {
           </Card>
         )}
       </div>
+
+      {/* CSS para ocultar scrollbar mas manter funcionalidade */}
+      <style jsx global>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </CitizenLayout>
   );
 }
