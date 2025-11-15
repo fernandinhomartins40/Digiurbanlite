@@ -42,6 +42,9 @@ jobs:
             # Clonar ou atualizar repositório
             if [ -d ".git" ]; then
               echo "Atualizando repositório..."
+              # Configurar git para usar HTTPS sem autenticação (repositório público)
+              git config --global credential.helper store
+              git remote set-url origin https://github.com/fernandinhomartins40/Digiurbanlite.git
               git fetch origin
               git reset --hard origin/main
               git clean -fd
