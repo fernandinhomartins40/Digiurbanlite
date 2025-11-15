@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -166,23 +167,24 @@ export default function DocumentosPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <CitizenLayout>
         <div className="text-center py-8">Carregando documentos...</div>
-      </div>
+      </CitizenLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Meus Documentos</h1>
-        <p className="text-gray-600">
-          Gerencie seus documentos digitalizados. Utilize a câmera para melhor qualidade de digitalização.
-        </p>
-      </div>
+    <CitizenLayout>
+      <div className="space-y-6 animate-fade-in">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Meus Documentos</h1>
+          <p className="text-sm text-gray-600 mt-0.5">
+            Gerencie seus documentos digitalizados. Utilize a câmera para melhor qualidade de digitalização.
+          </p>
+        </div>
 
       {/* Upload de Novos Documentos */}
-      <Card className="mb-6">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5" />
@@ -346,7 +348,7 @@ export default function DocumentosPage() {
       </Card>
 
       {/* Informações Importantes */}
-      <Card className="mt-6 border-blue-200 bg-blue-50">
+      <Card className="border-blue-200 bg-blue-50">
         <CardContent className="pt-6">
           <h3 className="font-semibold mb-2 flex items-center gap-2 text-blue-900">
             <AlertCircle className="w-5 h-5" />
@@ -388,6 +390,7 @@ export default function DocumentosPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </CitizenLayout>
   );
 }
