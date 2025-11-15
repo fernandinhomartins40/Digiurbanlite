@@ -76,7 +76,8 @@ jobs:
 
             # Frontend
             FRONTEND_PORT=3000
-            NEXT_PUBLIC_API_URL=http://localhost:3001
+            NEXT_PUBLIC_API_URL=/api
+            NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
 
             # PostgreSQL (valores padrão)
             POSTGRES_USER=digiurban

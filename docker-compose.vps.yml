@@ -29,6 +29,8 @@ services:
       args:
         - BUILD_TIMESTAMP=${BUILD_TIMESTAMP:-0}
         - DATABASE_URL=${DATABASE_URL}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api}
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3001}
     container_name: digiurban-vps
     ports:
       - "3060:80"  # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)

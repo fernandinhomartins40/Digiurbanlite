@@ -19,9 +19,14 @@ const MAX_RECONNECT_DELAY = 5000;
 // ============================================================
 export function getSocket(): Socket {
   if (!socketInstance || socketInstance.disconnected) {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    // Em produção (deploy): usa caminho relativo via Nginx
+    // Em desenvolvimento: usa URL completa do backend
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-    socketInstance = io(backendUrl, {
+    // Remover '/api' do final se existir, pois será adicionado no path
+    const baseUrl = backendUrl.replace(/\/api\/?$/, '');
+
+    socketInstance = io(baseUrl, {
       path: '/api/socket', // ✅ Path correto do backend
       transports: ['polling', 'websocket'], // ✅ Polling primeiro (mais confiável)
       reconnection: true,
