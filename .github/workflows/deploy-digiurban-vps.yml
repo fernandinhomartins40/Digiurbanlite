@@ -14,6 +14,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_PASSWORD }}" > ~/.ssh/vps_password
+          chmod 600 ~/.ssh/vps_password
+
+      - name: Sync code to VPS
+        run: |
+          # Instalar sshpass para autenticação com senha
+          sudo apt-get update && sudo apt-get install -y sshpass rsync
+
+          # Criar diretório no VPS
+          sshpass -f ~/.ssh/vps_password ssh -o StrictHostKeyChecking=no root@72.60.10.108 "mkdir -p /root/digiurban"
+
+          # Sincronizar código via rsync
+          sshpass -f ~/.ssh/vps_password rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.next' \
+            --exclude='dist' \
+            --exclude='*.db' \
+            --exclude='*.db-*' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ root@72.60.10.108:/root/digiurban/
+
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         env:
@@ -34,43 +59,14 @@ jobs:
 
             # Diretório da aplicação
             APP_DIR="/root/digiurban"
-            REPO_URL="https://github.com/fernandinhomartins40/Digiurbanlite.git"
 
-            # Backup de volumes Docker persistentes antes de remover código
-            echo "Fazendo backup de dados persistentes..."
-            if [ -d "$APP_DIR" ]; then
-              # Parar containers antes do backup
-              cd $APP_DIR && docker-compose -f docker-compose.vps.yml down || true
-            fi
-
-            # Remover código antigo completamente (mas preservar volumes Docker)
-            echo "Removendo código antigo..."
-            rm -rf $APP_DIR
-            mkdir -p $APP_DIR
-
-            # Clonar repositório sempre do zero
-            echo "Clonando repositório..."
+            # Parar containers existentes
+            echo "Parando containers existentes..."
             cd $APP_DIR
+            docker-compose -f docker-compose.vps.yml down || true
 
-            # Configurar git para não pedir credenciais e usar HTTPS público
-            export GIT_TERMINAL_PROMPT=0
-            export GIT_ASKPASS=/bin/echo
-
-            # Clone com timeout e sem prompt
-            git -c http.sslVerify=false clone --depth 1 --single-branch --branch main $REPO_URL . || {
-              echo "❌ Falha ao clonar repositório"
-              echo "Tentando com curl para baixar tar.gz..."
-              curl -L "https://github.com/fernandinhomartins40/Digiurbanlite/archive/refs/heads/main.tar.gz" -o repo.tar.gz
-              tar -xzf repo.tar.gz --strip-components=1
-              rm repo.tar.gz
-            }
-
-            echo "Verificando código clonado..."
+            echo "Verificando código sincronizado..."
             ls -la
-            if [ -d ".git" ]; then
-              git log --oneline -5
-              echo "Branch atual: $(git branch --show-current)"
-            fi
 
             # Criar arquivo .env
             echo "Criando arquivo .env..."
