@@ -130,6 +130,9 @@ export default function CitizenDetailsPage() {
       const response = await apiRequest(`/admin/citizens/${citizenId}/details`)
 
       if (response.success) {
+        console.log('Dados do cidadão:', response.data.citizen)
+        console.log('Documentos do cidadão:', response.data.citizen.documents)
+        console.log('Contador de documentos:', response.data.citizen._count)
         setCitizen(response.data.citizen)
       }
     } catch (error) {
