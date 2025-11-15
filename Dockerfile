@@ -40,6 +40,10 @@ RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
 ARG NEXT_PUBLIC_API_URL=/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Build argument para Backend URL (frontend acessa backend via localhost dentro do container)
+ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./
 
