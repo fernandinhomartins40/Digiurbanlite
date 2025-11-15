@@ -529,20 +529,22 @@ export function DocumentScanner({
   }, [facingMode])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto">
-        <div className="p-6">
+    <div className="fixed inset-0 z-50 bg-black/90 overflow-y-auto">
+      <div className="min-h-screen flex items-start sm:items-center justify-center p-2 sm:p-4">
+        <div className="w-full max-w-4xl my-4 sm:my-auto">
+          <Card className="w-full">
+            <div className="p-3 sm:p-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">Digitalizar Documento</h3>
-              <p className="text-sm text-gray-500">{documentName}</p>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex-1 min-w-0 mr-2">
+              <h3 className="text-base sm:text-lg font-semibold truncate">Digitalizar Documento</h3>
+              <p className="text-xs sm:text-sm text-gray-500 truncate">{documentName}</p>
             </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={onCancel}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -550,14 +552,14 @@ export function DocumentScanner({
 
           {/* Erro */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <span className="text-sm">{error}</span>
+            <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs sm:text-sm">{error}</span>
             </div>
           )}
 
           {/* Área de captura */}
-          <div className="relative aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden mb-4">
+          <div className="relative aspect-[4/3] bg-gray-900 rounded-lg overflow-hidden mb-3 sm:mb-4">
             {!capturedImage ? (
               <>
                 <video
@@ -573,31 +575,31 @@ export function DocumentScanner({
 
                 {/* Overlay de guia */}
                 <div className="absolute inset-0 pointer-events-none">
-                  <div className="absolute inset-0 border-4 border-white/30 border-dashed m-8 rounded-lg" />
-                  <div className="absolute bottom-4 left-0 right-0 text-center text-white text-sm bg-black/50 py-2">
+                  <div className="absolute inset-0 border-2 sm:border-4 border-white/30 border-dashed m-4 sm:m-8 rounded-lg" />
+                  <div className="absolute bottom-2 sm:bottom-4 left-0 right-0 text-center text-white text-xs sm:text-sm bg-black/50 py-1 sm:py-2 px-2">
                     Posicione o documento dentro da área marcada
                   </div>
                 </div>
 
                 {/* Controles de zoom */}
-                <div className="absolute top-4 right-4 flex flex-col gap-2">
+                <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex flex-col gap-1 sm:gap-2">
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="h-10 w-10 p-0 bg-white/90 hover:bg-white"
+                    className="h-8 w-8 sm:h-10 sm:w-10 p-0 bg-white/90 hover:bg-white"
                     onClick={handleZoomIn}
                     disabled={zoom >= 3}
                   >
-                    <ZoomIn className="h-4 w-4" />
+                    <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
                     size="sm"
                     variant="secondary"
-                    className="h-10 w-10 p-0 bg-white/90 hover:bg-white"
+                    className="h-8 w-8 sm:h-10 sm:w-10 p-0 bg-white/90 hover:bg-white"
                     onClick={handleZoomOut}
                     disabled={zoom <= 1}
                   >
-                    <ZoomOut className="h-4 w-4" />
+                    <ZoomOut className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </>
@@ -646,17 +648,20 @@ export function DocumentScanner({
 
           {/* Controles de edição após captura */}
           {capturedImage && (
-            <div className="mb-4 space-y-3">
+            <div className="mb-3 sm:mb-4 space-y-2 sm:space-y-3">
               {/* Seletor de modo de processamento */}
-              <div className="flex items-center gap-2">
-                <Palette className="h-4 w-4 text-gray-500" />
-                <Label className="text-sm font-medium">Estilo:</Label>
-                <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                  <Label className="text-xs sm:text-sm font-medium">Estilo:</Label>
+                </div>
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     size="sm"
                     variant={processingMode === 'color' ? 'default' : 'outline'}
                     onClick={() => setProcessingMode('color')}
                     disabled={processing}
+                    className="text-xs sm:text-sm"
                   >
                     Colorido
                   </Button>
@@ -665,6 +670,7 @@ export function DocumentScanner({
                     variant={processingMode === 'grayscale' ? 'default' : 'outline'}
                     onClick={() => setProcessingMode('grayscale')}
                     disabled={processing}
+                    className="text-xs sm:text-sm"
                   >
                     Cinza
                   </Button>
@@ -673,6 +679,7 @@ export function DocumentScanner({
                     variant={processingMode === 'blackwhite' ? 'default' : 'outline'}
                     onClick={() => setProcessingMode('blackwhite')}
                     disabled={processing}
+                    className="text-xs sm:text-sm"
                   >
                     P&B
                   </Button>
@@ -680,27 +687,33 @@ export function DocumentScanner({
               </div>
 
               {/* Botão de crop */}
-              <div className="flex items-center gap-2">
-                <Crop className="h-4 w-4 text-gray-500" />
-                <Label className="text-sm font-medium">Recortar:</Label>
-                <Button
-                  size="sm"
-                  variant={showCropTool ? 'default' : 'outline'}
-                  onClick={() => setShowCropTool(!showCropTool)}
-                  disabled={processing}
-                >
-                  {showCropTool ? 'Aplicar Recorte' : 'Selecionar Área'}
-                </Button>
-                {showCropTool && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <Crop className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                  <Label className="text-xs sm:text-sm font-medium">Recortar:</Label>
+                </div>
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     size="sm"
-                    variant="ghost"
-                    onClick={resetCrop}
+                    variant={showCropTool ? 'default' : 'outline'}
+                    onClick={() => setShowCropTool(!showCropTool)}
                     disabled={processing}
+                    className="text-xs sm:text-sm"
                   >
-                    Resetar
+                    {showCropTool ? 'Aplicar Recorte' : 'Selecionar Área'}
                   </Button>
-                )}
+                  {showCropTool && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={resetCrop}
+                      disabled={processing}
+                      className="text-xs sm:text-sm"
+                    >
+                      Resetar
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {showCropTool && (
@@ -712,33 +725,35 @@ export function DocumentScanner({
           )}
 
           {/* Instruções */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <h4 className="text-sm font-medium text-blue-900 mb-2">Dicas para melhor digitalização:</h4>
-            <ul className="text-xs text-blue-700 space-y-1">
+          <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <h4 className="text-xs sm:text-sm font-medium text-blue-900 mb-1 sm:mb-2">Dicas para melhor digitalização:</h4>
+            <ul className="text-xs text-blue-700 space-y-0.5 sm:space-y-1">
               <li>• Certifique-se de que há boa iluminação</li>
               <li>• Evite sombras sobre o documento</li>
               <li>• Mantenha o documento plano e reto</li>
-              <li>• Capture todo o documento dentro da área marcada</li>
-              <li>• Use zoom para aproximar se necessário</li>
+              <li className="hidden sm:list-item">• Capture todo o documento dentro da área marcada</li>
+              <li className="hidden sm:list-item">• Use zoom para aproximar se necessário</li>
             </ul>
           </div>
 
           {/* Botões de ação */}
-          <div className="flex gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
             {!capturedImage ? (
               <>
                 <Button
                   variant="outline"
                   onClick={switchCamera}
                   disabled={processing}
+                  className="w-full sm:w-auto"
                 >
                   <RotateCw className="h-4 w-4 mr-2" />
-                  Alternar Câmera
+                  <span className="hidden sm:inline">Alternar Câmera</span>
+                  <span className="sm:hidden">Alternar</span>
                 </Button>
                 <Button
                   onClick={capturePhoto}
                   disabled={processing || !isCameraReady}
-                  className="bg-amber-600 hover:bg-amber-700"
+                  className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700"
                 >
                   <Camera className="h-4 w-4 mr-2" />
                   Capturar Foto
@@ -750,14 +765,16 @@ export function DocumentScanner({
                   variant="outline"
                   onClick={retakePhoto}
                   disabled={processing}
+                  className="w-full sm:w-auto"
                 >
                   <RotateCw className="h-4 w-4 mr-2" />
-                  Tirar Novamente
+                  <span className="hidden sm:inline">Tirar Novamente</span>
+                  <span className="sm:hidden">Repetir</span>
                 </Button>
                 <Button
                   onClick={confirmPhoto}
                   disabled={processing}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
                 >
                   {processing ? (
                     <>
@@ -776,12 +793,14 @@ export function DocumentScanner({
           </div>
 
           {/* Informações técnicas */}
-          <div className="mt-4 text-xs text-gray-500 text-center">
-            Formatos aceitos: {acceptedFormats.map(f => f.toUpperCase()).join(', ')} ·
+          <div className="mt-3 sm:mt-4 text-xs text-gray-500 text-center">
+            <span className="hidden sm:inline">Formatos aceitos: {acceptedFormats.map(f => f.toUpperCase()).join(', ')} · </span>
             Tamanho máximo: {maxSizeMB}MB
           </div>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

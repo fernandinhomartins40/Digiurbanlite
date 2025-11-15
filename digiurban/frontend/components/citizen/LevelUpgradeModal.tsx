@@ -1,6 +1,7 @@
 'use client';
 
 import { X, CheckCircle2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { mapVerificationStatusToLevel, getNextLevel, getRegistrationLevelInfo } from '@/lib/citizen-utils';
 
@@ -11,6 +12,7 @@ interface LevelUpgradeModalProps {
 
 export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
   const { citizen } = useCitizenAuth();
+  const router = useRouter();
 
   if (!isOpen) return null;
 
@@ -27,21 +29,28 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
       'Email ou telefone'
     ],
     SILVER: [
-      'Documento de identidade (RG ou CNH)',
-      'Comprovante de residência atualizado',
-      'Título de eleitor',
-      'Foto 3x4 recente'
+      'Aguardar verificação do administrador',
+      'Manter dados cadastrais atualizados'
     ],
     GOLD: [
-      'Certidão de nascimento ou casamento',
-      'Comprovante de renda (3 últimos meses)',
-      'Declaração de composição familiar',
-      'Certificado de quitação eleitoral',
-      'Comprovante de escolaridade'
+      'RG (Frente) - Enviar na página "Meus Documentos"',
+      'RG (Verso) - Enviar na página "Meus Documentos"',
+      'CPF - Enviar na página "Meus Documentos"',
+      'Comprovante de Residência - Enviar na página "Meus Documentos"'
     ]
   };
 
   const requirements = nextLevelName ? requirementsByLevel[nextLevelName] || [] : [];
+
+  const handleUpgradeClick = () => {
+    // Se o próximo nível for GOLD, redirecionar para página de documentos
+    if (nextLevelName === 'GOLD') {
+      onClose();
+      router.push('/cidadao/documentos');
+    } else {
+      alert('Para ser promovido ao nível Prata, aguarde a verificação do administrador.');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
@@ -123,13 +132,22 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
               </div>
 
               {/* Aviso */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Atenção:</strong> Esta funcionalidade está em desenvolvimento.
-                  Em breve você poderá enviar os documentos e solicitar o aumento de nível
-                  diretamente pelo portal.
-                </p>
-              </div>
+              {nextLevelName === 'GOLD' ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-sm text-green-800">
+                    <strong>✓ Funcionalidade Disponível!</strong> Você já pode enviar seus documentos
+                    pela página "Meus Documentos". Após a aprovação de todos os documentos obrigatórios,
+                    você será automaticamente promovido para o nível Ouro! 🥇
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    Para ser promovido ao nível Prata, aguarde a verificação do administrador.
+                    Certifique-se de que seus dados cadastrais estão completos e corretos.
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -142,14 +160,12 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
           >
             Fechar
           </button>
-          {nextLevelInfo && (
+          {nextLevelInfo && nextLevelName === 'GOLD' && (
             <button
-              onClick={() => {
-                alert('Funcionalidade em desenvolvimento. Em breve você poderá solicitar o aumento de nível!');
-              }}
+              onClick={handleUpgradeClick}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
             >
-              Solicitar Agora
+              Ir para Meus Documentos
             </button>
           )}
         </div>
