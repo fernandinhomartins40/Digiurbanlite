@@ -80,11 +80,11 @@ jobs:
 
             # PostgreSQL (valores padrão)
             POSTGRES_USER=digiurban
-            POSTGRES_PASSWORD=digiurban2024secure
+            POSTGRES_PASSWORD=digiurban2024
             POSTGRES_DB=digiurban
 
             # Database URL (PostgreSQL)
-            DATABASE_URL=postgresql://digiurban:digiurban2024secure@postgres:5432/digiurban
+            DATABASE_URL=postgresql://digiurban:digiurban2024@postgres:5432/digiurban
 
             # JWT (gerado automaticamente para produção)
             JWT_SECRET=digiurban-production-secret-$(date +%s)-$(openssl rand -hex 16)
