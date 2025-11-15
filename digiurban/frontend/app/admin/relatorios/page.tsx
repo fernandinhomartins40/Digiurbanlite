@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -145,7 +147,7 @@ export default function RelatoriosPage() {
   const fetchReports = async () => {
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:3001/api/admin/relatorios', {
+      const response = await fetch('${API_URL}/admin/relatorios', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('digiurban_admin_token')}`,
           'X-Tenant-ID': 'demo',
@@ -167,7 +169,7 @@ export default function RelatoriosPage() {
 
   const fetchExecutions = async (reportId: string) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/relatorios/${reportId}/executions`, {
+      const response = await fetch(`${API_URL}/admin/relatorios/${reportId}/executions`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('digiurban_admin_token')}`,
           'X-Tenant-ID': 'demo',
@@ -187,7 +189,7 @@ export default function RelatoriosPage() {
 
   const createReport = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/admin/relatorios', {
+      const response = await fetch('${API_URL}/admin/relatorios', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('digiurban_admin_token')}`,
@@ -216,7 +218,7 @@ export default function RelatoriosPage() {
     if (!selectedReport) return
 
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/relatorios/${selectedReport.id}/execute`, {
+      const response = await fetch(`${API_URL}/admin/relatorios/${selectedReport.id}/execute`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('digiurban_admin_token')}`,
@@ -247,7 +249,7 @@ export default function RelatoriosPage() {
     if (!confirm('Tem certeza que deseja deletar este relatório?')) return
 
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/relatorios/${id}`, {
+      const response = await fetch(`${API_URL}/admin/relatorios/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('digiurban_admin_token')}`,
