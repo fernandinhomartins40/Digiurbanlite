@@ -297,6 +297,16 @@ async function main() {
     }
 
     // ========================================================================
+    // 6. MODULE WORKFLOWS (REMOVIDO - Feature não implementada)
+    // ========================================================================
+    // Workflows são opcionais e serão criados via interface admin quando necessário
+    // A infraestrutura está pronta (tabela module_workflows, APIs, etc)
+    // mas não pre-populamos workflows pois não há interface visual ainda
+    console.log('6️⃣  Module Workflows');
+    console.log('   ─────────────────────────────');
+    console.log('   ⏭️  Pulado - Workflows serão criados via interface admin\n');
+
+    // ========================================================================
     // RESUMO FINAL
     // ========================================================================
     console.log('\n╔════════════════════════════════════════════════════════╗');
