@@ -26,7 +26,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y sshpass rsync
 
           # Criar diretório no VPS
-          sshpass -f ~/.ssh/vps_password ssh -o StrictHostKeyChecking=no root@72.60.10.108 "mkdir -p /root/digiurban"
+          sshpass -f ~/.ssh/vps_password ssh -o StrictHostKeyChecking=no root@digiurban.com.br "mkdir -p /root/digiurban"
 
           # Sincronizar código via rsync
           sshpass -f ~/.ssh/vps_password rsync -avz --delete \
@@ -37,12 +37,12 @@ jobs:
             --exclude='*.db' \
             --exclude='*.db-*' \
             -e "ssh -o StrictHostKeyChecking=no" \
-            ./ root@72.60.10.108:/root/digiurban/
+            ./ root@digiurban.com.br:/root/digiurban/
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
-          host: 72.60.10.108
+          host: digiurban.com.br
           username: root
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
