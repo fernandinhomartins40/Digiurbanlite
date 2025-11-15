@@ -5,9 +5,9 @@ import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CameraCapture, DocumentType } from '@/components/ui/camera-capture';
 import { FileText, Download, Trash2, Upload, Calendar, CheckCircle, AlertCircle, Camera, Image as ImageIcon } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { DocumentScanner } from '@/components/common/DocumentScanner';
 
 interface Document {
   id: string;
@@ -42,7 +42,7 @@ export default function DocumentosPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
-  const [showCamera, setShowCamera] = useState<{type: string, docType: DocumentType} | null>(null);
+  const [showScanner, setShowScanner] = useState<{type: string, label: string} | null>(null);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
   useEffect(() => {
@@ -76,15 +76,16 @@ export default function DocumentosPage() {
     await handleUpload(type, file);
   };
 
-  const handleCameraCapture = (type: string, docType: DocumentType) => {
-    setShowCamera({ type, docType });
+  const handleCameraCapture = (type: string, label: string) => {
+    setShowScanner({ type, label });
   };
 
-  const handleCaptureComplete = async (file: File) => {
-    if (!showCamera) return;
+  const handleScanComplete = async (file: File) => {
+    if (!showScanner) return;
 
-    setShowCamera(null);
-    await handleUpload(showCamera.type, file);
+    const docType = showScanner.type;
+    setShowScanner(null);
+    await handleUpload(docType, file);
   };
 
   const handleUpload = async (type: string, file: File) => {
@@ -278,12 +279,12 @@ export default function DocumentosPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => handleCameraCapture(docType.value, docType.value as DocumentType)}
+                        onClick={() => handleCameraCapture(docType.value, docType.label)}
                         disabled={isUploading}
                         className="w-full"
                       >
                         <Camera className="w-4 h-4 mr-2" />
-                        Tirar Foto
+                        Digitalizar
                       </Button>
 
                       {isUploading && (
@@ -389,29 +390,15 @@ export default function DocumentosPage() {
         </CardContent>
       </Card>
 
-      {/* Modal da Câmera */}
-      {showCamera && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-75 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h3 className="font-semibold">Capturar Documento</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowCamera(null)}
-              >
-                ✕
-              </Button>
-            </div>
-            <div className="p-4">
-              <CameraCapture
-                documentType={showCamera.docType}
-                onCapture={handleCaptureComplete}
-                onCancel={() => setShowCamera(null)}
-              />
-            </div>
-          </div>
-        </div>
+      {/* Scanner de Documentos */}
+      {showScanner && (
+        <DocumentScanner
+          documentName={showScanner.label}
+          acceptedFormats={['jpg', 'jpeg', 'png', 'pdf']}
+          maxSizeMB={5}
+          onCapture={handleScanComplete}
+          onCancel={() => setShowScanner(null)}
+        />
       )}
       </div>
     </CitizenLayout>

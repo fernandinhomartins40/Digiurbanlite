@@ -109,6 +109,7 @@ export const loadAdminRoutes = () => {
   // DIA 3: REMOVED - admin-transfer era específico para multi-tenant
   const citizensRoutes = require('./citizens').default;
   const adminCitizensRoutes = require('./admin-citizens').default;
+  const adminCitizenDocumentsRoutes = require('./admin-citizen-documents').default;
 
   router.use('/admin/auth', adminAuthRoutes);
   router.use('/admin/management', adminManagementRoutes);
@@ -120,6 +121,7 @@ export const loadAdminRoutes = () => {
   // DIA 3: REMOVED - admin-transfer route
   router.use('/citizens', citizensRoutes);
   router.use('/admin/citizens', adminCitizensRoutes);
+  router.use('/admin/citizen-documents', adminCitizenDocumentsRoutes);
 
   return router;
 };
