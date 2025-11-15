@@ -63,7 +63,15 @@
       "Bash(else)",
       "Bash(do echo \"===== $sec =====\")",
       "Bash(/dev/null)",
-      "Bash(del check-documents.js check-protocol-docs.js check-all-data.js)"
+      "Bash(del check-documents.js check-protocol-docs.js check-all-data.js)",
+      "Bash(do echo '=== $section_SERVICES ===')",
+      "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" extract-services.py)",
+      "Bash(tsx prisma/clear-services.ts:*)",
+      "Bash(python3:*)",
+      "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" update-seeds-with-missing.py)",
+      "Bash(tsx prisma/seed-consolidated.ts:*)",
+      "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" check-duplicates-in-seeds.py)",
+      "Bash(del /f /q .next 2)"
     ],
     "deny": [],
     "ask": []
