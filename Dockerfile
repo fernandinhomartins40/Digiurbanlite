@@ -57,7 +57,8 @@ FROM node:18-alpine AS runner
 WORKDIR /app
 
 # Instalar Nginx, supervisord, PostgreSQL client e outras dependências
-RUN apk add --no-cache nginx supervisor curl postgresql-client
+# coreutils: necessário para o comando 'timeout' usado no startup.sh
+RUN apk add --no-cache nginx supervisor curl postgresql-client coreutils
 
 # Criar usuários
 RUN addgroup --system --gid 1001 nodejs && \
