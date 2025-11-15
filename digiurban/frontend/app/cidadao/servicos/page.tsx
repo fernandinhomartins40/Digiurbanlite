@@ -178,8 +178,9 @@ export default function ServicosPage() {
             <Button
               size="sm"
               className={cn(
-                "text-white group-hover:shadow-md hover:opacity-90 transition-opacity",
-                categoryColor.bgClass.replace('bg-opacity-10', '').replace('-50', '-700'),
+                "bg-white border group-hover:shadow-md hover:opacity-80 transition-opacity",
+                categoryColor.textClass,
+                categoryColor.borderClass,
                 isCompact ? "h-7 text-xs px-2" : "h-8 text-sm px-3"
               )}
               onClick={(e) => {
