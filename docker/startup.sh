@@ -71,14 +71,18 @@ CHECKSCRIPT
 
 # Executar verificação (timeout de 10s) NO DIRETÓRIO CORRETO
 echo "Verificando existência de dados..."
-INTEGRITY_RESULT=$(timeout 10 node check-db.js 2>&1 || echo "timeout_or_error")
-INTEGRITY_EXIT_CODE=$?
-rm -f check-db.js
+timeout 10 node check-db.js > /tmp/check-result.txt 2>&1
+CHECK_EXIT=$?
+INTEGRITY_RESULT=$(cat /tmp/check-result.txt 2>/dev/null || echo "error")
+rm -f check-db.js /tmp/check-result.txt
 
 echo "📋 Resultado: $INTEGRITY_RESULT"
+echo "📋 Exit code: $CHECK_EXIT"
 
-# Executar seed se necessário (apenas se exit code != 0)
-if [ $INTEGRITY_EXIT_CODE -ne 0 ]; then
+# Executar seed se necessário
+# Exit code 1 = precisa de seed (userCount === 0)
+# Exit code 0 = já tem dados (userCount > 0)
+if [ $CHECK_EXIT -eq 1 ]; then
   echo "🌱 Executando seed..."
 
   # Usar timeout para evitar que seed trave
