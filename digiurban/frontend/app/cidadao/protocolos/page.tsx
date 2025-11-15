@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   FileText,
   Search,
@@ -16,7 +17,10 @@ import {
   Eye,
   Calendar,
   Building2,
-  Loader2
+  Loader2,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useCitizenProtocols } from '@/hooks/useCitizenProtocols';
 import { CancelProtocolDialog } from '@/components/citizen/CancelProtocolDialog';
@@ -27,6 +31,21 @@ export default function ProtocolosPage() {
   const [statusFilter, setStatusFilter] = useState('todos');
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedProtocol, setSelectedProtocol] = useState<{ id: string; number: string } | null>(null);
+  const statusScrollRef = useRef<HTMLDivElement>(null);
+
+  // Função para rolar os chips de status
+  const scroll = (ref: React.RefObject<HTMLDivElement> | null, direction: 'left' | 'right') => {
+    const container = ref?.current;
+    if (!container) return;
+
+    const scrollAmount = 200; // Pixels para rolar
+    const newScrollPosition = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+
+    container.scrollTo({
+      left: newScrollPosition,
+      behavior: 'smooth'
+    });
+  };
 
   const statusTypes = [
     { id: 'todos', name: 'Todos', color: 'gray', apiValue: undefined },
@@ -105,11 +124,11 @@ export default function ProtocolosPage() {
 
   return (
     <CitizenLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Meus Protocolos</h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">Acompanhe o status das suas solicitações</p>
+          <h1 className="text-2xl font-bold text-gray-900">Meus Protocolos</h1>
+          <p className="text-sm text-gray-600 mt-0.5">Acompanhe o status das suas solicitações</p>
         </div>
 
         {/* Estatísticas */}
@@ -166,26 +185,62 @@ export default function ProtocolosPage() {
         {/* Busca e Filtros */}
         <div className="flex flex-col gap-3 sm:gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="Buscar por número, serviço..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 sm:pl-10 text-sm sm:text-base h-10 sm:h-11"
+              className="pl-9 pr-10 h-11 text-sm border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
-          </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-            {statusTypes.map((status) => (
-              <Button
-                key={status.id}
-                variant={statusFilter === status.id ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatusFilter(status.id)}
-                className="whitespace-nowrap flex-shrink-0 text-xs sm:text-sm"
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
-                {status.name}
-              </Button>
-            ))}
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Chips de Status com Setas */}
+          <div className="relative">
+            {/* Setas de navegação - apenas desktop */}
+            <div className="hidden lg:flex items-center gap-2 mb-2 justify-end">
+              <button
+                onClick={() => scroll(statusScrollRef, 'left')}
+                className="h-8 w-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center"
+                aria-label="Rolar status para esquerda"
+              >
+                <ChevronLeft className="h-4 w-4 text-gray-600" />
+              </button>
+              <button
+                onClick={() => scroll(statusScrollRef, 'right')}
+                className="h-8 w-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center"
+                aria-label="Rolar status para direita"
+              >
+                <ChevronRight className="h-4 w-4 text-gray-600" />
+              </button>
+            </div>
+            <div
+              ref={statusScrollRef}
+              className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {statusTypes.map((status) => (
+                <Button
+                  key={status.id}
+                  variant={statusFilter === status.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter(status.id)}
+                  className={cn(
+                    "whitespace-nowrap flex-shrink-0 text-sm snap-start transition-all",
+                    statusFilter === status.id && "shadow-md"
+                  )}
+                >
+                  {status.name}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -299,6 +354,17 @@ export default function ProtocolosPage() {
           onSuccess={handleCancelSuccess}
         />
       )}
+
+      {/* CSS para ocultar scrollbar mas manter funcionalidade */}
+      <style jsx global>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </CitizenLayout>
   );
 }
