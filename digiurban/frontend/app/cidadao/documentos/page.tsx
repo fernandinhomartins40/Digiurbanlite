@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileText, Download, Trash2, Upload, Calendar, CheckCircle, AlertCircle, Camera, Image as ImageIcon, Eye } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { DocumentScanner } from '@/components/common/DocumentScanner';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 // Componente para carregar imagem de forma assíncrona
 function DocumentImage({ documentId, fileName, className }: { documentId: string; fileName: string; className?: string }) {
@@ -108,6 +109,7 @@ export default function DocumentosPage() {
   const [showReuploadOptions, setShowReuploadOptions] = useState<{docId: string, docType: string, label: string} | null>(null);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const reuploadInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     loadDocuments();
@@ -506,11 +508,13 @@ export default function DocumentosPage() {
               {documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  className={`p-4 border rounded-lg hover:bg-gray-50 cursor-pointer ${
+                    isMobile ? 'space-y-3' : 'flex items-center justify-between'
+                  }`}
                   onClick={() => setPreviewDocument(doc)}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 flex-shrink-0 bg-gray-100 rounded border overflow-hidden">
+                  <div className={`flex items-center gap-4 ${isMobile ? 'w-full' : ''}`}>
+                    <div className={`${isMobile ? 'w-20 h-20' : 'w-16 h-16'} flex-shrink-0 bg-gray-100 rounded border overflow-hidden`}>
                       {isImageDocument(doc.mimeType) ? (
                         <DocumentImage
                           documentId={doc.id}
@@ -519,44 +523,60 @@ export default function DocumentosPage() {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <FileText className="w-8 h-8 text-blue-500" />
+                          <FileText className={`${isMobile ? 'w-10 h-10' : 'w-8 h-8'} text-blue-500`} />
                         </div>
                       )}
                     </div>
-                    <div>
-                      <h3 className="font-semibold">{getDocumentLabel(doc.documentType)}</h3>
-                      <p className="text-sm text-gray-500">{doc.fileName}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className={`font-semibold ${isMobile ? 'text-base' : ''}`}>
+                          {getDocumentLabel(doc.documentType)}
+                        </h3>
+                        {isMobile && (
+                          <div className="flex-shrink-0">
+                            {getStatusBadge(doc.status)}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 truncate">{doc.fileName}</p>
                       <p className="text-xs text-gray-400 mt-1">
                         Enviado em {formatDate(doc.uploadedAt)}
                       </p>
                       {doc.notes && (
-                        <p className="text-xs text-orange-600 mt-1">
+                        <p className="text-xs text-orange-600 mt-1 line-clamp-2">
                           Observação: {doc.notes}
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                    {getStatusBadge(doc.status)}
+                  <div
+                    className={`flex items-center gap-2 ${isMobile ? 'justify-end flex-wrap' : 'gap-3'}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {!isMobile && getStatusBadge(doc.status)}
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={isMobile ? "sm" : "sm"}
                         onClick={() => setPreviewDocument(doc)}
                         title="Visualizar"
+                        className={isMobile ? 'px-3' : ''}
                       >
                         <Eye className="w-4 h-4" />
+                        {isMobile && <span className="ml-1 text-xs">Ver</span>}
                       </Button>
 
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={isMobile ? "sm" : "sm"}
                         onClick={() => handleDownload(doc.id, doc.fileName)}
                         title="Baixar"
+                        className={isMobile ? 'px-3' : ''}
                       >
                         <Download className="w-4 h-4" />
+                        {isMobile && <span className="ml-1 text-xs">Baixar</span>}
                       </Button>
 
                       {doc.status === 'REJECTED' && (
@@ -571,31 +591,35 @@ export default function DocumentosPage() {
                           />
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={isMobile ? "sm" : "sm"}
                             onClick={() => reuploadInputRefs.current[`list-${doc.id}`]?.click()}
-                            className="text-orange-600 hover:text-orange-700"
+                            className={`text-orange-600 hover:text-orange-700 ${isMobile ? 'px-3' : ''}`}
                             title="Escolher Arquivo"
                             disabled={reuploadingDocId === doc.id}
                           >
                             {reuploadingDocId === doc.id ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600" />
                             ) : (
-                              <ImageIcon className="w-4 h-4" />
+                              <>
+                                <ImageIcon className="w-4 h-4" />
+                                {isMobile && <span className="ml-1 text-xs">Arquivo</span>}
+                              </>
                             )}
                           </Button>
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={isMobile ? "sm" : "sm"}
                             onClick={() => setShowReuploadOptions({
                               docId: doc.id,
                               docType: doc.documentType,
                               label: getDocumentLabel(doc.documentType)
                             })}
-                            className="text-orange-600 hover:text-orange-700"
+                            className={`text-orange-600 hover:text-orange-700 ${isMobile ? 'px-3' : ''}`}
                             title="Digitalizar"
                             disabled={reuploadingDocId === doc.id}
                           >
                             <Camera className="w-4 h-4" />
+                            {isMobile && <span className="ml-1 text-xs">Scanner</span>}
                           </Button>
                         </>
                       )}
@@ -603,12 +627,13 @@ export default function DocumentosPage() {
                       {doc.status !== 'APPROVED' && (
                         <Button
                           variant="outline"
-                          size="sm"
+                          size={isMobile ? "sm" : "sm"}
                           onClick={() => handleDelete(doc.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className={`text-red-600 hover:text-red-700 ${isMobile ? 'px-3' : ''}`}
                           title="Excluir"
                         >
                           <Trash2 className="w-4 h-4" />
+                          {isMobile && <span className="ml-1 text-xs">Excluir</span>}
                         </Button>
                       )}
                     </div>
