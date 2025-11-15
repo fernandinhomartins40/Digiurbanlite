@@ -113,4 +113,18 @@ export const apiClient = {
       ...options,
     });
   },
+
+  /**
+   * Realiza upload de arquivos (FormData)
+   */
+  upload: async (path: string, formData: FormData, options: RequestInit = {}) => {
+    const url = apiClient.getUrl(path);
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      // Não define Content-Type para FormData (navegador define automaticamente com boundary)
+      body: formData,
+      ...options,
+    });
+  },
 };

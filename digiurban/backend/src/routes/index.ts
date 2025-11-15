@@ -77,6 +77,7 @@ export const loadCitizenRoutes = () => {
   const citizenProtocolsRoutes = require('./citizen-protocols').default;
   const citizenFamilyRoutes = require('./citizen-family').default;
   const citizenDocumentsRoutes = require('./citizen-documents').default;
+  const citizenPersonalDocumentsRoutes = require('./citizen-personal-documents').default;
   const citizenNotificationsRoutes = require('./citizen-notifications').default;
   // DIA 3: REMOVED - citizen-transfer era específico para multi-tenant
 
@@ -85,6 +86,7 @@ export const loadCitizenRoutes = () => {
   router.use('/citizen/protocols', citizenProtocolsRoutes);
   router.use('/citizen/family', citizenFamilyRoutes);
   router.use('/citizen/documents', citizenDocumentsRoutes);
+  router.use('/citizen/personal-documents', citizenPersonalDocumentsRoutes);
   router.use('/citizen/notifications', citizenNotificationsRoutes);
   // DIA 3: REMOVED - citizen-transfer route
 

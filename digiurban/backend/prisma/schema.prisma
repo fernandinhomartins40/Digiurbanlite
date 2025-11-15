@@ -140,9 +140,35 @@ model Citizen {
   familyAsHead        FamilyComposition[]      @relation("FamilyHead")
   notifications       Notification[]
   protocolsSimplified ProtocolSimplified[]
+  documents           CitizenDocument[]        @relation("CitizenDocuments")
 
   @@unique([cpf])
   @@map("citizens")
+}
+
+// ========================================
+// DOCUMENTOS PESSOAIS DO CIDADÃO
+// ========================================
+
+model CitizenDocument {
+  id           String               @id @default(cuid())
+  citizenId    String
+  documentType String               // RG, CPF, Comprovante de Residência, etc.
+  fileName     String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  status       DocumentStatus       @default(PENDING)
+  notes        String?              // Observações de análise/rejeição
+  uploadedAt   DateTime             @default(now())
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  citizen      Citizen              @relation("CitizenDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([status])
+  @@map("citizen_documents")
 }
 
 model Invoice {

@@ -7,15 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CameraCapture, DocumentType } from '@/components/ui/camera-capture';
 import { FileText, Download, Trash2, Upload, Calendar, CheckCircle, AlertCircle, Camera, Image as ImageIcon } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
 
 interface Document {
   id: string;
-  type: string;
+  documentType: string;
   fileName: string;
-  fileUrl: string;
-  uploadDate: string;
-  status: 'pending' | 'approved' | 'rejected';
+  fileSize: number;
+  mimeType: string;
+  status: 'PENDING' | 'UPLOADED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'EXPIRED';
   notes?: string;
+  uploadedAt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const DOCUMENT_TYPES = [
@@ -34,32 +38,6 @@ const DOCUMENT_TYPES = [
   { value: 'outro', label: 'Outro Documento' }
 ];
 
-/**
- * ============================================================================
- * PÁGINA DE DOCUMENTOS PESSOAIS DO CIDADÃO
- * ============================================================================
- *
- * NOTA: Esta funcionalidade está parcialmente implementada.
- *
- * SITUAÇÃO ATUAL:
- * - Interface está funcional (upload, câmera, visualização)
- * - Dados são armazenados localmente (mockados) apenas para demonstração
- * - Backend NÃO possui rotas para documentos pessoais ainda
- *
- * PRÓXIMOS PASSOS PARA IMPLEMENTAÇÃO COMPLETA:
- * 1. Criar tabela CitizenDocument no banco de dados (Prisma schema)
- * 2. Criar rotas de API no backend (/api/citizen/personal-documents)
- * 3. Implementar serviço de upload e armazenamento de arquivos
- * 4. Conectar esta página com as rotas reais
- * 5. Implementar sistema de aprovação de documentos (opcional)
- *
- * DIFERENÇA COM DOCUMENTOS DE PROTOCOLO:
- * - Documentos de Protocolo: Anexados a solicitações específicas (já implementado)
- * - Documentos Pessoais: Biblioteca de documentos do cidadão para reutilização
- *
- * ============================================================================
- */
-
 export default function DocumentosPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,15 +53,17 @@ export default function DocumentosPage() {
     try {
       setLoading(true);
 
-      // ⚠️ TEMPORÁRIO: Dados mockados - Backend ainda não implementado
-      // TODO: Quando backend estiver pronto, substituir por:
-      // const response = await apiRequest('/citizen/personal-documents');
-      // setDocuments(response.documents);
+      const response = await apiClient.get('/citizen/personal-documents');
 
-      // Mock data para demonstração da interface
-      setDocuments([]);
+      if (!response.ok) {
+        throw new Error('Erro ao carregar documentos');
+      }
+
+      const data = await response.json();
+      setDocuments(data.documents || []);
     } catch (error) {
       console.error('Erro ao carregar documentos:', error);
+      setDocuments([]);
     } finally {
       setLoading(false);
     }
@@ -100,11 +80,8 @@ export default function DocumentosPage() {
     setShowCamera({ type, docType });
   };
 
-  const handleCaptureComplete = async (imageData: string) => {
+  const handleCaptureComplete = async (file: File) => {
     if (!showCamera) return;
-
-    const blob = await fetch(imageData).then(r => r.blob());
-    const file = new File([blob], `${showCamera.type}-${Date.now()}.jpg`, { type: 'image/jpeg' });
 
     setShowCamera(null);
     await handleUpload(showCamera.type, file);
@@ -114,30 +91,26 @@ export default function DocumentosPage() {
     try {
       setUploadingType(type);
 
-      // TODO: Implementar upload real
-      // const formData = new FormData();
-      // formData.append('file', file);
-      // formData.append('type', type);
-      // await fetch('/api/cidadao/documentos', {
-      //   method: 'POST',
-      //   body: formData
-      // });
+      const formData = new FormData();
+      formData.append('documents', file);
+      formData.append('documentType', type);
 
-      // Mock: adicionar à lista localmente
-      const newDocument: Document = {
-        id: Date.now().toString(),
-        type,
-        fileName: file.name,
-        fileUrl: URL.createObjectURL(file),
-        uploadDate: new Date().toISOString(),
-        status: 'pending'
-      };
+      const response = await apiClient.upload('/citizen/personal-documents/upload', formData);
 
-      setDocuments([...documents, newDocument]);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao enviar documento');
+      }
+
+      const data = await response.json();
+
+      // Recarregar lista de documentos
+      await loadDocuments();
+
       alert('Documento enviado com sucesso! Aguardando análise.');
     } catch (error) {
       console.error('Erro ao fazer upload:', error);
-      alert('Erro ao enviar documento. Tente novamente.');
+      alert(error instanceof Error ? error.message : 'Erro ao enviar documento. Tente novamente.');
     } finally {
       setUploadingType(null);
     }
@@ -147,14 +120,43 @@ export default function DocumentosPage() {
     if (!confirm('Deseja realmente excluir este documento?')) return;
 
     try {
-      // TODO: Implementar rota de API para deletar
-      // await fetch(`/api/cidadao/documentos/${documentId}`, { method: 'DELETE' });
+      const response = await apiClient.delete(`/citizen/personal-documents/${documentId}`);
 
-      setDocuments(documents.filter(doc => doc.id !== documentId));
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao excluir documento');
+      }
+
+      // Recarregar lista de documentos
+      await loadDocuments();
+
       alert('Documento excluído com sucesso!');
     } catch (error) {
       console.error('Erro ao excluir documento:', error);
-      alert('Erro ao excluir documento. Tente novamente.');
+      alert(error instanceof Error ? error.message : 'Erro ao excluir documento. Tente novamente.');
+    }
+  };
+
+  const handleDownload = async (documentId: string, fileName: string) => {
+    try {
+      const response = await apiClient.get(`/citizen/personal-documents/${documentId}/download`);
+
+      if (!response.ok) {
+        throw new Error('Erro ao fazer download');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Erro ao fazer download:', error);
+      alert('Erro ao fazer download do documento.');
     }
   };
 
@@ -164,12 +166,18 @@ export default function DocumentosPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'approved':
+      case 'APPROVED':
         return <Badge className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" />Aprovado</Badge>;
-      case 'rejected':
+      case 'REJECTED':
         return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" />Rejeitado</Badge>;
-      default:
+      case 'UNDER_REVIEW':
         return <Badge variant="secondary"><Calendar className="w-3 h-3 mr-1" />Em Análise</Badge>;
+      case 'UPLOADED':
+        return <Badge variant="secondary"><CheckCircle className="w-3 h-3 mr-1" />Enviado</Badge>;
+      case 'EXPIRED':
+        return <Badge variant="destructive"><AlertCircle className="w-3 h-3 mr-1" />Expirado</Badge>;
+      default:
+        return <Badge variant="secondary"><Calendar className="w-3 h-3 mr-1" />Pendente</Badge>;
     }
   };
 
@@ -201,22 +209,6 @@ export default function DocumentosPage() {
           </p>
         </div>
 
-        {/* Aviso de Funcionalidade em Desenvolvimento */}
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="p-4">
-            <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-yellow-900">
-                <p className="font-medium mb-1">Funcionalidade em Desenvolvimento</p>
-                <p className="text-yellow-800">
-                  Esta página está sendo preparada para permitir que você mantenha uma biblioteca de documentos pessoais.
-                  A interface está funcional, mas a integração com o backend ainda está sendo implementada.
-                  Por enquanto, para anexar documentos a solicitações, use o campo de upload durante o processo de solicitação de serviços.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
       {/* Upload de Novos Documentos */}
       <Card>
@@ -233,7 +225,7 @@ export default function DocumentosPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {DOCUMENT_TYPES.map((docType) => {
-              const existingDoc = documents.find(d => d.type === docType.value);
+              const existingDoc = documents.find(d => d.documentType === docType.value);
               const isUploading = uploadingType === docType.value;
 
               return (
@@ -252,15 +244,11 @@ export default function DocumentosPage() {
 
                   {existingDoc ? (
                     <div className="space-y-2">
-                      {existingDoc.fileUrl.startsWith('data:') ? (
-                        <img src={existingDoc.fileUrl} alt={docType.label} className="w-full h-32 object-cover rounded border" />
-                      ) : (
-                        <div className="flex items-center justify-center h-32 bg-gray-100 rounded border">
-                          <FileText className="w-12 h-12 text-gray-400" />
-                        </div>
-                      )}
+                      <div className="flex items-center justify-center h-32 bg-gray-100 rounded border">
+                        <FileText className="w-12 h-12 text-gray-400" />
+                      </div>
                       <div className="text-xs text-gray-500">
-                        Enviado em {formatDate(existingDoc.uploadDate)}
+                        Enviado em {formatDate(existingDoc.uploadedAt)}
                       </div>
                     </div>
                   ) : (
@@ -338,10 +326,10 @@ export default function DocumentosPage() {
                   <div className="flex items-center gap-4">
                     <FileText className="w-8 h-8 text-blue-500" />
                     <div>
-                      <h3 className="font-semibold">{getDocumentLabel(doc.type)}</h3>
+                      <h3 className="font-semibold">{getDocumentLabel(doc.documentType)}</h3>
                       <p className="text-sm text-gray-500">{doc.fileName}</p>
                       <p className="text-xs text-gray-400 mt-1">
-                        Enviado em {formatDate(doc.uploadDate)}
+                        Enviado em {formatDate(doc.uploadedAt)}
                       </p>
                       {doc.notes && (
                         <p className="text-xs text-orange-600 mt-1">
@@ -358,12 +346,12 @@ export default function DocumentosPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(doc.fileUrl, '_blank')}
+                        onClick={() => handleDownload(doc.id, doc.fileName)}
                       >
                         <Download className="w-4 h-4" />
                       </Button>
 
-                      {doc.status === 'pending' && (
+                      {doc.status !== 'APPROVED' && (
                         <Button
                           variant="outline"
                           size="sm"
