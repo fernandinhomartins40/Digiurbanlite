@@ -34,6 +34,32 @@ const DOCUMENT_TYPES = [
   { value: 'outro', label: 'Outro Documento' }
 ];
 
+/**
+ * ============================================================================
+ * PÁGINA DE DOCUMENTOS PESSOAIS DO CIDADÃO
+ * ============================================================================
+ *
+ * NOTA: Esta funcionalidade está parcialmente implementada.
+ *
+ * SITUAÇÃO ATUAL:
+ * - Interface está funcional (upload, câmera, visualização)
+ * - Dados são armazenados localmente (mockados) apenas para demonstração
+ * - Backend NÃO possui rotas para documentos pessoais ainda
+ *
+ * PRÓXIMOS PASSOS PARA IMPLEMENTAÇÃO COMPLETA:
+ * 1. Criar tabela CitizenDocument no banco de dados (Prisma schema)
+ * 2. Criar rotas de API no backend (/api/citizen/personal-documents)
+ * 3. Implementar serviço de upload e armazenamento de arquivos
+ * 4. Conectar esta página com as rotas reais
+ * 5. Implementar sistema de aprovação de documentos (opcional)
+ *
+ * DIFERENÇA COM DOCUMENTOS DE PROTOCOLO:
+ * - Documentos de Protocolo: Anexados a solicitações específicas (já implementado)
+ * - Documentos Pessoais: Biblioteca de documentos do cidadão para reutilização
+ *
+ * ============================================================================
+ */
+
 export default function DocumentosPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,22 +74,14 @@ export default function DocumentosPage() {
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      // TODO: Implementar rota de API para buscar documentos
-      // const response = await fetch('/api/cidadao/documentos');
-      // const data = await response.json();
-      // setDocuments(data);
 
-      // Mock data para demonstração
-      setDocuments([
-        {
-          id: '1',
-          type: 'rg_frente',
-          fileName: 'rg-frente.jpg',
-          fileUrl: '/uploads/documents/rg-frente.jpg',
-          uploadDate: new Date().toISOString(),
-          status: 'approved'
-        }
-      ]);
+      // ⚠️ TEMPORÁRIO: Dados mockados - Backend ainda não implementado
+      // TODO: Quando backend estiver pronto, substituir por:
+      // const response = await apiRequest('/citizen/personal-documents');
+      // setDocuments(response.documents);
+
+      // Mock data para demonstração da interface
+      setDocuments([]);
     } catch (error) {
       console.error('Erro ao carregar documentos:', error);
     } finally {
@@ -182,6 +200,23 @@ export default function DocumentosPage() {
             Gerencie seus documentos digitalizados. Utilize a câmera para melhor qualidade de digitalização.
           </p>
         </div>
+
+        {/* Aviso de Funcionalidade em Desenvolvimento */}
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="p-4">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-yellow-900">
+                <p className="font-medium mb-1">Funcionalidade em Desenvolvimento</p>
+                <p className="text-yellow-800">
+                  Esta página está sendo preparada para permitir que você mantenha uma biblioteca de documentos pessoais.
+                  A interface está funcional, mas a integração com o backend ainda está sendo implementada.
+                  Por enquanto, para anexar documentos a solicitações, use o campo de upload durante o processo de solicitação de serviços.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
       {/* Upload de Novos Documentos */}
       <Card>
