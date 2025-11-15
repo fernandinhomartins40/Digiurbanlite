@@ -24,6 +24,11 @@ import {
   Users,
   Bell,
   Home,
+  Eye,
+  Download,
+  Trash2,
+  Check,
+  X,
 } from 'lucide-react'
 
 interface CitizenDetails {
@@ -84,7 +89,21 @@ interface CitizenDetails {
     protocols: number
     familyAsHead: number
     notifications: number
+    documents: number
   }
+  documents?: Array<{
+    id: string
+    documentType: string
+    fileName: string
+    fileSize: number
+    mimeType: string
+    status: 'PENDING' | 'UPLOADED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'EXPIRED'
+    notes?: string
+    uploadedAt: string
+    reviewedBy?: string
+    reviewedAt?: string
+    rejectionReason?: string
+  }>
 }
 
 export default function CitizenDetailsPage() {
@@ -97,6 +116,9 @@ export default function CitizenDetailsPage() {
   const citizenId = params.id as string
   const [citizen, setCitizen] = useState<CitizenDetails | null>(null)
   const [loading, setLoading] = useState(true)
+  const [previewDocument, setPreviewDocument] = useState<any>(null)
+  const [approving, setApproving] = useState<string | null>(null)
+  const [rejecting, setRejecting] = useState<string | null>(null)
 
   useEffect(() => {
     loadCitizen()
@@ -159,6 +181,119 @@ export default function CitizenDetailsPage() {
       IMPORT: 'Importação',
     }
     return sources[source as keyof typeof sources] || source
+  }
+
+  const getDocumentLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      rg: 'RG - Identidade',
+      cpf: 'CPF',
+      comprovante_residencia: 'Comprovante de Residência',
+      certidao_nascimento: 'Certidão de Nascimento',
+      titulo_eleitor: 'Título de Eleitor',
+      carteira_trabalho: 'Carteira de Trabalho',
+      comprovante_renda: 'Comprovante de Renda',
+      outro: 'Outro Documento',
+    }
+    return labels[type] || type
+  }
+
+  const handleApproveDocument = async (documentId: string) => {
+    try {
+      setApproving(documentId)
+      const response = await apiRequest(`/admin/citizen-documents/${documentId}/approve`, {
+        method: 'POST',
+        body: JSON.stringify({ notes: 'Documento aprovado' }),
+      })
+
+      if (response.success) {
+        toast({
+          title: 'Sucesso',
+          description: 'Documento aprovado com sucesso',
+        })
+        loadCitizen()
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao aprovar documento',
+      })
+    } finally {
+      setApproving(null)
+    }
+  }
+
+  const handleRejectDocument = async (documentId: string) => {
+    const reason = prompt('Digite o motivo da rejeição:')
+    if (!reason) return
+
+    try {
+      setRejecting(documentId)
+      const response = await apiRequest(`/admin/citizen-documents/${documentId}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ notes: reason }),
+      })
+
+      if (response.success) {
+        toast({
+          title: 'Sucesso',
+          description: 'Documento rejeitado',
+        })
+        loadCitizen()
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao rejeitar documento',
+      })
+    } finally {
+      setRejecting(null)
+    }
+  }
+
+  const handleDownloadDocument = async (documentId: string, fileName: string) => {
+    try {
+      const response = await apiRequest(`/admin/citizen-documents/${documentId}/download?download=true`)
+
+      if (!response.ok) {
+        throw new Error('Erro ao fazer download')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao fazer download',
+      })
+    }
+  }
+
+  const isImageDocument = (mimeType: string) => {
+    return mimeType?.startsWith('image/')
+  }
+
+  const getDocumentStatusBadge = (status: string) => {
+    const statusConfig = {
+      PENDING: { label: 'Pendente', variant: 'secondary' as const },
+      UPLOADED: { label: 'Enviado', variant: 'default' as const },
+      UNDER_REVIEW: { label: 'Em Análise', variant: 'default' as const },
+      APPROVED: { label: 'Aprovado', variant: 'default' as const },
+      REJECTED: { label: 'Rejeitado', variant: 'destructive' as const },
+      EXPIRED: { label: 'Expirado', variant: 'destructive' as const },
+    }
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING
+    return <Badge variant={config.variant}>{config.label}</Badge>
   }
 
   if (loading) {
@@ -252,10 +387,10 @@ export default function CitizenDetailsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <Shield className="h-8 w-8 text-purple-600" />
+              <FileText className="h-8 w-8 text-indigo-600" />
               <div>
-                <div className="text-sm font-medium">{getSourceLabel(citizen.registrationSource)}</div>
-                <div className="text-sm text-gray-500">Origem</div>
+                <div className="text-2xl font-bold">{citizen._count.documents || 0}</div>
+                <div className="text-sm text-gray-500">Documentos</div>
               </div>
             </div>
           </CardContent>
@@ -266,6 +401,7 @@ export default function CitizenDetailsPage() {
       <Tabs defaultValue="personal" className="space-y-4">
         <TabsList>
           <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
+          <TabsTrigger value="documents">Documentos</TabsTrigger>
           <TabsTrigger value="family">Composição Familiar</TabsTrigger>
           <TabsTrigger value="protocols">Protocolos</TabsTrigger>
           {citizen.vulnerableFamilyData && (
@@ -402,6 +538,114 @@ export default function CitizenDetailsPage() {
           </Card>
         </TabsContent>
 
+        {/* Documentos */}
+        <TabsContent value="documents">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Documentos Pessoais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {citizen.documents && citizen.documents.length > 0 ? (
+                <div className="space-y-3">
+                  {citizen.documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold text-gray-900">
+                              {getDocumentLabel(doc.documentType)}
+                            </h3>
+                            {getDocumentStatusBadge(doc.status)}
+                          </div>
+                          <p className="text-sm text-gray-600">{doc.fileName}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Enviado em {formatDate(doc.uploadedAt)}
+                          </p>
+                          {doc.notes && (
+                            <p className="text-xs text-orange-600 mt-1">
+                              Observação: {doc.notes}
+                            </p>
+                          )}
+                          {doc.rejectionReason && (
+                            <p className="text-xs text-red-600 mt-1">
+                              Motivo da rejeição: {doc.rejectionReason}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPreviewDocument(doc)}
+                            title="Visualizar"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadDocument(doc.id, doc.fileName)}
+                            title="Baixar"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+
+                          {doc.status === 'PENDING' && canEdit && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleApproveDocument(doc.id)}
+                                disabled={approving === doc.id}
+                                className="text-green-600 hover:text-green-700"
+                                title="Aprovar"
+                              >
+                                {approving === doc.id ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600" />
+                                ) : (
+                                  <Check className="w-4 h-4" />
+                                )}
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRejectDocument(doc.id)}
+                                disabled={rejecting === doc.id}
+                                className="text-red-600 hover:text-red-700"
+                                title="Rejeitar"
+                              >
+                                {rejecting === doc.id ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600" />
+                                ) : (
+                                  <X className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>Nenhum documento enviado ainda</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Composição Familiar */}
         <TabsContent value="family">
           <CitizenFamilyComposition
@@ -515,6 +759,103 @@ export default function CitizenDetailsPage() {
           </TabsContent>
         )}
       </Tabs>
+
+      {/* Modal de Preview de Documentos */}
+      {previewDocument && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setPreviewDocument(null)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold">
+                    {getDocumentLabel(previewDocument.documentType)}
+                  </h2>
+                  <p className="text-sm text-gray-500">{previewDocument.fileName}</p>
+                </div>
+                <button
+                  onClick={() => setPreviewDocument(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="mb-4">
+                {getDocumentStatusBadge(previewDocument.status)}
+              </div>
+
+              <div className="mb-4 bg-gray-100 rounded-lg p-2 flex items-center justify-center min-h-[400px]">
+                {isImageDocument(previewDocument.mimeType) ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_URL}/admin/citizen-documents/${previewDocument.id}/download`}
+                    alt={previewDocument.fileName}
+                    className="max-w-full max-h-[600px] object-contain"
+                  />
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="w-24 h-24 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Preview não disponível para este tipo de arquivo</p>
+                    <Button
+                      onClick={() => handleDownloadDocument(previewDocument.id, previewDocument.fileName)}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Baixar Documento
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownloadDocument(previewDocument.id, previewDocument.fileName)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar
+                </Button>
+                {previewDocument.status === 'PENDING' && canEdit && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        handleApproveDocument(previewDocument.id)
+                        setPreviewDocument(null)
+                      }}
+                      disabled={approving === previewDocument.id}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Aprovar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        handleRejectDocument(previewDocument.id)
+                        setPreviewDocument(null)
+                      }}
+                      disabled={rejecting === previewDocument.id}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Rejeitar
+                    </Button>
+                  </>
+                )}
+                <Button onClick={() => setPreviewDocument(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

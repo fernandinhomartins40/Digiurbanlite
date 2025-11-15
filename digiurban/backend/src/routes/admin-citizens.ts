@@ -588,11 +588,28 @@ router.get(
             department: { select: { name: true } }
         }
         },
+        documents: {
+          orderBy: { uploadedAt: 'desc' },
+          select: {
+            id: true,
+            documentType: true,
+            fileName: true,
+            fileSize: true,
+            mimeType: true,
+            status: true,
+            notes: true,
+            uploadedAt: true,
+            reviewedBy: true,
+            reviewedAt: true,
+            rejectionReason: true
+          }
+        },
         _count: {
           select: {
             protocolsSimplified: true,
             familyAsHead: true,
-            notifications: true
+            notifications: true,
+            documents: true
         }
       }
         }
