@@ -7,6 +7,8 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import * as path from 'path';
 import * as fs from 'fs';
+import { createSecureUploadMiddleware, validateUploadedFilesMiddleware } from '../middleware/secure-upload';
+import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 
 // ====================== TIPOS E INTERFACES ======================
 
@@ -186,26 +188,18 @@ function validateUploadedFiles(req: Request, res: Response, next: NextFunction):
 
 // ====================== MIDDLEWARE ======================
 
-const citizenAuthMiddleware: RequestHandler = (_req: Request, _res: Response, next: NextFunction) => {
-  // Citizen auth implementation
-  next();
-};
-
-// Mock multer middleware
-const uploadMiddleware = {
-  array: (_fieldName: string, _maxCount: number) => {
-    return (_req: Request, _res: Response, next: NextFunction) => {
-      next();
-    };
-  }
-};
+// Upload middleware para documentos pessoais
+const uploadMiddleware = createSecureUploadMiddleware(undefined, {
+  maxFileSize: 10 * 1024 * 1024, // 10MB
+  maxFiles: 5
+});
 
 // ====================== ROUTER SETUP ======================
 
 const router = Router();
 
 // Middleware para verificar autenticação em todas as rotas
-router.use(citizenAuthMiddleware);
+router.use(citizenAuthMiddleware as any);
 
 // ====================== ROUTES ======================
 
@@ -356,9 +350,19 @@ router.get(
         return res.status(404).json(createErrorResponse('FILE_NOT_FOUND', 'Arquivo não encontrado no servidor'));
       }
 
-      // Definir headers para download
-      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+      // Definir headers CORS e content-type
+      const origin = (req as any).headers?.origin || (req as any).get?.('origin') || '*';
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+
+      // Se for download via query param, forçar download, senão inline para preview
+      const forceDownload = req.query.download === 'true';
+      if (forceDownload) {
+        res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+      } else {
+        res.setHeader('Content-Disposition', `inline; filename="${document.fileName}"`);
+      }
 
       // Enviar arquivo
       return res.sendFile(filePath);

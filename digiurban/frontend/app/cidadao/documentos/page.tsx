@@ -5,9 +5,69 @@ import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Download, Trash2, Upload, Calendar, CheckCircle, AlertCircle, Camera, Image as ImageIcon } from 'lucide-react';
+import { FileText, Download, Trash2, Upload, Calendar, CheckCircle, AlertCircle, Camera, Image as ImageIcon, Eye } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { DocumentScanner } from '@/components/common/DocumentScanner';
+
+// Componente para carregar imagem de forma assíncrona
+function DocumentImage({ documentId, fileName, className }: { documentId: string; fileName: string; className?: string }) {
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadImage = async () => {
+      try {
+        const response = await apiClient.get(`/citizen/personal-documents/${documentId}/download`);
+
+        if (!response.ok) {
+          throw new Error('Erro ao carregar imagem');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        if (mounted) {
+          setImageUrl(url);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar imagem:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      mounted = false;
+      if (imageUrl) {
+        window.URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, [documentId]);
+
+  if (loading) {
+    return (
+      <div className={`flex items-center justify-center ${className}`}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+      </div>
+    );
+  }
+
+  if (!imageUrl) {
+    return (
+      <div className={`flex items-center justify-center ${className}`}>
+        <FileText className="w-12 h-12 text-gray-400" />
+      </div>
+    );
+  }
+
+  return <img src={imageUrl} alt={fileName} className={className} />;
+}
 
 interface Document {
   id: string;
@@ -43,6 +103,7 @@ export default function DocumentosPage() {
   const [loading, setLoading] = useState(true);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState<{type: string, label: string} | null>(null);
+  const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
   useEffect(() => {
@@ -140,7 +201,7 @@ export default function DocumentosPage() {
 
   const handleDownload = async (documentId: string, fileName: string) => {
     try {
-      const response = await apiClient.get(`/citizen/personal-documents/${documentId}/download`);
+      const response = await apiClient.get(`/citizen/personal-documents/${documentId}/download?download=true`);
 
       if (!response.ok) {
         throw new Error('Erro ao fazer download');
@@ -190,6 +251,10 @@ export default function DocumentosPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const isImageDocument = (mimeType: string) => {
+    return mimeType?.startsWith('image/');
   };
 
   if (loading) {
@@ -245,12 +310,34 @@ export default function DocumentosPage() {
 
                   {existingDoc ? (
                     <div className="space-y-2">
-                      <div className="flex items-center justify-center h-32 bg-gray-100 rounded border">
-                        <FileText className="w-12 h-12 text-gray-400" />
+                      <div
+                        className="h-32 bg-gray-100 rounded border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => setPreviewDocument(existingDoc)}
+                      >
+                        {isImageDocument(existingDoc.mimeType) ? (
+                          <DocumentImage
+                            documentId={existingDoc.id}
+                            fileName={existingDoc.fileName}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <FileText className="w-12 h-12 text-gray-400" />
+                          </div>
+                        )}
                       </div>
                       <div className="text-xs text-gray-500">
                         Enviado em {formatDate(existingDoc.uploadedAt)}
                       </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPreviewDocument(existingDoc)}
+                        className="w-full text-xs"
+                      >
+                        Visualizar
+                      </Button>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -322,10 +409,23 @@ export default function DocumentosPage() {
               {documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                  onClick={() => setPreviewDocument(doc)}
                 >
                   <div className="flex items-center gap-4">
-                    <FileText className="w-8 h-8 text-blue-500" />
+                    <div className="w-16 h-16 flex-shrink-0 bg-gray-100 rounded border overflow-hidden">
+                      {isImageDocument(doc.mimeType) ? (
+                        <DocumentImage
+                          documentId={doc.id}
+                          fileName={doc.fileName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <FileText className="w-8 h-8 text-blue-500" />
+                        </div>
+                      )}
+                    </div>
                     <div>
                       <h3 className="font-semibold">{getDocumentLabel(doc.documentType)}</h3>
                       <p className="text-sm text-gray-500">{doc.fileName}</p>
@@ -340,14 +440,24 @@ export default function DocumentosPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                     {getStatusBadge(doc.status)}
 
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => setPreviewDocument(doc)}
+                        title="Visualizar"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleDownload(doc.id, doc.fileName)}
+                        title="Baixar"
                       >
                         <Download className="w-4 h-4" />
                       </Button>
@@ -358,6 +468,7 @@ export default function DocumentosPage() {
                           size="sm"
                           onClick={() => handleDelete(doc.id)}
                           className="text-red-600 hover:text-red-700"
+                          title="Excluir"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -389,6 +500,86 @@ export default function DocumentosPage() {
           </ul>
         </CardContent>
       </Card>
+
+      {/* Modal de Preview */}
+      {previewDocument && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setPreviewDocument(null)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold">{getDocumentLabel(previewDocument.documentType)}</h2>
+                  <p className="text-sm text-gray-500">{previewDocument.fileName}</p>
+                </div>
+                <button
+                  onClick={() => setPreviewDocument(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="mb-4">
+                {getStatusBadge(previewDocument.status)}
+              </div>
+
+              <div className="mb-4 bg-gray-100 rounded-lg p-2 flex items-center justify-center min-h-[400px]">
+                {isImageDocument(previewDocument.mimeType) ? (
+                  <DocumentImage
+                    documentId={previewDocument.id}
+                    fileName={previewDocument.fileName}
+                    className="max-w-full max-h-[600px] object-contain"
+                  />
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="w-24 h-24 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Preview não disponível para este tipo de arquivo</p>
+                    <Button
+                      onClick={() => handleDownload(previewDocument.id, previewDocument.fileName)}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Baixar Documento
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => handleDownload(previewDocument.id, previewDocument.fileName)}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar
+                </Button>
+                {previewDocument.status !== 'APPROVED' && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setPreviewDocument(null);
+                      handleDelete(previewDocument.id);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Excluir
+                  </Button>
+                )}
+                <Button onClick={() => setPreviewDocument(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Scanner de Documentos */}
       {showScanner && (
