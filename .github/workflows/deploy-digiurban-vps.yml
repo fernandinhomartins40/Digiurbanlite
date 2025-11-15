@@ -48,16 +48,9 @@ jobs:
               echo "Verificando integridade do repositório..."
               git status
               git log --oneline -5
-              echo "Verificando arquivo crítico tenant.ts..."
-              if ! grep -q "tenantMiddleware" digiurban/backend/src/middleware/tenant.ts; then
-                echo "❌ ERRO CRÍTICO: Middleware tenant não encontrado!"
-                echo "Git pull falhou em atualizar o arquivo. Abortando deploy."
-                exit 1
-              fi
-              echo "✅ Middleware tenant confirmado no código-fonte"
             else
               echo "Clonando repositório..."
-              git clone https://github.com/${{ github.repository }} .
+              git clone https://github.com/fernandinhomartins40/Digiurbanlite.git .
             fi
 
             # Criar arquivo .env
@@ -144,11 +137,6 @@ jobs:
             for i in {1..10}; do
               if curl -f http://localhost:3060/health; then
                 echo "✅ DigiUrban está rodando na porta 3060!"
-
-                # Verificar se o código compilado tem o middleware
-                echo "Verificando código compilado..."
-                docker exec digiurban-vps ls -la /app/backend/dist/middleware/tenant.js || echo "⚠️ Middleware não encontrado"
-
                 exit 0
               fi
               echo "Tentativa $i/10 falhou, aguardando 5s..."
