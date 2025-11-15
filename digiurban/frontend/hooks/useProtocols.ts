@@ -46,7 +46,7 @@ export function useProtocols(serviceId?: string): UseProtocolsResult {
       setLoading(true);
       setError(null);
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
       // Build query params
       const params = new URLSearchParams({

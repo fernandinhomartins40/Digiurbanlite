@@ -58,7 +58,7 @@ export function useService(department: string, module: string): UseServiceResult
       setLoading(true);
       setError(null);
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
       const response = await fetch(
         `${backendUrl}/api/services/${department}/${module}`,
         {
