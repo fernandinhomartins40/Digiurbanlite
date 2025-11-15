@@ -104,7 +104,10 @@ export default function DocumentosPage() {
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState<{type: string, label: string} | null>(null);
   const [previewDocument, setPreviewDocument] = useState<Document | null>(null);
+  const [reuploadingDocId, setReuploadingDocId] = useState<string | null>(null);
+  const [showReuploadOptions, setShowReuploadOptions] = useState<{docId: string, docType: string, label: string} | null>(null);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
+  const reuploadInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
 
   useEffect(() => {
     loadDocuments();
@@ -142,11 +145,17 @@ export default function DocumentosPage() {
   };
 
   const handleScanComplete = async (file: File) => {
-    if (!showScanner) return;
-
-    const docType = showScanner.type;
-    setShowScanner(null);
-    await handleUpload(docType, file);
+    if (showScanner) {
+      // Scanner para novo upload
+      const docType = showScanner.type;
+      setShowScanner(null);
+      await handleUpload(docType, file);
+    } else if (showReuploadOptions) {
+      // Scanner para reenvio
+      const docId = showReuploadOptions.docId;
+      setShowReuploadOptions(null);
+      await handleReupload(docId, file);
+    }
   };
 
   const handleUpload = async (type: string, file: File) => {
@@ -176,6 +185,42 @@ export default function DocumentosPage() {
     } finally {
       setUploadingType(null);
     }
+  };
+
+  const handleReupload = async (documentId: string, file: File) => {
+    try {
+      setReuploadingDocId(documentId);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await apiClient.upload(`/citizen/personal-documents/${documentId}/reupload`, formData);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erro ao reenviar documento');
+      }
+
+      // Recarregar lista de documentos
+      await loadDocuments();
+
+      alert('Documento reenviado com sucesso! Aguardando nova análise.');
+    } catch (error) {
+      console.error('Erro ao reenviar documento:', error);
+      alert(error instanceof Error ? error.message : 'Erro ao reenviar documento. Tente novamente.');
+    } finally {
+      setReuploadingDocId(null);
+    }
+  };
+
+  const handleReuploadFileSelect = async (documentId: string, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    await handleReupload(documentId, file);
+
+    // Limpar input para permitir selecionar o mesmo arquivo novamente
+    event.target.value = '';
   };
 
   const handleDelete = async (documentId: string) => {
@@ -329,15 +374,67 @@ export default function DocumentosPage() {
                       <div className="text-xs text-gray-500">
                         Enviado em {formatDate(existingDoc.uploadedAt)}
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setPreviewDocument(existingDoc)}
-                        className="w-full text-xs"
-                      >
-                        Visualizar
-                      </Button>
+
+                      {existingDoc.status === 'REJECTED' ? (
+                        <>
+                          {existingDoc.notes && (
+                            <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                              <strong>Motivo:</strong> {existingDoc.notes}
+                            </div>
+                          )}
+
+                          {reuploadingDocId === existingDoc.id ? (
+                            <div className="text-xs text-center text-gray-500 py-2">
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-orange-500 mx-auto mb-1" />
+                              Enviando...
+                            </div>
+                          ) : (
+                            <>
+                              <input
+                                type="file"
+                                ref={(el) => { reuploadInputRefs.current[existingDoc.id] = el; }}
+                                accept="image/*,.pdf"
+                                onChange={(e) => handleReuploadFileSelect(existingDoc.id, e)}
+                                className="hidden"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => reuploadInputRefs.current[existingDoc.id]?.click()}
+                                className="w-full text-xs"
+                              >
+                                <ImageIcon className="w-3 h-3 mr-2" />
+                                Escolher Arquivo
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="default"
+                                size="sm"
+                                onClick={() => setShowReuploadOptions({
+                                  docId: existingDoc.id,
+                                  docType: existingDoc.documentType,
+                                  label: getDocumentLabel(existingDoc.documentType)
+                                })}
+                                className="w-full text-xs bg-orange-500 hover:bg-orange-600"
+                              >
+                                <Camera className="w-3 h-3 mr-2" />
+                                Digitalizar
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPreviewDocument(existingDoc)}
+                          className="w-full text-xs"
+                        >
+                          Visualizar
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -462,6 +559,47 @@ export default function DocumentosPage() {
                         <Download className="w-4 h-4" />
                       </Button>
 
+                      {doc.status === 'REJECTED' && (
+                        <>
+                          <input
+                            type="file"
+                            ref={(el) => { reuploadInputRefs.current[`list-${doc.id}`] = el; }}
+                            accept="image/*,.pdf"
+                            onChange={(e) => handleReuploadFileSelect(doc.id, e)}
+                            className="hidden"
+                            disabled={reuploadingDocId === doc.id}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => reuploadInputRefs.current[`list-${doc.id}`]?.click()}
+                            className="text-orange-600 hover:text-orange-700"
+                            title="Escolher Arquivo"
+                            disabled={reuploadingDocId === doc.id}
+                          >
+                            {reuploadingDocId === doc.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600" />
+                            ) : (
+                              <ImageIcon className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowReuploadOptions({
+                              docId: doc.id,
+                              docType: doc.documentType,
+                              label: getDocumentLabel(doc.documentType)
+                            })}
+                            className="text-orange-600 hover:text-orange-700"
+                            title="Digitalizar"
+                            disabled={reuploadingDocId === doc.id}
+                          >
+                            <Camera className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+
                       {doc.status !== 'APPROVED' && (
                         <Button
                           variant="outline"
@@ -527,8 +665,13 @@ export default function DocumentosPage() {
                 </button>
               </div>
 
-              <div className="mb-4">
+              <div className="mb-4 space-y-2">
                 {getStatusBadge(previewDocument.status)}
+                {previewDocument.status === 'REJECTED' && previewDocument.notes && (
+                  <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+                    <strong>Motivo da Rejeição:</strong> {previewDocument.notes}
+                  </div>
+                )}
               </div>
 
               <div className="mb-4 bg-gray-100 rounded-lg p-2 flex items-center justify-center min-h-[400px]">
@@ -560,7 +703,53 @@ export default function DocumentosPage() {
                   <Download className="w-4 h-4 mr-2" />
                   Baixar
                 </Button>
-                {previewDocument.status !== 'APPROVED' && (
+
+                {previewDocument.status === 'REJECTED' && (
+                  <>
+                    <input
+                      type="file"
+                      ref={(el) => { reuploadInputRefs.current[`modal-${previewDocument.id}`] = el; }}
+                      accept="image/*,.pdf"
+                      onChange={(e) => handleReuploadFileSelect(previewDocument.id, e)}
+                      className="hidden"
+                      disabled={reuploadingDocId === previewDocument.id}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => reuploadInputRefs.current[`modal-${previewDocument.id}`]?.click()}
+                      disabled={reuploadingDocId === previewDocument.id}
+                    >
+                      {reuploadingDocId === previewDocument.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <ImageIcon className="w-4 h-4 mr-2" />
+                          Escolher Arquivo
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      className="bg-orange-500 hover:bg-orange-600"
+                      onClick={() => {
+                        setPreviewDocument(null);
+                        setShowReuploadOptions({
+                          docId: previewDocument.id,
+                          docType: previewDocument.documentType,
+                          label: getDocumentLabel(previewDocument.documentType)
+                        });
+                      }}
+                      disabled={reuploadingDocId === previewDocument.id}
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Digitalizar
+                    </Button>
+                  </>
+                )}
+
+                {previewDocument.status !== 'APPROVED' && previewDocument.status !== 'REJECTED' && (
                   <Button
                     variant="destructive"
                     onClick={() => {
@@ -572,7 +761,8 @@ export default function DocumentosPage() {
                     Excluir
                   </Button>
                 )}
-                <Button onClick={() => setPreviewDocument(null)}>
+
+                <Button variant="outline" onClick={() => setPreviewDocument(null)}>
                   Fechar
                 </Button>
               </div>
@@ -582,13 +772,16 @@ export default function DocumentosPage() {
       )}
 
       {/* Scanner de Documentos */}
-      {showScanner && (
+      {(showScanner || showReuploadOptions) && (
         <DocumentScanner
-          documentName={showScanner.label}
+          documentName={showScanner ? showScanner.label : showReuploadOptions!.label}
           acceptedFormats={['jpg', 'jpeg', 'png', 'pdf']}
           maxSizeMB={5}
           onCapture={handleScanComplete}
-          onCancel={() => setShowScanner(null)}
+          onCancel={() => {
+            setShowScanner(null);
+            setShowReuploadOptions(null);
+          }}
         />
       )}
       </div>

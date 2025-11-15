@@ -351,7 +351,7 @@ router.get(
       }
 
       // Definir headers CORS e content-type
-      const origin = (req as any).headers?.origin || (req as any).get?.('origin') || '*';
+      const origin = (req as any as Request).get('origin') || '*';
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
@@ -480,6 +480,106 @@ router.patch(
       console.error('Erro ao atualizar documento:', error);
       const errorMessage = isError(error) ? error.message : 'Erro desconhecido';
       return res.status(500).json(createErrorResponse('INTERNAL_SERVER_ERROR', 'Erro ao atualizar documento', errorMessage));
+    }
+  })
+);
+
+/**
+ * POST /api/citizen/personal-documents/:documentId/reupload - Reenviar documento rejeitado
+ */
+router.post(
+  '/:documentId/reupload',
+  uploadMiddleware.single('file'),
+  validateUploadedFiles,
+  handleAsyncRoute(async (req, res) => {
+    const { citizen } = req;
+    const documentId = getStringParam(req.params.documentId);
+
+    if (!documentId) {
+      return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'ID do documento é obrigatório'));
+    }
+
+    const file = (req as any).file as MulterFile | undefined;
+    if (!file) {
+      return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'Arquivo é obrigatório'));
+    }
+
+    try {
+      // Buscar documento existente
+      const existingDocument = await prisma.citizenDocument.findFirst({
+        where: {
+          id: documentId,
+          citizenId: citizen.id
+        }
+      });
+
+      if (!existingDocument) {
+        // Limpar arquivo enviado se documento não encontrado
+        deleteFile(file.path);
+        return res.status(404).json(createErrorResponse('NOT_FOUND', 'Documento não encontrado'));
+      }
+
+      // Verificar se documento está rejeitado
+      if (existingDocument.status !== 'REJECTED') {
+        deleteFile(file.path);
+        return res.status(400).json(createErrorResponse('INVALID_STATUS', 'Apenas documentos rejeitados podem ser reenviados'));
+      }
+
+      // Remover arquivo antigo
+      deleteFile(existingDocument.filePath);
+
+      // Atualizar documento com novo arquivo
+      const updatedDocument = await prisma.citizenDocument.update({
+        where: { id: documentId },
+        data: {
+          fileName: file.originalname,
+          filePath: file.path,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          status: 'PENDING',
+          notes: null,
+          rejectionReason: null,
+          reviewedBy: null,
+          reviewedAt: null,
+          uploadedAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+
+      // Criar notificação para admin
+      await prisma.notification.create({
+        data: {
+          citizenId: citizen.id,
+          title: 'Documento Reenviado',
+          message: `O cidadão reenviou o documento "${existingDocument.documentType}" que estava rejeitado.`,
+          type: 'INFO',
+          isRead: false
+        }
+      });
+
+      return res.json({
+        success: true,
+        message: 'Documento reenviado com sucesso',
+        document: {
+          id: updatedDocument.id,
+          documentType: updatedDocument.documentType,
+          fileName: updatedDocument.fileName,
+          fileSize: updatedDocument.fileSize,
+          mimeType: updatedDocument.mimeType,
+          status: updatedDocument.status,
+          uploadedAt: updatedDocument.uploadedAt,
+          createdAt: updatedDocument.createdAt,
+          updatedAt: updatedDocument.updatedAt
+        }
+      });
+    } catch (error: unknown) {
+      // Limpar arquivo em caso de erro
+      if (file) {
+        deleteFile(file.path);
+      }
+      console.error('Erro ao reenviar documento:', error);
+      const errorMessage = isError(error) ? error.message : 'Erro desconhecido';
+      return res.status(500).json(createErrorResponse('INTERNAL_SERVER_ERROR', 'Erro ao reenviar documento', errorMessage));
     }
   })
 );

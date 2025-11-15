@@ -2,7 +2,7 @@
 // ADMIN-CITIZEN-DOCUMENTS.TS - Rotas de Admin para Documentos Pessoais
 // ============================================================================
 
-import { Router, Response } from 'express';
+import { Router, Response, Request } from 'express';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware, requirePermission } from '../middleware/admin-auth';
 import { asyncHandler } from '../utils/express-helpers';
@@ -213,20 +213,37 @@ router.get(
       return;
     }
 
-    // Definir headers para download
-    res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+    // Definir headers CORS e content-type
+    const origin = (authReq as any as Request).get('origin') || '*';
+    console.log(`[DOWNLOAD] Documento ${documentId}`);
+    console.log(`[DOWNLOAD] Nome: ${document.fileName}`);
+    console.log(`[DOWNLOAD] Caminho: ${filePath}`);
+    console.log(`[DOWNLOAD] MIME: ${document.mimeType}`);
+    console.log(`[DOWNLOAD] Origin: ${origin}`);
+
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
 
+    // Se for download via query param, forçar download, senão inline para preview
+    const forceDownload = authReq.query.download === 'true';
+    if (forceDownload) {
+      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+    } else {
+      res.setHeader('Content-Disposition', `inline; filename="${document.fileName}"`);
+    }
+
+    console.log(`[DOWNLOAD] Enviando arquivo...`);
     // Enviar arquivo
     res.sendFile(filePath);
   })
 );
 
 /**
- * PUT /api/admin/citizen-documents/:documentId/approve
+ * POST /api/admin/citizen-documents/:documentId/approve
  * Aprova um documento
  */
-router.put(
+router.post(
   '/:documentId/approve',
   requirePermission('citizens:verify'),
   asyncHandler(async (req, res: Response): Promise<void> => {
@@ -274,6 +291,8 @@ router.put(
         data: {
           status: 'APPROVED',
           notes: notes || null,
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
           updatedAt: new Date()
         }
       });
@@ -343,10 +362,10 @@ router.put(
 );
 
 /**
- * PUT /api/admin/citizen-documents/:documentId/reject
+ * POST /api/admin/citizen-documents/:documentId/reject
  * Rejeita um documento
  */
-router.put(
+router.post(
   '/:documentId/reject',
   requirePermission('citizens:verify'),
   asyncHandler(async (req, res: Response): Promise<void> => {
@@ -392,6 +411,9 @@ router.put(
         data: {
           status: 'REJECTED',
           notes: reason,
+          rejectionReason: reason,
+          reviewedBy: adminId,
+          reviewedAt: new Date(),
           updatedAt: new Date()
         }
       });

@@ -151,20 +151,23 @@ model Citizen {
 // ========================================
 
 model CitizenDocument {
-  id           String               @id @default(cuid())
-  citizenId    String
-  documentType String               // RG, CPF, Comprovante de Residência, etc.
-  fileName     String
-  filePath     String
-  fileSize     Int
-  mimeType     String
-  status       DocumentStatus       @default(PENDING)
-  notes        String?              // Observações de análise/rejeição
-  uploadedAt   DateTime             @default(now())
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  id              String               @id @default(cuid())
+  citizenId       String
+  documentType    String               // RG, CPF, Comprovante de Residência, etc.
+  fileName        String
+  filePath        String
+  fileSize        Int
+  mimeType        String
+  status          DocumentStatus       @default(PENDING)
+  notes           String?              // Observações de análise/rejeição
+  uploadedAt      DateTime             @default(now())
+  reviewedBy      String?              // ID do admin que revisou
+  reviewedAt      DateTime?            // Data da revisão
+  rejectionReason String?              // Motivo da rejeição
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
-  citizen      Citizen              @relation("CitizenDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
+  citizen         Citizen              @relation("CitizenDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
 
   @@index([citizenId])
   @@index([status])

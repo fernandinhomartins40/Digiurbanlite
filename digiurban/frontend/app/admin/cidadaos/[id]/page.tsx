@@ -29,7 +29,125 @@ import {
   Trash2,
   Check,
   X,
+  File,
+  FileImage,
 } from 'lucide-react'
+
+// Função helper para identificar tipo de documento
+function getDocumentTypeInfo(mimeType: string, fileName: string) {
+  const extension = fileName.split('.').pop()?.toLowerCase() || '';
+
+  if (mimeType.startsWith('image/')) {
+    return { type: 'image', icon: FileImage, color: 'text-blue-500', label: 'Imagem' };
+  } else if (mimeType === 'application/pdf' || extension === 'pdf') {
+    return { type: 'pdf', icon: FileText, color: 'text-red-500', label: 'PDF' };
+  } else if (
+    mimeType.includes('word') ||
+    extension === 'doc' ||
+    extension === 'docx'
+  ) {
+    return { type: 'word', icon: File, color: 'text-blue-600', label: 'Word' };
+  } else if (
+    mimeType.includes('excel') ||
+    mimeType.includes('spreadsheet') ||
+    extension === 'xls' ||
+    extension === 'xlsx'
+  ) {
+    return { type: 'excel', icon: FileText, color: 'text-green-600', label: 'Excel' };
+  } else {
+    return { type: 'other', icon: File, color: 'text-gray-500', label: 'Arquivo' };
+  }
+}
+
+// Componente para thumbnail de documento
+function DocumentThumbnail({
+  documentId,
+  fileName,
+  mimeType,
+  className
+}: {
+  documentId: string;
+  fileName: string;
+  mimeType: string;
+  className?: string;
+}) {
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const docInfo = getDocumentTypeInfo(mimeType, fileName);
+  const Icon = docInfo.icon;
+
+  useEffect(() => {
+    // Só carregar preview para imagens
+    if (docInfo.type !== 'image') {
+      setLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    let objectUrl: string | null = null;
+
+    const loadImage = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/citizen-documents/${documentId}/download`, {
+          credentials: 'include',
+          headers: {
+            'Accept': 'image/*',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao carregar imagem');
+        }
+
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+
+        if (mounted) {
+          setImageUrl(objectUrl);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar thumbnail:', error);
+        if (mounted) {
+          setError(true);
+          setLoading(false);
+        }
+      }
+    };
+
+    loadImage();
+
+    return () => {
+      mounted = false;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [documentId, docInfo.type]);
+
+  if (loading) {
+    return (
+      <div className={`flex items-center justify-center bg-gray-100 ${className}`}>
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-400"></div>
+      </div>
+    );
+  }
+
+  // Para imagens, mostrar preview
+  if (docInfo.type === 'image' && !error && imageUrl) {
+    return <img src={imageUrl} alt={fileName} className={className} />;
+  }
+
+  // Para outros tipos, mostrar ícone
+  return (
+    <div className={`flex flex-col items-center justify-center bg-gray-50 ${className}`}>
+      <Icon className={`w-12 h-12 ${docInfo.color}`} />
+      <span className="text-xs mt-1 text-gray-600 font-medium">{docInfo.label}</span>
+    </div>
+  );
+}
 
 interface CitizenDetails {
   id: string
@@ -234,7 +352,7 @@ export default function CitizenDetailsPage() {
       setRejecting(documentId)
       const response = await apiRequest(`/admin/citizen-documents/${documentId}/reject`, {
         method: 'POST',
-        body: JSON.stringify({ notes: reason }),
+        body: JSON.stringify({ reason }),
       })
 
       if (response.success) {
@@ -325,7 +443,7 @@ export default function CitizenDetailsPage() {
     )
   }
 
-  const canEdit = hasPermission('citizens:update')
+  const canEdit = hasPermission('citizens:verify') || hasPermission('citizens:update')
 
   return (
     <div className="p-8 space-y-6">
@@ -585,7 +703,20 @@ export default function CitizenDetailsPage() {
                       key={doc.id}
                       className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        {/* Miniatura */}
+                        <div
+                          className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded border overflow-hidden cursor-pointer"
+                          onClick={() => setPreviewDocument(doc)}
+                        >
+                          <DocumentThumbnail
+                            documentId={doc.id}
+                            fileName={doc.fileName}
+                            mimeType={doc.mimeType}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="font-semibold text-gray-900">
@@ -628,7 +759,7 @@ export default function CitizenDetailsPage() {
                             <Download className="w-4 h-4" />
                           </Button>
 
-                          {doc.status === 'PENDING' && canEdit && (
+                          {doc.status === 'PENDING' && (
                             <>
                               <Button
                                 variant="outline"
@@ -823,24 +954,49 @@ export default function CitizenDetailsPage() {
               </div>
 
               <div className="mb-4 bg-gray-100 rounded-lg p-2 flex items-center justify-center min-h-[400px]">
-                {isImageDocument(previewDocument.mimeType) ? (
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_API_URL}/admin/citizen-documents/${previewDocument.id}/download`}
-                    alt={previewDocument.fileName}
-                    className="max-w-full max-h-[600px] object-contain"
-                  />
-                ) : (
-                  <div className="text-center py-12">
-                    <FileText className="w-24 h-24 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4">Preview não disponível para este tipo de arquivo</p>
-                    <Button
-                      onClick={() => handleDownloadDocument(previewDocument.id, previewDocument.fileName)}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Baixar Documento
-                    </Button>
-                  </div>
-                )}
+                {(() => {
+                  const docInfo = getDocumentTypeInfo(previewDocument.mimeType, previewDocument.fileName);
+                  const Icon = docInfo.icon;
+
+                  // Para imagens, mostrar preview
+                  if (docInfo.type === 'image') {
+                    return (
+                      <DocumentThumbnail
+                        documentId={previewDocument.id}
+                        fileName={previewDocument.fileName}
+                        mimeType={previewDocument.mimeType}
+                        className="max-w-full max-h-[600px] object-contain"
+                      />
+                    );
+                  }
+
+                  // Para PDF, mostrar iframe
+                  if (docInfo.type === 'pdf') {
+                    return (
+                      <iframe
+                        src={`${process.env.NEXT_PUBLIC_API_URL}/admin/citizen-documents/${previewDocument.id}/download`}
+                        className="w-full h-[600px] border-0"
+                        title={previewDocument.fileName}
+                      />
+                    );
+                  }
+
+                  // Para outros tipos, mostrar ícone e botão de download
+                  return (
+                    <div className="text-center py-12">
+                      <Icon className={`w-24 h-24 mx-auto mb-4 ${docInfo.color}`} />
+                      <p className="text-lg font-semibold text-gray-700 mb-2">{docInfo.label}</p>
+                      <p className="text-sm text-gray-500 mb-4">{previewDocument.fileName}</p>
+                      <p className="text-gray-600 mb-4">Preview não disponível para este tipo de arquivo</p>
+                      <Button
+                        onClick={() => handleDownloadDocument(previewDocument.id, previewDocument.fileName)}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Baixar Documento
+                      </Button>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="flex gap-3 justify-end">
@@ -851,7 +1007,7 @@ export default function CitizenDetailsPage() {
                   <Download className="w-4 h-4 mr-2" />
                   Baixar
                 </Button>
-                {previewDocument.status === 'PENDING' && canEdit && (
+                {previewDocument.status === 'PENDING' && (
                   <>
                     <Button
                       variant="outline"

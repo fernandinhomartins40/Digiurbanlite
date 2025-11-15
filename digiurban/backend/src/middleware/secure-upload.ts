@@ -57,8 +57,11 @@ export function sanitizeFilename(filename: string): string {
   // Remover path traversal
   const basename = path.basename(filename);
 
-  // Remover caracteres especiais perigosos, manter apenas alfanuméricos, pontos, hífens e underscores
-  const sanitized = basename.replace(/[^a-zA-Z0-9._-]/g, '_');
+  // Normalizar caracteres acentuados (NFD = decompor, depois remover diacríticos)
+  const normalized = basename.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Remover caracteres especiais perigosos, manter apenas alfanuméricos, pontos, hífens, underscores e espaços
+  const sanitized = normalized.replace(/[^a-zA-Z0-9._\s-]/g, '_').replace(/\s+/g, '_');
 
   // Limitar tamanho do nome
   const maxLength = 200;
