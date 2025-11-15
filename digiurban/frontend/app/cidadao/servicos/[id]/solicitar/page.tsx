@@ -338,23 +338,23 @@ export default function SolicitarServicoPage() {
 
   return (
     <CitizenLayout>
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5 animate-fade-in">
         {/* Header */}
         <div>
           <Button
             variant="ghost"
             size="sm"
-            className="mb-4"
+            className="mb-3 -ml-2"
             onClick={() => router.back()}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
 
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
             {isProgramEnrollment && !selectedProgram ? 'Selecione o Programa' : 'Solicitar Serviço'}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 mt-0.5">
             {isProgramEnrollment && !selectedProgram
               ? 'Escolha o programa em que deseja se inscrever'
               : 'Preencha os dados para solicitar este serviço'}
@@ -363,21 +363,21 @@ export default function SolicitarServicoPage() {
 
         {/* Informações do Serviço */}
         <Card>
-          <CardHeader>
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <FileText className="h-6 w-6 text-blue-600" />
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-50 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
-              <div className="flex-1">
-                <CardTitle className="text-xl">{service.name}</CardTitle>
-                <CardDescription className="mt-1">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-base sm:text-xl">{service.name}</CardTitle>
+                <CardDescription className="mt-1 text-sm">
                   {service.department.name}
                 </CardDescription>
                 {service.description && (
                   <p className="text-sm text-gray-600 mt-2">{service.description}</p>
                 )}
                 {service.estimatedDays && (
-                  <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
+                  <div className="flex items-center gap-2 mt-2 text-xs sm:text-sm text-gray-500">
                     <Clock className="h-4 w-4" />
                     <span>Prazo estimado: {service.estimatedDays} dias</span>
                   </div>
@@ -821,20 +821,20 @@ export default function SolicitarServicoPage() {
               )}
 
               {/* Botões de Ação */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => router.back()}
                   disabled={submitting}
-                  className="flex-1"
+                  className="w-full sm:flex-1 order-2 sm:order-1"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1"
+                  className="w-full sm:flex-1 order-1 sm:order-2"
                 >
                   {submitting ? (
                     <>
