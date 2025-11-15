@@ -41,12 +41,6 @@ jobs:
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         with:
           host: 72.60.10.108
           username: root
@@ -54,7 +48,6 @@ jobs:
           port: 22
           timeout: 300s
           command_timeout: 300s
-          envs: DATABASE_URL,JWT_SECRET,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB
           script: |
             set -e
 
@@ -73,7 +66,7 @@ jobs:
 
             # Criar arquivo .env
             echo "Criando arquivo .env..."
-            cat > .env << EOF
+            cat > .env << 'EOF'
             # Node.js
             NODE_ENV=production
 
@@ -85,16 +78,16 @@ jobs:
             FRONTEND_PORT=3000
             NEXT_PUBLIC_API_URL=http://localhost:3001
 
-            # PostgreSQL
-            POSTGRES_USER=${POSTGRES_USER:-digiurban}
-            POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-digiurban2024}
-            POSTGRES_DB=${POSTGRES_DB:-digiurban}
+            # PostgreSQL (valores padrão)
+            POSTGRES_USER=digiurban
+            POSTGRES_PASSWORD=digiurban2024secure
+            POSTGRES_DB=digiurban
 
             # Database URL (PostgreSQL)
-            DATABASE_URL=${DATABASE_URL}
+            DATABASE_URL=postgresql://digiurban:digiurban2024secure@postgres:5432/digiurban
 
-            # JWT
-            JWT_SECRET=${JWT_SECRET}
+            # JWT (gerado automaticamente para produção)
+            JWT_SECRET=digiurban-production-secret-$(date +%s)-$(openssl rand -hex 16)
             JWT_EXPIRES_IN=7d
             JWT_ADMIN_EXPIRES_IN=8h
             JWT_CITIZEN_EXPIRES_IN=30d
@@ -109,10 +102,10 @@ jobs:
 
             # Logs
             LOG_LEVEL=info
-
-            # Build
-            BUILD_TIMESTAMP=$(date +%s)
             EOF
+
+            # Adicionar BUILD_TIMESTAMP ao .env
+            echo "BUILD_TIMESTAMP=$(date +%s)" >> .env
 
             # Remover arquivos .db SQLite antigos (não usamos mais)
             echo "Removendo arquivos .db do código-fonte..."
