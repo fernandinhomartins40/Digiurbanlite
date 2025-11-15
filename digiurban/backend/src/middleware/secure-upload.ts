@@ -5,7 +5,7 @@
  * Middleware de segurança para upload de arquivos com validação robusta
  */
 
-import * as multer from 'multer';
+import multer from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
@@ -310,7 +310,7 @@ export function createSecureUploadMiddleware(
   const storage = createSecureStorage();
   const fileFilter = createSecureFileFilter(documentConfigs);
 
-  return (multer as any)({
+  return multer({
     storage,
     fileFilter,
     limits: {

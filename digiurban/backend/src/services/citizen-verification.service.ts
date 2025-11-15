@@ -55,8 +55,9 @@ export interface PromotionResult {
  * Verifica se um documento está expirado
  */
 function isDocumentExpired(document: CitizenDocument): boolean {
-  const expirationDays = GOLD_REQUIREMENTS.expirationDays[document.documentType]
-    || GOLD_REQUIREMENTS.expirationDays.default;
+  const expirationConfig = GOLD_REQUIREMENTS.expirationDays as Record<string, number>;
+  const expirationDays = expirationConfig[document.documentType]
+    || expirationConfig.default;
 
   const uploadDate = new Date(document.uploadedAt);
   const now = new Date();
@@ -237,11 +238,11 @@ export async function autoPromoteToGold(
     // 2.4. Criar log de auditoria
     await tx.auditLog.create({
       data: {
+        userId: approvedBy,
+        citizenId,
         action: 'CITIZEN_PROMOTED_TO_GOLD',
-        entityType: 'CITIZEN',
-        entityId: citizenId,
-        performedBy: approvedBy,
-        metadata: {
+        resource: 'CITIZEN',
+        details: {
           promotionReason: 'AUTO_DOCUMENT_APPROVAL',
           previousStatus,
           newStatus: 'GOLD',

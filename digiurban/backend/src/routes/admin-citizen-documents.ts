@@ -292,13 +292,13 @@ router.put(
       // 3.3. Criar log de auditoria
       await tx.auditLog.create({
         data: {
+          userId: adminId,
+          citizenId: document.citizenId,
           action: 'DOCUMENT_APPROVED',
-          entityType: 'CITIZEN_DOCUMENT',
-          entityId: documentId,
-          performedBy: adminId,
-          metadata: {
+          resource: 'CITIZEN_DOCUMENT',
+          details: {
+            documentId,
             documentType: document.documentType,
-            citizenId: document.citizenId,
             citizenName: document.citizen.name,
             notes
           }
@@ -410,13 +410,13 @@ router.put(
       // 2.3. Criar log de auditoria
       await tx.auditLog.create({
         data: {
+          userId: adminId,
+          citizenId: document.citizenId,
           action: 'DOCUMENT_REJECTED',
-          entityType: 'CITIZEN_DOCUMENT',
-          entityId: documentId,
-          performedBy: adminId,
-          metadata: {
+          resource: 'CITIZEN_DOCUMENT',
+          details: {
+            documentId,
             documentType: document.documentType,
-            citizenId: document.citizenId,
             citizenName: document.citizen.name,
             rejectionReason: reason
           }

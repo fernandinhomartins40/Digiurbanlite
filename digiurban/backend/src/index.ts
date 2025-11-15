@@ -191,6 +191,7 @@ try { console.log('   → admin-chamados...'); app.use('/api/admin/chamados', re
 try { console.log('   → admin-reports...'); app.use('/api/admin/relatorios', require('./routes/admin-reports').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-reports:', e); }
 try { console.log('   → admin-gabinete...'); app.use('/api/admin/gabinete', require('./routes/admin-gabinete').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-gabinete:', e); }
 try { console.log('   → admin-citizens...'); app.use('/api/admin/citizens', require('./routes/admin-citizens').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-citizens:', e); }
+try { console.log('   → admin-citizen-documents...'); app.use('/api/admin/citizen-documents', require('./routes/admin-citizen-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-citizen-documents:', e); }
 try { console.log('   → citizens...'); app.use('/api/citizens', require('./routes/citizens').default); console.log('   ✓'); } catch (e) { console.error('❌ citizens:', e); }
 
 // Portal do cidadão
@@ -200,6 +201,7 @@ try { console.log('   → citizen-protocols...'); app.use('/api/citizen/protocol
 // try { console.log('   → citizen-programs...'); app.use('/api/citizen', require('./routes/citizen-programs').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-programs:', e); }
 try { console.log('   → citizen-family...'); app.use('/api/citizen/family', require('./routes/citizen-family').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-family:', e); }
 try { console.log('   → citizen-documents...'); app.use('/api/citizen/documents', require('./routes/citizen-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-documents:', e); }
+try { console.log('   → citizen-personal-documents...'); app.use('/api/citizen/personal-documents', require('./routes/citizen-personal-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-personal-documents:', e); }
 try { console.log('   → citizen-notifications...'); app.use('/api/citizen/notifications', require('./routes/citizen-notifications').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-notifications:', e); }
 
 // ============================================================
