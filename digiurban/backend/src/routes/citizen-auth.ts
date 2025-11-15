@@ -367,8 +367,37 @@ router.get('/me', asyncHandler(async (req: Request, res: Response) => {
     // Remover senha da resposta
     const { password: _, ...citizenData } = citizen;
 
+    // Buscar informações do tenant (município)
+    let tenantInfo = null;
+    if (citizen.municipioId) {
+      const tenant = await prisma.municipioConfig.findUnique({
+        where: { id: citizen.municipioId },
+        select: {
+          id: true,
+          nome: true,
+          nomeMunicipio: true,
+          ufMunicipio: true,
+          codigoIbge: true,
+          isActive: true
+        }
+      });
+      // Mapear para o formato esperado pelo frontend
+      if (tenant) {
+        tenantInfo = {
+          id: tenant.id,
+          name: tenant.nome,
+          nomeMunicipio: tenant.nomeMunicipio,
+          ufMunicipio: tenant.ufMunicipio,
+          codigoIbge: tenant.codigoIbge,
+          status: tenant.isActive ? 'active' : 'inactive'
+        };
+      }
+    }
+
     return res.json({
-      citizen: citizenData
+      citizen: citizenData,
+      tenantId: citizen.municipioId || decoded.tenantId,
+      tenant: tenantInfo
     });
   } catch (error: unknown) {
     console.error('Erro ao buscar dados do cidadão:', error);
