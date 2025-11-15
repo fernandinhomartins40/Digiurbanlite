@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -116,6 +116,7 @@ export default function ServicosPage() {
   const ServiceCard = ({ service, variant = 'default' }: { service: CitizenService; variant?: 'default' | 'compact' }) => {
     const categoryColor = service.category ? getCategoryColor(service.category) : getDepartmentTheme(service.department?.name || '');
     const isCompact = variant === 'compact';
+    const [isHovered, setIsHovered] = React.useState(false);
 
     return (
       <Card
@@ -177,10 +178,17 @@ export default function ServicosPage() {
             </div>
             <Button
               size="sm"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              style={isHovered ? {
+                backgroundColor: categoryColor.primary,
+                borderColor: categoryColor.primary,
+                color: 'white'
+              } : {}}
               className={cn(
-                "bg-white border group-hover:shadow-md hover:opacity-80 transition-opacity",
-                categoryColor.textClass,
-                categoryColor.borderClass,
+                "bg-white border group-hover:shadow-md transition-all",
+                !isHovered && categoryColor.textClass,
+                !isHovered && categoryColor.borderClass,
                 isCompact ? "h-7 text-xs px-2" : "h-8 text-sm px-3"
               )}
               onClick={(e) => {
