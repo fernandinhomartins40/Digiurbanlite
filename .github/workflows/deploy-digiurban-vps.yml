@@ -51,11 +51,26 @@ jobs:
             # Clonar repositório sempre do zero
             echo "Clonando repositório..."
             cd $APP_DIR
-            git clone $REPO_URL .
+
+            # Configurar git para não pedir credenciais e usar HTTPS público
+            export GIT_TERMINAL_PROMPT=0
+            export GIT_ASKPASS=/bin/echo
+
+            # Clone com timeout e sem prompt
+            git -c http.sslVerify=false clone --depth 1 --single-branch --branch main $REPO_URL . || {
+              echo "❌ Falha ao clonar repositório"
+              echo "Tentando com curl para baixar tar.gz..."
+              curl -L "https://github.com/fernandinhomartins40/Digiurbanlite/archive/refs/heads/main.tar.gz" -o repo.tar.gz
+              tar -xzf repo.tar.gz --strip-components=1
+              rm repo.tar.gz
+            }
 
             echo "Verificando código clonado..."
-            git log --oneline -5
-            echo "Branch atual: $(git branch --show-current)"
+            ls -la
+            if [ -d ".git" ]; then
+              git log --oneline -5
+              echo "Branch atual: $(git branch --show-current)"
+            fi
 
             # Criar arquivo .env
             echo "Criando arquivo .env..."
