@@ -475,35 +475,62 @@ export default function CitizenDetailsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {citizen.address && (
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Logradouro</label>
-                  <p className="text-gray-900">{citizen.address}</p>
-                </div>
-              )}
-              <div className="grid grid-cols-3 gap-4">
-                {citizen.city && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Cidade</label>
-                    <p className="text-gray-900">{citizen.city}</p>
-                  </div>
-                )}
-                {citizen.state && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">Estado</label>
-                    <p className="text-gray-900">{citizen.state}</p>
-                  </div>
-                )}
-                {citizen.zipCode && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">CEP</label>
-                    <p className="text-gray-900">{citizen.zipCode}</p>
-                  </div>
-                )}
-              </div>
-              {!citizen.address && !citizen.city && !citizen.state && (
-                <p className="text-gray-500">Endereço não informado</p>
-              )}
+              {(() => {
+                // Verificar se address é um objeto ou string
+                const addressObj = typeof citizen.address === 'object' && citizen.address !== null
+                  ? citizen.address as any
+                  : null;
+                const addressStr = typeof citizen.address === 'string' ? citizen.address : null;
+
+                return (
+                  <>
+                    {(addressObj?.logradouro || addressStr) && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Logradouro</label>
+                        <p className="text-gray-900">
+                          {addressObj?.logradouro || addressStr}
+                          {addressObj?.numero && `, ${addressObj.numero}`}
+                        </p>
+                      </div>
+                    )}
+                    {addressObj?.complemento && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Complemento</label>
+                        <p className="text-gray-900">{addressObj.complemento}</p>
+                      </div>
+                    )}
+                    {addressObj?.bairro && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Bairro</label>
+                        <p className="text-gray-900">{addressObj.bairro}</p>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-3 gap-4">
+                      {(addressObj?.cidade || citizen.city) && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Cidade</label>
+                          <p className="text-gray-900">{addressObj?.cidade || citizen.city}</p>
+                        </div>
+                      )}
+                      {(addressObj?.uf || citizen.state) && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Estado</label>
+                          <p className="text-gray-900">{addressObj?.uf || citizen.state}</p>
+                        </div>
+                      )}
+                      {(addressObj?.cep || citizen.zipCode) && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">CEP</label>
+                          <p className="text-gray-900">{addressObj?.cep || citizen.zipCode}</p>
+                        </div>
+                      )}
+                    </div>
+                    {!citizen.address && !citizen.city && !citizen.state && (
+                      <p className="text-gray-500">Endereço não informado</p>
+                    )}
+                  </>
+                );
+              })()}
             </CardContent>
           </Card>
 
