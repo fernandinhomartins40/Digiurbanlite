@@ -40,7 +40,7 @@ export function useDepartmentStats(department: string) {
       setLoading(true);
       setError(null);
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
       // Busca o token do localStorage (admin) ou sessionStorage (citizen)
       const token = typeof window !== 'undefined'
@@ -55,7 +55,7 @@ export function useDepartmentStats(department: string) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${backendUrl}/api/departments/${department}/stats`, {
+      const res = await fetch(`${apiUrl}/departments/${department}/stats`, {
         credentials: 'include', // Envia cookies httpOnly automaticamente
         headers,
       });

@@ -12,7 +12,7 @@ import {
   ApiResponse,
 } from '@/types/protocol-enhancements';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
  * Cria uma nova pendência
@@ -23,7 +23,7 @@ export async function createPending(
   token: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings`,
+    `${API_URL}/protocols/${protocolId}/pendings`,
     {
       method: 'POST',
       headers: {
@@ -57,7 +57,7 @@ export async function getProtocolPendings(
   }
 
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings?${params.toString()}`,
+    `${API_URL}/protocols/${protocolId}/pendings?${params.toString()}`,
     {
       method: 'GET',
       headers: {
@@ -84,7 +84,7 @@ export async function getPending(
   token: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/${pendingId}`,
+    `${API_URL}/protocols/${protocolId}/pendings/${pendingId}`,
     {
       method: 'GET',
       headers: {
@@ -112,7 +112,7 @@ export async function updatePending(
   token: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/${pendingId}`,
+    `${API_URL}/protocols/${protocolId}/pendings/${pendingId}`,
     {
       method: 'PUT',
       headers: {
@@ -141,7 +141,7 @@ export async function startPending(
   token: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/${pendingId}/start`,
+    `${API_URL}/protocols/${protocolId}/pendings/${pendingId}/start`,
     {
       method: 'PUT',
       headers: {
@@ -169,7 +169,7 @@ export async function resolvePending(
   token: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/${pendingId}/resolve`,
+    `${API_URL}/protocols/${protocolId}/pendings/${pendingId}/resolve`,
     {
       method: 'PUT',
       headers: {
@@ -199,7 +199,7 @@ export async function cancelPending(
   token: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/${pendingId}/cancel`,
+    `${API_URL}/protocols/${protocolId}/pendings/${pendingId}/cancel`,
     {
       method: 'PUT',
       headers: {
@@ -227,7 +227,7 @@ export async function hasBlockingPendings(
   token: string
 ): Promise<boolean> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/check-blocking`,
+    `${API_URL}/protocols/${protocolId}/pendings/check-blocking`,
     {
       method: 'GET',
       headers: {
@@ -253,7 +253,7 @@ export async function countPendingsByStatus(
   token: string
 ): Promise<PendingCountByStatus> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/count-by-status`,
+    `${API_URL}/protocols/${protocolId}/pendings/count-by-status`,
     {
       method: 'GET',
       headers: {
@@ -279,7 +279,7 @@ export async function checkExpiredPendings(
   token: string
 ): Promise<{ count: number; expired: ProtocolPending[] }> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/check-expired`,
+    `${API_URL}/protocols/${protocolId}/pendings/check-expired`,
     {
       method: 'PUT',
       headers: {
@@ -307,7 +307,7 @@ export async function deletePending(
   token: string
 ): Promise<void> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/pendings/${pendingId}`,
+    `${API_URL}/protocols/${protocolId}/pendings/${pendingId}`,
     {
       method: 'DELETE',
       headers: {

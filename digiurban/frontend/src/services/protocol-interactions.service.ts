@@ -8,7 +8,7 @@ import {
   ApiResponse,
 } from '@/types/protocol-enhancements';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
  * Cria uma nova interação em um protocolo
@@ -19,7 +19,7 @@ export async function createInteraction(
   token: string
 ): Promise<ProtocolInteraction> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/interactions`,
+    `${API_URL}/protocols/${protocolId}/interactions`,
     {
       method: 'POST',
       headers: {
@@ -53,7 +53,7 @@ export async function getProtocolInteractions(
   }
 
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/interactions?${params.toString()}`,
+    `${API_URL}/protocols/${protocolId}/interactions?${params.toString()}`,
     {
       method: 'GET',
       headers: {
@@ -80,7 +80,7 @@ export async function markInteractionAsRead(
   token: string
 ): Promise<ProtocolInteraction> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/interactions/${interactionId}/read`,
+    `${API_URL}/protocols/${protocolId}/interactions/${interactionId}/read`,
     {
       method: 'PUT',
       headers: {
@@ -106,7 +106,7 @@ export async function markAllInteractionsAsRead(
   token: string
 ): Promise<void> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/interactions/read-all`,
+    `${API_URL}/protocols/${protocolId}/interactions/read-all`,
     {
       method: 'PUT',
       headers: {
@@ -130,7 +130,7 @@ export async function getUnreadCount(
   token: string
 ): Promise<number> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/interactions/unread-count`,
+    `${API_URL}/protocols/${protocolId}/interactions/unread-count`,
     {
       method: 'GET',
       headers: {
@@ -157,7 +157,7 @@ export async function deleteInteraction(
   token: string
 ): Promise<void> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/interactions/${interactionId}`,
+    `${API_URL}/protocols/${protocolId}/interactions/${interactionId}`,
     {
       method: 'DELETE',
       headers: {

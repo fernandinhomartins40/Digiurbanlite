@@ -38,7 +38,7 @@ export function usePlanejamentoUrbanoStats() {
 
         // Buscar departamento de planejamento urbano
         const deptResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/departments`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/departments`,
           { headers }
         );
 
@@ -59,7 +59,7 @@ export function usePlanejamentoUrbanoStats() {
 
         // Buscar protocolos
         const protocolsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/protocolos?department=planejamento_urbano`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/protocolos?department=planejamento_urbano`,
           { headers }
         );
 
@@ -68,15 +68,15 @@ export function usePlanejamentoUrbanoStats() {
         // Buscar dados dos módulos
         const [alvarasRes, certidoesRes, numeracaoRes] = await Promise.all([
           axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/planejamento-urbano/alvaras`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/secretarias/planejamento-urbano/alvaras`,
             { headers }
           ).catch(() => ({ data: { data: [] } })),
           axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/planejamento-urbano/certidoes`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/secretarias/planejamento-urbano/certidoes`,
             { headers }
           ).catch(() => ({ data: { data: [] } })),
           axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/planejamento-urbano/numeracao`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/secretarias/planejamento-urbano/numeracao`,
             { headers }
           ).catch(() => ({ data: { data: [] } })),
         ]);

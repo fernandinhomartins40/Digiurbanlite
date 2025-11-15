@@ -39,7 +39,7 @@ export function useObrasPublicasStats() {
 
         // Buscar departamento de obras públicas
         const deptResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/departments`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/departments`,
           { headers }
         );
 
@@ -60,7 +60,7 @@ export function useObrasPublicasStats() {
 
         // Buscar protocolos
         const protocolsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/protocolos?department=obras_publicas`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/protocolos?department=obras_publicas`,
           { headers }
         );
 

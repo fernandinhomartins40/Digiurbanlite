@@ -34,7 +34,7 @@ export function useMeioAmbienteStats() {
 
         // Buscar departamento de meio ambiente
         const deptResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/departments`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/departments`,
           { headers }
         );
 
@@ -56,15 +56,15 @@ export function useMeioAmbienteStats() {
         // Buscar dados das rotas
         const [protocolsRes, licencasRes, denunciasRes] = await Promise.all([
           axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/protocolos?department=meio_ambiente`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/protocolos?department=meio_ambiente`,
             { headers }
           ),
           axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/meio-ambiente/licencas`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/secretarias/meio-ambiente/licencas`,
             { headers }
           ),
           axios.get(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/meio-ambiente/denuncias`,
+            `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/secretarias/meio-ambiente/denuncias`,
             { headers }
           )
         ]);

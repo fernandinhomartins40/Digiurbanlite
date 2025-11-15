@@ -11,7 +11,7 @@ import {
   ApiResponse,
 } from '@/types/protocol-enhancements';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
  * Cria/Solicita um novo documento
@@ -22,7 +22,7 @@ export async function createDocument(
   token: string
 ): Promise<ProtocolDocument> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents`,
+    `${API_URL}/protocols/${protocolId}/documents`,
     {
       method: 'POST',
       headers: {
@@ -50,7 +50,7 @@ export async function getProtocolDocuments(
   token: string
 ): Promise<ProtocolDocument[]> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents`,
+    `${API_URL}/protocols/${protocolId}/documents`,
     {
       method: 'GET',
       headers: {
@@ -77,7 +77,7 @@ export async function getDocument(
   token: string
 ): Promise<ProtocolDocument> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents/${documentId}`,
+    `${API_URL}/protocols/${protocolId}/documents/${documentId}`,
     {
       method: 'GET',
       headers: {
@@ -105,7 +105,7 @@ export async function uploadDocument(
   token: string
 ): Promise<ProtocolDocument> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents/${documentId}/upload`,
+    `${API_URL}/protocols/${protocolId}/documents/${documentId}/upload`,
     {
       method: 'PUT',
       headers: {
@@ -134,7 +134,7 @@ export async function approveDocument(
   token: string
 ): Promise<ProtocolDocument> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents/${documentId}/approve`,
+    `${API_URL}/protocols/${protocolId}/documents/${documentId}/approve`,
     {
       method: 'PUT',
       headers: {
@@ -162,7 +162,7 @@ export async function rejectDocument(
   token: string
 ): Promise<ProtocolDocument> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents/${documentId}/reject`,
+    `${API_URL}/protocols/${protocolId}/documents/${documentId}/reject`,
     {
       method: 'PUT',
       headers: {
@@ -191,7 +191,7 @@ export async function markDocumentUnderReview(
   token: string
 ): Promise<ProtocolDocument> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents/${documentId}/review`,
+    `${API_URL}/protocols/${protocolId}/documents/${documentId}/review`,
     {
       method: 'PUT',
       headers: {
@@ -217,7 +217,7 @@ export async function checkRequiredDocuments(
   token: string
 ): Promise<DocumentCheckResult> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents/check-required`,
+    `${API_URL}/protocols/${protocolId}/documents/check-required`,
     {
       method: 'GET',
       headers: {
@@ -243,7 +243,7 @@ export async function checkAllDocumentsApproved(
   token: string
 ): Promise<DocumentApprovalCheckResult> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents/check-approved`,
+    `${API_URL}/protocols/${protocolId}/documents/check-approved`,
     {
       method: 'GET',
       headers: {
@@ -270,7 +270,7 @@ export async function deleteDocument(
   token: string
 ): Promise<void> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/documents/${documentId}`,
+    `${API_URL}/protocols/${protocolId}/documents/${documentId}`,
     {
       method: 'DELETE',
       headers: {

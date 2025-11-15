@@ -9,7 +9,7 @@ import {
   ApiResponse,
 } from '@/types/protocol-enhancements';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
  * Cria uma nova etapa em um protocolo
@@ -20,7 +20,7 @@ export async function createStage(
   token: string
 ): Promise<ProtocolStage> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages`,
+    `${API_URL}/protocols/${protocolId}/stages`,
     {
       method: 'POST',
       headers: {
@@ -48,7 +48,7 @@ export async function getProtocolStages(
   token: string
 ): Promise<ProtocolStage[]> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages`,
+    `${API_URL}/protocols/${protocolId}/stages`,
     {
       method: 'GET',
       headers: {
@@ -74,7 +74,7 @@ export async function getCurrentStage(
   token: string
 ): Promise<ProtocolStage | null> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/current`,
+    `${API_URL}/protocols/${protocolId}/stages/current`,
     {
       method: 'GET',
       headers: {
@@ -101,7 +101,7 @@ export async function getStageById(
   token: string
 ): Promise<ProtocolStage> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/${stageId}`,
+    `${API_URL}/protocols/${protocolId}/stages/${stageId}`,
     {
       method: 'GET',
       headers: {
@@ -129,7 +129,7 @@ export async function updateStage(
   token: string
 ): Promise<ProtocolStage> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/${stageId}`,
+    `${API_URL}/protocols/${protocolId}/stages/${stageId}`,
     {
       method: 'PUT',
       headers: {
@@ -158,7 +158,7 @@ export async function startStage(
   token: string
 ): Promise<ProtocolStage> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/${stageId}/start`,
+    `${API_URL}/protocols/${protocolId}/stages/${stageId}/start`,
     {
       method: 'PUT',
       headers: {
@@ -187,7 +187,7 @@ export async function completeStage(
   token?: string
 ): Promise<ProtocolStage> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/${stageId}/complete`,
+    `${API_URL}/protocols/${protocolId}/stages/${stageId}/complete`,
     {
       method: 'PUT',
       headers: {
@@ -217,7 +217,7 @@ export async function skipStage(
   token?: string
 ): Promise<ProtocolStage> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/${stageId}/skip`,
+    `${API_URL}/protocols/${protocolId}/stages/${stageId}/skip`,
     {
       method: 'PUT',
       headers: {
@@ -247,7 +247,7 @@ export async function failStage(
   token: string
 ): Promise<ProtocolStage> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/${stageId}/fail`,
+    `${API_URL}/protocols/${protocolId}/stages/${stageId}/fail`,
     {
       method: 'PUT',
       headers: {
@@ -275,7 +275,7 @@ export async function checkAllStagesCompleted(
   token: string
 ): Promise<boolean> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/check-completion`,
+    `${API_URL}/protocols/${protocolId}/stages/check-completion`,
     {
       method: 'GET',
       headers: {
@@ -301,7 +301,7 @@ export async function countStagesByStatus(
   token: string
 ): Promise<Record<StageStatus, number>> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/count-by-status`,
+    `${API_URL}/protocols/${protocolId}/stages/count-by-status`,
     {
       method: 'GET',
       headers: {
@@ -329,7 +329,7 @@ export async function deleteStage(
   token: string
 ): Promise<void> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/stages/${stageId}`,
+    `${API_URL}/protocols/${protocolId}/stages/${stageId}`,
     {
       method: 'DELETE',
       headers: {

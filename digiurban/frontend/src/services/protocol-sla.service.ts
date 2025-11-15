@@ -9,7 +9,7 @@ import {
   ApiResponse,
 } from '@/types/protocol-enhancements';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
  * Cria um SLA para um protocolo
@@ -20,7 +20,7 @@ export async function createSLA(
   token: string
 ): Promise<ProtocolSLA> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/sla`,
+    `${API_URL}/protocols/${protocolId}/sla`,
     {
       method: 'POST',
       headers: {
@@ -48,7 +48,7 @@ export async function getProtocolSLA(
   token: string
 ): Promise<ProtocolSLA | null> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/sla`,
+    `${API_URL}/protocols/${protocolId}/sla`,
     {
       method: 'GET',
       headers: {
@@ -79,7 +79,7 @@ export async function pauseSLA(
   token: string
 ): Promise<ProtocolSLA> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/sla/pause`,
+    `${API_URL}/protocols/${protocolId}/sla/pause`,
     {
       method: 'PUT',
       headers: {
@@ -107,7 +107,7 @@ export async function resumeSLA(
   token: string
 ): Promise<ProtocolSLA> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/sla/resume`,
+    `${API_URL}/protocols/${protocolId}/sla/resume`,
     {
       method: 'PUT',
       headers: {
@@ -133,7 +133,7 @@ export async function completeSLA(
   token: string
 ): Promise<ProtocolSLA> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/sla/complete`,
+    `${API_URL}/protocols/${protocolId}/sla/complete`,
     {
       method: 'PUT',
       headers: {
@@ -159,7 +159,7 @@ export async function updateSLAStatus(
   token: string
 ): Promise<ProtocolSLA | null> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/sla/update-status`,
+    `${API_URL}/protocols/${protocolId}/sla/update-status`,
     {
       method: 'PUT',
       headers: {
@@ -190,7 +190,7 @@ export async function getOverdueSLAs(
   }
 
   const response = await fetch(
-    `${API_URL}/api/sla/overdue?${params.toString()}`,
+    `${API_URL}/sla/overdue?${params.toString()}`,
     {
       method: 'GET',
       headers: {
@@ -223,7 +223,7 @@ export async function getSLAsNearDue(
   }
 
   const response = await fetch(
-    `${API_URL}/api/sla/near-due?${params.toString()}`,
+    `${API_URL}/sla/near-due?${params.toString()}`,
     {
       method: 'GET',
       headers: {
@@ -248,7 +248,7 @@ export async function getSLAStats(
   tenantId: string,
   token: string
 ): Promise<SLAStats> {
-  const response = await fetch(`${API_URL}/api/sla/stats/${tenantId}`, {
+  const response = await fetch(`${API_URL}/sla/stats/${tenantId}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -272,7 +272,7 @@ export async function deleteSLA(
   token: string
 ): Promise<void> {
   const response = await fetch(
-    `${API_URL}/api/protocols/${protocolId}/sla`,
+    `${API_URL}/protocols/${protocolId}/sla`,
     {
       method: 'DELETE',
       headers: {

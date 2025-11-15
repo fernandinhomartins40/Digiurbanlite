@@ -9,7 +9,7 @@ import {
   ApiResponse,
 } from '@/types/protocol-enhancements';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
  * Cria um novo workflow de módulo
@@ -18,7 +18,7 @@ export async function createWorkflow(
   data: CreateWorkflowData,
   token: string
 ): Promise<ModuleWorkflow> {
-  const response = await fetch(`${API_URL}/api/workflows`, {
+  const response = await fetch(`${API_URL}/workflows`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export async function createWorkflow(
 export async function getAllWorkflows(
   token: string
 ): Promise<ModuleWorkflow[]> {
-  const response = await fetch(`${API_URL}/api/workflows`, {
+  const response = await fetch(`${API_URL}/workflows`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -62,7 +62,7 @@ export async function getAllWorkflows(
  * Obtém estatísticas de workflows
  */
 export async function getWorkflowStats(token: string): Promise<any> {
-  const response = await fetch(`${API_URL}/api/workflows/stats`, {
+  const response = await fetch(`${API_URL}/workflows/stats`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -85,7 +85,7 @@ export async function getWorkflowByModuleType(
   moduleType: string,
   token: string
 ): Promise<ModuleWorkflow | null> {
-  const response = await fetch(`${API_URL}/api/workflows/${moduleType}`, {
+  const response = await fetch(`${API_URL}/workflows/${moduleType}`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -113,7 +113,7 @@ export async function updateWorkflow(
   data: Partial<CreateWorkflowData>,
   token: string
 ): Promise<ModuleWorkflow> {
-  const response = await fetch(`${API_URL}/api/workflows/${moduleType}`, {
+  const response = await fetch(`${API_URL}/workflows/${moduleType}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ export async function applyWorkflowToProtocol(
   token: string
 ): Promise<ProtocolStage[]> {
   const response = await fetch(
-    `${API_URL}/api/workflows/${moduleType}/apply/${protocolId}`,
+    `${API_URL}/workflows/${moduleType}/apply/${protocolId}`,
     {
       method: 'POST',
       headers: {
@@ -167,7 +167,7 @@ export async function validateStageConditions(
   token: string
 ): Promise<{ valid: boolean; missingItems: string[] }> {
   const response = await fetch(
-    `${API_URL}/api/workflows/validate-stage/${protocolId}/${stageOrder}`,
+    `${API_URL}/workflows/validate-stage/${protocolId}/${stageOrder}`,
     {
       method: 'GET',
       headers: {
@@ -192,7 +192,7 @@ export async function validateStageConditions(
 export async function seedDefaultWorkflows(
   token: string
 ): Promise<ModuleWorkflow[]> {
-  const response = await fetch(`${API_URL}/api/workflows/seed-defaults`, {
+  const response = await fetch(`${API_URL}/workflows/seed-defaults`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -215,7 +215,7 @@ export async function deleteWorkflow(
   moduleType: string,
   token: string
 ): Promise<void> {
-  const response = await fetch(`${API_URL}/api/workflows/${moduleType}`, {
+  const response = await fetch(`${API_URL}/workflows/${moduleType}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${token}`,
