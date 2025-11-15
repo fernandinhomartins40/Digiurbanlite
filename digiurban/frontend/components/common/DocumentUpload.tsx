@@ -175,13 +175,14 @@ export function DocumentUpload({
               </div>
             )}
 
-            <div className="flex gap-2 justify-center">
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
               {allowCamera && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={openScanner}
                   disabled={disabled || uploading}
+                  className="w-full sm:w-auto"
                 >
                   <Camera className="h-4 w-4 mr-2" />
                   Digitalizar
@@ -193,6 +194,7 @@ export function DocumentUpload({
                 variant="outline"
                 onClick={openFileDialog}
                 disabled={disabled || uploading}
+                className="w-full sm:w-auto"
               >
                 <Upload className="h-4 w-4 mr-2" />
                 Selecionar Arquivo
