@@ -230,6 +230,23 @@ export default function ServicosPage() {
 
         {/* Chips de Departamento - Scroll Horizontal */}
         <div className="relative">
+          {/* Setas de navegação - apenas desktop */}
+          <div className="hidden lg:flex items-center gap-2 mb-2 justify-end">
+            <button
+              onClick={() => scroll(scrollContainerRef, 'left')}
+              className="h-8 w-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center"
+              aria-label="Rolar departamentos para esquerda"
+            >
+              <ChevronLeft className="h-4 w-4 text-gray-600" />
+            </button>
+            <button
+              onClick={() => scroll(scrollContainerRef, 'right')}
+              className="h-8 w-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center"
+              aria-label="Rolar departamentos para direita"
+            >
+              <ChevronRight className="h-4 w-4 text-gray-600" />
+            </button>
+          </div>
           <div
             ref={scrollContainerRef}
             className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
