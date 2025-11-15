@@ -11,10 +11,13 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Camera, X, RotateCw, Check, AlertCircle, Loader2, ZoomIn, ZoomOut, Crop, Palette } from 'lucide-react'
+import { Camera, X, RotateCw, Check, AlertCircle, Loader2, ZoomIn, ZoomOut, Crop, Palette, Edit3, Plus } from 'lucide-react'
 import { compressImage, validateFile, formatFileSize } from '@/lib/document-utils'
+import { useIsMobile, useHaptics } from '@/hooks/useIsMobile'
+import { cn } from '@/lib/utils'
 
 type ProcessingMode = 'color' | 'grayscale' | 'blackwhite'
+type EditMode = 'filters' | 'crop' | null
 
 interface CropArea {
   x: number
@@ -49,6 +52,11 @@ export function DocumentScanner({
   const [cropArea, setCropArea] = useState<CropArea | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const [editMode, setEditMode] = useState<EditMode>(null)
+
+  // Hooks mobile
+  const isMobile = useIsMobile()
+  const { vibrate } = useHaptics()
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -210,6 +218,11 @@ export function DocumentScanner({
   const capturePhoto = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return
 
+    // Feedback háptico em mobile
+    if (isMobile) {
+      vibrate(50)
+    }
+
     const video = videoRef.current
     const canvas = canvasRef.current
 
@@ -246,7 +259,7 @@ export function DocumentScanner({
     })
 
     stopCamera()
-  }, [stopCamera, zoom])
+  }, [stopCamera, zoom, isMobile, vibrate])
 
   /**
    * Retira nova foto
@@ -528,6 +541,342 @@ export function DocumentScanner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facingMode])
 
+  // Interface Mobile Full-Screen
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black">
+        {/* Header Mobile */}
+        <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent">
+          <div className="flex items-center justify-between p-4">
+            <div className="text-white">
+              <h3 className="text-sm font-semibold">{documentName}</h3>
+              <p className="text-xs text-gray-300">
+                {!capturedImage ? 'Posicione o documento' : editMode ? 'Editar documento' : 'Revisar captura'}
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onCancel}
+              className="text-white hover:bg-white/20 h-10 w-10"
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Área de Captura/Preview - Full Screen */}
+        <div className="absolute inset-0">
+          {!capturedImage ? (
+            <>
+              {/* Vídeo da Câmera */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{
+                  transform: `scale(${zoom})`
+                }}
+              />
+
+              {/* Overlay com Guia do Documento */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                {/* Área escura ao redor */}
+                <div className="absolute inset-0 bg-black/50" />
+
+                {/* Moldura do Documento */}
+                <div
+                  className="relative z-10 border-4 border-white/90 rounded-lg"
+                  style={{
+                    width: '85%',
+                    maxWidth: '500px',
+                    aspectRatio: '1.5',
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)'
+                  }}
+                >
+                  {/* Cantos Decorativos */}
+                  <div className="absolute -top-1 -left-1 w-10 h-10 border-t-[5px] border-l-[5px] border-green-400 rounded-tl-lg" />
+                  <div className="absolute -top-1 -right-1 w-10 h-10 border-t-[5px] border-r-[5px] border-green-400 rounded-tr-lg" />
+                  <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-[5px] border-l-[5px] border-green-400 rounded-bl-lg" />
+                  <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-[5px] border-r-[5px] border-green-400 rounded-br-lg" />
+
+                  {/* Instrução Central */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2">
+                      <p className="text-white text-sm font-medium text-center">
+                        Alinhe o documento<br />dentro da moldura
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Controles de Zoom */}
+              <div className="absolute top-20 right-4 z-20 flex flex-col gap-3">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="h-12 w-12 p-0 bg-white/90 hover:bg-white rounded-full shadow-lg"
+                  onClick={handleZoomIn}
+                  disabled={zoom >= 3}
+                >
+                  <ZoomIn className="h-6 w-6" />
+                </Button>
+                <div className="bg-white/90 rounded-full px-3 py-1 text-sm font-semibold text-center shadow-lg">
+                  {zoom.toFixed(1)}x
+                </div>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="h-12 w-12 p-0 bg-white/90 hover:bg-white rounded-full shadow-lg"
+                  onClick={handleZoomOut}
+                  disabled={zoom <= 1}
+                >
+                  <ZoomOut className="h-6 w-6" />
+                </Button>
+              </div>
+
+              {/* Botão Alternar Câmera */}
+              <div className="absolute top-20 left-4 z-20">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="h-12 w-12 p-0 bg-white/90 hover:bg-white rounded-full shadow-lg"
+                  onClick={switchCamera}
+                >
+                  <RotateCw className="h-6 w-6" />
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Preview da Foto Capturada */}
+              {!editMode ? (
+                <div className="relative w-full h-full flex items-center justify-center bg-black">
+                  <canvas
+                    ref={previewCanvasRef}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              ) : editMode === 'crop' ? (
+                <div className="relative w-full h-full flex items-center justify-center bg-black">
+                  <canvas
+                    ref={cropCanvasRef}
+                    className="cursor-crosshair touch-none max-w-full max-h-full"
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchEnd}
+                  />
+
+                  {/* Instrução de Recorte */}
+                  <div className="absolute bottom-32 left-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-4">
+                    <p className="text-white text-sm text-center">
+                      Arraste na imagem para selecionar a área desejada
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative w-full h-full flex items-center justify-center bg-black">
+                  <canvas
+                    ref={previewCanvasRef}
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Canvas oculto para captura */}
+        <canvas ref={canvasRef} className="hidden" />
+
+        {/* Erro */}
+        {error && (
+          <div className="absolute top-20 left-4 right-4 z-30">
+            <div className="bg-red-500/95 backdrop-blur-sm rounded-lg p-4 flex items-start gap-3 text-white shadow-xl">
+              <AlertCircle className="h-6 w-6 flex-shrink-0 mt-0.5" />
+              <p className="text-sm font-medium">{error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Controles Inferiores */}
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent pb-6 pt-8">
+          {!capturedImage ? (
+            /* Modo Captura */
+            <div className="flex items-center justify-center">
+              <Button
+                size="lg"
+                onClick={capturePhoto}
+                disabled={processing || !isCameraReady}
+                className="h-20 w-20 p-0 bg-white hover:bg-gray-200 rounded-full shadow-2xl"
+              >
+                <Camera className="h-10 w-10 text-black" />
+              </Button>
+            </div>
+          ) : !editMode ? (
+            /* Modo Preview - Ações Principais */
+            <div className="px-4 space-y-3">
+              {/* Botões de Ação Principal */}
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={retakePhoto}
+                  disabled={processing}
+                  className="flex-1 h-14 text-base bg-white/10 border-white/30 text-white hover:bg-white/20"
+                >
+                  <RotateCw className="h-5 w-5 mr-2" />
+                  Tirar Novamente
+                </Button>
+                <Button
+                  onClick={confirmPhoto}
+                  disabled={processing}
+                  className="flex-1 h-14 text-base bg-green-600 hover:bg-green-700"
+                >
+                  {processing ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="h-5 w-5 mr-2" />
+                      Adicionar
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Botão Editar */}
+              <Button
+                variant="outline"
+                onClick={() => setEditMode('filters')}
+                disabled={processing}
+                className="w-full h-12 text-base bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
+                <Edit3 className="h-5 w-5 mr-2" />
+                Editar (Filtros e Recorte)
+              </Button>
+            </div>
+          ) : (
+            /* Modo Edição */
+            <div className="px-4 space-y-4">
+              {/* Abas de Edição */}
+              <div className="flex gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-1">
+                <Button
+                  variant={editMode === 'filters' ? 'default' : 'ghost'}
+                  onClick={() => setEditMode('filters')}
+                  className={cn(
+                    'flex-1 h-12',
+                    editMode === 'filters'
+                      ? 'bg-white text-black hover:bg-gray-200'
+                      : 'text-white hover:bg-white/20'
+                  )}
+                >
+                  <Palette className="h-5 w-5 mr-2" />
+                  Filtros
+                </Button>
+                <Button
+                  variant={editMode === 'crop' ? 'default' : 'ghost'}
+                  onClick={() => setEditMode('crop')}
+                  className={cn(
+                    'flex-1 h-12',
+                    editMode === 'crop'
+                      ? 'bg-white text-black hover:bg-gray-200'
+                      : 'text-white hover:bg-white/20'
+                  )}
+                >
+                  <Crop className="h-5 w-5 mr-2" />
+                  Recorte
+                </Button>
+              </div>
+
+              {/* Conteúdo da Aba Atual */}
+              {editMode === 'filters' && (
+                <div className="flex gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-2">
+                  <Button
+                    size="lg"
+                    variant={processingMode === 'color' ? 'default' : 'outline'}
+                    onClick={() => setProcessingMode('color')}
+                    className={cn(
+                      'flex-1 h-12',
+                      processingMode === 'color'
+                        ? 'bg-white text-black hover:bg-gray-200'
+                        : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
+                    )}
+                  >
+                    Colorido
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={processingMode === 'grayscale' ? 'default' : 'outline'}
+                    onClick={() => setProcessingMode('grayscale')}
+                    className={cn(
+                      'flex-1 h-12',
+                      processingMode === 'grayscale'
+                        ? 'bg-white text-black hover:bg-gray-200'
+                        : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
+                    )}
+                  >
+                    Cinza
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={processingMode === 'blackwhite' ? 'default' : 'outline'}
+                    onClick={() => setProcessingMode('blackwhite')}
+                    className={cn(
+                      'flex-1 h-12',
+                      processingMode === 'blackwhite'
+                        ? 'bg-white text-black hover:bg-gray-200'
+                        : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
+                    )}
+                  >
+                    P&B
+                  </Button>
+                </div>
+              )}
+
+              {editMode === 'crop' && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={resetCrop}
+                    className="flex-1 h-12 bg-white/10 border-white/30 text-white hover:bg-white/20"
+                  >
+                    Resetar
+                  </Button>
+                  <Button
+                    onClick={() => setShowCropTool(!showCropTool)}
+                    className="flex-1 h-12 bg-white text-black hover:bg-gray-200"
+                  >
+                    {showCropTool ? 'Aplicar' : 'Selecionar Área'}
+                  </Button>
+                </div>
+              )}
+
+              {/* Botão Concluir Edição */}
+              <Button
+                onClick={() => setEditMode(null)}
+                className="w-full h-12 bg-green-600 hover:bg-green-700"
+              >
+                <Check className="h-5 w-5 mr-2" />
+                Concluir Edição
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Interface Desktop (Original)
   return (
     <div className="fixed inset-0 z-50 bg-black/90 overflow-y-auto">
       <div className="min-h-screen flex items-start sm:items-center justify-center p-2 sm:p-4">
