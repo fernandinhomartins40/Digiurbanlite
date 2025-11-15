@@ -28,7 +28,8 @@ import {
   Truck,
   House,
   Calendar,
-  Map
+  Map,
+  GitBranch
 } from 'lucide-react'
 
 interface NavItem {
@@ -83,6 +84,12 @@ export function AdminSidebar() {
           href: '/admin/servicos',
           icon: Settings,
           permissions: ['services:create', 'services:update']
+        },
+        {
+          title: 'Workflows',
+          href: '/admin/workflows',
+          icon: GitBranch,
+          minRole: 'ADMIN'
         },
         {
           title: 'Estatísticas',
