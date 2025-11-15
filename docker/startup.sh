@@ -59,8 +59,9 @@ async function check() {
     await prisma.$disconnect();
     process.exit(userCount === 0 ? 1 : 0);
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error checking database:', error.message);
     await prisma.$disconnect();
+    // Retornar 1 para indicar que precisa de seed em caso de erro
     process.exit(1);
   }
 }
@@ -68,21 +69,31 @@ async function check() {
 check();
 CHECKSCRIPT
 
-# Executar verificação
-INTEGRITY_RESULT=$(node /tmp/check-db.js 2>&1)
+# Executar verificação (timeout de 10s)
+echo "Verificando existência de dados..."
+INTEGRITY_RESULT=$(timeout 10 node /tmp/check-db.js 2>&1 || echo "timeout_or_error")
 INTEGRITY_EXIT_CODE=$?
 rm -f /tmp/check-db.js
 
 echo "📋 Resultado: $INTEGRITY_RESULT"
 
-# Executar seed se necessário
+# Executar seed se necessário (apenas se exit code != 0)
 if [ $INTEGRITY_EXIT_CODE -ne 0 ]; then
   echo "🌱 Executando seed..."
-  npm run db:seed || {
-    echo "❌ Seed falhou"
-    exit 1
-  }
-  echo "✅ Seed concluído"
+
+  # Usar timeout para evitar que seed trave
+  timeout 120 npm run db:seed
+  SEED_EXIT=$?
+
+  if [ $SEED_EXIT -eq 0 ]; then
+    echo "✅ Seed concluído com sucesso"
+  elif [ $SEED_EXIT -eq 124 ]; then
+    echo "⚠️ Seed timeout após 120s - continuando mesmo assim"
+  else
+    echo "❌ Seed falhou com código $SEED_EXIT"
+    # NÃO sair com erro - permitir que aplicação inicie mesmo sem seed
+    echo "⚠️ Continuando sem seed - admin precisa popular manualmente"
+  fi
 else
   echo "ℹ️ Database já tem dados, seed não necessário"
 fi
