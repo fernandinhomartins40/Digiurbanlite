@@ -15,7 +15,9 @@ import {
   Loader2,
   Building2,
   X,
-  TrendingUp
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useCitizenServices, CitizenService } from '@/hooks/useCitizenServices';
 import { getDepartmentTheme, getCategoryColor } from '@/lib/department-colors';
@@ -27,9 +29,25 @@ export default function ServicosPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('todos');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const popularScrollRef = useRef<HTMLDivElement>(null);
+  const categoryScrollRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const handleSolicitar = (serviceId: string) => {
     router.push(`/cidadao/servicos/${serviceId}/solicitar`);
+  };
+
+  // Função para rolar os sliders
+  const scroll = (ref: React.RefObject<HTMLDivElement> | HTMLDivElement | null, direction: 'left' | 'right') => {
+    const container = ref && 'current' in ref ? ref.current : ref;
+    if (!container) return;
+
+    const scrollAmount = 300; // Pixels para rolar
+    const newScrollPosition = container.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+
+    container.scrollTo({
+      left: newScrollPosition,
+      behavior: 'smooth'
+    });
   };
 
   // Extrair departamentos únicos
@@ -261,11 +279,33 @@ export default function ServicosPage() {
         {/* Serviços Populares - Slider Horizontal */}
         {!loading && !error && popularServices.length > 0 && searchTerm === '' && selectedDepartment === 'todos' && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-orange-500" />
-              <h2 className="text-lg font-bold text-gray-900">Mais Procurados</h2>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-orange-500" />
+                <h2 className="text-lg font-bold text-gray-900">Mais Procurados</h2>
+              </div>
+              {/* Setas de navegação - apenas desktop */}
+              <div className="hidden lg:flex items-center gap-2">
+                <button
+                  onClick={() => scroll(popularScrollRef, 'left')}
+                  className="h-8 w-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center"
+                  aria-label="Rolar para esquerda"
+                >
+                  <ChevronLeft className="h-4 w-4 text-gray-600" />
+                </button>
+                <button
+                  onClick={() => scroll(popularScrollRef, 'right')}
+                  className="h-8 w-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center"
+                  aria-label="Rolar para direita"
+                >
+                  <ChevronRight className="h-4 w-4 text-gray-600" />
+                </button>
+              </div>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+            <div
+              ref={popularScrollRef}
+              className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+            >
               {popularServices.map(service => (
                 <ServiceCard key={service.id} service={service} variant="compact" />
               ))}
@@ -293,10 +333,32 @@ export default function ServicosPage() {
                         <p className="text-xs text-gray-500">{categoryServices.length} serviços</p>
                       </div>
                     </div>
+                    {/* Setas de navegação - apenas desktop */}
+                    <div className="hidden lg:flex items-center gap-2">
+                      <button
+                        onClick={() => scroll(categoryScrollRefs.current.get(categoryName), 'left')}
+                        className="h-8 w-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center"
+                        aria-label="Rolar para esquerda"
+                      >
+                        <ChevronLeft className="h-4 w-4 text-gray-600" />
+                      </button>
+                      <button
+                        onClick={() => scroll(categoryScrollRefs.current.get(categoryName), 'right')}
+                        className="h-8 w-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-colors flex items-center justify-center"
+                        aria-label="Rolar para direita"
+                      >
+                        <ChevronRight className="h-4 w-4 text-gray-600" />
+                      </button>
+                    </div>
                   </div>
 
                   {/* Slider de Cards */}
-                  <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+                  <div
+                    ref={(el) => {
+                      if (el) categoryScrollRefs.current.set(categoryName, el);
+                    }}
+                    className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide"
+                  >
                     {categoryServices.map(service => (
                       <ServiceCard key={service.id} service={service} variant="compact" />
                     ))}
