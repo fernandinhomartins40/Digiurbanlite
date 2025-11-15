@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: digiurban-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-digiurban}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-digiurban2024}
+      POSTGRES_DB: ${POSTGRES_DB:-digiurban}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - digiurban_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-digiurban}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   digiurban:
     build:
       context: .
@@ -22,10 +43,9 @@ services:
       # Frontend (porta interna 3000)
       - FRONTEND_PORT=3000
       # NEXT_PUBLIC_API_URL é setado em BUILD TIME no Dockerfile (linha 40)
-      # Não precisa ser setado aqui pois já foi injetado no build
 
-      # Database
-      - DATABASE_URL=${DATABASE_URL:-file:/app/data/dev.db}
+      # Database PostgreSQL
+      - DATABASE_URL=${DATABASE_URL}
 
       # JWT
       - JWT_SECRET=${JWT_SECRET:-digiurban-super-secret-change-in-production}
@@ -45,21 +65,23 @@ services:
       - LOG_LEVEL=info
 
     volumes:
-      - digiurban_data:/app/data
       - digiurban_uploads:/app/uploads
       - digiurban_logs:/app/logs
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 90s
+      start_period: 120s
     networks:
       - digiurban_network
 
 volumes:
-  digiurban_data:
+  postgres_data:
     driver: local
   digiurban_uploads:
     driver: local

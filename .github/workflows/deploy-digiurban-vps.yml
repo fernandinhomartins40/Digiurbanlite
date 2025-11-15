@@ -44,6 +44,9 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
         with:
           host: 72.60.10.108
           username: root
@@ -51,7 +54,7 @@ jobs:
           port: 22
           timeout: 300s
           command_timeout: 300s
-          envs: DATABASE_URL,JWT_SECRET
+          envs: DATABASE_URL,JWT_SECRET,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB
           script: |
             set -e
 
@@ -82,7 +85,12 @@ jobs:
             FRONTEND_PORT=3000
             NEXT_PUBLIC_API_URL=http://localhost:3001
 
-            # Database
+            # PostgreSQL
+            POSTGRES_USER=${POSTGRES_USER:-digiurban}
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-digiurban2024}
+            POSTGRES_DB=${POSTGRES_DB:-digiurban}
+
+            # Database URL (PostgreSQL)
             DATABASE_URL=${DATABASE_URL}
 
             # JWT
@@ -106,18 +114,16 @@ jobs:
             BUILD_TIMESTAMP=$(date +%s)
             EOF
 
-            # ⚠️ CRÍTICO: Remover TODOS os arquivos .db ANTES do build
+            # Remover arquivos .db SQLite antigos (não usamos mais)
             echo "Removendo arquivos .db do código-fonte..."
             find . -name "*.db" -type f ! -path "*/node_modules/*" -delete || true
             find . -name "*.db-*" -type f ! -path "*/node_modules/*" -delete || true
             echo "✅ Arquivos .db removidos"
 
-            # Limpar TODOS os recursos Docker antigos para garantir rebuild limpo
+            # Limpar containers e imagens antigas (PRESERVAR volumes do PostgreSQL)
             echo "Limpando recursos antigos..."
             docker container prune -f || true
-            docker image prune -f || true
-            docker volume prune -f || true
-            docker system prune -af --volumes || true
+            docker image prune -af || true
 
             # Garantir BUILD_TIMESTAMP como variável de ambiente ANTES do build
             export BUILD_TIMESTAMP=$(date +%s)

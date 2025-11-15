@@ -20,9 +20,9 @@ RUN npm install --legacy-peer-deps
 COPY digiurban/backend ./
 
 # Gerar Prisma Client (sem criar banco - apenas gerar tipos)
-# ⚠️ IMPORTANTE: usar DATABASE_URL temporário para evitar criação de banco
-ARG DATABASE_URL=file:/app/data/dev.db
-ENV DATABASE_URL=${DATABASE_URL}
+# ⚠️ IMPORTANTE: usar DATABASE_URL do PostgreSQL
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
 RUN npx prisma generate
 
 # Build TypeScript
@@ -56,8 +56,8 @@ RUN npm run build
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Instalar Nginx e supervisord
-RUN apk add --no-cache nginx supervisor curl
+# Instalar Nginx, supervisord, PostgreSQL client e outras dependências
+RUN apk add --no-cache nginx supervisor curl postgresql-client
 
 # Criar usuários
 RUN addgroup --system --gid 1001 nodejs && \
