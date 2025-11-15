@@ -241,7 +241,16 @@ router.get(
           registrationSource: true,
           verifiedAt: true,
           verifiedBy: true,
-          createdAt: true
+          createdAt: true,
+          _count: {
+            select: {
+              documents: {
+                where: {
+                  status: 'PENDING'
+                }
+              }
+            }
+          }
         },
         skip,
         take: limitNum,

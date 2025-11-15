@@ -61,6 +61,9 @@ interface Citizen {
   verifiedAt?: string
   verifiedBy?: string
   createdAt: string
+  _count?: {
+    documents: number
+  }
 }
 
 export default function CidadaosPage() {
@@ -449,24 +452,32 @@ export default function CidadaosPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {citizen.verificationStatus === 'VERIFIED' ? (
-                        <Badge className="bg-blue-100 text-blue-800">
-                          <ShieldCheck className="h-3 w-3 mr-1" />
-                          Prata
-                        </Badge>
-                      ) : citizen.verificationStatus === 'PENDING' ? (
-                        <Badge className="bg-yellow-100 text-yellow-800">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Bronze
-                        </Badge>
-                      ) : citizen.verificationStatus === 'REJECTED' ? (
-                        <Badge className="bg-red-100 text-red-800">
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Rejeitado
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">-</Badge>
-                      )}
+                      <div className="flex flex-col gap-1">
+                        {citizen.verificationStatus === 'VERIFIED' ? (
+                          <Badge className="bg-blue-100 text-blue-800">
+                            <ShieldCheck className="h-3 w-3 mr-1" />
+                            Prata
+                          </Badge>
+                        ) : citizen.verificationStatus === 'PENDING' ? (
+                          <Badge className="bg-yellow-100 text-yellow-800">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Bronze
+                          </Badge>
+                        ) : citizen.verificationStatus === 'REJECTED' ? (
+                          <Badge className="bg-red-100 text-red-800">
+                            <XCircle className="h-3 w-3 mr-1" />
+                            Rejeitado
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">-</Badge>
+                        )}
+                        {citizen._count?.documents && citizen._count.documents > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            <FileText className="h-3 w-3 mr-1" />
+                            {citizen._count.documents} doc{citizen._count.documents > 1 ? 's' : ''} pendente{citizen._count.documents > 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center text-xs text-muted-foreground">
