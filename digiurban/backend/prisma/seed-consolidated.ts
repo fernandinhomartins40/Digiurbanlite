@@ -288,7 +288,7 @@ async function main() {
     console.log('   📦 Importando serviços...');
 
     try {
-      const { seedServices } = await import('./seeds/services-simplified-complete');
+      const { seedServices } = await import('./seeds/services/index');
       const servicesCreated = await seedServices();
       console.log(`   ✅ ${servicesCreated} serviços criados/atualizados\n`);
     } catch (error: any) {
