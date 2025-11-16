@@ -597,31 +597,33 @@ export const educationServices: ServiceDefinition[] = [
       color: '#3b82f6',
       formSchema: {
         type: 'object',
+          citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
-          nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
 
           // ========== BLOCO 2: CONTATO ==========
-          email: { type: 'string', format: 'email', title: 'E-mail' },
-          telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
 
           // ========== BLOCO 3: ENDEREÇO ==========
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
 
           // ========== BLOCO 4: COMPLEMENTARES ==========
-          nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
 
           // ========== BLOCO 5: DADOS DO ATENDIMENTO ==========
           tipoAtendimento: {
@@ -664,49 +666,32 @@ export const educationServices: ServiceDefinition[] = [
       formSchema: {
         type: 'object',
         citizenFields: [
-          'nome',
-          'cpf',
-          'rg',
-          'dataNascimento',
-          'email',
-          'telefone',
-          'telefoneSecundario',
-          'cep',
-          'logradouro',
-          'numero',
-          'complemento',
-          'bairro',
-          'pontoReferencia',
-          'nomeMae',
-          'estadoCivil',
-          'profissao',
-          'rendaFamiliar'
-        ],
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL (CIDADÃO) ==========
-          nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Responsável' },
 
           // ========== BLOCO 2: CONTATO DO RESPONSÁVEL ==========
-          email: { type: 'string', format: 'email', title: 'E-mail do Responsável' },
-          telefone: { type: 'string', title: 'Telefone Principal do Responsável', pattern: '^\\d{10,11}$' },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
 
           // ========== BLOCO 3: ENDEREÇO DO RESPONSÁVEL ==========
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
 
           // ========== BLOCO 4: COMPLEMENTARES DO RESPONSÁVEL ==========
-          nomeMae: { type: 'string', title: 'Nome da Mãe do Responsável', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
 
           // ========== BLOCO 5: DADOS DO ALUNO ==========
           nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
@@ -779,49 +764,32 @@ export const educationServices: ServiceDefinition[] = [
       formSchema: {
         type: 'object',
         citizenFields: [
-          'nome',
-          'cpf',
-          'rg',
-          'dataNascimento',
-          'email',
-          'telefone',
-          'telefoneSecundario',
-          'cep',
-          'logradouro',
-          'numero',
-          'complemento',
-          'bairro',
-          'pontoReferencia',
-          'nomeMae',
-          'estadoCivil',
-          'profissao',
-          'rendaFamiliar'
-        ],
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
-          nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Responsável' },
 
           // ========== BLOCO 2: CONTATO DO RESPONSÁVEL ==========
-          email: { type: 'string', format: 'email', title: 'E-mail do Responsável' },
-          telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
 
           // ========== BLOCO 3: ENDEREÇO DO RESPONSÁVEL ==========
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
 
           // ========== BLOCO 4: COMPLEMENTARES DO RESPONSÁVEL ==========
-          nomeMae: { type: 'string', title: 'Nome da Mãe do Responsável', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
 
           // ========== BLOCO 5: DADOS DO ALUNO ==========
           nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
@@ -877,49 +845,32 @@ export const educationServices: ServiceDefinition[] = [
       formSchema: {
         type: 'object',
         citizenFields: [
-          'nome',
-          'cpf',
-          'rg',
-          'dataNascimento',
-          'email',
-          'telefone',
-          'telefoneSecundario',
-          'cep',
-          'logradouro',
-          'numero',
-          'complemento',
-          'bairro',
-          'pontoReferencia',
-          'nomeMae',
-          'estadoCivil',
-          'profissao',
-          'rendaFamiliar'
-        ],
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
-          nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG do Responsável', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Responsável' },
 
           // ========== BLOCO 2: CONTATO DO RESPONSÁVEL ==========
-          email: { type: 'string', format: 'email', title: 'E-mail do Responsável' },
-          telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
 
           // ========== BLOCO 3: ENDEREÇO DO RESPONSÁVEL ==========
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
 
           // ========== BLOCO 4: COMPLEMENTARES DO RESPONSÁVEL ==========
-          nomeMae: { type: 'string', title: 'Nome da Mãe do Responsável', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
 
           // ========== BLOCO 5: DADOS DO ALUNO ==========
           nomeAluno: { type: 'string', title: 'Nome Completo do Aluno', minLength: 3, maxLength: 200 },
@@ -989,49 +940,32 @@ export const educationServices: ServiceDefinition[] = [
       formSchema: {
         type: 'object',
         citizenFields: [
-          'nome',
-          'cpf',
-          'rg',
-          'dataNascimento',
-          'email',
-          'telefone',
-          'telefoneSecundario',
-          'cep',
-          'logradouro',
-          'numero',
-          'complemento',
-          'bairro',
-          'pontoReferencia',
-          'nomeMae',
-          'estadoCivil',
-          'profissao',
-          'rendaFamiliar'
-        ],
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE (RESPONSÁVEL) ==========
-          nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Solicitante' },
 
           // ========== BLOCO 2: CONTATO DO SOLICITANTE ==========
-          email: { type: 'string', format: 'email', title: 'E-mail do Solicitante' },
-          telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
 
           // ========== BLOCO 3: ENDEREÇO DO SOLICITANTE ==========
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
 
           // ========== BLOCO 4: COMPLEMENTARES DO SOLICITANTE ==========
-          nomeMae: { type: 'string', title: 'Nome da Mãe do Solicitante', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
 
           // ========== BLOCO 5: VÍNCULO COM O ALUNO ==========
           vinculoComAluno: { type: 'string', title: 'Vínculo com o Aluno', enum: ['Próprio Aluno (maior de idade)', 'Pai', 'Mãe', 'Avô/Avó', 'Tio/Tia', 'Irmão(ã) maior', 'Tutor Legal', 'Procurador', 'Outro'] },
@@ -1089,49 +1023,32 @@ export const educationServices: ServiceDefinition[] = [
       formSchema: {
         type: 'object',
         citizenFields: [
-          'nome',
-          'cpf',
-          'rg',
-          'dataNascimento',
-          'email',
-          'telefone',
-          'telefoneSecundario',
-          'cep',
-          'logradouro',
-          'numero',
-          'complemento',
-          'bairro',
-          'pontoReferencia',
-          'nomeMae',
-          'estadoCivil',
-          'profissao',
-          'rendaFamiliar'
-        ],
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE ==========
-          nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Solicitante' },
 
           // ========== BLOCO 2: CONTATO DO SOLICITANTE ==========
-          email: { type: 'string', format: 'email', title: 'E-mail do Solicitante' },
-          telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
 
           // ========== BLOCO 3: ENDEREÇO DO SOLICITANTE ==========
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
 
           // ========== BLOCO 4: COMPLEMENTARES DO SOLICITANTE ==========
-          nomeMae: { type: 'string', title: 'Nome da Mãe do Solicitante', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
 
           // ========== BLOCO 5: VÍNCULO COM O ALUNO ==========
           vinculoComAluno: { type: 'string', title: 'Vínculo com o Aluno', enum: ['Próprio Aluno (maior)', 'Pai', 'Mãe', 'Avô/Avó', 'Tio/Tia', 'Irmão(ã)', 'Tutor Legal', 'Outro'] },
@@ -1174,49 +1091,32 @@ export const educationServices: ServiceDefinition[] = [
       formSchema: {
         type: 'object',
         citizenFields: [
-          'nome',
-          'cpf',
-          'rg',
-          'dataNascimento',
-          'email',
-          'telefone',
-          'telefoneSecundario',
-          'cep',
-          'logradouro',
-          'numero',
-          'complemento',
-          'bairro',
-          'pontoReferencia',
-          'nomeMae',
-          'estadoCivil',
-          'profissao',
-          'rendaFamiliar'
-        ],
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE ==========
-          nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG do Solicitante', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento do Solicitante' },
 
           // ========== BLOCO 2: CONTATO DO SOLICITANTE ==========
-          email: { type: 'string', format: 'email', title: 'E-mail do Solicitante' },
-          telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
 
           // ========== BLOCO 3: ENDEREÇO DO SOLICITANTE ==========
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
 
           // ========== BLOCO 4: COMPLEMENTARES DO SOLICITANTE ==========
-          nomeMae: { type: 'string', title: 'Nome da Mãe do Solicitante', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
 
           // ========== BLOCO 5: VÍNCULO COM O ALUNO ==========
           vinculoComAluno: { type: 'string', title: 'Vínculo com o Aluno', enum: ['Próprio Aluno (maior)', 'Pai', 'Mãe', 'Avô/Avó', 'Tio/Tia', 'Irmão(ã)', 'Tutor Legal', 'Outro'] },
@@ -1260,42 +1160,25 @@ export const educationServices: ServiceDefinition[] = [
       formSchema: {
         type: 'object',
         citizenFields: [
-          'nome',
-          'cpf',
-          'rg',
-          'dataNascimento',
-          'email',
-          'telefone',
-          'telefoneSecundario',
-          'cep',
-          'logradouro',
-          'numero',
-          'complemento',
-          'bairro',
-          'pontoReferencia',
-          'nomeMae',
-          'estadoCivil',
-          'profissao',
-          'rendaFamiliar'
-        ],
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
-          nome: { type: 'string', title: 'Nome Completo do Gestor', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
-          email: { type: 'string', format: 'email', title: 'E-mail' },
-          telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
           nomeEscola: { type: 'string', title: 'Nome da Unidade Escolar', minLength: 3, maxLength: 200 },
           codigoINEP: { type: 'string', title: 'Código INEP da Escola', maxLength: 50 },
           enderecoEscola: { type: 'string', title: 'Endereço da Escola', maxLength: 300 },

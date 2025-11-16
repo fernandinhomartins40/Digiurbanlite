@@ -323,23 +323,23 @@ export const healthServices: ServiceDefinition[] = [
     color: '#ef4444',
     formSchema: {
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+          'citizen_name',
+          'citizen_cpf',
+          'citizen_rg',
+          'citizen_birthdate',
+          'citizen_email',
+          'citizen_phone',
+          'citizen_phonesecondary',
+          'citizen_zipcode',
+          'citizen_address',
+          'citizen_addressnumber',
+          'citizen_addresscomplement',
+          'citizen_neighborhood',
+          'citizen_mothername',
+          'citizen_maritalstatus',
+          'citizen_occupation',
+          'citizen_familyincome'
+        ],
       fields: [
         {
           id: 'pontoReferencia',
@@ -421,7 +421,6 @@ export const healthServices: ServiceDefinition[] = [
           items: {
             type: 'object',
             properties: {
-              nome: { type: 'string', title: 'Nome do Medicamento', minLength: 3, maxLength: 200 },
               dosagem: { type: 'string', title: 'Dosagem', maxLength: 50 },
               quantidade: { type: 'integer', title: 'Quantidade', minimum: 1 },
               posologia: { type: 'string', title: 'Posologia', maxLength: 200 },
@@ -973,23 +972,23 @@ export const healthServices: ServiceDefinition[] = [
     color: '#06b6d4',
     formSchema: {
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
+          'citizen_name',
+          'citizen_cpf',
+          'citizen_rg',
+          'citizen_birthdate',
+          'citizen_email',
+          'citizen_phone',
+          'citizen_phonesecondary',
+          'citizen_zipcode',
+          'citizen_address',
+          'citizen_addressnumber',
+          'citizen_addresscomplement',
+          'citizen_neighborhood',
+          'citizen_mothername',
+          'citizen_maritalstatus',
+          'citizen_occupation',
+          'citizen_familyincome'
+        ],
       fields: [
         {
           id: 'pontoReferencia',
@@ -1360,13 +1359,24 @@ export const healthServices: ServiceDefinition[] = [
       color: '#10b981',
       formSchema: {
         type: 'object',
+          citizenFields: [
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_city',
+            'citizen_state',
+            'citizen_mothername'
+          ],
         properties: {
           nomeCompleto: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           nomeSocial: { type: 'string', title: 'Nome Social', maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
-          nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
           nomePai: { type: 'string', title: 'Nome do Pai', maxLength: 200 },
           sexo: {
             type: 'string',
@@ -1374,15 +1384,6 @@ export const healthServices: ServiceDefinition[] = [
             enum: ['MASCULINO', 'FEMININO'],
             enumNames: ['Masculino', 'Feminino']
           },
-          telefone: { type: 'string', title: 'Telefone', pattern: '^\\d{10,11}$' },
-          email: { type: 'string', format: 'email', title: 'E-mail' },
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
-          logradouro: { type: 'string', title: 'Logradouro', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
-          cidade: { type: 'string', title: 'Cidade', minLength: 2, maxLength: 100 },
-          uf: { type: 'string', title: 'UF', pattern: '^[A-Z]{2}$', minLength: 2, maxLength: 2 }
         },
         required: ['nomeCompleto', 'cpf', 'dataNascimento', 'nomeMae', 'sexo', 'telefone', 'cep', 'logradouro', 'bairro', 'cidade', 'uf']
       }
@@ -1403,49 +1404,32 @@ export const healthServices: ServiceDefinition[] = [
       formSchema: {
         type: 'object',
         citizenFields: [
-          'nome',
-          'cpf',
-          'rg',
-          'dataNascimento',
-          'email',
-          'telefone',
-          'telefoneSecundario',
-          'cep',
-          'logradouro',
-          'numero',
-          'complemento',
-          'bairro',
-          'pontoReferencia',
-          'nomeMae',
-          'estadoCivil',
-          'profissao',
-          'rendaFamiliar'
-        ],
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO ==========
-          nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
-          rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
-          dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
 
           // ========== BLOCO 2: CONTATO ==========
-          email: { type: 'string', format: 'email', title: 'E-mail' },
-          telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$' },
-          telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$' },
 
           // ========== BLOCO 3: ENDEREÇO ==========
-          cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$' },
-          logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
-          numero: { type: 'string', title: 'Número', maxLength: 10 },
-          complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
-          bairro: { type: 'string', title: 'Bairro', minLength: 2, maxLength: 100 },
           pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
 
           // ========== BLOCO 4: COMPLEMENTARES ==========
-          nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
-          estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
-          profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
-          rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
 
           // ========== BLOCO 5: DADOS DE SAÚDE ==========
           cartaoSUS: { type: 'string', title: 'Cartão SUS (CNS)', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
@@ -1508,12 +1492,14 @@ export const healthServices: ServiceDefinition[] = [
       color: '#64748b',
       formSchema: {
         type: 'object',
+          citizenFields: [
+            'citizen_cpf',
+            'citizen_email',
+            'citizen_phone'
+          ],
         properties: {
           nomeACS: { type: 'string', title: 'Nome do ACS', minLength: 3, maxLength: 200 },
-          cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
           cns: { type: 'string', title: 'CNS', pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
-          telefone: { type: 'string', title: 'Telefone', pattern: '^\\d{10,11}$' },
-          email: { type: 'string', format: 'email', title: 'E-mail' },
           unidadeSaude: { type: 'string', title: 'Unidade de Saúde', minLength: 3, maxLength: 200 },
           microarea: { type: 'string', title: 'Microárea', maxLength: 50 },
           dataAdmissao: { type: 'string', format: 'date', title: 'Data de Admissão' },
