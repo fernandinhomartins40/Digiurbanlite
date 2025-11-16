@@ -663,6 +663,25 @@ export const educationServices: ServiceDefinition[] = [
       color: '#2563eb',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL (CIDADÃO) ==========
           nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
@@ -759,6 +778,25 @@ export const educationServices: ServiceDefinition[] = [
       color: '#f59e0b',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
           nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
@@ -838,6 +876,25 @@ export const educationServices: ServiceDefinition[] = [
       color: '#ef4444',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO RESPONSÁVEL ==========
           nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
@@ -931,6 +988,25 @@ export const educationServices: ServiceDefinition[] = [
       color: '#06b6d4',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE (RESPONSÁVEL) ==========
           nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
@@ -1012,6 +1088,25 @@ export const educationServices: ServiceDefinition[] = [
       color: '#10b981',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE ==========
           nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
@@ -1078,6 +1173,25 @@ export const educationServices: ServiceDefinition[] = [
       color: '#3b82f6',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE ==========
           nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
@@ -1145,6 +1259,25 @@ export const educationServices: ServiceDefinition[] = [
       color: '#64748b',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Gestor', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },

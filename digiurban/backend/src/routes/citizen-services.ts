@@ -456,7 +456,9 @@ router.get('/:id/similar', async (req, res) => {
 
 // Middleware de autenticação para rota de solicitação (outras rotas não precisam de auth)
 // POST /api/services/:id/request - Solicitar um serviço
-// IMPORTANTE: Aplicar middlewares na ordem: upload -> auth
+// IMPORTANTE: Aplicar middlewares na ordem: upload -> auth -> validação
+import { validateServiceFormData } from '../lib/json-schema-validator';
+
 router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, res) => {
   try {
     const { id: serviceId } = req.params;
@@ -505,6 +507,21 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
         console.warn('Erro ao parsear customFormData:', e);
         customFormData = {};
       }
+    }
+
+    // Validar customFormData contra o JSON Schema do serviço (se houver)
+    if (customFormData && Object.keys(customFormData).length > 0) {
+      const validation = validateServiceFormData(service, customFormData);
+
+      if (!validation.valid) {
+        console.warn('❌ Validação de formulário falhou:', validation.errors);
+        return res.status(400).json({
+          error: 'Dados do formulário inválidos',
+          details: validation.errors
+        });
+      }
+
+      console.log('✅ Validação de formulário OK');
     }
 
     const {

@@ -518,6 +518,25 @@ export const socialServices: ServiceDefinition[] = [
       color: '#16a34a',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO ==========
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
@@ -595,6 +614,25 @@ export const socialServices: ServiceDefinition[] = [
       color: '#dc2626',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -641,6 +679,25 @@ export const socialServices: ServiceDefinition[] = [
       color: '#a855f7',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -678,6 +735,25 @@ export const socialServices: ServiceDefinition[] = [
       color: '#f97316',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -715,6 +791,25 @@ export const socialServices: ServiceDefinition[] = [
       color: '#8b5cf6',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -751,6 +846,25 @@ export const socialServices: ServiceDefinition[] = [
       color: '#06b6d4',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -785,6 +899,25 @@ export const socialServices: ServiceDefinition[] = [
       color: '#64748b',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Coordenador', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },

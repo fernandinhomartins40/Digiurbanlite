@@ -78,7 +78,9 @@
       "Bash(git show:*)",
       "Bash(tee:*)",
       "Bash(NODE_ENV=production node:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" add-citizen-fields.py)",
+      "Bash(del \"C:\\Projetos Cursor\\Digiurbanlite\\add-citizen-fields.py\")"
     ],
     "deny": [],
     "ask": []

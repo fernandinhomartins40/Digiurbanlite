@@ -20,74 +20,57 @@ export const publicSafetyServices: ServiceDefinition[] = [
     icon: 'Siren',
     color: '#dc2626',
     formSchema: {
+      type: 'object',
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthDate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phoneSecondary',
-        'citizen_zipCode',
-        'citizen_address',
-        'citizen_addressNumber',
-        'citizen_addressComplement',
-        'citizen_neighborhood',
-        'citizen_motherName',
-        'citizen_maritalStatus',
-        'citizen_occupation',
-        'citizen_familyIncome'
+        'nome',
+        'cpf',
+        'rg',
+        'dataNascimento',
+        'email',
+        'telefone',
+        'telefoneSecundario',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'nomeMae',
+        'estadoCivil',
+        'profissao',
+        'rendaFamiliar'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'tipoOcorrencia',
-          label: 'Tipo de Ocorrência',
-          type: 'select',
-          options: ['Furto', 'Roubo', 'Ameaça', 'Perturbação', 'Acidente', 'Outro'],
-          required: true
-        },
-        {
-          id: 'dataOcorrencia',
-          label: 'Data da Ocorrência',
-          type: 'date',
-          required: true
-        },
-        {
-          id: 'horaOcorrencia',
-          label: 'Hora da Ocorrência',
-          type: 'text',
-          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
-          required: true
-        },
-        {
-          id: 'localOcorrencia',
-          label: 'Local da Ocorrência',
-          type: 'text',
-          maxLength: 300,
-          required: true
-        },
-        {
-          id: 'descricao',
-          label: 'Descrição dos Fatos',
-          type: 'textarea',
-          minLength: 50,
-          maxLength: 2000,
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
+      properties: {
+        // Campos do Cidadão
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // Campos Customizados do Serviço
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        tipoOcorrencia: { type: 'string', title: 'Tipo de Ocorrência', enum: ['Furto', 'Roubo', 'Ameaça', 'Perturbação', 'Acidente', 'Outro'] },
+        dataOcorrencia: { type: 'string', format: 'date', title: 'Data da Ocorrência' },
+        horaOcorrencia: { type: 'string', title: 'Hora da Ocorrência', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
+        localOcorrencia: { type: 'string', title: 'Local da Ocorrência', maxLength: 300 },
+        descricao: { type: 'string', title: 'Descrição dos Fatos', minLength: 50, maxLength: 2000, widget: 'textarea' },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+      },
+      required: [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
+        'tipoOcorrencia', 'dataOcorrencia', 'horaOcorrencia', 'localOcorrencia', 'descricao'
       ]
     }
   },
@@ -105,54 +88,54 @@ export const publicSafetyServices: ServiceDefinition[] = [
     icon: 'Shield',
     color: '#b91c1c',
     formSchema: {
+      type: 'object',
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthDate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phoneSecondary',
-        'citizen_zipCode',
-        'citizen_address',
-        'citizen_addressNumber',
-        'citizen_addressComplement',
-        'citizen_neighborhood',
-        'citizen_motherName',
-        'citizen_maritalStatus',
-        'citizen_occupation',
-        'citizen_familyIncome'
+        'nome',
+        'cpf',
+        'rg',
+        'dataNascimento',
+        'email',
+        'telefone',
+        'telefoneSecundario',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'nomeMae',
+        'estadoCivil',
+        'profissao',
+        'rendaFamiliar'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'motivo',
-          label: 'Motivo do Patrulhamento',
-          type: 'textarea',
-          minLength: 20,
-          maxLength: 1000,
-          required: true
-        },
-        {
-          id: 'periodo',
-          label: 'Período Solicitado',
-          type: 'text',
-          maxLength: 200,
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
+      properties: {
+        // Campos do Cidadão
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // Campos Customizados do Serviço
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        motivo: { type: 'string', title: 'Motivo do Patrulhamento', minLength: 20, maxLength: 1000, widget: 'textarea' },
+        periodo: { type: 'string', title: 'Período Solicitado', maxLength: 200 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+      },
+      required: [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
+        'motivo', 'periodo'
       ]
     }
   },
@@ -211,59 +194,55 @@ export const publicSafetyServices: ServiceDefinition[] = [
     icon: 'Users',
     color: '#991b1b',
     formSchema: {
+      type: 'object',
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthDate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phoneSecondary',
-        'citizen_zipCode',
-        'citizen_address',
-        'citizen_addressNumber',
-        'citizen_addressComplement',
-        'citizen_neighborhood',
-        'citizen_motherName',
-        'citizen_maritalStatus',
-        'citizen_occupation',
-        'citizen_familyIncome'
+        'nome',
+        'cpf',
+        'rg',
+        'dataNascimento',
+        'email',
+        'telefone',
+        'telefoneSecundario',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'nomeMae',
+        'estadoCivil',
+        'profissao',
+        'rendaFamiliar'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'nomeEvento',
-          label: 'Nome do Evento',
-          type: 'text',
-          maxLength: 200,
-          required: true
-        },
-        {
-          id: 'publicoEstimado',
-          label: 'Público Estimado',
-          type: 'number',
-          minimum: 1,
-          required: true
-        },
-        {
-          id: 'dataEvento',
-          label: 'Data do Evento',
-          type: 'date',
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
+      properties: {
+        // Campos do Cidadão
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // Campos Customizados do Serviço
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        nomeEvento: { type: 'string', title: 'Nome do Evento', maxLength: 200 },
+        publicoEstimado: { type: 'number', title: 'Público Estimado', minimum: 1 },
+        dataEvento: { type: 'string', format: 'date', title: 'Data do Evento' },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+      },
+      required: [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
+        'nomeEvento', 'publicoEstimado', 'dataEvento'
       ]
     }
   },
@@ -281,6 +260,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#dc2626',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -364,6 +362,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#991b1b',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -406,6 +423,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#7f1d1d',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -447,6 +483,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#ef4444',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo (opcional para denúncia anônima)', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF (opcional)', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -488,6 +543,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#f87171',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Informante', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -529,6 +603,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#fca5a5',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -570,6 +663,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#dc2626',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Agente', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF do Agente', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -613,6 +725,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#64748b',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -652,6 +783,25 @@ export const publicSafetyServices: ServiceDefinition[] = [
       color: '#64748b',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Operador', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },

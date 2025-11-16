@@ -325,6 +325,25 @@ export const publicWorksServices: ServiceDefinition[] = [
       color: '#ea580c',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -367,6 +386,25 @@ export const publicWorksServices: ServiceDefinition[] = [
       color: '#f97316',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Solicitante', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF do Solicitante', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -408,6 +446,25 @@ export const publicWorksServices: ServiceDefinition[] = [
       color: '#fb923c',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Responsável', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF do Responsável', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -452,6 +509,25 @@ export const publicWorksServices: ServiceDefinition[] = [
       color: '#fdba74',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Fiscal', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF do Fiscal', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },

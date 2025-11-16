@@ -20,67 +20,56 @@ export const agricultureServices: ServiceDefinition[] = [
     icon: 'Tractor',
     color: '#16a34a',
     formSchema: {
+      type: 'object',
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthDate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phoneSecondary',
-        'citizen_zipCode',
-        'citizen_address',
-        'citizen_addressNumber',
-        'citizen_addressComplement',
-        'citizen_neighborhood',
-        'citizen_motherName',
-        'citizen_maritalStatus',
-        'citizen_occupation',
-        'citizen_familyIncome'
+        'nome',
+        'cpf',
+        'rg',
+        'dataNascimento',
+        'email',
+        'telefone',
+        'telefoneSecundario',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'nomeMae',
+        'estadoCivil',
+        'profissao',
+        'rendaFamiliar'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'areaPropriedade',
-          label: 'Área da Propriedade (hectares)',
-          type: 'number',
-          minimum: 0,
-          required: true
-        },
-        {
-          id: 'tipoProducao',
-          label: 'Tipo de Produção',
-          type: 'text',
-          maxLength: 300,
-          required: true
-        },
-        {
-          id: 'possuiDAP',
-          label: 'Possui DAP?',
-          type: 'checkbox',
-          defaultValue: false,
-          required: false
-        },
-        {
-          id: 'numeroDAP',
-          label: 'Número da DAP',
-          type: 'text',
-          maxLength: 50,
-          required: false
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
+      properties: {
+        // Campos do Cidadão
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // Campos Customizados do Serviço
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        areaPropriedade: { type: 'number', title: 'Área da Propriedade (hectares)', minimum: 0 },
+        tipoProducao: { type: 'string', title: 'Tipo de Produção', maxLength: 300 },
+        possuiDAP: { type: 'boolean', title: 'Possui DAP?', default: false },
+        numeroDAP: { type: 'string', title: 'Número da DAP', maxLength: 50 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+      },
+      required: [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
+        'areaPropriedade', 'tipoProducao'
       ]
     }
   },
@@ -98,59 +87,55 @@ export const agricultureServices: ServiceDefinition[] = [
     icon: 'Wrench',
     color: '#15803d',
     formSchema: {
+      type: 'object',
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthDate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phoneSecondary',
-        'citizen_zipCode',
-        'citizen_address',
-        'citizen_addressNumber',
-        'citizen_addressComplement',
-        'citizen_neighborhood',
-        'citizen_motherName',
-        'citizen_maritalStatus',
-        'citizen_occupation',
-        'citizen_familyIncome'
+        'nome',
+        'cpf',
+        'rg',
+        'dataNascimento',
+        'email',
+        'telefone',
+        'telefoneSecundario',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'nomeMae',
+        'estadoCivil',
+        'profissao',
+        'rendaFamiliar'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'tipoMaquina',
-          label: 'Tipo de Máquina',
-          type: 'select',
-          options: ['Trator', 'Arado', 'Grade', 'Plantadeira', 'Colheitadeira', 'Outro'],
-          required: true
-        },
-        {
-          id: 'dataPreferencial',
-          label: 'Data Preferencial',
-          type: 'date',
-          required: true
-        },
-        {
-          id: 'areaTrabalho',
-          label: 'Área a Ser Trabalhada (hectares)',
-          type: 'number',
-          minimum: 0,
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
+      properties: {
+        // Campos do Cidadão
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // Campos Customizados do Serviço
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        tipoMaquina: { type: 'string', title: 'Tipo de Máquina', enum: ['Trator', 'Arado', 'Grade', 'Plantadeira', 'Colheitadeira', 'Outro'] },
+        dataPreferencial: { type: 'string', format: 'date', title: 'Data Preferencial' },
+        areaTrabalho: { type: 'number', title: 'Área a Ser Trabalhada (hectares)', minimum: 0 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+      },
+      required: [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
+        'tipoMaquina', 'dataPreferencial', 'areaTrabalho'
       ]
     }
   },
@@ -168,53 +153,54 @@ export const agricultureServices: ServiceDefinition[] = [
     icon: 'Store',
     color: '#166534',
     formSchema: {
+      type: 'object',
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthDate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phoneSecondary',
-        'citizen_zipCode',
-        'citizen_address',
-        'citizen_addressNumber',
-        'citizen_addressComplement',
-        'citizen_neighborhood',
-        'citizen_motherName',
-        'citizen_maritalStatus',
-        'citizen_occupation',
-        'citizen_familyIncome'
+        'nome',
+        'cpf',
+        'rg',
+        'dataNascimento',
+        'email',
+        'telefone',
+        'telefoneSecundario',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'nomeMae',
+        'estadoCivil',
+        'profissao',
+        'rendaFamiliar'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'produtosVender',
-          label: 'Produtos a Vender',
-          type: 'textarea',
-          minLength: 10,
-          maxLength: 500,
-          required: true
-        },
-        {
-          id: 'dataFeira',
-          label: 'Data da Feira',
-          type: 'date',
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
+      properties: {
+        // Campos do Cidadão
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // Campos Customizados do Serviço
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        produtosVender: { type: 'string', title: 'Produtos a Vender', minLength: 10, maxLength: 500, widget: 'textarea' },
+        dataFeira: { type: 'string', format: 'date', title: 'Data da Feira' },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+      },
+      required: [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
+        'produtosVender', 'dataFeira'
       ]
     }
   },
@@ -232,60 +218,55 @@ export const agricultureServices: ServiceDefinition[] = [
     icon: 'Sprout',
     color: '#15803d',
     formSchema: {
+      type: 'object',
       citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthDate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phoneSecondary',
-        'citizen_zipCode',
-        'citizen_address',
-        'citizen_addressNumber',
-        'citizen_addressComplement',
-        'citizen_neighborhood',
-        'citizen_motherName',
-        'citizen_maritalStatus',
-        'citizen_occupation',
-        'citizen_familyIncome'
+        'nome',
+        'cpf',
+        'rg',
+        'dataNascimento',
+        'email',
+        'telefone',
+        'telefoneSecundario',
+        'cep',
+        'logradouro',
+        'numero',
+        'complemento',
+        'bairro',
+        'nomeMae',
+        'estadoCivil',
+        'profissao',
+        'rendaFamiliar'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'tipoSemente',
-          label: 'Tipo de Semente',
-          type: 'select',
-          options: ['Milho', 'Feijão', 'Soja', 'Hortaliças', 'Outro'],
-          required: true
-        },
-        {
-          id: 'quantidade',
-          label: 'Quantidade (kg)',
-          type: 'number',
-          minimum: 1,
-          required: true
-        },
-        {
-          id: 'areaPlantio',
-          label: 'Área de Plantio (hectares)',
-          type: 'number',
-          minimum: 0,
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
+      properties: {
+        // Campos do Cidadão
+        nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+        cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+        rg: { type: 'string', title: 'RG', minLength: 5, maxLength: 20 },
+        dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+        email: { type: 'string', format: 'email', title: 'E-mail' },
+        telefone: { type: 'string', title: 'Telefone Principal', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        telefoneSecundario: { type: 'string', title: 'Telefone Secundário (opcional)', pattern: '^\\d{10,11}$', minLength: 10, maxLength: 11 },
+        cep: { type: 'string', title: 'CEP', pattern: '^\\d{8}$', minLength: 8, maxLength: 8 },
+        logradouro: { type: 'string', title: 'Rua/Avenida', minLength: 3, maxLength: 200 },
+        numero: { type: 'string', title: 'Número', maxLength: 10 },
+        complemento: { type: 'string', title: 'Complemento (opcional)', maxLength: 100 },
+        bairro: { type: 'string', title: 'Bairro/Comunidade', minLength: 2, maxLength: 100 },
+        nomeMae: { type: 'string', title: 'Nome da Mãe', minLength: 3, maxLength: 200 },
+        estadoCivil: { type: 'string', title: 'Estado Civil', enum: ['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável'] },
+        profissao: { type: 'string', title: 'Profissão/Ocupação', maxLength: 100 },
+        rendaFamiliar: { type: 'string', title: 'Faixa de Renda Familiar', enum: ['Até 1 salário mínimo', '1 a 2 salários mínimos', '2 a 3 salários mínimos', '3 a 5 salários mínimos', 'Acima de 5 salários mínimos'] },
+
+        // Campos Customizados do Serviço
+        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+        tipoSemente: { type: 'string', title: 'Tipo de Semente', enum: ['Milho', 'Feijão', 'Soja', 'Hortaliças', 'Outro'] },
+        quantidade: { type: 'number', title: 'Quantidade (kg)', minimum: 1 },
+        areaPlantio: { type: 'number', title: 'Área de Plantio (hectares)', minimum: 0 },
+        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+      },
+      required: [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
+        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
+        'tipoSemente', 'quantidade', 'areaPlantio'
       ]
     }
   },
@@ -331,6 +312,25 @@ export const agricultureServices: ServiceDefinition[] = [
       color: '#10b981',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO SOLICITANTE ==========
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
@@ -430,6 +430,25 @@ export const agricultureServices: ServiceDefinition[] = [
       color: '#10b981',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO PARTICIPANTE ==========
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
@@ -508,6 +527,25 @@ export const agricultureServices: ServiceDefinition[] = [
       color: '#16a34a',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO PRODUTOR ==========
           nome: { type: 'string', title: 'Nome Completo do Produtor', minLength: 3, maxLength: 200 },
@@ -592,6 +630,25 @@ export const agricultureServices: ServiceDefinition[] = [
       color: '#059669',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO DO PROPRIETÁRIO ==========
           nome: { type: 'string', title: 'Nome Completo do Proprietário', minLength: 3, maxLength: 200 },

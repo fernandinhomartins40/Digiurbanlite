@@ -330,6 +330,25 @@ export const housingServices: ServiceDefinition[] = [
       color: '#0891b2',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -378,6 +397,25 @@ export const housingServices: ServiceDefinition[] = [
       color: '#155e75',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -425,6 +463,25 @@ export const housingServices: ServiceDefinition[] = [
       color: '#06b6d4',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo do Proprietário', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF do Proprietário', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
@@ -473,6 +530,25 @@ export const housingServices: ServiceDefinition[] = [
       color: '#0891b2',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
           cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },

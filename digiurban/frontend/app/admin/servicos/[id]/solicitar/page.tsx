@@ -17,6 +17,7 @@ import { MaskedInput, getMaskPlaceholder } from '@/components/ui/masked-input';
 import { normalizeRequiredDocuments } from '@/lib/normalize-documents'
 import { DocumentUpload } from '@/components/common/DocumentUpload'
 import { normalizeDocumentConfig } from '@/lib/document-utils';
+import { ServiceFormRenderer } from '@/components/forms/ServiceFormRenderer';
 
 interface Service {
   id: string;
@@ -726,98 +727,13 @@ export default function AdminSolicitarServicoPage() {
 
               {/* Campos do Formulário Customizado */}
               {activeFormFields && activeFormFields.length > 0 && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="font-medium text-gray-900">
-                    {selectedProgram ? 'Informações Adicionais' : 'Informações Específicas'}
-                  </h3>
-                  {activeFormFields.map((field: any) => {
-                    const isPrefilled = isFieldPrefilled(field.id);
-
-                    return (
-                      <div key={field.id} className="space-y-2">
-                        <Label htmlFor={field.id} className="flex items-center gap-2">
-                          {field.label}
-                          {field.required && <span className="text-red-500">*</span>}
-                          {isPrefilled && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full">
-                              <CheckCircle className="h-3 w-3" />
-                              Auto-preenchido
-                            </span>
-                          )}
-                        </Label>
-
-                        {field.type === 'text' ? (
-                          <input
-                            id={field.id}
-                            type="text"
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : 'border-gray-300'
-                            }`}
-                            placeholder={field.placeholder}
-                          />
-                        ) : null}
-
-                        {field.type === 'number' && (
-                          <input
-                            id={field.id}
-                            type="number"
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, parseInt(e.target.value) || 0)}
-                            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : 'border-gray-300'
-                            }`}
-                            placeholder={field.placeholder}
-                          />
-                        )}
-
-                        {field.type === 'select' && field.options && (
-                          <select
-                              id={field.id}
-                              required={field.required}
-                              value={customFormData[field.id] || ''}
-                              onChange={(e) => updateField(field.id, e.target.value)}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                isPrefilled
-                                  ? 'border-green-300 bg-green-50/30'
-                                  : 'border-gray-300'
-                              }`}
-                            >
-                              <option value="">Selecione...</option>
-                              {field.options.map((option: string) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
-                        )}
-
-                        {field.type === 'textarea' && (
-                          <Textarea
-                            id={field.id}
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            rows={3}
-                            className={`resize-none ${
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : ''
-                            }`}
-                            placeholder={field.placeholder}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <ServiceFormRenderer
+                  fields={activeFormFields}
+                  formData={customFormData}
+                  onChange={updateField}
+                  isFieldPrefilled={isFieldPrefilled}
+                  title={selectedProgram ? 'Informações Adicionais' : 'Informações Específicas'}
+                />
               )}
 
               {/* Botões de Ação */}

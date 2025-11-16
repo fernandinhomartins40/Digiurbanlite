@@ -18,6 +18,7 @@ import { ModernMaskedInput as MaskedInput, getMaskPlaceholder } from '@/componen
 import { normalizeRequiredDocuments } from '@/lib/normalize-documents'
 import { DocumentUpload } from '@/components/common/DocumentUpload'
 import { normalizeDocumentConfig } from '@/lib/document-utils';
+import { ServiceFormRenderer } from '@/components/forms/ServiceFormRenderer';
 
 interface Service {
   id: string;
@@ -696,128 +697,13 @@ export default function SolicitarServicoPage() {
 
               {/* Campos do Formulário Customizado (programa ou serviço) */}
               {activeFormFields && activeFormFields.length > 0 && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="font-medium text-gray-900">
-                    {selectedProgram ? 'Informações Adicionais' : 'Informações Específicas'}
-                  </h3>
-                  {activeFormFields.map((field: any) => {
-                    const isPrefilled = isFieldPrefilled(field.id);
-
-                    return (
-                      <div key={field.id} className="space-y-2">
-                        <Label htmlFor={field.id} className="flex items-center gap-2">
-                          {field.label}
-                          {field.required && <span className="text-red-500">*</span>}
-                          {isPrefilled && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full">
-                              <CheckCircle className="h-3 w-3" />
-                              Auto-preenchido
-                            </span>
-                          )}
-                        </Label>
-
-                        {field.type === 'text' && (
-                          <Input
-                            id={field.id}
-                            type="text"
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : ''
-                            }
-                            placeholder={field.placeholder}
-                          />
-                        )}
-
-                        {field.type === 'date' && (
-                          <Input
-                            id={field.id}
-                            type="date"
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : ''
-                            }
-                          />
-                        )}
-
-                        {field.type === 'number' && (
-                          <Input
-                            id={field.id}
-                            type="number"
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : ''
-                            }
-                            placeholder={field.placeholder}
-                          />
-                        )}
-
-                        {field.type === 'checkbox' && (
-                          <div className="flex items-center gap-2">
-                            <input
-                              id={field.id}
-                              type="checkbox"
-                              checked={customFormData[field.id] === true || customFormData[field.id] === 'true'}
-                              onChange={(e) => updateField(field.id, e.target.checked)}
-                              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Label htmlFor={field.id} className="font-normal cursor-pointer">
-                              {field.placeholder || field.label}
-                            </Label>
-                          </div>
-                        )}
-
-                        {field.type === 'select' && (
-                          <select
-                              id={field.id}
-                              required={field.required}
-                              value={customFormData[field.id] || ''}
-                              onChange={(e) => updateField(field.id, e.target.value)}
-                              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                isPrefilled
-                                  ? 'border-green-300 bg-green-50/30'
-                                  : 'border-gray-300'
-                              }`}
-                            >
-                              <option value="">Selecione...</option>
-                              {field.options && field.options.map((option: string) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ))}
-                            </select>
-                        )}
-
-                        {field.type === 'textarea' && (
-                          <Textarea
-                            id={field.id}
-                            required={field.required}
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            rows={3}
-                            className={`resize-none ${
-                              isPrefilled
-                                ? 'border-green-300 bg-green-50/30'
-                                : ''
-                            }`}
-                            placeholder={field.placeholder}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <ServiceFormRenderer
+                  fields={activeFormFields}
+                  formData={customFormData}
+                  onChange={updateField}
+                  isFieldPrefilled={isFieldPrefilled}
+                  title={selectedProgram ? 'Informações Adicionais' : 'Informações Específicas'}
+                />
               )}
 
               {/* Botões de Ação */}

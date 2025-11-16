@@ -1402,6 +1402,25 @@ export const healthServices: ServiceDefinition[] = [
       color: '#8b5cf6',
       formSchema: {
         type: 'object',
+        citizenFields: [
+          'nome',
+          'cpf',
+          'rg',
+          'dataNascimento',
+          'email',
+          'telefone',
+          'telefoneSecundario',
+          'cep',
+          'logradouro',
+          'numero',
+          'complemento',
+          'bairro',
+          'pontoReferencia',
+          'nomeMae',
+          'estadoCivil',
+          'profissao',
+          'rendaFamiliar'
+        ],
         properties: {
           // ========== BLOCO 1: IDENTIFICAÇÃO ==========
           nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
