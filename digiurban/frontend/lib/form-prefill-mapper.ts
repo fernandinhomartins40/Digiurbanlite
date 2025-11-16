@@ -625,6 +625,8 @@ export function prefillFormData(
     // Normalizar o ID do campo para lowercase e remover acentos
     const normalizedId = normalizeFieldId(field.id);
 
+    console.log(`🔍 [DEBUG PREFILL] Campo: "${field.id}" → normalizedId: "${normalizedId}"`);
+
     // ESTRATÉGIA DE 3 NÍVEIS (APENAS PARA CAMPOS CITIZEN_*):
     // 1. Tentar mapeamento direto
     const mapper = FIELD_MAPPINGS[normalizedId];
@@ -633,31 +635,24 @@ export function prefillFormData(
       // Aplicar o mapeamento direto
       const value = mapper(citizenData);
 
+      console.log(`🔍 [DEBUG MAPPER] "${field.id}" → mapper found, value:`, value);
+
       // Apenas preencher se houver valor
       if (value !== undefined && value !== null && value !== '') {
         formData[field.id] = value;
         prefilledCount++;
 
-        // Log apenas para telefone e data
-        if (field.id === 'citizen_phone' || field.id === 'citizen_birthDate') {
-          console.log(`✅ [CITIZEN FIELD] "${field.id}" → "${value}"`);
-        }
+        console.log(`✅ [CITIZEN FIELD FILLED] "${field.id}" → "${value}"`);
       } else {
         formData[field.id] = getDefaultValueForType(field.type);
 
-        // Log de erro apenas para telefone e data vazios
-        if (field.id === 'citizen_phone' || field.id === 'citizen_birthDate') {
-          console.log(`❌ [CITIZEN FIELD VAZIO] "${field.id}" - valor retornado: ${value}`);
-        }
+        console.log(`❌ [CITIZEN FIELD EMPTY] "${field.id}" - valor retornado: ${value}`);
       }
     } else {
       // 2. Campo citizen_* sem mapeamento encontrado - inicializar vazio
       formData[field.id] = getDefaultValueForType(field.type);
 
-      // Log apenas se for telefone ou data
-      if (field.id === 'citizen_phone' || field.id === 'citizen_birthDate') {
-        console.log(`⚠️ [CITIZEN FIELD SEM MAPEAMENTO] "${field.id}" (${normalizedId})`);
-      }
+      console.log(`⚠️ [NO MAPPER] "${field.id}" (normalized: "${normalizedId}")`);
     }
   });
 

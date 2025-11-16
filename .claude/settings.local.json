@@ -80,7 +80,9 @@
       "Bash(NODE_ENV=production node:*)",
       "Bash(ssh:*)",
       "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" add-citizen-fields.py)",
-      "Bash(del \"C:\\Projetos Cursor\\Digiurbanlite\\add-citizen-fields.py\")"
+      "Bash(del \"C:\\Projetos Cursor\\Digiurbanlite\\add-citizen-fields.py\")",
+      "Bash(set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=não temos dados em produção pode resetar)",
+      "Bash(cmd /c \"set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=não temos dados em produção pode resetar && npx prisma migrate reset --force --skip-seed\")"
     ],
     "deny": [],
     "ask": []

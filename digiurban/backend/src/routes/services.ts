@@ -7,6 +7,7 @@ import {
   SuccessResponse,
   ErrorResponse
         } from '../types';
+import { generateDefaultWorkflow } from '../services/workflow-template.service';
 
 // ====================== TIPOS LOCAIS ISOLADOS ======================
 
@@ -228,44 +229,122 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       }
     }
 
-    // Criar serviço simplificado
-    const service = await prisma.serviceSimplified.create({
-      data: {
-        // Básico
-        name,
-        description: description || null,
-        category: category || null,
-        departmentId,
-        serviceType: serviceType || 'SEM_DADOS',
-        requiresDocuments: requiresDocuments || false,
-        requiredDocuments: requiredDocuments || null,
-        estimatedDays: estimatedDays || null,
-        priority: priority || 3,
-        icon: icon || null,
-        color: color || null,
-        isActive: true,
+    // ========== VALIDAÇÕES CRÍTICAS DE UNICIDADE ==========
 
-        // Campos para COM_DADOS
-        moduleType: serviceType === 'COM_DADOS' ? moduleType : null,
-        formSchema: serviceType === 'COM_DADOS' ? formSchema : null
+    // VALIDAÇÃO 1: moduleType único em serviços
+    if (serviceType === 'COM_DADOS' && moduleType) {
+      const existingService = await prisma.serviceSimplified.findFirst({
+        where: {
+          moduleType,
+          isActive: true // Considerar apenas ativos
         },
-      include: {
-        department: {
-          select: {
-            id: true,
-            name: true,
-            code: true
-        }
+        select: { id: true, name: true }
+      });
+
+      if (existingService) {
+        return res.status(400).json({
+          success: false,
+          error: 'Duplicate moduleType',
+          message: `O moduleType "${moduleType}" já está em uso pelo serviço "${existingService.name}". Cada moduleType deve ser único. Escolha outro nome ou reutilize o serviço existente.`,
+          existingService: {
+            id: existingService.id,
+            name: existingService.name
+          }
+        });
       }
+
+      // VALIDAÇÃO 2: moduleType único em workflows
+      const existingWorkflow = await prisma.moduleWorkflow.findUnique({
+        where: { moduleType },
+        select: { id: true, name: true }
+      });
+
+      if (existingWorkflow) {
+        return res.status(409).json({
+          success: false,
+          error: 'Workflow already exists',
+          message: `Já existe um workflow com moduleType "${moduleType}" (${existingWorkflow.name}). Para usar este moduleType, você precisa reutilizar o serviço existente ou escolher outro nome.`,
+          existingWorkflow: {
+            id: existingWorkflow.id,
+            name: existingWorkflow.name
+          }
+        });
+      }
+    }
+
+    // ========== CRIAÇÃO EM TRANSAÇÃO ATÔMICA ==========
+
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Criar serviço
+      const service = await tx.serviceSimplified.create({
+        data: {
+          // Básico
+          name,
+          description: description || null,
+          category: category || null,
+          departmentId,
+          serviceType: serviceType || 'SEM_DADOS',
+          requiresDocuments: requiresDocuments || false,
+          requiredDocuments: requiredDocuments || null,
+          estimatedDays: estimatedDays || null,
+          priority: priority || 3,
+          icon: icon || null,
+          color: color || null,
+          isActive: true,
+
+          // Campos para COM_DADOS
+          moduleType: serviceType === 'COM_DADOS' ? moduleType : null,
+          formSchema: serviceType === 'COM_DADOS' ? formSchema : null
+        },
+        include: {
+          department: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          }
         }
+      });
+
+      // 2. Se COM_DADOS, criar workflow automaticamente
+      let workflow = null;
+      let workflowCreated = false;
+
+      if (serviceType === 'COM_DADOS' && moduleType) {
+        const workflowTemplate = generateDefaultWorkflow({
+          moduleType,
+          serviceName: name,
+          serviceDescription: description,
+          estimatedDays,
+          departmentName: department.name
         });
 
+        // Criar workflow (já validamos que não existe)
+        workflow = await tx.moduleWorkflow.create({
+          data: workflowTemplate
+        });
+
+        workflowCreated = true;
+        console.log(`✅ [AUTO-CREATE] Workflow criado para ${moduleType}`);
+      }
+
+      return { service, workflow, workflowCreated };
+    });
+
+    // ========== RESPOSTA COM INFORMAÇÕES COMPLETAS ==========
+
     return res.status(201).json({
-      message: 'Serviço criado com sucesso',
-      service,
-      serviceType: service.serviceType,
-      hasDataCapture: service.serviceType === 'COM_DADOS',
-      moduleType: service.moduleType
+      success: true,
+      message: result.workflowCreated
+        ? `Serviço e workflow criados com sucesso. O workflow foi gerado automaticamente e pode ser editado em /admin/workflows`
+        : 'Serviço criado com sucesso',
+      service: result.service,
+      workflow: result.workflow,
+      workflowCreated: result.workflowCreated,
+      serviceType: result.service.serviceType,
+      hasDataCapture: result.service.serviceType === 'COM_DADOS',
+      moduleType: result.service.moduleType
         });
   } catch (error) {
     console.error('Create service error:', error);

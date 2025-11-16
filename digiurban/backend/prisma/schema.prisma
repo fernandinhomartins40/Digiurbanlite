@@ -238,7 +238,7 @@ model ServiceSimplified {
   serviceType ServiceType
 
   // Para serviços COM_DADOS
-  moduleType String? // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc
+  moduleType String? @unique // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc - DEVE SER ÚNICO
   formSchema Json? // Schema do formulário
 
   // Configuração de campos do formulário

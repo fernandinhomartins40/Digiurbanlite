@@ -117,21 +117,21 @@ const CITIZEN_FIELD_MAPPING: Record<string, { label: string; type: string; mask?
   citizen_name: { label: 'Nome Completo', type: 'text' },
   citizen_cpf: { label: 'CPF', type: 'text', mask: 'cpf' },
   citizen_rg: { label: 'RG', type: 'text' },
-  citizen_birthDate: { label: 'Data de Nascimento', type: 'date' },
+  citizen_birthdate: { label: 'Data de Nascimento', type: 'date' }, // lowercase para match
   citizen_phone: { label: 'Telefone', type: 'text', mask: 'phone' },
-  citizen_phoneSecondary: { label: 'Telefone Secundário', type: 'text', mask: 'phone' },
+  citizen_phonesecondary: { label: 'Telefone Secundário', type: 'text', mask: 'phone' }, // lowercase
   citizen_email: { label: 'E-mail', type: 'email' },
   citizen_address: { label: 'Endereço', type: 'text' },
-  citizen_addressNumber: { label: 'Número', type: 'text' },
-  citizen_addressComplement: { label: 'Complemento', type: 'text' },
+  citizen_addressnumber: { label: 'Número', type: 'text' }, // lowercase
+  citizen_addresscomplement: { label: 'Complemento', type: 'text' }, // lowercase
   citizen_neighborhood: { label: 'Bairro', type: 'text' },
   citizen_city: { label: 'Cidade', type: 'text' },
   citizen_state: { label: 'Estado (UF)', type: 'text' },
-  citizen_zipCode: { label: 'CEP', type: 'text', mask: 'cep' },
-  citizen_motherName: { label: 'Nome da Mãe', type: 'text' },
-  citizen_maritalStatus: { label: 'Estado Civil', type: 'text' },
+  citizen_zipcode: { label: 'CEP', type: 'text', mask: 'cep' }, // lowercase
+  citizen_mothername: { label: 'Nome da Mãe', type: 'text' }, // lowercase
+  citizen_maritalstatus: { label: 'Estado Civil', type: 'text' }, // lowercase
   citizen_occupation: { label: 'Profissão', type: 'text' },
-  citizen_familyIncome: { label: 'Renda Familiar', type: 'text' },
+  citizen_familyincome: { label: 'Renda Familiar', type: 'text' }, // lowercase
 };
 
 /**
@@ -143,9 +143,13 @@ function convertCitizenFieldsToFormFields(citizenFields: string[]): FormField[] 
   }
 
   return citizenFields.map((fieldId: string) => {
-    const mapping = CITIZEN_FIELD_MAPPING[fieldId] || { label: fieldId, type: 'text' };
+    // Normalizar para lowercase para buscar no mapeamento
+    const normalizedId = fieldId.toLowerCase();
+    const mapping = CITIZEN_FIELD_MAPPING[normalizedId] || { label: fieldId, type: 'text' };
+
+    // Retornar com ID normalizado para garantir match com form-prefill-mapper
     return {
-      id: fieldId,
+      id: normalizedId, // IMPORTANTE: usar lowercase para match
       label: mapping.label,
       type: mapping.type,
       mask: mapping.mask,
