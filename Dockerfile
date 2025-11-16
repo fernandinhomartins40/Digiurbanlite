@@ -28,6 +28,11 @@ RUN npx prisma generate
 # Build TypeScript
 RUN npm run build
 
+# Validar que arquivos críticos foram compilados
+RUN test -f dist/index.js || (echo "❌ ERRO: index.js não foi compilado!" && exit 1)
+RUN test -f dist/routes/citizen-services.js || (echo "❌ ERRO: citizen-services.js não foi compilado!" && exit 1)
+RUN echo "✅ Build do TypeScript concluído com sucesso"
+
 # ========== STAGE 2: Build Frontend ==========
 FROM node:18-alpine AS frontend-builder
 WORKDIR /app/frontend

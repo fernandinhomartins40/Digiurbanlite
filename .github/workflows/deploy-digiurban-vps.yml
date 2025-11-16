@@ -123,6 +123,30 @@ jobs:
             export BUILD_TIMESTAMP=$(date +%s)
             echo "BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"
 
+            # ===== VALIDAÇÃO PRÉ-BUILD: Verificar arquivos críticos =====
+            echo "=== Validando arquivos críticos antes do build ==="
+
+            if [ ! -f "digiurban/backend/src/routes/citizen-services.ts" ]; then
+              echo "❌ ERRO: citizen-services.ts não encontrado!"
+              exit 1
+            fi
+            echo "✓ citizen-services.ts encontrado"
+
+            if [ ! -f "digiurban/backend/src/index.ts" ]; then
+              echo "❌ ERRO: index.ts não encontrado!"
+              exit 1
+            fi
+            echo "✓ index.ts encontrado"
+
+            # Verificar se o index.ts registra a rota citizen-services
+            if ! grep -q "citizen-services" digiurban/backend/src/index.ts; then
+              echo "❌ ERRO: index.ts não registra a rota citizen-services!"
+              exit 1
+            fi
+            echo "✓ Rota citizen-services registrada no index.ts"
+
+            echo "=== Todos os arquivos críticos validados ==="
+
             # Build da imagem sem cache (BUILD_TIMESTAMP vem do export acima)
             echo "Construindo nova imagem..."
             docker-compose -f docker-compose.vps.yml build --no-cache --pull
@@ -155,12 +179,42 @@ jobs:
               exit 1
             fi
 
+            # ===== VALIDAÇÃO PÓS-BUILD: Verificar rota crítica =====
+            echo "=== Validando rotas críticas no container ==="
+
+            # Verificar se o arquivo compilado existe
+            if ! docker exec digiurban-vps test -f /app/backend/dist/routes/citizen-services.js; then
+              echo "❌ ERRO: citizen-services.js não foi compilado no container!"
+              echo "=== Listando arquivos em dist/routes ==="
+              docker exec digiurban-vps ls -la /app/backend/dist/routes/ || true
+              exit 1
+            fi
+            echo "✓ citizen-services.js compilado no container"
+
+            # Verificar se o index.js registra a rota
+            if ! docker exec digiurban-vps grep -q "citizen-services" /app/backend/dist/index.js; then
+              echo "❌ ERRO: Rota citizen-services não registrada no index.js compilado!"
+              exit 1
+            fi
+            echo "✓ Rota citizen-services registrada no index.js compilado"
+
             # Verificar health
             echo "Verificando health check..."
             for i in {1..15}; do
               if curl -f http://localhost:3060/health; then
                 echo "✅ DigiUrban está rodando na porta 3060!"
-                exit 0
+
+                # Validar rota citizen-services está acessível
+                echo "=== Validando rota /api/citizen/services ==="
+                if curl -f http://localhost:3060/api/citizen/services; then
+                  echo "✅ Rota /api/citizen/services está acessível!"
+                  exit 0
+                else
+                  echo "❌ Rota /api/citizen/services retornou erro!"
+                  echo "=== Logs do backend ==="
+                  docker logs digiurban-vps --tail=50
+                  exit 1
+                fi
               fi
               echo "Tentativa $i/15 falhou, aguardando 10s..."
 
