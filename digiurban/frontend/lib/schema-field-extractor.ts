@@ -111,6 +111,51 @@ function convertJsonSchemaFieldToFormField(
 }
 
 /**
+ * Mapeamento de citizenFields para labels e tipos
+ */
+const CITIZEN_FIELD_MAPPING: Record<string, { label: string; type: string; mask?: string }> = {
+  citizen_name: { label: 'Nome Completo', type: 'text' },
+  citizen_cpf: { label: 'CPF', type: 'text', mask: 'cpf' },
+  citizen_rg: { label: 'RG', type: 'text' },
+  citizen_birthDate: { label: 'Data de Nascimento', type: 'date' },
+  citizen_phone: { label: 'Telefone', type: 'text', mask: 'phone' },
+  citizen_phoneSecondary: { label: 'Telefone Secundário', type: 'text', mask: 'phone' },
+  citizen_email: { label: 'E-mail', type: 'email' },
+  citizen_address: { label: 'Endereço', type: 'text' },
+  citizen_addressNumber: { label: 'Número', type: 'text' },
+  citizen_addressComplement: { label: 'Complemento', type: 'text' },
+  citizen_neighborhood: { label: 'Bairro', type: 'text' },
+  citizen_city: { label: 'Cidade', type: 'text' },
+  citizen_state: { label: 'Estado (UF)', type: 'text' },
+  citizen_zipCode: { label: 'CEP', type: 'text', mask: 'cep' },
+  citizen_motherName: { label: 'Nome da Mãe', type: 'text' },
+  citizen_maritalStatus: { label: 'Estado Civil', type: 'text' },
+  citizen_occupation: { label: 'Profissão', type: 'text' },
+  citizen_familyIncome: { label: 'Renda Familiar', type: 'text' },
+};
+
+/**
+ * Converte citizenFields em FormField objects
+ */
+function convertCitizenFieldsToFormFields(citizenFields: string[]): FormField[] {
+  if (!Array.isArray(citizenFields) || citizenFields.length === 0) {
+    return [];
+  }
+
+  return citizenFields.map((fieldId: string) => {
+    const mapping = CITIZEN_FIELD_MAPPING[fieldId] || { label: fieldId, type: 'text' };
+    return {
+      id: fieldId,
+      label: mapping.label,
+      type: mapping.type,
+      mask: mapping.mask,
+      required: true,
+      placeholder: mapping.label
+    };
+  });
+}
+
+/**
  * Extrai campos de um formSchema, suportando ambos os formatos
  *
  * @param formSchema - Schema do formulário (formato legado ou JSON Schema)
@@ -121,10 +166,9 @@ export function extractFieldsFromSchema(formSchema: any): FormField[] {
     return [];
   }
 
-  // Formato Legado: { type: 'form', fields: [...] }
+  // Formato Legado: { type: 'form', fields: [...], citizenFields: [...] }
   if (Array.isArray(formSchema.fields)) {
-    console.log('📋 [SCHEMA] Formato legado detectado:', formSchema.fields.length, 'campos');
-    return formSchema.fields.map((field: any) => ({
+    const customFields = formSchema.fields.map((field: any) => ({
       id: field.id,
       type: field.type,
       label: field.label,
@@ -134,6 +178,21 @@ export function extractFieldsFromSchema(formSchema: any): FormField[] {
       mask: field.mask,
       ...field, // Preservar outras propriedades
     }));
+
+    // Incluir citizenFields se existirem
+    const citizenFields = formSchema.citizenFields
+      ? convertCitizenFieldsToFormFields(formSchema.citizenFields)
+      : [];
+
+    const totalFields = [...citizenFields, ...customFields];
+
+    console.log('📋 [SCHEMA] Formato legado detectado:', {
+      citizenFields: citizenFields.length,
+      customFields: customFields.length,
+      total: totalFields.length
+    });
+
+    return totalFields;
   }
 
   // Formato JSON Schema: { type: 'object', properties: {...}, required: [...] }

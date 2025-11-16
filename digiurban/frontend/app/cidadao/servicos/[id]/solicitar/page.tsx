@@ -69,32 +69,11 @@ export default function SolicitarServicoPage() {
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
   // useMemo para evitar recriar array em cada render
+  // extractFieldsFromSchema já inclui citizenFields automaticamente
   const activeFormFields = useMemo(() => {
     const schema = selectedProgram?.formSchema || service?.formSchema;
     return extractFieldsFromSchema(schema);
   }, [selectedProgram?.formSchema, service?.formSchema]);
-
-  // Extrair campos citizen_* do schema (se houver)
-  const citizenFormFields = useMemo(() => {
-    if (!service?.formSchema) return [];
-
-    // Extrair todos os campos do schema
-    const allFields = extractFieldsFromSchema(service.formSchema);
-
-    // Filtrar apenas campos citizen_*
-    const citizenFields = allFields.filter(field =>
-      field.id.toLowerCase().startsWith('citizen_')
-    );
-
-    console.log('👤 [CITIZEN FIELDS] Extraídos:', citizenFields.length, 'campos');
-
-    return citizenFields;
-  }, [service?.formSchema]);
-
-  // Combinar todos os campos para o hook de pré-preenchimento
-  const allFormFields = useMemo(() => {
-    return [...citizenFormFields, ...activeFormFields];
-  }, [citizenFormFields, activeFormFields]);
 
   // Hook de pré-preenchimento (será inicializado depois que o serviço carregar)
   const {
@@ -105,7 +84,7 @@ export default function SolicitarServicoPage() {
     hasPrefilledData,
     prefilledCount
   } = useFormPrefill({
-    fields: allFormFields,
+    fields: activeFormFields,
     onPrefillComplete: (count) => {
       if (count > 0) {
         console.log(`✓ ${count} campos pré-preenchidos automaticamente`);
