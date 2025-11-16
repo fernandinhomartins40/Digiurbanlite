@@ -108,7 +108,19 @@ console.log('✅ Rotas de autenticação carregadas!');
 const publicRoutes = require('./routes/public').default;
 app.use('/api/public', publicRoutes);
 
-// Rotas de serviços
+// ⚠️ ORDEM CRÍTICA: Rotas mais específicas ANTES de rotas genéricas
+// Rotas de serviços do portal do cidadão (ESPECÍFICAS - /api/citizen/services)
+try {
+  console.log('📦 Carregando rotas do portal do cidadão...');
+  const citizenServicesRoutes = require('./routes/citizen-services').default;
+  app.use('/api/citizen/services', citizenServicesRoutes);
+  console.log('✅ citizen-services carregado');
+} catch (e) {
+  console.error('❌ ERRO CRÍTICO ao carregar citizen-services:', e);
+  throw e; // FALHAR imediatamente se não carregar
+}
+
+// Rotas de serviços genéricas (DEPOIS das específicas)
 const serviceRoutes = require('./routes/services').default;
 app.use('/api/services', serviceRoutes);
 
@@ -194,8 +206,7 @@ try { console.log('   → admin-citizens...'); app.use('/api/admin/citizens', re
 try { console.log('   → admin-citizen-documents...'); app.use('/api/admin/citizen-documents', require('./routes/admin-citizen-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-citizen-documents:', e); }
 try { console.log('   → citizens...'); app.use('/api/citizens', require('./routes/citizens').default); console.log('   ✓'); } catch (e) { console.error('❌ citizens:', e); }
 
-// Portal do cidadão
-try { console.log('   → citizen-services...'); app.use('/api/citizen/services', require('./routes/citizen-services').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-services:', e); }
+// Portal do cidadão (citizen-services já carregado no início - linha 113)
 try { console.log('   → citizen-protocols...'); app.use('/api/citizen/protocols', require('./routes/citizen-protocols').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-protocols:', e); }
 // DIA 3: DISABLED - arquivo não existe
 // try { console.log('   → citizen-programs...'); app.use('/api/citizen', require('./routes/citizen-programs').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-programs:', e); }

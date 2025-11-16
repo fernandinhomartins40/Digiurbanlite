@@ -198,6 +198,22 @@ jobs:
             fi
             echo "✓ Rota citizen-services registrada no index.js compilado"
 
+            # Aguardar backend inicializar e buscar logs de carregamento de rotas
+            echo "=== Aguardando backend carregar rotas (10s) ==="
+            sleep 10
+
+            echo "=== Logs de carregamento de rotas do backend ==="
+            docker logs digiurban-vps 2>&1 | grep -A 2 -B 2 "citizen-services" || echo "⚠️ Nenhum log de citizen-services encontrado"
+
+            echo "=== Verificando se houve erro no carregamento ==="
+            if docker logs digiurban-vps 2>&1 | grep -q "❌ citizen-services"; then
+              echo "❌ ERRO: citizen-services falhou ao carregar!"
+              echo "=== Logs completos ==="
+              docker logs digiurban-vps --tail=100
+              exit 1
+            fi
+            echo "✓ Nenhum erro no carregamento de citizen-services"
+
             # Verificar health
             echo "Verificando health check..."
             for i in {1..15}; do
