@@ -18,6 +18,7 @@ import { normalizeRequiredDocuments } from '@/lib/normalize-documents'
 import { DocumentUpload } from '@/components/common/DocumentUpload'
 import { normalizeDocumentConfig } from '@/lib/document-utils';
 import { ServiceFormRenderer } from '@/components/forms/ServiceFormRenderer';
+import { extractFieldsFromSchema } from '@/lib/schema-field-extractor';
 
 interface Service {
   id: string;
@@ -73,9 +74,9 @@ export default function AdminSolicitarServicoPage() {
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
   const activeFormFields = useMemo(() => {
-    const rawFormFields = selectedProgram?.formSchema || service?.formSchema?.fields || [];
-    return Array.isArray(rawFormFields) ? rawFormFields : [];
-  }, [selectedProgram?.formSchema, service?.formSchema?.fields]);
+    const schema = selectedProgram?.formSchema || service?.formSchema;
+    return extractFieldsFromSchema(schema);
+  }, [selectedProgram?.formSchema, service?.formSchema]);
 
   // Hook de pré-preenchimento
   const {

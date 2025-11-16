@@ -19,6 +19,7 @@ import { normalizeRequiredDocuments } from '@/lib/normalize-documents'
 import { DocumentUpload } from '@/components/common/DocumentUpload'
 import { normalizeDocumentConfig } from '@/lib/document-utils';
 import { ServiceFormRenderer } from '@/components/forms/ServiceFormRenderer';
+import { extractFieldsFromSchema, extractCitizenFields } from '@/lib/schema-field-extractor';
 
 interface Service {
   id: string;
@@ -69,44 +70,26 @@ export default function SolicitarServicoPage() {
   // Determinar quais campos usar: do programa selecionado ou do serviço
   // useMemo para evitar recriar array em cada render
   const activeFormFields = useMemo(() => {
-    const rawFormFields = selectedProgram?.formSchema || service?.formSchema?.fields || [];
-    return Array.isArray(rawFormFields) ? rawFormFields : [];
-  }, [selectedProgram?.formSchema, service?.formSchema?.fields]);
+    const schema = selectedProgram?.formSchema || service?.formSchema;
+    return extractFieldsFromSchema(schema);
+  }, [selectedProgram?.formSchema, service?.formSchema]);
 
-  // Converter citizenFields em FormField objects
+  // Extrair campos citizen_* do schema (se houver)
   const citizenFormFields = useMemo(() => {
-    const citizenFields = service?.formSchema?.citizenFields || [];
-    if (!Array.isArray(citizenFields) || citizenFields.length === 0) return [];
+    if (!service?.formSchema) return [];
 
-    // Mapeamento de citizenFields para labels e tipos
-    const fieldMapping: Record<string, { label: string; type: string; mask?: string }> = {
-      citizen_name: { label: 'Nome Completo', type: 'text' },
-      citizen_cpf: { label: 'CPF', type: 'text', mask: 'cpf' },
-      citizen_rg: { label: 'RG', type: 'text' },
-      citizen_birthDate: { label: 'Data de Nascimento', type: 'date' },
-      citizen_phone: { label: 'Telefone', type: 'text', mask: 'phone' },
-      citizen_email: { label: 'E-mail', type: 'email' },
-      citizen_address: { label: 'Endereço', type: 'text' },
-      citizen_addressNumber: { label: 'Número', type: 'text' },
-      citizen_addressComplement: { label: 'Complemento', type: 'text' },
-      citizen_neighborhood: { label: 'Bairro', type: 'text' },
-      citizen_city: { label: 'Cidade', type: 'text' },
-      citizen_state: { label: 'Estado (UF)', type: 'text' },
-      citizen_zipCode: { label: 'CEP', type: 'text', mask: 'cep' },
-    };
+    // Extrair todos os campos do schema
+    const allFields = extractFieldsFromSchema(service.formSchema);
 
-    return citizenFields.map((fieldId: string) => {
-      const mapping = fieldMapping[fieldId] || { label: fieldId, type: 'text' };
-      return {
-        id: fieldId,
-        label: mapping.label,
-        type: mapping.type,
-        mask: mapping.mask,
-        required: true,
-        placeholder: mapping.label
-      };
-    });
-  }, [service?.formSchema?.citizenFields]);
+    // Filtrar apenas campos citizen_*
+    const citizenFields = allFields.filter(field =>
+      field.id.toLowerCase().startsWith('citizen_')
+    );
+
+    console.log('👤 [CITIZEN FIELDS] Extraídos:', citizenFields.length, 'campos');
+
+    return citizenFields;
+  }, [service?.formSchema]);
 
   // Combinar todos os campos para o hook de pré-preenchimento
   const allFormFields = useMemo(() => {
