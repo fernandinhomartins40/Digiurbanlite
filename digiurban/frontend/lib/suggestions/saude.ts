@@ -10,7 +10,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'especialidade', type: 'select', label: 'Especialidade', required: true },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde Preferida', required: true },
       { name: 'periodo_preferencia', type: 'select', label: 'Período de Preferência', required: false },
@@ -42,7 +41,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 2,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'data_ultima_menstruacao', type: 'date', label: 'Data da Última Menstruação (DUM)', required: true },
       { name: 'primeira_gestacao', type: 'checkbox', label: 'Primeira Gestação', required: false },
       { name: 'unidade_preferencia', type: 'select', label: 'Unidade de Saúde para Pré-Natal', required: true },
@@ -57,7 +55,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_vacina', type: 'select', label: 'Tipo de Vacina', required: true },
       { name: 'posto_vacinacao', type: 'select', label: 'Posto de Vacinação', required: true },
       { name: 'carteira_vacinacao', type: 'text', label: 'Número da Carteira de Vacinação', required: false },
@@ -105,7 +102,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'hipertensao', type: 'checkbox', label: 'Hipertensão', required: false },
       { name: 'diabetes', type: 'checkbox', label: 'Diabetes', required: false },
       { name: 'unidade_acompanhamento', type: 'select', label: 'Unidade para Acompanhamento', required: true },
@@ -120,7 +116,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_atendimento', type: 'select', label: 'Tipo de Atendimento', required: true },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
       { name: 'primeira_consulta', type: 'checkbox', label: 'Primeira Consulta', required: false },
@@ -152,7 +147,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_atendimento', type: 'select', label: 'Tipo de Atendimento', required: true },
       { name: 'caps_referencia', type: 'select', label: 'CAPS de Referência', required: false },
       { name: 'primeira_vez', type: 'checkbox', label: 'Primeira Vez em Atendimento Psicológico', required: false },
@@ -168,7 +162,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'municipio_nascimento', type: 'text', label: 'Município de Nascimento', required: true },
       { name: 'segunda_via', type: 'checkbox', label: 'Segunda Via', required: false },
     ]
@@ -197,8 +190,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
-      { name: 'estado_civil', type: 'select', label: 'Estado Civil', required: true },
       { name: 'num_filhos', type: 'number', label: 'Número de Filhos', required: false },
       { name: 'metodo_interesse', type: 'select', label: 'Método de Interesse', required: false },
       { name: 'unidade_referencia', type: 'select', label: 'Unidade de Referência', required: true },
@@ -244,7 +235,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'primeira_mamografia', type: 'checkbox', label: 'Primeira Mamografia', required: false },
       { name: 'historico_familiar', type: 'checkbox', label: 'Histórico Familiar de Câncer de Mama', required: false },
       { name: 'data_ultima_mamografia', type: 'date', label: 'Data da Última Mamografia', required: false },
@@ -260,7 +250,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'data_ultimo_preventivo', type: 'date', label: 'Data do Último Preventivo', required: false },
       { name: 'primeira_vez', type: 'checkbox', label: 'Primeira Vez', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
@@ -411,7 +400,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'medico_solicitante', type: 'text', label: 'Médico Solicitante', required: true },
       { name: 'sintomas', type: 'textarea', label: 'Sintomas Apresentados', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
@@ -458,7 +446,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_atendimento', type: 'select', label: 'Tipo de Atendimento', required: true },
       { name: 'caps_unidade', type: 'select', label: 'Unidade CAPS', required: true },
       { name: 'emergencia', type: 'checkbox', label: 'Situação de Emergência', required: false },
@@ -473,7 +460,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'anos_fumante', type: 'number', label: 'Há quantos anos fuma?', required: true },
       { name: 'cigarros_dia', type: 'number', label: 'Cigarros por dia', required: true },
       { name: 'tentativas_anteriores', type: 'number', label: 'Tentativas Anteriores de Parar', required: false },
@@ -489,7 +475,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'restricao_medica', type: 'checkbox', label: 'Possui Restrição Médica', required: false },
       { name: 'descricao_restricao', type: 'textarea', label: 'Descrição da Restrição', required: false },
@@ -505,7 +490,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_problema', type: 'select', label: 'Tipo de Problema', required: true },
       { name: 'medico_encaminhamento', type: 'text', label: 'Médico que Encaminhou', required: false },
       { name: 'crianca', type: 'checkbox', label: 'Paciente é Criança', required: false },
@@ -595,7 +579,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'peso', type: 'number', label: 'Peso Atual (kg)', required: true },
       { name: 'altura', type: 'number', label: 'Altura (cm)', required: true },
       { name: 'doenca_associada', type: 'checkbox', label: 'Possui Doença Associada (diabetes, hipertensão)', required: false },
@@ -641,7 +624,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'idade_paciente', type: 'number', label: 'Idade do Paciente', required: true },
       { name: 'medico_encaminhamento', type: 'text', label: 'Médico que Encaminhou', required: true },
       { name: 'grau_fimose', type: 'select', label: 'Grau da Fimose', required: false },
@@ -671,7 +653,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'finalidade', type: 'text', label: 'Finalidade do Atestado', required: true },
       { name: 'orgao_destino', type: 'text', label: 'Órgão de Destino', required: true },
     ]
@@ -685,7 +666,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'idade', type: 'number', label: 'Idade', required: true },
       { name: 'historico_familiar', type: 'checkbox', label: 'Histórico Familiar de Câncer de Próstata', required: false },
       { name: 'primeiro_exame', type: 'checkbox', label: 'Primeiro Exame', required: false },
@@ -716,7 +696,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_caso', type: 'select', label: 'Tipo de Caso', required: true },
       { name: 'contatos_domiciliares', type: 'number', label: 'Número de Contatos Domiciliares', required: false },
       { name: 'unidade_referencia', type: 'select', label: 'Unidade de Referência', required: true },
@@ -731,7 +710,6 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     estimatedDays: 3,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_tuberculose', type: 'select', label: 'Tipo de Tuberculose', required: true },
       { name: 'tratamento_supervisionado', type: 'checkbox', label: 'Necessita Tratamento Supervisionado', required: false },
       { name: 'unidade_referencia', type: 'select', label: 'Unidade de Referência', required: true },

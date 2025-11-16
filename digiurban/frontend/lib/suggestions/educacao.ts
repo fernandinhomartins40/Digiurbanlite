@@ -10,7 +10,6 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'serie_ano', type: 'select', label: 'Série/Ano', required: true },
       { name: 'escola_preferencia', type: 'select', label: 'Escola de Preferência', required: true },
       { name: 'turno', type: 'select', label: 'Turno Desejado', required: true },
@@ -103,7 +102,6 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade_atual', type: 'select', label: 'Escolaridade Atual', required: true },
       { name: 'unidade_eja', type: 'select', label: 'Unidade EJA', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -350,7 +348,6 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escola', type: 'select', label: 'Escola', required: true },
       { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
     ]
@@ -399,7 +396,6 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'creche_preferencia', type: 'select', label: 'Creche de Preferência', required: true },
       { name: 'periodo', type: 'select', label: 'Período (Integral/Parcial)', required: true },
     ]
@@ -413,7 +409,6 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'pre_escola', type: 'select', label: 'Pré-Escola de Preferência', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -501,7 +496,6 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência para as Aulas', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
@@ -515,7 +509,6 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },

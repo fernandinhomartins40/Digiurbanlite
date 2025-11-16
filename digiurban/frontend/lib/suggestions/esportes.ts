@@ -10,7 +10,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria (Sub-10, Sub-12, etc.)', required: true },
       { name: 'experiencia', type: 'select', label: 'Experiência Prévia', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -25,7 +24,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'altura', type: 'number', label: 'Altura (cm)', required: false },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
@@ -40,7 +38,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'altura', type: 'number', label: 'Altura (cm)', required: false },
       { name: 'categoria_idade', type: 'select', label: 'Categoria de Idade', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
@@ -55,7 +52,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel_natacao', type: 'select', label: 'Nível de Natação', required: true },
       { name: 'restricao_saude', type: 'textarea', label: 'Restrições de Saúde', required: false },
       { name: 'turma_preferencia', type: 'select', label: 'Turma de Preferência', required: true },
@@ -70,7 +66,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'objetivo', type: 'select', label: 'Objetivo', required: true },
       { name: 'horario_disponibilidade', type: 'select', label: 'Horário de Disponibilidade', required: true },
@@ -206,7 +201,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'evento', type: 'select', label: 'Evento', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria', required: true },
       { name: 'tamanho_camisa', type: 'select', label: 'Tamanho da Camisa', required: true },
@@ -249,7 +243,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria por Idade', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -263,7 +256,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
     ]
@@ -277,7 +269,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -291,7 +282,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'faixa_atual', type: 'select', label: 'Faixa Atual', required: false },
       { name: 'experiencia_previa', type: 'select', label: 'Experiência Prévia', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
@@ -306,7 +296,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'faixa_graduacao', type: 'select', label: 'Faixa/Graduação', required: false },
       { name: 'turma', type: 'select', label: 'Turma', required: true },
     ]
@@ -320,7 +309,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'prova_interesse', type: 'select', label: 'Prova de Interesse', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -362,7 +350,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -376,7 +363,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'modalidade', type: 'select', label: 'Modalidade', required: true },
       { name: 'possui_patins', type: 'select', label: 'Possui Patins Próprios', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
@@ -391,7 +377,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'possui_equipamento', type: 'select', label: 'Possui Skate e Equipamentos', required: true },
     ]
@@ -447,7 +432,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'objetivo', type: 'select', label: 'Objetivo', required: true },
       { name: 'horario_treino', type: 'select', label: 'Horário de Treino', required: true },
       { name: 'problema_saude', type: 'textarea', label: 'Problemas de Saúde', required: false },
@@ -462,7 +446,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'objetivo_avaliacao', type: 'select', label: 'Objetivo da Avaliação', required: true },
       { name: 'pratica_atividade', type: 'select', label: 'Pratica Atividade Física', required: true },
     ]
@@ -476,7 +459,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'possui_raquete', type: 'select', label: 'Possui Raquete', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
@@ -491,7 +473,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
@@ -505,7 +486,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'corda_graduacao', type: 'text', label: 'Corda/Graduação (se houver)', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -601,7 +581,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
@@ -615,7 +594,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
@@ -629,7 +607,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'genero', type: 'select', label: 'Gênero', required: true },
       { name: 'experiencia', type: 'select', label: 'Experiência', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
@@ -644,7 +621,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'arma_interesse', type: 'select', label: 'Arma de Interesse', required: false },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
     ]
@@ -658,7 +634,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'experiencia', type: 'select', label: 'Experiência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
@@ -672,7 +647,6 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'categoria', type: 'select', label: 'Categoria', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]

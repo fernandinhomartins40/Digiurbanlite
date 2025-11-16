@@ -304,7 +304,6 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'mora_sozinho', type: 'select', label: 'Mora Sozinho?', required: true },
       { name: 'contato_emergencia', type: 'text', label: 'Contato de Emergência', required: true },
       { name: 'telefone_emergencia', type: 'tel', label: 'Telefone de Emergência', required: true },
@@ -542,7 +541,6 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'endereco_residencia', type: 'text', label: 'Endereço de Residência', required: true },
       { name: 'responsavel_legal', type: 'text', label: 'Responsável Legal', required: false },
       { name: 'num_processo', type: 'text', label: 'Número do Processo', required: true },
@@ -598,7 +596,6 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'placa_veiculo', type: 'text', label: 'Placa do Veículo', required: true },
       { name: 'condutor_principal', type: 'text', label: 'Condutor Principal', required: true },
       { name: 'possui_mobilidade_reduzida', type: 'select', label: 'Possui Mobilidade Reduzida?', required: true },
@@ -613,7 +610,6 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'genero', type: 'select', label: 'Gênero', required: true },
       { name: 'turma_preferencial', type: 'select', label: 'Turma Preferencial', required: true },
       { name: 'experiencia_previa', type: 'select', label: 'Possui Experiência Prévia?', required: false },

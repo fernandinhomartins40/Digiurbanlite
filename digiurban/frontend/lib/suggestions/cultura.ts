@@ -10,7 +10,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'instrumento_interesse', type: 'select', label: 'Instrumento de Interesse', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -25,7 +24,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'estilo_danca', type: 'select', label: 'Estilo de Dança', required: true },
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -40,7 +38,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'experiencia_teatro', type: 'select', label: 'Experiência em Teatro', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -55,7 +52,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'modalidade_arte', type: 'select', label: 'Modalidade de Arte', required: true },
       { name: 'nivel_habilidade', type: 'select', label: 'Nível de Habilidade', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -148,7 +144,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 1,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: false },
     ]
   },
@@ -250,7 +245,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'modalidade_interesse', type: 'select', label: 'Modalidade de Interesse', required: true },
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -279,7 +273,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'graduacao_capoeira', type: 'text', label: 'Graduação (se houver)', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
@@ -293,7 +286,6 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'experiencia_grafite', type: 'select', label: 'Experiência com Grafite', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]

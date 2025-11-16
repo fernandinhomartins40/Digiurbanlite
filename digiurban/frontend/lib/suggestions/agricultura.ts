@@ -58,7 +58,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     requiresDocuments: true,
     suggestedFields: [
       { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'cpf_presidente', type: 'cpf', label: 'CPF do Presidente', required: true },
       { name: 'num_cooperados', type: 'number', label: 'Número de Cooperados', required: true },
       { name: 'area_atuacao', type: 'select', label: 'Área de Atuação', required: true },
     ]
@@ -253,7 +252,6 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
       { name: 'produtos_oferecer', type: 'textarea', label: 'Produtos a Oferecer', required: true },
       { name: 'capacidade_fornecimento', type: 'text', label: 'Capacidade de Fornecimento', required: true },
       { name: 'possui_dap', type: 'select', label: 'Possui DAP', required: true },

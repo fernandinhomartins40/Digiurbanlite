@@ -10,7 +10,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar Mensal (R$)', required: true },
     ]
@@ -38,7 +37,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_beneficio', type: 'select', label: 'Tipo de Benefício', required: true },
       { name: 'possui_deficiencia', type: 'checkbox', label: 'Possui Deficiência', required: false },
       { name: 'idoso_65_mais', type: 'checkbox', label: 'Idoso com 65 anos ou mais', required: false },
@@ -54,7 +52,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_deficiencia', type: 'select', label: 'Tipo de Deficiência', required: true },
       { name: 'laudo_medico', type: 'checkbox', label: 'Anexar Laudo Médico', required: true },
       { name: 'necessita_acompanhante', type: 'checkbox', label: 'Necessita Acompanhante', required: false },
@@ -100,7 +97,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'num_membros_familia', type: 'number', label: 'Número de Membros da Família', required: true },
       { name: 'renda_total', type: 'number', label: 'Renda Total Familiar (R$)', required: true },
     ]
@@ -129,7 +125,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'cadastro_unico', type: 'checkbox', label: 'Possui Cadastro Único', required: true },
     ]
   },
@@ -186,7 +181,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
@@ -201,7 +195,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 7,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'atividades_interesse', type: 'textarea', label: 'Atividades de Interesse', required: false },
       { name: 'restricao_saude', type: 'textarea', label: 'Restrições de Saúde', required: false },
     ]
@@ -261,8 +254,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'estado_civil', type: 'select', label: 'Estado Civil', required: true },
-      { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
       { name: 'imovel_proprio', type: 'checkbox', label: 'Possui Imóvel Próprio', required: false },
     ]
@@ -317,7 +308,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 30,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'estado_civil', type: 'select', label: 'Estado Civil', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'motivacao', type: 'textarea', label: 'Motivação para Acolher', required: true },
@@ -332,7 +322,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'turno_escola', type: 'select', label: 'Turno da Escola', required: true },
@@ -376,7 +365,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'documento_solicitado', type: 'select', label: 'Documento a Solicitar', required: true },
       { name: 'primeira_via', type: 'checkbox', label: 'Primeira Via', required: false },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: false },
@@ -405,7 +393,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'turno_disponivel', type: 'select', label: 'Turno Disponível', required: true },
     ]
   },
@@ -418,7 +405,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'atividades_interesse', type: 'textarea', label: 'Atividades de Interesse', required: false },
     ]
@@ -475,7 +461,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 15,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'experiencia_profissional', type: 'textarea', label: 'Experiência Profissional', required: false },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
@@ -490,7 +475,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 20,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'experiencia_anterior', type: 'checkbox', label: 'Possui Experiência Anterior', required: false },
       { name: 'disponibilidade', type: 'select', label: 'Disponibilidade de Horário', required: true },
@@ -547,7 +531,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 5,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'tipo_sanguineo', type: 'select', label: 'Tipo Sanguíneo', required: false },
       { name: 'peso', type: 'number', label: 'Peso (kg)', required: true },
       { name: 'ja_doou_antes', type: 'checkbox', label: 'Já Doou Antes', required: false },
@@ -591,7 +574,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: false,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento em Informática', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
@@ -633,7 +615,6 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     estimatedDays: 10,
     requiresDocuments: true,
     suggestedFields: [
-      { name: 'data_nascimento', type: 'date', label: 'Data de Nascimento', required: true },
       { name: 'data_saida', type: 'date', label: 'Data de Saída do Sistema', required: true },
       { name: 'tem_familia', type: 'checkbox', label: 'Possui Família de Referência', required: false },
       { name: 'necessidades', type: 'textarea', label: 'Necessidades Principais', required: true },
