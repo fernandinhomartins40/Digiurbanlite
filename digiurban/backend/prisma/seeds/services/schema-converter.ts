@@ -101,12 +101,13 @@ export function convertLegacyToUnified(legacySchema: any): UnifiedFormSchema {
   // 1. Processar citizenFields (se existir)
   if (legacySchema.citizenFields && Array.isArray(legacySchema.citizenFields)) {
     for (const oldFieldName of legacySchema.citizenFields) {
+      // ✅ CRÍTICO: Manter o prefixo citizen_ nos citizenFields
+      // O frontend (schema-field-extractor.ts) espera campos com prefixo citizen_
+      // Não usar OLD_TO_NEW_CITIZEN_FIELDS aqui, pois remove o prefixo
+      citizenFields.push(oldFieldName);
+
+      // Buscar mapeamento apenas para criar properties no JSON Schema
       const newFieldName = OLD_TO_NEW_CITIZEN_FIELDS[oldFieldName] || oldFieldName;
-
-      // Adicionar à lista de campos do cidadão
-      citizenFields.push(newFieldName);
-
-      // Buscar definição padrão do campo do cidadão
       if (CITIZEN_FIELD_DEFINITIONS[newFieldName]) {
         properties[newFieldName] = { ...CITIZEN_FIELD_DEFINITIONS[newFieldName] };
         required.push(newFieldName); // Campos do cidadão são sempre obrigatórios
@@ -157,9 +158,11 @@ export function createUnifiedSchema(
 
   // Adicionar campos do cidadão
   for (const fieldName of citizenFieldNames) {
-    if (CITIZEN_FIELD_DEFINITIONS[fieldName]) {
-      properties[fieldName] = { ...CITIZEN_FIELD_DEFINITIONS[fieldName] };
-      required.push(fieldName);
+    // ✅ Converter citizen_* para nome sem prefixo para buscar definição
+    const mappedName = OLD_TO_NEW_CITIZEN_FIELDS[fieldName] || fieldName;
+    if (CITIZEN_FIELD_DEFINITIONS[mappedName]) {
+      properties[mappedName] = { ...CITIZEN_FIELD_DEFINITIONS[mappedName] };
+      required.push(mappedName);
     }
   }
 
