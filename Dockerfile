@@ -69,10 +69,10 @@ WORKDIR /app
 # coreutils: necessário para o comando 'timeout' usado no startup.sh
 RUN apk add --no-cache nginx supervisor curl postgresql-client coreutils
 
-# Criar usuários
+# Criar usuários com shell válido para permitir execução pelo supervisord
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 backend && \
-    adduser --system --uid 1002 frontend
+    adduser --system --uid 1001 --shell /bin/sh backend && \
+    adduser --system --uid 1002 --shell /bin/sh frontend
 
 # ===== Backend =====
 WORKDIR /app/backend

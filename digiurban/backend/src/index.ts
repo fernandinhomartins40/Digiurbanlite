@@ -21,6 +21,9 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy - CRÍTICO para rate limiting funcionar corretamente atrás de Nginx
+app.set('trust proxy', true);
+
 // Middleware
 app.use(helmet());
 
