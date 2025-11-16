@@ -398,7 +398,14 @@ export function DocumentScanner({
    * Manipuladores de crop (recorte) - Mouse
    */
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!showCropTool || !cropCanvasRef.current || !cropArea) return
+    if (!showCropTool || !cropCanvasRef.current || !cropArea) {
+      console.log('[MouseDown] Condições não atendidas:', {
+        showCropTool,
+        cropCanvasRef: !!cropCanvasRef.current,
+        cropArea: !!cropArea
+      })
+      return
+    }
 
     const canvas = cropCanvasRef.current
     const rect = canvas.getBoundingClientRect()
@@ -408,12 +415,19 @@ export function DocumentScanner({
     const x = (e.clientX - rect.left) * scaleX
     const y = (e.clientY - rect.top) * scaleY
 
+    console.log('[MouseDown] Ponto clicado:', { x, y, scaleX, scaleY })
+
     const corner = getCornerAtPoint(x, y)
+
+    console.log('[MouseDown] Canto detectado:', corner)
 
     if (corner) {
       setDraggingCorner(corner)
       setIsDragging(true)
       if (isMobile) vibrate(20)
+      console.log('[MouseDown] Drag iniciado no canto:', corner)
+    } else {
+      console.log('[MouseDown] Nenhum canto encontrado no ponto')
     }
   }, [showCropTool, cropArea, getCornerAtPoint, isMobile, vibrate])
 
@@ -469,7 +483,14 @@ export function DocumentScanner({
    * Manipuladores de crop (recorte) - Touch (móveis/tablets)
    */
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!showCropTool || !cropCanvasRef.current || !cropArea) return
+    if (!showCropTool || !cropCanvasRef.current || !cropArea) {
+      console.log('[TouchStart] Condições não atendidas:', {
+        showCropTool,
+        cropCanvasRef: !!cropCanvasRef.current,
+        cropArea: !!cropArea
+      })
+      return
+    }
     e.preventDefault()
 
     const canvas = cropCanvasRef.current
@@ -481,12 +502,19 @@ export function DocumentScanner({
     const x = (touch.clientX - rect.left) * scaleX
     const y = (touch.clientY - rect.top) * scaleY
 
+    console.log('[TouchStart] Ponto tocado:', { x, y, scaleX, scaleY })
+
     const corner = getCornerAtPoint(x, y)
+
+    console.log('[TouchStart] Canto detectado:', corner)
 
     if (corner) {
       setDraggingCorner(corner)
       setIsDragging(true)
       if (isMobile) vibrate(20)
+      console.log('[TouchStart] Drag iniciado no canto:', corner)
+    } else {
+      console.log('[TouchStart] Nenhum canto encontrado no ponto')
     }
   }, [showCropTool, cropArea, getCornerAtPoint, isMobile, vibrate])
 
@@ -555,7 +583,16 @@ export function DocumentScanner({
    * Desenha imagem no canvas de crop com área selecionada e handles
    */
   useEffect(() => {
-    if (!capturedImage || !showCropTool || !cropCanvasRef.current) return
+    if (!capturedImage || !showCropTool || !cropCanvasRef.current) {
+      console.log('[CropCanvas] Condições não atendidas:', {
+        capturedImage: !!capturedImage,
+        showCropTool,
+        cropCanvasRef: !!cropCanvasRef.current
+      })
+      return
+    }
+
+    console.log('[CropCanvas] Renderizando canvas de crop com area:', cropArea)
 
     const img = new Image()
     img.onload = () => {
@@ -573,6 +610,7 @@ export function DocumentScanner({
 
       // Desenhar área de seleção se existir
       if (cropArea && cropArea.width > 0 && cropArea.height > 0) {
+        console.log('[CropCanvas] Desenhando area de crop:', cropArea)
         // Overlay escuro fora da área selecionada
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
         ctx.fillRect(0, 0, canvas.width, cropArea.y)
@@ -940,7 +978,14 @@ export function DocumentScanner({
                 <div className="relative w-full h-full flex items-center justify-center bg-black">
                   <canvas
                     ref={cropCanvasRef}
-                    className="cursor-crosshair touch-none max-w-full max-h-full"
+                    className="cursor-crosshair touch-none"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      display: 'block'
+                    }}
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}

@@ -159,6 +159,14 @@ jobs:
             echo "Aguardando containers iniciarem..."
             sleep 30
 
+            # ===== DIAGNÓSTICO: Verificar se backend está crashando =====
+            echo "=== Verificando status do backend no supervisord ==="
+            docker exec digiurban-vps supervisorctl status || true
+
+            echo "=== Logs completos do backend (stdout + stderr) ==="
+            docker exec digiurban-vps cat /var/log/backend.stdout.log || echo "Nenhum log stdout"
+            docker exec digiurban-vps cat /var/log/backend.stderr.log || echo "Nenhum log stderr"
+
             # Verificar status
             echo "Verificando status dos containers..."
             docker-compose -f docker-compose.vps.yml ps

@@ -73,7 +73,12 @@
       "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" check-duplicates-in-seeds.py)",
       "Bash(del /f /q .next 2)",
       "Bash(del \"digiurban\\frontend\\nul\")",
-      "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" fix-api-urls.py)"
+      "Bash(\"C:\\Users\\fusea\\AppData\\Local\\Programs\\Python\\Python312\\python.exe\" fix-api-urls.py)",
+      "Bash(gh run list:*)",
+      "Bash(git show:*)",
+      "Bash(tee:*)",
+      "Bash(NODE_ENV=production node:*)",
+      "Bash(ssh:*)"
     ],
     "deny": [],
     "ask": []
