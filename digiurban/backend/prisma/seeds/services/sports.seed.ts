@@ -244,7 +244,7 @@ export const sportsServices: ServiceDefinition[] = [
     description: 'Inscrição de equipes em torneios municipais',
     departmentCode: 'ESPORTES',
     serviceType: 'COM_DADOS',
-    moduleType: 'INSCRICAO_TORNEIO',
+    moduleType: 'INSCRICAO_EQUIPE_TORNEIO',
     requiresDocuments: true,
     requiredDocuments: ['Lista de Atletas', 'Regulamento Assinado'],
     estimatedDays: 7,

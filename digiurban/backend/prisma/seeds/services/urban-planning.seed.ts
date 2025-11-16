@@ -382,7 +382,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
       description: 'Aprovação de projetos de construção e reforma',
       departmentCode: 'PLANEJAMENTO_URBANO',
       serviceType: 'COM_DADOS',
-      moduleType: 'APROVACAO_PROJETO',
+      moduleType: 'APROVACAO_PROJETO_ARQUITETONICO',
       requiresDocuments: true,
       requiredDocuments: ['Projeto Arquitetônico', 'ART', 'Documentação do Imóvel'],
       estimatedDays: 30,

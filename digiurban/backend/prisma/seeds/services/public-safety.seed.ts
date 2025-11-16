@@ -310,7 +310,7 @@ export const publicSafetyServices: ServiceDefinition[] = [
       description: 'Registro de boletim de ocorrência',
       departmentCode: 'SEGURANCA_PUBLICA',
       serviceType: 'COM_DADOS',
-      moduleType: 'REGISTRO_OCORRENCIA',
+      moduleType: 'REGISTRO_BO',
       requiresDocuments: true,
       requiredDocuments: ['RG', 'CPF'],
       estimatedDays: 1,

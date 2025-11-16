@@ -11,7 +11,7 @@ export const publicWorksServices: ServiceDefinition[] = [
     description: 'Aprovação de projetos de construção',
     departmentCode: 'OBRAS_PUBLICAS',
     serviceType: 'COM_DADOS',
-    moduleType: 'APROVACAO_PROJETO',
+    moduleType: 'APROVACAO_PROJETO_CONSTRUCAO',
     requiresDocuments: true,
     requiredDocuments: ['Projeto Arquitetônico', 'ART', 'Matrícula'],
     estimatedDays: 45,
