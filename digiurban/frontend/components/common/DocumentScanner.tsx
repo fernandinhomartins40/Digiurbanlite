@@ -53,9 +53,11 @@ export function DocumentScanner({
   const [cropArea, setCropArea] = useState<CropArea | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
+  const [draggingCorner, setDraggingCorner] = useState<'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' | null>(null)
   const [editMode, setEditMode] = useState<EditMode>(null)
   const [detectedCorners, setDetectedCorners] = useState<DocumentCorners | null>(null)
   const [autoDetecting, setAutoDetecting] = useState(false)
+  const [detectionConfidence, setDetectionConfidence] = useState<number>(0)
 
   // Hooks mobile
   const isMobile = useIsMobile()
@@ -219,15 +221,28 @@ export function DocumentScanner({
    * Detecta automaticamente as bordas do documento
    */
   const autoDetectDocument = useCallback(async () => {
-    if (!canvasRef.current) return
+    if (!canvasRef.current) {
+      console.warn('[AutoDetect] Canvas não disponível')
+      return
+    }
 
+    console.log('[AutoDetect] Iniciando detecção automática...')
     setAutoDetecting(true)
+    setDetectedCorners(null) // Limpar detecção anterior
 
     try {
       const result = await detectDocument(canvasRef.current)
 
+      console.log('[AutoDetect] Resultado da detecção:', result)
+
       if (result.success && result.corners) {
+        console.log('[AutoDetect] Documento detectado com sucesso!', {
+          corners: result.corners,
+          confidence: result.confidence
+        })
+
         setDetectedCorners(result.corners)
+        setDetectionConfidence(result.confidence)
 
         // Converter corners para cropArea
         const minX = Math.min(
@@ -255,18 +270,23 @@ export function DocumentScanner({
           result.corners.bottomRight.y
         )
 
-        setCropArea({
+        const detectedCropArea = {
           x: minX,
           y: minY,
           width: maxX - minX,
           height: maxY - minY
-        })
+        }
 
-        // Mostrar mensagem de sucesso
+        console.log('[AutoDetect] Área de recorte calculada:', detectedCropArea)
+        setCropArea(detectedCropArea)
+
+        // Mostrar mensagem de sucesso com vibração
         if (isMobile) {
           vibrate(100)
         }
       } else {
+        console.warn('[AutoDetect] Detecção falhou, usando imagem completa:', result.error)
+
         // Fallback para imagem completa
         setCropArea({
           x: 0,
@@ -276,7 +296,8 @@ export function DocumentScanner({
         })
       }
     } catch (err) {
-      console.error('Erro na detecção automática:', err)
+      console.error('[AutoDetect] Erro na detecção automática:', err)
+
       // Fallback para imagem completa
       if (canvasRef.current) {
         setCropArea({
@@ -288,6 +309,7 @@ export function DocumentScanner({
       }
     } finally {
       setAutoDetecting(false)
+      console.log('[AutoDetect] Detecção finalizada')
     }
   }, [isMobile, vibrate])
 
@@ -349,10 +371,34 @@ export function DocumentScanner({
   }, [startCamera])
 
   /**
+   * Verifica se o ponto está próximo de um canto (handle)
+   */
+  const getCornerAtPoint = useCallback((x: number, y: number): 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' | null => {
+    if (!cropArea) return null
+
+    const handleRadius = 30 // Área de toque maior para mobile
+    const corners = {
+      topLeft: { x: cropArea.x, y: cropArea.y },
+      topRight: { x: cropArea.x + cropArea.width, y: cropArea.y },
+      bottomRight: { x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height },
+      bottomLeft: { x: cropArea.x, y: cropArea.y + cropArea.height }
+    }
+
+    for (const [name, corner] of Object.entries(corners)) {
+      const distance = Math.sqrt(Math.pow(x - corner.x, 2) + Math.pow(y - corner.y, 2))
+      if (distance <= handleRadius) {
+        return name as 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft'
+      }
+    }
+
+    return null
+  }, [cropArea])
+
+  /**
    * Manipuladores de crop (recorte) - Mouse
    */
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!showCropTool || !cropCanvasRef.current) return
+    if (!showCropTool || !cropCanvasRef.current || !cropArea) return
 
     const canvas = cropCanvasRef.current
     const rect = canvas.getBoundingClientRect()
@@ -362,43 +408,68 @@ export function DocumentScanner({
     const x = (e.clientX - rect.left) * scaleX
     const y = (e.clientY - rect.top) * scaleY
 
-    setIsDragging(true)
-    setDragStart({ x, y })
-    setCropArea({ x, y, width: 0, height: 0 })
-  }, [showCropTool])
+    const corner = getCornerAtPoint(x, y)
+
+    if (corner) {
+      setDraggingCorner(corner)
+      setIsDragging(true)
+      if (isMobile) vibrate(20)
+    }
+  }, [showCropTool, cropArea, getCornerAtPoint, isMobile, vibrate])
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDragging || !dragStart || !cropCanvasRef.current) return
+    if (!isDragging || !draggingCorner || !cropCanvasRef.current || !cropArea) return
 
     const canvas = cropCanvasRef.current
     const rect = canvas.getBoundingClientRect()
     const scaleX = canvas.width / rect.width
     const scaleY = canvas.height / rect.height
 
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
+    const x = Math.max(0, Math.min((e.clientX - rect.left) * scaleX, canvas.width))
+    const y = Math.max(0, Math.min((e.clientY - rect.top) * scaleY, canvas.height))
 
-    const width = x - dragStart.x
-    const height = y - dragStart.y
+    // Atualizar área baseado no canto sendo arrastado
+    const newCropArea = { ...cropArea }
 
-    setCropArea({
-      x: width < 0 ? x : dragStart.x,
-      y: height < 0 ? y : dragStart.y,
-      width: Math.abs(width),
-      height: Math.abs(height)
-    })
-  }, [isDragging, dragStart])
+    switch (draggingCorner) {
+      case 'topLeft':
+        newCropArea.width = cropArea.x + cropArea.width - x
+        newCropArea.height = cropArea.y + cropArea.height - y
+        newCropArea.x = x
+        newCropArea.y = y
+        break
+      case 'topRight':
+        newCropArea.width = x - cropArea.x
+        newCropArea.height = cropArea.y + cropArea.height - y
+        newCropArea.y = y
+        break
+      case 'bottomRight':
+        newCropArea.width = x - cropArea.x
+        newCropArea.height = y - cropArea.y
+        break
+      case 'bottomLeft':
+        newCropArea.width = cropArea.x + cropArea.width - x
+        newCropArea.height = y - cropArea.y
+        newCropArea.x = x
+        break
+    }
+
+    // Validar dimensões mínimas
+    if (newCropArea.width > 50 && newCropArea.height > 50) {
+      setCropArea(newCropArea)
+    }
+  }, [isDragging, draggingCorner, cropArea])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
-    setDragStart(null)
+    setDraggingCorner(null)
   }, [])
 
   /**
    * Manipuladores de crop (recorte) - Touch (móveis/tablets)
    */
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!showCropTool || !cropCanvasRef.current) return
+    if (!showCropTool || !cropCanvasRef.current || !cropArea) return
     e.preventDefault()
 
     const canvas = cropCanvasRef.current
@@ -410,13 +481,17 @@ export function DocumentScanner({
     const x = (touch.clientX - rect.left) * scaleX
     const y = (touch.clientY - rect.top) * scaleY
 
-    setIsDragging(true)
-    setDragStart({ x, y })
-    setCropArea({ x, y, width: 0, height: 0 })
-  }, [showCropTool])
+    const corner = getCornerAtPoint(x, y)
+
+    if (corner) {
+      setDraggingCorner(corner)
+      setIsDragging(true)
+      if (isMobile) vibrate(20)
+    }
+  }, [showCropTool, cropArea, getCornerAtPoint, isMobile, vibrate])
 
   const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDragging || !dragStart || !cropCanvasRef.current) return
+    if (!isDragging || !draggingCorner || !cropCanvasRef.current || !cropArea) return
     e.preventDefault()
 
     const canvas = cropCanvasRef.current
@@ -425,23 +500,44 @@ export function DocumentScanner({
     const scaleY = canvas.height / rect.height
 
     const touch = e.touches[0]
-    const x = (touch.clientX - rect.left) * scaleX
-    const y = (touch.clientY - rect.top) * scaleY
+    const x = Math.max(0, Math.min((touch.clientX - rect.left) * scaleX, canvas.width))
+    const y = Math.max(0, Math.min((touch.clientY - rect.top) * scaleY, canvas.height))
 
-    const width = x - dragStart.x
-    const height = y - dragStart.y
+    // Atualizar área baseado no canto sendo arrastado
+    const newCropArea = { ...cropArea }
 
-    setCropArea({
-      x: width < 0 ? x : dragStart.x,
-      y: height < 0 ? y : dragStart.y,
-      width: Math.abs(width),
-      height: Math.abs(height)
-    })
-  }, [isDragging, dragStart])
+    switch (draggingCorner) {
+      case 'topLeft':
+        newCropArea.width = cropArea.x + cropArea.width - x
+        newCropArea.height = cropArea.y + cropArea.height - y
+        newCropArea.x = x
+        newCropArea.y = y
+        break
+      case 'topRight':
+        newCropArea.width = x - cropArea.x
+        newCropArea.height = cropArea.y + cropArea.height - y
+        newCropArea.y = y
+        break
+      case 'bottomRight':
+        newCropArea.width = x - cropArea.x
+        newCropArea.height = y - cropArea.y
+        break
+      case 'bottomLeft':
+        newCropArea.width = cropArea.x + cropArea.width - x
+        newCropArea.height = y - cropArea.y
+        newCropArea.x = x
+        break
+    }
+
+    // Validar dimensões mínimas
+    if (newCropArea.width > 50 && newCropArea.height > 50) {
+      setCropArea(newCropArea)
+    }
+  }, [isDragging, draggingCorner, cropArea])
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false)
-    setDragStart(null)
+    setDraggingCorner(null)
   }, [])
 
   const resetCrop = useCallback(() => {
@@ -456,7 +552,7 @@ export function DocumentScanner({
   }, [])
 
   /**
-   * Desenha imagem no canvas de crop
+   * Desenha imagem no canvas de crop com área selecionada e handles
    */
   useEffect(() => {
     if (!capturedImage || !showCropTool || !cropCanvasRef.current) return
@@ -472,20 +568,71 @@ export function DocumentScanner({
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
+      // Desenhar imagem
       ctx.drawImage(img, 0, 0)
 
       // Desenhar área de seleção se existir
       if (cropArea && cropArea.width > 0 && cropArea.height > 0) {
-        ctx.strokeStyle = '#f59e0b'
-        ctx.lineWidth = 3
-        ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height)
-
         // Overlay escuro fora da área selecionada
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
         ctx.fillRect(0, 0, canvas.width, cropArea.y)
         ctx.fillRect(0, cropArea.y, cropArea.x, cropArea.height)
         ctx.fillRect(cropArea.x + cropArea.width, cropArea.y, canvas.width - cropArea.x - cropArea.width, cropArea.height)
         ctx.fillRect(0, cropArea.y + cropArea.height, canvas.width, canvas.height - cropArea.y - cropArea.height)
+
+        // Borda da área selecionada
+        ctx.strokeStyle = '#10b981' // Verde
+        ctx.lineWidth = 3
+        ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height)
+
+        // Desenhar cantos (handles) para ajuste
+        const handleSize = 24
+        const handles = [
+          { x: cropArea.x, y: cropArea.y }, // Top-left
+          { x: cropArea.x + cropArea.width, y: cropArea.y }, // Top-right
+          { x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height }, // Bottom-right
+          { x: cropArea.x, y: cropArea.y + cropArea.height }, // Bottom-left
+        ]
+
+        handles.forEach(handle => {
+          // Círculo branco com borda verde
+          ctx.fillStyle = '#ffffff'
+          ctx.beginPath()
+          ctx.arc(handle.x, handle.y, handleSize / 2, 0, Math.PI * 2)
+          ctx.fill()
+
+          ctx.strokeStyle = '#10b981'
+          ctx.lineWidth = 3
+          ctx.beginPath()
+          ctx.arc(handle.x, handle.y, handleSize / 2, 0, Math.PI * 2)
+          ctx.stroke()
+        })
+
+        // Grade (linhas de terço) para ajudar no enquadramento
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
+        ctx.lineWidth = 1
+
+        // Linhas verticais
+        ctx.beginPath()
+        ctx.moveTo(cropArea.x + cropArea.width / 3, cropArea.y)
+        ctx.lineTo(cropArea.x + cropArea.width / 3, cropArea.y + cropArea.height)
+        ctx.stroke()
+
+        ctx.beginPath()
+        ctx.moveTo(cropArea.x + (cropArea.width * 2) / 3, cropArea.y)
+        ctx.lineTo(cropArea.x + (cropArea.width * 2) / 3, cropArea.y + cropArea.height)
+        ctx.stroke()
+
+        // Linhas horizontais
+        ctx.beginPath()
+        ctx.moveTo(cropArea.x, cropArea.y + cropArea.height / 3)
+        ctx.lineTo(cropArea.x + cropArea.width, cropArea.y + cropArea.height / 3)
+        ctx.stroke()
+
+        ctx.beginPath()
+        ctx.moveTo(cropArea.x, cropArea.y + (cropArea.height * 2) / 3)
+        ctx.lineTo(cropArea.x + cropArea.width, cropArea.y + (cropArea.height * 2) / 3)
+        ctx.stroke()
       }
     }
     img.src = capturedImage
@@ -783,7 +930,9 @@ export function DocumentScanner({
                   {detectedCorners && !autoDetecting && (
                     <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-500/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
                       <Check className="h-4 w-4 text-white" />
-                      <p className="text-sm font-medium text-white">Documento detectado!</p>
+                      <p className="text-sm font-medium text-white">
+                        Documento detectado! ({Math.round(detectionConfidence)}% confiança)
+                      </p>
                     </div>
                   )}
                 </div>
@@ -804,8 +953,11 @@ export function DocumentScanner({
 
                   {/* Instrução de Recorte */}
                   <div className="absolute bottom-32 left-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-4">
-                    <p className="text-white text-sm text-center">
-                      Arraste na imagem para selecionar a área desejada
+                    <p className="text-white text-sm text-center font-medium">
+                      Arraste os círculos nos cantos para ajustar a área
+                    </p>
+                    <p className="text-white/70 text-xs text-center mt-1">
+                      Use a grade como guia de enquadramento
                     </p>
                   </div>
                 </div>
