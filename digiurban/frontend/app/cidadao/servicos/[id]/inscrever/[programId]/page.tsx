@@ -67,7 +67,7 @@ export default function InscreverProgramaPage() {
       setError(null);
 
       // Carregar informações do serviço
-      const serviceResponse = await apiClient.get(`/api/citizen/services/${serviceId}`);
+      const serviceResponse = await apiClient.get(`/citizen/services/${serviceId}`);
 
       if (!serviceResponse.ok) {
         throw new Error('Erro ao carregar informações do serviço');
@@ -84,7 +84,7 @@ export default function InscreverProgramaPage() {
       }
 
       // Carregar detalhes do programa
-      const programResponse = await apiClient.get(`/api/citizen/${serviceType}/${programId}`);
+      const programResponse = await apiClient.get(`/citizen/${serviceType}/${programId}`);
 
       if (!programResponse.ok) {
         throw new Error('Erro ao carregar informações do programa');

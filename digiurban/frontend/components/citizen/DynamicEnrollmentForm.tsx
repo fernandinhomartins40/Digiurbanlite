@@ -174,7 +174,10 @@ export function DynamicEnrollmentForm({
       });
 
       // Criar protocolo de inscrição
-      const response = await fetch('/api/citizen/protocols', {
+      const { getFullApiUrl } = await import('@/lib/api-config');
+      const url = getFullApiUrl('/citizen/protocols');
+
+      const response = await fetch(url, {
         method: 'POST',
         body: submitData,
         credentials: 'include'

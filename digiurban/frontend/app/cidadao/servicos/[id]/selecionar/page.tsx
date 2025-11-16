@@ -43,7 +43,7 @@ export default function SelecionarProgramaPage() {
     try {
       setLoading(true);
 
-      const response = await apiClient.get(`/api/citizen/services/${serviceId}`);
+      const response = await apiClient.get(`/citizen/services/${serviceId}`);
 
       if (!response.ok) {
         throw new Error('Erro ao carregar informações do serviço');

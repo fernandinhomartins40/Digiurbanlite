@@ -49,7 +49,7 @@ export function ProgramSelector({ serviceType, onSelectProgram }: ProgramSelecto
       setLoading(true);
       setError(null);
 
-      const response = await apiClient.get(`/api/citizen/${serviceType}`);
+      const response = await apiClient.get(`/citizen/${serviceType}`);
 
       if (!response.ok) {
         throw new Error('Erro ao carregar programas disponíveis');
