@@ -15,6 +15,7 @@ import { Camera, X, RotateCw, Check, AlertCircle, Loader2, ZoomIn, ZoomOut, Crop
 import { compressImage, validateFile, formatFileSize } from '@/lib/document-utils'
 import { useIsMobile, useHaptics } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/utils'
+import { detectDocument, type DocumentCorners } from '@/lib/document-detection'
 
 type ProcessingMode = 'color' | 'grayscale' | 'blackwhite'
 type EditMode = 'filters' | 'crop' | null
@@ -53,6 +54,8 @@ export function DocumentScanner({
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null)
   const [editMode, setEditMode] = useState<EditMode>(null)
+  const [detectedCorners, setDetectedCorners] = useState<DocumentCorners | null>(null)
+  const [autoDetecting, setAutoDetecting] = useState(false)
 
   // Hooks mobile
   const isMobile = useIsMobile()
@@ -213,9 +216,85 @@ export function DocumentScanner({
   }, [])
 
   /**
+   * Detecta automaticamente as bordas do documento
+   */
+  const autoDetectDocument = useCallback(async () => {
+    if (!canvasRef.current) return
+
+    setAutoDetecting(true)
+
+    try {
+      const result = await detectDocument(canvasRef.current)
+
+      if (result.success && result.corners) {
+        setDetectedCorners(result.corners)
+
+        // Converter corners para cropArea
+        const minX = Math.min(
+          result.corners.topLeft.x,
+          result.corners.topRight.x,
+          result.corners.bottomLeft.x,
+          result.corners.bottomRight.x
+        )
+        const maxX = Math.max(
+          result.corners.topLeft.x,
+          result.corners.topRight.x,
+          result.corners.bottomLeft.x,
+          result.corners.bottomRight.x
+        )
+        const minY = Math.min(
+          result.corners.topLeft.y,
+          result.corners.topRight.y,
+          result.corners.bottomLeft.y,
+          result.corners.bottomRight.y
+        )
+        const maxY = Math.max(
+          result.corners.topLeft.y,
+          result.corners.topRight.y,
+          result.corners.bottomLeft.y,
+          result.corners.bottomRight.y
+        )
+
+        setCropArea({
+          x: minX,
+          y: minY,
+          width: maxX - minX,
+          height: maxY - minY
+        })
+
+        // Mostrar mensagem de sucesso
+        if (isMobile) {
+          vibrate(100)
+        }
+      } else {
+        // Fallback para imagem completa
+        setCropArea({
+          x: 0,
+          y: 0,
+          width: canvasRef.current.width,
+          height: canvasRef.current.height
+        })
+      }
+    } catch (err) {
+      console.error('Erro na detecção automática:', err)
+      // Fallback para imagem completa
+      if (canvasRef.current) {
+        setCropArea({
+          x: 0,
+          y: 0,
+          width: canvasRef.current.width,
+          height: canvasRef.current.height
+        })
+      }
+    } finally {
+      setAutoDetecting(false)
+    }
+  }, [isMobile, vibrate])
+
+  /**
    * Captura foto
    */
-  const capturePhoto = useCallback(() => {
+  const capturePhoto = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return
 
     // Feedback háptico em mobile
@@ -250,16 +329,13 @@ export function DocumentScanner({
     const imageData = canvas.toDataURL('image/jpeg', 0.95)
     setCapturedImage(imageData)
 
-    // Inicializar área de corte com imagem completa
-    setCropArea({
-      x: 0,
-      y: 0,
-      width: canvas.width,
-      height: canvas.height
-    })
-
     stopCamera()
-  }, [stopCamera, zoom, isMobile, vibrate])
+
+    // Executar detecção automática após um pequeno delay
+    setTimeout(() => {
+      autoDetectDocument()
+    }, 100)
+  }, [stopCamera, zoom, isMobile, vibrate, autoDetectDocument])
 
   /**
    * Retira nova foto
@@ -692,6 +768,24 @@ export function DocumentScanner({
                     ref={previewCanvasRef}
                     className="max-w-full max-h-full object-contain"
                   />
+
+                  {/* Indicador de Detecção Automática */}
+                  {autoDetecting && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4 flex flex-col items-center gap-2">
+                        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                        <p className="text-sm font-medium text-gray-900">Detectando documento...</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Indicador de Sucesso da Detecção */}
+                  {detectedCorners && !autoDetecting && (
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-500/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
+                      <Check className="h-4 w-4 text-white" />
+                      <p className="text-sm font-medium text-white">Documento detectado!</p>
+                    </div>
+                  )}
                 </div>
               ) : editMode === 'crop' ? (
                 <div className="relative w-full h-full flex items-center justify-center bg-black">
@@ -786,6 +880,26 @@ export function DocumentScanner({
                   )}
                 </Button>
               </div>
+
+              {/* Botão Redetectar */}
+              <Button
+                variant="outline"
+                onClick={autoDetectDocument}
+                disabled={processing || autoDetecting}
+                className="w-full h-12 text-base bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
+                {autoDetecting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Detectando...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-5 w-5 mr-2" />
+                    Redetectar Documento
+                  </>
+                )}
+              </Button>
 
               {/* Botão Editar */}
               <Button
