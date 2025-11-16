@@ -568,103 +568,14 @@ export default function SolicitarServicoPage() {
                 </div>
               )}
 
-              {/* Campos do Cidadão (selecionados na criação do serviço) */}
-              {citizenFormFields && citizenFormFields.length > 0 && (
-                <div className="space-y-4 pt-4 border-t">
-                  <h3 className="font-medium text-gray-900">Dados Pessoais</h3>
-                  <p className="text-sm text-gray-600">
-                    Estes dados serão preenchidos automaticamente com suas informações cadastradas
-                  </p>
-                  {citizenFormFields.map((field: any) => {
-                    const isPrefilled = isFieldPrefilled(field.id);
-
-                    return (
-                      <div key={field.id} className="space-y-2">
-                        <Label htmlFor={field.id} className="flex items-center gap-2">
-                          {field.label}
-                          {field.required && <span className="text-red-500">*</span>}
-                          {isPrefilled && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full">
-                              <CheckCircle className="h-3 w-3" />
-                              Auto-preenchido
-                            </span>
-                          )}
-                        </Label>
-
-                        {field.mask === 'cpf' ? (
-                          <MaskedInput
-                            id={field.id}
-                            type="cpf"
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
-                            required={field.required}
-                          />
-                        ) : field.mask === 'phone' ? (
-                          <>
-                            {field.id === 'citizen_phone' && console.log('🔍 [RENDER PHONE] customFormData:', customFormData[field.id], 'isPrefilled:', isPrefilled)}
-                            <MaskedInput
-                              id={field.id}
-                              type="phone"
-                              value={customFormData[field.id] || ''}
-                              onChange={(e) => updateField(field.id, e.target.value)}
-                              className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
-                              required={field.required}
-                            />
-                          </>
-                        ) : field.mask === 'cep' ? (
-                          <MaskedInput
-                            id={field.id}
-                            type="cep"
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
-                            required={field.required}
-                          />
-                        ) : field.type === 'date' ? (
-                          <Input
-                            id={field.id}
-                            type="date"
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
-                            required={field.required}
-                          />
-                        ) : field.type === 'email' ? (
-                          <Input
-                            id={field.id}
-                            type="email"
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
-                            placeholder={field.placeholder}
-                            required={field.required}
-                          />
-                        ) : (
-                          <Input
-                            id={field.id}
-                            type="text"
-                            value={customFormData[field.id] || ''}
-                            onChange={(e) => updateField(field.id, e.target.value)}
-                            className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
-                            placeholder={field.placeholder}
-                            required={field.required}
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Campos do Formulário Customizado (programa ou serviço) */}
+              {/* Todos os Campos do Formulário (citizen_* + customizados) */}
               {activeFormFields && activeFormFields.length > 0 && (
                 <ServiceFormRenderer
                   fields={activeFormFields}
                   formData={customFormData}
                   onChange={updateField}
                   isFieldPrefilled={isFieldPrefilled}
-                  title={selectedProgram ? 'Informações Adicionais' : 'Informações Específicas'}
+                  title={selectedProgram ? 'Informações Adicionais' : 'Dados do Serviço'}
                 />
               )}
 

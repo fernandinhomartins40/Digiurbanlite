@@ -2,11 +2,11 @@
 
 ## 📋 Sumário Executivo
 
-**Objetivo:** Automatizar a criação de workflows quando um novo serviço é criado, garantindo que todos os serviços COM_DADOS tenham workflows associados automaticamente.
+**Objetivo:** Automatizar a criação de workflows quando um novo serviço é criado, garantindo que todos os serviços COM_DADOS tenham workflows associados automaticamente E que **moduleType seja ÚNICO** em todo o sistema.
 
-**Status Atual:** Workflows são criados manualmente ou via seed. Serviços podem existir sem workflows, causando inconsistência.
+**Status Atual:** Workflows são criados manualmente ou via seed. Serviços podem existir sem workflows, causando inconsistência. **NÃO HÁ VALIDAÇÃO** de moduleType duplicado.
 
-**Proposta:** Criar workflow automaticamente ao criar serviço COM_DADOS, com validações e fallbacks seguros.
+**Proposta:** Criar workflow automaticamente ao criar serviço COM_DADOS + **validação rigorosa de unicidade de moduleType**.
 
 ---
 
@@ -20,9 +20,11 @@
 3. Se serviceType = COM_DADOS:
    - Valida presença de moduleType ✅
    - Valida presença de formSchema ✅
+   - ❌ NÃO VALIDA se moduleType já existe em outro serviço
 4. Cria serviço no banco ✅
 5. Retorna sucesso
 6. ❌ WORKFLOW NÃO É CRIADO
+7. ❌ PERMITE DUPLICAÇÃO DE moduleType (CRÍTICO!)
 ```
 
 ### Fluxo Atual de Criação de Protocolos
@@ -42,7 +44,25 @@
    }
 ```
 
-### ⚠️ Problema Identificado
+### ⚠️ Problemas Identificados
+
+#### **Problema 1: CRÍTICO - Duplicação de moduleType**
+
+Se dois admins criam serviços COM_DADOS com o **MESMO moduleType**:
+
+1. ✅ Serviço A criado: `moduleType = "ATENDIMENTOS_SAUDE"`
+2. ✅ Serviço B criado: `moduleType = "ATENDIMENTOS_SAUDE"` (DUPLICADO!)
+3. ❌ **Sistema permite** duplicação (sem validação)
+4. ❌ Dois serviços apontam para o mesmo workflow
+5. ❌ Confusão: qual serviço usar?
+6. ❌ Relatórios quebrados
+7. ❌ **INCONSISTÊNCIA GRAVE** no sistema
+
+**Regra de Negócio:**
+> **1 moduleType = 1 Serviço = 1 Workflow**
+> Relação **1:1:1 obrigatória**
+
+#### **Problema 2: Serviço sem Workflow**
 
 Se um serviço COM_DADOS é criado com `moduleType = "NOVO_SERVICO_XYZ"` mas **não existe workflow** com esse moduleType:
 
@@ -77,20 +97,38 @@ Criar workflow automaticamente SEMPRE que serviço COM_DADOS é criado.
 - ⚠️ Pode criar workflows "genéricos" demais
 - ⚠️ Admin precisa editar depois para personalizar
 
-**Fluxo:**
+**Fluxo CORRIGIDO com Validação:**
 ```
 1. Admin cria serviço COM_DADOS com moduleType="LICENCA_AMBIENTAL"
-2. Sistema verifica: existe workflow com esse moduleType?
-   - Se SIM: apenas associa (nada muda)
-   - Se NÃO: cria workflow automático baseado em template
-3. Workflow criado com:
-   - moduleType: "LICENCA_AMBIENTAL"
-   - name: nome do serviço (ex: "Licença Ambiental")
-   - stages: template genérico (5-7 etapas padrão)
-   - defaultSLA: estimatedDays do serviço OU 10 dias (padrão)
-4. Serviço + Workflow criados com sucesso
-5. Admin pode editar workflow depois em /admin/workflows
+
+2. ✅ VALIDAÇÃO CRÍTICA 1: moduleType único?
+   - Busca em services_simplified: WHERE moduleType = "LICENCA_AMBIENTAL"
+   - Se encontrar: ❌ ERRO 400 "moduleType já em uso pelo serviço X"
+   - Se não encontrar: ✅ Prossegue
+
+3. ✅ VALIDAÇÃO CRÍTICA 2: workflow existe?
+   - Busca em module_workflows: WHERE moduleType = "LICENCA_AMBIENTAL"
+   - Se SIM: ❌ ERRO 409 "moduleType já tem workflow. Use outro nome ou reutilize serviço existente"
+   - Se NÃO: ✅ Prossegue (criará workflow automático)
+
+4. ✅ TRANSAÇÃO ATÔMICA:
+   a) Cria Serviço com moduleType="LICENCA_AMBIENTAL"
+   b) Cria Workflow com:
+      - moduleType: "LICENCA_AMBIENTAL" (mesmo valor)
+      - name: nome do serviço (ex: "Licença Ambiental")
+      - stages: template genérico (5 etapas padrão)
+      - defaultSLA: estimatedDays do serviço OU 10 dias
+   c) Se qualquer um falhar: ROLLBACK de tudo
+
+5. ✅ Serviço + Workflow criados juntos (garantia 1:1:1)
+6. Admin pode editar workflow depois em /admin/workflows
 ```
+
+**Garantias:**
+- ✅ **1 moduleType = 1 Serviço (ÚNICO)**
+- ✅ **1 moduleType = 1 Workflow (ÚNICO)**
+- ✅ **Serviço sempre tem workflow (100% cobertura)**
+- ✅ **Transação atômica (tudo ou nada)**
 
 #### **Opção 2: Validação Obrigatória**
 
@@ -243,60 +281,108 @@ return res.status(201).json({
 })
 ```
 
-**DEPOIS:**
+**DEPOIS (COM VALIDAÇÕES DE UNICIDADE):**
 
 ```typescript
-// Criar serviço em transação
+// ========== VALIDAÇÕES CRÍTICAS DE UNICIDADE ==========
+
+// VALIDAÇÃO 1: moduleType único em serviços
+if (serviceType === 'COM_DADOS' && moduleType) {
+  const existingService = await prisma.serviceSimplified.findFirst({
+    where: {
+      moduleType,
+      isActive: true // Considerar apenas ativos
+    },
+    select: { id: true, name: true }
+  })
+
+  if (existingService) {
+    return res.status(400).json({
+      success: false,
+      error: 'Duplicate moduleType',
+      message: `O moduleType "${moduleType}" já está em uso pelo serviço "${existingService.name}". Cada moduleType deve ser único. Escolha outro nome ou reutilize o serviço existente.`,
+      existingService: {
+        id: existingService.id,
+        name: existingService.name
+      }
+    })
+  }
+
+  // VALIDAÇÃO 2: moduleType único em workflows
+  const existingWorkflow = await prisma.moduleWorkflow.findUnique({
+    where: { moduleType },
+    select: { id: true, name: true }
+  })
+
+  if (existingWorkflow) {
+    return res.status(409).json({
+      success: false,
+      error: 'Workflow already exists',
+      message: `Já existe um workflow com moduleType "${moduleType}" (${existingWorkflow.name}). Para usar este moduleType, você precisa reutilizar o serviço existente ou escolher outro nome.`,
+      existingWorkflow: {
+        id: existingWorkflow.id,
+        name: existingWorkflow.name
+      }
+    })
+  }
+}
+
+// ========== CRIAÇÃO EM TRANSAÇÃO ATÔMICA ==========
+
 const result = await prisma.$transaction(async (tx) => {
   // 1. Criar serviço
   const service = await tx.serviceSimplified.create({
     data: {
       name,
       description: description || null,
-      // ... outros campos
+      category: category || null,
+      departmentId,
+      serviceType: serviceType || 'SEM_DADOS',
+      requiresDocuments: requiresDocuments || false,
+      requiredDocuments: requiredDocuments || null,
+      estimatedDays: estimatedDays || null,
+      priority: priority || 3,
+      icon: icon || null,
+      color: color || null,
+      isActive: true,
+      // Campos COM_DADOS
       moduleType: serviceType === 'COM_DADOS' ? moduleType : null,
       formSchema: serviceType === 'COM_DADOS' ? formSchema : null
     },
     include: { department: true }
   })
 
-  // 2. Se COM_DADOS, verificar/criar workflow
+  // 2. Se COM_DADOS, criar workflow automaticamente
   let workflow = null
   let workflowCreated = false
 
   if (serviceType === 'COM_DADOS' && moduleType) {
-    // Verificar se workflow já existe
-    workflow = await tx.moduleWorkflow.findUnique({
-      where: { moduleType }
+    const workflowTemplate = generateDefaultWorkflow({
+      moduleType,
+      serviceName: name,
+      serviceDescription: description,
+      estimatedDays,
+      departmentName: department.name
     })
 
-    // Se não existe, criar automaticamente
-    if (!workflow) {
-      const workflowTemplate = generateDefaultWorkflow({
-        moduleType,
-        serviceName: name,
-        serviceDescription: description,
-        estimatedDays,
-        departmentName: department.name
-      })
+    // Criar workflow (já validamos que não existe)
+    workflow = await tx.moduleWorkflow.create({
+      data: workflowTemplate
+    })
 
-      workflow = await tx.moduleWorkflow.create({
-        data: workflowTemplate
-      })
-
-      workflowCreated = true
-      console.log(`✅ Workflow automático criado: ${moduleType}`)
-    } else {
-      console.log(`ℹ️ Workflow já existe: ${moduleType}`)
-    }
+    workflowCreated = true
+    console.log(`✅ [AUTO-CREATE] Workflow criado para ${moduleType}`)
   }
 
   return { service, workflow, workflowCreated }
 })
 
+// ========== RESPOSTA COM INFORMAÇÕES COMPLETAS ==========
+
 return res.status(201).json({
-  message: workflowCreated
-    ? 'Serviço e workflow criados com sucesso'
+  success: true,
+  message: result.workflowCreated
+    ? `Serviço e workflow criados com sucesso. O workflow foi gerado automaticamente e pode ser editado em /admin/workflows`
     : 'Serviço criado com sucesso',
   service: result.service,
   workflow: result.workflow,
@@ -307,14 +393,155 @@ return res.status(201).json({
 })
 ```
 
-### 3. Adicionar Validação na Atualização de Serviços
+**Pontos Críticos da Validação:**
+
+1. ✅ **Validação ANTES da transação** (falha rápido)
+2. ✅ **Busca por serviços ativos** (`isActive: true`)
+3. ✅ **Busca por workflows** (unique constraint)
+4. ✅ **Mensagens claras** com nome do serviço/workflow conflitante
+5. ✅ **Status HTTP corretos:**
+   - 400 (Bad Request) para moduleType duplicado em serviço
+   - 409 (Conflict) para moduleType já tem workflow
+6. ✅ **Transação atômica** (rollback automático se falhar)
+
+### 3. Adicionar Constraint UNIQUE no Banco de Dados
+
+**Arquivo:** `backend/prisma/schema.prisma`
+
+Adicionar constraint de unicidade para garantir a nível de banco:
+
+```prisma
+model ServiceSimplified {
+  id           String  @id @default(cuid())
+  name         String
+  moduleType   String? @unique  // ← ADICIONAR @unique
+  // ... outros campos
+
+  @@map("services_simplified")
+}
+```
+
+**Migração:**
+
+```bash
+# Criar migração
+npx prisma migrate dev --name add-unique-module-type
+
+# SQL gerado:
+ALTER TABLE "services_simplified" ADD CONSTRAINT "services_simplified_moduleType_key" UNIQUE ("moduleType");
+```
+
+**Benefícios:**
+- ✅ Garante unicidade a nível de banco
+- ✅ Proteção contra race conditions
+- ✅ Erro claro se tentar duplicar (Prisma lança exceção)
+
+### 4. Adicionar Validação na Atualização de Serviços
 
 **Arquivo:** `backend/src/routes/services.ts` (PUT /:id)
 
-Se admin alterar `moduleType` de um serviço:
-- Verificar se novo moduleType tem workflow
-- Se não, criar automaticamente
-- Avisar admin que workflow foi criado
+```typescript
+// PUT /api/services/:id
+router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (req, res) => {
+  const { id } = req.params
+  const { moduleType: newModuleType, serviceType, ...otherFields } = req.body
+
+  // Buscar serviço atual
+  const currentService = await prisma.serviceSimplified.findUnique({
+    where: { id }
+  })
+
+  if (!currentService) {
+    return res.status(404).json({
+      success: false,
+      message: 'Serviço não encontrado'
+    })
+  }
+
+  // ========== VALIDAÇÃO DE MUDANÇA DE moduleType ==========
+
+  const isChangingModuleType = newModuleType && newModuleType !== currentService.moduleType
+
+  if (isChangingModuleType) {
+    // VALIDAÇÃO 1: Novo moduleType único?
+    const existingService = await prisma.serviceSimplified.findFirst({
+      where: {
+        moduleType: newModuleType,
+        id: { not: id }, // Excluir o próprio serviço
+        isActive: true
+      }
+    })
+
+    if (existingService) {
+      return res.status(400).json({
+        success: false,
+        error: 'Duplicate moduleType',
+        message: `O moduleType "${newModuleType}" já está em uso pelo serviço "${existingService.name}"`
+      })
+    }
+
+    // VALIDAÇÃO 2: Workflow existe para novo moduleType?
+    const existingWorkflow = await prisma.moduleWorkflow.findUnique({
+      where: { moduleType: newModuleType }
+    })
+
+    if (existingWorkflow) {
+      return res.status(409).json({
+        success: false,
+        error: 'Workflow exists',
+        message: `Já existe workflow para "${newModuleType}". Use outro moduleType.`
+      })
+    }
+  }
+
+  // ========== ATUALIZAÇÃO EM TRANSAÇÃO ==========
+
+  const result = await prisma.$transaction(async (tx) => {
+    // 1. Atualizar serviço
+    const updatedService = await tx.serviceSimplified.update({
+      where: { id },
+      data: {
+        ...otherFields,
+        moduleType: newModuleType || currentService.moduleType
+      },
+      include: { department: true }
+    })
+
+    // 2. Se mudou moduleType para COM_DADOS, criar workflow
+    let workflow = null
+    let workflowCreated = false
+
+    if (isChangingModuleType && serviceType === 'COM_DADOS') {
+      const workflowTemplate = generateDefaultWorkflow({
+        moduleType: newModuleType,
+        serviceName: updatedService.name,
+        serviceDescription: updatedService.description,
+        estimatedDays: updatedService.estimatedDays,
+        departmentName: updatedService.department.name
+      })
+
+      workflow = await tx.moduleWorkflow.create({
+        data: workflowTemplate
+      })
+
+      workflowCreated = true
+      console.log(`✅ [AUTO-CREATE] Workflow criado ao atualizar para ${newModuleType}`)
+    }
+
+    return { service: updatedService, workflow, workflowCreated }
+  })
+
+  return res.status(200).json({
+    success: true,
+    message: result.workflowCreated
+      ? 'Serviço atualizado e workflow criado automaticamente'
+      : 'Serviço atualizado com sucesso',
+    service: result.service,
+    workflow: result.workflow,
+    workflowCreated: result.workflowCreated
+  })
+})
+```
 
 ### 4. Indicador Visual no Frontend
 
@@ -432,23 +659,30 @@ await tx.auditLog.create({
 - ✅ defaultSLA = 15 dias
 - ✅ Resposta indica `workflowCreated: true`
 
-### Cenário 2: Criar Serviço COM_DADOS com Workflow Existente
+### Cenário 2: Criar Serviço COM_DADOS com moduleType Duplicado (DEVE FALHAR)
+
+**Setup:**
+- Serviço A já existe: `moduleType = "ATENDIMENTOS_SAUDE"`
 
 **Input:**
 ```json
 {
-  "name": "Atendimento Médico Especial",
+  "name": "Outro Atendimento de Saúde",
   "serviceType": "COM_DADOS",
-  "moduleType": "ATENDIMENTOS_SAUDE", // Já existe no seed
+  "moduleType": "ATENDIMENTOS_SAUDE", // ❌ DUPLICADO!
   "departmentId": "abc123"
 }
 ```
 
 **Esperado:**
-- ✅ Serviço criado
-- ✅ Workflow NÃO criado (já existe)
-- ✅ Serviço associado ao workflow existente
-- ✅ Resposta indica `workflowCreated: false`
+- ❌ **ERRO 400 Bad Request**
+- ❌ Mensagem: `"O moduleType "ATENDIMENTOS_SAUDE" já está em uso pelo serviço "Atendimentos de Saúde". Cada moduleType deve ser único."`
+- ❌ **NADA É CRIADO** (validação bloqueia antes)
+- ✅ Retorna `existingService: { id, name }` para informar qual serviço está usando
+
+**Alternativas para o Admin:**
+1. Escolher outro moduleType: `"ATENDIMENTOS_SAUDE_ESPECIAL"`
+2. Reutilizar serviço existente ao invés de criar novo
 
 ### Cenário 3: Criar Serviço SEM_DADOS
 
@@ -466,22 +700,29 @@ await tx.auditLog.create({
 - ✅ Workflow NÃO criado (não é COM_DADOS)
 - ✅ moduleType = null
 
-### Cenário 4: Criar Serviço com moduleType Duplicado
+### Cenário 4: Criar Serviço onde Workflow Já Existe (DEVE FALHAR)
+
+**Setup:**
+- Workflow já existe: `moduleType = "MATRICULA_ALUNO"`
+- Mas **não** há serviço usando esse moduleType
 
 **Input:**
 ```json
 {
-  "name": "Outro serviço",
+  "name": "Matrícula Especial",
   "serviceType": "COM_DADOS",
-  "moduleType": "MATRICULA_ALUNO", // Já usado por outro serviço
+  "moduleType": "MATRICULA_ALUNO", // Workflow existe, serviço não
   "departmentId": "abc123"
 }
 ```
 
 **Esperado:**
-- ❌ Erro 400
-- ❌ Mensagem: "moduleType já está em uso"
-- ❌ Nada criado
+- ❌ **ERRO 409 Conflict**
+- ❌ Mensagem: `"Já existe um workflow com moduleType "MATRICULA_ALUNO". Para usar este moduleType, você precisa escolher outro nome."`
+- ❌ **NADA É CRIADO**
+- ✅ Retorna `existingWorkflow: { id, name }`
+
+**Razão:** Garante relação 1:1:1 (1 moduleType = 1 serviço = 1 workflow)
 
 ### Cenário 5: Protocolo com Workflow Auto-Criado
 
