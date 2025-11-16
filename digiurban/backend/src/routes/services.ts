@@ -322,7 +322,14 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
 
         // Criar workflow (já validamos que não existe)
         workflow = await tx.moduleWorkflow.create({
-          data: workflowTemplate
+          data: {
+            moduleType: workflowTemplate.moduleType,
+            name: workflowTemplate.name,
+            description: workflowTemplate.description,
+            defaultSLA: workflowTemplate.defaultSLA,
+            stages: workflowTemplate.stages as any, // JSON field
+            rules: workflowTemplate.rules as any // JSON field
+          }
         });
 
         workflowCreated = true;
@@ -410,6 +417,50 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
         error: 'Forbidden',
         message: 'Você só pode editar serviços do seu departamento'
         });
+    }
+
+    // ========== VALIDAÇÃO DE UNICIDADE DO moduleType ==========
+    // Se está tentando alterar o moduleType, validar unicidade
+    if (moduleType !== undefined && moduleType !== service.moduleType) {
+      // VALIDAÇÃO 1: moduleType único em serviços
+      const existingService = await prisma.serviceSimplified.findFirst({
+        where: {
+          moduleType,
+          isActive: true,
+          id: { not: id } // Excluir o próprio serviço
+        },
+        select: { id: true, name: true }
+      });
+
+      if (existingService) {
+        return res.status(400).json({
+          success: false,
+          error: 'Duplicate moduleType',
+          message: `O moduleType "${moduleType}" já está em uso pelo serviço "${existingService.name}". Cada moduleType deve ser único. Escolha outro nome.`,
+          existingService: {
+            id: existingService.id,
+            name: existingService.name
+          }
+        });
+      }
+
+      // VALIDAÇÃO 2: moduleType único em workflows
+      const existingWorkflow = await prisma.moduleWorkflow.findUnique({
+        where: { moduleType },
+        select: { id: true, name: true }
+      });
+
+      if (existingWorkflow) {
+        return res.status(409).json({
+          success: false,
+          error: 'Workflow already exists',
+          message: `Já existe um workflow com moduleType "${moduleType}" (${existingWorkflow.name}). Para usar este moduleType, escolha outro nome ou reutilize o workflow existente.`,
+          existingWorkflow: {
+            id: existingWorkflow.id,
+            name: existingWorkflow.name
+          }
+        });
+      }
     }
 
     const updatedService = await prisma.serviceSimplified.update({
