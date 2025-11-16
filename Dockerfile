@@ -89,9 +89,9 @@ COPY --from=backend-builder /app/backend/node_modules/.prisma ./node_modules/.pr
 # Copiar scripts diretamente do contexto (não do builder)
 COPY digiurban/backend/scripts ./scripts
 
-# Criar diretórios de dados
-RUN mkdir -p /app/data /app/uploads /app/logs && \
-    chown -R backend:nodejs /app/data /app/uploads /app/logs
+# Criar diretórios de dados e uploads no local correto
+RUN mkdir -p /app/data /app/backend/uploads /app/logs && \
+    chown -R backend:nodejs /app/data /app/backend/uploads /app/logs
 
 # ===== Frontend =====
 WORKDIR /app/frontend
