@@ -419,7 +419,9 @@ export function DocumentScanner({
    * Atualiza preview com modo de processamento
    */
   useEffect(() => {
-    if (!capturedImage || !cropArea || showCropTool) return
+    if (!capturedImage || !cropArea) return
+    // Só atualiza preview quando NÃO está no modo de crop ativo
+    if (editMode === 'crop' && showCropTool) return
 
     const updatePreview = () => {
       const canvas = previewCanvasRef.current
@@ -453,7 +455,7 @@ export function DocumentScanner({
     const timeout = setTimeout(updatePreview, 100)
 
     return () => clearTimeout(timeout)
-  }, [capturedImage, cropArea, processingMode, applyProcessingMode, showCropTool])
+  }, [capturedImage, cropArea, processingMode, applyProcessingMode, showCropTool, editMode])
 
   /**
    * Confirma e processa foto
@@ -562,6 +564,15 @@ export function DocumentScanner({
       }
     }
   }, [isMobile])
+
+  // Ativar showCropTool automaticamente quando entrar no modo crop
+  useEffect(() => {
+    if (editMode === 'crop') {
+      setShowCropTool(true)
+    } else if (editMode === 'filters') {
+      setShowCropTool(false)
+    }
+  }, [editMode])
 
   // Interface Mobile Full-Screen
   if (isMobile) {
@@ -870,15 +881,9 @@ export function DocumentScanner({
                   <Button
                     variant="outline"
                     onClick={resetCrop}
-                    className="flex-1 h-12 bg-white/10 border-white/30 text-white hover:bg-white/20"
+                    className="w-full h-12 bg-white/10 border-white/30 text-white hover:bg-white/20"
                   >
-                    Resetar
-                  </Button>
-                  <Button
-                    onClick={() => setShowCropTool(!showCropTool)}
-                    className="flex-1 h-12 bg-white text-black hover:bg-gray-200"
-                  >
-                    {showCropTool ? 'Aplicar' : 'Selecionar Área'}
+                    Resetar Área
                   </Button>
                 </div>
               )}
