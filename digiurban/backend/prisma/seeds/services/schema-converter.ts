@@ -16,21 +16,21 @@ const OLD_TO_NEW_CITIZEN_FIELDS: Record<string, string> = {
   citizen_name: 'nome',
   citizen_cpf: 'cpf',
   citizen_rg: 'rg',
-  citizen_birthDate: 'dataNascimento',
+  citizen_birthdate: 'dataNascimento',
   citizen_email: 'email',
   citizen_phone: 'telefone',
-  citizen_phoneSecondary: 'telefoneSecundario',
-  citizen_zipCode: 'cep',
+  citizen_phonesecondary: 'telefoneSecundario',
+  citizen_zipcode: 'cep',
   citizen_address: 'logradouro',
-  citizen_addressNumber: 'numero',
-  citizen_addressComplement: 'complemento',
+  citizen_addressnumber: 'numero',
+  citizen_addresscomplement: 'complemento',
   citizen_neighborhood: 'bairro',
   citizen_city: 'cidade',
   citizen_state: 'uf',
-  citizen_motherName: 'nomeMae',
-  citizen_maritalStatus: 'estadoCivil',
+  citizen_mothername: 'nomeMae',
+  citizen_maritalstatus: 'estadoCivil',
   citizen_occupation: 'profissao',
-  citizen_familyIncome: 'rendaFamiliar'
+  citizen_familyincome: 'rendaFamiliar'
 };
 
 /**

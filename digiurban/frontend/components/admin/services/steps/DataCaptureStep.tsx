@@ -60,13 +60,13 @@ const CITIZEN_PROFILE_FIELDS = [
   { id: 'citizen_rg', label: 'RG', type: 'text' as const, description: 'RG do cidadão' },
   { id: 'citizen_email', label: 'E-mail', type: 'email' as const, description: 'E-mail cadastrado' },
   { id: 'citizen_phone', label: 'Telefone', type: 'tel' as const, description: 'Telefone principal' },
-  { id: 'citizen_phoneSecondary', label: 'Telefone Secundário', type: 'tel' as const, description: 'Telefone alternativo' },
-  { id: 'citizen_birthDate', label: 'Data de Nascimento', type: 'date' as const, description: 'Data de nascimento' },
+  { id: 'citizen_phonesecondary', label: 'Telefone Secundário', type: 'tel' as const, description: 'Telefone alternativo' },
+  { id: 'citizen_birthdate', label: 'Data de Nascimento', type: 'date' as const, description: 'Data de nascimento' },
   { id: 'citizen_address', label: 'Endereço Completo', type: 'textarea' as const, description: 'Endereço do cidadão' },
-  { id: 'citizen_motherName', label: 'Nome da Mãe', type: 'text' as const, description: 'Nome completo da mãe' },
-  { id: 'citizen_maritalStatus', label: 'Estado Civil', type: 'text' as const, description: 'Estado civil' },
+  { id: 'citizen_mothername', label: 'Nome da Mãe', type: 'text' as const, description: 'Nome completo da mãe' },
+  { id: 'citizen_maritalstatus', label: 'Estado Civil', type: 'text' as const, description: 'Estado civil' },
   { id: 'citizen_occupation', label: 'Profissão', type: 'text' as const, description: 'Ocupação profissional' },
-  { id: 'citizen_familyIncome', label: 'Renda Familiar', type: 'text' as const, description: 'Faixa de renda familiar' },
+  { id: 'citizen_familyincome', label: 'Renda Familiar', type: 'text' as const, description: 'Faixa de renda familiar' },
 ]
 
 export function DataCaptureStep({ formData, onChange }: DataCaptureStepProps) {

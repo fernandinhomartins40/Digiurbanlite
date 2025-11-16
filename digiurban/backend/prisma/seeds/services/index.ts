@@ -5,6 +5,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { ServiceDefinition } from './types';
+import { generateDefaultWorkflow } from '../../src/services/workflow-template.service';
 
 import { healthServices } from './health.seed';
 import { educationServices } from './education.seed';

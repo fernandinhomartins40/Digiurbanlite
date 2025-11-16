@@ -32,16 +32,16 @@ export function buildServiceCreationUrl(
       'citizen_name',
       'citizen_cpf',
       'citizen_rg',
-      'citizen_birthDate',
+      'citizen_birthdate',
       'citizen_phone',
       'citizen_email',
       'citizen_address',
-      'citizen_addressNumber',
-      'citizen_addressComplement',
+      'citizen_addressnumber',
+      'citizen_addresscomplement',
       'citizen_neighborhood',
       'citizen_city',
       'citizen_state',
-      'citizen_zipCode',
+      'citizen_zipcode',
     ]
   };
 
