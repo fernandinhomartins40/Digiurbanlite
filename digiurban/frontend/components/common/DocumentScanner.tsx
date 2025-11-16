@@ -35,6 +35,14 @@ interface DocumentScannerProps {
   onCancel: () => void
 }
 
+type DocumentType = 'cpf' | 'rg' | 'cnh' | 'a4' | 'generic'
+
+interface DocumentFormat {
+  type: DocumentType
+  aspectRatio: number
+  label: string
+}
+
 export function DocumentScanner({
   documentName,
   acceptedFormats,
@@ -62,6 +70,39 @@ export function DocumentScanner({
   // Hooks mobile
   const isMobile = useIsMobile()
   const { vibrate } = useHaptics()
+
+  /**
+   * Detecta o tipo de documento baseado no nome
+   */
+  const detectDocumentFormat = useCallback((): DocumentFormat => {
+    const nameLower = documentName.toLowerCase()
+
+    // CPF: 85.6mm x 53.98mm ≈ 1.59 (formato cartão de crédito)
+    if (nameLower.includes('cpf')) {
+      return { type: 'cpf', aspectRatio: 1.59, label: 'CPF' }
+    }
+
+    // RG: 74mm x 105mm ≈ 1.42 (vertical) ou 105mm x 74mm ≈ 1.42 (horizontal)
+    if (nameLower.includes('rg') || nameLower.includes('identidade')) {
+      return { type: 'rg', aspectRatio: 1.42, label: 'RG' }
+    }
+
+    // CNH: 85.6mm x 53.98mm ≈ 1.59 (formato cartão de crédito)
+    if (nameLower.includes('cnh') || nameLower.includes('habilitação') || nameLower.includes('carteira')) {
+      return { type: 'cnh', aspectRatio: 1.59, label: 'CNH' }
+    }
+
+    // A4: 210mm x 297mm ≈ 1.41 (vertical) ou 297mm x 210mm ≈ 1.41 (horizontal)
+    if (nameLower.includes('a4') || nameLower.includes('contrato') || nameLower.includes('certidão') ||
+        nameLower.includes('comprovante') || nameLower.includes('declaração')) {
+      return { type: 'a4', aspectRatio: 1.41, label: 'A4' }
+    }
+
+    // Genérico: 1.5 (proporção padrão)
+    return { type: 'generic', aspectRatio: 1.5, label: 'Documento' }
+  }, [documentName])
+
+  const documentFormat = detectDocumentFormat()
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -880,13 +921,13 @@ export function DocumentScanner({
                 {/* Área escura ao redor */}
                 <div className="absolute inset-0 bg-black/50" />
 
-                {/* Moldura do Documento */}
+                {/* Moldura do Documento - Adaptada ao Tipo */}
                 <div
                   className="relative z-10 border-4 border-white/90 rounded-lg"
                   style={{
                     width: '85%',
                     maxWidth: '500px',
-                    aspectRatio: '1.5',
+                    aspectRatio: documentFormat.aspectRatio.toString(),
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)'
                   }}
                 >
@@ -896,9 +937,12 @@ export function DocumentScanner({
                   <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-[5px] border-l-[5px] border-green-400 rounded-bl-lg" />
                   <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-[5px] border-r-[5px] border-green-400 rounded-br-lg" />
 
-                  {/* Instrução Central */}
+                  {/* Instrução Central com Tipo de Documento */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2">
+                      <p className="text-green-400 text-xs font-semibold text-center uppercase tracking-wider mb-1">
+                        {documentFormat.label}
+                      </p>
                       <p className="text-white text-sm font-medium text-center">
                         Alinhe o documento<br />dentro da moldura
                       </p>
@@ -949,10 +993,81 @@ export function DocumentScanner({
               {/* Preview da Foto Capturada */}
               {!editMode ? (
                 <div className="relative w-full h-full flex items-center justify-center bg-black">
+                  {/* Canvas de Preview com Bordas Detectadas */}
                   <canvas
                     ref={previewCanvasRef}
                     className="max-w-full max-h-full object-contain"
                   />
+
+                  {/* Overlay com Bordas da Detecção */}
+                  {detectedCorners && !autoDetecting && cropArea && (
+                    <canvas
+                      ref={(canvas) => {
+                        if (!canvas || !previewCanvasRef.current) return
+
+                        // Copiar dimensões do preview canvas
+                        const previewCanvas = previewCanvasRef.current
+                        canvas.width = previewCanvas.width
+                        canvas.height = previewCanvas.height
+
+                        const ctx = canvas.getContext('2d')
+                        if (!ctx) return
+
+                        // Limpar canvas
+                        ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+                        // Desenhar bordas verdes ao redor da área detectada
+                        ctx.strokeStyle = '#10b981' // Verde
+                        ctx.lineWidth = 6
+                        ctx.shadowColor = '#10b981'
+                        ctx.shadowBlur = 10
+
+                        // Desenhar retângulo da área detectada
+                        ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height)
+
+                        // Desenhar cantos decorativos
+                        const cornerSize = 40
+                        const corners = [
+                          { x: cropArea.x, y: cropArea.y }, // Top-left
+                          { x: cropArea.x + cropArea.width, y: cropArea.y }, // Top-right
+                          { x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height }, // Bottom-right
+                          { x: cropArea.x, y: cropArea.y + cropArea.height }, // Bottom-left
+                        ]
+
+                        ctx.lineWidth = 8
+                        ctx.strokeStyle = '#10b981'
+                        ctx.shadowBlur = 15
+
+                        corners.forEach((corner, index) => {
+                          ctx.beginPath()
+                          if (index === 0) { // Top-left
+                            ctx.moveTo(corner.x, corner.y + cornerSize)
+                            ctx.lineTo(corner.x, corner.y)
+                            ctx.lineTo(corner.x + cornerSize, corner.y)
+                          } else if (index === 1) { // Top-right
+                            ctx.moveTo(corner.x - cornerSize, corner.y)
+                            ctx.lineTo(corner.x, corner.y)
+                            ctx.lineTo(corner.x, corner.y + cornerSize)
+                          } else if (index === 2) { // Bottom-right
+                            ctx.moveTo(corner.x, corner.y - cornerSize)
+                            ctx.lineTo(corner.x, corner.y)
+                            ctx.lineTo(corner.x - cornerSize, corner.y)
+                          } else { // Bottom-left
+                            ctx.moveTo(corner.x + cornerSize, corner.y)
+                            ctx.lineTo(corner.x, corner.y)
+                            ctx.lineTo(corner.x, corner.y - cornerSize)
+                          }
+                          ctx.stroke()
+                        })
+                      }}
+                      className="absolute max-w-full max-h-full object-contain pointer-events-none"
+                      style={{
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)'
+                      }}
+                    />
+                  )}
 
                   {/* Indicador de Detecção Automática */}
                   {autoDetecting && (
