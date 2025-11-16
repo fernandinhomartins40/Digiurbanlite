@@ -181,7 +181,16 @@ router.get(
         cpf: true,
         email: true,
         phone: true,
-        address: true
+        address: true,
+        // ✅ CRÍTICO: Adicionar todos os campos para pré-preenchimento no admin
+        birthDate: true,
+        rg: true,
+        phoneSecondary: true,
+        motherName: true,
+        maritalStatus: true,
+        occupation: true,
+        familyIncome: true,
+        verificationStatus: true
         },
       take: 10,
       orderBy: { name: 'asc' }
