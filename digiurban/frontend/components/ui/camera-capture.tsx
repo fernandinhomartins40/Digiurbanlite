@@ -322,6 +322,26 @@ export function CameraCapture({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Esconder menu inferior e overflow do body quando o componente está montado
+  useEffect(() => {
+    // Adicionar classe ao body para esconder overflow
+    document.body.style.overflow = 'hidden'
+
+    // Esconder menu inferior especificamente
+    const bottomNav = document.querySelector('nav[class*="bottom-0"]')
+    if (bottomNav instanceof HTMLElement) {
+      bottomNav.style.display = 'none'
+    }
+
+    return () => {
+      // Restaurar ao desmontar
+      document.body.style.overflow = ''
+      if (bottomNav instanceof HTMLElement) {
+        bottomNav.style.display = ''
+      }
+    }
+  }, []);
+
   // Função para processar imagem com efeito de documento digitalizado
   const processDocumentImage = (context: CanvasRenderingContext2D, width: number, height: number) => {
     const imageData = context.getImageData(0, 0, width, height);
@@ -465,6 +485,7 @@ export function CameraCapture({
   const guideDimensions = getGuideDimensions();
 
   return (
+    <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4">
     <Card className="w-full max-w-4xl mx-auto">
       <CardContent className="p-0">
         <div className="relative bg-black">
@@ -611,5 +632,6 @@ export function CameraCapture({
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }

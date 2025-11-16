@@ -541,10 +541,32 @@ export function DocumentScanner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facingMode])
 
+  // Esconder menu inferior em mobile quando scanner está ativo
+  useEffect(() => {
+    if (isMobile) {
+      // Adicionar classe ao body para esconder overflow e menu inferior
+      document.body.style.overflow = 'hidden'
+
+      // Esconder menu inferior especificamente
+      const bottomNav = document.querySelector('nav[class*="bottom-0"]')
+      if (bottomNav instanceof HTMLElement) {
+        bottomNav.style.display = 'none'
+      }
+
+      return () => {
+        // Restaurar ao desmontar
+        document.body.style.overflow = ''
+        if (bottomNav instanceof HTMLElement) {
+          bottomNav.style.display = ''
+        }
+      }
+    }
+  }, [isMobile])
+
   // Interface Mobile Full-Screen
   if (isMobile) {
     return (
-      <div className="fixed inset-0 z-50 bg-black">
+      <div className="fixed inset-0 z-[60] bg-black">
         {/* Header Mobile */}
         <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent">
           <div className="flex items-center justify-between p-4">
@@ -708,7 +730,7 @@ export function DocumentScanner({
         )}
 
         {/* Controles Inferiores */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent pb-6 pt-8">
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black via-black/90 to-transparent pb-8 pt-8" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
           {!capturedImage ? (
             /* Modo Captura */
             <div className="flex items-center justify-center">
