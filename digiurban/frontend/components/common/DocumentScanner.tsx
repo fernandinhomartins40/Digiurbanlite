@@ -108,6 +108,7 @@ export function DocumentScanner({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const cropCanvasRef = useRef<HTMLCanvasElement>(null)
   const previewCanvasRef = useRef<HTMLCanvasElement>(null)
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const imageRef = useRef<HTMLImageElement | null>(null)
 
@@ -876,6 +877,84 @@ export function DocumentScanner({
     }
   }, [editMode])
 
+  /**
+   * Desenha bordas verdes da detecção no overlay canvas
+   */
+  useEffect(() => {
+    if (!overlayCanvasRef.current || !previewCanvasRef.current || !detectedCorners || !cropArea || autoDetecting || editMode) {
+      console.log('[OverlayCanvas] Não desenhar overlay:', {
+        overlayCanvas: !!overlayCanvasRef.current,
+        previewCanvas: !!previewCanvasRef.current,
+        detectedCorners: !!detectedCorners,
+        cropArea: !!cropArea,
+        autoDetecting,
+        editMode
+      })
+      return
+    }
+
+    console.log('[OverlayCanvas] Desenhando bordas verdes da detecção')
+
+    const overlayCanvas = overlayCanvasRef.current
+    const previewCanvas = previewCanvasRef.current
+
+    // Copiar dimensões do preview canvas
+    overlayCanvas.width = previewCanvas.width
+    overlayCanvas.height = previewCanvas.height
+
+    const ctx = overlayCanvas.getContext('2d')
+    if (!ctx) return
+
+    // Limpar canvas
+    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
+
+    // Desenhar bordas verdes ao redor da área detectada
+    ctx.strokeStyle = '#10b981' // Verde
+    ctx.lineWidth = 6
+    ctx.shadowColor = '#10b981'
+    ctx.shadowBlur = 10
+
+    // Desenhar retângulo da área detectada
+    ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height)
+
+    // Desenhar cantos decorativos em L
+    const cornerSize = 40
+    const corners = [
+      { x: cropArea.x, y: cropArea.y }, // Top-left
+      { x: cropArea.x + cropArea.width, y: cropArea.y }, // Top-right
+      { x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height }, // Bottom-right
+      { x: cropArea.x, y: cropArea.y + cropArea.height }, // Bottom-left
+    ]
+
+    ctx.lineWidth = 8
+    ctx.strokeStyle = '#10b981'
+    ctx.shadowBlur = 15
+
+    corners.forEach((corner, index) => {
+      ctx.beginPath()
+      if (index === 0) { // Top-left
+        ctx.moveTo(corner.x, corner.y + cornerSize)
+        ctx.lineTo(corner.x, corner.y)
+        ctx.lineTo(corner.x + cornerSize, corner.y)
+      } else if (index === 1) { // Top-right
+        ctx.moveTo(corner.x - cornerSize, corner.y)
+        ctx.lineTo(corner.x, corner.y)
+        ctx.lineTo(corner.x, corner.y + cornerSize)
+      } else if (index === 2) { // Bottom-right
+        ctx.moveTo(corner.x, corner.y - cornerSize)
+        ctx.lineTo(corner.x, corner.y)
+        ctx.lineTo(corner.x - cornerSize, corner.y)
+      } else { // Bottom-left
+        ctx.moveTo(corner.x + cornerSize, corner.y)
+        ctx.lineTo(corner.x, corner.y)
+        ctx.lineTo(corner.x, corner.y - cornerSize)
+      }
+      ctx.stroke()
+    })
+
+    console.log('[OverlayCanvas] Bordas desenhadas com sucesso')
+  }, [detectedCorners, cropArea, autoDetecting, editMode])
+
   // Interface Mobile Full-Screen
   if (isMobile) {
     return (
@@ -993,81 +1072,22 @@ export function DocumentScanner({
               {/* Preview da Foto Capturada */}
               {!editMode ? (
                 <div className="relative w-full h-full flex items-center justify-center bg-black">
-                  {/* Canvas de Preview com Bordas Detectadas */}
+                  {/* Canvas de Preview */}
                   <canvas
                     ref={previewCanvasRef}
                     className="max-w-full max-h-full object-contain"
                   />
 
                   {/* Overlay com Bordas da Detecção */}
-                  {detectedCorners && !autoDetecting && cropArea && (
-                    <canvas
-                      ref={(canvas) => {
-                        if (!canvas || !previewCanvasRef.current) return
-
-                        // Copiar dimensões do preview canvas
-                        const previewCanvas = previewCanvasRef.current
-                        canvas.width = previewCanvas.width
-                        canvas.height = previewCanvas.height
-
-                        const ctx = canvas.getContext('2d')
-                        if (!ctx) return
-
-                        // Limpar canvas
-                        ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-                        // Desenhar bordas verdes ao redor da área detectada
-                        ctx.strokeStyle = '#10b981' // Verde
-                        ctx.lineWidth = 6
-                        ctx.shadowColor = '#10b981'
-                        ctx.shadowBlur = 10
-
-                        // Desenhar retângulo da área detectada
-                        ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height)
-
-                        // Desenhar cantos decorativos
-                        const cornerSize = 40
-                        const corners = [
-                          { x: cropArea.x, y: cropArea.y }, // Top-left
-                          { x: cropArea.x + cropArea.width, y: cropArea.y }, // Top-right
-                          { x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height }, // Bottom-right
-                          { x: cropArea.x, y: cropArea.y + cropArea.height }, // Bottom-left
-                        ]
-
-                        ctx.lineWidth = 8
-                        ctx.strokeStyle = '#10b981'
-                        ctx.shadowBlur = 15
-
-                        corners.forEach((corner, index) => {
-                          ctx.beginPath()
-                          if (index === 0) { // Top-left
-                            ctx.moveTo(corner.x, corner.y + cornerSize)
-                            ctx.lineTo(corner.x, corner.y)
-                            ctx.lineTo(corner.x + cornerSize, corner.y)
-                          } else if (index === 1) { // Top-right
-                            ctx.moveTo(corner.x - cornerSize, corner.y)
-                            ctx.lineTo(corner.x, corner.y)
-                            ctx.lineTo(corner.x, corner.y + cornerSize)
-                          } else if (index === 2) { // Bottom-right
-                            ctx.moveTo(corner.x, corner.y - cornerSize)
-                            ctx.lineTo(corner.x, corner.y)
-                            ctx.lineTo(corner.x - cornerSize, corner.y)
-                          } else { // Bottom-left
-                            ctx.moveTo(corner.x + cornerSize, corner.y)
-                            ctx.lineTo(corner.x, corner.y)
-                            ctx.lineTo(corner.x, corner.y - cornerSize)
-                          }
-                          ctx.stroke()
-                        })
-                      }}
-                      className="absolute max-w-full max-h-full object-contain pointer-events-none"
-                      style={{
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)'
-                      }}
-                    />
-                  )}
+                  <canvas
+                    ref={overlayCanvasRef}
+                    className="absolute max-w-full max-h-full object-contain pointer-events-none"
+                    style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}
+                  />
 
                   {/* Indicador de Detecção Automática */}
                   {autoDetecting && (
