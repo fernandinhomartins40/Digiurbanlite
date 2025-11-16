@@ -60,7 +60,7 @@ export function useService(department: string, module: string): UseServiceResult
 
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
       const response = await fetch(
-        `${backendUrl}/api/services/${department}/${module}`,
+        `${backendUrl}/services/${department}/${module}`,
         {
           credentials: 'include',
           headers: {

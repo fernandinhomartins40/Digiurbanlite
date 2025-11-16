@@ -63,7 +63,7 @@ export function useServiceProtocols(serviceIds: string[]): UseServiceProtocolsRe
       });
 
       const response = await fetch(
-        `${backendUrl}/api/protocols?${params.toString()}`,
+        `${backendUrl}/protocols?${params.toString()}`,
         {
           credentials: 'include',
           headers: {

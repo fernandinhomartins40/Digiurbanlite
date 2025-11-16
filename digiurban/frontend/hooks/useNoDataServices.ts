@@ -42,7 +42,7 @@ export function useNoDataServices(departmentSlug: string): UseNoDataServicesResu
 
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
       const response = await fetch(
-        `${backendUrl}/api/citizen/services/departments/${departmentSlug}/no-data`,
+        `${backendUrl}/citizen/services/departments/${departmentSlug}/no-data`,
         {
           credentials: 'include',
           headers: {

@@ -20,7 +20,7 @@ export async function DELETE(
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/email-server/domains/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/email-server/domains/${params.id}`, {
       method: 'DELETE',
       headers: {
         'Cookie': `digiurban_admin_token=${token}`

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fazer requisição ao backend
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/stats`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/stats`, {
       headers: {
         'Cookie': `digiurban_admin_token=${token}`
       }

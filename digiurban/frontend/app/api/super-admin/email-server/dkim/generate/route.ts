@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/email-server/dkim/generate`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/email-server/dkim/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

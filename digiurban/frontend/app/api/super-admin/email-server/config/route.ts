@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/email-server/config`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/email-server/config`, {
       headers: {
         'Cookie': `digiurban_admin_token=${token}`
       }
@@ -52,7 +52,7 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
 
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/email-server/config`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/email-server/config`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

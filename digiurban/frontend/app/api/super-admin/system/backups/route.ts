@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/system/backups`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/system/backups`, {
       headers: {
         'Cookie': `digiurban_admin_token=${token}`
       }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/system/backups`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/system/backups`, {
       method: 'POST',
       headers: {
         'Cookie': `digiurban_admin_token=${token}`

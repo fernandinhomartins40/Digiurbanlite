@@ -25,7 +25,7 @@ export async function PUT(
     const body = await request.json();
 
     // Fazer requisição ao backend
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/users/admins/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/users/admins/${params.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ export async function DELETE(
     }
 
     // Fazer requisição ao backend
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/users/admins/${params.id}`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/users/admins/${params.id}`, {
       method: 'DELETE',
       headers: {
         'Cookie': `digiurban_admin_token=${token}`

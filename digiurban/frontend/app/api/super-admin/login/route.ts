@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Fazer requisição ao backend
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/login`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

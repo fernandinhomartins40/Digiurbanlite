@@ -20,7 +20,7 @@ export async function POST(
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/email-server/domains/${params.id}/verify`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/email-server/domains/${params.id}/verify`, {
       method: 'POST',
       headers: {
         'Cookie': `digiurban_admin_token=${token}`

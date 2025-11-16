@@ -24,10 +24,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('[/api/super-admin/auth/me] 🔄 Fazendo requisição para backend:', `${BACKEND_URL}/api/super-admin/auth/me`);
+    console.log('[/api/super-admin/auth/me] 🔄 Fazendo requisição para backend:', `${BACKEND_URL}/super-admin/auth/me`);
 
     // Fazer requisição ao backend passando o cookie no formato correto
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/auth/me`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/auth/me`, {
       method: 'GET',
       headers: {
         'Cookie': `digiurban_admin_token=${token}`,

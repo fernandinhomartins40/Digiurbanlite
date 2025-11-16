@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/email-server/dkim`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/email-server/dkim`, {
       headers: {
         'Cookie': `digiurban_admin_token=${token}`
       }

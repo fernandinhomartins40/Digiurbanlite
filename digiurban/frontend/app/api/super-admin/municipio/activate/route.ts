@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fazer requisição ao backend
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/municipio/activate`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/municipio/activate`, {
       method: 'POST',
       headers: {
         'Cookie': `digiurban_admin_token=${token}`

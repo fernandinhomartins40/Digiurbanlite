@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
     // Tentar fazer logout no backend (mesmo sem token)
     if (token) {
-      await fetch(`${BACKEND_URL}/api/super-admin/logout`, {
+      await fetch(`${BACKEND_URL}/super-admin/logout`, {
         method: 'POST',
         headers: {
           'Cookie': `digiurban_admin_token=${token}`

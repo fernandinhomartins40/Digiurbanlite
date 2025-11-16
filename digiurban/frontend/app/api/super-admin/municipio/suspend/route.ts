@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Fazer requisição ao backend
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/municipio/suspend`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/municipio/suspend`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

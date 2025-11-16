@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fazer requisição ao backend
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/users/admins`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/users/admins`, {
       headers: {
         'Cookie': `digiurban_admin_token=${token}`
       }
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Fazer requisição ao backend
-    const response = await fetch(`${BACKEND_URL}/api/super-admin/users/admins`, {
+    const response = await fetch(`${BACKEND_URL}/super-admin/users/admins`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
