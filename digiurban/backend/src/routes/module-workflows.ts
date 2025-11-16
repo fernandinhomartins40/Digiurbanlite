@@ -10,7 +10,7 @@ const router = express.Router();
  * POST /api/workflows
  * Criar um novo workflow de módulo
  */
-router.post('/', requireMinRole(UserRole.ADMIN), async (req, res) => {
+router.post('/', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const { moduleType, name, description, stages, defaultSLA, rules } =
       req.body;
@@ -72,7 +72,7 @@ router.get('/', adminAuthMiddleware, async (req, res) => {
  * GET /api/workflows/stats
  * Obter estatísticas de workflows
  */
-router.get('/stats', requireMinRole(UserRole.ADMIN), async (req, res) => {
+router.get('/stats', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const stats = await workflowService.getWorkflowStats();
 
@@ -125,7 +125,7 @@ router.get('/:moduleType', adminAuthMiddleware, async (req, res) => {
  * PUT /api/workflows/:moduleType
  * Atualizar um workflow
  */
-router.put('/:moduleType', requireMinRole(UserRole.ADMIN), async (req, res) => {
+router.put('/:moduleType', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const { moduleType } = req.params;
     const updateData = req.body;
@@ -155,6 +155,7 @@ router.put('/:moduleType', requireMinRole(UserRole.ADMIN), async (req, res) => {
  */
 router.post(
   '/:moduleType/apply/:protocolId',
+  adminAuthMiddleware,
   requireRole(UserRole.USER),
   async (req, res) => {
     try {
@@ -187,6 +188,7 @@ router.post(
  */
 router.get(
   '/validate-stage/:protocolId/:stageOrder',
+  adminAuthMiddleware,
   requireRole(UserRole.USER),
   async (req, res) => {
     try {
@@ -218,6 +220,7 @@ router.get(
  */
 router.post(
   '/seed-defaults',
+  adminAuthMiddleware,
   requireMinRole(UserRole.ADMIN),
   async (req, res) => {
     try {
@@ -245,6 +248,7 @@ router.post(
  */
 router.delete(
   '/:moduleType',
+  adminAuthMiddleware,
   requireMinRole(UserRole.ADMIN),
   async (req, res) => {
     try {
