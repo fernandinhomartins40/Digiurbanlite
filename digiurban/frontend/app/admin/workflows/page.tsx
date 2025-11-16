@@ -18,6 +18,9 @@ import {
 } from 'lucide-react'
 import { WorkflowFormModal } from '@/components/admin/workflows/WorkflowFormModal'
 import { useToast } from '@/hooks/use-toast'
+import { HelpButton } from '@/components/common/HelpButton'
+import { HelpModal } from '@/components/common/HelpModal'
+import { workflowsHelpContent } from '@/src/content/help/workflows-help'
 
 interface ModuleWorkflow {
   id: string
@@ -39,6 +42,7 @@ export default function WorkflowsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingWorkflow, setEditingWorkflow] = useState<ModuleWorkflow | null>(null)
   const [stats, setStats] = useState<any>(null)
+  const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
     loadWorkflows()
@@ -150,9 +154,17 @@ export default function WorkflowsPage() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-3 mb-2">
-          <GitBranch className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Workflows de Módulos</h1>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <GitBranch className="h-8 w-8 text-primary" />
+            <h1 className="text-3xl font-bold">Workflows de Módulos</h1>
+          </div>
+          <HelpButton
+            onClick={() => setShowHelp(true)}
+            position="inline"
+            label="Como usar Workflows?"
+            size="md"
+          />
         </div>
         <p className="text-muted-foreground">
           Gerencie os fluxos de trabalho com etapas, aprovações e SLAs
@@ -335,6 +347,20 @@ export default function WorkflowsPage() {
           onSaveSuccess={handleSaveSuccess}
         />
       )}
+
+      {/* Sistema de Ajuda */}
+      <HelpModal
+        isOpen={showHelp}
+        onClose={() => setShowHelp(false)}
+        content={workflowsHelpContent}
+      />
+
+      {/* Botão de Ajuda Flutuante */}
+      <HelpButton
+        onClick={() => setShowHelp(true)}
+        position="fixed"
+        label="Precisa de ajuda com Workflows?"
+      />
     </div>
   )
 }
