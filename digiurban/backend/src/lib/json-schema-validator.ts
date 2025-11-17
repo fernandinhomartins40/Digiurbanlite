@@ -105,7 +105,23 @@ export function validateServiceFormData(
 
   // Se formSchema já é um JSON Schema válido (tem type, properties, etc.)
   if (formSchema.type === 'object' && formSchema.properties) {
-    return validateFormData(formSchema, data);
+    // ✅ FIX: Remover campos do cidadão da validação (são preenchidos pelo backend)
+    const cleanedSchema = { ...formSchema };
+
+    if (Array.isArray(cleanedSchema.required)) {
+      // Campos do cidadão que devem ser ignorados na validação do customFormData
+      const citizenFieldsToIgnore = [
+        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
+        'telefoneSecundario', 'cep', 'logradouro', 'numero', 'complemento',
+        'bairro', 'cidade', 'uf', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar'
+      ];
+
+      cleanedSchema.required = cleanedSchema.required.filter(
+        (field: string) => !citizenFieldsToIgnore.includes(field)
+      );
+    }
+
+    return validateFormData(cleanedSchema, data);
   }
 
   // Se formSchema é o formato legado (array de fields)
