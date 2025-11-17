@@ -358,10 +358,10 @@ export const housingServices: ServiceDefinition[] = [
           numeroDependentes: { type: 'integer', title: 'Número de Dependentes', minimum: 0 },
           situacaoAtual: { type: 'string', title: 'Situação Atual de Moradia', enum: ['Própria', 'Alugada', 'Cedida', 'Ocupação Irregular', 'Situação de Rua'] },
           tempoResidencia: { type: 'string', title: 'Tempo de Residência no Município', enum: ['Menos de 1 ano', '1-3 anos', '3-5 anos', '5-10 anos', 'Mais de 10 anos'] },
-          possuiImovel: { type: 'string', title: 'Possui Imóvel?', enum: ['Sim', 'Não'] },
-          inscritoCadUnico: { type: 'string', title: 'Inscrito no CadÚnico?', enum: ['Sim', 'Não'] },
+          possuiImovel: { type: 'boolean', title: 'Possui Imóvel?', default: false },
+          inscritoCadUnico: { type: 'boolean', title: 'Inscrito no CadÚnico?', default: false },
           nisCadUnico: { type: 'string', title: 'NIS (CadÚnico)', maxLength: 20 },
-          deficienciaFamilia: { type: 'string', title: 'Há pessoa com deficiência na família?', enum: ['Sim', 'Não'] },
+          deficienciaFamilia: { type: 'boolean', title: 'Há pessoa com deficiência na família?', default: false },
           observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
         },
         required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'programaInteresse', 'rendaFamiliarTotal', 'numeroMoradores', 'situacaoAtual', 'possuiImovel', 'inscritoCadUnico']
@@ -408,9 +408,9 @@ export const housingServices: ServiceDefinition[] = [
           motivoSolicitacao: { type: 'string', title: 'Motivo da Solicitação', enum: ['Desabrigado por Calamidade', 'Despejo', 'Remoção por Obra Pública', 'Vulnerabilidade Social', 'Violência Doméstica', 'Outro'] },
           descricaoSituacao: { type: 'string', title: 'Descrição da Situação', minLength: 30, maxLength: 1000 },
           valorAluguel: { type: 'number', title: 'Valor do Aluguel Atual/Pretendido (R$)', minimum: 0 },
-          inscritoCadUnico: { type: 'string', title: 'Inscrito no CadÚnico?', enum: ['Sim', 'Não'] },
+          inscritoCadUnico: { type: 'boolean', title: 'Inscrito no CadÚnico?', default: false },
           nisCadUnico: { type: 'string', title: 'NIS (CadÚnico)', maxLength: 20 },
-          deficienciaFamilia: { type: 'string', title: 'Há pessoa com deficiência na família?', enum: ['Sim', 'Não'] },
+          deficienciaFamilia: { type: 'boolean', title: 'Há pessoa com deficiência na família?', default: false },
           observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
         },
         required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'rendaFamiliarTotal', 'numeroMoradores', 'motivoSolicitacao', 'descricaoSituacao', 'inscritoCadUnico']
@@ -506,10 +506,10 @@ export const housingServices: ServiceDefinition[] = [
           numeroDependentes: { type: 'integer', title: 'Número de Dependentes', minimum: 0 },
           situacaoAtual: { type: 'string', title: 'Situação Atual de Moradia', enum: ['Alugada', 'Cedida', 'Ocupação Irregular', 'Situação de Rua', 'Outro'] },
           tempoResidencia: { type: 'string', title: 'Tempo de Residência no Município', enum: ['Menos de 1 ano', '1-3 anos', '3-5 anos', '5-10 anos', 'Mais de 10 anos'] },
-          inscritoCadUnico: { type: 'string', title: 'Inscrito no CadÚnico?', enum: ['Sim', 'Não'] },
+          inscritoCadUnico: { type: 'boolean', title: 'Inscrito no CadÚnico?', default: false },
           nisCadUnico: { type: 'string', title: 'NIS (CadÚnico)', maxLength: 20 },
-          deficienciaFamilia: { type: 'string', title: 'Há pessoa com deficiência na família?', enum: ['Sim', 'Não'] },
-          idosoFamilia: { type: 'string', title: 'Há idoso na família?', enum: ['Sim', 'Não'] },
+          deficienciaFamilia: { type: 'boolean', title: 'Há pessoa com deficiência na família?', default: false },
+          idosoFamilia: { type: 'boolean', title: 'Há idoso na família?', default: false },
           observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
         },
         required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'rendaFamiliarTotal', 'numeroMoradores', 'situacaoAtual', 'tempoResidencia', 'inscritoCadUnico']

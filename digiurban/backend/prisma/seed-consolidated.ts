@@ -297,12 +297,28 @@ async function main() {
     }
 
     // ========================================================================
-    // 6. MODULE WORKFLOWS (REMOVIDO - Feature não implementada)
+    // 6. ESTABELECIMENTOS (Unidades de Saúde, Escolas, CRAS, Espaços Públicos)
+    // ========================================================================
+    console.log('6️⃣  Estabelecimentos e Espaços Públicos');
+    console.log('   ─────────────────────────────');
+    console.log('   📦 Importando estabelecimentos...');
+
+    try {
+      const { seedAllEstabelecimentos } = await import('./seeds/establishments/index');
+      await seedAllEstabelecimentos();
+      console.log(`   ✅ Estabelecimentos criados com sucesso\n`);
+    } catch (error: any) {
+      console.error('   ⚠️  Erro ao importar estabelecimentos:', error.message);
+      console.log('   ℹ️  Continuando sem os estabelecimentos...\n');
+    }
+
+    // ========================================================================
+    // 7. MODULE WORKFLOWS (REMOVIDO - Feature não implementada)
     // ========================================================================
     // Workflows são opcionais e serão criados via interface admin quando necessário
     // A infraestrutura está pronta (tabela module_workflows, APIs, etc)
     // mas não pre-populamos workflows pois não há interface visual ainda
-    console.log('6️⃣  Module Workflows');
+    console.log('7️⃣  Module Workflows');
     console.log('   ─────────────────────────────');
     console.log('   ⏭️  Pulado - Workflows serão criados via interface admin\n');
 

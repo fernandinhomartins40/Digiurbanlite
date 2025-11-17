@@ -1702,3 +1702,89 @@ model CustomDataRecord {
   @@index([serviceId])
   @@map("custom_data_records")
 }
+
+// ========================================
+// TABELAS DE APOIO PARA SELECTS DINÂMICOS
+// ========================================
+
+// Unidades de Saúde (UBS, UPA, Hospitais, etc.)
+model UnidadeSaude {
+  id          String   @id @default(cuid())
+  nome        String
+  tipo        String   // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
+  endereco    String?
+  bairro      String?
+  telefone    String?
+  horario     String?
+  especialidades Json?  // Array de especialidades disponíveis
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([isActive])
+  @@map("unidades_saude")
+}
+
+// Unidades Educacionais (Escolas, Creches, etc.)
+model UnidadeEducacao {
+  id          String   @id @default(cuid())
+  nome        String
+  tipo        String   // 'Escola', 'Creche', 'EMEI', 'EMEF', 'CEI', 'Outro'
+  endereco    String?
+  bairro      String?
+  telefone    String?
+  email       String?
+  niveisEnsino Json?   // ['Infantil', 'Fundamental I', 'Fundamental II', 'EJA']
+  turnos      Json?    // ['Matutino', 'Vespertino', 'Integral', 'Noturno']
+  vagas       Int?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([isActive])
+  @@map("unidades_educacao")
+}
+
+// Unidades de Assistência Social (CRAS, CREAS)
+model UnidadeCRAS {
+  id          String   @id @default(cuid())
+  nome        String
+  tipo        String   // 'CRAS', 'CREAS'
+  endereco    String?
+  bairro      String?
+  telefone    String?
+  email       String?
+  horario     String?
+  programas   Json?    // Array de programas oferecidos
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([isActive])
+  @@map("unidades_cras")
+}
+
+// Espaços Públicos (Quadras, Ginásios, Teatros, Centros Culturais, etc.)
+model EspacoPublico {
+  id          String   @id @default(cuid())
+  nome        String
+  tipo        String   // 'Quadra', 'Ginásio', 'Campo', 'Piscina', 'Teatro', 'Centro Cultural', 'Praça', 'Outro'
+  categoria   String?  // 'Esportivo', 'Cultural', 'Lazer', 'Misto'
+  endereco    String?
+  bairro      String?
+  telefone    String?
+  capacidade  Int?
+  comodidades Json?    // Array de comodidades disponíveis
+  horario     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@map("espacos_publicos")
+}
