@@ -403,6 +403,26 @@ export const educationServices: ServiceDefinition[] = [
           required: false
         }
       ]
+    },
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        description: 'Selecione o aluno que utilizará o transporte escolar',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'enderecoColeta', sourceField: 'enderecoColeta' },
+          { id: 'horarioColeta', sourceField: 'horarioColeta' },
+          { id: 'possuiNecessidadesEspeciais', sourceField: 'possuiNecessidadesEspeciais' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
     }
   },
   {
@@ -786,6 +806,47 @@ export const educationServices: ServiceDefinition[] = [
           'nomeAluno', 'dataNascimentoAluno', 'certidaoNascimento', 'nomeMaeAluno', 'sexoAluno',
           'grauParentesco', 'unidadeEscolarDesejada', 'nivelEnsino', 'turnoDesejado', 'tipoMatricula'
         ]
+      },
+      linkedCitizensConfig: {
+        enabled: true,
+        links: [{
+          linkType: 'STUDENT',
+          role: 'BENEFICIARY',
+          label: 'Aluno',
+          description: 'Selecione o aluno que será matriculado',
+          required: true,
+          mapFromLegacyFields: {
+            name: 'nomeAluno',
+            birthDate: 'dataNascimentoAluno',
+            cpf: 'cpfAluno',
+            rg: 'rgAluno'
+          },
+          contextFields: [
+            { id: 'sexoAluno', sourceField: 'sexoAluno' },
+            { id: 'racaCorAluno', sourceField: 'racaCorAluno' },
+            { id: 'certidaoNascimento', sourceField: 'certidaoNascimento' },
+            { id: 'nomeMaeAluno', sourceField: 'nomeMaeAluno' },
+            { id: 'nomePaiAluno', sourceField: 'nomePaiAluno' },
+            { id: 'grauParentesco', sourceField: 'grauParentesco' },
+            { id: 'possuiGuardaJudicial', sourceField: 'possuiGuardaJudicial' },
+            { id: 'unidadeEscolarDesejada', sourceField: 'unidadeEscolarDesejada' },
+            { id: 'nivelEnsino', sourceField: 'nivelEnsino' },
+            { id: 'anoSerieDesejado', sourceField: 'anoSerieDesejado' },
+            { id: 'turnoDesejado', sourceField: 'turnoDesejado' },
+            { id: 'tipoMatricula', sourceField: 'tipoMatricula' },
+            { id: 'escolaOrigem', sourceField: 'escolaOrigem' },
+            { id: 'possuiNecessidadesEspeciais', sourceField: 'possuiNecessidadesEspeciais' },
+            { id: 'tipoNecessidade', sourceField: 'tipoNecessidade' },
+            { id: 'descricaoNecessidades', sourceField: 'descricaoNecessidades' },
+            { id: 'necessitaAcompanhante', sourceField: 'necessitaAcompanhante' },
+            { id: 'possuiLaudoMedico', sourceField: 'possuiLaudoMedico' },
+            { id: 'alergias', sourceField: 'alergias' },
+            { id: 'medicamentosUso', sourceField: 'medicamentosUso' },
+            { id: 'bolsaFamilia', sourceField: 'bolsaFamilia' },
+            { id: 'nisBolsaFamilia', sourceField: 'nisBolsaFamilia' }
+          ],
+          expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+        }]
       }
     },
   {
@@ -868,6 +929,41 @@ export const educationServices: ServiceDefinition[] = [
           'nomeAluno', 'dataNascimentoAluno', 'unidadeEscolar', 'serie', 'turno',
           'enderecoEmbarqueCompleto', 'pontoReferenciaEmbarque', 'distanciaEscolaKm', 'horarioEntradaEscola'
         ]
+      },
+      linkedCitizensConfig: {
+        enabled: true,
+        links: [{
+          linkType: 'STUDENT',
+          role: 'BENEFICIARY',
+          label: 'Aluno',
+          description: 'Selecione o aluno que utilizará o transporte escolar',
+          required: true,
+          mapFromLegacyFields: {
+            name: 'nomeAluno',
+            birthDate: 'dataNascimentoAluno',
+            cpf: 'cpfAluno'
+          },
+          contextFields: [
+            { id: 'unidadeEscolar', sourceField: 'unidadeEscolar' },
+            { id: 'serie', sourceField: 'serie' },
+            { id: 'turno', sourceField: 'turno' },
+            { id: 'numeroMatricula', sourceField: 'numeroMatricula' },
+            { id: 'enderecoEmbarqueCompleto', sourceField: 'enderecoEmbarqueCompleto' },
+            { id: 'pontoReferenciaEmbarque', sourceField: 'pontoReferenciaEmbarque' },
+            { id: 'distanciaEscolaKm', sourceField: 'distanciaEscolaKm' },
+            { id: 'zonaResidencia', sourceField: 'zonaResidencia' },
+            { id: 'possuiNecessidadesEspeciais', sourceField: 'possuiNecessidadesEspeciais' },
+            { id: 'tipoNecessidade', sourceField: 'tipoNecessidade' },
+            { id: 'necessitaMonitor', sourceField: 'necessitaMonitor' },
+            { id: 'motivoNecessidadeMonitor', sourceField: 'motivoNecessidadeMonitor' },
+            { id: 'necessitaCadeiraRodas', sourceField: 'necessitaCadeiraRodas' },
+            { id: 'horarioEntradaEscola', sourceField: 'horarioEntradaEscola' },
+            { id: 'horarioSaidaEscola', sourceField: 'horarioSaidaEscola' },
+            { id: 'necessitaTransporteIda', sourceField: 'necessitaTransporteIda' },
+            { id: 'necessitaTransporteVolta', sourceField: 'necessitaTransporteVolta' }
+          ],
+          expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+        }]
       }
     },
   {
@@ -962,6 +1058,35 @@ export const educationServices: ServiceDefinition[] = [
           'tipoOcorrencia', 'dataOcorrencia', 'horaOcorrencia', 'localOcorrencia', 'descricaoOcorrencia',
           'gravidadeOcorrencia', 'professorRelator'
         ]
+      },
+      linkedCitizensConfig: {
+        enabled: true,
+        links: [{
+          linkType: 'STUDENT',
+          role: 'BENEFICIARY',
+          label: 'Aluno',
+          description: 'Selecione o aluno relacionado à ocorrência',
+          required: true,
+          mapFromLegacyFields: {
+            name: 'nomeAluno',
+            birthDate: 'dataNascimentoAluno',
+            cpf: 'cpfAluno'
+          },
+          contextFields: [
+            { id: 'numeroMatricula', sourceField: 'numeroMatricula' },
+            { id: 'unidadeEscolar', sourceField: 'unidadeEscolar' },
+            { id: 'serie', sourceField: 'serie' },
+            { id: 'turma', sourceField: 'turma' },
+            { id: 'turno', sourceField: 'turno' },
+            { id: 'tipoOcorrencia', sourceField: 'tipoOcorrencia' },
+            { id: 'dataOcorrencia', sourceField: 'dataOcorrencia' },
+            { id: 'horaOcorrencia', sourceField: 'horaOcorrencia' },
+            { id: 'localOcorrencia', sourceField: 'localOcorrencia' },
+            { id: 'descricaoOcorrencia', sourceField: 'descricaoOcorrencia' },
+            { id: 'gravidadeOcorrencia', sourceField: 'gravidadeOcorrencia' }
+          ],
+          expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+        }]
       }
     },
   {
@@ -1046,6 +1171,30 @@ export const educationServices: ServiceDefinition[] = [
           'vinculoComAluno', 'nomeAluno', 'dataNascimentoAluno', 'unidadeEscolar',
           'tipoDocumento', 'anoLetivo', 'finalidade', 'formaEntrega'
         ]
+      },
+      linkedCitizensConfig: {
+        enabled: true,
+        links: [{
+          linkType: 'STUDENT',
+          role: 'BENEFICIARY',
+          label: 'Aluno',
+          description: 'Selecione o aluno para o qual o documento será emitido',
+          required: true,
+          mapFromLegacyFields: {
+            name: 'nomeAluno',
+            cpf: 'cpfAluno',
+            birthDate: 'dataNascimentoAluno'
+          },
+          contextFields: [
+            { id: 'numeroMatricula', sourceField: 'numeroMatricula' },
+            { id: 'unidadeEscolar', sourceField: 'unidadeEscolar' },
+            { id: 'tipoDocumento', sourceField: 'tipoDocumento' },
+            { id: 'anoLetivo', sourceField: 'anoLetivo' },
+            { id: 'serieAnoReferencia', sourceField: 'serieAnoReferencia' },
+            { id: 'periodoReferencia', sourceField: 'periodoReferencia' }
+          ],
+          expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+        }]
       }
     },
   {
@@ -1114,6 +1263,28 @@ export const educationServices: ServiceDefinition[] = [
           'vinculoComAluno', 'nomeAluno', 'matricula', 'unidadeEscolar', 'serie',
           'periodoConsulta', 'anoLetivo'
         ]
+      },
+      linkedCitizensConfig: {
+        enabled: true,
+        links: [{
+          linkType: 'STUDENT',
+          role: 'BENEFICIARY',
+          label: 'Aluno',
+          description: 'Selecione o aluno para consulta de frequência',
+          required: true,
+          mapFromLegacyFields: {
+            name: 'nomeAluno'
+          },
+          contextFields: [
+            { id: 'matricula', sourceField: 'matricula' },
+            { id: 'unidadeEscolar', sourceField: 'unidadeEscolar' },
+            { id: 'serie', sourceField: 'serie' },
+            { id: 'turma', sourceField: 'turma' },
+            { id: 'periodoConsulta', sourceField: 'periodoConsulta' },
+            { id: 'anoLetivo', sourceField: 'anoLetivo' }
+          ],
+          expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+        }]
       }
     },
   {
@@ -1183,6 +1354,29 @@ export const educationServices: ServiceDefinition[] = [
           'vinculoComAluno', 'nomeAluno', 'matricula', 'unidadeEscolar', 'serie',
           'periodoConsulta', 'anoLetivo'
         ]
+      },
+      linkedCitizensConfig: {
+        enabled: true,
+        links: [{
+          linkType: 'STUDENT',
+          role: 'BENEFICIARY',
+          label: 'Aluno',
+          description: 'Selecione o aluno para consulta de notas e boletim',
+          required: true,
+          mapFromLegacyFields: {
+            name: 'nomeAluno'
+          },
+          contextFields: [
+            { id: 'matricula', sourceField: 'matricula' },
+            { id: 'unidadeEscolar', sourceField: 'unidadeEscolar' },
+            { id: 'serie', sourceField: 'serie' },
+            { id: 'turma', sourceField: 'turma' },
+            { id: 'periodoConsulta', sourceField: 'periodoConsulta' },
+            { id: 'anoLetivo', sourceField: 'anoLetivo' },
+            { id: 'disciplinaEspecifica', sourceField: 'disciplinaEspecifica' }
+          ],
+          expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+        }]
       }
     },
   {

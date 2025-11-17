@@ -422,13 +422,24 @@ export const sportsServices: ServiceDefinition[] = [
         linkType: 'STUDENT',
         role: 'BENEFICIARY',
         label: 'Aluno/Participante',
+        description: 'Selecione o aluno que participará da escolinha esportiva',
         required: true,
-        mapFromLegacyFields: {},
+        mapFromLegacyFields: {
+          name: 'nomeAluno',
+          cpf: 'cpfAluno',
+          birthDate: 'dataNascimentoAluno'
+        },
         contextFields: [
-          { id: 'modalidade', sourceField: 'modalidade' },
-          { id: 'turno', sourceField: 'turno' }
+          { id: 'idadeAluno', sourceField: 'idadeAluno' },
+          { id: 'sexoAluno', sourceField: 'sexoAluno' },
+          { id: 'modalidadeEscolinha', sourceField: 'modalidadeEscolinha' },
+          { id: 'unidadeEscolinha', sourceField: 'unidadeEscolinha' },
+          { id: 'turnoPreferencia', sourceField: 'turnoPreferencia' },
+          { id: 'necessidadesEspeciais', sourceField: 'necessidadesEspeciais' },
+          { id: 'experienciaAnterior', sourceField: 'experienciaAnterior' },
+          { id: 'objetivoInscricao', sourceField: 'objetivoInscricao' }
         ],
-        expectedRelationships: ['SON', 'DAUGHTER']
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
       }]
     }
   },

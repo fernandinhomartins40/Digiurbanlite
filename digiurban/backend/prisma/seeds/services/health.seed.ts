@@ -1376,6 +1376,29 @@ export const healthServices: ServiceDefinition[] = [
           required: false
         }
       ]
+    },
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'COMPANION',
+        role: 'COMPANION',
+        label: 'Acompanhante',
+        description: 'Selecione o acompanhante para o transporte',
+        required: false,
+        mapFromLegacyFields: {
+          name: 'nomeAcompanhante',
+          cpf: 'cpfAcompanhante'
+        },
+        contextFields: [
+          { id: 'parentescoAcompanhante', sourceField: 'parentescoAcompanhante' },
+          { id: 'necessitaAcompanhante', sourceField: 'necessitaAcompanhante' },
+          { id: 'condicaoPaciente', sourceField: 'condicaoPaciente' },
+          { id: 'tipoTransporte', sourceField: 'tipoTransporte' },
+          { id: 'destino', sourceField: 'destino' },
+          { id: 'dataPreferencial', sourceField: 'dataPreferencial' }
+        ],
+        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING']
+      }]
     }
   },
   {

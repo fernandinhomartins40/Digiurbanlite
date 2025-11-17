@@ -585,7 +585,25 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'relacao', type: 'select', label: 'Relação com o Paciente', required: true },
       { name: 'data_atendimento', type: 'date', label: 'Data do Atendimento', required: true },
       { name: 'periodo_acompanhamento', type: 'select', label: 'Período de Acompanhamento', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'COMPANION',
+        role: 'COMPANION',
+        label: 'Acompanhante',
+        required: true,
+        mapFromLegacyFields: {
+          cpf: 'cpf_acompanhante'
+        },
+        contextFields: [
+          { id: 'relacao', sourceField: 'relacao' },
+          { id: 'dataAtendimento', sourceField: 'data_atendimento' },
+          { id: 'periodoAcompanhamento', sourceField: 'periodo_acompanhamento' }
+        ],
+        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING', 'OTHER']
+      }]
+    }
   },
   {
     id: 'programa-obesidade',

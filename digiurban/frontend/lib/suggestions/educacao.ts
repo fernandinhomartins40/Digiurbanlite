@@ -53,7 +53,27 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_residencia', type: 'text', label: 'Endereço de Residência', required: true },
       { name: 'distancia_escola', type: 'number', label: 'Distância até a Escola (km)', required: false },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'serie', sourceField: 'serie' },
+          { id: 'turno', sourceField: 'turno' },
+          { id: 'enderecoResidencia', sourceField: 'endereco_residencia' },
+          { id: 'distanciaEscola', sourceField: 'distancia_escola' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'merenda-especial',
@@ -69,7 +89,26 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'descricao_restricao', type: 'textarea', label: 'Descrição da Restrição', required: true },
       { name: 'laudo_medico', type: 'checkbox', label: 'Possui Laudo Médico', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'restricaoAlimentar', sourceField: 'restricao_alimentar' },
+          { id: 'descricaoRestricao', sourceField: 'descricao_restricao' },
+          { id: 'laudoMedico', sourceField: 'laudo_medico' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'transferencia-escola',
@@ -131,7 +170,26 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar Mensal (R$)', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores na Casa', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'serie', sourceField: 'serie' },
+          { id: 'rendaFamiliar', sourceField: 'renda_familiar' },
+          { id: 'numMoradores', sourceField: 'num_moradores' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'eja-inscricao',
@@ -161,7 +219,27 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_deficiencia', type: 'select', label: 'Tipo de Deficiência/Necessidade', required: true },
       { name: 'laudo_medico', type: 'checkbox', label: 'Possui Laudo Médico', required: true },
       { name: 'atendimento_solicitado', type: 'textarea', label: 'Tipo de Atendimento Necessário', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'serie', sourceField: 'serie' },
+          { id: 'tipoDeficiencia', sourceField: 'tipo_deficiencia' },
+          { id: 'laudoMedico', sourceField: 'laudo_medico' },
+          { id: 'atendimentoSolicitado', sourceField: 'atendimento_solicitado' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'uniforme-escolar',
@@ -178,7 +256,27 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tamanho_calca', type: 'select', label: 'Tamanho da Calça/Bermuda', required: true },
       { name: 'tamanho_tenis', type: 'number', label: 'Número do Calçado', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'serie', sourceField: 'serie' },
+          { id: 'tamanhoCamisa', sourceField: 'tamanho_camisa' },
+          { id: 'tamanhoCalca', sourceField: 'tamanho_calca' },
+          { id: 'tamanhoTenis', sourceField: 'tamanho_tenis' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'material-escolar',
@@ -193,7 +291,25 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'serie', sourceField: 'serie' },
+          { id: 'turno', sourceField: 'turno' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'historico-escolar',
@@ -223,7 +339,27 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'data_prova_perdida', type: 'date', label: 'Data da Prova Perdida', required: true },
       { name: 'motivo', type: 'textarea', label: 'Motivo da Ausência', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'serie', sourceField: 'serie' },
+          { id: 'disciplina', sourceField: 'disciplina' },
+          { id: 'dataProvaPerdida', sourceField: 'data_prova_perdida' },
+          { id: 'motivo', sourceField: 'motivo' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'atendimento-psicologo-escolar',
@@ -253,7 +389,26 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'disciplina', type: 'select', label: 'Disciplina', required: true },
       { name: 'turno_disponivel', type: 'select', label: 'Turno Disponível', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escola', sourceField: 'escola' },
+          { id: 'serie', sourceField: 'serie' },
+          { id: 'disciplina', sourceField: 'disciplina' },
+          { id: 'turnoDisponivel', sourceField: 'turno_disponivel' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'rematricula',

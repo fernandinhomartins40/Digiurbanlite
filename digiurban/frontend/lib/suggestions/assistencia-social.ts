@@ -141,7 +141,23 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     requiresDocuments: true,
     suggestedFields: [
       { name: 'cadastro_unico', type: 'checkbox', label: 'Possui Cadastro Único', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'DEPENDENT',
+        role: 'BENEFICIARY',
+        label: 'Criança',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeCrianca'
+        },
+        contextFields: [
+          { id: 'cadastroUnico', sourceField: 'cadastro_unico' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER']
+      }]
+    }
   },
   {
     id: 'creas-atendimento',
@@ -171,7 +187,38 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'cpf_mae', type: 'cpf', label: 'CPF da Mãe', required: true },
       { name: 'data_nascimento_bebe', type: 'date', label: 'Data de Nascimento do Bebê', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [
+        {
+          linkType: 'FAMILY_MEMBER',
+          role: 'DEPENDENT',
+          label: 'Mãe',
+          required: true,
+          mapFromLegacyFields: {
+            cpf: 'cpf_mae'
+          },
+          contextFields: [
+            { id: 'rendaFamiliar', sourceField: 'renda_familiar' }
+          ],
+          expectedRelationships: ['SPOUSE', 'DAUGHTER', 'SISTER', 'OTHER']
+        },
+        {
+          linkType: 'FAMILY_MEMBER',
+          role: 'BENEFICIARY',
+          label: 'Bebê',
+          required: true,
+          mapFromLegacyFields: {
+            birthDate: 'data_nascimento_bebe'
+          },
+          contextFields: [
+            { id: 'dataNascimento', sourceField: 'data_nascimento_bebe' }
+          ],
+          expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+        }
+      ]
+    }
   },
   {
     id: 'auxilio-funeral',
@@ -619,7 +666,36 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     suggestedFields: [
       { name: 'cpf_mae', type: 'cpf', label: 'CPF da Mãe', required: true },
       { name: 'data_nascimento_crianca', type: 'date', label: 'Data de Nascimento da Criança', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [
+        {
+          linkType: 'FAMILY_MEMBER',
+          role: 'DEPENDENT',
+          label: 'Mãe',
+          required: true,
+          mapFromLegacyFields: {
+            cpf: 'cpf_mae'
+          },
+          contextFields: [],
+          expectedRelationships: ['SPOUSE', 'DAUGHTER', 'SISTER', 'OTHER']
+        },
+        {
+          linkType: 'FAMILY_MEMBER',
+          role: 'BENEFICIARY',
+          label: 'Criança',
+          required: true,
+          mapFromLegacyFields: {
+            birthDate: 'data_nascimento_crianca'
+          },
+          contextFields: [
+            { id: 'dataNascimento', sourceField: 'data_nascimento_crianca' }
+          ],
+          expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+        }
+      ]
+    }
   },
   {
     id: 'acompanhamento-egressos',
