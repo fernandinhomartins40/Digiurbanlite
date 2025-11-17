@@ -313,12 +313,28 @@ async function main() {
     }
 
     // ========================================================================
-    // 7. MODULE WORKFLOWS (REMOVIDO - Feature não implementada)
+    // 7. DADOS AUXILIARES (25 tabelas auxiliares - 100% do plano)
+    // ========================================================================
+    console.log('7️⃣  Dados Auxiliares (25 tabelas)');
+    console.log('   ─────────────────────────────');
+    console.log('   📦 Importando dados auxiliares...');
+
+    try {
+      const { seedAllAuxiliaryData } = await import('./seeds/auxiliary/index');
+      await seedAllAuxiliaryData();
+      console.log(`   ✅ Todos os dados auxiliares criados com sucesso\n`);
+    } catch (error: any) {
+      console.error('   ⚠️  Erro ao importar dados auxiliares:', error.message);
+      console.log('   ℹ️  Continuando sem os dados auxiliares...\n');
+    }
+
+    // ========================================================================
+    // 8. MODULE WORKFLOWS (REMOVIDO - Feature não implementada)
     // ========================================================================
     // Workflows são opcionais e serão criados via interface admin quando necessário
     // A infraestrutura está pronta (tabela module_workflows, APIs, etc)
     // mas não pre-populamos workflows pois não há interface visual ainda
-    console.log('7️⃣  Module Workflows');
+    console.log('8️⃣  Module Workflows');
     console.log('   ─────────────────────────────');
     console.log('   ⏭️  Pulado - Workflows serão criados via interface admin\n');
 
