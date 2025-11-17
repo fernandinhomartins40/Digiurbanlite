@@ -141,6 +141,7 @@ model Citizen {
   notifications       Notification[]
   protocolsSimplified ProtocolSimplified[]
   documents           CitizenDocument[]        @relation("CitizenDocuments")
+  linkedProtocols     ProtocolCitizenLink[]    @relation("LinkedCitizens")
 
   @@unique([cpf])
   @@map("citizens")
@@ -222,6 +223,47 @@ model FamilyComposition {
 
   @@unique([headId, memberId])
   @@map("family_compositions")
+}
+
+// ========================================
+// VINCULAÇÃO DE CIDADÃOS EM PROTOCOLOS
+// ========================================
+
+model ProtocolCitizenLink {
+  id         String   @id @default(cuid())
+  protocolId String
+
+  // Vínculo com cidadão cadastrado
+  linkedCitizenId String
+  linkedCitizen   Citizen @relation("LinkedCitizens", fields: [linkedCitizenId], references: [id], onDelete: Cascade)
+
+  // Tipo de vínculo no contexto do protocolo
+  linkType     CitizenLinkType
+
+  // Relacionamento com o solicitante (alinha com FamilyComposition)
+  relationship String?  // SON, SPOUSE, PARENT, OTHER (opcional se já existe em FamilyComposition)
+
+  // Papel no serviço
+  role         ServiceRole
+
+  // Dados contextuais específicos do vínculo (série escolar, escola, etc)
+  contextData  Json?
+
+  // Campos de validação
+  isVerified   Boolean  @default(false)  // Se o vínculo foi verificado contra FamilyComposition
+  verifiedAt   DateTime?
+  verifiedBy   String?  // userId do admin que verificou
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@index([protocolId])
+  @@index([linkedCitizenId])
+  @@index([linkType])
+  @@index([protocolId, linkType])
+  @@map("protocol_citizen_links")
 }
 
 // ========================================
@@ -315,6 +357,7 @@ model ProtocolSimplified {
   pendings      ProtocolPending[]
   stages        ProtocolStage[]
   sla           ProtocolSLA?
+  citizenLinks  ProtocolCitizenLink[]
 
   @@index([status])
   @@index([createdAt])
@@ -1446,6 +1489,28 @@ enum ProtocolStatus {
 enum ServiceType {
   COM_DADOS // Captura dados estruturados para módulo específico
   SEM_DADOS // Gera protocolo de acompanhamento, pode receber arquivos
+}
+
+enum CitizenLinkType {
+  STUDENT              // Aluno
+  GUARDIAN             // Responsável Legal
+  PATIENT              // Paciente
+  COMPANION            // Acompanhante
+  DEPENDENT            // Dependente
+  FAMILY_MEMBER        // Membro Familiar
+  AUTHORIZED_PERSON    // Pessoa Autorizada
+  BENEFICIARY          // Beneficiário
+  WITNESS              // Testemunha
+  OTHER                // Outro
+}
+
+enum ServiceRole {
+  BENEFICIARY    // Quem recebe o benefício
+  RESPONSIBLE    // Responsável legal
+  AUTHORIZED     // Pessoa autorizada
+  COMPANION      // Acompanhante
+  WITNESS        // Testemunha
+  OTHER          // Outro
 }
 
 enum TenantStatus {
