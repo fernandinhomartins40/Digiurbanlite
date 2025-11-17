@@ -168,6 +168,28 @@ export class ProtocolModuleService {
       }
     }
 
+    // ============================================================================
+    // PROCESSAR CITIZEN LINKS (FORA DA TRANSAÇÃO)
+    // ============================================================================
+
+    try {
+      const { processProtocolCitizenLinks } = await import('./protocol-citizen-links.service');
+      const links = await processProtocolCitizenLinks(
+        result.protocol.id,
+        serviceId,
+        citizenId,
+        formData,
+        createdById
+      );
+
+      if (links.length > 0) {
+        console.log(`✅ ${links.length} citizen link(s) processado(s) para protocolo ${result.protocol.id}`);
+      }
+    } catch (error) {
+      console.error('Erro ao processar citizen links:', error);
+      // Não falhar a criação do protocolo se citizen links falharem
+    }
+
     return result;
   }
 

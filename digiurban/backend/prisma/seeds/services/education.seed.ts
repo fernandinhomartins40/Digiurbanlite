@@ -133,6 +133,29 @@ export const educationServices: ServiceDefinition[] = [
           required: false
         }
       ]
+    },
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        description: 'Selecione o aluno que será matriculado',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno',
+          birthDate: 'dataNascimentoAluno'
+        },
+        contextFields: [
+          { id: 'sexoAluno', sourceField: 'sexoAluno' },
+          { id: 'escolaPreferencial', sourceField: 'escolaPreferencial' },
+          { id: 'anoEscolar', sourceField: 'anoEscolar' },
+          { id: 'turnoPreferencial', sourceField: 'turnoPreferencial' },
+          { id: 'possuiNecessidadesEspeciais', sourceField: 'possuiNecessidadesEspeciais' },
+          { id: 'descricaoNecessidades', sourceField: 'descricaoNecessidades' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
     }
   },
   {
@@ -221,6 +244,23 @@ export const educationServices: ServiceDefinition[] = [
           required: false
         }
       ]
+    },
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escolaOrigem', sourceField: 'escolaOrigem' },
+          { id: 'escolaDestino', sourceField: 'escolaDestino' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER']
+      }]
     }
   },
   {

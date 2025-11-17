@@ -51,6 +51,8 @@ export const loadProtocolRoutes = () => {
   const protocolSLARoutes = require('./protocol-sla').default;
   console.log('    - module-workflows');
   const moduleWorkflowsRoutes = require('./module-workflows').default;
+  console.log('    - protocol-citizen-links');
+  const protocolCitizenLinksRoutes = require('./protocol-citizen-links.routes').default;
 
   console.log('    - Montando rotas...');
   router.use('/protocols', protocolsSimplifiedRoutes);
@@ -59,6 +61,7 @@ export const loadProtocolRoutes = () => {
   router.use('/protocols', protocolPendingsRoutes);
   router.use('/protocols', protocolStagesRoutes);
   router.use('/protocols', protocolSLARoutes);
+  router.use('/protocols', protocolCitizenLinksRoutes);
   router.use('/workflows', moduleWorkflowsRoutes);
   router.use('/sla', protocolSLARoutes);
 
@@ -110,6 +113,7 @@ export const loadAdminRoutes = () => {
   const citizensRoutes = require('./citizens').default;
   const adminCitizensRoutes = require('./admin-citizens').default;
   const adminCitizenDocumentsRoutes = require('./admin-citizen-documents').default;
+  const citizenLinksValidationRoutes = require('./citizen-links-validation.routes').default;
 
   router.use('/admin/auth', adminAuthRoutes);
   router.use('/admin/management', adminManagementRoutes);
@@ -122,6 +126,7 @@ export const loadAdminRoutes = () => {
   router.use('/citizens', citizensRoutes);
   router.use('/admin/citizens', adminCitizensRoutes);
   router.use('/admin/citizen-documents', adminCitizenDocumentsRoutes);
+  router.use('/admin/citizens', citizenLinksValidationRoutes);
 
   return router;
 };

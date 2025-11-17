@@ -99,7 +99,22 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     suggestedFields: [
       { name: 'num_membros_familia', type: 'number', label: 'Número de Membros da Família', required: true },
       { name: 'renda_total', type: 'number', label: 'Renda Total Familiar (R$)', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'FAMILY_MEMBER',
+        role: 'DEPENDENT',
+        label: 'Membros da Família',
+        required: false,
+        mapFromLegacyFields: {},
+        contextFields: [
+          { id: 'parentesco', sourceField: 'membrosFamilia[].parentesco' },
+          { id: 'renda', sourceField: 'membrosFamilia[].renda' }
+        ],
+        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING']
+      }]
+    }
   },
   {
     id: 'acolhimento-institucional',

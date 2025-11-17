@@ -7,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, FileText, MessageSquare, AlertCircle, GitBranch, Clock } from 'lucide-react'
+import { ArrowLeft, FileText, MessageSquare, AlertCircle, GitBranch, Clock, Users } from 'lucide-react'
 import { ProtocolSLAIndicator } from '@/components/admin/protocol/ProtocolSLAIndicator'
 import { ProtocolInteractionsTab } from '@/components/admin/protocol/ProtocolInteractionsTab'
 import { ProtocolDocumentsTab } from '@/components/admin/protocol/ProtocolDocumentsTab'
 import { ProtocolPendingsTab } from '@/components/admin/protocol/ProtocolPendingsTab'
 import { ProtocolStagesTab } from '@/components/admin/protocol/ProtocolStagesTab'
+import { CitizenLinksDisplay } from '@/components/protocol/CitizenLinksDisplay'
 import { getProtocolDocuments } from '@/services/protocol-documents.service'
 import { getProtocolPendings } from '@/services/protocol-pendings.service'
 import { getProtocolStages } from '@/services/protocol-stages.service'
@@ -211,7 +212,7 @@ export default function ProtocolDetailPage() {
         {/* Conteúdo Principal (2/3) */}
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="interactions" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="interactions" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Interações
@@ -219,6 +220,10 @@ export default function ProtocolDetailPage() {
               <TabsTrigger value="documents" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Documentos
+              </TabsTrigger>
+              <TabsTrigger value="citizens" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Cidadãos
               </TabsTrigger>
               <TabsTrigger value="pendings" className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
@@ -239,6 +244,15 @@ export default function ProtocolDetailPage() {
                 protocolId={protocolId}
                 documents={documents}
                 onRefresh={loadProtocolData}
+              />
+            </TabsContent>
+
+            <TabsContent value="citizens" className="mt-6">
+              <CitizenLinksDisplay
+                protocolId={protocolId}
+                citizenLinks={protocol.citizenLinks}
+                editable={true}
+                onUpdate={loadProtocolData}
               />
             </TabsContent>
 

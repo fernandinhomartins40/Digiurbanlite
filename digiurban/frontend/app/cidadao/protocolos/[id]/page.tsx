@@ -23,11 +23,13 @@ import {
   FileCheck,
   History,
   Loader2,
+  Users,
 } from 'lucide-react';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { toast } from 'sonner';
 import { CitizenProtocolInteractionsTab } from '@/components/citizen/CitizenProtocolInteractionsTab';
 import { CancelProtocolDialog } from '@/components/citizen/CancelProtocolDialog';
+import { CitizenLinksDisplay } from '@/components/protocol/CitizenLinksDisplay';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -320,6 +322,10 @@ export default function ProtocolDetailsPage() {
               <MessageSquare className="h-4 w-4" />
               Interações
             </TabsTrigger>
+            <TabsTrigger value="citizens" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Cidadãos Vinculados
+            </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="h-4 w-4" />
               Histórico ({protocol.history.length})
@@ -328,6 +334,13 @@ export default function ProtocolDetailsPage() {
 
           <TabsContent value="interactions">
             <CitizenProtocolInteractionsTab protocolId={protocol.id} />
+          </TabsContent>
+
+          <TabsContent value="citizens">
+            <CitizenLinksDisplay
+              protocolId={protocol.id}
+              editable={false}
+            />
           </TabsContent>
 
           <TabsContent value="history">

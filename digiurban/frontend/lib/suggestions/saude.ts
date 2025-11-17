@@ -91,7 +91,24 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'medico_referencia', type: 'text', label: 'Médico de Referência', required: true },
       { name: 'acompanhante', type: 'checkbox', label: 'Necessita Acompanhante', required: false },
       { name: 'transporte', type: 'checkbox', label: 'Necessita Transporte', required: false },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'COMPANION',
+        role: 'COMPANION',
+        label: 'Acompanhante',
+        required: false,
+        mapFromLegacyFields: {
+          name: 'nomeAcompanhante',
+          cpf: 'cpfAcompanhante'
+        },
+        contextFields: [
+          { id: 'parentescoAcompanhante', sourceField: 'parentescoAcompanhante' }
+        ],
+        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING']
+      }]
+    }
   },
   {
     id: 'programa-hiperdia',

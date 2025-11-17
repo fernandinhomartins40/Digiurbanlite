@@ -13,7 +13,22 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'categoria', type: 'select', label: 'Categoria (Sub-10, Sub-12, etc.)', required: true },
       { name: 'experiencia', type: 'select', label: 'Experiência Prévia', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno/Participante',
+        required: true,
+        mapFromLegacyFields: {},
+        contextFields: [
+          { id: 'modalidade', sourceField: 'modalidade' },
+          { id: 'turno', sourceField: 'turno' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER']
+      }]
+    }
   },
   {
     id: 'escolinha-volei',
