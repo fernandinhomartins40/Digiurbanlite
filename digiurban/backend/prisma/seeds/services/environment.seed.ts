@@ -265,8 +265,8 @@ export const environmentServices: ServiceDefinition[] = [
         {
           id: 'especieArvore',
           label: 'Espécie da Árvore',
-          type: 'text',
-          maxLength: 200,
+          type: 'select',
+          options: ['Ipê Amarelo', 'Ipê Roxo', 'Ipê Branco', 'Pau-brasil', 'Jacarandá', 'Cedro', 'Jatobá', 'Aroeira', 'Quaresmeira', 'Sibipiruna', 'Mangueira', 'Jaqueira', 'Abacateiro', 'Goiabeira', 'Pitangueira', 'Eucalipto', 'Pinus', 'Palmeira Imperial', 'Palmeira Real', 'Outra (especificar nos comentários)'],
           required: true
         },
         {
@@ -508,7 +508,7 @@ export const environmentServices: ServiceDefinition[] = [
           alturaEstimada: { type: 'number', title: 'Altura Estimada (metros)', minimum: 0 },
           motivoSolicitacao: { type: 'string', title: 'Motivo da Solicitação', enum: ['Risco de Queda', 'Raízes Danificando Estruturas', 'Galhos sobre Fiação', 'Doença', 'Praga', 'Outro'] },
           descricaoMotivo: { type: 'string', title: 'Descrição Detalhada do Motivo', minLength: 30, maxLength: 1000 },
-          possuiLaudoTecnico: { type: 'string', title: 'Possui Laudo Técnico?', enum: ['Sim', 'Não'] },
+          possuiLaudoTecnico: { type: 'boolean', title: 'Possui Laudo Técnico?', default: false },
           observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
         },
         required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoSolicitacao', 'enderecoArvore', 'motivoSolicitacao', 'descricaoMotivo']
