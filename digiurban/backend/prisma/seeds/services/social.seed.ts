@@ -83,6 +83,21 @@ export const socialServices: ServiceDefinition[] = [
           required: false
         }
       ]
+    },
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'FAMILY_MEMBER',
+        role: 'DEPENDENT',
+        label: 'Membros da Família',
+        required: false,
+        mapFromLegacyFields: {},
+        contextFields: [
+          { id: 'parentesco', sourceField: 'membrosFamilia[].parentesco' },
+          { id: 'renda', sourceField: 'membrosFamilia[].renda' }
+        ],
+        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING']
+      }]
     }
   },
   {

@@ -2,7 +2,32 @@
  * Tipos compartilhados para seeds de serviços
  */
 
-import { ServiceType } from '@prisma/client';
+import { ServiceType, CitizenLinkType, ServiceRole } from '@prisma/client';
+
+export interface LinkedCitizenConfig {
+  enabled: boolean;
+  links: LinkedCitizenLinkConfig[];
+}
+
+export interface LinkedCitizenLinkConfig {
+  linkType: CitizenLinkType | string;
+  role: ServiceRole | string;
+  label: string;
+  description?: string;
+  required?: boolean;
+  mapFromLegacyFields?: {
+    cpf?: string;
+    name?: string;
+    birthDate?: string;
+    [key: string]: string | undefined;
+  };
+  contextFields?: Array<{
+    id: string;
+    sourceField?: string;
+    value?: any;
+  }>;
+  expectedRelationships?: string[];
+}
 
 export interface ServiceDefinition {
   name: string;
@@ -18,4 +43,5 @@ export interface ServiceDefinition {
   icon?: string;
   color?: string;
   formSchema?: any;
+  linkedCitizensConfig?: LinkedCitizenConfig;
 }

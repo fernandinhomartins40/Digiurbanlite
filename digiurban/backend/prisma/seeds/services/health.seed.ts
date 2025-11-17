@@ -507,6 +507,23 @@ export const healthServices: ServiceDefinition[] = [
           required: false
         }
       ]
+    },
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'AUTHORIZED_PERSON',
+        role: 'AUTHORIZED',
+        label: 'Familiar Autorizado',
+        required: false,
+        mapFromLegacyFields: {
+          name: 'nomeFamiliarAutorizado',
+          cpf: 'cpfFamiliarAutorizado'
+        },
+        contextFields: [
+          { id: 'parentescoFamiliar', sourceField: 'parentescoFamiliar' }
+        ],
+        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER']
+      }]
     }
   },
   {
@@ -955,6 +972,23 @@ export const healthServices: ServiceDefinition[] = [
           required: false
         }
       ]
+    },
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'COMPANION',
+        role: 'COMPANION',
+        label: 'Acompanhante',
+        required: false,
+        mapFromLegacyFields: {
+          name: 'nomeAcompanhante',
+          cpf: 'cpfAcompanhante'
+        },
+        contextFields: [
+          { id: 'parentescoAcompanhante', sourceField: 'parentescoAcompanhante' }
+        ],
+        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING']
+      }]
     }
   },
   {

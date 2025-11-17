@@ -415,8 +415,23 @@ export const sportsServices: ServiceDefinition[] = [
           observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
         },
         required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeAluno', 'cpfAluno', 'dataNascimentoAluno', 'idadeAluno', 'sexoAluno', 'modalidadeEscolinha', 'turnoPreferencia']
-      }
-    },
+      },
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno/Participante',
+        required: true,
+        mapFromLegacyFields: {},
+        contextFields: [
+          { id: 'modalidade', sourceField: 'modalidade' },
+          { id: 'turno', sourceField: 'turno' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER']
+      }]
+    }
+  },
   {
       name: 'Cadastro de Atleta',
       description: 'Cadastro de atletas federados no município',

@@ -330,6 +330,22 @@ router.get('/:id', requireMinRole(UserRole.USER), async (req, res) => {
         },
         history: {
           orderBy: { timestamp: 'desc' }
+        },
+        citizenLinks: {
+          include: {
+            linkedCitizen: {
+              select: {
+                id: true,
+                name: true,
+                cpf: true,
+                email: true,
+                phone: true,
+                birthDate: true,
+                rg: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'asc' }
         }
       }
     });

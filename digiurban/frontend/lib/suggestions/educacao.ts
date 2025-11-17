@@ -13,7 +13,30 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'serie_ano', type: 'select', label: 'Série/Ano', required: true },
       { name: 'escola_preferencia', type: 'select', label: 'Escola de Preferência', required: true },
       { name: 'turno', type: 'select', label: 'Turno Desejado', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        description: 'Selecione o aluno que será matriculado',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno',
+          birthDate: 'dataNascimentoAluno'
+        },
+        contextFields: [
+          { id: 'sexoAluno', sourceField: 'sexoAluno' },
+          { id: 'escolaPreferencial', sourceField: 'escolaPreferencial' },
+          { id: 'anoEscolar', sourceField: 'anoEscolar' },
+          { id: 'turnoPreferencial', sourceField: 'turnoPreferencial' },
+          { id: 'possuiNecessidadesEspeciais', sourceField: 'possuiNecessidadesEspeciais' },
+          { id: 'descricaoNecessidades', sourceField: 'descricaoNecessidades' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
   },
   {
     id: 'transporte-escolar',
@@ -61,7 +84,24 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'escola_destino', type: 'select', label: 'Escola de Destino', required: true },
       { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
       { name: 'motivo', type: 'textarea', label: 'Motivo da Transferência', required: true },
-    ]
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escolaOrigem', sourceField: 'escolaOrigem' },
+          { id: 'escolaDestino', sourceField: 'escolaDestino' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER']
+      }]
+    }
   },
   {
     id: 'declaracao-escolaridade',

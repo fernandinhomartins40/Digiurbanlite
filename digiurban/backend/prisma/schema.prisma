@@ -263,6 +263,9 @@ model ProtocolCitizenLink {
   @@index([linkedCitizenId])
   @@index([linkType])
   @@index([protocolId, linkType])
+  @@index([linkedCitizenId, isVerified])
+  @@index([protocolId, isVerified])
+  @@index([isVerified, verifiedAt])
   @@map("protocol_citizen_links")
 }
 
@@ -282,6 +285,7 @@ model ServiceSimplified {
   // Para serviços COM_DADOS
   moduleType String? @unique // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc - DEVE SER ÚNICO
   formSchema Json? // Schema do formulário
+  linkedCitizensConfig Json? // Configuração de vinculação de cidadãos (alunos, dependentes, etc)
 
   // Configuração de campos do formulário
   formFieldsConfig Json? // Array de objetos {id, label, type, required, enabled, category}

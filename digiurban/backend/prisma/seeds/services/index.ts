@@ -83,6 +83,7 @@ export async function seedServices() {
             serviceType: serviceDef.serviceType,
             moduleType: serviceDef.moduleType,
             formSchema: serviceDef.formSchema || undefined,
+            linkedCitizensConfig: serviceDef.linkedCitizensConfig || undefined,
             requiresDocuments: serviceDef.requiresDocuments,
             requiredDocuments: serviceDef.requiredDocuments
               ? JSON.stringify(serviceDef.requiredDocuments)
@@ -106,6 +107,7 @@ export async function seedServices() {
             serviceType: serviceDef.serviceType,
             moduleType: serviceDef.moduleType,
             formSchema: serviceDef.formSchema || undefined,
+            linkedCitizensConfig: serviceDef.linkedCitizensConfig || undefined,
             requiresDocuments: serviceDef.requiresDocuments,
             requiredDocuments: serviceDef.requiredDocuments
               ? JSON.stringify(serviceDef.requiredDocuments)
