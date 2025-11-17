@@ -1810,3 +1810,475 @@ model EspacoPublico {
   @@index([isActive])
   @@map("espacos_publicos")
 }
+
+// ========================================
+// ENTIDADES MUNICIPAIS (Continuação)
+// ========================================
+
+// Conjuntos Habitacionais
+model ConjuntoHabitacional {
+  id                  String   @id @default(cuid())
+  nome                String
+  endereco            String?
+  bairro              String?
+  totalUnidades       Int?
+  unidadesOcupadas    Int      @default(0)
+  unidadesDisponiveis Int      @default(0)
+  tipologias          Json?    // ['1 quarto', '2 quartos', '3 quartos']
+  programaOrigem      String?  // 'MCMV', 'CDHU', 'Municipal'
+  latitude            Float?
+  longitude           Float?
+  infraestrutura      Json?    // ['água', 'esgoto', 'pavimentação', 'iluminação']
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("conjuntos_habitacionais")
+}
+
+// Viaturas e Equipamentos de Segurança
+model ViaturaSeguranca {
+  id                String   @id @default(cuid())
+  codigo            String   @unique
+  tipo              String   // 'Patrulha', 'Moto', 'Bicicleta', 'Viatura Especial'
+  placa             String?
+  modelo            String?
+  ano               Int?
+  status            String   @default("Ativa") // 'Ativa', 'Manutenção', 'Inativa'
+  equipamentos      Json?    // ['Rádio', 'Câmera', 'GPS']
+  baseOperacional   String?
+  horasUso          Int      @default(0)
+  kmRodados         Int      @default(0)
+  proximaManutencao DateTime?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([status, isActive])
+  @@index([isActive])
+  @@map("viaturas_seguranca")
+}
+
+// Parques e Praças
+model ParquePraca {
+  id                 String    @id @default(cuid())
+  nome               String
+  tipo               String    // 'Parque', 'Praça', 'Jardim', 'Área Verde'
+  endereco           String?
+  bairro             String?
+  latitude           Float?
+  longitude          Float?
+  area               Float?    // m²
+  equipamentos       Json?     // ['Playground', 'Quadra', 'Academia ao Ar Livre']
+  horarioFuncionamento String?
+  permiteEventos     Boolean   @default(true)
+  capacidadeEventos  Int?
+  ultimaManutencao   DateTime?
+  proximaManutencao  DateTime?
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([isActive])
+  @@map("parques_pracas")
+}
+
+// Estabelecimentos Turísticos
+model EstabelecimentoTuristico {
+  id           String   @id @default(cuid())
+  nome         String
+  tipo         String   // 'Hotel', 'Pousada', 'Restaurante', 'Atração Turística'
+  endereco     String?
+  bairro       String?
+  telefone     String?
+  email        String?
+  site         String?
+  categoria    String?  // Classificação (estrelas, etc.)
+  latitude     Float?
+  longitude    Float?
+  capacidade   Int?
+  servicos     Json?    // ['Wi-Fi', 'Estacionamento', 'Acessibilidade']
+  horario      String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([isActive])
+  @@map("estabelecimentos_turisticos")
+}
+
+// ========================================
+// CATEGORIAS E TIPOS
+// ========================================
+
+// Programas Sociais
+model ProgramaSocial {
+  id                     String    @id @default(cuid())
+  nome                   String    @unique
+  descricao              String?
+  tipo                   String?   // 'Transferência de Renda', 'Apoio Social', 'Capacitação'
+  criteriosElegibilidade Json?     // Critérios estruturados
+  valorBeneficio         Float?
+  periodicidade          String?   // 'Mensal', 'Único', 'Anual'
+  documentosNecessarios  Json?     // Array de documentos
+  orgaoResponsavel       String?
+  legislacao             String?
+  dataInicio             DateTime?
+  dataFim                DateTime?
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([isActive])
+  @@map("programas_sociais")
+}
+
+// Tipos de Obras e Serviços
+model TipoObraServico {
+  id                   String   @id @default(cuid())
+  nome                 String   @unique
+  categoria            String   // 'Pavimentação', 'Drenagem', 'Iluminação', 'Saneamento'
+  descricao            String?
+  tempoMedioExecucao   Int?     // Dias
+  requisitosPrevios    Json?    // ['Projeto', 'Licença Ambiental']
+  equipamentosNecessarios Json? // Array de equipamentos
+  materiaisComuns      Json?    // Array de materiais
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@map("tipos_obra_servico")
+}
+
+// Especialidades Médicas
+model EspecialidadeMedica {
+  id                    String   @id @default(cuid())
+  nome                  String   @unique
+  descricao             String?
+  area                  String?  // 'Clínica Médica', 'Cirúrgica', 'Diagnóstica'
+  tempoMedioConsulta    Int?     // Minutos
+  requisitosPaciente    String?  // 'Encaminhamento', 'Livre'
+  examesComuns          Json?    // Array de exames
+  unidadesQueOferecem   Json?    // IDs das unidades (pode ser calculado)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([area, isActive])
+  @@index([isActive])
+  @@map("especialidades_medicas")
+}
+
+// Tipos de Produção Agrícola
+model TipoProducaoAgricola {
+  id                          String   @id @default(cuid())
+  nome                        String   @unique
+  categoria                   String   // 'Vegetal', 'Animal'
+  subcategoria                String?  // 'Grãos', 'Hortaliças', 'Pecuária Leiteira'
+  sazonalidade                Json?    // Meses de plantio/colheita
+  assistenciaTecnicaDisponivel Boolean  @default(false)
+  programasApoio              Json?    // Array de programas
+  isActive                    Boolean  @default(true)
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@map("tipos_producao_agricola")
+}
+
+// Máquinas e Equipamentos Agrícolas
+model MaquinaAgricola {
+  id                    String    @id @default(cuid())
+  tipo                  String    // 'Trator', 'Arado', 'Grade', 'Plantadeira'
+  modelo                String?
+  identificacao         String    @unique
+  status                String    @default("Disponível") // 'Disponível', 'Emprestada', 'Manutenção'
+  capacidade            String?
+  potencia              String?
+  horasUso              Int       @default(0)
+  ultimaManutencao      DateTime?
+  proximaManutencao     DateTime?
+  valorHoraUso          Float?    // Se cobrado
+  documentosNecessarios Json?     // Para empréstimo
+  isActive              Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([status, isActive])
+  @@index([isActive])
+  @@map("maquinas_agricolas")
+}
+
+// Espécies de Árvores
+model EspecieArvore {
+  id                  String   @id @default(cuid())
+  nomeComum           String   @unique
+  nomeCientifico      String?
+  familia             String?
+  origem              String?  // 'Nativa', 'Exótica'
+  porte               String?  // 'Pequeno', 'Médio', 'Grande'
+  tipoRaiz            String?
+  crescimento         String?  // 'Rápido', 'Médio', 'Lento'
+  adequadaCalcada     Boolean  @default(false)
+  adequadaParque      Boolean  @default(true)
+  flores              String?
+  frutificacao        String?
+  cuidadosEspeciais   String?
+  disponibilidadeMudas Int     @default(0)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([origem, isActive])
+  @@index([isActive])
+  @@map("especies_arvore")
+}
+
+// Tipos de Estabelecimentos Turísticos (Categorias)
+model TipoEstabelecimentoTuristico {
+  id                  String   @id @default(cuid())
+  nome                String   @unique
+  categoria           String?  // 'Hospedagem', 'Alimentação', 'Atração', 'Serviço'
+  requisitosLegais    Json?    // ['Alvará', 'Licença Sanitária']
+  documentosNecessarios Json?  // Array de documentos
+  classificacao       String?  // Sistema de classificação (estrelas, etc.)
+  inspectionRequired  Boolean  @default(false)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@map("tipos_estabelecimento_turistico")
+}
+
+// Modalidades Esportivas
+model ModalidadeEsportiva {
+  id                      String   @id @default(cuid())
+  nome                    String   @unique
+  categoria               String   // 'Individual', 'Coletivo'
+  tipo                    String?  // 'Quadra', 'Campo', 'Piscina', 'Tatame'
+  faixasEtarias           Json?    // ['Infantil', 'Juvenil', 'Adulto', 'Sênior']
+  equipamentosNecessarios Json?    // Array de equipamentos
+  profissionaisNecessarios Json?   // ['Professor', 'Técnico', 'Árbitro']
+  espacosDisponiveis      Json?    // IDs dos espaços (pode ser calculado)
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@map("modalidades_esportivas")
+}
+
+// Tipos de Atividades Culturais
+model TipoAtividadeCultural {
+  id                  String   @id @default(cuid())
+  nome                String   @unique
+  categoria           String?  // 'Artes Visuais', 'Artes Cênicas', 'Música', 'Literatura'
+  materialNecessario  Json?    // Array de materiais
+  faixasEtarias       Json?    // Idades recomendadas
+  duracaoMedia        Int?     // Horas/aula
+  espacosAdequados    Json?    // IDs dos espaços (pode ser calculado)
+  profissionaisNecessarios String?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@map("tipos_atividade_cultural")
+}
+
+// Tipos de Ocorrências
+model TipoOcorrencia {
+  id                     String   @id @default(cuid())
+  nome                   String   @unique
+  categoria              String   // 'Contra Pessoa', 'Contra Patrimônio', 'Ordem Pública'
+  gravidade              Int      @default(3) // 1-5
+  requererBoletimOcorrencia Boolean @default(false)
+  tempoRespostaPadrao    Int?     // Minutos
+  equipesCompetentes     Json?    // Array de equipes
+  procedimentosPadrao    String?
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([categoria, gravidade, isActive])
+  @@index([isActive])
+  @@map("tipos_ocorrencia")
+}
+
+// Cursos Profissionalizantes
+model CursoProfissionalizante {
+  id                   String    @id @default(cuid())
+  nome                 String    @unique
+  categoria            String?   // 'Informática', 'Artesanato', 'Mecânica'
+  area                 String?
+  cargaHoraria         Int?      // Horas totais
+  duracao              Int?      // Meses
+  requisitos           String?
+  certificacao         String?
+  conteudoProgramatico Json?     // Estrutura do curso
+  vagas                Int       @default(0)
+  vagasOcupadas        Int       @default(0)
+  instrutorId          String?   // FK para Professor (opcional)
+  localCurso           String?
+  horario              String?
+  dataInicio           DateTime?
+  dataFim              DateTime?
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@map("cursos_profissionalizantes")
+}
+
+// Programas Habitacionais
+model ProgramaHabitacional {
+  id                     String    @id @default(cuid())
+  nome                   String    @unique
+  descricao              String?
+  tipo                   String    // 'Aquisição', 'Melhoria', 'Regularização'
+  criteriosElegibilidade Json?     // Critérios estruturados
+  rendaMaxima            Float?
+  rendaMinima            Float?
+  documentosNecessarios  Json?     // Array de documentos
+  beneficiosOferecidos   String?
+  prazoAtendimento       Int?      // Dias
+  orgaoGestor            String?
+  legislacao             String?
+  dataInicioInscricoes   DateTime?
+  dataFimInscricoes      DateTime?
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([isActive])
+  @@map("programas_habitacionais")
+}
+
+// Programas Ambientais
+model ProgramaAmbiental {
+  id                       String    @id @default(cuid())
+  nome                     String    @unique
+  descricao                String?
+  tipo                     String?   // 'Coleta Seletiva', 'Arborização', 'Educação Ambiental'
+  objetivos                String?
+  metasAnuais              Json?     // Metas estruturadas
+  publicoAlvo              String?
+  parcerias                Json?     // Array de parceiros
+  recursosNecessarios      String?
+  indicadoresMonitoramento Json?     // KPIs do programa
+  dataInicio               DateTime?
+  dataFim                  DateTime?
+  isActive                 Boolean   @default(true)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  @@index([tipo, isActive])
+  @@index([isActive])
+  @@map("programas_ambientais")
+}
+
+// ========================================
+// PROFISSIONAIS
+// ========================================
+
+// Profissionais de Saúde
+model ProfissionalSaude {
+  id                  String   @id @default(cuid())
+  nome                String
+  cpf                 String   @unique
+  registroProfissional String  @unique // CRM, CRO, CRP, etc.
+  especialidade       String?
+  categoria           String   // 'Médico', 'Enfermeiro', 'Dentista', 'Psicólogo'
+  unidadesAtendimento Json?    // Array de IDs das unidades
+  horarioAtendimento  Json?    // Horários estruturados
+  diasSemana          Json?    // Array de dias
+  tempoMedioConsulta  Int?     // Minutos
+  aceitaAgendamento   Boolean  @default(true)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([categoria, isActive])
+  @@index([especialidade, isActive])
+  @@index([isActive])
+  @@map("profissionais_saude")
+}
+
+// Professores e Instrutores
+model Professor {
+  id              String   @id @default(cuid())
+  nome            String
+  cpf             String   @unique
+  formacao        String?
+  especializacoes Json?    // Array de especializações
+  areasAtuacao    Json?    // Array de áreas
+  vinculo         String?  // 'Efetivo', 'Contratado', 'Voluntário'
+  cargaHoraria    Int?     // Horas/semana
+  disponibilidade Json?    // Horários disponíveis
+  avaliacaoMedia  Float?   // Nota 0-5
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([vinculo, isActive])
+  @@index([isActive])
+  @@map("professores")
+}
+
+// Guias Turísticos
+model GuiaTuristico {
+  id              String   @id @default(cuid())
+  nome            String
+  cpf             String   @unique
+  cadastur        String?  @unique // Cadastro do Ministério do Turismo
+  idiomas         Json?    // Array de idiomas
+  especialidades  Json?    // ['Histórico', 'Ecológico', 'Aventura']
+  certificacoes   Json?    // Array de certificações
+  disponibilidade Json?    // Calendário
+  valorDiaria     Float?
+  avaliacaoMedia  Float?   // Nota 0-5
+  totalTours      Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("guias_turisticos")
+}
+
+// ========================================
+// DOCUMENTOS
+// ========================================
+
+// Tipos de Documentos
+model TipoDocumento {
+  id               String   @id @default(cuid())
+  nome             String   @unique
+  descricao        String?
+  categoria        String   // 'Identificação', 'Comprovante', 'Declaração', 'Licença'
+  formatosAceitos  Json?    // ['PDF', 'JPG', 'PNG']
+  tamanhoMaximo    Int?     // MB
+  requisitosPadrao String?  // Texto com requisitos
+  validadeDocumento Int?    // Dias de validade
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@map("tipos_documento")
+}
