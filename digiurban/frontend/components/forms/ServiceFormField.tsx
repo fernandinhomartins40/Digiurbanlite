@@ -50,12 +50,17 @@ export function ServiceFormField({ field, value, onChange, isPrefilled = false }
       return;
     }
 
-    if (minLength && value && value.length < minLength) {
+    // ✅ IMPORTANTE: Campos com máscara (CPF, telefone, CEP) não devem validar minLength/maxLength
+    // pois a máscara adiciona caracteres extras (parênteses, hífens, pontos, espaços)
+    // A validação de formato é feita pelo componente ModernMaskedInput
+    const hasMask = field.mask === 'cpf' || field.mask === 'phone' || field.mask === 'cep';
+
+    if (!hasMask && minLength && value && value.length < minLength) {
       setError(`O campo "${field.label}" deve ter no mínimo ${minLength} caracteres`);
       return;
     }
 
-    if (maxLength && value && value.length > maxLength) {
+    if (!hasMask && maxLength && value && value.length > maxLength) {
       setError(`O campo "${field.label}" deve ter no máximo ${maxLength} caracteres`);
       return;
     }
