@@ -291,12 +291,20 @@ model ServiceSimplified {
 
   // Para serviços COM_DADOS
   moduleType String? @unique // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc - DEVE SER ÚNICO
-  formSchema Json? // Schema do formulário
-  linkedCitizensConfig Json? // Configuração de vinculação de cidadãos (alunos, dependentes, etc)
 
-  // Configuração de campos do formulário
-  formFieldsConfig Json? // Array de objetos {id, label, type, required, enabled, category}
-  enabledFields    Json? // Array de IDs dos campos habilitados (fallback)
+  // ========================================
+  // SCHEMAS DE FORMULÁRIO (LEGACY + NOVO)
+  // ========================================
+
+  // ❌ DEPRECATED: Schemas antigos (manter para compatibilidade temporária)
+  formSchema Json? // Schema do formulário (DEPRECATED - usar formSchemaStructured)
+  formFieldsConfig Json? // Array de objetos {id, label, type, required, enabled, category} (DEPRECATED)
+  enabledFields    Json? // Array de IDs dos campos habilitados (DEPRECATED)
+  linkedCitizensConfig Json? // Configuração de vinculação de cidadãos (DEPRECATED - agora em formSchemaStructured)
+
+  // ✅ NOVO: Schema estruturado unificado (ServiceFormSchema)
+  // Contém: citizenFields, fields, linkedCitizensConfig, sections, layout, validations
+  formSchemaStructured Json? // Schema estruturado seguindo ServiceFormSchema type
 
   // Campos básicos
   isActive          Boolean @default(true)

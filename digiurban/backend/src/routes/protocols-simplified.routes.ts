@@ -13,6 +13,7 @@ import { AuthenticatedRequest } from '../types';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { protocolServiceSimplified } from '../services/protocol-simplified.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { getProtocolCitizenLinks } from '../services/protocol-citizen-links.service';
 
 const router = Router();
 
@@ -89,12 +90,16 @@ router.post('/', requireMinRole(UserRole.USER), async (req, res) => {
       attachments
         });
 
+    // ✅ NOVO: Buscar citizen links criados
+    const citizenLinks = await getProtocolCitizenLinks(result.protocol.id);
+
     return res.status(201).json({
       success: true,
       data: {
         protocol: result.protocol,
         hasModule: result.hasModule,
-        moduleType: result.protocol.moduleType || null
+        moduleType: result.protocol.moduleType || null,
+        citizenLinks // ✅ Retornar links criados
         },
       message: result.hasModule
         ? `Protocolo ${result.protocol.number} criado e vinculado ao módulo`

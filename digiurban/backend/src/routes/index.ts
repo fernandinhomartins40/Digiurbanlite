@@ -25,7 +25,9 @@ export const loadBasicRoutes = () => {
   console.log('  📂 Carregando rotas básicas...');
   const router = Router();
   const serviceRoutes = require('./services').default;
+  const auxiliaryDataRoutes = require('./auxiliary-data.routes').default;
   router.use('/services', serviceRoutes);
+  router.use('/auxiliary-data', auxiliaryDataRoutes);
   console.log('  ✅ Rotas básicas carregadas');
   return router;
 };

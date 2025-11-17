@@ -10,6 +10,7 @@ import { prisma } from '../lib/prisma'
 import { generateProtocolNumberSafe } from './protocol-number.service'
 import { protocolStatusEngine } from './protocol-status.engine'
 import { ActorRole } from '../types/protocol-status.types'
+import { processProtocolCitizenLinks } from './protocol-citizen-links.service'
 
 // ========================================
 // TYPES & INTERFACES
@@ -119,7 +120,35 @@ export class ProtocolServiceSimplified {
       console.log(`✓ Protocolo ${protocol.number} vinculado ao módulo: ${service.moduleType}`)
     }
 
-    // 5. Criar histórico
+    // 5. ✅ NOVO: Processar citizen links se configurado
+    let citizenLinks: any[] = []
+    if (service.serviceType === 'COM_DADOS' && formData) {
+      // Verificar se serviço tem linkedCitizensConfig
+      const hasLinkedCitizensConfig = !!(
+        service.linkedCitizensConfig ||
+        (service as any).formSchemaStructured?.linkedCitizensConfig
+      )
+
+      if (hasLinkedCitizensConfig) {
+        try {
+          console.log(`✓ Processando citizen links para protocolo ${protocol.number}...`)
+          citizenLinks = await processProtocolCitizenLinks(
+            protocol.id,
+            serviceId,
+            citizenId,
+            formData,
+            data.createdById
+          )
+          console.log(`✓ ${citizenLinks.length} citizen link(s) criado(s)`)
+        } catch (error: any) {
+          console.error(`❌ Erro ao processar citizen links:`, error)
+          // Não falhar o protocolo inteiro por causa disso
+          // mas logar para investigação
+        }
+      }
+    }
+
+    // 6. Criar histórico
     await prisma.protocolHistorySimplified.create({
       data: {
         protocolId: protocol.id,
