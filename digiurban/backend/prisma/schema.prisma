@@ -210,15 +210,22 @@ model Lead {
 }
 
 model FamilyComposition {
-  id           String   @id @default(cuid())
-  headId       String
-  memberId     String
-  relationship String
-  isDependent  Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  member       Citizen  @relation("FamilyMember", fields: [memberId], references: [id], onDelete: Cascade)
-  head         Citizen  @relation("FamilyHead", fields: [headId], references: [id], onDelete: Cascade)
+  id            String               @id @default(cuid())
+  headId        String
+  memberId      String
+  relationship  FamilyRelationship
+  isDependent   Boolean              @default(false)
+
+  // Campos calculados adicionados na Sprint 2
+  monthlyIncome Decimal?             // Renda mensal do membro
+  occupation    String?              // Ocupação
+  education     String?              // Escolaridade
+  hasDisability Boolean?             // Possui deficiência
+
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  member        Citizen              @relation("FamilyMember", fields: [memberId], references: [id], onDelete: Cascade)
+  head          Citizen              @relation("FamilyHead", fields: [headId], references: [id], onDelete: Cascade)
 
   @@unique([headId, memberId])
   @@map("family_compositions")
@@ -1558,6 +1565,21 @@ enum VerificationStatus {
   VERIFIED // Prata - Cadastro verificado pelo admin
   GOLD // Ouro - Cadastro completo com documentação adicional
   REJECTED // Rejeitado
+}
+
+enum FamilyRelationship {
+  SPOUSE        // Cônjuge
+  SON           // Filho
+  DAUGHTER      // Filha
+  FATHER        // Pai
+  MOTHER        // Mãe
+  BROTHER       // Irmão
+  SISTER        // Irmã
+  GRANDFATHER   // Avô
+  GRANDMOTHER   // Avó
+  GRANDSON      // Neto
+  GRANDDAUGHTER // Neta
+  OTHER         // Outro
 }
 
 enum CulturalAttendanceType {

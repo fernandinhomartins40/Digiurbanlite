@@ -11,6 +11,7 @@ import { ProtocolStatus, Prisma, UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { generateProtocolNumberSafe } from './protocol-number.service';
 import { protocolStatusEngine } from './protocol-status.engine';
+import { familyStatsService } from './family-stats.service';
 
 // ============================================================================
 // TYPES
@@ -70,6 +71,22 @@ export class ProtocolModuleService {
     // 2. Verificar tipo de serviço
     const isComDados = service.serviceType === 'COM_DADOS';
 
+    // 2.1 Pré-preencher dados de composição familiar (Sprint 3.2)
+    let enrichedFormData = { ...formData };
+    try {
+      const familyPrefillData = await familyStatsService.getFormPrefillData(citizenId);
+
+      // Mesclar dados de composição familiar com formData existente
+      // Dados do formulário têm prioridade sobre dados calculados
+      enrichedFormData = {
+        ...familyPrefillData,
+        ...formData // Sobrescreve com dados manuais se existirem
+      };
+    } catch (error) {
+      // Se falhar ao buscar dados familiares, continua com formData original
+      console.warn('Não foi possível pré-preencher dados familiares:', error);
+    }
+
     // 3. Criar protocolo em transação
     const result = await prisma.$transaction(async (tx) => {
       // Gerar número do protocolo - Sistema centralizado com lock
@@ -83,8 +100,8 @@ export class ProtocolModuleService {
       // Preparar customData com metadados da entidade virtual
       const customDataPayload = isComDados && service.moduleType
         ? {
-            // Dados do formulário
-            ...formData,
+            // Dados do formulário (enriquecidos com dados de composição familiar)
+            ...enrichedFormData,
             // Metadados da entidade virtual
             _meta: {
               entityType: service.moduleType,
@@ -95,7 +112,7 @@ export class ProtocolModuleService {
               approvedBy: null
             }
           }
-        : formData;
+        : enrichedFormData;
 
       // Criar protocolo
       const protocol = await tx.protocolSimplified.create({

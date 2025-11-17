@@ -17,6 +17,11 @@ interface FamilyMember {
   id: string
   relationship: string
   isDependent: boolean
+  // Novos campos Sprint 2
+  monthlyIncome?: number | null
+  occupation?: string | null
+  education?: string | null
+  hasDisability?: boolean | null
   createdAt: string
   member: {
     id: string
@@ -43,11 +48,16 @@ interface CitizenFamilyCompositionProps {
 
 const RELATIONSHIPS = [
   { value: 'SPOUSE', label: 'Cônjuge' },
-  { value: 'SON', label: 'Filho(a)' },
-  { value: 'PARENT', label: 'Pai/Mãe' },
-  { value: 'SIBLING', label: 'Irmão(ã)' },
-  { value: 'GRANDPARENT', label: 'Avô/Avó' },
-  { value: 'GRANDCHILD', label: 'Neto(a)' },
+  { value: 'SON', label: 'Filho' },
+  { value: 'DAUGHTER', label: 'Filha' },
+  { value: 'FATHER', label: 'Pai' },
+  { value: 'MOTHER', label: 'Mãe' },
+  { value: 'BROTHER', label: 'Irmão' },
+  { value: 'SISTER', label: 'Irmã' },
+  { value: 'GRANDFATHER', label: 'Avô' },
+  { value: 'GRANDMOTHER', label: 'Avó' },
+  { value: 'GRANDSON', label: 'Neto' },
+  { value: 'GRANDDAUGHTER', label: 'Neta' },
   { value: 'OTHER', label: 'Outro' },
 ]
 
@@ -68,6 +78,11 @@ export function CitizenFamilyComposition({ citizenId, citizenName, canEdit = tru
     memberId: '',
     relationship: '',
     isDependent: false,
+    // Novos campos Sprint 2
+    monthlyIncome: '',
+    occupation: '',
+    education: '',
+    hasDisability: false,
   })
 
   const { toast } = useToast()
@@ -157,6 +172,11 @@ export function CitizenFamilyComposition({ citizenId, citizenName, canEdit = tru
           memberId: formData.memberId,
           relationship: formData.relationship,
           isDependent: formData.isDependent,
+          // Novos campos Sprint 2
+          monthlyIncome: formData.monthlyIncome ? parseFloat(formData.monthlyIncome) : undefined,
+          occupation: formData.occupation || undefined,
+          education: formData.education || undefined,
+          hasDisability: formData.hasDisability,
         }),
       })
 
@@ -171,6 +191,10 @@ export function CitizenFamilyComposition({ citizenId, citizenName, canEdit = tru
           memberId: '',
           relationship: '',
           isDependent: false,
+          monthlyIncome: '',
+          occupation: '',
+          education: '',
+          hasDisability: false,
         })
         setSearchTerm('')
         setSearchResults([])
@@ -413,6 +437,58 @@ export function CitizenFamilyComposition({ citizenId, citizenName, canEdit = tru
               <Label htmlFor="isDependent" className="cursor-pointer">
                 É dependente financeiro
               </Label>
+            </div>
+
+            {/* Novos campos Sprint 2 */}
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Informações Adicionais (Opcional)</h3>
+
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="monthlyIncome">Renda Mensal (R$)</Label>
+                  <Input
+                    id="monthlyIncome"
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 1500.00"
+                    value={formData.monthlyIncome}
+                    onChange={(e) => setFormData({ ...formData, monthlyIncome: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="occupation">Ocupação</Label>
+                  <Input
+                    id="occupation"
+                    placeholder="Ex: Estudante, Aposentado, etc."
+                    value={formData.occupation}
+                    onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="education">Escolaridade</Label>
+                  <Input
+                    id="education"
+                    placeholder="Ex: Ensino Médio Completo"
+                    value={formData.education}
+                    onChange={(e) => setFormData({ ...formData, education: e.target.value })}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="hasDisability"
+                    checked={formData.hasDisability}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, hasDisability: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="hasDisability" className="cursor-pointer">
+                    Possui deficiência
+                  </Label>
+                </div>
+              </div>
             </div>
           </div>
 

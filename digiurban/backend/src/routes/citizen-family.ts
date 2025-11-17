@@ -5,6 +5,7 @@ import { AuthenticatedRequest, SuccessResponse, ErrorResponse, TenantCitizenAuth
 import * as bcrypt from 'bcryptjs';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import { validateCPF } from '../utils/validators';
+import { familyStatsService } from '../services/family-stats.service';
 
 // FASE 2 - Interface para família
 // WhereClause interface removida - usando WhereCondition do sistema centralizado
@@ -18,21 +19,26 @@ const addMemberSchema = z.object({
   email: z.string().email('Email inválido').optional(),
   phone: z.string().optional(),
   relationship: z.enum([
-    'cônjuge',
-    'filho',
-    'filha',
-    'pai',
-    'mãe',
-    'irmão',
-    'irmã',
-    'avô',
-    'avó',
-    'neto',
-    'neta',
-    'outros',
+    'SPOUSE',
+    'SON',
+    'DAUGHTER',
+    'FATHER',
+    'MOTHER',
+    'BROTHER',
+    'SISTER',
+    'GRANDFATHER',
+    'GRANDMOTHER',
+    'GRANDSON',
+    'GRANDDAUGHTER',
+    'OTHER',
   ]),
   isDependent: z.boolean().default(false),
   birthDate: z.string().optional(),
+  // Novos campos Sprint 2
+  monthlyIncome: z.number().optional(),
+  occupation: z.string().optional(),
+  education: z.string().optional(),
+  hasDisability: z.boolean().optional(),
   address: z
     .object({
       street: z.string(),
@@ -47,20 +53,25 @@ const addMemberSchema = z.object({
 
 const updateRelationshipSchema = z.object({
   relationship: z.enum([
-    'cônjuge',
-    'filho',
-    'filha',
-    'pai',
-    'mãe',
-    'irmão',
-    'irmã',
-    'avô',
-    'avó',
-    'neto',
-    'neta',
-    'outros',
+    'SPOUSE',
+    'SON',
+    'DAUGHTER',
+    'FATHER',
+    'MOTHER',
+    'BROTHER',
+    'SISTER',
+    'GRANDFATHER',
+    'GRANDMOTHER',
+    'GRANDSON',
+    'GRANDDAUGHTER',
+    'OTHER',
   ]),
-  isDependent: z.boolean()
+  isDependent: z.boolean(),
+  // Novos campos Sprint 2
+  monthlyIncome: z.number().optional(),
+  occupation: z.string().optional(),
+  education: z.string().optional(),
+  hasDisability: z.boolean().optional()
         });
 
 // Middleware para verificar tenant em todas as rotas
@@ -209,14 +220,26 @@ router.post('/members', async (req, res) => {
       );
     }
 
+    // Validação inteligente de relacionamento (Sprint 3.1)
+    let warnings: string[] = [];
+    if (data.birthDate) {
+      const birthDate = new Date(data.birthDate);
+      warnings = familyStatsService.validateRelationshipByAge(data.relationship, birthDate);
+    }
+
     // Criar relacionamento familiar
     const familyComposition = await prisma.familyComposition.create({
       data: {
-        
+
         headId: citizen.id,
         memberId: memberCitizen.id,
         relationship: data.relationship,
-        isDependent: data.isDependent
+        isDependent: data.isDependent,
+        // Novos campos Sprint 2
+        monthlyIncome: data.monthlyIncome,
+        occupation: data.occupation,
+        education: data.education,
+        hasDisability: data.hasDisability
         },
       include: {
         member: {
@@ -247,7 +270,8 @@ router.post('/members', async (req, res) => {
 
     return res.status(201).json({
       message: 'Membro adicionado à família com sucesso',
-      familyComposition
+      familyComposition,
+      warnings: warnings.length > 0 ? warnings : undefined
         });
   } catch (error: unknown) {
     console.error('Erro ao adicionar membro da família:', error);
@@ -290,7 +314,12 @@ router.put('/members/:memberId', async (req, res) => {
       where: { id: familyComposition.id },
       data: {
         relationship: data.relationship,
-        isDependent: data.isDependent
+        isDependent: data.isDependent,
+        // Novos campos Sprint 2
+        monthlyIncome: data.monthlyIncome,
+        occupation: data.occupation,
+        education: data.education,
+        hasDisability: data.hasDisability
         },
       include: {
         member: {
@@ -465,14 +494,16 @@ router.get('/stats', async (req, res) => {
   try {
     const { citizen } = req as TenantCitizenAuthenticatedRequest;
 
-    // Buscar membros da família
+    // Usar o novo FamilyStatsService
+    const familyStats = await familyStatsService.calculateStats(citizen.id);
+
+    // Buscar membros da família para protocolo stats
     const familyMembers = await prisma.familyComposition.findMany({
       where: {
-        
         headId: citizen.id
-        },
+      },
       select: { memberId: true, relationship: true, isDependent: true }
-      });
+    });
 
     const allFamilyIds = [citizen.id, ...familyMembers.map(m => m.memberId)];
 
@@ -480,21 +511,19 @@ router.get('/stats', async (req, res) => {
     const protocolStats = await prisma.protocolSimplified.groupBy({
       by: ['status'],
       where: {
-        
         citizenId: { in: allFamilyIds }
-        },
+      },
       _count: {
         status: true
-        }
-        });
+      }
+    });
 
     // Total de protocolos
     const totalProtocols = await prisma.protocolSimplified.count({
       where: {
-        
         citizenId: { in: allFamilyIds }
-        }
-        });
+      }
+    });
 
     // Estatísticas por membro
     const memberStats = await Promise.all(
@@ -505,18 +534,17 @@ router.get('/stats', async (req, res) => {
             : await prisma.citizen.findUnique({
                 where: { id: memberId },
                 select: { id: true, name: true, cpf: true }
-      });
+              });
 
         const protocolCount = await prisma.protocolSimplified.count({
           where: {
-            
             citizenId: memberId
-        }
+          }
         });
 
         const relationship =
           memberId === citizen.id
-            ? 'responsável'
+            ? 'HEAD'
             : familyMembers.find(fm => fm.memberId === memberId)?.relationship;
 
         return {
@@ -528,12 +556,34 @@ router.get('/stats', async (req, res) => {
     );
 
     return res.json({
-      familySize: allFamilyIds.length,
-      dependents: familyMembers.filter(m => m.isDependent).length,
+      // Estatísticas demográficas (novo)
+      demographics: {
+        totalMembers: familyStats.totalMembers,
+        totalDependents: familyStats.totalDependents,
+        totalChildren: familyStats.totalChildren,
+        totalElderly: familyStats.totalElderly,
+        totalWithDisability: familyStats.totalWithDisability,
+        averageAge: familyStats.averageAge,
+        membersByRelationship: familyStats.membersByRelationship
+      },
+      // Estatísticas financeiras (novo)
+      financial: {
+        totalIncome: familyStats.totalIncome,
+        incomePerCapita: familyStats.incomePerCapita
+      },
+      // Estatísticas de protocolos (mantido)
+      protocols: {
+        total: totalProtocols,
+        byStatus: protocolStats,
+        byMember: memberStats
+      },
+      // Retrocompatibilidade (deprecated)
+      familySize: familyStats.totalMembers,
+      dependents: familyStats.totalDependents,
       totalProtocols,
       protocolsByStatus: protocolStats,
       memberStats
-        });
+    });
   } catch (error) {
     console.error('Erro ao buscar estatísticas familiares:', error);
     return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'));
