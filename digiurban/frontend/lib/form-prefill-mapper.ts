@@ -605,21 +605,10 @@ export function prefillFormData(
 
   fields.forEach(field => {
     // ============================================================================
-    // REGRA IMPORTANTE: Apenas campos citizen_* são pré-preenchidos automaticamente
-    // Campos customizados do serviço NÃO devem ser pré-preenchidos, mesmo que
-    // tenham nomes semelhantes (ex: nomeResponsavel, cpfProprietario, etc)
-    // ============================================================================
-
-    const isCitizenField = field.id.toLowerCase().startsWith('citizen_');
-
-    if (!isCitizenField) {
-      // Campo customizado do serviço - SEMPRE inicializar vazio
-      formData[field.id] = getDefaultValueForType(field.type);
-      return;
-    }
-
-    // ============================================================================
-    // CAMPOS CITIZEN_* - Aplicar pré-preenchimento
+    // ESTRATÉGIA DE PRÉ-PREENCHIMENTO:
+    // 1. Campos com prefixo citizen_* são SEMPRE pré-preenchidos
+    // 2. Campos SEM prefixo são pré-preenchidos SE encontrarem mapeamento
+    // 3. Campos sem mapeamento são inicializados vazios
     // ============================================================================
 
     // Normalizar o ID do campo para lowercase e remover acentos
@@ -627,12 +616,11 @@ export function prefillFormData(
 
     console.log(`🔍 [DEBUG PREFILL] Campo: "${field.id}" → normalizedId: "${normalizedId}"`);
 
-    // ESTRATÉGIA DE 3 NÍVEIS (APENAS PARA CAMPOS CITIZEN_*):
-    // 1. Tentar mapeamento direto
+    // Tentar encontrar mapeamento direto
     const mapper = FIELD_MAPPINGS[normalizedId];
 
     if (mapper) {
-      // Aplicar o mapeamento direto
+      // Mapeamento encontrado - aplicar pré-preenchimento
       const value = mapper(citizenData);
 
       console.log(`🔍 [DEBUG MAPPER] "${field.id}" → mapper found, value:`, value);
@@ -642,14 +630,14 @@ export function prefillFormData(
         formData[field.id] = value;
         prefilledCount++;
 
-        console.log(`✅ [CITIZEN FIELD FILLED] "${field.id}" → "${value}"`);
+        console.log(`✅ [FIELD FILLED] "${field.id}" → "${value}"`);
       } else {
         formData[field.id] = getDefaultValueForType(field.type);
 
-        console.log(`❌ [CITIZEN FIELD EMPTY] "${field.id}" - valor retornado: ${value}`);
+        console.log(`❌ [FIELD EMPTY] "${field.id}" - valor retornado: ${value}`);
       }
     } else {
-      // 2. Campo citizen_* sem mapeamento encontrado - inicializar vazio
+      // Sem mapeamento - inicializar vazio
       formData[field.id] = getDefaultValueForType(field.type);
 
       console.log(`⚠️ [NO MAPPER] "${field.id}" (normalized: "${normalizedId}")`);
