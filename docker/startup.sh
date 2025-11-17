@@ -30,11 +30,7 @@ fi
 
 echo "✅ PostgreSQL está pronto!"
 
-# Gerar Prisma Client se necessário
-echo "🔧 Gerando Prisma Client..."
-npx prisma generate || echo "⚠️ Prisma generate falhou"
-
-# Executar migrations
+# Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
 npx prisma migrate deploy || {
   echo "⚠️ Migrations falharam, tentando db push..."
@@ -42,6 +38,13 @@ npx prisma migrate deploy || {
     echo "❌ db push falhou"
     exit 1
   }
+}
+
+# Gerar Prisma Client APÓS migrations (para garantir sincronização)
+echo "🔧 Gerando Prisma Client..."
+npx prisma generate || {
+  echo "❌ Prisma generate falhou"
+  exit 1
 }
 
 # Executar seed de forma simplificada

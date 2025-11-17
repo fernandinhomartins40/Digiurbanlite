@@ -68,7 +68,7 @@ export async function processProtocolCitizenLinks(
       return [];
     }
 
-    const config = service.linkedCitizensConfig as LinkedCitizenConfig;
+    const config = service.linkedCitizensConfig as unknown as LinkedCitizenConfig;
 
     if (!config.enabled || !config.links || config.links.length === 0) {
       console.log('[protocol-citizen-links] Citizen links not enabled for service');
@@ -158,7 +158,7 @@ export async function processProtocolCitizenLinks(
           where: {
             headId: citizenId,
             memberId: linkedCitizenId,
-            relationship: { in: linkConfig.expectedRelationships }
+            relationship: { in: linkConfig.expectedRelationships as any }
           }
         });
 
