@@ -335,11 +335,17 @@ router.get('/:id', async (req, res) => {
             customFields.push({
               id,
               label: prop.title || id,
-              type: prop.enum ? 'select' : (prop.type === 'number' ? 'number' : 'text'),
+              type: prop.enum ? 'select' : (prop.type === 'number' ? 'number' : (prop.type === 'string' ? 'text' : prop.type)),
               required: required.includes(id),
               placeholder: prop.description,
               options: prop.enum || undefined,
-              mask: prop.mask || undefined
+              mask: prop.mask || undefined,
+              // ✅ Incluir regras de validação para o frontend
+              minLength: prop.minLength,
+              maxLength: prop.maxLength,
+              min: prop.minimum,
+              max: prop.maximum,
+              pattern: prop.pattern
             });
           }
         });

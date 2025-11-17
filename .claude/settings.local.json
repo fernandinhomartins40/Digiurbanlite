@@ -85,7 +85,9 @@
       "Bash(cmd /c \"set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=não temos dados em produção pode resetar && npx prisma migrate reset --force --skip-seed\")",
       "Bash(psql:*)",
       "Bash(dir:*)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote add:*)"
     ],
     "deny": [],
     "ask": []
