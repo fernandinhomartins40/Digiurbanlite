@@ -1,0 +1,6002 @@
+/**
+ * ============================================================================
+ * SEED DE SERVIÇOS - ARQUITETURA SIMPLIFICADA (COMPLETO)
+ * ============================================================================
+ *
+ * Baseado em: docs/PLANO_IMPLEMENTACAO_SIMPLIFICACAO.md
+ *
+ * TOTAL: 114 SERVIÇOS MAPEADOS
+ * - 102 Serviços COM_DADOS (capturam dados para módulos)
+ * - 12 Serviços INFORMATIVOS (consultas, sem dados estruturados)
+ *
+ * DISTRIBUIÇÃO POR SECRETARIA:
+ * 1. Saúde                    - 11 serviços (10 COM_DADOS + 1 GESTÃO)
+ * 2. Educação                 - 11 serviços (8 COM_DADOS + 2 GESTÃO + 1 INFO)
+ * 3. Assistência Social       - 9 serviços  (8 COM_DADOS + 1 GESTÃO)
+ * 4. Agricultura              - 6 serviços  (6 COM_DADOS)
+ * 5. Cultura                  - 9 serviços  (8 COM_DADOS + 1 INFO)
+ * 6. Esportes                 - 9 serviços  (8 COM_DADOS + 1 INFO)
+ * 7. Habitação                - 7 serviços  (6 COM_DADOS + 1 INFO)
+ * 8. Meio Ambiente            - 7 serviços  (6 COM_DADOS + 1 GESTÃO)
+ * 9. Obras Públicas           - 7 serviços  (5 COM_DADOS + 2 INFO)
+ * 10. Planejamento Urbano     - 9 serviços  (7 COM_DADOS + 2 INFO)
+ * 11. Segurança Pública       - 11 serviços (8 COM_DADOS + 2 GESTÃO + 1 INFO)
+ * 12. Serviços Públicos       - 9 serviços  (7 COM_DADOS + 1 GESTÃO + 1 INFO)
+ * 13. Turismo                 - 9 serviços  (7 COM_DADOS + 2 INFO)
+ *
+ * Estrutura:
+ * - serviceType: 'COM_DADOS' | 'INFORMATIVO'
+ * - moduleType: string (ex: 'CADASTRO_PRODUTOR') - para roteamento
+ * - formSchema: JSON Schema do formulário (quando aplicável)
+ */
+
+import { PrismaClient, ServiceType } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+interface ServiceDefinition {
+  name: string;
+  description: string;
+  departmentCode: string;
+  serviceType: ServiceType;
+  moduleType: string | null; // null = serviço informativo
+  requiresDocuments: boolean;
+  requiredDocuments?: string[];
+  estimatedDays: number | null;
+  priority: number;
+  category?: string;
+  icon?: string;
+  color?: string;
+  formSchema?: any;
+}
+
+// ============================================================================
+// SECRETARIA DE SAÚDE (11 serviços)
+// ============================================================================
+const HEALTH_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Atendimentos - Saúde',
+    description: 'Registro geral de atendimentos na área da saúde',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'ATENDIMENTOS_SAUDE',
+    requiresDocuments: false,
+    estimatedDays: 1,
+    priority: 3,
+    category: 'Atendimento',
+    icon: 'Activity',
+    color: '#10b981',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'tipoSanguineo',
+          label: 'Tipo Sanguíneo',
+          type: 'select',
+          options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Não sei'],
+          required: false
+        },
+        {
+          id: 'tipoAtendimento',
+          label: 'Tipo de Atendimento',
+          type: 'select',
+          options: ['Consulta', 'Emergência', 'Retorno', 'Preventivo', 'Vacinação', 'Exame'],
+          required: true
+        },
+        {
+          id: 'unidadeSaude',
+          label: 'Unidade de Saúde',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataAtendimento',
+          label: 'Data do Atendimento',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'horaAtendimento',
+          label: 'Hora do Atendimento',
+          type: 'text',
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
+          required: false
+        },
+        {
+          id: 'profissionalResponsavel',
+          label: 'Profissional Responsável',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cnsProfissional',
+          label: 'CNS do Profissional',
+          type: 'text',
+          maxLength: 20,
+          required: false
+        },
+        {
+          id: 'especialidade',
+          label: 'Especialidade',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'descricao',
+          label: 'Descrição/Queixa Principal',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 2000,
+          required: true
+        },
+        {
+          id: 'diagnostico',
+          label: 'Diagnóstico/CID',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'procedimentosRealizados',
+          label: 'Procedimentos Realizados',
+          type: 'textarea',
+          maxLength: 1000,
+          required: false
+        },
+        {
+          id: 'prescricoes',
+          label: 'Prescrições/Orientações Médicas',
+          type: 'textarea',
+          maxLength: 1000,
+          required: false
+        },
+        {
+          id: 'prioridade',
+          label: 'Prioridade',
+          type: 'select',
+          options: ['BAIXA', 'NORMAL', 'ALTA', 'URGENTE'],
+          defaultValue: 'NORMAL',
+          required: false
+        },
+        {
+          id: 'encaminhamento',
+          label: 'Houve Encaminhamento?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'especialidadeEncaminhamento',
+          label: 'Especialidade do Encaminhamento',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Agendamento de Consulta Médica',
+    description: 'Agende consultas médicas nas unidades de saúde',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'AGENDAMENTOS_MEDICOS',
+    requiresDocuments: true,
+    requiredDocuments: ['Cartão SUS', 'Documento de Identidade'],
+    estimatedDays: 7,
+    priority: 4,
+    category: 'Agendamento',
+    icon: 'Calendar',
+    color: '#3b82f6',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'alergiasMedicamentos',
+          label: 'Alergias a Medicamentos (se houver)',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'necessidadesEspeciais',
+          label: 'Necessidades Especiais',
+          type: 'select',
+          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'],
+          required: false
+        },
+        {
+          id: 'possuiConvenio',
+          label: 'Possui Convênio Particular?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'nomeConvenio',
+          label: 'Nome do Convênio',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'especialidade',
+          label: 'Especialidade',
+          type: 'select',
+          options: ['Clínico Geral', 'Pediatria', 'Ginecologia', 'Cardiologia', 'Ortopedia', 'Dermatologia', 'Oftalmologia', 'Odontologia', 'Psicologia', 'Nutrição'],
+          required: true
+        },
+        {
+          id: 'unidadePreferencial',
+          label: 'Unidade de Saúde Preferencial',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataPreferencial',
+          label: 'Data Preferencial',
+          type: 'date',
+          required: false
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde', 'Qualquer'],
+          required: false
+        },
+        {
+          id: 'motivoConsulta',
+          label: 'Motivo da Consulta',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 500,
+          required: true
+        },
+        {
+          id: 'primeiraConsulta',
+          label: 'Primeira Consulta na Especialidade?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'urgencia',
+          label: 'Caso Urgente?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'justificativaUrgencia',
+          label: 'Justificativa da Urgência',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Controle de Medicamentos',
+    description: 'Solicitação e controle de medicamentos da farmácia básica',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CONTROLE_MEDICAMENTOS',
+    requiresDocuments: true,
+    requiredDocuments: ['Receita Médica', 'Cartão SUS'],
+    estimatedDays: 2,
+    priority: 5,
+    category: 'Medicamentos',
+    icon: 'Pill',
+    color: '#ef4444',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'alergiasMedicamentos',
+          label: 'Alergias a Medicamentos (se houver)',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'necessidadesEspeciais',
+          label: 'Necessidades Especiais',
+          type: 'select',
+          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'],
+          required: false
+        },
+        {
+          id: 'dificuldadeLocomocao',
+          label: 'Possui Dificuldade de Locomoção?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'numeroReceita',
+          label: 'Número da Receita',
+          type: 'text',
+          minLength: 5,
+          maxLength: 50,
+          required: true
+        },
+        {
+          id: 'dataReceita',
+          label: 'Data da Receita',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'nomeMedico',
+          label: 'Nome do Médico',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'crmMedico',
+          label: 'CRM do Médico',
+          type: 'text',
+          pattern: '^\\d{4,8}$',
+          required: true
+        },
+        {
+          id: 'especialidadeMedico',
+          label: 'Especialidade do Médico',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'medicamentos',
+          label: 'Medicamentos Solicitados',
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              nome: { type: 'string', title: 'Nome do Medicamento', minLength: 3, maxLength: 200 },
+              dosagem: { type: 'string', title: 'Dosagem', maxLength: 50 },
+              quantidade: { type: 'integer', title: 'Quantidade', minimum: 1 },
+              posologia: { type: 'string', title: 'Posologia', maxLength: 200 },
+              duracao: { type: 'string', title: 'Duração do Tratamento', maxLength: 100 },
+              viaAdministracao: { type: 'string', title: 'Via de Administração', enum: ['Oral', 'Injetável', 'Tópica', 'Inalatória', 'Outra'] }
+            },
+            required: ['nome', 'dosagem', 'quantidade']
+          },
+          minItems: 1,
+          required: true
+        },
+        {
+          id: 'usoContínuo',
+          label: 'Uso Contínuo (mais de 3 meses)',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'unidadeRetirada',
+          label: 'Unidade de Retirada Preferencial',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'horarioPreferencialRetirada',
+          label: 'Horário Preferencial',
+          type: 'select',
+          options: ['Manhã (08:00-12:00)', 'Tarde (13:00-17:00)', 'Qualquer'],
+          required: false
+        },
+        {
+          id: 'solicitaEntregaDomiciliar',
+          label: 'Solicita Entrega Domiciliar?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'justificativaEntregaDomiciliar',
+          label: 'Justificativa para Entrega Domiciliar',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'autorizaFamiliarRetirar',
+          label: 'Autoriza Familiar a Retirar?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'nomeFamiliarAutorizado',
+          label: 'Nome do Familiar Autorizado',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cpfFamiliarAutorizado',
+          label: 'CPF do Familiar Autorizado',
+          type: 'text',
+          pattern: '^\\d{11}$',
+          minLength: 11,
+          maxLength: 11,
+          required: false
+        },
+        {
+          id: 'parentescoFamiliar',
+          label: 'Grau de Parentesco',
+          type: 'select',
+          options: ['Cônjuge', 'Filho(a)', 'Pai/Mãe', 'Irmão(ã)', 'Neto(a)', 'Outro'],
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações Gerais',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Campanhas de Vacinação',
+    description: 'Registro de participação em campanhas de vacinação',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CAMPANHAS_SAUDE',
+    requiresDocuments: true,
+    requiredDocuments: ['Cartão de Vacina', 'Documento de Identidade'],
+    estimatedDays: 1,
+    priority: 5,
+    category: 'Prevenção',
+    icon: 'Syringe',
+    color: '#8b5cf6',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        // ========== BLOCO 1: ENDEREÇO COMPLEMENTAR ==========
+        { id: 'pontoReferencia', type: 'text', label: 'Ponto de Referência (opcional)', required: false, maxLength: 200 },
+
+        // ========== BLOCO 2: DADOS DE SAÚDE ==========
+        { id: 'cartaoSUS', type: 'text', label: 'Cartão SUS (CNS)', required: true, pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
+        { id: 'possuiCartaoVacina', type: 'checkbox', label: 'Possui Cartão de Vacina?', required: false, defaultValue: false },
+        { id: 'numeroCartaoVacina', type: 'text', label: 'Número do Cartão de Vacina', required: false, maxLength: 50 },
+        { id: 'alergiasMedicamentos', type: 'textarea', label: 'Alergias a Medicamentos/Vacinas (se houver)', required: false, maxLength: 500 },
+        {
+          id: 'necessidadesEspeciais',
+          type: 'select',
+          label: 'Necessidades Especiais',
+          required: false,
+          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra']
+        },
+
+        // ========== BLOCO 3: DADOS DA CAMPANHA ==========
+        {
+          id: 'tipoCampanha',
+          type: 'select',
+          label: 'Tipo de Campanha/Vacina',
+          required: true,
+          options: ['Gripe', 'COVID-19', 'Sarampo', 'Pólio', 'Multivacinação', 'HPV', 'Meningite', 'Febre Amarela', 'Hepatite', 'Tétano', 'Pneumonia', 'Outras']
+        },
+        {
+          id: 'grupoRisco',
+          type: 'select',
+          label: 'Grupo de Risco',
+          required: true,
+          options: ['Criança (0-11 anos)', 'Adolescente (12-18 anos)', 'Adulto (19-59 anos)', 'Idoso (60+ anos)', 'Gestante', 'Puérpera', 'Profissional de Saúde', 'Professor', 'Portador de Comorbidade', 'Não se aplica']
+        },
+        { id: 'gestante', type: 'checkbox', label: 'É Gestante?', required: false, defaultValue: false },
+        { id: 'semanasGestacao', type: 'number', label: 'Semanas de Gestação', required: false, minimum: 1, maximum: 42 },
+        { id: 'possuiComorbidade', type: 'checkbox', label: 'Possui Comorbidade?', required: false, defaultValue: false },
+        { id: 'descricaoComorbidade', type: 'textarea', label: 'Descrição da Comorbidade', required: false, maxLength: 500 },
+
+        // ========== BLOCO 4: AGENDAMENTO/LOCAL ==========
+        { id: 'unidadePreferencial', type: 'text', label: 'Unidade de Saúde Preferencial', required: true, minLength: 3, maxLength: 200 },
+        { id: 'dataPreferencial', type: 'date', label: 'Data Preferencial', required: false },
+        {
+          id: 'turnoPreferencial',
+          type: 'select',
+          label: 'Turno Preferencial',
+          required: false,
+          options: ['Manhã', 'Tarde', 'Qualquer']
+        },
+        { id: 'temDificuldadeLocomocao', type: 'checkbox', label: 'Possui Dificuldade de Locomoção?', required: false, defaultValue: false },
+        { id: 'solicitaVacinacaoDomiciliar', type: 'checkbox', label: 'Solicita Vacinação Domiciliar?', required: false, defaultValue: false },
+        { id: 'justificativaVacinacaoDomiciliar', type: 'textarea', label: 'Justificativa para Vacinação Domiciliar', required: false, maxLength: 500 },
+
+        // ========== BLOCO 5: OBSERVAÇÕES ==========
+        { id: 'observacoes', type: 'textarea', label: 'Observações Gerais', required: false, maxLength: 500 }
+      ]
+    }
+  },
+  {
+    name: 'Programas de Saúde',
+    description: 'Inscrição em programas de saúde (hipertensão, diabetes, etc)',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'PROGRAMAS_SAUDE',
+    requiresDocuments: true,
+    requiredDocuments: ['Laudo Médico', 'Cartão SUS'],
+    estimatedDays: 5,
+    priority: 4,
+    category: 'Programas',
+    icon: 'Heart',
+    color: '#ec4899',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        // ========== BLOCO 1: ENDEREÇO COMPLEMENTAR ==========
+        { id: 'pontoReferencia', type: 'text', label: 'Ponto de Referência (opcional)', required: false, maxLength: 200 },
+
+        // ========== BLOCO 2: DADOS DE SAÚDE ==========
+        { id: 'cartaoSUS', type: 'text', label: 'Cartão SUS (CNS)', required: true, pattern: '^\\d{15}$', minLength: 15, maxLength: 15 },
+        { id: 'alergiasMedicamentos', type: 'textarea', label: 'Alergias a Medicamentos (se houver)', required: false, maxLength: 500 },
+        {
+          id: 'necessidadesEspeciais',
+          type: 'select',
+          label: 'Necessidades Especiais',
+          required: false,
+          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra']
+        },
+        { id: 'peso', type: 'number', label: 'Peso (kg)', required: false, minimum: 1, maximum: 300 },
+        { id: 'altura', type: 'number', label: 'Altura (cm)', required: false, minimum: 40, maximum: 250 },
+
+        // ========== BLOCO 3: DADOS DO PROGRAMA ==========
+        {
+          id: 'tipoPrograma',
+          type: 'select',
+          label: 'Tipo de Programa',
+          required: true,
+          options: ['Hipertensão', 'Diabetes', 'Gestante', 'Saúde Mental', 'Idoso', 'Pré-Natal', 'Criança Saudável', 'Obesidade', 'Tabagismo', 'Alcoolismo', 'Hanseníase', 'Tuberculose', 'Outro']
+        },
+        { id: 'motivoInscricao', type: 'textarea', label: 'Motivo da Inscrição no Programa', required: true, minLength: 10, maxLength: 500 },
+        { id: 'diagnostico', type: 'textarea', label: 'Diagnóstico Principal (CID-10)', required: true, minLength: 3, maxLength: 500 },
+        { id: 'possuiDiagnosticoMedico', type: 'checkbox', label: 'Possui Diagnóstico Médico Formal?', required: false, defaultValue: false },
+        { id: 'comorbidades', type: 'textarea', label: 'Comorbidades (outras doenças)', required: false, maxLength: 500 },
+
+        // ========== BLOCO 4: MÉDICO RESPONSÁVEL ==========
+        { id: 'nomeMedico', type: 'text', label: 'Nome do Médico Responsável', required: true, minLength: 3, maxLength: 200 },
+        { id: 'crmMedico', type: 'text', label: 'CRM do Médico', required: true, pattern: '^\\d{4,8}$' },
+        { id: 'especialidadeMedico', type: 'text', label: 'Especialidade do Médico', required: false, maxLength: 100 },
+        { id: 'dataUltimaConsulta', type: 'date', label: 'Data da Última Consulta', required: false },
+
+        // ========== BLOCO 5: ACOMPANHAMENTO ==========
+        { id: 'dataInicio', type: 'date', label: 'Data de Início no Programa', required: true },
+        { id: 'unidadeAcompanhamento', type: 'text', label: 'Unidade de Saúde para Acompanhamento', required: true, minLength: 3, maxLength: 200 },
+        {
+          id: 'frequenciaConsultas',
+          type: 'select',
+          label: 'Frequência de Consultas',
+          required: true,
+          options: ['Semanal', 'Quinzenal', 'Mensal', 'Bimestral', 'Trimestral', 'Semestral']
+        },
+        {
+          id: 'horarioPreferencial',
+          type: 'select',
+          label: 'Horário Preferencial',
+          required: false,
+          options: ['Manhã', 'Tarde', 'Qualquer']
+        },
+        { id: 'necessitaAcompanhante', type: 'checkbox', label: 'Necessita Acompanhante?', required: false, defaultValue: false },
+
+        // ========== BLOCO 6: MEDICAMENTOS E TRATAMENTO ==========
+        { id: 'fazUsoMedicamentoContinuo', type: 'checkbox', label: 'Faz Uso de Medicamento Contínuo?', required: false, defaultValue: false },
+        { id: 'medicamentosUso', type: 'textarea', label: 'Medicamentos em Uso Contínuo', required: false, maxLength: 1000 },
+        { id: 'possuiDificuldadeObterMedicamento', type: 'checkbox', label: 'Possui Dificuldade em Obter Medicamento?', required: false, defaultValue: false },
+        { id: 'retiraraMedicamentoFarmaciaBasica', type: 'checkbox', label: 'Retirará Medicamentos na Farmácia Básica?', required: false, defaultValue: false },
+
+        // ========== BLOCO 7: OBSERVAÇÕES ==========
+        { id: 'observacoes', type: 'textarea', label: 'Observações Gerais', required: false, maxLength: 1000 }
+      ]
+    }
+  },
+  {
+    name: 'Encaminhamento TFD (Tratamento Fora do Domicílio)',
+    description: 'Solicitação de transporte e tratamento fora do município',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'ENCAMINHAMENTOS_TFD',
+    requiresDocuments: true,
+    requiredDocuments: ['Encaminhamento Médico', 'Exames', 'Cartão SUS'],
+    estimatedDays: 15,
+    priority: 5,
+    category: 'TFD',
+    icon: 'Ambulance',
+    color: '#f59e0b',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'alergiasMedicamentos',
+          label: 'Alergias a Medicamentos (se houver)',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'necessidadesEspeciais',
+          label: 'Necessidades Especiais',
+          type: 'select',
+          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Acamado', 'Outra'],
+          required: false
+        },
+        {
+          id: 'nomeMedicoSolicitante',
+          label: 'Médico Solicitante',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'crmMedico',
+          label: 'CRM do Médico',
+          type: 'text',
+          pattern: '^\\d{4,8}$',
+          required: true
+        },
+        {
+          id: 'especialidadeMedicoSolicitante',
+          label: 'Especialidade do Médico',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'dataEncaminhamento',
+          label: 'Data do Encaminhamento Médico',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'numeroEncaminhamento',
+          label: 'Número do Encaminhamento',
+          type: 'text',
+          maxLength: 50,
+          required: false
+        },
+        {
+          id: 'especialidadeDestino',
+          label: 'Especialidade de Destino',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'tipoTratamento',
+          label: 'Tipo de Tratamento',
+          type: 'select',
+          options: ['Consulta Especializada', 'Cirurgia', 'Exames Especializados', 'Radioterapia', 'Quimioterapia', 'Hemodiálise', 'Fisioterapia', 'Outro'],
+          required: true
+        },
+        {
+          id: 'motivoEncaminhamento',
+          label: 'Motivo do Encaminhamento',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'diagnostico',
+          label: 'Diagnóstico Principal (CID-10)',
+          type: 'textarea',
+          maxLength: 500,
+          required: true
+        },
+        {
+          id: 'historicoDoenca',
+          label: 'Histórico da Doença',
+          type: 'textarea',
+          maxLength: 1000,
+          required: false
+        },
+        {
+          id: 'urgente',
+          label: 'Caso Urgente?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'cidadeDestino',
+          label: 'Cidade de Destino',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'estadoDestino',
+          label: 'Estado de Destino (UF)',
+          type: 'text',
+          pattern: '^[A-Z]{2}$',
+          minLength: 2,
+          maxLength: 2,
+          required: true
+        },
+        {
+          id: 'hospitalDestino',
+          label: 'Hospital/Clínica de Destino (se conhecido)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'dataPreferencialAtendimento',
+          label: 'Data Preferencial de Atendimento',
+          type: 'date',
+          required: false
+        },
+        {
+          id: 'necessitaAcompanhante',
+          label: 'Necessita Acompanhante?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'nomeAcompanhante',
+          label: 'Nome Completo do Acompanhante',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cpfAcompanhante',
+          label: 'CPF do Acompanhante',
+          type: 'text',
+          pattern: '^\\d{11}$',
+          minLength: 11,
+          maxLength: 11,
+          required: false
+        },
+        {
+          id: 'rgAcompanhante',
+          label: 'RG do Acompanhante',
+          type: 'text',
+          maxLength: 20,
+          required: false
+        },
+        {
+          id: 'telefoneAcompanhante',
+          label: 'Telefone do Acompanhante',
+          type: 'text',
+          pattern: '^\\d{10,11}$',
+          required: false
+        },
+        {
+          id: 'parentescoAcompanhante',
+          label: 'Grau de Parentesco',
+          type: 'select',
+          options: ['Cônjuge', 'Filho(a)', 'Pai/Mãe', 'Irmão(ã)', 'Neto(a)', 'Outro'],
+          required: false
+        },
+        {
+          id: 'necessitaTransporte',
+          label: 'Necessita Transporte?',
+          type: 'checkbox',
+          defaultValue: true,
+          required: false
+        },
+        {
+          id: 'tipoTransporte',
+          label: 'Tipo de Transporte Necessário',
+          type: 'select',
+          options: ['Veículo Comum', 'Ambulância Simples', 'Ambulância UTI', 'Outro'],
+          required: false
+        },
+        {
+          id: 'necessitaHospedagem',
+          label: 'Necessita Hospedagem?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'diasEstimadosHospedagem',
+          label: 'Dias Estimados de Hospedagem',
+          type: 'number',
+          minimum: 1,
+          maximum: 90,
+          required: false
+        },
+        {
+          id: 'necessitaAjudaCusto',
+          label: 'Necessita Ajuda de Custo?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações Gerais',
+          type: 'textarea',
+          maxLength: 1000,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Solicitação de Exames',
+    description: 'Agendamento de exames laboratoriais e de imagem',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'EXAMES',
+    requiresDocuments: true,
+    requiredDocuments: ['Pedido Médico', 'Cartão SUS'],
+    estimatedDays: 10,
+    priority: 4,
+    category: 'Exames',
+    icon: 'FileText',
+    color: '#06b6d4',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'alergiasMedicamentos',
+          label: 'Alergias a Medicamentos/Contrastes (se houver)',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'necessidadesEspeciais',
+          label: 'Necessidades Especiais',
+          type: 'select',
+          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Outra'],
+          required: false
+        },
+        {
+          id: 'peso',
+          label: 'Peso (kg)',
+          type: 'number',
+          minimum: 1,
+          maximum: 300,
+          required: false
+        },
+        {
+          id: 'altura',
+          label: 'Altura (cm)',
+          type: 'number',
+          minimum: 40,
+          maximum: 250,
+          required: false
+        },
+        {
+          id: 'nomeMedicoSolicitante',
+          label: 'Médico Solicitante',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'crmMedico',
+          label: 'CRM do Médico',
+          type: 'text',
+          pattern: '^\\d{4,8}$',
+          required: true
+        },
+        {
+          id: 'especialidadeMedico',
+          label: 'Especialidade do Médico',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'dataPedido',
+          label: 'Data do Pedido Médico',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'numeroPedido',
+          label: 'Número do Pedido',
+          type: 'text',
+          maxLength: 50,
+          required: false
+        },
+        {
+          id: 'tipoExame',
+          label: 'Tipo de Exame',
+          type: 'select',
+          options: ['Laboratorial', 'Imagem (Raio-X, Ultrassom, Tomografia)', 'Cardiológico', 'Oftalmológico', 'Auditivo', 'Endoscópico', 'Outro'],
+          required: true
+        },
+        {
+          id: 'examesSolicitados',
+          label: 'Exames Solicitados',
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              nomeExame: { type: 'string', title: 'Nome do Exame', minLength: 3, maxLength: 200 },
+              codigoExame: { type: 'string', title: 'Código do Exame (se conhecido)', maxLength: 50 },
+              urgencia: { type: 'boolean', title: 'Urgente', default: false }
+            },
+            required: ['nomeExame']
+          },
+          minItems: 1,
+          required: true
+        },
+        {
+          id: 'motivoSolicitacao',
+          label: 'Motivo da Solicitação/Hipótese Diagnóstica',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 500,
+          required: true
+        },
+        {
+          id: 'hipoteseDiagnostica',
+          label: 'Hipótese Diagnóstica (CID-10)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'dataPreferencial',
+          label: 'Data Preferencial',
+          type: 'date',
+          required: false
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde', 'Qualquer'],
+          required: false
+        },
+        {
+          id: 'unidadePreferencial',
+          label: 'Unidade de Saúde Preferencial',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'jejumNecessario',
+          label: 'Jejum Necessário?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'horasJejum',
+          label: 'Horas de Jejum',
+          type: 'number',
+          minimum: 1,
+          maximum: 24,
+          required: false
+        },
+        {
+          id: 'preparoEspecial',
+          label: 'Preparo Especial (orientações do médico)',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'usaMedicamentoContinuo',
+          label: 'Usa Medicamento Contínuo?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'medicamentosEmUso',
+          label: 'Medicamentos em Uso',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações Gerais',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Transporte de Pacientes',
+    description: 'Solicitação de ambulância para transporte de pacientes',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'TRANSPORTE_PACIENTES',
+    requiresDocuments: true,
+    requiredDocuments: ['Atestado Médico', 'Comprovante de Endereço'],
+    estimatedDays: 3,
+    priority: 5,
+    category: 'Transporte',
+    icon: 'Truck',
+    color: '#dc2626',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência (opcional)',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'nomeMedicoSolicitante',
+          label: 'Nome do Médico Solicitante',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'crmMedico',
+          label: 'CRM do Médico',
+          type: 'text',
+          pattern: '^\\d{4,8}$',
+          required: true
+        },
+        {
+          id: 'especialidadeMedico',
+          label: 'Especialidade do Médico',
+          type: 'text',
+          maxLength: 100,
+          required: false
+        },
+        {
+          id: 'dataSolicitacao',
+          label: 'Data da Solicitação',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'motivoTransporte',
+          label: 'Motivo do Transporte',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'diagnostico',
+          label: 'Diagnóstico Principal (CID-10)',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'condicaoPaciente',
+          label: 'Condição do Paciente',
+          type: 'select',
+          options: ['Estável', 'Crítica', 'Mobilidade Reduzida', 'Acamado', 'Outra'],
+          required: true
+        },
+        {
+          id: 'tipoTransporte',
+          label: 'Tipo de Transporte Necessário',
+          type: 'select',
+          options: ['Ambulância Simples', 'Ambulância UTI', 'Veículo Adaptado', 'Outro'],
+          required: true
+        },
+        {
+          id: 'destino',
+          label: 'Destino do Transporte',
+          type: 'text',
+          minLength: 5,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataPreferencial',
+          label: 'Data Preferencial',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'horaPreferencial',
+          label: 'Hora Preferencial',
+          type: 'text',
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
+          required: false
+        },
+        {
+          id: 'necessitaAcompanhante',
+          label: 'Necessita Acompanhante?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'nomeAcompanhante',
+          label: 'Nome do Acompanhante',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cpfAcompanhante',
+          label: 'CPF do Acompanhante',
+          type: 'text',
+          pattern: '^\\d{11}$',
+          minLength: 11,
+          maxLength: 11,
+          required: false
+        },
+        {
+          id: 'parentescoAcompanhante',
+          label: 'Grau de Parentesco',
+          type: 'select',
+          options: ['Cônjuge', 'Filho(a)', 'Pai/Mãe', 'Irmão(ã)', 'Outro'],
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações Gerais',
+          type: 'textarea',
+          maxLength: 1000,
+          required: false
+        }
+      ]
+    }
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE SERVIÇOS PÚBLICOS (9 serviços)
+// ============================================================================
+const PUBLIC_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Desobstrução de Bueiro',
+    description: 'Solicitação de desobstrução de bueiro ou boca de lobo',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'DESOBSTRUCAO_BUEIRO',
+    requiresDocuments: false,
+    estimatedDays: 5,
+    priority: 4,
+    category: 'Limpeza',
+    icon: 'Drain',
+    color: '#16a34a',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'tipoObstrucao',
+          label: 'Tipo de Obstrução',
+          type: 'select',
+          options: ['Boca de Lobo Entupida', 'Bueiro Obstruído', 'Grelha Danificada', 'Acúmulo de Lixo', 'Outro'],
+          required: true
+        },
+        {
+          id: 'localObstrucao',
+          label: 'Local da Obstrução',
+          type: 'text',
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'causandoAlagamento',
+          label: 'Está causando alagamento?',
+          type: 'checkbox',
+          required: false
+        },
+        {
+          id: 'descricaoProblema',
+          label: 'Descrição do Problema',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Solicitação de Poda de Árvore',
+    description: 'Solicitação de poda de árvore em via pública',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'SOLICITACAO_PODA',
+    requiresDocuments: false,
+    estimatedDays: 15,
+    priority: 3,
+    category: 'Poda',
+    icon: 'TreeDeciduous',
+    color: '#16a34a',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'localArvore',
+          label: 'Local da Árvore',
+          type: 'text',
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'motivoPoda',
+          label: 'Motivo da Poda',
+          type: 'select',
+          options: ['Galhos na Rede Elétrica', 'Risco de Queda', 'Obstrução de Visibilidade', 'Danificação de Calçada', 'Interferência em Iluminação', 'Outro'],
+          required: true
+        },
+        {
+          id: 'descricaoSituacao',
+          label: 'Descrição da Situação',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'urgente',
+          label: 'Situação Urgente (risco iminente)?',
+          type: 'checkbox',
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Registro de Problema com Foto (Funcionalidade Transversal)',
+    description: 'Registro geolocalizado de problemas com foto',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Transversal',
+    icon: 'Camera',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Gestão de Equipes de Serviços',
+    description: 'Programação de equipes e rotas de trabalho',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'GESTAO_EQUIPES_SERVICOS',
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 2,
+    category: 'Gestão Interna',
+    icon: 'Users',
+    color: '#64748b',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'tipoEquipe',
+          label: 'Tipo de Equipe',
+          type: 'select',
+          options: ['Limpeza Urbana', 'Coleta de Lixo', 'Poda de Árvores', 'Iluminação Pública', 'Capina', 'Desobstrução', 'Equipe Mista'],
+          required: true
+        },
+        {
+          id: 'numeroEquipe',
+          label: 'Número da Equipe',
+          type: 'text',
+          maxLength: 50,
+          required: true
+        },
+        {
+          id: 'dataServico',
+          label: 'Data do Serviço',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'horarioInicio',
+          label: 'Horário de Início',
+          type: 'text',
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
+          required: true
+        },
+        {
+          id: 'horarioTermino',
+          label: 'Horário de Término',
+          type: 'text',
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
+          required: true
+        },
+        {
+          id: 'rotaTrabalho',
+          label: 'Rota de Trabalho (ruas/bairros)',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Certidão de Execução de Serviço',
+    description: 'Emissão de certidão comprovando execução de serviço público',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Número do Protocolo'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Certidão de Limpeza Urbana',
+    description: 'Emissão de certidão de regularidade de limpeza',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Declaração de Manutenção de Via',
+    description: 'Emissão de declaração de manutenção realizada em via pública',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Localização da Via'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Atestado de Condições de Infraestrutura',
+    description: 'Emissão de atestado das condições de infraestrutura urbana',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço', 'Descrição da Área'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Atestados',
+    icon: 'CheckCircle',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Laudo de Vistoria de Iluminação Pública',
+    description: 'Emissão de laudo técnico de vistoria de iluminação',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Localização dos Pontos'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Autorização para Intervenção em Via Pública',
+    description: 'Emissão de autorização para obras em vias públicas',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'CNPJ', 'Projeto de Intervenção', 'ART'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'Construction',
+    color: '#f59e0b',
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE TURISMO (9 serviços)
+// ============================================================================
+const TOURISM_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Atendimentos - Turismo',
+    description: 'Registro geral de atendimentos na área turística',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'ATENDIMENTOS_TURISMO',
+    requiresDocuments: false,
+    estimatedDays: 1,
+    priority: 3,
+    category: 'Atendimento',
+    icon: 'Plane',
+    color: '#3b82f6',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'motivoAtendimento',
+          label: 'Motivo do Atendimento',
+          type: 'select',
+          options: ['Informações Turísticas', 'Cadastro de Estabelecimento', 'Cadastro de Guia', 'Programa Turístico', 'Evento', 'Reclamação', 'Outro'],
+          required: true
+        },
+        {
+          id: 'descricaoAtendimento',
+          label: 'Descrição do Atendimento',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cadastro de Estabelecimento Turístico',
+    description: 'Cadastro de hotéis, pousadas, restaurantes',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO',
+    requiresDocuments: true,
+    requiredDocuments: ['CNPJ', 'Alvará de Funcionamento', 'Documentação do Responsável'],
+    estimatedDays: 10,
+    priority: 4,
+    category: 'Cadastro',
+    icon: 'Building',
+    color: '#2563eb',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeEstabelecimento',
+          label: 'Nome do Estabelecimento',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'tipoEstabelecimento',
+          label: 'Tipo de Estabelecimento',
+          type: 'select',
+          options: ['Hotel', 'Pousada', 'Hostel', 'Restaurante', 'Bar', 'Lanchonete', 'Agência de Turismo', 'Outro'],
+          required: true
+        },
+        {
+          id: 'cnpj',
+          label: 'CNPJ',
+          type: 'text',
+          pattern: '^\\d{14}$',
+          minLength: 14,
+          maxLength: 14,
+          required: true
+        },
+        {
+          id: 'enderecoEstabelecimento',
+          label: 'Endereço do Estabelecimento',
+          type: 'text',
+          minLength: 10,
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'cepEstabelecimento',
+          label: 'CEP do Estabelecimento',
+          type: 'text',
+          pattern: '^\\d{8}$',
+          required: true
+        },
+        {
+          id: 'telefoneEstabelecimento',
+          label: 'Telefone do Estabelecimento',
+          type: 'text',
+          pattern: '^\\d{10,11}$',
+          required: true
+        },
+        {
+          id: 'emailEstabelecimento',
+          label: 'E-mail do Estabelecimento',
+          type: 'email',
+          required: false
+        },
+        {
+          id: 'capacidadeAtendimento',
+          label: 'Capacidade de Atendimento',
+          type: 'number',
+          minimum: 1,
+          required: false
+        },
+        {
+          id: 'descricaoServicos',
+          label: 'Descrição dos Serviços',
+          type: 'textarea',
+          minLength: 30,
+          maxLength: 1000,
+          required: false
+        },
+        {
+          id: 'horarioFuncionamento',
+          label: 'Horário de Funcionamento',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cadastro de Guia Turístico',
+    description: 'Cadastro de guias de turismo credenciados',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_GUIA_TURISTICO',
+    requiresDocuments: true,
+    requiredDocuments: ['RG', 'CPF', 'Cadastur', 'Certificado de Capacitação'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Cadastro',
+    icon: 'User',
+    color: '#1d4ed8',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'numeroCadastur',
+          label: 'Número do Cadastur',
+          type: 'text',
+          maxLength: 50,
+          required: true
+        },
+        {
+          id: 'especialidades',
+          label: 'Especialidades',
+          type: 'text',
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'idiomas',
+          label: 'Idiomas que Fala',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'tempoExperiencia',
+          label: 'Tempo de Experiência',
+          type: 'select',
+          options: ['Menos de 1 ano', '1-3 anos', '3-5 anos', '5-10 anos', 'Mais de 10 anos'],
+          required: false
+        },
+        {
+          id: 'certificacoes',
+          label: 'Certificações e Cursos',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Inscrição em Programa Turístico',
+    description: 'Inscrição em programas de desenvolvimento turístico',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'INSCRICAO_PROGRAMA_TURISTICO',
+    requiresDocuments: true,
+    requiredDocuments: ['CNPJ ou CPF', 'Projeto', 'Documentação do Estabelecimento'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Programas',
+    icon: 'FileCheck',
+    color: '#1e40af',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomePrograma',
+          label: 'Nome do Programa',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'tipoPrograma',
+          label: 'Tipo de Programa',
+          type: 'select',
+          options: ['Qualificação Profissional', 'Desenvolvimento de Produto', 'Marketing Turístico', 'Infraestrutura', 'Outro'],
+          required: true
+        },
+        {
+          id: 'tipoInscrito',
+          label: 'Tipo de Inscrito',
+          type: 'select',
+          options: ['Pessoa Física', 'Pessoa Jurídica'],
+          required: true
+        },
+        {
+          id: 'cnpj',
+          label: 'CNPJ (se pessoa jurídica)',
+          type: 'text',
+          pattern: '^\\d{14}$',
+          required: false
+        },
+        {
+          id: 'descricaoProjeto',
+          label: 'Descrição do Projeto',
+          type: 'textarea',
+          minLength: 50,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Registro de Atrativo Turístico',
+    description: 'Cadastro de pontos turísticos e atrativos',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'REGISTRO_ATRATIVO_TURISTICO',
+    requiresDocuments: true,
+    requiredDocuments: ['Fotos', 'Descrição', 'Localização GPS'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Atrativos',
+    icon: 'MapPin',
+    color: '#1e3a8a',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeAtrativo',
+          label: 'Nome do Atrativo',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'tipoAtrativo',
+          label: 'Tipo de Atrativo',
+          type: 'select',
+          options: ['Natural', 'Cultural', 'Histórico', 'Religioso', 'Gastronômico', 'Esportivo', 'Outro'],
+          required: true
+        },
+        {
+          id: 'descricaoAtrativo',
+          label: 'Descrição do Atrativo',
+          type: 'textarea',
+          minLength: 50,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'enderecoAtrativo',
+          label: 'Endereço do Atrativo',
+          type: 'text',
+          minLength: 10,
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'acessibilidade',
+          label: 'Acessibilidade',
+          type: 'select',
+          options: ['Total', 'Parcial', 'Não Possui'],
+          required: false
+        },
+        {
+          id: 'horarioFuncionamento',
+          label: 'Horário de Funcionamento',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'valorEntrada',
+          label: 'Valor da Entrada',
+          type: 'select',
+          options: ['Gratuito', 'Pago'],
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cadastro de Roteiro Turístico',
+    description: 'Cadastro de roteiros e passeios turísticos',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_ROTEIRO_TURISTICO',
+    requiresDocuments: true,
+    requiredDocuments: ['Roteiro Detalhado', 'Fotos', 'Valores', 'Contatos'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Roteiros',
+    icon: 'Route',
+    color: '#3b82f6',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeRoteiro',
+          label: 'Nome do Roteiro',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'tipoRoteiro',
+          label: 'Tipo de Roteiro',
+          type: 'select',
+          options: ['Histórico-Cultural', 'Ecoturismo', 'Gastronômico', 'Religioso', 'Aventura', 'Rural', 'Outro'],
+          required: true
+        },
+        {
+          id: 'descricaoRoteiro',
+          label: 'Descrição do Roteiro',
+          type: 'textarea',
+          minLength: 50,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'duracao',
+          label: 'Duração',
+          type: 'select',
+          options: ['Meio Período', '1 Dia', '2 Dias', '3 ou mais Dias'],
+          required: true
+        },
+        {
+          id: 'pontosParada',
+          label: 'Pontos de Parada',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'nivelDificuldade',
+          label: 'Nível de Dificuldade',
+          type: 'select',
+          options: ['Fácil', 'Moderado', 'Difícil'],
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cadastro de Evento Turístico',
+    description: 'Registro de eventos e festivais turísticos',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_EVENTO_TURISTICO',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto do Evento', 'Autorizações', 'Cronograma'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Eventos',
+    icon: 'Calendar',
+    color: '#2563eb',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeEvento',
+          label: 'Nome do Evento',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'tipoEvento',
+          label: 'Tipo de Evento',
+          type: 'select',
+          options: ['Festival', 'Feira', 'Show', 'Congresso', 'Exposição', 'Competição Esportiva', 'Outro'],
+          required: true
+        },
+        {
+          id: 'descricaoEvento',
+          label: 'Descrição do Evento',
+          type: 'textarea',
+          minLength: 50,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'dataInicio',
+          label: 'Data de Início',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'dataFim',
+          label: 'Data de Término',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'localEvento',
+          label: 'Local do Evento',
+          type: 'text',
+          minLength: 10,
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'publicoEstimado',
+          label: 'Público Estimado',
+          type: 'number',
+          minimum: 1,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Mapa Turístico',
+    description: 'Visualização de atrativos turísticos no mapa',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Map',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Guia Turístico da Cidade',
+    description: 'Informações gerais sobre a cidade',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Book',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de Cadastro Turístico',
+    description: 'Emissão de certidão de cadastro no sistema turístico municipal',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'CNPJ', 'Alvará de Funcionamento'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#3b82f6',
+  },
+  {
+    name: 'Certidão de Regularidade Turística',
+    description: 'Emissão de certidão de regularidade de estabelecimento turístico',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'CNPJ', 'Cadastro Turístico'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#3b82f6',
+  },
+  {
+    name: 'Declaração de Apoio a Evento Turístico',
+    description: 'Emissão de declaração de apoio institucional a eventos',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Projeto do Evento', 'Cronograma'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#3b82f6',
+  },
+  {
+    name: 'Atestado de Participação em Capacitação',
+    description: 'Emissão de atestado de participação em curso de turismo',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Inscrição'],
+    estimatedDays: 5,
+    priority: 2,
+    category: 'Atestados',
+    icon: 'CheckCircle',
+    color: '#3b82f6',
+  },
+  {
+    name: 'Laudo de Vistoria de Equipamento Turístico',
+    description: 'Emissão de laudo de vistoria de estabelecimentos turísticos',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'CNPJ', 'Cadastro Turístico', 'Alvará'],
+    estimatedDays: 15,
+    priority: 3,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#3b82f6',
+  },
+  {
+    name: 'Autorização de Uso de Marca Turística',
+    description: 'Emissão de autorização para uso da marca turística da cidade',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'CNPJ', 'Projeto de Uso da Marca'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'Award',
+    color: '#3b82f6',
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE EDUCAÇÃO (11 serviços)
+// ============================================================================
+const EDUCATION_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Matrícula Escolar',
+    description: 'Solicitação de matrícula em escolas municipais',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'MATRICULA_ESCOLAR',
+    requiresDocuments: true,
+    requiredDocuments: ['Certidão de Nascimento', 'Comprovante de Residência', 'Cartão de Vacina'],
+    estimatedDays: 5,
+    priority: 5,
+    category: 'Matrícula',
+    icon: 'GraduationCap',
+    color: '#8b5cf6',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeAluno',
+          label: 'Nome Completo do Aluno',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataNascimentoAluno',
+          label: 'Data de Nascimento do Aluno',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'sexoAluno',
+          label: 'Sexo do Aluno',
+          type: 'select',
+          options: ['Masculino', 'Feminino', 'Outro'],
+          required: true
+        },
+        {
+          id: 'nomeResponsavel',
+          label: 'Nome Completo do Responsável',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'cpfResponsavel',
+          label: 'CPF do Responsável',
+          type: 'text',
+          pattern: '^\\d{11}$',
+          required: true
+        },
+        {
+          id: 'parentescoResponsavel',
+          label: 'Grau de Parentesco',
+          type: 'select',
+          options: ['Pai', 'Mãe', 'Avô/Avó', 'Tio(a)', 'Irmão(ã)', 'Outro'],
+          required: true
+        },
+        {
+          id: 'escolaPreferencial',
+          label: 'Escola Preferencial',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'anoEscolar',
+          label: 'Ano Escolar',
+          type: 'select',
+          options: ['Educação Infantil (0-3 anos)', 'Pré-Escola (4-5 anos)', '1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', 'EJA - Ensino Fundamental', 'EJA - Ensino Médio'],
+          required: true
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde', 'Integral', 'Qualquer'],
+          required: true
+        },
+        {
+          id: 'possuiNecessidadesEspeciais',
+          label: 'Possui Necessidades Especiais?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'descricaoNecessidades',
+          label: 'Descrição das Necessidades Especiais',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Transferência Escolar',
+    description: 'Solicitação de transferência entre escolas',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'TRANSFERENCIA_ESCOLAR',
+    requiresDocuments: true,
+    requiredDocuments: ['Histórico Escolar', 'Comprovante de Residência', 'Declaração de Transferência'],
+    estimatedDays: 7,
+    priority: 4,
+    category: 'Transferência',
+    icon: 'ArrowRightLeft',
+    color: '#7c3aed',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeAluno',
+          label: 'Nome Completo do Aluno',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'escolaOrigem',
+          label: 'Escola de Origem',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'escolaDestino',
+          label: 'Escola de Destino',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'anoAtual',
+          label: 'Ano Escolar Atual',
+          type: 'select',
+          options: ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano'],
+          required: true
+        },
+        {
+          id: 'motivoTransferencia',
+          label: 'Motivo da Transferência',
+          type: 'select',
+          options: ['Mudança de Endereço', 'Preferência de Turno', 'Melhor Infraestrutura', 'Proximidade com Trabalho', 'Outro'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Gestão de Merenda Escolar',
+    description: 'Controle de cardápios e estoque de merenda',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'GESTAO_MERENDA',
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 3,
+    category: 'Gestão Interna',
+    icon: 'Utensils',
+    color: '#6d28d9',
+    formSchema: {
+      citizenFields: [],
+      fields: [
+        {
+          id: 'escola',
+          label: 'Escola',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataCardapio',
+          label: 'Data do Cardápio',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'cardapio',
+          label: 'Cardápio do Dia',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'quantidadeAlunos',
+          label: 'Quantidade de Alunos Atendidos',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Solicitação de Transporte Escolar',
+    description: 'Cadastro para uso do transporte escolar',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'TRANSPORTE_ESCOLAR',
+    requiresDocuments: true,
+    requiredDocuments: ['Comprovante de Matrícula', 'Comprovante de Residência'],
+    estimatedDays: 10,
+    priority: 4,
+    category: 'Transporte',
+    icon: 'Bus',
+    color: '#5b21b6',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeAluno',
+          label: 'Nome do Aluno',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'escola',
+          label: 'Escola',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'enderecoColeta',
+          label: 'Endereço de Coleta',
+          type: 'text',
+          minLength: 10,
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'horarioColeta',
+          label: 'Horário de Coleta',
+          type: 'text',
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
+          required: true
+        },
+        {
+          id: 'possuiNecessidadesEspeciais',
+          label: 'Necessita Veículo Adaptado?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Inscrição em Cursos Livres',
+    description: 'Inscrição em cursos de capacitação oferecidos pela secretaria',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'INSCRICAO_CURSO_LIVRE',
+    requiresDocuments: true,
+    requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
+    estimatedDays: 3,
+    priority: 3,
+    category: 'Cursos',
+    icon: 'BookOpen',
+    color: '#4c1d95',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'cursoInteresse',
+          label: 'Curso de Interesse',
+          type: 'select',
+          options: ['Informática Básica', 'Inglês', 'Artesanato', 'Culinária', 'Dança', 'Música', 'Teatro', 'Outro'],
+          required: true
+        },
+        {
+          id: 'nivelEscolaridade',
+          label: 'Nível de Escolaridade',
+          type: 'select',
+          options: ['Fundamental Incompleto', 'Fundamental Completo', 'Médio Incompleto', 'Médio Completo', 'Superior Incompleto', 'Superior Completo'],
+          required: true
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde', 'Noite', 'Qualquer'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cadastro de Professores',
+    description: 'Cadastro de professores para banco de talentos',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_PROFESSOR',
+    requiresDocuments: true,
+    requiredDocuments: ['Diploma', 'Currículo', 'Comprovante de Residência'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Cadastro',
+    icon: 'ChalkboardTeacher',
+    color: '#6b21a8',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'formacao',
+          label: 'Formação Acadêmica',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'disciplinas',
+          label: 'Disciplinas que Leciona',
+          type: 'text',
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'experiencia',
+          label: 'Experiência Profissional',
+          type: 'textarea',
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'disponibilidade',
+          label: 'Disponibilidade de Horário',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Relatórios de Frequência',
+    description: 'Consulta de frequência escolar',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'ChartBar',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Calendário Escolar',
+    description: 'Visualização do calendário letivo',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Calendar',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de Conclusão',
+    description: 'Emissão de certidão de conclusão de curso',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Histórico Escolar'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Declaração de Matrícula',
+    description: 'Emissão de declaração de matrícula',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Nome do Aluno'],
+    estimatedDays: 3,
+    priority: 2,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Atestado de Frequência',
+    description: 'Emissão de atestado de frequência escolar',
+    departmentCode: 'EDUCACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Nome do Aluno'],
+    estimatedDays: 3,
+    priority: 2,
+    category: 'Atestados',
+    icon: 'CheckCircle',
+    color: '#7c3aed',
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE ASSISTÊNCIA SOCIAL (9 serviços)
+// ============================================================================
+const SOCIAL_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Cadastro Único (CadÚnico)',
+    description: 'Inscrição ou atualização no Cadastro Único',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_UNICO',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência', 'Comprovante de Renda'],
+    estimatedDays: 10,
+    priority: 5,
+    category: 'Benefícios',
+    icon: 'Users',
+    color: '#dc2626',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nis',
+          label: 'NIS (se já possui)',
+          type: 'text',
+          pattern: '^\\d{11}$',
+          required: false
+        },
+        {
+          id: 'membrosFamilia',
+          label: 'Membros da Família',
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+              cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+              parentesco: { type: 'string', title: 'Parentesco', enum: ['Responsável', 'Cônjuge', 'Filho(a)', 'Enteado(a)', 'Pai/Mãe', 'Outro'] },
+              renda: { type: 'number', title: 'Renda Mensal', minimum: 0 }
+            },
+            required: ['nome', 'parentesco']
+          },
+          minItems: 1,
+          required: true
+        },
+        {
+          id: 'beneficiosRecebidos',
+          label: 'Benefícios Recebidos',
+          type: 'text',
+          maxLength: 500,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Bolsa Família',
+    description: 'Solicitação de inclusão no Bolsa Família',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'COM_DADOS',
+    moduleType: 'BOLSA_FAMILIA',
+    requiresDocuments: true,
+    requiredDocuments: ['CadÚnico', 'Comprovante de Renda', 'Cartão de Vacina das Crianças'],
+    estimatedDays: 30,
+    priority: 5,
+    category: 'Benefícios',
+    icon: 'Wallet',
+    color: '#b91c1c',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nisResponsavel',
+          label: 'NIS do Responsável Familiar',
+          type: 'text',
+          pattern: '^\\d{11}$',
+          required: true
+        },
+        {
+          id: 'criancasEscola',
+          label: 'Crianças em Idade Escolar (6-17 anos)',
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              nome: { type: 'string', title: 'Nome da Criança', minLength: 3, maxLength: 200 },
+              dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' },
+              escola: { type: 'string', title: 'Nome da Escola', maxLength: 200 },
+              frequencia: { type: 'number', title: 'Frequência (%)', minimum: 0, maximum: 100 }
+            },
+            required: ['nome', 'dataNascimento', 'escola']
+          },
+          required: false
+        },
+        {
+          id: 'gestante',
+          label: 'Há Gestante na Família?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'CRAS - Atendimento',
+    description: 'Agendamento de atendimento no CRAS',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'COM_DADOS',
+    moduleType: 'ATENDIMENTO_CRAS',
+    requiresDocuments: true,
+    requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
+    estimatedDays: 3,
+    priority: 4,
+    category: 'Atendimento',
+    icon: 'Home',
+    color: '#991b1b',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'crasReferencia',
+          label: 'CRAS de Referência',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataPreferencial',
+          label: 'Data Preferencial',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde'],
+          required: true
+        },
+        {
+          id: 'motivoAtendimento',
+          label: 'Motivo do Atendimento',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 500,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cesta Básica',
+    description: 'Solicitação de cesta básica emergencial',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CESTA_BASICA',
+    requiresDocuments: true,
+    requiredDocuments: ['Comprovante de Residência', 'Declaração de Renda', 'Laudo Social'],
+    estimatedDays: 5,
+    priority: 5,
+    category: 'Assistência',
+    icon: 'Package',
+    color: '#7f1d1d',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'quantidadePessoas',
+          label: 'Quantidade de Pessoas na Residência',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'situacaoEmergencia',
+          label: 'Situação de Emergência',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'rendaTotal',
+          label: 'Renda Total Familiar',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Gestão de Benefícios Sociais',
+    description: 'Controle interno de benefícios concedidos',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'COM_DADOS',
+    moduleType: 'GESTAO_BENEFICIOS',
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 3,
+    category: 'Gestão Interna',
+    icon: 'ShieldCheck',
+    color: '#6b7280',
+    formSchema: {
+      citizenFields: [],
+      fields: [
+        {
+          id: 'beneficio',
+          label: 'Tipo de Benefício',
+          type: 'select',
+          options: ['Bolsa Família', 'BPC', 'Cesta Básica', 'Auxílio Emergencial', 'Outro'],
+          required: true
+        },
+        {
+          id: 'nisBeneficiario',
+          label: 'NIS do Beneficiário',
+          type: 'text',
+          pattern: '^\\d{11}$',
+          required: true
+        },
+        {
+          id: 'valor',
+          label: 'Valor Concedido',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'dataConcessao',
+          label: 'Data de Concessão',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Relatório de Atendimentos',
+    description: 'Consulta de atendimentos realizados',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'FileText',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de CadÚnico',
+    description: 'Emissão de certidão de inscrição no CadÚnico',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#dc2626',
+  },
+  {
+    name: 'Declaração de Benefício',
+    description: 'Emissão de declaração de recebimento de benefício',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'NIS'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#dc2626',
+  },
+  {
+    name: 'Laudo Social',
+    description: 'Emissão de laudo técnico social',
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#dc2626',
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE AGRICULTURA (6 serviços)
+// ============================================================================
+const AGRICULTURE_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Cadastro de Produtor Rural',
+    description: 'Cadastro de produtores rurais do município',
+    departmentCode: 'AGRICULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_PRODUTOR',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'Comprovante de Residência', 'DAP (se aplicável)'],
+    estimatedDays: 10,
+    priority: 4,
+    category: 'Cadastro',
+    icon: 'Tractor',
+    color: '#16a34a',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'areaPropriedade',
+          label: 'Área da Propriedade (hectares)',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'tipoProducao',
+          label: 'Tipo de Produção',
+          type: 'text',
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'possuiDAP',
+          label: 'Possui DAP?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'numeroDAP',
+          label: 'Número da DAP',
+          type: 'text',
+          maxLength: 50,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Solicitação de Máquinas',
+    description: 'Solicitação de uso de máquinas agrícolas',
+    departmentCode: 'AGRICULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'SOLICITACAO_MAQUINAS',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'Comprovante de Propriedade'],
+    estimatedDays: 7,
+    priority: 4,
+    category: 'Máquinas',
+    icon: 'Wrench',
+    color: '#15803d',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'tipoMaquina',
+          label: 'Tipo de Máquina',
+          type: 'select',
+          options: ['Trator', 'Arado', 'Grade', 'Plantadeira', 'Colheitadeira', 'Outro'],
+          required: true
+        },
+        {
+          id: 'dataPreferencial',
+          label: 'Data Preferencial',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'areaTrabalho',
+          label: 'Área a Ser Trabalhada (hectares)',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Feira do Produtor',
+    description: 'Inscrição para participar da feira',
+    departmentCode: 'AGRICULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'FEIRA_PRODUTOR',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'Comprovante de Residência'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Feira',
+    icon: 'Store',
+    color: '#166534',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'produtosVender',
+          label: 'Produtos a Vender',
+          type: 'textarea',
+          minLength: 10,
+          maxLength: 500,
+          required: true
+        },
+        {
+          id: 'dataFeira',
+          label: 'Data da Feira',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Programa de Sementes',
+    description: 'Solicitação de sementes para plantio',
+    departmentCode: 'AGRICULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'PROGRAMA_SEMENTES',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'DAP'],
+    estimatedDays: 10,
+    priority: 4,
+    category: 'Programas',
+    icon: 'Sprout',
+    color: '#15803d',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'tipoSemente',
+          label: 'Tipo de Semente',
+          type: 'select',
+          options: ['Milho', 'Feijão', 'Soja', 'Hortaliças', 'Outro'],
+          required: true
+        },
+        {
+          id: 'quantidade',
+          label: 'Quantidade (kg)',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'areaPlantio',
+          label: 'Área de Plantio (hectares)',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Certidão de Produtor Rural',
+    description: 'Emissão de certidão de produtor rural',
+    departmentCode: 'AGRICULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#16a34a',
+  },
+  {
+    name: 'Declaração de Atividade Rural',
+    description: 'Emissão de declaração de atividade rural',
+    departmentCode: 'AGRICULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'DAP'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#16a34a',
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE CULTURA (9 serviços)
+// ============================================================================
+const CULTURE_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Inscrição em Oficinas Culturais',
+    description: 'Inscrição em oficinas de arte, música, dança',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'INSCRICAO_OFICINA',
+    requiresDocuments: true,
+    requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Oficinas',
+    icon: 'Palette',
+    color: '#7c3aed',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'oficinaInteresse',
+          label: 'Oficina de Interesse',
+          type: 'select',
+          options: ['Teatro', 'Dança', 'Música', 'Artes Visuais', 'Literatura', 'Fotografia', 'Outro'],
+          required: true
+        },
+        {
+          id: 'nivelExperiencia',
+          label: 'Nível de Experiência',
+          type: 'select',
+          options: ['Iniciante', 'Intermediário', 'Avançado'],
+          required: true
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde', 'Noite', 'Qualquer'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cadastro de Artistas Locais',
+    description: 'Cadastro de artistas para eventos culturais',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_ARTISTA',
+    requiresDocuments: true,
+    requiredDocuments: ['Portfólio', 'RG', 'CPF'],
+    estimatedDays: 10,
+    priority: 4,
+    category: 'Cadastro',
+    icon: 'Mic',
+    color: '#6d28d9',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'areaAtuacao',
+          label: 'Área de Atuação',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'experiencia',
+          label: 'Experiência Artística',
+          type: 'textarea',
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'disponibilidade',
+          label: 'Disponibilidade para Eventos',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Agenda Cultural',
+    description: 'Consulta de eventos culturais',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Calendar',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de Participação em Evento',
+    description: 'Emissão de certidão de participação',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Nome do Evento'],
+    estimatedDays: 5,
+    priority: 2,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Declaração de Apoio Cultural',
+    description: 'Emissão de declaração de apoio a projetos',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Projeto Cultural'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Atestado de Capacitação Cultural',
+    description: 'Emissão de atestado de conclusão de oficina',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Inscrição'],
+    estimatedDays: 5,
+    priority: 2,
+    category: 'Atestados',
+    icon: 'CheckCircle',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Laudo de Patrimônio Cultural',
+    description: 'Emissão de laudo técnico de bens culturais',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Documentação do Bem'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Autorização para Evento Cultural',
+    description: 'Autorização para realização de eventos',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Projeto do Evento', 'Autorizações'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'Ticket',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Inscrição em Editais Culturais',
+    description: 'Inscrição em editais de fomento',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'INSCRICAO_EDITAL',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto', 'Orçamento', 'Documentos Pessoais'],
+    estimatedDays: 30,
+    priority: 5,
+    category: 'Editais',
+    icon: 'FilePen',
+    color: '#5b21b6',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeProjeto',
+          label: 'Nome do Projeto',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'areaCultural',
+          label: 'Área Cultural',
+          type: 'select',
+          options: ['Artes Cênicas', 'Música', 'Artes Visuais', 'Literatura', 'Patrimônio', 'Audiovisual', 'Outro'],
+          required: true
+        },
+        {
+          id: 'descricaoProjeto',
+          label: 'Descrição do Projeto',
+          type: 'textarea',
+          minLength: 100,
+          maxLength: 2000,
+          required: true
+        },
+        {
+          id: 'valorSolicitado',
+          label: 'Valor Solicitado',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE ESPORTES (9 serviços)
+// ============================================================================
+const SPORTS_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Inscrição em Modalidades Esportivas',
+    description: 'Inscrição em aulas de esporte',
+    departmentCode: 'ESPORTES',
+    serviceType: 'COM_DADOS',
+    moduleType: 'INSCRICAO_MODALIDADE',
+    requiresDocuments: true,
+    requiredDocuments: ['Atestado Médico', 'RG', 'Comprovante de Residência'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Inscrições',
+    icon: 'Trophy',
+    color: '#f59e0b',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'modalidade',
+          label: 'Modalidade Esportiva',
+          type: 'select',
+          options: ['Futebol', 'Vôlei', 'Basquete', 'Natação', 'Judô', 'Karatê', 'Atletismo', 'Outro'],
+          required: true
+        },
+        {
+          id: 'nivel',
+          label: 'Nível',
+          type: 'select',
+          options: ['Iniciante', 'Intermediário', 'Avançado'],
+          required: true
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde', 'Noite', 'Qualquer'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Aluguel de Quadras',
+    description: 'Reserva de quadras esportivas',
+    departmentCode: 'ESPORTES',
+    serviceType: 'COM_DADOS',
+    moduleType: 'ALUGUEL_QUADRA',
+    requiresDocuments: true,
+    requiredDocuments: ['RG', 'CPF'],
+    estimatedDays: 1,
+    priority: 3,
+    category: 'Reservas',
+    icon: 'CalendarCheck',
+    color: '#d97706',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'local',
+          label: 'Local da Quadra',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataReserva',
+          label: 'Data da Reserva',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'horarioInicio',
+          label: 'Horário de Início',
+          type: 'text',
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
+          required: true
+        },
+        {
+          id: 'duracao',
+          label: 'Duração (horas)',
+          type: 'number',
+          minimum: 1,
+          maximum: 4,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Agenda de Eventos Esportivos',
+    description: 'Consulta de competições e torneios',
+    departmentCode: 'ESPORTES',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Calendar',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de Participação Esportiva',
+    description: 'Emissão de certidão de participação',
+    departmentCode: 'ESPORTES',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Nome do Evento'],
+    estimatedDays: 5,
+    priority: 2,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Declaração de Atleta',
+    description: 'Emissão de declaração de atleta',
+    departmentCode: 'ESPORTES',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Inscrição'],
+    estimatedDays: 5,
+    priority: 2,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Atestado de Aptidão Física',
+    description: 'Emissão de atestado para prática esportiva',
+    departmentCode: 'ESPORTES',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Atestado Médico'],
+    estimatedDays: 3,
+    priority: 2,
+    category: 'Atestados',
+    icon: 'CheckCircle',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Laudo Técnico de Instalação',
+    description: 'Emissão de laudo de instalações esportivas',
+    departmentCode: 'ESPORTES',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Localização'],
+    estimatedDays: 15,
+    priority: 3,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Autorização para Torneio',
+    description: 'Autorização para realização de torneios',
+    departmentCode: 'ESPORTES',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Regulamento'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Autorizações',
+    icon: 'Shield',
+    color: '#f59e0b',
+  },
+  {
+    name: 'Inscrição em Torneios',
+    description: 'Inscrição de equipes em torneios municipais',
+    departmentCode: 'ESPORTES',
+    serviceType: 'COM_DADOS',
+    moduleType: 'INSCRICAO_TORNEIO',
+    requiresDocuments: true,
+    requiredDocuments: ['Lista de Atletas', 'Regulamento Assinado'],
+    estimatedDays: 7,
+    priority: 4,
+    category: 'Torneios',
+    icon: 'Medal',
+    color: '#f97316',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeEquipe',
+          label: 'Nome da Equipe',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'modalidade',
+          label: 'Modalidade',
+          type: 'select',
+          options: ['Futebol', 'Futsal', 'Vôlei', 'Basquete', 'Handebol', 'Outro'],
+          required: true
+        },
+        {
+          id: 'categoria',
+          label: 'Categoria',
+          type: 'select',
+          options: ['Infantil', 'Juvenil', 'Adulto', 'Master', 'Feminino', 'Misto'],
+          required: true
+        },
+        {
+          id: 'atletas',
+          label: 'Lista de Atletas',
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              nome: { type: 'string', title: 'Nome Completo', minLength: 3, maxLength: 200 },
+              cpf: { type: 'string', title: 'CPF', pattern: '^\\d{11}$', minLength: 11, maxLength: 11 },
+              dataNascimento: { type: 'string', format: 'date', title: 'Data de Nascimento' }
+            },
+            required: ['nome', 'cpf']
+          },
+          minItems: 5,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE HABITAÇÃO (7 serviços)
+// ============================================================================
+const HOUSING_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Regularização Fundiária',
+    description: 'Solicitação de regularização de imóvel',
+    departmentCode: 'HABITACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'REGULARIZACAO_FUNDIARIA',
+    requiresDocuments: true,
+    requiredDocuments: ['Escritura', 'IPTU', 'Comprovante de Residência'],
+    estimatedDays: 60,
+    priority: 5,
+    category: 'Regularização',
+    icon: 'Home',
+    color: '#0891b2',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'matriculaImovel',
+          label: 'Matrícula do Imóvel',
+          type: 'text',
+          maxLength: 50,
+          required: false
+        },
+        {
+          id: 'areaConstruida',
+          label: 'Área Construída (m²)',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'tempoResidencia',
+          label: 'Tempo de Residência (anos)',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 1000,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Programa Minha Casa Minha Vida',
+    description: 'Inscrição no programa habitacional',
+    departmentCode: 'HABITACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'MINHA_CASA',
+    requiresDocuments: true,
+    requiredDocuments: ['Comprovante de Renda', 'RG', 'CPF', 'Certidão de Casamento'],
+    estimatedDays: 90,
+    priority: 5,
+    category: 'Programas',
+    icon: 'Building',
+    color: '#0e7490',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'rendaFamiliar',
+          label: 'Renda Familiar Mensal',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'possuiImovel',
+          label: 'Possui Imóvel Próprio?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: true
+        },
+        {
+          id: 'quantidadeFilhos',
+          label: 'Quantidade de Filhos',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Mapa de Lotes',
+    description: 'Visualização de lotes disponíveis',
+    departmentCode: 'HABITACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Map',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de Regularidade Fundiária',
+    description: 'Emissão de certidão de regularidade',
+    departmentCode: 'HABITACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Matrícula'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#0891b2',
+  },
+  {
+    name: 'Declaração de Residência',
+    description: 'Emissão de declaração de residência',
+    departmentCode: 'HABITACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço'],
+    estimatedDays: 5,
+    priority: 2,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#0891b2',
+  },
+  {
+    name: 'Laudo de Vistoria Habitacional',
+    description: 'Emissão de laudo técnico de vistoria',
+    departmentCode: 'HABITACAO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Endereço do Imóvel'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#0891b2',
+  },
+  {
+    name: 'Autorização para Construção',
+    description: 'Autorização para construção em lote',
+    departmentCode: 'HABITACAO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'AUTORIZACAO_CONSTRUCAO',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto', 'ART', 'Matrícula'],
+    estimatedDays: 30,
+    priority: 4,
+    category: 'Construção',
+    icon: 'Hammer',
+    color: '#0e7490',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'lote',
+          label: 'Número do Lote',
+          type: 'text',
+          maxLength: 50,
+          required: true
+        },
+        {
+          id: 'areaConstruir',
+          label: 'Área a Construir (m²)',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'tipoConstrucao',
+          label: 'Tipo de Construção',
+          type: 'select',
+          options: ['Residencial', 'Comercial', 'Misto'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE MEIO AMBIENTE (7 serviços)
+// ============================================================================
+const ENVIRONMENT_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Licenciamento Ambiental',
+    description: 'Solicitação de licença ambiental',
+    departmentCode: 'MEIO_AMBIENTE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'LICENCIAMENTO_AMBIENTAL',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto', 'Estudo de Impacto', 'ART'],
+    estimatedDays: 60,
+    priority: 5,
+    category: 'Licenças',
+    icon: 'Leaf',
+    color: '#16a34a',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'tipoAtividade',
+          label: 'Tipo de Atividade',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'areaImpacto',
+          label: 'Área de Impacto (hectares)',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'medidasMitigacao',
+          label: 'Medidas de Mitigação',
+          type: 'textarea',
+          minLength: 50,
+          maxLength: 2000,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Coleta Seletiva',
+    description: 'Cadastro para coleta seletiva',
+    departmentCode: 'MEIO_AMBIENTE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'COLETA_SELETIVA',
+    requiresDocuments: false,
+    estimatedDays: 3,
+    priority: 2,
+    category: 'Coleta',
+    icon: 'Recycle',
+    color: '#15803d',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'diaColeta',
+          label: 'Dia da Coleta',
+          type: 'select',
+          options: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Gestão de Resíduos',
+    description: 'Controle interno de resíduos',
+    departmentCode: 'MEIO_AMBIENTE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'GESTAO_RESIDUOS',
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 3,
+    category: 'Gestão Interna',
+    icon: 'Trash2',
+    color: '#166534',
+    formSchema: {
+      citizenFields: [],
+      fields: [
+        {
+          id: 'tipoResiduo',
+          label: 'Tipo de Resíduo',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'quantidade',
+          label: 'Quantidade (toneladas)',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'destino',
+          label: 'Destino Final',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+        name: 'Certidão Ambiental',
+    description: 'Emissão de certidão ambiental',
+    departmentCode: 'MEIO_AMBIENTE',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Matrícula do Imóvel'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#16a34a',
+  },
+  {
+    name: 'Declaração de Conformidade Ambiental',
+    description: 'Emissão de declaração de conformidade',
+    departmentCode: 'MEIO_AMBIENTE',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Licença Ambiental'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#16a34a',
+  },
+  {
+    name: 'Laudo Técnico Ambiental',
+    description: 'Emissão de laudo técnico ambiental',
+    departmentCode: 'MEIO_AMBIENTE',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Endereço do Imóvel'],
+    estimatedDays: 30,
+    priority: 4,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#16a34a',
+  },
+  {
+    name: 'Autorização para Poda/Supressão de Árvores',
+    description: 'Autorização para poda ou corte de árvores',
+    departmentCode: 'MEIO_AMBIENTE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'AUTORIZACAO_PODA',
+    requiresDocuments: true,
+    requiredDocuments: ['Foto da Árvore', 'Laudo Técnico', 'Comprovante de Residência'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'TreePine',
+    color: '#15803d',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'especieArvore',
+          label: 'Espécie da Árvore',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'quantidade',
+          label: 'Quantidade de Árvores',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'motivo',
+          label: 'Motivo da Poda/Supressão',
+          type: 'select',
+          options: ['Risco de Queda', 'Doença', 'Obstrução', 'Construção', 'Outro'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE TURISMO (6 serviços)
+// ============================================================================
+const TOURISM_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Cadastro de Ponto Turístico',
+    description: 'Cadastro de novos pontos turísticos',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_PONTO',
+    requiresDocuments: true,
+    requiredDocuments: ['Fotos', 'Descrição', 'Comprovante de Propriedade'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Cadastro',
+    icon: 'MapPin',
+    color: '#0d9488',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomePonto',
+          label: 'Nome do Ponto Turístico',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'descricao',
+          label: 'Descrição do Local',
+          type: 'textarea',
+          minLength: 50,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'horarioFuncionamento',
+          label: 'Horário de Funcionamento',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'acessibilidade',
+          label: 'Possui Acessibilidade?',
+          type: 'checkbox',
+          defaultValue: false,
+          required: false
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Guia de Turismo',
+    description: 'Consulta de roteiros e guias turísticos',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Compass',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de Ponto Turístico',
+    description: 'Emissão de certidão de registro',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Nome do Ponto'],
+    estimatedDays: 7,
+    priority: 2,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#0d9488',
+  },
+  {
+    name: 'Declaração de Evento Turístico',
+    description: 'Emissão de declaração para eventos',
+    departmentCode: 'TURISMO',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Projeto do Evento'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#0d9488',
+  },
+  {
+    name: 'Autorização para Evento Turístico',
+    description: 'Autorização para eventos turísticos',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'AUTORIZACAO_EVENTO',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto', 'Seguro', 'Autorizações'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'Ticket',
+    color: '#0d9488',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeEvento',
+          label: 'Nome do Evento',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'dataInicio',
+          label: 'Data de Início',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'dataFim',
+          label: 'Data de Fim',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'publicoEstimado',
+          label: 'Público Estimado',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cadastro de Guias e Condutores',
+    description: 'Cadastro de profissionais de turismo',
+    departmentCode: 'TURISMO',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_GUIA',
+    requiresDocuments: true,
+    requiredDocuments: ['Certificado', 'RG', 'CPF'],
+    estimatedDays: 10,
+    priority: 4,
+    category: 'Cadastro',
+    icon: 'UserCheck',
+    color: '#0f766e',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'formacao',
+          label: 'Formação/Certificação',
+          type: 'text',
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'idiomas',
+          label: 'Idiomas Falados',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'experiencia',
+          label: 'Experiência Profissional',
+          type: 'textarea',
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE OBRAS PÚBLICAS (8 serviços)
+// ============================================================================
+const PUBLIC_WORKS_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Aprovação de Projeto de Construção',
+    description: 'Aprovação de projetos de construção',
+    departmentCode: 'OBRAS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'APROVACAO_PROJETO',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto Arquitetônico', 'ART', 'Matrícula'],
+    estimatedDays: 45,
+    priority: 5,
+    category: 'Aprovação',
+    icon: 'Blueprint',
+    color: '#7c3aed',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'areaConstruir',
+          label: 'Área a Construir (m²)',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'tipoObra',
+          label: 'Tipo de Obra',
+          type: 'select',
+          options: ['Residencial', 'Comercial', 'Industrial', 'Misto'],
+          required: true
+        },
+        {
+          id: 'pavimentos',
+          label: 'Número de Pavimentos',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Alvará de Construção',
+    description: 'Emissão de alvará de construção',
+    departmentCode: 'OBRAS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto Aprovado', 'ART', 'Taxas Pagas'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Alvarás',
+    icon: 'FileCheck',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Habite-se',
+    description: 'Emissão de habite-se',
+    departmentCode: 'OBRAS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['Vistoria', 'Projeto', 'Certidões'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Conclusão',
+    icon: 'Home',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Certidão de Numeração Predial',
+    description: 'Emissão de certidão de numeração',
+    departmentCode: 'OBRAS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Endereço'],
+    estimatedDays: 7,
+    priority: 2,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Laudo de Vistoria Técnica',
+    description: 'Emissão de laudo de vistoria',
+    departmentCode: 'OBRAS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Endereço do Imóvel'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Autorização para Demolição',
+    description: 'Autorização para demolição de imóvel',
+    departmentCode: 'OBRAS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'AUTORIZACAO_DEMOLICAO',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto', 'Laudo Estrutural', 'Anuência Vizinhos'],
+    estimatedDays: 30,
+    priority: 5,
+    category: 'Autorizações',
+    icon: 'Hammer',
+    color: '#6d28d9',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'motivoDemolicao',
+          label: 'Motivo da Demolição',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'areaDemolir',
+          label: 'Área a Demolir (m²)',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Plano Diretor',
+    description: 'Consulta ao plano diretor municipal',
+    departmentCode: 'OBRAS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Map',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Gestão de Obras Públicas',
+    description: 'Controle interno de obras em andamento',
+    departmentCode: 'OBRAS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'GESTAO_OBRAS',
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 3,
+    category: 'Gestão Interna',
+    icon: 'Wrench',
+    color: '#6b7280',
+    formSchema: {
+      citizenFields: [],
+      fields: [
+        {
+          id: 'nomeObra',
+          label: 'Nome da Obra',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'localizacao',
+          label: 'Localização',
+          type: 'text',
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'orcamento',
+          label: 'Orçamento',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'prazo',
+          label: 'Prazo (dias)',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'status',
+          label: 'Status',
+          type: 'select',
+          options: ['Planejamento', 'Em Execução', 'Paralisada', 'Concluída'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+];
+
+// ============================================================================
+// SECRETARIA DE SEGURANÇA PÚBLICA (6 serviços)
+// ============================================================================
+const PUBLIC_SAFETY_SERVICES: ServiceDefinition[] = [
+  {
+    name: 'Registro de Ocorrência',
+    description: 'Registro de boletim de ocorrência',
+    departmentCode: 'SEGURANCA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'REGISTRO_OCORRENCIA',
+    requiresDocuments: true,
+    requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
+    estimatedDays: 1,
+    priority: 5,
+    category: 'Ocorrências',
+    icon: 'Siren',
+    color: '#dc2626',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'tipoOcorrencia',
+          label: 'Tipo de Ocorrência',
+          type: 'select',
+          options: ['Furto', 'Roubo', 'Ameaça', 'Perturbação', 'Acidente', 'Outro'],
+          required: true
+        },
+        {
+          id: 'dataOcorrencia',
+          label: 'Data da Ocorrência',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'horaOcorrencia',
+          label: 'Hora da Ocorrência',
+          type: 'text',
+          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
+          required: true
+        },
+        {
+          id: 'localOcorrencia',
+          label: 'Local da Ocorrência',
+          type: 'text',
+          maxLength: 300,
+          required: true
+        },
+        {
+          id: 'descricao',
+          label: 'Descrição dos Fatos',
+          type: 'textarea',
+          minLength: 50,
+          maxLength: 2000,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Solicitação de Patrulhamento',
+    description: 'Solicitação de ronda policial',
+    departmentCode: 'SEGURANCA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'PATROLHAMENTO',
+    requiresDocuments: true,
+    requiredDocuments: ['RG', 'CPF'],
+    estimatedDays: 2,
+    priority: 4,
+    category: 'Patrulhamento',
+    icon: 'Shield',
+    color: '#b91c1c',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'motivo',
+          label: 'Motivo do Patrulhamento',
+          type: 'textarea',
+          minLength: 20,
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'periodo',
+          label: 'Período Solicitado',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Mapa de Criminalidade',
+    description: 'Consulta de estatísticas de segurança',
+    departmentCode: 'SEGURANCA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'ChartBar',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de Antecedentes',
+    description: 'Emissão de certidão de antecedentes criminais',
+    departmentCode: 'SEGURANCA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG'],
+    estimatedDays: 3,
+    priority: 2,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#dc2626',
+  },
+  {
+    name: 'Declaração de Perda de Documentos',
+    description: 'Emissão de declaração de perda',
+    departmentCode: 'SEGURANCA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'BO'],
+    estimatedDays: 3,
+    priority: 2,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#dc2626',
+  },
+  {
+    name: 'Autorização para Evento com Segurança',
+    description: 'Autorização para eventos com policiamento',
+    departmentCode: 'SEGURANCA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'AUTORIZACAO_EVENTO_SEG',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto', 'Seguro', 'Autorizações'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'Users',
+    color: '#991b1b',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthDate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phoneSecondary',
+        'citizen_zipCode',
+        'citizen_address',
+        'citizen_addressNumber',
+        'citizen_addressComplement',
+        'citizen_neighborhood',
+        'citizen_motherName',
+        'citizen_maritalStatus',
+        'citizen_occupation',
+        'citizen_familyIncome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeEvento',
+          label: 'Nome do Evento',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'publicoEstimado',
+          label: 'Público Estimado',
+          type: 'number',
+          minimum: 1,
+          required: true
+        },
+        {
+          id: 'dataEvento',
+          label: 'Data do Evento',
+          type: 'date',
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+];
+
+// ============================================================================
+// EXPORTAÇÃO FINAL DE TODOS OS SERVIÇOS
+// ============================================================================
+export const ALL_SERVICES: ServiceDefinition[] = [
+  ...HEALTH_SERVICES,
+  ...EDUCATION_SERVICES,
+  ...SOCIAL_SERVICES,
+  ...AGRICULTURE_SERVICES,
+  ...CULTURE_SERVICES,
+  ...SPORTS_SERVICES,
+  ...HOUSING_SERVICES,
+  ...ENVIRONMENT_SERVICES,
+  ...TOURISM_SERVICES,
+  ...PUBLIC_WORKS_SERVICES,
+  ...PUBLIC_SAFETY_SERVICES,
+];
+
+// Total de serviços: 11 secretarias × média de 8 serviços = ~88 serviços
+// Todos com formSchema completo onde aplicável (COM_DADOS)
+// Todos com ícones, cores, categorias e prioridades consistentes
+
+
+// ============================================================================
+// EXPORTAR FUNÇÃO DE SEED
+// ============================================================================
+
+export async function seedServices() {
+  console.log('\n📦 Iniciando seed de serviços simplificados...');
+
+  // Buscar departamentos
+  const departments = await prisma.department.findMany();
+
+  const departmentMap = new Map(
+    departments.map(dept => [dept.code, dept.id])
+  );
+
+  let totalCreated = 0;
+  const allServices = [
+    ...HEALTH_SERVICES,
+    ...EDUCATION_SERVICES,
+    ...SOCIAL_SERVICES,
+    ...AGRICULTURE_SERVICES,
+    ...CULTURE_SERVICES,
+    ...SPORTS_SERVICES,
+    ...HOUSING_SERVICES,
+    ...ENVIRONMENT_SERVICES,
+    ...PUBLIC_WORKS_SERVICES,
+    ...URBAN_PLANNING_SERVICES,
+    ...SECURITY_SERVICES,
+    ...PUBLIC_SERVICES,
+    ...TOURISM_SERVICES,
+  ];
+
+  for (const serviceDef of allServices) {
+    const departmentId = departmentMap.get(serviceDef.departmentCode);
+
+    if (!departmentId) {
+      console.warn(`   ⚠️  Departamento ${serviceDef.departmentCode} não encontrado, pulando serviço: ${serviceDef.name}`);
+      continue;
+    }
+
+    try {
+      // Verificar se serviço já existe
+      const existing = await prisma.serviceSimplified.findFirst({
+        where: {
+          name: serviceDef.name,
+          departmentId: departmentId
+        }
+      });
+
+      if (existing) {
+        // Atualizar serviço existente
+        await prisma.serviceSimplified.update({
+          where: { id: existing.id },
+          data: {
+            description: serviceDef.description,
+            serviceType: serviceDef.serviceType,
+            moduleType: serviceDef.moduleType,
+            formSchema: serviceDef.formSchema || undefined,
+            requiresDocuments: serviceDef.requiresDocuments,
+            requiredDocuments: serviceDef.requiredDocuments
+              ? JSON.stringify(serviceDef.requiredDocuments)
+              : undefined,
+            estimatedDays: serviceDef.estimatedDays,
+            priority: serviceDef.priority,
+            category: serviceDef.category,
+            icon: serviceDef.icon,
+            color: serviceDef.color,
+            isActive: true,
+          }
+        });
+        console.log(`   🔄 ${serviceDef.name} (atualizado)`);
+      } else {
+        // Criar novo serviço
+        await prisma.serviceSimplified.create({
+          data: {
+            name: serviceDef.name,
+            description: serviceDef.description,
+            departmentId,
+            serviceType: serviceDef.serviceType,
+            moduleType: serviceDef.moduleType,
+            formSchema: serviceDef.formSchema || undefined,
+            requiresDocuments: serviceDef.requiresDocuments,
+            requiredDocuments: serviceDef.requiredDocuments
+              ? JSON.stringify(serviceDef.requiredDocuments)
+              : undefined,
+            estimatedDays: serviceDef.estimatedDays,
+            priority: serviceDef.priority,
+            category: serviceDef.category,
+            icon: serviceDef.icon,
+            color: serviceDef.color,
+            isActive: true,
+          }
+        });
+        totalCreated++;
+        console.log(`   ✅ ${serviceDef.name}`);
+      }
+    } catch (error: any) {
+      console.error(`   ❌ Erro ao processar serviço ${serviceDef.name}:`, error.message);
+    }
+  }
+
+  console.log(`\n✅ Seed de serviços concluído: ${totalCreated} serviços criados`);
+  return totalCreated;
+}
+
+// Executar seed se chamado diretamente
+if (require.main === module) {
+  seedServices()
+    .then(() => {
+      console.log('✅ Seed executado com sucesso!');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('❌ Erro ao executar seed:', error);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}

@@ -1,0 +1,29 @@
+# Fixtures
+
+Este diretório contém arquivos de teste (fixtures) utilizados nos testes E2E.
+
+## Estrutura
+
+```
+fixtures/
+├── certidao_nascimento.pdf
+├── comprovante_residencia.pdf
+├── carteira_trabalho.pdf
+├── buraco_foto1.jpg
+├── buraco_foto2.jpg
+├── buraco_foto3.jpg
+├── buraco_concluido1.jpg
+└── buraco_concluido2.jpg
+```
+
+## Uso
+
+Estes arquivos são utilizados nos testes E2E para simular uploads de documentos e fotos.
+
+Exemplo:
+```typescript
+await page.locator('input[type="file"]').setInputFiles([
+  'tests/fixtures/certidao_nascimento.pdf',
+  'tests/fixtures/comprovante_residencia.pdf',
+]);
+```

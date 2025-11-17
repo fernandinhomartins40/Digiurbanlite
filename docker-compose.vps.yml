@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: digiurban-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-digiurban}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-digiurban2024}
+      POSTGRES_DB: ${POSTGRES_DB:-digiurban}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - digiurban_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-digiurban}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  digiurban:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUILD_TIMESTAMP=${BUILD_TIMESTAMP:-0}
+        - DATABASE_URL=${DATABASE_URL}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api}
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3001}
+    container_name: digiurban-vps
+    ports:
+      - "3060:80"  # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)
+    environment:
+      # Node.js
+      - NODE_ENV=production
+
+      # Backend (porta interna 3001)
+      - PORT=3001
+      - BACKEND_PORT=3001
+
+      # Frontend (porta interna 3000)
+      - FRONTEND_PORT=3000
+      # NEXT_PUBLIC_API_URL é setado em BUILD TIME no Dockerfile (linha 40)
+
+      # Database PostgreSQL
+      - DATABASE_URL=${DATABASE_URL}
+
+      # JWT
+      - JWT_SECRET=${JWT_SECRET:-digiurban-super-secret-change-in-production}
+      - JWT_EXPIRES_IN=7d
+      - JWT_ADMIN_EXPIRES_IN=8h
+      - JWT_CITIZEN_EXPIRES_IN=30d
+
+      # CORS (ambos domínios com e sem www)
+      - FRONTEND_URL=https://digiurban.com.br
+      - CORS_ORIGIN=https://digiurban.com.br
+      - ALLOWED_ORIGINS=https://www.digiurban.com.br,https://digiurban.com.br,http://www.digiurban.com.br,http://digiurban.com.br,http://72.60.10.108:3060,http://localhost:3060
+
+      # Tenants
+      - DEFAULT_TENANT=demo
+
+      # Logs
+      - LOG_LEVEL=info
+
+    volumes:
+      - digiurban_uploads:/app/uploads
+      - digiurban_logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - digiurban_network
+
+volumes:
+  postgres_data:
+    driver: local
+  digiurban_uploads:
+    driver: local
+  digiurban_logs:
+    driver: local
+
+networks:
+  digiurban_network:
+    driver: bridge

@@ -1,0 +1,676 @@
+[
+  {
+    "code": "OBR_BURACO_001",
+    "name": "Reportar Buraco na Rua",
+    "category": "Obras Públicas",
+    "description": "Reportar buraco, rachadura ou afundamento no asfalto",
+    "icon": "Construction",
+    "moduleType": "public_works",
+    "moduleEntity": "pothole",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Localização Completa", "type": "text", "required": true, "placeholder": "Rua, número, bairro"},
+        {"id": "coordinates", "label": "Localização GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Problema", "type": "textarea", "required": true},
+        {"id": "size", "label": "Tamanho Aproximado", "type": "select", "required": true, "options": ["Pequeno (< 1m)", "Médio (1-3m)", "Grande (> 3m)"]},
+        {"id": "depth", "label": "Profundidade", "type": "select", "required": false, "options": ["Raso (< 5cm)", "Médio (5-15cm)", "Profundo (> 15cm)"]},
+        {"id": "trafficImpact", "label": "Impacto no Trânsito", "type": "select", "required": true, "options": ["Baixo", "Médio", "Alto"]},
+        {"id": "photos", "label": "Fotos do Local", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone para Contato", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_ILUMINACAO_002",
+    "name": "Reportar Problema de Iluminação",
+    "category": "Obras Públicas",
+    "description": "Poste apagado, lâmpada queimada ou iluminação inadequada",
+    "icon": "Lightbulb",
+    "moduleType": "public_works",
+    "moduleEntity": "lighting",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Localização do Poste", "type": "text", "required": true},
+        {"id": "coordinates", "label": "Localização GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Problema", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Tipo de Problema", "type": "select", "required": true, "options": ["Poste apagado", "Lâmpada piscando", "Iluminação fraca", "Poste danificado", "Fiação exposta"]},
+        {"id": "criticalArea", "label": "Área Crítica?", "type": "select", "required": true, "options": ["Sim - próximo a escola", "Sim - próximo a hospital", "Sim - área comercial", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local (opcional)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_VAZAMENTO_003",
+    "name": "Reportar Vazamento de Água",
+    "category": "Obras Públicas",
+    "description": "Vazamento em via pública ou rede de distribuição",
+    "icon": "Droplet",
+    "moduleType": "public_works",
+    "moduleEntity": "leak",
+    "estimatedTime": "2 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local do Vazamento", "type": "text", "required": true},
+        {"id": "coordinates", "label": "Localização GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "severity", "label": "Intensidade", "type": "select", "required": true, "options": ["Pequeno gotejamento", "Vazamento moderado", "Vazamento intenso", "Rompimento de tubulação"]},
+        {"id": "trafficImpact", "label": "Impacto", "type": "select", "required": true, "options": ["Baixo", "Médio", "Alto - via interditada"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_ESGOTO_004",
+    "name": "Reportar Problema de Esgoto",
+    "category": "Obras Públicas",
+    "description": "Esgoto entupido, vazamento ou retorno em via pública",
+    "icon": "Waves",
+    "moduleType": "public_works",
+    "moduleEntity": "sewer",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local do Problema", "type": "text", "required": true},
+        {"id": "coordinates", "label": "Localização GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Tipo de Problema", "type": "select", "required": true, "options": ["Entupimento", "Vazamento", "Retorno de esgoto", "Boca de lobo obstruída", "Mau cheiro"]},
+        {"id": "severity", "label": "Gravidade", "type": "select", "required": true, "options": ["Leve", "Moderada", "Grave - risco à saúde"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_PAVIMENTACAO_005",
+    "name": "Solicitar Pavimentação de Rua",
+    "category": "Obras Públicas",
+    "description": "Solicitação de pavimentação asfáltica em rua sem pavimento",
+    "icon": "Road",
+    "moduleType": "public_works",
+    "moduleEntity": "pavement",
+    "estimatedTime": "60 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Rua a ser pavimentada", "type": "text", "required": true},
+        {"id": "coordinates", "label": "Localização GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "affectedLength", "label": "Extensão Aproximada (metros)", "type": "number", "required": true},
+        {"id": "condition", "label": "Condição Atual", "type": "select", "required": true, "options": ["Terra batida", "Cascalho", "Paralelepípedo deteriorado", "Asfalto muito danificado"]},
+        {"id": "trafficVolume", "label": "Volume de Tráfego", "type": "select", "required": true, "options": ["Baixo", "Médio", "Alto"]},
+        {"id": "urgencyReason", "label": "Motivo da Urgência", "type": "textarea", "required": false},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos da rua", "Abaixo-assinado (se houver)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_CALCADA_006",
+    "name": "Reportar Problema em Calçada",
+    "category": "Obras Públicas",
+    "description": "Calçada danificada, buraco ou desnível",
+    "icon": "Footprints",
+    "moduleType": "public_works",
+    "moduleEntity": "sidewalk",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Localização", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Problema", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Tipo de Problema", "type": "select", "required": true, "options": ["Buraco", "Desnível", "Rachadura", "Piso quebrado", "Falta de calçada"]},
+        {"id": "accessibilityIssue", "label": "Impede Acessibilidade?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_RAMPA_007",
+    "name": "Solicitar Instalação de Rampa de Acessibilidade",
+    "category": "Obras Públicas",
+    "description": "Solicitação de rampa para cadeirantes e pessoas com mobilidade reduzida",
+    "icon": "Accessibility",
+    "moduleType": "public_works",
+    "moduleEntity": "accessibility",
+    "estimatedTime": "20 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local para Rampa", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "accessibilityType", "label": "Tipo de Adequação", "type": "select", "required": true, "options": ["Rampa de acesso", "Rebaixamento de calçada", "Piso tátil", "Corrimão"]},
+        {"id": "publicBuilding", "label": "Próximo a prédio público?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "schoolNearby", "label": "Próximo a escola?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "healthUnitNearby", "label": "Próximo a UBS/hospital?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "urgencyJustification", "label": "Motivo da Urgência", "type": "textarea", "required": false},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_SINALIZACAO_008",
+    "name": "Solicitar Sinalização de Trânsito",
+    "category": "Obras Públicas",
+    "description": "Solicitação ou reparo de placas, faixas e sinalização viária",
+    "icon": "TrafficCone",
+    "moduleType": "public_works",
+    "moduleEntity": "signage",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "signageType", "label": "Tipo de Sinalização", "type": "select", "required": true, "options": ["Placa de trânsito", "Faixa de pedestres", "Lombada", "Redutor de velocidade", "Sinalização horizontal", "Semáforo"]},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Faltando", "Danificada", "Desgastada", "Mal posicionada"]},
+        {"id": "trafficImpact", "label": "Impacto no Trânsito", "type": "select", "required": true, "options": ["Baixo", "Médio", "Alto"]},
+        {"id": "nearSchool", "label": "Próximo a escola?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "accidentHistory", "label": "Há histórico de acidentes?", "type": "select", "required": false, "options": ["Sim", "Não", "Não sei"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_PONTE_009",
+    "name": "Reportar Problema em Ponte ou Viaduto",
+    "category": "Obras Públicas",
+    "description": "Danos estruturais, rachaduras ou problemas em pontes e viadutos",
+    "icon": "Bridge",
+    "moduleType": "public_works",
+    "moduleEntity": "pothole",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Localização da Ponte/Viaduto", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Problema", "type": "textarea", "required": true},
+        {"id": "structureType", "label": "Tipo", "type": "select", "required": true, "options": ["Ponte", "Viaduto", "Passarela"]},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Rachadura", "Corrosão", "Buraco", "Guarda-corpo danificado", "Desnível", "Outro"]},
+        {"id": "severity", "label": "Gravidade", "type": "select", "required": true, "options": ["Leve", "Moderada", "Grave - risco estrutural"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": true},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos detalhadas do problema"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_DRENAGEM_010",
+    "name": "Reportar Problema de Drenagem",
+    "category": "Obras Públicas",
+    "description": "Alagamento, entupimento de bueiro ou problema de drenagem pluvial",
+    "icon": "CloudRain",
+    "moduleType": "public_works",
+    "moduleEntity": "sewer",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Bueiro entupido", "Boca de lobo obstruída", "Alagamento frequente", "Erosão", "Falta de drenagem"]},
+        {"id": "frequency", "label": "Frequência", "type": "select", "required": true, "options": ["Sempre que chove", "Apenas em chuvas fortes", "Ocasional"]},
+        {"id": "severity", "label": "Impacto", "type": "select", "required": true, "options": ["Leve", "Moderado", "Grave - alaga casas"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local alagado ou problema"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_MURO_011",
+    "name": "Reportar Muro ou Talude em Risco",
+    "category": "Obras Públicas",
+    "description": "Muro de arrimo ou talude com risco de desmoronamento",
+    "icon": "AlertTriangle",
+    "moduleType": "public_works",
+    "moduleEntity": "pothole",
+    "estimatedTime": "3 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição do Risco", "type": "textarea", "required": true},
+        {"id": "structureType", "label": "Tipo", "type": "select", "required": true, "options": ["Muro de arrimo", "Talude", "Encosta"]},
+        {"id": "riskLevel", "label": "Nível de Risco", "type": "select", "required": true, "options": ["Baixo", "Médio", "Alto - risco iminente"]},
+        {"id": "affectedHouses", "label": "Casas em risco?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": true},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do muro/talude"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_MEIOFIO_012",
+    "name": "Solicitar Reparo de Meio-Fio",
+    "category": "Obras Públicas",
+    "description": "Meio-fio quebrado, faltando ou danificado",
+    "icon": "Square",
+    "moduleType": "public_works",
+    "moduleEntity": "sidewalk",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "affectedLength", "label": "Extensão Aproximada (metros)", "type": "number", "required": true},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Quebrado", "Faltando", "Afundado", "Desalinhado"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_CONSTRUCAO_013",
+    "name": "Solicitar Construção/Reforma de Praça",
+    "category": "Obras Públicas",
+    "description": "Solicitação de construção, reforma ou revitalização de praça pública",
+    "icon": "Trees",
+    "moduleType": "public_works",
+    "moduleEntity": "pavement",
+    "estimatedTime": "90 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local da Praça", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição da Solicitação", "type": "textarea", "required": true},
+        {"id": "workType", "label": "Tipo de Obra", "type": "select", "required": true, "options": ["Construção nova", "Reforma", "Revitalização"]},
+        {"id": "requestedFeatures", "label": "Melhorias Solicitadas", "type": "checkbox", "required": false, "options": ["Playground", "Quadra esportiva", "Iluminação", "Bancos", "Calçamento", "Paisagismo", "Academia ao ar livre"]},
+        {"id": "currentCondition", "label": "Condição Atual", "type": "textarea", "required": false},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local", "Abaixo-assinado (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_GALERIA_014",
+    "name": "Reportar Problema em Galeria Pluvial",
+    "category": "Obras Públicas",
+    "description": "Galeria de águas pluviais entupida ou danificada",
+    "icon": "Waves",
+    "moduleType": "public_works",
+    "moduleEntity": "sewer",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Entupimento", "Rompimento", "Desmoronamento", "Vazamento"]},
+        {"id": "causesFlooding", "label": "Causa alagamento?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do problema"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_GUARITA_015",
+    "name": "Solicitar Reparo em Equipamento Urbano",
+    "category": "Obras Públicas",
+    "description": "Reparo em bancos, lixeiras, guaritas e outros equipamentos urbanos",
+    "icon": "Wrench",
+    "moduleType": "public_works",
+    "moduleEntity": "pothole",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "equipmentType", "label": "Tipo de Equipamento", "type": "select", "required": true, "options": ["Banco", "Lixeira", "Guarita", "Abrigo de ônibus", "Bicicletário", "Outro"]},
+        {"id": "issue", "label": "Problema", "type": "select", "required": true, "options": ["Quebrado", "Danificado", "Faltando", "Vandalizado"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do equipamento"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_ASFALTO_016",
+    "name": "Solicitar Recapeamento Asfáltico",
+    "category": "Obras Públicas",
+    "description": "Solicitação de recapeamento de rua com asfalto deteriorado",
+    "icon": "Road",
+    "moduleType": "public_works",
+    "moduleEntity": "pavement",
+    "estimatedTime": "30 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Rua", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "affectedLength", "label": "Extensão (metros)", "type": "number", "required": true},
+        {"id": "condition", "label": "Condição Atual", "type": "select", "required": true, "options": ["Asfalto desgastado", "Muitos buracos", "Remendos excessivos", "Afundamento"]},
+        {"id": "trafficVolume", "label": "Tráfego", "type": "select", "required": true, "options": ["Baixo", "Médio", "Alto"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos da rua", "Abaixo-assinado (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_SEMAFORO_017",
+    "name": "Solicitar Instalação de Semáforo",
+    "category": "Obras Públicas",
+    "description": "Solicitação de instalação de semáforo em cruzamento",
+    "icon": "TrafficCone",
+    "moduleType": "public_works",
+    "moduleEntity": "signage",
+    "estimatedTime": "60 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Cruzamento", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "trafficVolume", "label": "Volume de Tráfego", "type": "select", "required": true, "options": ["Médio", "Alto", "Muito alto"]},
+        {"id": "nearSchool", "label": "Próximo a escola?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "accidentHistory", "label": "Histórico de acidentes?", "type": "select", "required": true, "options": ["Sim", "Não", "Não sei"]},
+        {"id": "pedestrianCrossing", "label": "Faixa de pedestres?", "type": "select", "required": false, "options": ["Sim - existe", "Não - necessário"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do cruzamento", "Estudo de tráfego (se houver)", "Abaixo-assinado (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_CICLOVIA_018",
+    "name": "Solicitar Ciclovia ou Ciclofaixa",
+    "category": "Obras Públicas",
+    "description": "Solicitação de construção de ciclovia ou ciclofaixa",
+    "icon": "Bike",
+    "moduleType": "public_works",
+    "moduleEntity": "pavement",
+    "estimatedTime": "90 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Trajeto Proposto", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "type", "label": "Tipo", "type": "select", "required": true, "options": ["Ciclovia (segregada)", "Ciclofaixa (compartilhada)"]},
+        {"id": "affectedLength", "label": "Extensão Estimada (metros)", "type": "number", "required": true},
+        {"id": "connectsTo", "label": "Conecta-se a", "type": "text", "required": false, "placeholder": "Outras ciclovias, pontos de interesse"},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do trajeto", "Abaixo-assinado (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_ESCADA_019",
+    "name": "Solicitar Reparo de Escadaria Pública",
+    "category": "Obras Públicas",
+    "description": "Reparo ou construção de escadaria em via pública",
+    "icon": "ArrowUpCircle",
+    "moduleType": "public_works",
+    "moduleEntity": "sidewalk",
+    "estimatedTime": "20 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "workType", "label": "Tipo de Obra", "type": "select", "required": true, "options": ["Reparo", "Construção nova", "Instalação de corrimão"]},
+        {"id": "condition", "label": "Condição Atual", "type": "select", "required": false, "options": ["Boa", "Regular", "Ruim", "Inexistente"]},
+        {"id": "needsHandrail", "label": "Necessita corrimão?", "type": "select", "required": false, "options": ["Sim", "Não", "Já possui"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_EROSAO_020",
+    "name": "Reportar Erosão em Via Pública",
+    "category": "Obras Públicas",
+    "description": "Erosão ou cratera em rua, terreno ou área pública",
+    "icon": "Mountain",
+    "moduleType": "public_works",
+    "moduleEntity": "pothole",
+    "estimatedTime": "10 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "size", "label": "Tamanho", "type": "select", "required": true, "options": ["Pequena", "Média", "Grande", "Muito grande"]},
+        {"id": "riskLevel", "label": "Nível de Risco", "type": "select", "required": true, "options": ["Baixo", "Médio", "Alto"]},
+        {"id": "affectsHouses", "label": "Afeta residências?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": true},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos da erosão"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_TAPA_BURACO_021",
+    "name": "Operação Tapa-Buraco Emergencial",
+    "category": "Obras Públicas",
+    "description": "Solicitação de reparo emergencial de buraco com risco iminente",
+    "icon": "AlertCircle",
+    "moduleType": "public_works",
+    "moduleEntity": "pothole",
+    "estimatedTime": "48 horas",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local EXATO", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS (OBRIGATÓRIO)", "type": "map", "required": true},
+        {"id": "description", "label": "Descrição do Risco", "type": "textarea", "required": true},
+        {"id": "size", "label": "Tamanho", "type": "select", "required": true, "options": ["Médio (1-3m)", "Grande (> 3m)"]},
+        {"id": "depth", "label": "Profundidade", "type": "select", "required": true, "options": ["Médio (5-15cm)", "Profundo (> 15cm)"]},
+        {"id": "emergencyReason", "label": "Motivo da Emergência", "type": "select", "required": true, "options": ["Risco de acidente grave", "Via principal interditada", "Já houve acidentes", "Danificando veículos"]},
+        {"id": "photos", "label": "Fotos (OBRIGATÓRIO)", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": true},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do buraco (obrigatório)", "GPS preciso (obrigatório)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_PINTURA_022",
+    "name": "Solicitar Pintura de Faixa de Pedestres",
+    "category": "Obras Públicas",
+    "description": "Pintura ou repintura de faixa de pedestres",
+    "icon": "PaintBucket",
+    "moduleType": "public_works",
+    "moduleEntity": "signage",
+    "estimatedTime": "5 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "issue", "label": "Situação", "type": "select", "required": true, "options": ["Faixa apagada", "Faixa danificada", "Faixa inexistente"]},
+        {"id": "nearSchool", "label": "Próximo a escola?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_REDUCAO_023",
+    "name": "Solicitar Redutor de Velocidade (Lombada)",
+    "category": "Obras Públicas",
+    "description": "Instalação de lombada ou redutor de velocidade",
+    "icon": "TrendingDown",
+    "moduleType": "public_works",
+    "moduleEntity": "signage",
+    "estimatedTime": "15 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local Proposto", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "reducerType", "label": "Tipo de Redutor", "type": "select", "required": true, "options": ["Lombada física", "Lombada eletrônica", "Estreitamento de pista"]},
+        {"id": "speedingIssue", "label": "Problema de Velocidade?", "type": "select", "required": true, "options": ["Sim - constante", "Sim - ocasional", "Não - prevenção"]},
+        {"id": "nearSchool", "label": "Próximo a escola?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "accidentHistory", "label": "Histórico de acidentes?", "type": "select", "required": false, "options": ["Sim", "Não", "Não sei"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 3, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local", "Abaixo-assinado (recomendado)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_PASSARELA_024",
+    "name": "Solicitar Passarela de Pedestres",
+    "category": "Obras Públicas",
+    "description": "Construção de passarela elevada para pedestres",
+    "icon": "Bridge",
+    "moduleType": "public_works",
+    "moduleEntity": "accessibility",
+    "estimatedTime": "120 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Local Proposto", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "roadType", "label": "Tipo de Via", "type": "select", "required": true, "options": ["Rodovia", "Avenida de grande movimento", "Via expressa"]},
+        {"id": "trafficVolume", "label": "Volume de Tráfego", "type": "select", "required": true, "options": ["Alto", "Muito alto"]},
+        {"id": "nearSchool", "label": "Próximo a escola?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "accidentHistory", "label": "Histórico de atropelamentos?", "type": "select", "required": true, "options": ["Sim", "Não", "Não sei"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": false},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do local", "Estudo de fluxo (se houver)", "Abaixo-assinado (obrigatório)"]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "OBR_VISTORIA_025",
+    "name": "Solicitar Vistoria Técnica em Obra Particular",
+    "category": "Obras Públicas",
+    "description": "Solicitação de vistoria em obra particular que afeta via pública",
+    "icon": "ClipboardCheck",
+    "moduleType": "public_works",
+    "moduleEntity": "pothole",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "location", "label": "Endereço da Obra", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "description", "label": "Motivo da Vistoria", "type": "textarea", "required": true},
+        {"id": "issueType", "label": "Tipo de Problema", "type": "select", "required": true, "options": ["Dano em calçada", "Dano em asfalto", "Entulho na rua", "Bloqueio de via", "Risco estrutural", "Outro"]},
+        {"id": "affectsPublicArea", "label": "Afeta área pública?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "photos", "label": "Fotos", "type": "file-multiple", "accept": "image/*", "maxFiles": 5, "required": true},
+        {"id": "reporterName", "label": "Seu Nome", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": ["Fotos do problema"]
+    },
+    "fieldMapping": {}
+  }
+]

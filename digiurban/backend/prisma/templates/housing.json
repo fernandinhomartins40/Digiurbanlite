@@ -1,0 +1,534 @@
+[
+  {
+    "code": "HAB_MCMV_001",
+    "name": "Programa Minha Casa Minha Vida",
+    "category": "Habitação",
+    "description": "Inscrição no programa habitacional Minha Casa Minha Vida",
+    "icon": "Home",
+    "moduleType": "housing",
+    "moduleEntity": "housing_program",
+    "estimatedTime": "90 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "maritalStatus", "label": "Estado Civil", "type": "select", "required": true, "options": ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável"]},
+        {"id": "familyMembers", "label": "Número de Pessoas na Família", "type": "number", "required": true},
+        {"id": "monthlyIncome", "label": "Renda Familiar Mensal", "type": "select", "required": true, "options": ["Até R$ 2.640", "R$ 2.640 a R$ 4.400", "R$ 4.400 a R$ 8.000"]},
+        {"id": "currentAddress", "label": "Endereço Atual", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "email", "label": "E-mail", "type": "email", "required": false},
+        {"id": "hasDisability", "label": "Possui deficiência?", "type": "select", "required": false, "options": ["Sim", "Não"]},
+        {"id": "isHeadOfFamily", "label": "É chefe de família?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "observations", "label": "Observações", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda (3 últimos meses)",
+        "Certidão de casamento ou nascimento",
+        "Comprovante de não-propriedade de imóvel"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_MUTIRAO_002",
+    "name": "Programa Habitação por Mutirão",
+    "category": "Habitação",
+    "description": "Inscrição em programa de construção por mutirão",
+    "icon": "Users",
+    "moduleType": "housing",
+    "moduleEntity": "housing_program",
+    "estimatedTime": "120 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "currentAddress", "label": "Endereço Atual", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Membros da Família", "type": "number", "required": true},
+        {"id": "monthlyIncome", "label": "Renda Familiar", "type": "select", "required": true, "options": ["Até 1 salário mínimo", "1-2 salários mínimos", "2-3 salários mínimos"]},
+        {"id": "availability", "label": "Disponibilidade para Mutirão", "type": "select", "required": true, "options": ["Fins de semana", "Dias úteis", "Qualquer horário"]},
+        {"id": "skills", "label": "Habilidades de Construção", "type": "select", "required": false, "options": ["Nenhuma", "Pedreiro", "Eletricista", "Encanador", "Pintor", "Outros"]},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "email", "label": "E-mail", "type": "email", "required": false},
+        {"id": "observations", "label": "Observações", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda",
+        "Declaração de compromisso com o mutirão"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_SOCIAL_003",
+    "name": "Cadastro Habitação de Interesse Social",
+    "category": "Habitação",
+    "description": "Cadastro para habitação de interesse social do município",
+    "icon": "Building2",
+    "moduleType": "housing",
+    "moduleEntity": "housing_program",
+    "estimatedTime": "60 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "currentSituation", "label": "Situação Atual de Moradia", "type": "select", "required": true, "options": ["Aluguel", "Casa de parentes", "Ocupação irregular", "Área de risco", "Outro"]},
+        {"id": "currentAddress", "label": "Endereço Atual", "type": "text", "required": true},
+        {"id": "rentValue", "label": "Valor do Aluguel (se aplicável)", "type": "text", "required": false},
+        {"id": "familyMembers", "label": "Pessoas na Família", "type": "number", "required": true},
+        {"id": "monthlyIncome", "label": "Renda Mensal Total", "type": "select", "required": true, "options": ["Até R$ 1.320", "R$ 1.320 a R$ 2.640", "R$ 2.640 a R$ 4.400"]},
+        {"id": "vulnerabilityReason", "label": "Motivo da Vulnerabilidade", "type": "textarea", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "email", "label": "E-mail", "type": "email", "required": false},
+        {"id": "urgency", "label": "Grau de Urgência", "type": "select", "required": true, "options": ["Normal", "Urgente", "Muito urgente"]}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF de todos os maiores de idade",
+        "Comprovante de residência",
+        "Comprovante de renda de todos os trabalhadores",
+        "Certidão de nascimento dos filhos"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_REFORMA_004",
+    "name": "Programa de Reforma Habitacional",
+    "category": "Habitação",
+    "description": "Solicitação de auxílio para reforma de residência",
+    "icon": "Wrench",
+    "moduleType": "housing",
+    "moduleEntity": "housing_program",
+    "estimatedTime": "45 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome do Proprietário", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "propertyAddress", "label": "Endereço do Imóvel", "type": "text", "required": true},
+        {"id": "ownershipProof", "label": "Tipo de Comprovação", "type": "select", "required": true, "options": ["Escritura registrada", "Contrato de compra", "Posse há mais de 5 anos", "Outro"]},
+        {"id": "reformType", "label": "Tipo de Reforma", "type": "select", "required": true, "options": ["Telhado", "Hidráulica", "Elétrica", "Ampliação", "Acessibilidade", "Estrutural", "Múltiplos"]},
+        {"id": "description", "label": "Descrição dos Problemas", "type": "textarea", "required": true},
+        {"id": "familyMembers", "label": "Pessoas na Residência", "type": "number", "required": true},
+        {"id": "monthlyIncome", "label": "Renda Familiar", "type": "select", "required": true, "options": ["Até R$ 2.640", "R$ 2.640 a R$ 4.400"]},
+        {"id": "urgency", "label": "Nível de Urgência", "type": "select", "required": true, "options": ["Normal", "Urgente - risco estrutural", "Emergência"]},
+        {"id": "photos", "label": "Fotos dos Problemas", "type": "file-multiple", "accept": "image/*", "maxFiles": 10, "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade ou posse",
+        "Comprovante de residência",
+        "Comprovante de renda",
+        "Fotos dos problemas estruturais"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_LOTE_001",
+    "name": "Solicitação de Lote Urbanizado",
+    "category": "Habitação",
+    "description": "Inscrição para recebimento de lote urbanizado",
+    "icon": "LayoutGrid",
+    "moduleType": "housing",
+    "moduleEntity": "lot_application",
+    "estimatedTime": "180 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "currentAddress", "label": "Endereço Atual", "type": "text", "required": true},
+        {"id": "maritalStatus", "label": "Estado Civil", "type": "select", "required": true, "options": ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "União Estável"]},
+        {"id": "familyMembers", "label": "Membros da Família", "type": "number", "required": true},
+        {"id": "monthlyIncome", "label": "Renda Familiar", "type": "select", "required": true, "options": ["Até R$ 2.640", "R$ 2.640 a R$ 4.400", "R$ 4.400 a R$ 8.000"]},
+        {"id": "hasProperty", "label": "Possui outro imóvel?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "preferredArea", "label": "Região de Preferência", "type": "text", "required": false},
+        {"id": "canPayInstallments", "label": "Pode pagar prestações?", "type": "select", "required": true, "options": ["Sim", "Sim - com subsídio", "Não"]},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "email", "label": "E-mail", "type": "email", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda (3 meses)",
+        "Certidão de casamento ou nascimento",
+        "Certidão negativa de propriedade de imóveis"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_LOTE_002",
+    "name": "Solicitação de Lote Rural",
+    "category": "Habitação",
+    "description": "Inscrição para recebimento de lote em área rural",
+    "icon": "Tractor",
+    "moduleType": "housing",
+    "moduleEntity": "lot_application",
+    "estimatedTime": "180 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "birthDate", "label": "Data de Nascimento", "type": "date", "required": true},
+        {"id": "familyMembers", "label": "Membros da Família", "type": "number", "required": true},
+        {"id": "agricultureExperience", "label": "Experiência com Agricultura", "type": "select", "required": true, "options": ["Sim - sempre trabalhei", "Sim - tenho experiência", "Pouca experiência", "Não tenho"]},
+        {"id": "purposeUse", "label": "Finalidade do Lote", "type": "select", "required": true, "options": ["Agricultura familiar", "Pecuária", "Misto", "Moradia rural"]},
+        {"id": "monthlyIncome", "label": "Renda Familiar", "type": "select", "required": true, "options": ["Até R$ 2.640", "R$ 2.640 a R$ 4.400"]},
+        {"id": "hasProperty", "label": "Possui outro imóvel?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "currentAddress", "label": "Endereço Atual", "type": "text", "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "observations", "label": "Observações", "type": "textarea", "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda",
+        "Certidão negativa de propriedade rural"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_LOTE_003",
+    "name": "Regularização de Lote Ocupado",
+    "category": "Habitação",
+    "description": "Solicitação de regularização de lote ocupado informalmente",
+    "icon": "FileCheck",
+    "moduleType": "housing",
+    "moduleEntity": "lot_application",
+    "estimatedTime": "120 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome do Ocupante", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "lotAddress", "label": "Endereço do Lote", "type": "text", "required": true},
+        {"id": "coordinates", "label": "Localização GPS", "type": "map", "required": false},
+        {"id": "occupationTime", "label": "Tempo de Ocupação", "type": "select", "required": true, "options": ["Menos de 1 ano", "1-3 anos", "3-5 anos", "Mais de 5 anos"]},
+        {"id": "hasConstruction", "label": "Há construção no lote?", "type": "select", "required": true, "options": ["Sim - casa de alvenaria", "Sim - casa de madeira", "Não - terreno vazio", "Em construção"]},
+        {"id": "lotSize", "label": "Tamanho Aproximado (m²)", "type": "number", "required": false},
+        {"id": "familyMembers", "label": "Pessoas Residindo", "type": "number", "required": true},
+        {"id": "proofOfOccupation", "label": "Comprovação de Ocupação", "type": "textarea", "required": true},
+        {"id": "photos", "label": "Fotos do Lote e Construção", "type": "file-multiple", "accept": "image/*", "maxFiles": 10, "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovantes de ocupação (contas, declarações)",
+        "Fotos do imóvel e lote",
+        "Declaração de vizinhos (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_LOTE_004",
+    "name": "Permuta de Lote",
+    "category": "Habitação",
+    "description": "Solicitação de troca de lote por motivos justificados",
+    "icon": "RefreshCw",
+    "moduleType": "housing",
+    "moduleEntity": "lot_application",
+    "estimatedTime": "90 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome do Proprietário", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "currentLotAddress", "label": "Endereço do Lote Atual", "type": "text", "required": true},
+        {"id": "lotNumber", "label": "Número do Lote", "type": "text", "required": false},
+        {"id": "permutationReason", "label": "Motivo da Permuta", "type": "select", "required": true, "options": ["Proximidade do trabalho", "Saúde/acessibilidade", "Segurança", "Tamanho inadequado", "Outro"]},
+        {"id": "description", "label": "Descrição Detalhada", "type": "textarea", "required": true},
+        {"id": "preferredArea", "label": "Região Desejada", "type": "text", "required": false},
+        {"id": "urgency", "label": "Urgência", "type": "select", "required": true, "options": ["Baixa", "Média", "Alta"]},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "supportingDocs", "label": "Documentos Comprobatórios", "type": "file-multiple", "accept": "*", "maxFiles": 5, "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Título ou contrato do lote atual",
+        "Comprovantes do motivo da permuta (laudos, declarações, etc)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_REG_001",
+    "name": "Regularização Fundiária Urbana",
+    "category": "Habitação",
+    "description": "Solicitação de regularização de imóvel em área urbana",
+    "icon": "FileText",
+    "moduleType": "housing",
+    "moduleEntity": "regularization",
+    "estimatedTime": "180 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome do Ocupante/Proprietário", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "propertyAddress", "label": "Endereço do Imóvel", "type": "text", "required": true},
+        {"id": "coordinates", "label": "Localização GPS", "type": "map", "required": false},
+        {"id": "occupationTime", "label": "Tempo de Ocupação", "type": "select", "required": true, "options": ["Menos de 5 anos", "5-10 anos", "10-20 anos", "Mais de 20 anos"]},
+        {"id": "situationType", "label": "Tipo de Situação", "type": "select", "required": true, "options": ["Posse sem registro", "Loteamento irregular", "Ocupação em área pública", "Herança sem inventário", "Outro"]},
+        {"id": "propertyType", "label": "Tipo de Propriedade", "type": "select", "required": true, "options": ["Casa", "Terreno", "Apartamento", "Comércio"]},
+        {"id": "familyMembers", "label": "Pessoas Residindo", "type": "number", "required": true},
+        {"id": "description", "label": "Histórico da Ocupação", "type": "textarea", "required": true},
+        {"id": "photos", "label": "Fotos do Imóvel", "type": "file-multiple", "accept": "image/*", "maxFiles": 10, "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência (antigos e atuais)",
+        "Contas de água, luz, telefone antigas",
+        "Fotos do imóvel",
+        "Declaração de vizinhos",
+        "Documentos de compra (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_REG_002",
+    "name": "Regularização de Loteamento",
+    "category": "Habitação",
+    "description": "Regularização de loteamento irregular ou clandestino",
+    "icon": "MapPin",
+    "moduleType": "housing",
+    "moduleEntity": "regularization",
+    "estimatedTime": "240 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "subdivisionName", "label": "Nome do Loteamento", "type": "text", "required": true},
+        {"id": "location", "label": "Localização", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "representativeName", "label": "Nome do Representante", "type": "text", "required": true},
+        {"id": "representativeCpf", "label": "CPF do Representante", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "totalLots", "label": "Número Total de Lotes", "type": "number", "required": true},
+        {"id": "occupiedLots", "label": "Lotes Ocupados", "type": "number", "required": true},
+        {"id": "infrastructure", "label": "Infraestrutura Existente", "type": "checkbox", "required": true, "options": ["Água", "Luz", "Esgoto", "Asfalto", "Transporte público", "Nenhuma"]},
+        {"id": "irregularityType", "label": "Tipo de Irregularidade", "type": "select", "required": true, "options": ["Sem aprovação municipal", "Parcelamento irregular", "Área de preservação", "Outro"]},
+        {"id": "description", "label": "Descrição", "type": "textarea", "required": true},
+        {"id": "photos", "label": "Fotos do Loteamento", "type": "file-multiple", "accept": "image/*", "maxFiles": 15, "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Documentos do representante (RG, CPF)",
+        "Planta do loteamento (se houver)",
+        "Lista de moradores",
+        "Fotos aéreas e terrestres",
+        "Documentos da área (matrícula, etc)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_REG_003",
+    "name": "Usucapião Urbano",
+    "category": "Habitação",
+    "description": "Processo de usucapião para regularização de imóvel urbano",
+    "icon": "Scale",
+    "moduleType": "housing",
+    "moduleEntity": "regularization",
+    "estimatedTime": "360 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "propertyAddress", "label": "Endereço do Imóvel", "type": "text", "required": true},
+        {"id": "coordinates", "label": "GPS", "type": "map", "required": false},
+        {"id": "occupationStartDate", "label": "Data de Início da Ocupação", "type": "date", "required": true},
+        {"id": "occupationTime", "label": "Tempo de Ocupação", "type": "select", "required": true, "options": ["5-10 anos", "10-15 anos", "Mais de 15 anos"]},
+        {"id": "propertySize", "label": "Tamanho da Propriedade (m²)", "type": "number", "required": true},
+        {"id": "usucapiaoType", "label": "Tipo de Usucapião", "type": "select", "required": true, "options": ["Ordinário (10 anos)", "Extraordinário (15 anos)", "Especial urbano (5 anos)"]},
+        {"id": "continuousOccupation", "label": "Ocupação Ininterrupta?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "peacefulOccupation", "label": "Ocupação Pacífica?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "familyMembers", "label": "Pessoas na Família", "type": "number", "required": true},
+        {"id": "description", "label": "Histórico Detalhado", "type": "textarea", "required": true},
+        {"id": "photos", "label": "Fotos Históricas e Atuais", "type": "file-multiple", "accept": "image/*", "maxFiles": 20, "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Certidão de matrícula do imóvel (se houver)",
+        "Comprovantes de ocupação (todos os anos)",
+        "Contas antigas (água, luz, IPTU)",
+        "Fotos antigas do imóvel",
+        "Declarações de vizinhos reconhecidas em cartório",
+        "Planta do imóvel"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_REG_004",
+    "name": "Retificação de Área e Confrontações",
+    "category": "Habitação",
+    "description": "Retificação de metragem ou confrontações em registro de imóvel",
+    "icon": "Ruler",
+    "moduleType": "housing",
+    "moduleEntity": "regularization",
+    "estimatedTime": "90 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome do Proprietário", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "propertyAddress", "label": "Endereço do Imóvel", "type": "text", "required": true},
+        {"id": "registrationNumber", "label": "Número da Matrícula", "type": "text", "required": true},
+        {"id": "rectificationType", "label": "Tipo de Retificação", "type": "select", "required": true, "options": ["Área (metragem)", "Confrontações (limites)", "Ambos"]},
+        {"id": "registeredArea", "label": "Área Registrada (m²)", "type": "number", "required": true},
+        {"id": "actualArea", "label": "Área Real (m²)", "type": "number", "required": true},
+        {"id": "difference", "label": "Diferença (m²)", "type": "number", "required": false},
+        {"id": "description", "label": "Descrição da Divergência", "type": "textarea", "required": true},
+        {"id": "hasSurvey", "label": "Possui Levantamento Topográfico?", "type": "select", "required": true, "options": ["Sim - anexado", "Não - necessário"]},
+        {"id": "photos", "label": "Fotos e Documentos", "type": "file-multiple", "accept": "*", "maxFiles": 10, "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Certidão de matrícula atualizada",
+        "Levantamento topográfico",
+        "Planta do imóvel",
+        "Anuência dos confrontantes",
+        "Fotos do imóvel"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_AUXILIO_001",
+    "name": "Auxílio Aluguel Emergencial",
+    "category": "Habitação",
+    "description": "Solicitação de auxílio para pagamento de aluguel em situação emergencial",
+    "icon": "DollarSign",
+    "moduleType": "housing",
+    "moduleEntity": "housing_aid",
+    "estimatedTime": "30 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "currentAddress", "label": "Endereço Atual", "type": "text", "required": true},
+        {"id": "rentValue", "label": "Valor do Aluguel", "type": "text", "required": true, "placeholder": "R$ 0,00"},
+        {"id": "familyMembers", "label": "Pessoas na Família", "type": "number", "required": true},
+        {"id": "monthlyIncome", "label": "Renda Familiar Mensal", "type": "text", "required": true},
+        {"id": "emergencyReason", "label": "Motivo da Emergência", "type": "select", "required": true, "options": ["Perda de emprego", "Doença na família", "Desabrigado", "Despejo", "Calamidade", "Outro"]},
+        {"id": "description", "label": "Descrição da Situação", "type": "textarea", "required": true},
+        {"id": "requestedPeriod", "label": "Período Solicitado", "type": "select", "required": true, "options": ["1 mês", "2 meses", "3 meses", "6 meses"]},
+        {"id": "hasIncome", "label": "Possui alguma renda?", "type": "select", "required": true, "options": ["Sim - formal", "Sim - informal", "Não"]},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "supportingDocs", "label": "Documentos Comprobatórios", "type": "file-multiple", "accept": "*", "maxFiles": 10, "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Contrato de aluguel",
+        "Comprovante de renda (ou declaração de ausência)",
+        "Documentos comprobatórios da emergência"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_AUXILIO_002",
+    "name": "Auxílio Material de Construção",
+    "category": "Habitação",
+    "description": "Solicitação de auxílio com material de construção para reforma",
+    "icon": "Package",
+    "moduleType": "housing",
+    "moduleEntity": "housing_aid",
+    "estimatedTime": "60 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "propertyAddress", "label": "Endereço do Imóvel", "type": "text", "required": true},
+        {"id": "familyMembers", "label": "Pessoas na Residência", "type": "number", "required": true},
+        {"id": "monthlyIncome", "label": "Renda Familiar", "type": "select", "required": true, "options": ["Até R$ 1.320", "R$ 1.320 a R$ 2.640", "R$ 2.640 a R$ 4.400"]},
+        {"id": "reformType", "label": "Tipo de Reforma", "type": "select", "required": true, "options": ["Telhado", "Piso", "Reboco", "Hidráulica", "Sanitário", "Outro"]},
+        {"id": "materialsNeeded", "label": "Materiais Necessários", "type": "textarea", "required": true},
+        {"id": "urgencyReason", "label": "Justificativa", "type": "textarea", "required": true},
+        {"id": "hasLabor", "label": "Possui mão de obra?", "type": "select", "required": true, "options": ["Sim - própria", "Sim - contratada", "Não"]},
+        {"id": "photos", "label": "Fotos da Necessidade", "type": "file-multiple", "accept": "image/*", "maxFiles": 10, "required": true},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade ou posse",
+        "Comprovante de residência",
+        "Comprovante de renda",
+        "Fotos dos problemas",
+        "Orçamento de materiais (se houver)"
+      ]
+    },
+    "fieldMapping": {}
+  },
+  {
+    "code": "HAB_AUXILIO_003",
+    "name": "Auxílio Moradia Temporária",
+    "category": "Habitação",
+    "description": "Solicitação de moradia temporária em situação de desabrigamento",
+    "icon": "Home",
+    "moduleType": "housing",
+    "moduleEntity": "housing_aid",
+    "estimatedTime": "7 dias úteis",
+    "defaultFields": {
+      "fields": [
+        {"id": "fullName", "label": "Nome Completo", "type": "text", "required": true},
+        {"id": "cpf", "label": "CPF", "type": "text", "required": true, "mask": "999.999.999-99"},
+        {"id": "familyMembers", "label": "Número de Pessoas", "type": "number", "required": true},
+        {"id": "hasChildren", "label": "Há crianças?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "hasElderly", "label": "Há idosos?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "hasDisabled", "label": "Há deficientes?", "type": "select", "required": true, "options": ["Sim", "Não"]},
+        {"id": "reason", "label": "Motivo do Desabrigamento", "type": "select", "required": true, "options": ["Desabamento", "Incêndio", "Alagamento", "Despejo", "Calamidade", "Outro"]},
+        {"id": "description", "label": "Descrição da Situação", "type": "textarea", "required": true},
+        {"id": "currentLocation", "label": "Localização Atual", "type": "text", "required": true},
+        {"id": "estimatedPeriod", "label": "Período Estimado", "type": "select", "required": true, "options": ["Até 1 mês", "1-3 meses", "3-6 meses", "Indeterminado"]},
+        {"id": "phone", "label": "Telefone", "type": "phone", "required": true},
+        {"id": "photos", "label": "Fotos da Ocorrência", "type": "file-multiple", "accept": "image/*", "maxFiles": 10, "required": false}
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF de todos os membros",
+        "Boletim de ocorrência (se houver)",
+        "Laudo da defesa civil (se houver)",
+        "Fotos da situação"
+      ]
+    },
+    "fieldMapping": {}
+  }
+]

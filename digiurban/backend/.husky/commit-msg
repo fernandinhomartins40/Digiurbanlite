@@ -1,0 +1,59 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# ============================================================================
+# FASE 3.4 - COMMIT MESSAGE VALIDATION
+# Validação do formato das mensagens de commit
+# ============================================================================
+
+commit_file="$1"
+commit_msg=$(cat "$commit_file")
+
+# Padrão esperado: tipo(escopo): descrição
+# Exemplos válidos:
+# feat(auth): adicionar autenticação JWT
+# fix(types): corrigir tipos AuthenticatedRequest
+# docs(readme): atualizar documentação de instalação
+# refactor(utils): melhorar helpers do Prisma
+
+# Regex para validar formato
+pattern="^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,50}"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "❌ Formato de commit inválido!"
+  echo ""
+  echo "📋 Formato esperado:"
+  echo "   tipo(escopo): descrição"
+  echo ""
+  echo "📚 Tipos válidos:"
+  echo "   feat      - Nova funcionalidade"
+  echo "   fix       - Correção de bug"
+  echo "   docs      - Documentação"
+  echo "   style     - Formatação/estilo"
+  echo "   refactor  - Refatoração"
+  echo "   test      - Testes"
+  echo "   chore     - Manutenção"
+  echo "   perf      - Performance"
+  echo "   ci        - CI/CD"
+  echo "   build     - Build"
+  echo "   revert    - Reverter commit"
+  echo ""
+  echo "✅ Exemplos válidos:"
+  echo "   feat(auth): implementar login JWT"
+  echo "   fix(types): corrigir AuthenticatedRequest"
+  echo "   docs(api): atualizar documentação endpoints"
+  echo ""
+  echo "📝 Sua mensagem: '$commit_msg'"
+  echo ""
+  exit 1
+fi
+
+# Verificar se não é muito longa
+if [ ${#commit_msg} -gt 100 ]; then
+  echo "⚠️  Mensagem de commit muito longa (${#commit_msg} caracteres)."
+  echo "   Limite recomendado: 50-72 caracteres"
+  echo "   Mensagem: '$commit_msg'"
+  echo ""
+fi
+
+echo "✅ Mensagem de commit válida!"

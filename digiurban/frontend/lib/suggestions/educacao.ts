@@ -1,0 +1,749 @@
+import { ServiceSuggestion } from './types';
+
+export const educacaoSuggestions: ServiceSuggestion[] = [
+  {
+    id: 'matricula-escolar',
+    name: 'Matrícula Escolar',
+    description: 'Matrícula na rede municipal de ensino',
+    icon: 'GraduationCap',
+    category: 'Matrícula',
+    estimatedDays: 5,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'serie_ano', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'escola_preferencia', type: 'select', label: 'Escola de Preferência', required: true },
+      { name: 'turno', type: 'select', label: 'Turno Desejado', required: true },
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        description: 'Selecione o aluno que será matriculado',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno',
+          birthDate: 'dataNascimentoAluno'
+        },
+        contextFields: [
+          { id: 'sexoAluno', sourceField: 'sexoAluno' },
+          { id: 'escolaPreferencial', sourceField: 'escolaPreferencial' },
+          { id: 'anoEscolar', sourceField: 'anoEscolar' },
+          { id: 'turnoPreferencial', sourceField: 'turnoPreferencial' },
+          { id: 'possuiNecessidadesEspeciais', sourceField: 'possuiNecessidadesEspeciais' },
+          { id: 'descricaoNecessidades', sourceField: 'descricaoNecessidades' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
+      }]
+    }
+  },
+  {
+    id: 'transporte-escolar',
+    name: 'Transporte Escolar',
+    description: 'Solicitação de transporte escolar gratuito',
+    icon: 'Bus',
+    category: 'Transporte',
+    estimatedDays: 7,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'turno', type: 'select', label: 'Turno', required: true },
+      { name: 'endereco_residencia', type: 'text', label: 'Endereço de Residência', required: true },
+      { name: 'distancia_escola', type: 'number', label: 'Distância até a Escola (km)', required: false },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'merenda-especial',
+    name: 'Merenda Especial',
+    description: 'Solicitação de alimentação adaptada para necessidades especiais',
+    icon: 'UtensilsCrossed',
+    category: 'Alimentação',
+    estimatedDays: 10,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'restricao_alimentar', type: 'select', label: 'Tipo de Restrição', required: true },
+      { name: 'descricao_restricao', type: 'textarea', label: 'Descrição da Restrição', required: true },
+      { name: 'laudo_medico', type: 'checkbox', label: 'Possui Laudo Médico', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'transferencia-escola',
+    name: 'Transferência de Escola',
+    description: 'Solicite transferência entre unidades escolares',
+    icon: 'ArrowRightLeft',
+    category: 'Transferência',
+    estimatedDays: 7,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola_atual', type: 'select', label: 'Escola Atual', required: true },
+      { name: 'escola_destino', type: 'select', label: 'Escola de Destino', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'motivo', type: 'textarea', label: 'Motivo da Transferência', required: true },
+    ],
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [{
+        linkType: 'STUDENT',
+        role: 'BENEFICIARY',
+        label: 'Aluno',
+        required: true,
+        mapFromLegacyFields: {
+          name: 'nomeAluno'
+        },
+        contextFields: [
+          { id: 'escolaOrigem', sourceField: 'escolaOrigem' },
+          { id: 'escolaDestino', sourceField: 'escolaDestino' }
+        ],
+        expectedRelationships: ['SON', 'DAUGHTER']
+      }]
+    }
+  },
+  {
+    id: 'declaracao-escolaridade',
+    name: 'Declaração de Escolaridade',
+    description: 'Emissão de declarações e atestados escolares',
+    icon: 'FileText',
+    category: 'Documentos',
+    estimatedDays: 3,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'tipo_documento', type: 'select', label: 'Tipo de Documento', required: true },
+      { name: 'finalidade', type: 'text', label: 'Finalidade do Documento', required: true },
+    ]
+  },
+  {
+    id: 'bolsa-estudo',
+    name: 'Bolsa de Estudos',
+    description: 'Solicitação de bolsas de estudo municipal',
+    icon: 'Award',
+    category: 'Bolsas',
+    estimatedDays: 20,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'text', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'renda_familiar', type: 'number', label: 'Renda Familiar Mensal (R$)', required: true },
+      { name: 'num_moradores', type: 'number', label: 'Número de Moradores na Casa', required: true },
+    ]
+  },
+  {
+    id: 'eja-inscricao',
+    name: 'Inscrição no EJA',
+    description: 'Educação de Jovens e Adultos - inscrição e matrícula',
+    icon: 'BookOpen',
+    category: 'EJA',
+    estimatedDays: 10,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escolaridade_atual', type: 'select', label: 'Escolaridade Atual', required: true },
+      { name: 'unidade_eja', type: 'select', label: 'Unidade EJA', required: true },
+      { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
+    ]
+  },
+  {
+    id: 'educacao-especial',
+    name: 'Educação Especial',
+    description: 'Solicitação de atendimento educacional especializado (AEE)',
+    icon: 'Heart',
+    category: 'Inclusão',
+    estimatedDays: 15,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'tipo_deficiencia', type: 'select', label: 'Tipo de Deficiência/Necessidade', required: true },
+      { name: 'laudo_medico', type: 'checkbox', label: 'Possui Laudo Médico', required: true },
+      { name: 'atendimento_solicitado', type: 'textarea', label: 'Tipo de Atendimento Necessário', required: true },
+    ]
+  },
+  {
+    id: 'uniforme-escolar',
+    name: 'Distribuição de Uniformes',
+    description: 'Solicitação de uniformes escolares',
+    icon: 'Shirt',
+    category: 'Material',
+    estimatedDays: 10,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'tamanho_camisa', type: 'select', label: 'Tamanho da Camisa', required: true },
+      { name: 'tamanho_calca', type: 'select', label: 'Tamanho da Calça/Bermuda', required: true },
+      { name: 'tamanho_tenis', type: 'number', label: 'Número do Calçado', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'material-escolar',
+    name: 'Kit de Material Escolar',
+    description: 'Distribuição de kit de material escolar',
+    icon: 'Backpack',
+    category: 'Material',
+    estimatedDays: 10,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'turno', type: 'select', label: 'Turno', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'historico-escolar',
+    name: 'Histórico Escolar',
+    description: 'Solicitação de histórico escolar completo',
+    icon: 'FileText',
+    category: 'Documentos',
+    estimatedDays: 7,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola onde Estudou', required: true },
+      { name: 'ano_conclusao', type: 'number', label: 'Ano de Conclusão', required: true },
+    ]
+  },
+  {
+    id: 'segunda-chamada-prova',
+    name: 'Segunda Chamada de Prova',
+    description: 'Solicitação de segunda chamada para avaliações',
+    icon: 'Calendar',
+    category: 'Avaliações',
+    estimatedDays: 3,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'disciplina', type: 'text', label: 'Disciplina', required: true },
+      { name: 'data_prova_perdida', type: 'date', label: 'Data da Prova Perdida', required: true },
+      { name: 'motivo', type: 'textarea', label: 'Motivo da Ausência', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'atendimento-psicologo-escolar',
+    name: 'Atendimento com Psicólogo Escolar',
+    description: 'Solicitação de acompanhamento psicológico na escola',
+    icon: 'Brain',
+    category: 'Apoio',
+    estimatedDays: 10,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
+    ]
+  },
+  {
+    id: 'reforco-escolar',
+    name: 'Aulas de Reforço',
+    description: 'Inscrição em aulas de reforço escolar',
+    icon: 'BookOpen',
+    category: 'Apoio',
+    estimatedDays: 5,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'disciplina', type: 'select', label: 'Disciplina', required: true },
+      { name: 'turno_disponivel', type: 'select', label: 'Turno Disponível', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'rematricula',
+    name: 'Rematrícula',
+    description: 'Renovação de matrícula para o próximo ano letivo',
+    icon: 'RefreshCw',
+    category: 'Matrícula',
+    estimatedDays: 3,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola Atual', required: true },
+      { name: 'serie_atual', type: 'select', label: 'Série/Ano Atual', required: true },
+      { name: 'serie_proxima', type: 'select', label: 'Série/Ano para o Próximo Ano', required: true },
+      { name: 'turno', type: 'select', label: 'Turno Desejado', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'trancamento-matricula',
+    name: 'Trancamento de Matrícula',
+    description: 'Solicitação de trancamento temporário de matrícula',
+    icon: 'PauseCircle',
+    category: 'Matrícula',
+    estimatedDays: 5,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'motivo', type: 'textarea', label: 'Motivo do Trancamento', required: true },
+      { name: 'previsao_retorno', type: 'date', label: 'Previsão de Retorno', required: false },
+    ]
+  },
+  {
+    id: 'certificado-conclusao',
+    name: 'Certificado de Conclusão',
+    description: 'Emissão de certificado de conclusão de curso',
+    icon: 'Award',
+    category: 'Documentos',
+    estimatedDays: 10,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'curso_nivel', type: 'select', label: 'Curso/Nível Concluído', required: true },
+      { name: 'ano_conclusao', type: 'number', label: 'Ano de Conclusão', required: true },
+    ]
+  },
+  {
+    id: 'visita-pedagogica',
+    name: 'Autorização de Visita Pedagógica',
+    description: 'Autorização para participação em visitas e excursões escolares',
+    icon: 'MapPin',
+    category: 'Atividades',
+    estimatedDays: 2,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'local_visita', type: 'text', label: 'Local da Visita', required: true },
+      { name: 'data_visita', type: 'date', label: 'Data da Visita', required: true },
+      { name: 'autorizo', type: 'checkbox', label: 'Autorizo a Participação', required: true },
+      { name: 'telefone_emergencia', type: 'tel', label: 'Telefone de Emergência', required: true },
+    ]
+  },
+  {
+    id: 'atividades-complementares',
+    name: 'Atividades Complementares',
+    description: 'Inscrição em atividades extracurriculares',
+    icon: 'Music',
+    category: 'Atividades',
+    estimatedDays: 7,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'atividade', type: 'select', label: 'Atividade de Interesse', required: true },
+      { name: 'turno_disponivel', type: 'select', label: 'Turno Disponível', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'recuperacao-nota',
+    name: 'Recuperação de Nota',
+    description: 'Inscrição em recuperação paralela ou final',
+    icon: 'TrendingUp',
+    category: 'Avaliações',
+    estimatedDays: 3,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'disciplina', type: 'select', label: 'Disciplina', required: true },
+      { name: 'tipo_recuperacao', type: 'select', label: 'Tipo de Recuperação', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'biblioteca-emprestimo',
+    name: 'Cadastro na Biblioteca',
+    description: 'Cadastro para empréstimo de livros na biblioteca escolar',
+    icon: 'Library',
+    category: 'Biblioteca',
+    estimatedDays: 2,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'turma', type: 'text', label: 'Turma', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'pass-livre-estudante',
+    name: 'Passe Livre Estudantil',
+    description: 'Solicitação de passe livre para transporte público',
+    icon: 'Bus',
+    category: 'Transporte',
+    estimatedDays: 15,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'text', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'turno', type: 'select', label: 'Turno', required: true },
+      { name: 'endereco_residencia', type: 'text', label: 'Endereço de Residência', required: true },
+    ]
+  },
+  {
+    id: 'carteirinha-estudante',
+    name: 'Carteirinha de Estudante',
+    description: 'Emissão de carteira de identificação estudantil',
+    icon: 'CreditCard',
+    category: 'Documentos',
+    estimatedDays: 10,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+    ]
+  },
+  {
+    id: 'alergia-medicamentos',
+    name: 'Informação de Alergia e Medicamentos',
+    description: 'Registro de alergias e uso de medicamentos controlados',
+    icon: 'AlertTriangle',
+    category: 'Saúde',
+    estimatedDays: 3,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'alergia', type: 'textarea', label: 'Alergias Conhecidas', required: false },
+      { name: 'medicamento_continuo', type: 'textarea', label: 'Medicamentos de Uso Contínuo', required: false },
+      { name: 'condicao_saude', type: 'textarea', label: 'Condições de Saúde Relevantes', required: false },
+      { name: 'telefone_emergencia', type: 'tel', label: 'Telefone de Emergência', required: true },
+    ]
+  },
+  {
+    id: 'dispensa-educacao-fisica',
+    name: 'Dispensa de Educação Física',
+    description: 'Solicitação de dispensa temporária ou permanente de Ed. Física',
+    icon: 'X',
+    category: 'Saúde',
+    estimatedDays: 5,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'tipo_dispensa', type: 'select', label: 'Tipo de Dispensa', required: true },
+      { name: 'motivo', type: 'textarea', label: 'Motivo/Condição Médica', required: true },
+      { name: 'periodo', type: 'text', label: 'Período da Dispensa', required: true },
+      { name: 'laudo_medico', type: 'checkbox', label: 'Anexar Laudo Médico', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'pre-matricula-creche',
+    name: 'Pré-Matrícula em Creche',
+    description: 'Solicitação de vaga em creche municipal (0-3 anos)',
+    icon: 'Baby',
+    category: 'Educação Infantil',
+    estimatedDays: 30,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'creche_preferencia', type: 'select', label: 'Creche de Preferência', required: true },
+      { name: 'periodo', type: 'select', label: 'Período (Integral/Parcial)', required: true },
+    ]
+  },
+  {
+    id: 'pre-escola',
+    name: 'Matrícula em Pré-Escola',
+    description: 'Matrícula em pré-escola municipal (4-5 anos)',
+    icon: 'Baby',
+    category: 'Educação Infantil',
+    estimatedDays: 10,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'pre_escola', type: 'select', label: 'Pré-Escola de Preferência', required: true },
+      { name: 'turno', type: 'select', label: 'Turno', required: true },
+    ]
+  },
+  {
+    id: 'conselho-escola',
+    name: 'Eleição do Conselho Escolar',
+    description: 'Candidatura para o conselho escolar',
+    icon: 'Users',
+    category: 'Participação',
+    estimatedDays: 5,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'segmento', type: 'select', label: 'Segmento (Pais/Professores/Funcionários)', required: true },
+    ]
+  },
+  {
+    id: 'reclamacao-bullying',
+    name: 'Denúncia de Bullying',
+    description: 'Registro de ocorrência de bullying ou violência escolar',
+    icon: 'ShieldAlert',
+    category: 'Segurança',
+    estimatedDays: 1,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: false },
+      { name: 'descricao_ocorrido', type: 'textarea', label: 'Descrição do Ocorrido', required: true },
+      { name: 'data_ocorrencia', type: 'date', label: 'Data da Ocorrência', required: false },
+      { name: 'denuncia_anonima', type: 'checkbox', label: 'Denúncia Anônima', required: false },
+    ]
+  },
+  {
+    id: 'programa-mais-educacao',
+    name: 'Programa Mais Educação',
+    description: 'Inscrição em programa de educação integral',
+    icon: 'Clock',
+    category: 'Programas',
+    estimatedDays: 10,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'atividades_interesse', type: 'textarea', label: 'Atividades de Interesse', required: false },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'estagio-supervisionado',
+    name: 'Estágio Supervisionado',
+    description: 'Cadastro de estudantes para estágio na rede municipal',
+    icon: 'Briefcase',
+    category: 'Estágio',
+    estimatedDays: 15,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'instituicao_ensino', type: 'text', label: 'Instituição de Ensino Superior', required: true },
+      { name: 'curso', type: 'text', label: 'Curso', required: true },
+      { name: 'periodo', type: 'text', label: 'Período Atual', required: true },
+      { name: 'area_interesse', type: 'select', label: 'Área de Interesse para Estágio', required: true },
+    ]
+  },
+  {
+    id: 'projeto-leitura',
+    name: 'Projeto de Incentivo à Leitura',
+    description: 'Inscrição em projeto de leitura e letramento',
+    icon: 'BookOpen',
+    category: 'Projetos',
+    estimatedDays: 5,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'genero_preferencia', type: 'select', label: 'Gênero Literário de Preferência', required: false },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'alfabetizacao-adultos',
+    name: 'Alfabetização de Adultos',
+    description: 'Programa de alfabetização para adultos não alfabetizados',
+    icon: 'Pen',
+    category: 'EJA',
+    estimatedDays: 7,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'local_preferencia', type: 'select', label: 'Local de Preferência para as Aulas', required: true },
+      { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
+    ]
+  },
+  {
+    id: 'curso-profissionalizante',
+    name: 'Curso Profissionalizante',
+    description: 'Inscrição em cursos técnicos e profissionalizantes',
+    icon: 'Tool',
+    category: 'Cursos',
+    estimatedDays: 15,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
+      { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
+      { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
+    ]
+  },
+  {
+    id: 'olimpiadas-escolares',
+    name: 'Olimpíadas Escolares',
+    description: 'Inscrição em olimpíadas e competições escolares',
+    icon: 'Trophy',
+    category: 'Competições',
+    estimatedDays: 7,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'olimpiada', type: 'select', label: 'Olimpíada/Competição', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  },
+  {
+    id: 'renovacao-contrato-professor',
+    name: 'Renovação de Contrato Temporário',
+    description: 'Renovação de contrato de professor temporário',
+    icon: 'RefreshCw',
+    category: 'RH',
+    estimatedDays: 20,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'disciplina', type: 'text', label: 'Disciplina/Área', required: true },
+      { name: 'data_inicio_contrato', type: 'date', label: 'Data de Início do Contrato Atual', required: true },
+    ]
+  },
+  {
+    id: 'capacitacao-professores',
+    name: 'Capacitação de Professores',
+    description: 'Inscrição em cursos de formação continuada',
+    icon: 'GraduationCap',
+    category: 'Formação',
+    estimatedDays: 10,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'area_atuacao', type: 'text', label: 'Área de Atuação', required: true },
+      { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
+    ]
+  },
+  {
+    id: 'projeto-horta-escolar',
+    name: 'Projeto Horta Escolar',
+    description: 'Inscrição da escola em projeto de horta pedagógica',
+    icon: 'Sprout',
+    category: 'Projetos',
+    estimatedDays: 15,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'series_participantes', type: 'textarea', label: 'Séries Participantes', required: true },
+      { name: 'espaco_disponivel', type: 'checkbox', label: 'Possui Espaço Disponível', required: true },
+      { name: 'objetivo_projeto', type: 'textarea', label: 'Objetivo do Projeto', required: false },
+    ]
+  },
+  {
+    id: 'sala-recursos-multifuncionais',
+    name: 'Sala de Recursos Multifuncionais',
+    description: 'Cadastro para atendimento em sala de recursos',
+    icon: 'Accessibility',
+    category: 'Inclusão',
+    estimatedDays: 10,
+    requiresDocuments: true,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'tipo_necessidade', type: 'select', label: 'Tipo de Necessidade Especial', required: true },
+      { name: 'laudo_anexado', type: 'checkbox', label: 'Laudo Médico Anexado', required: true },
+      { name: 'horario_disponivel', type: 'select', label: 'Horário Disponível', required: true },
+    ]
+  },
+  {
+    id: 'conselho-classe',
+    name: 'Ata de Conselho de Classe',
+    description: 'Solicitação de cópia de ata de conselho de classe',
+    icon: 'FileText',
+    category: 'Documentos',
+    estimatedDays: 5,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'vinculo', type: 'select', label: 'Vínculo (Responsável/Professor/Outros)', required: true },
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie_turma', type: 'text', label: 'Série/Turma', required: true },
+      { name: 'periodo', type: 'text', label: 'Período (Bimestre/Trimestre/Ano)', required: true },
+    ]
+  },
+  {
+    id: 'projeto-feira-ciencias',
+    name: 'Feira de Ciências',
+    description: 'Inscrição de projeto para feira de ciências',
+    icon: 'Flask',
+    category: 'Eventos',
+    estimatedDays: 7,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'titulo_projeto', type: 'text', label: 'Título do Projeto', required: true },
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'area_conhecimento', type: 'select', label: 'Área do Conhecimento', required: true },
+      { name: 'resumo_projeto', type: 'textarea', label: 'Resumo do Projeto', required: true },
+      { name: 'professor_orientador', type: 'text', label: 'Professor Orientador', required: true },
+    ]
+  },
+  {
+    id: 'atendimento-assistente-social',
+    name: 'Atendimento com Assistente Social',
+    description: 'Solicitação de atendimento com assistente social escolar',
+    icon: 'Users',
+    category: 'Apoio',
+    estimatedDays: 7,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'vinculo', type: 'select', label: 'Vínculo (Aluno/Responsável/Professor)', required: true },
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'motivo_atendimento', type: 'textarea', label: 'Motivo do Atendimento', required: true },
+      { name: 'urgente', type: 'checkbox', label: 'Situação Urgente', required: false },
+    ]
+  },
+  {
+    id: 'termo-responsabilidade-menor',
+    name: 'Termo de Responsabilidade para Menor',
+    description: 'Autorização para saída antecipada ou atividades específicas',
+    icon: 'FileSignature',
+    category: 'Autorizações',
+    estimatedDays: 2,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'tipo_autorizacao', type: 'select', label: 'Tipo de Autorização', required: true },
+      { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
+    ]
+  },
+  {
+    id: 'calendario-escolar',
+    name: 'Calendário Escolar',
+    description: 'Solicitação de cópia do calendário escolar anual',
+    icon: 'Calendar',
+    category: 'Informações',
+    estimatedDays: 1,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'ano_letivo', type: 'number', label: 'Ano Letivo', required: true },
+    ]
+  },
+  {
+    id: 'lista-material-escolar',
+    name: 'Lista de Material Escolar',
+    description: 'Solicitação de lista oficial de material escolar',
+    icon: 'List',
+    category: 'Informações',
+    estimatedDays: 1,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+    ]
+  },
+  {
+    id: 'renegociacao-mensalidade',
+    name: 'Renegociação de Débitos Escolares',
+    description: 'Solicitação de parcelamento de débitos com a escola',
+    icon: 'DollarSign',
+    category: 'Financeiro',
+    estimatedDays: 10,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'valor_debito', type: 'number', label: 'Valor do Débito (R$)', required: true },
+      { name: 'parcelas_desejadas', type: 'number', label: 'Número de Parcelas Desejadas', required: true },
+    ]
+  },
+  {
+    id: 'atualizacao-cadastral',
+    name: 'Atualização Cadastral',
+    description: 'Atualização de dados cadastrais do aluno',
+    icon: 'Edit',
+    category: 'Cadastro',
+    estimatedDays: 3,
+    requiresDocuments: false,
+    suggestedFields: [
+      { name: 'escola', type: 'select', label: 'Escola', required: true },
+      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
+      { name: 'dados_atualizar', type: 'select', label: 'Dados a Atualizar', required: true },
+      { name: 'novos_dados', type: 'textarea', label: 'Novos Dados', required: true },
+      { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
+    ]
+  }
+];

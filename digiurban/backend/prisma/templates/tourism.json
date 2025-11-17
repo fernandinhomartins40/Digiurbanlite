@@ -1,0 +1,819 @@
+[
+  {
+    "code": "TUR_CADASTRO_001",
+    "name": "Cadastro de Estabelecimento Turístico",
+    "category": "Turismo",
+    "description": "Cadastramento de hotéis, pousadas, restaurantes e agências de turismo no registro municipal",
+    "icon": "Building",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "businessName",
+          "label": "Nome do Estabelecimento",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "tradeName",
+          "label": "Nome Fantasia",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "cnpj",
+          "label": "CNPJ",
+          "type": "text",
+          "required": true,
+          "mask": "99.999.999/9999-99"
+        },
+        {
+          "id": "businessType",
+          "label": "Tipo de Estabelecimento",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Hotel",
+            "Pousada",
+            "Restaurante",
+            "Bar",
+            "Agência de Turismo",
+            "Transporte Turístico",
+            "Artesanato",
+            "Comércio Local",
+            "Guia Turístico"
+          ]
+        },
+        {
+          "id": "category",
+          "label": "Categoria",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "ownerName",
+          "label": "Nome do Proprietário",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "ownerCpf",
+          "label": "CPF do Proprietário",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "address",
+          "label": "Endereço Completo",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "capacity",
+          "label": "Capacidade",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "services",
+          "label": "Serviços Oferecidos",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "acceptsCreditCard",
+          "label": "Aceita Cartão?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "hasParking",
+          "label": "Possui Estacionamento?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "isAccessible",
+          "label": "Acessível para PcD?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "website",
+          "label": "Website",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "socialMedia",
+          "label": "Redes Sociais",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "CNPJ",
+        "RG e CPF do proprietário",
+        "Comprovante de endereço",
+        "Alvará de funcionamento",
+        "Fotos do estabelecimento"
+      ]
+    },
+    "estimatedTime": "7 dias úteis",
+    "moduleType": "tourism",
+    "moduleEntity": "LocalBusiness",
+    "fieldMapping": {
+      "businessName": "business.name",
+      "cnpj": "business.cnpj",
+      "businessType": "business.type",
+      "ownerName": "owner.name"
+    }
+  },
+  {
+    "code": "TUR_ATRATIVO_002",
+    "name": "Cadastro de Ponto Turístico",
+    "category": "Turismo",
+    "description": "Cadastramento de atrativos turísticos naturais, históricos ou culturais do município",
+    "icon": "MapPin",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "attractionName",
+          "label": "Nome do Atrativo",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "type",
+          "label": "Tipo",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Natural",
+            "Histórico",
+            "Cultural",
+            "Religioso",
+            "Aventura",
+            "Gastronômico"
+          ]
+        },
+        {
+          "id": "category",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Ponto Turístico",
+            "Parque",
+            "Museu",
+            "Igreja",
+            "Praça",
+            "Monumento",
+            "Trilha",
+            "Cachoeira",
+            "Outro"
+          ]
+        },
+        {
+          "id": "description",
+          "label": "Descrição",
+          "type": "textarea",
+          "required": true,
+          "minLength": 50
+        },
+        {
+          "id": "address",
+          "label": "Localização",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "coordinates",
+          "label": "Coordenadas GPS",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "accessType",
+          "label": "Acesso",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Livre",
+            "Público",
+            "Privado",
+            "Restrito"
+          ]
+        },
+        {
+          "id": "hasParking",
+          "label": "Possui Estacionamento?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "hasRestrooms",
+          "label": "Possui Banheiros?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "isAccessible",
+          "label": "Acessível para PcD?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "isFree",
+          "label": "Entrada Gratuita?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "entryFee",
+          "label": "Valor da Entrada",
+          "type": "currency",
+          "required": false
+        },
+        {
+          "id": "photos",
+          "label": "Fotos",
+          "type": "file-multiple",
+          "required": true,
+          "accept": "image/*",
+          "maxFiles": 10
+        },
+        {
+          "id": "contactName",
+          "label": "Nome do Responsável",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "contactPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Fotos do local (mínimo 5)",
+        "Documentos do responsável",
+        "Autorização (se privado)"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "tourism",
+    "moduleEntity": "TouristAttraction",
+    "fieldMapping": {
+      "attractionName": "attraction.name",
+      "type": "attraction.type",
+      "category": "attraction.category",
+      "description": "attraction.description"
+    }
+  },
+  {
+    "code": "TUR_PROGRAMA_003",
+    "name": "Inscrição em Programa Turístico",
+    "category": "Turismo",
+    "description": "Inscrição em roteiros e programas turísticos oferecidos pela prefeitura",
+    "icon": "Map",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "programId",
+          "label": "Programa Turístico",
+          "type": "select",
+          "required": true,
+          "dynamicOptions": "/api/specialized/tourism/programs?status=ativo"
+        },
+        {
+          "id": "participantName",
+          "label": "Nome",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "cpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "numberOfParticipants",
+          "label": "Número de Participantes",
+          "type": "number",
+          "required": true,
+          "min": 1
+        },
+        {
+          "id": "accommodationNeeded",
+          "label": "Necessita Hospedagem?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "transportNeeded",
+          "label": "Necessita Transporte?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "dietaryRestrictions",
+          "label": "Restrições Alimentares",
+          "type": "textarea",
+          "required": false
+        },
+        {
+          "id": "specialNeeds",
+          "label": "Necessidades Especiais",
+          "type": "textarea",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de pagamento (se houver taxa)"
+      ]
+    },
+    "estimatedTime": "3 dias úteis",
+    "moduleType": "tourism",
+    "moduleEntity": "TourismProgram",
+    "fieldMapping": {
+      "programId": "enrollment.programId",
+      "participantName": "participant.name",
+      "cpf": "participant.cpf"
+    }
+  },
+  {
+    "code": "TUR_GUIA_004",
+    "name": "Cadastro de Guia Turístico",
+    "category": "Turismo",
+    "description": "Cadastramento de guias de turismo para atuação no município",
+    "icon": "Users",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "guideName",
+          "label": "Nome",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "cpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "registrationNumber",
+          "label": "Número de Cadastur",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "languages",
+          "label": "Idiomas",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Português",
+            "Inglês",
+            "Espanhol",
+            "Francês",
+            "Alemão",
+            "Italiano",
+            "Outro"
+          ]
+        },
+        {
+          "id": "specialization",
+          "label": "Especialização",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Turismo Histórico",
+            "Ecoturismo",
+            "Turismo Rural",
+            "Turismo Religioso",
+            "Turismo de Aventura"
+          ]
+        },
+        {
+          "id": "experience",
+          "label": "Experiência (anos)",
+          "type": "number",
+          "required": true,
+          "min": 0
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Cadastur",
+        "Certificados",
+        "Foto 3x4"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "tourism",
+    "moduleEntity": "TourismAttendance",
+    "fieldMapping": {
+      "guideName": "guide.name",
+      "cpf": "guide.cpf"
+    }
+  },
+  {
+    "code": "TUR_EVENTO_005",
+    "name": "Proposta de Evento Turístico",
+    "category": "Turismo",
+    "description": "Submissão de proposta para realização de evento turístico no município",
+    "icon": "Calendar",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "eventName",
+          "label": "Nome do Evento",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "eventType",
+          "label": "Tipo",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Festival",
+            "Feira",
+            "Exposição",
+            "Congresso",
+            "Workshop",
+            "Outro"
+          ]
+        },
+        {
+          "id": "description",
+          "label": "Descrição",
+          "type": "textarea",
+          "required": true,
+          "minLength": 100
+        },
+        {
+          "id": "startDate",
+          "label": "Data de Início",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "endDate",
+          "label": "Data de Término",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "location",
+          "label": "Local",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "expectedVisitors",
+          "label": "Público Esperado",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "organizerName",
+          "label": "Organizador",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Projeto do evento",
+        "Orçamento",
+        "Documentos do organizador"
+      ]
+    },
+    "estimatedTime": "10 dias úteis",
+    "moduleType": "tourism",
+    "moduleEntity": "TourismInfo",
+    "fieldMapping": {
+      "eventName": "event.title",
+      "description": "event.content",
+      "organizerName": "organizer.name"
+    }
+  },
+  {
+    "code": "TUR_INFORMACAO_006",
+    "name": "Solicitação de Informações Turísticas",
+    "category": "Turismo",
+    "description": "Solicitação de informações, mapas e materiais turísticos do município",
+    "icon": "Info",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "visitorName",
+          "label": "Nome",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "origin",
+          "label": "Cidade de Origem",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "visitPurpose",
+          "label": "Motivo da Visita",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Lazer",
+            "Negócios",
+            "Estudos",
+            "Visita Familiar",
+            "Outro"
+          ]
+        },
+        {
+          "id": "interests",
+          "label": "Interesses",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Atrativos Naturais",
+            "Cultura e História",
+            "Gastronomia",
+            "Aventura",
+            "Eventos",
+            "Compras"
+          ]
+        },
+        {
+          "id": "stayDuration",
+          "label": "Tempo de Permanência",
+          "type": "select",
+          "required": false,
+          "options": [
+            "1 dia",
+            "2-3 dias",
+            "4-7 dias",
+            "Mais de 1 semana"
+          ]
+        },
+        {
+          "id": "needsMaps",
+          "label": "Necessita Mapas?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "needsAccommodation",
+          "label": "Precisa de Indicação de Hospedagem?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "additionalInfo",
+          "label": "Outras Informações Desejadas",
+          "type": "textarea",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": [],
+    "estimatedTime": "1 dia útil",
+    "moduleType": "tourism",
+    "moduleEntity": "TourismAttendance",
+    "fieldMapping": {
+      "visitorName": "visitor.name",
+      "origin": "visitor.origin",
+      "interests": "visitor.interests"
+    }
+  },
+  {
+    "code": "TUR_PARCERIA_007",
+    "name": "Proposta de Parceria Turística",
+    "category": "Turismo",
+    "description": "Proposta de parceria entre estabelecimento privado e secretaria de turismo",
+    "icon": "Handshake",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "businessName",
+          "label": "Nome do Estabelecimento",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "cnpj",
+          "label": "CNPJ",
+          "type": "text",
+          "required": true,
+          "mask": "99.999.999/9999-99"
+        },
+        {
+          "id": "businessType",
+          "label": "Tipo de Negócio",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "ownerName",
+          "label": "Nome do Proprietário",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "partnershipType",
+          "label": "Tipo de Parceria",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Divulgação",
+            "Desconto para Turistas",
+            "Hospedagem de Eventos",
+            "Capacitação",
+            "Outra"
+          ]
+        },
+        {
+          "id": "proposal",
+          "label": "Descrição da Proposta",
+          "type": "textarea",
+          "required": true,
+          "minLength": 100
+        },
+        {
+          "id": "benefits",
+          "label": "Benefícios Oferecidos",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "CNPJ",
+        "Contrato social",
+        "Documentos do proprietário"
+      ]
+    },
+    "estimatedTime": "15 dias úteis",
+    "moduleType": "tourism",
+    "moduleEntity": "LocalBusiness",
+    "fieldMapping": {
+      "businessName": "business.name",
+      "cnpj": "business.cnpj",
+      "proposal": "partnership.proposal"
+    }
+  },
+  {
+    "code": "TUR_PROGRAM_ENROLL_008",
+    "name": "Inscrição em Programa Turístico",
+    "category": "Turismo",
+    "description": "Inscrever-se em programas e roteiros turísticos municipais",
+    "icon": "MapPin",
+    "defaultFields": {
+      "fields": []
+    },
+    "requiredDocs": {
+      "documents": []
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "INSCRICAO_PROGRAMA_TURISTICO",
+    "moduleEntity": "TourismProgramEnrollment",
+    "redirectTo": "/cidadao/servicos/{serviceId}/selecionar",
+    "usesDynamicForm": true,
+    "fieldMapping": {}
+  }
+]

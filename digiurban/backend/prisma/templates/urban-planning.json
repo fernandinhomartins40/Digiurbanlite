@@ -1,0 +1,670 @@
+[
+  {
+    "code": "URB_PERMIT_NEW_001",
+    "name": "Alvará para Nova Construção",
+    "category": "Planejamento Urbano",
+    "description": "Solicitar alvará para construção de novo imóvel",
+    "icon": "Building",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "applicantName",
+          "label": "Nome do Requerente",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "applicantCpf",
+          "label": "CPF/CNPJ",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "applicantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "applicantEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "permitType",
+          "label": "Tipo de Alvará",
+          "type": "select",
+          "required": true,
+          "options": [
+            "new_construction"
+          ]
+        },
+        {
+          "id": "constructionType",
+          "label": "Tipo de Construção",
+          "type": "select",
+          "required": true,
+          "options": [
+            "residential",
+            "commercial",
+            "industrial",
+            "mixed"
+          ]
+        },
+        {
+          "id": "propertyAddress",
+          "label": "Endereço do Imóvel",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyNumber",
+          "label": "Número",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "neighborhood",
+          "label": "Bairro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "lotNumber",
+          "label": "Número do Lote",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "blockNumber",
+          "label": "Número da Quadra",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "totalArea",
+          "label": "Área Total do Terreno (m²)",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "builtArea",
+          "label": "Área a Construir (m²)",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "floors",
+          "label": "Número de Pavimentos",
+          "type": "number",
+          "required": true,
+          "default": 1
+        },
+        {
+          "id": "projectValue",
+          "label": "Valor Estimado do Projeto (R$)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "engineerName",
+          "label": "Nome do Engenheiro",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "engineerCrea",
+          "label": "CREA do Engenheiro",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "architectName",
+          "label": "Nome do Arquiteto",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "architectCau",
+          "label": "CAU do Arquiteto",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "type": "file-multiple",
+          "accept": "application/pdf",
+          "maxFiles": 10,
+          "required": true
+        },
+        {
+          "id": "projectFiles",
+          "label": "Projeto Arquitetônico",
+          "type": "file-multiple",
+          "accept": "application/pdf,image/*",
+          "maxFiles": 20,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do proprietário",
+        "Matrícula do imóvel",
+        "Projeto arquitetônico",
+        "ART/RRT do responsável técnico",
+        "Comprovante de pagamento de taxas"
+      ]
+    },
+    "estimatedTime": "30 dias úteis",
+    "moduleType": "urban_planning",
+    "moduleEntity": "BuildingPermit",
+    "fieldMapping": {}
+  },
+  {
+    "code": "URB_PERMIT_REFORM_002",
+    "name": "Alvará para Reforma",
+    "category": "Planejamento Urbano",
+    "description": "Solicitar alvará para reforma de imóvel existente",
+    "icon": "Hammer",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "applicantName",
+          "label": "Nome do Requerente",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "applicantCpf",
+          "label": "CPF/CNPJ",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "applicantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "permitType",
+          "label": "Tipo de Alvará",
+          "type": "select",
+          "required": true,
+          "options": [
+            "reform"
+          ]
+        },
+        {
+          "id": "constructionType",
+          "label": "Tipo do Imóvel",
+          "type": "select",
+          "required": true,
+          "options": [
+            "residential",
+            "commercial",
+            "industrial",
+            "mixed"
+          ]
+        },
+        {
+          "id": "propertyAddress",
+          "label": "Endereço do Imóvel",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "neighborhood",
+          "label": "Bairro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "totalArea",
+          "label": "Área Total (m²)",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "builtArea",
+          "label": "Área da Reforma (m²)",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "projectValue",
+          "label": "Valor Estimado (R$)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "engineerName",
+          "label": "Nome do Responsável Técnico",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "engineerCrea",
+          "label": "CREA/CAU",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "type": "file-multiple",
+          "accept": "application/pdf",
+          "maxFiles": 10,
+          "required": true
+        },
+        {
+          "id": "projectFiles",
+          "label": "Projeto da Reforma",
+          "type": "file-multiple",
+          "accept": "application/pdf,image/*",
+          "maxFiles": 15,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Matrícula do imóvel",
+        "Projeto da reforma",
+        "ART/RRT"
+      ]
+    },
+    "estimatedTime": "20 dias úteis",
+    "moduleType": "urban_planning",
+    "moduleEntity": "BuildingPermit",
+    "fieldMapping": {}
+  },
+  {
+    "code": "URB_CERT_ZONING_003",
+    "name": "Certidão de Zoneamento",
+    "category": "Planejamento Urbano",
+    "description": "Obter certidão de uso e ocupação do solo",
+    "icon": "MapPin",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "applicantName",
+          "label": "Nome do Requerente",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "applicantCpf",
+          "label": "CPF/CNPJ",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "applicantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "applicantEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "certificateType",
+          "label": "Tipo de Certidão",
+          "type": "select",
+          "required": true,
+          "options": [
+            "zoning"
+          ]
+        },
+        {
+          "id": "purpose",
+          "label": "Finalidade da Certidão",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyAddress",
+          "label": "Endereço do Imóvel",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "neighborhood",
+          "label": "Bairro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "lotNumber",
+          "label": "Número do Lote",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "blockNumber",
+          "label": "Número da Quadra",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "cadastralNumber",
+          "label": "Número Cadastral",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "type": "file-multiple",
+          "accept": "application/pdf,image/*",
+          "maxFiles": 5,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Matrícula ou IPTU do imóvel"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "urban_planning",
+    "moduleEntity": "UrbanCertificate",
+    "fieldMapping": {}
+  },
+  {
+    "code": "URB_CERT_ALIGNMENT_004",
+    "name": "Certidão de Alinhamento",
+    "category": "Planejamento Urbano",
+    "description": "Obter certidão de alinhamento e nivelamento",
+    "icon": "Ruler",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "applicantName",
+          "label": "Nome",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "applicantCpf",
+          "label": "CPF/CNPJ",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "applicantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "certificateType",
+          "label": "Tipo de Certidão",
+          "type": "select",
+          "required": true,
+          "options": [
+            "alignment"
+          ]
+        },
+        {
+          "id": "purpose",
+          "label": "Finalidade",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyAddress",
+          "label": "Endereço",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "neighborhood",
+          "label": "Bairro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "type": "file-multiple",
+          "accept": "application/pdf,image/*",
+          "maxFiles": 5,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Matrícula do imóvel"
+      ]
+    },
+    "estimatedTime": "7 dias úteis",
+    "moduleType": "urban_planning",
+    "moduleEntity": "UrbanCertificate",
+    "fieldMapping": {}
+  },
+  {
+    "code": "URB_NUMBERING_005",
+    "name": "Numeração de Imóvel",
+    "category": "Planejamento Urbano",
+    "description": "Solicitar numeração oficial para imóvel",
+    "icon": "Hash",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "applicantName",
+          "label": "Nome",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "applicantCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "applicantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "propertyAddress",
+          "label": "Endereço (sem número)",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "neighborhood",
+          "label": "Bairro",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "reference",
+          "label": "Ponto de Referência",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "coordinates",
+          "label": "Localização GPS",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "numberingType",
+          "label": "Tipo de Numeração",
+          "type": "select",
+          "required": true,
+          "options": [
+            "new",
+            "change",
+            "additional"
+          ]
+        },
+        {
+          "id": "currentNumber",
+          "label": "Número Atual (se alteração)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "reason",
+          "label": "Motivo da Solicitação",
+          "type": "textarea",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade",
+        "Croqui de localização"
+      ]
+    },
+    "estimatedTime": "10 dias úteis",
+    "moduleType": "urban_planning",
+    "moduleEntity": "PropertyNumbering",
+    "fieldMapping": {}
+  },
+  {
+    "code": "URB_SUBDIVISION_006",
+    "name": "Desmembramento de Lote",
+    "category": "Planejamento Urbano",
+    "description": "Solicitar desmembramento de lote urbano",
+    "icon": "Split",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "ownerName",
+          "label": "Nome do Proprietário",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "ownerCpf",
+          "label": "CPF/CNPJ",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "ownerPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "ownerEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "originalAddress",
+          "label": "Endereço do Lote Original",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "originalLotNumber",
+          "label": "Número do Lote",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "originalBlockNumber",
+          "label": "Número da Quadra",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "originalArea",
+          "label": "Área Total do Lote (m²)",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "cadastralNumber",
+          "label": "Número Cadastral",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "newLotsCount",
+          "label": "Quantidade de Novos Lotes",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "newLotsData",
+          "label": "Dados dos Novos Lotes",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva a área de cada novo lote"
+        },
+        {
+          "id": "surveyorName",
+          "label": "Nome do Agrimensor",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "surveyorCrea",
+          "label": "CREA do Agrimensor",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "type": "file-multiple",
+          "accept": "application/pdf",
+          "maxFiles": 10,
+          "required": true
+        },
+        {
+          "id": "surveyPlans",
+          "label": "Plantas e Memoriais",
+          "type": "file-multiple",
+          "accept": "application/pdf,image/*",
+          "maxFiles": 15,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do proprietário",
+        "Matrícula do imóvel",
+        "Planta de desmembramento",
+        "Memorial descritivo",
+        "ART do agrimensor"
+      ]
+    },
+    "estimatedTime": "45 dias úteis",
+    "moduleType": "urban_planning",
+    "moduleEntity": "LotSubdivision",
+    "fieldMapping": {}
+  }
+]

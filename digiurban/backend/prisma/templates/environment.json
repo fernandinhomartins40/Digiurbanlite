@@ -1,0 +1,575 @@
+[
+  {
+    "code": "ENV_LICENSE_001",
+    "name": "Licença Ambiental Prévia (LP)",
+    "category": "Meio Ambiente",
+    "description": "Solicitação de Licença Prévia para atividades que possam causar impacto ambiental",
+    "icon": "FileCheck",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "applicantName",
+          "label": "Nome do Requerente",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "applicantCpf",
+          "label": "CPF/CNPJ",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "applicantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "applicantEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "licenseType",
+          "label": "Tipo de Licença",
+          "type": "select",
+          "required": true,
+          "options": [
+            "LP - Licença Prévia"
+          ]
+        },
+        {
+          "id": "activityType",
+          "label": "Tipo de Atividade",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Construção Civil",
+            "Indústria",
+            "Comércio",
+            "Serviços",
+            "Agropecuária",
+            "Mineração",
+            "Outro"
+          ]
+        },
+        {
+          "id": "description",
+          "label": "Descrição do Empreendimento",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva detalhadamente a atividade/empreendimento"
+        },
+        {
+          "id": "location",
+          "label": "Localização",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "coordinates",
+          "label": "Coordenadas GPS",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "area",
+          "label": "Área (m² ou hectares)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "type": "file-multiple",
+          "accept": "application/pdf,image/*",
+          "maxFiles": 10,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do requerente",
+        "Comprovante de propriedade ou posse",
+        "Planta de situação",
+        "Memorial descritivo do projeto",
+        "Estudo de Impacto Ambiental (se aplicável)"
+      ]
+    },
+    "estimatedTime": "30 dias úteis",
+    "moduleType": "environment",
+    "moduleEntity": "EnvironmentalLicense",
+    "fieldMapping": {
+      "applicantName": "license.applicantName",
+      "applicantCpf": "license.applicantCpf",
+      "applicantPhone": "license.applicantPhone",
+      "applicantEmail": "license.applicantEmail",
+      "licenseType": "license.licenseType",
+      "activityType": "license.activityType",
+      "description": "license.description",
+      "location": "license.location",
+      "coordinates": "license.coordinates",
+      "area": "license.area",
+      "documents": "license.documents"
+    }
+  },
+  {
+    "code": "ENV_TREE_PRUNING_002",
+    "name": "Autorização para Poda de Árvore",
+    "category": "Meio Ambiente",
+    "description": "Solicitar autorização para realizar poda em árvore",
+    "icon": "TreeDeciduous",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "applicantName",
+          "label": "Nome do Solicitante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "applicantCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "applicantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "authorizationType",
+          "label": "Tipo de Autorização",
+          "type": "select",
+          "required": true,
+          "options": [
+            "pruning"
+          ]
+        },
+        {
+          "id": "reason",
+          "label": "Motivo da Poda",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva o motivo da solicitação"
+        },
+        {
+          "id": "location",
+          "label": "Localização da Árvore",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "coordinates",
+          "label": "Localização GPS",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "treeCount",
+          "label": "Quantidade de Árvores",
+          "type": "number",
+          "required": true,
+          "default": 1
+        },
+        {
+          "id": "treeSpecies",
+          "label": "Espécie(s) da(s) Árvore(s)",
+          "type": "text",
+          "required": false,
+          "placeholder": "Ex: Mangueira, Ipê, Flamboyant"
+        },
+        {
+          "id": "photos",
+          "label": "Fotos da Árvore",
+          "type": "file-multiple",
+          "accept": "image/*",
+          "maxFiles": 5,
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência ou propriedade",
+        "Fotos da árvore (recomendado)"
+      ]
+    },
+    "estimatedTime": "10 dias úteis",
+    "moduleType": "environment",
+    "moduleEntity": "TreeAuthorization",
+    "fieldMapping": {
+      "applicantName": "authorization.applicantName",
+      "applicantCpf": "authorization.applicantCpf",
+      "applicantPhone": "authorization.applicantPhone",
+      "authorizationType": "authorization.authorizationType",
+      "reason": "authorization.reason",
+      "location": "authorization.location",
+      "coordinates": "authorization.coordinates",
+      "treeCount": "authorization.treeCount",
+      "treeSpecies": "authorization.treeSpecies",
+      "photos": "authorization.photos"
+    }
+  },
+  {
+    "code": "ENV_TREE_REMOVAL_003",
+    "name": "Autorização para Supressão de Árvore",
+    "category": "Meio Ambiente",
+    "description": "Solicitar autorização para remover/cortar árvore",
+    "icon": "TreeDeciduous",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "applicantName",
+          "label": "Nome do Solicitante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "applicantCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "applicantPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "authorizationType",
+          "label": "Tipo de Autorização",
+          "type": "select",
+          "required": true,
+          "options": [
+            "removal"
+          ]
+        },
+        {
+          "id": "reason",
+          "label": "Motivo da Supressão",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Justifique detalhadamente o motivo da remoção"
+        },
+        {
+          "id": "location",
+          "label": "Localização da Árvore",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "coordinates",
+          "label": "Localização GPS",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "treeCount",
+          "label": "Quantidade de Árvores",
+          "type": "number",
+          "required": true,
+          "default": 1
+        },
+        {
+          "id": "treeSpecies",
+          "label": "Espécie(s) da(s) Árvore(s)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "photos",
+          "label": "Fotos da Árvore",
+          "type": "file-multiple",
+          "accept": "image/*",
+          "maxFiles": 5,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade",
+        "Fotos da árvore",
+        "Laudo técnico (se houver risco)"
+      ]
+    },
+    "estimatedTime": "15 dias úteis",
+    "moduleType": "environment",
+    "moduleEntity": "TreeAuthorization",
+    "fieldMapping": {
+      "applicantName": "authorization.applicantName",
+      "applicantCpf": "authorization.applicantCpf",
+      "applicantPhone": "authorization.applicantPhone",
+      "authorizationType": "authorization.authorizationType",
+      "reason": "authorization.reason",
+      "location": "authorization.location",
+      "coordinates": "authorization.coordinates",
+      "treeCount": "authorization.treeCount",
+      "treeSpecies": "authorization.treeSpecies",
+      "photos": "authorization.photos"
+    }
+  },
+  {
+    "code": "ENV_COMPLAINT_004",
+    "name": "Denúncia Ambiental",
+    "category": "Meio Ambiente",
+    "description": "Reportar crime ou infração ambiental",
+    "icon": "AlertTriangle",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "isAnonymous",
+          "label": "Denúncia Anônima",
+          "type": "checkbox",
+          "required": false,
+          "default": false
+        },
+        {
+          "id": "complainantName",
+          "label": "Seu Nome",
+          "type": "text",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "isAnonymous",
+            "value": false
+          }
+        },
+        {
+          "id": "complainantPhone",
+          "label": "Seu Telefone",
+          "type": "phone",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "isAnonymous",
+            "value": false
+          }
+        },
+        {
+          "id": "complainantEmail",
+          "label": "Seu E-mail",
+          "type": "email",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "isAnonymous",
+            "value": false
+          }
+        },
+        {
+          "id": "complaintType",
+          "label": "Tipo de Denúncia",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Poluição de rio/córrego",
+            "Desmatamento ilegal",
+            "Maus-tratos a animais",
+            "Descarte irregular de lixo",
+            "Poluição sonora",
+            "Queimadas irregulares",
+            "Outro"
+          ]
+        },
+        {
+          "id": "description",
+          "label": "Descrição da Denúncia",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Descreva detalhadamente o que está ocorrendo"
+        },
+        {
+          "id": "location",
+          "label": "Local da Ocorrência",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "coordinates",
+          "label": "Localização GPS",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "photos",
+          "label": "Fotos/Evidências",
+          "type": "file-multiple",
+          "accept": "image/*,video/*",
+          "maxFiles": 10,
+          "required": false
+        },
+        {
+          "id": "priority",
+          "label": "Urgência",
+          "type": "select",
+          "required": false,
+          "options": [
+            "normal",
+            "high",
+            "urgent"
+          ],
+          "default": "normal"
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Fotos/vídeos (recomendado)"
+      ]
+    },
+    "estimatedTime": "Imediato",
+    "moduleType": "environment",
+    "moduleEntity": "EnvironmentalComplaint",
+    "fieldMapping": {
+      "isAnonymous": "complaint.isAnonymous",
+      "complainantName": "complaint.complainantName",
+      "complainantPhone": "complaint.complainantPhone",
+      "complainantEmail": "complaint.complainantEmail",
+      "complaintType": "complaint.complaintType",
+      "description": "complaint.description",
+      "location": "complaint.location",
+      "coordinates": "complaint.coordinates",
+      "photos": "complaint.photos",
+      "priority": "complaint.priority"
+    }
+  },
+  {
+    "code": "ENV_ORGANIC_CERT_005",
+    "name": "Certificação Orgânica Municipal",
+    "category": "Meio Ambiente",
+    "description": "Solicitar certificação de produção orgânica",
+    "icon": "Sprout",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "producerName",
+          "label": "Nome do Produtor",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "producerCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "producerPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "producerEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "propertyName",
+          "label": "Nome da Propriedade",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "propertyLocation",
+          "label": "Localização da Propriedade",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyArea",
+          "label": "Área da Propriedade (Alqueire)",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "coordinates",
+          "label": "Coordenadas GPS",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "products",
+          "label": "Produtos Cultivados",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Liste os produtos que você cultiva (ex: hortaliças, frutas, etc)"
+        },
+        {
+          "id": "productionSystem",
+          "label": "Sistema de Produção",
+          "type": "select",
+          "required": true,
+          "options": [
+            "organic",
+            "in_transition",
+            "agroecological"
+          ]
+        },
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "type": "file-multiple",
+          "accept": "application/pdf,image/*",
+          "maxFiles": 10,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade ou posse",
+        "Declaração de práticas orgânicas",
+        "Croqui da propriedade"
+      ]
+    },
+    "estimatedTime": "45 dias úteis",
+    "moduleType": "environment",
+    "moduleEntity": "OrganicCertification",
+    "fieldMapping": {
+      "producerName": "certification.producerName",
+      "producerCpf": "certification.producerCpf",
+      "producerPhone": "certification.producerPhone",
+      "producerEmail": "certification.producerEmail",
+      "propertyName": "certification.propertyName",
+      "propertyLocation": "certification.propertyLocation",
+      "propertyArea": "certification.propertyArea",
+      "coordinates": "certification.coordinates",
+      "products": "certification.products",
+      "productionSystem": "certification.productionSystem",
+      "documents": "certification.documents"
+    }
+  },
+  {
+    "code": "ENV_PROGRAM_ENROLL_012",
+    "name": "Inscrição em Programa Ambiental",
+    "category": "Meio Ambiente",
+    "description": "Inscrever-se em programas de educação e preservação ambiental",
+    "icon": "Leaf",
+    "defaultFields": {
+      "fields": []
+    },
+    "requiredDocs": {
+      "documents": []
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "INSCRICAO_PROGRAMA_AMBIENTAL",
+    "moduleEntity": "EnvironmentalProgramEnrollment",
+    "redirectTo": "/cidadao/servicos/{serviceId}/selecionar",
+    "usesDynamicForm": true,
+    "fieldMapping": {}
+  }
+]

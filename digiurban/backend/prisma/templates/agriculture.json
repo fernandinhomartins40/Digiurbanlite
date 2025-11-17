@@ -1,0 +1,513 @@
+[
+  {
+    "code": "AGR_TECH_ASSIST_001",
+    "name": "Assistência Técnica Rural",
+    "category": "Agricultura",
+    "description": "Solicitar visita técnica para orientação agropecuária",
+    "icon": "Tractor",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "producerName",
+          "label": "Nome do Produtor",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "producerCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "producerPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "propertyLocation",
+          "label": "Localização da Propriedade",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyArea",
+          "label": "Área (Alqueire)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "assistanceType",
+          "label": "Tipo de Assistência",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Lavoura",
+            "Pecuária",
+            "Solo",
+            "Irrigação",
+            "Controle de Pragas",
+            "Outro"
+          ]
+        },
+        {
+          "id": "description",
+          "label": "Descrição da Necessidade",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "cropTypes",
+          "label": "Culturas Existentes",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade/posse"
+      ]
+    },
+    "estimatedTime": "7 dias úteis",
+    "moduleType": "agriculture",
+    "moduleEntity": "TechnicalAssistance",
+    "fieldMapping": {
+      "producerName": "assistance.producerName",
+      "producerCpf": "assistance.producerCpf",
+      "producerPhone": "assistance.producerPhone",
+      "propertyLocation": "assistance.propertyLocation",
+      "propertyArea": "assistance.propertyArea",
+      "assistanceType": "assistance.assistanceType",
+      "description": "assistance.description",
+      "cropTypes": "assistance.cropTypes"
+    }
+  },
+  {
+    "code": "AGR_SEEDS_002",
+    "name": "Distribuição de Sementes",
+    "category": "Agricultura",
+    "description": "Solicitar sementes para plantio",
+    "icon": "Sprout",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "producerName",
+          "label": "Nome do Produtor",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "producerCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "producerPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "propertyLocation",
+          "label": "Localização",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyArea",
+          "label": "Área (Alqueire)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "requestType",
+          "label": "Tipo de Solicitação",
+          "type": "select",
+          "required": true,
+          "options": [
+            "seeds",
+            "both"
+          ]
+        },
+        {
+          "id": "items",
+          "label": "Sementes Solicitadas",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Liste as sementes e quantidades desejadas"
+        },
+        {
+          "id": "purpose",
+          "label": "Finalidade",
+          "type": "select",
+          "required": true,
+          "options": [
+            "commercial",
+            "subsistence"
+          ]
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade/posse"
+      ]
+    },
+    "estimatedTime": "10 dias úteis",
+    "moduleType": "agriculture",
+    "moduleEntity": "SeedDistribution",
+    "fieldMapping": {
+      "producerName": "distribution.producerName",
+      "producerCpf": "distribution.producerCpf",
+      "producerPhone": "distribution.producerPhone",
+      "propertyLocation": "distribution.propertyLocation",
+      "propertyArea": "distribution.propertyArea",
+      "requestType": "distribution.requestType",
+      "items": "distribution.items",
+      "purpose": "distribution.purpose"
+    }
+  },
+  {
+    "code": "AGR_SEEDLINGS_003",
+    "name": "Distribuição de Mudas",
+    "category": "Agricultura",
+    "description": "Solicitar mudas para plantio",
+    "icon": "Trees",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "producerName",
+          "label": "Nome do Produtor",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "producerCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "producerPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "propertyLocation",
+          "label": "Localização",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyArea",
+          "label": "Área (Alqueire)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "requestType",
+          "label": "Tipo de Solicitação",
+          "type": "select",
+          "required": true,
+          "options": [
+            "seedlings",
+            "both"
+          ]
+        },
+        {
+          "id": "items",
+          "label": "Mudas Solicitadas",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Liste as mudas e quantidades desejadas"
+        },
+        {
+          "id": "purpose",
+          "label": "Finalidade",
+          "type": "select",
+          "required": true,
+          "options": [
+            "commercial",
+            "subsistence",
+            "agroforestry"
+          ]
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade/posse"
+      ]
+    },
+    "estimatedTime": "10 dias úteis",
+    "moduleType": "agriculture",
+    "moduleEntity": "SeedDistribution",
+    "fieldMapping": {
+      "producerName": "distribution.producerName",
+      "producerCpf": "distribution.producerCpf",
+      "producerPhone": "distribution.producerPhone",
+      "propertyLocation": "distribution.propertyLocation",
+      "propertyArea": "distribution.propertyArea",
+      "requestType": "distribution.requestType",
+      "items": "distribution.items",
+      "purpose": "distribution.purpose"
+    }
+  },
+  {
+    "code": "AGR_SOIL_ANALYSIS_004",
+    "name": "Análise de Solo",
+    "category": "Agricultura",
+    "description": "Solicitar análise de solo da propriedade",
+    "icon": "FlaskConical",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "producerName",
+          "label": "Nome do Produtor",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "producerCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "producerPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "propertyLocation",
+          "label": "Localização",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyArea",
+          "label": "Área (Alqueire)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "coordinates",
+          "label": "Coordenadas GPS",
+          "type": "map",
+          "required": false
+        },
+        {
+          "id": "analysisType",
+          "label": "Tipo de Análise",
+          "type": "select",
+          "required": true,
+          "options": [
+            "basic",
+            "complete",
+            "specific"
+          ]
+        },
+        {
+          "id": "purpose",
+          "label": "Objetivo da Análise",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "cropIntended",
+          "label": "Cultura Pretendida",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "sampleCount",
+          "label": "Número de Amostras",
+          "type": "number",
+          "required": true,
+          "default": 1
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade/posse",
+        "Croqui da área"
+      ]
+    },
+    "estimatedTime": "20 dias úteis",
+    "moduleType": "agriculture",
+    "moduleEntity": "SoilAnalysis",
+    "fieldMapping": {
+      "producerName": "analysis.producerName",
+      "producerCpf": "analysis.producerCpf",
+      "producerPhone": "analysis.producerPhone",
+      "propertyLocation": "analysis.propertyLocation",
+      "propertyArea": "analysis.propertyArea",
+      "coordinates": "analysis.coordinates",
+      "analysisType": "analysis.analysisType",
+      "purpose": "analysis.purpose",
+      "cropIntended": "analysis.cropIntended",
+      "sampleCount": "analysis.sampleCount"
+    }
+  },
+  {
+    "code": "AGR_MARKET_REG_005",
+    "name": "Cadastro Feira do Produtor",
+    "category": "Agricultura",
+    "description": "Solicitar cadastro para vender na feira municipal",
+    "icon": "Store",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "producerName",
+          "label": "Nome do Produtor",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "producerCpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "producerPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "producerEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "propertyLocation",
+          "label": "Localização da Propriedade",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "propertyArea",
+          "label": "Área (Alqueire)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "products",
+          "label": "Produtos a Vender",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Liste os produtos que pretende comercializar"
+        },
+        {
+          "id": "productionType",
+          "label": "Tipo de Produção",
+          "type": "select",
+          "required": true,
+          "options": [
+            "organic",
+            "conventional",
+            "agroecological"
+          ]
+        },
+        {
+          "id": "hasOrganicCert",
+          "label": "Possui Certificação Orgânica?",
+          "type": "checkbox",
+          "required": false
+        },
+        {
+          "id": "needsStall",
+          "label": "Necessita de Barraca?",
+          "type": "checkbox",
+          "required": false
+        },
+        {
+          "id": "documents",
+          "label": "Documentos",
+          "type": "file-multiple",
+          "accept": "application/pdf,image/*",
+          "maxFiles": 5,
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de propriedade/posse",
+        "Certificação orgânica (se houver)"
+      ]
+    },
+    "estimatedTime": "15 dias úteis",
+    "moduleType": "agriculture",
+    "moduleEntity": "FarmerMarketRegistration",
+    "fieldMapping": {
+      "producerName": "registration.producerName",
+      "producerCpf": "registration.producerCpf",
+      "producerPhone": "registration.producerPhone",
+      "producerEmail": "registration.producerEmail",
+      "propertyLocation": "registration.propertyLocation",
+      "propertyArea": "registration.propertyArea",
+      "products": "registration.products",
+      "productionType": "registration.productionType",
+      "hasOrganicCert": "registration.hasOrganicCert",
+      "needsStall": "registration.needsStall",
+      "documents": "registration.documents"
+    }
+  },
+  {
+    "code": "AGR_PROGRAM_ENROLL_006",
+    "name": "Inscrição em Programa Rural",
+    "category": "Agricultura",
+    "description": "Inscrever-se em programas de desenvolvimento rural",
+    "icon": "Users",
+    "defaultFields": {
+      "fields": []
+    },
+    "requiredDocs": {
+      "documents": []
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "INSCRICAO_PROGRAMA_RURAL",
+    "moduleEntity": "RuralProgramEnrollment",
+    "redirectTo": "/cidadao/servicos/{serviceId}/selecionar",
+    "usesDynamicForm": true,
+    "fieldMapping": {}
+  },
+  {
+    "code": "AGR_COURSE_ENROLL_007",
+    "name": "Inscrição em Curso Rural",
+    "category": "Agricultura",
+    "description": "Inscrever-se em cursos e capacitações rurais",
+    "icon": "GraduationCap",
+    "defaultFields": {
+      "fields": []
+    },
+    "requiredDocs": {
+      "documents": []
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "INSCRICAO_CURSO_RURAL",
+    "moduleEntity": "RuralTrainingEnrollment",
+    "redirectTo": "/cidadao/servicos/{serviceId}/selecionar",
+    "usesDynamicForm": true,
+    "fieldMapping": {}
+  }
+]

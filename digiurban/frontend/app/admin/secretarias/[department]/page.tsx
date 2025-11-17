@@ -1,0 +1,405 @@
+'use client';
+
+import { useParams, useRouter } from 'next/navigation';
+import { useDepartmentStats } from '@/hooks/useDepartmentStats';
+import { getDepartmentConfig } from '@/lib/department-config';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Plus,
+  FileText,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  Calendar,
+  MapPin,
+  FileCheck,
+} from 'lucide-react';
+
+/**
+ * 🎯 PÁGINA PRINCIPAL DINÂMICA DE DEPARTAMENTO
+ *
+ * Esta página única substitui 13 arquivos hardcoded de secretarias.
+ * Funciona para TODOS os departamentos automaticamente.
+ *
+ * Features:
+ * - Stats agregadas do departamento (vêm do backend)
+ * - Cards dos módulos COM_DADOS (gerados dinamicamente)
+ * - Cards dos serviços SEM_DADOS (certidões/documentos)
+ * - Tudo atualiza em real-time via WebSocket
+ *
+ * Admin cria novo serviço → card aparece automaticamente ✨
+ */
+export default function DepartmentPage() {
+  const params = useParams();
+  const router = useRouter();
+  const department = params.department as string;
+
+  // ✅ Busca config visual do departamento (nome, ícone, cores)
+  const config = getDepartmentConfig(department);
+
+  // ✅ Busca stats do backend (protocolos + serviços com stats)
+  const { stats, loading, error } = useDepartmentStats(department);
+
+  if (!config) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-destructive">Departamento não encontrado</CardTitle>
+            <CardDescription>
+              O departamento "{department}" não está configurado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => router.push('/admin')}>Voltar</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const Icon = config.icon;
+
+  // ✅ Filtra módulos (serviços COM_DADOS com moduleType)
+  const modules = stats?.services.filter(
+    (s) => s.serviceType === 'COM_DADOS' && s.moduleType
+  ) || [];
+
+  // ✅ Filtra serviços SEM_DADOS (certidões, declarações)
+  const documents = stats?.services.filter(
+    (s) => s.serviceType === 'SEM_DADOS'
+  ) || [];
+
+  // ✅ Filtra serviços COM_DADOS que NÃO são módulos (formulários simples)
+  const simpleServices = stats?.services.filter(
+    (s) => s.serviceType === 'COM_DADOS' && !s.moduleType
+  ) || [];
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* 📌 Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className={`text-3xl font-bold flex items-center ${config.color}`}>
+            <Icon className="h-8 w-8 mr-3" />
+            {config.name}
+          </h1>
+          <p className="text-muted-foreground mt-2">{config.description}</p>
+        </div>
+        <Badge variant="outline" className={`${config.color} ${config.borderColor}`}>
+          {modules.length} módulos
+        </Badge>
+      </div>
+
+      {/* 📊 Stats Gerais do Departamento */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Protocolos</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <div className="text-2xl font-bold">{stats?.protocols.total || 0}</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+            <Clock className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-orange-600">
+                  {stats?.protocols.pending || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Aguardando análise</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Em Andamento</CardTitle>
+            <TrendingUp className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-blue-600">
+                  {stats?.protocols.inProgress || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Em processamento</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-green-600">
+                  {stats?.protocols.approved || 0}
+                </div>
+                <p className="text-xs text-muted-foreground">Concluídos</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 🎴 CARDS DOS MÓDULOS - 100% DINÂMICOS */}
+      {modules.length > 0 && (
+        <div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold">Módulos de Gestão</h2>
+            <p className="text-sm text-muted-foreground">
+              Gestão de dados estruturados e cadastros do departamento
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading ? (
+              <>
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <Skeleton className="h-6 w-48" />
+                      <Skeleton className="h-4 w-full mt-2" />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className="h-20 w-full" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            ) : (
+              modules.map((service) => (
+                <Card
+                  key={service.id}
+                  className={`cursor-pointer hover:shadow-lg transition-shadow ${config.bgColor} ${config.borderColor}`}
+                  onClick={() => router.push(`/admin/secretarias/${department}/${service.slug}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className={`h-5 w-5 ${config.color}`} />
+                      {service.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {service.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* Stats do módulo */}
+                      <div className="text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Total:</span>
+                          <span className="font-medium">{service.stats.total}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Pendentes:</span>
+                          <span className="font-medium text-orange-600">
+                            {service.stats.pending}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Aprovados:</span>
+                          <span className="font-medium text-green-600">
+                            {service.stats.approved}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Features condicionais */}
+                      <div className="flex gap-2 flex-wrap">
+                        {service.hasScheduling && (
+                          <Badge variant="outline" className="text-xs">
+                            <Calendar className="h-3 w-3 mr-1" />
+                            Agenda
+                          </Badge>
+                        )}
+                        {service.hasLocation && (
+                          <Badge variant="outline" className="text-xs">
+                            <MapPin className="h-3 w-3 mr-1" />
+                            Mapa
+                          </Badge>
+                        )}
+                        {service.requiresDocuments && (
+                          <Badge variant="outline" className="text-xs">
+                            <FileCheck className="h-3 w-3 mr-1" />
+                            Documentos
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 📄 SERVIÇOS SEM_DADOS (Certidões, Declarações) */}
+      {documents.length > 0 && (
+        <div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold">Certidões e Documentos</h2>
+            <p className="text-sm text-muted-foreground">
+              Serviços que geram protocolos para emissão de documentos oficiais
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {documents.map((service) => (
+              <Card
+                key={service.id}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    {service.name}
+                  </CardTitle>
+                  <CardDescription className="line-clamp-2">
+                    {service.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button size="sm" className="w-full">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Solicitar
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 📝 SERVIÇOS COM_DADOS SIMPLES (Sem módulo) */}
+      {simpleServices.length > 0 && (
+        <div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold">Outros Serviços</h2>
+            <p className="text-sm text-muted-foreground">
+              Serviços com formulários de coleta de dados
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {simpleServices.map((service) => (
+              <Card
+                key={service.id}
+                className="hover:shadow-lg transition-shadow"
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg">{service.name}</CardTitle>
+                  <CardDescription className="line-clamp-2">
+                    {service.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => router.push(`/admin/servicos/${service.id}/solicitar`)}
+                  >
+                    <Plus className="h-3 w-3 mr-1" />
+                    Criar Protocolo
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 🚀 Ações Rápidas */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Ações Rápidas</CardTitle>
+          <CardDescription>
+            Acesso direto às funcionalidades mais utilizadas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Button
+              className="h-20 flex flex-col"
+              variant="outline"
+              onClick={() => router.push(`/cidadao/servicos?asAdmin=true&departamento=${department}`)}
+            >
+              <Plus className="h-6 w-6 mb-2" />
+              <span>Novo Protocolo</span>
+            </Button>
+
+            <Button
+              className="h-20 flex flex-col"
+              variant="outline"
+              onClick={() => router.push(`/admin/protocolos?departamento=${department}&status=pending`)}
+            >
+              <FileText className="h-6 w-6 mb-2" />
+              <span>Protocolos Pendentes</span>
+              {stats && stats.protocols.pending > 0 && (
+                <Badge className="mt-1" variant="destructive">
+                  {stats.protocols.pending}
+                </Badge>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Estado vazio */}
+      {!loading && modules.length === 0 && documents.length === 0 && simpleServices.length === 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+            <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhum serviço cadastrado</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Este departamento ainda não possui serviços configurados.
+            </p>
+            <Button onClick={() => router.push('/admin/configuracoes/servicos')}>
+              Configurar Serviços
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Estado de erro */}
+      {error && (
+        <Card className="border-destructive">
+          <CardContent className="p-6">
+            <p className="text-destructive">Erro ao carregar dados: {error}</p>
+            <Button className="mt-4" variant="outline" onClick={() => window.location.reload()}>
+              Tentar Novamente
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

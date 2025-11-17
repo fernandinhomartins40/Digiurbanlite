@@ -1,0 +1,795 @@
+/**
+ * SEED DE SERVIÇOS - SECRETARIA DE CULTURA
+ * Total: 9 serviços
+ */
+
+import { ServiceDefinition } from './types';
+
+export const cultureServices: ServiceDefinition[] = [
+  {
+    name: 'Inscrição em Oficinas Culturais',
+    description: 'Inscrição em oficinas de arte, música, dança',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'INSCRICAO_OFICINA',
+    requiresDocuments: true,
+    requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
+    estimatedDays: 5,
+    priority: 3,
+    category: 'Oficinas',
+    icon: 'Palette',
+    color: '#7c3aed',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'oficinaInteresse',
+          label: 'Oficina de Interesse',
+          type: 'select',
+          options: ['Teatro', 'Dança', 'Música', 'Artes Visuais', 'Literatura', 'Fotografia', 'Outro'],
+          required: true
+        },
+        {
+          id: 'nivelExperiencia',
+          label: 'Nível de Experiência',
+          type: 'select',
+          options: ['Iniciante', 'Intermediário', 'Avançado'],
+          required: true
+        },
+        {
+          id: 'turnoPreferencial',
+          label: 'Turno Preferencial',
+          type: 'select',
+          options: ['Manhã', 'Tarde', 'Noite', 'Qualquer'],
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Cadastro de Artistas Locais',
+    description: 'Cadastro de artistas para eventos culturais',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_ARTISTA',
+    requiresDocuments: true,
+    requiredDocuments: ['Portfólio', 'RG', 'CPF'],
+    estimatedDays: 10,
+    priority: 4,
+    category: 'Cadastro',
+    icon: 'Mic',
+    color: '#6d28d9',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'areaAtuacao',
+          label: 'Área de Atuação',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'experiencia',
+          label: 'Experiência Artística',
+          type: 'textarea',
+          maxLength: 1000,
+          required: true
+        },
+        {
+          id: 'disponibilidade',
+          label: 'Disponibilidade para Eventos',
+          type: 'text',
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+    name: 'Agenda Cultural',
+    description: 'Consulta de eventos culturais',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: false,
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Calendar',
+    color: '#94a3b8',
+  },
+  {
+    name: 'Certidão de Participação em Evento',
+    description: 'Emissão de certidão de participação',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Nome do Evento'],
+    estimatedDays: 5,
+    priority: 2,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Declaração de Apoio Cultural',
+    description: 'Emissão de declaração de apoio a projetos',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Projeto Cultural'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Declarações',
+    icon: 'FileCheck',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Atestado de Capacitação Cultural',
+    description: 'Emissão de atestado de conclusão de oficina',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Inscrição'],
+    estimatedDays: 5,
+    priority: 2,
+    category: 'Atestados',
+    icon: 'CheckCircle',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Laudo de Patrimônio Cultural',
+    description: 'Emissão de laudo técnico de bens culturais',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Documentação do Bem'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Autorização para Evento Cultural',
+    description: 'Autorização para realização de eventos',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Projeto do Evento', 'Autorizações'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'Ticket',
+    color: '#7c3aed',
+  },
+  {
+    name: 'Inscrição em Editais Culturais',
+    description: 'Inscrição em editais de fomento',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'INSCRICAO_EDITAL',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto', 'Orçamento', 'Documentos Pessoais'],
+    estimatedDays: 30,
+    priority: 5,
+    category: 'Editais',
+    icon: 'FilePen',
+    color: '#5b21b6',
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      fields: [
+        {
+          id: 'pontoReferencia',
+          label: 'Ponto de Referência',
+          type: 'text',
+          maxLength: 200,
+          required: false
+        },
+        {
+          id: 'nomeProjeto',
+          label: 'Nome do Projeto',
+          type: 'text',
+          minLength: 3,
+          maxLength: 200,
+          required: true
+        },
+        {
+          id: 'areaCultural',
+          label: 'Área Cultural',
+          type: 'select',
+          options: ['Artes Cênicas', 'Música', 'Artes Visuais', 'Literatura', 'Patrimônio', 'Audiovisual', 'Outro'],
+          required: true
+        },
+        {
+          id: 'descricaoProjeto',
+          label: 'Descrição do Projeto',
+          type: 'textarea',
+          minLength: 100,
+          maxLength: 2000,
+          required: true
+        },
+        {
+          id: 'valorSolicitado',
+          label: 'Valor Solicitado',
+          type: 'number',
+          minimum: 0,
+          required: true
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações',
+          type: 'textarea',
+          maxLength: 500,
+          required: false
+        }
+      ]
+    }
+  },
+  {
+      name: 'Atendimentos - Cultura',
+      description: 'Registro geral de atendimentos na área cultural',
+      departmentCode: 'CULTURA',
+      serviceType: 'COM_DADOS',
+      moduleType: 'ATENDIMENTOS_CULTURA',
+      requiresDocuments: false,
+      estimatedDays: 1,
+      priority: 3,
+      category: 'Atendimento',
+      icon: 'Palette',
+      color: '#a855f7',
+      formSchema: {
+        type: 'object',
+          citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
+        properties: {
+          // ========== BLOCO 1: IDENTIFICAÇÃO ==========
+
+          // ========== BLOCO 2: CONTATO ==========
+
+          // ========== BLOCO 3: ENDEREÇO ==========
+          pontoReferencia: { type: 'string', title: 'Ponto de Referência (opcional)', maxLength: 200 },
+
+          // ========== BLOCO 4: COMPLEMENTARES ==========
+
+          // ========== BLOCO 5: DADOS DO ATENDIMENTO ==========
+          tipoAtendimento: {
+            type: 'string',
+            title: 'Tipo de Atendimento',
+            enum: ['Inscrição em Oficina', 'Reserva de Espaço', 'Informações sobre Evento', 'Projeto Cultural', 'Cadastro de Grupo', 'Reclamação', 'Outro']
+          },
+          assunto: { type: 'string', title: 'Assunto', minLength: 5, maxLength: 200 },
+          descricao: { type: 'string', title: 'Descrição do Atendimento', minLength: 10, maxLength: 2000 },
+          dataAtendimento: { type: 'string', format: 'date', title: 'Data do Atendimento' },
+          servidorResponsavel: { type: 'string', title: 'Servidor Responsável', minLength: 3, maxLength: 200 },
+          areaCultural: { type: 'string', title: 'Área Cultural', enum: ['Artes Visuais', 'Música', 'Teatro', 'Dança', 'Literatura', 'Artesanato', 'Cultura Popular', 'Audiovisual', 'Outra'] },
+          resolvido: { type: 'boolean', title: 'Resolvido', default: false },
+          observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
+        },
+        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoAtendimento', 'assunto', 'descricao', 'dataAtendimento', 'servidorResponsavel']
+      }
+    },
+  {
+      name: 'Reserva de Espaço Cultural',
+      description: 'Agendamento de teatros, centros culturais e auditórios',
+      departmentCode: 'CULTURA',
+      serviceType: 'COM_DADOS',
+      moduleType: 'RESERVA_ESPACO_CULTURAL',
+      requiresDocuments: true,
+      requiredDocuments: ['RG', 'CPF', 'Projeto do Evento'],
+      estimatedDays: 10,
+      priority: 3,
+      category: 'Reserva',
+      icon: 'Building',
+      color: '#8b5cf6',
+      formSchema: {
+        type: 'object',
+        citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
+        properties: {
+          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+          espacoDesejado: { type: 'string', title: 'Espaço Desejado', minLength: 3, maxLength: 200 },
+          tipoEvento: { type: 'string', title: 'Tipo de Evento', enum: ['Teatro', 'Show Musical', 'Dança', 'Exposição', 'Palestra', 'Workshop', 'Reunião', 'Outro'] },
+          nomeEvento: { type: 'string', title: 'Nome do Evento', minLength: 3, maxLength: 200 },
+          descricaoEvento: { type: 'string', title: 'Descrição do Evento', minLength: 20, maxLength: 1000 },
+          dataDesejada: { type: 'string', format: 'date', title: 'Data Desejada' },
+          horarioInicio: { type: 'string', title: 'Horário de Início', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
+          horarioTermino: { type: 'string', title: 'Horário de Término', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
+          publicoEstimado: { type: 'integer', title: 'Público Estimado', minimum: 1 },
+          cobrancaIngresso: { type: 'boolean', title: 'Haverá Cobrança de Ingresso?', default: false },
+          valorIngresso: { type: 'number', title: 'Valor do Ingresso (se houver)', minimum: 0 },
+          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        },
+        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'espacoDesejado', 'tipoEvento', 'nomeEvento', 'descricaoEvento', 'dataDesejada', 'horarioInicio', 'publicoEstimado']
+      }
+    },
+  {
+      name: 'Inscrição em Oficina Cultural',
+      description: 'Inscrição em oficinas de arte, música, teatro, dança',
+      departmentCode: 'CULTURA',
+      serviceType: 'COM_DADOS',
+      moduleType: 'INSCRICAO_OFICINA_CULTURAL',
+      requiresDocuments: true,
+      requiredDocuments: ['RG', 'CPF', 'Comprovante de Endereço'],
+      estimatedDays: 5,
+      priority: 3,
+      category: 'Oficinas',
+      icon: 'Music',
+      color: '#d946ef',
+      formSchema: {
+        type: 'object',
+        citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
+        properties: {
+          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+          nomeOficina: { type: 'string', title: 'Nome da Oficina', minLength: 3, maxLength: 200 },
+          tipoOficina: { type: 'string', title: 'Tipo de Oficina', enum: ['Música', 'Teatro', 'Dança', 'Artes Visuais', 'Artesanato', 'Literatura', 'Fotografia', 'Audiovisual', 'Outra'] },
+          nivelExperiencia: { type: 'string', title: 'Nível de Experiência', enum: ['Nenhum', 'Iniciante', 'Intermediário', 'Avançado'] },
+          turnoPreferido: { type: 'string', title: 'Turno Preferido', enum: ['Manhã', 'Tarde', 'Noite', 'Qualquer'] },
+          motivoInscricao: { type: 'string', title: 'Motivo da Inscrição', minLength: 20, maxLength: 500 },
+          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        },
+        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeOficina', 'tipoOficina', 'motivoInscricao']
+      }
+    },
+  {
+      name: 'Cadastro de Grupo Artístico',
+      description: 'Cadastro de grupos culturais e artísticos',
+      departmentCode: 'CULTURA',
+      serviceType: 'COM_DADOS',
+      moduleType: 'CADASTRO_GRUPO_ARTISTICO',
+      requiresDocuments: true,
+      requiredDocuments: ['Documentos dos Integrantes', 'Portfólio', 'Estatuto (se houver)'],
+      estimatedDays: 7,
+      priority: 3,
+      category: 'Cadastro',
+      icon: 'Users',
+      color: '#a855f7',
+      formSchema: {
+        type: 'object',
+        citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
+        properties: {
+          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+          nomeGrupo: { type: 'string', title: 'Nome do Grupo Artístico', minLength: 3, maxLength: 200 },
+          tipoManifestacao: { type: 'string', title: 'Tipo de Manifestação', enum: ['Teatro', 'Música', 'Dança', 'Artes Visuais', 'Literatura', 'Cultura Popular', 'Outra'] },
+          anoFundacao: { type: 'integer', title: 'Ano de Fundação', minimum: 1900, maximum: 2100 },
+          numeroIntegrantes: { type: 'integer', title: 'Número de Integrantes', minimum: 1 },
+          descricaoGrupo: { type: 'string', title: 'Descrição do Grupo', minLength: 50, maxLength: 1000 },
+          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        },
+        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeGrupo', 'tipoManifestacao', 'numeroIntegrantes', 'descricaoGrupo']
+      }
+    },
+  {
+      name: 'Projeto Cultural',
+      description: 'Submissão de projetos culturais',
+      departmentCode: 'CULTURA',
+      serviceType: 'COM_DADOS',
+      moduleType: 'PROJETO_CULTURAL',
+      requiresDocuments: true,
+      requiredDocuments: ['Projeto Detalhado', 'Orçamento', 'Currículo do Proponente'],
+      estimatedDays: 30,
+      priority: 4,
+      category: 'Projetos',
+      icon: 'FileText',
+      color: '#9333ea',
+      formSchema: {
+        type: 'object',
+        citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
+        properties: {
+          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+          nomeProjeto: { type: 'string', title: 'Nome do Projeto', minLength: 3, maxLength: 200 },
+          areaCultural: { type: 'string', title: 'Área Cultural', enum: ['Artes Visuais', 'Música', 'Teatro', 'Dança', 'Literatura', 'Audiovisual', 'Cultura Popular', 'Patrimônio', 'Outra'] },
+          resumoProjeto: { type: 'string', title: 'Resumo do Projeto', minLength: 50, maxLength: 1000 },
+          objetivos: { type: 'string', title: 'Objetivos', minLength: 50, maxLength: 1000 },
+          publicoAlvo: { type: 'string', title: 'Público-Alvo', maxLength: 500 },
+          valorTotal: { type: 'number', title: 'Valor Total (R$)', minimum: 0 },
+          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        },
+        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeProjeto', 'areaCultural', 'resumoProjeto', 'objetivos', 'publicoAlvo']
+      }
+    },
+  {
+      name: 'Submissão de Projeto Cultural (Lei de Incentivo)',
+      description: 'Submissão de projetos para Lei de Incentivo à Cultura',
+      departmentCode: 'CULTURA',
+      serviceType: 'COM_DADOS',
+      moduleType: 'SUBMISSAO_PROJETO_CULTURAL',
+      requiresDocuments: true,
+      requiredDocuments: ['Projeto Detalhado', 'Orçamento', 'Documentação Legal', 'Plano de Divulgação'],
+      estimatedDays: 45,
+      priority: 5,
+      category: 'Incentivo',
+      icon: 'DollarSign',
+      color: '#7c3aed',
+      formSchema: {
+        type: 'object',
+        citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
+        properties: {
+          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+          nomeProjeto: { type: 'string', title: 'Nome do Projeto', minLength: 3, maxLength: 200 },
+          areaCultural: { type: 'string', title: 'Área Cultural', enum: ['Artes Visuais', 'Música', 'Teatro', 'Dança', 'Literatura', 'Audiovisual', 'Cultura Popular', 'Patrimônio', 'Outra'] },
+          resumoProjeto: { type: 'string', title: 'Resumo do Projeto', minLength: 50, maxLength: 1000 },
+          objetivos: { type: 'string', title: 'Objetivos', minLength: 50, maxLength: 1000 },
+          justificativa: { type: 'string', title: 'Justificativa', minLength: 50, maxLength: 1000 },
+          publicoAlvo: { type: 'string', title: 'Público-Alvo', maxLength: 500 },
+          valorTotal: { type: 'number', title: 'Valor Total Solicitado (R$)', minimum: 0 },
+          contrapartida: { type: 'string', title: 'Contrapartida Social', maxLength: 500 },
+          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        },
+        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeProjeto', 'areaCultural', 'resumoProjeto', 'objetivos', 'justificativa', 'valorTotal']
+      }
+    },
+  {
+      name: 'Cadastro de Evento Cultural',
+      description: 'Registro de eventos culturais no município',
+      departmentCode: 'CULTURA',
+      serviceType: 'COM_DADOS',
+      moduleType: 'CADASTRO_EVENTO_CULTURAL',
+      requiresDocuments: true,
+      requiredDocuments: ['Projeto do Evento', 'Autorizações Necessárias'],
+      estimatedDays: 15,
+      priority: 3,
+      category: 'Eventos',
+      icon: 'Calendar',
+      color: '#c026d3',
+      formSchema: {
+        type: 'object',
+        citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
+        properties: {
+          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+          nomeEvento: { type: 'string', title: 'Nome do Evento', minLength: 3, maxLength: 200 },
+          tipoEvento: { type: 'string', title: 'Tipo de Evento', enum: ['Show', 'Teatro', 'Exposição', 'Festival', 'Oficina', 'Palestra', 'Outro'] },
+          dataEvento: { type: 'string', format: 'date', title: 'Data do Evento' },
+          localEvento: { type: 'string', title: 'Local do Evento', minLength: 3, maxLength: 200 },
+          publicoEstimado: { type: 'integer', title: 'Público Estimado', minimum: 1 },
+          descricaoEvento: { type: 'string', title: 'Descrição do Evento', minLength: 50, maxLength: 1000 },
+          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
+        },
+        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeEvento', 'tipoEvento', 'dataEvento', 'localEvento', 'descricaoEvento']
+      }
+    },
+  {
+      name: 'Registro de Manifestação Cultural',
+      description: 'Registro de patrimônio cultural imaterial',
+      departmentCode: 'CULTURA',
+      serviceType: 'COM_DADOS',
+      moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL',
+      requiresDocuments: true,
+      requiredDocuments: ['Documentação Histórica', 'Fotos', 'Depoimentos'],
+      estimatedDays: 60,
+      priority: 4,
+      category: 'Patrimônio',
+      icon: 'Landmark',
+      color: '#86198f',
+      formSchema: {
+        type: 'object',
+        citizenFields: [
+            'citizen_name',
+            'citizen_cpf',
+            'citizen_rg',
+            'citizen_birthdate',
+            'citizen_email',
+            'citizen_phone',
+            'citizen_phonesecondary',
+            'citizen_zipcode',
+            'citizen_address',
+            'citizen_addressnumber',
+            'citizen_addresscomplement',
+            'citizen_neighborhood',
+            'citizen_mothername',
+            'citizen_maritalstatus',
+            'citizen_occupation',
+            'citizen_familyincome'
+          ],
+        properties: {
+          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
+          nomeManifestacao: { type: 'string', title: 'Nome da Manifestação Cultural', minLength: 3, maxLength: 200 },
+          tipoManifestacao: { type: 'string', title: 'Tipo de Manifestação', enum: ['Festa Popular', 'Dança Tradicional', 'Música Folclórica', 'Artesanato', 'Culinária', 'Celebração Religiosa', 'Outra'] },
+          descricaoHistorica: { type: 'string', title: 'Descrição Histórica', minLength: 100, maxLength: 2000 },
+          origemManifestacao: { type: 'string', title: 'Origem da Manifestação', maxLength: 500 },
+          periodicidade: { type: 'string', title: 'Periodicidade', enum: ['Anual', 'Semestral', 'Mensal', 'Esporádica', 'Contínua'] },
+          observacoes: { type: 'string', title: 'Observações', maxLength: 1000 }
+        },
+        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeManifestacao', 'tipoManifestacao', 'descricaoHistorica', 'periodicidade']
+      }
+    },
+  {
+      name: 'Agenda de Eventos Culturais',
+      description: 'Consulta ao calendário de eventos culturais da cidade',
+      departmentCode: 'CULTURA',
+      serviceType: 'SEM_DADOS',
+      moduleType: null,
+      requiresDocuments: false,
+      estimatedDays: null,
+      priority: 1,
+      category: 'Informativo',
+      icon: 'Calendar',
+      color: '#94a3b8',
+    },
+  {
+      name: 'Certidão de Artista Local',
+      description: 'Emissão de certidão comprovando registro como artista local',
+      departmentCode: 'CULTURA',
+      serviceType: 'SEM_DADOS',
+      moduleType: null,
+      requiresDocuments: true,
+      requiredDocuments: ['CPF', 'RG', 'Portfólio Artístico'],
+      estimatedDays: 5,
+      priority: 3,
+      category: 'Certidões',
+      icon: 'FileText',
+      color: '#f59e0b'
+    },
+  {
+      name: 'Declaração de Participação em Evento Cultural',
+      description: 'Declaração comprovando participação em eventos culturais municipais',
+      departmentCode: 'CULTURA',
+      serviceType: 'SEM_DADOS',
+      moduleType: null,
+      requiresDocuments: true,
+      requiredDocuments: ['CPF', 'Comprovante de Participação'],
+      estimatedDays: 3,
+      priority: 3,
+      category: 'Certidões',
+      icon: 'FileCheck',
+      color: '#a855f7'
+    },
+  {
+      name: 'Guia de Utilização de Espaço Cultural',
+      description: 'Autorização para uso de espaços culturais municipais',
+      departmentCode: 'CULTURA',
+      serviceType: 'SEM_DADOS',
+      moduleType: null,
+      requiresDocuments: true,
+      requiredDocuments: ['CPF', 'Projeto Cultural', 'Cronograma'],
+      estimatedDays: 7,
+      priority: 4,
+      category: 'Documentos',
+      icon: 'Building',
+      color: '#10b981'
+    },
+  {
+      name: 'Atestado de Grupo Artístico',
+      description: 'Atestado de registro de grupo artístico municipal',
+      departmentCode: 'CULTURA',
+      serviceType: 'SEM_DADOS',
+      moduleType: null,
+      requiresDocuments: true,
+      requiredDocuments: ['CPF', 'RG', 'Estatuto do Grupo'],
+      estimatedDays: 5,
+      priority: 3,
+      category: 'Certidões',
+      icon: 'Users',
+      color: '#ec4899'
+    },
+  {
+      name: 'Consulta de Agenda Cultural',
+      description: 'Consulta oficial da programação cultural do município',
+      departmentCode: 'CULTURA',
+      serviceType: 'SEM_DADOS',
+      moduleType: null,
+      requiresDocuments: true,
+      requiredDocuments: ['CPF'],
+      estimatedDays: 1,
+      priority: 2,
+      category: 'Consultas',
+      icon: 'Search',
+      color: '#3b82f6'
+    },
+  {
+      name: 'Segunda Via de Cadastro Cultural',
+      description: 'Emissão de segunda via de cadastros culturais',
+      departmentCode: 'CULTURA',
+      serviceType: 'SEM_DADOS',
+      moduleType: null,
+      requiresDocuments: true,
+      requiredDocuments: ['CPF', 'RG'],
+      estimatedDays: 3,
+      priority: 2,
+      category: 'Documentos',
+      icon: 'Copy',
+      color: '#6b7280'
+    }
+];

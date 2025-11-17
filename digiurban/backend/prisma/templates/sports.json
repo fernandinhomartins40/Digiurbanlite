@@ -1,0 +1,1248 @@
+[
+  {
+    "code": "ESP_ESCOLINHA_001",
+    "name": "Inscrição em Escolinha Esportiva",
+    "category": "Esporte",
+    "description": "Inscrição de crianças e adolescentes em escolinhas esportivas municipais (futebol, vôlei, basquete, etc.)",
+    "icon": "Trophy",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "schoolId",
+          "label": "Escolinha Esportiva",
+          "type": "select",
+          "required": true,
+          "dynamicOptions": "/api/specialized/sports/sports-schools?isActive=true"
+        },
+        {
+          "id": "studentName",
+          "label": "Nome do Aluno",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "birthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "cpf",
+          "label": "CPF",
+          "type": "text",
+          "required": false,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "address",
+          "label": "Endereço",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "hasExperience",
+          "label": "Tem Experiência na Modalidade?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "parentName",
+          "label": "Nome do Responsável",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "parentCpf",
+          "label": "CPF do Responsável",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "parentPhone",
+          "label": "Telefone do Responsável",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "emergencyContact",
+          "label": "Contato de Emergência",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "medicalConditions",
+          "label": "Condições Médicas ou Restrições",
+          "type": "textarea",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Certidão de Nascimento ou RG",
+        "CPF",
+        "Comprovante de residência",
+        "Atestado médico",
+        "Autorização dos pais",
+        "Foto 3x4"
+      ]
+    },
+    "estimatedTime": "3 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "SportsSchool",
+    "fieldMapping": {
+      "schoolId": "enrollment.schoolId",
+      "studentName": "student.name",
+      "birthDate": "student.birthDate",
+      "parentName": "parent.name"
+    }
+  },
+  {
+    "code": "ESP_ATLETA_002",
+    "name": "Cadastro de Atleta",
+    "category": "Esporte",
+    "description": "Cadastramento de atletas para representação do município em competições oficiais",
+    "icon": "Medal",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "athleteName",
+          "label": "Nome do Atleta",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "birthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "cpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "rg",
+          "label": "RG",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "address",
+          "label": "Endereço Completo",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "sport",
+          "label": "Modalidade Esportiva",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Futebol",
+            "Vôlei",
+            "Basquete",
+            "Handebol",
+            "Atletismo",
+            "Natação",
+            "Judô",
+            "Karatê",
+            "Tênis",
+            "Xadrez",
+            "Outro"
+          ]
+        },
+        {
+          "id": "category",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Infantil",
+            "Juvenil",
+            "Adulto",
+            "Veterano"
+          ]
+        },
+        {
+          "id": "hasClubMembership",
+          "label": "É Federado?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "federationNumber",
+          "label": "Número da Federação",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "medicalCertificateValid",
+          "label": "Possui Atestado Médico Válido?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "emergencyContactName",
+          "label": "Nome do Contato de Emergência",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "emergencyContactPhone",
+          "label": "Telefone de Emergência",
+          "type": "phone",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Atestado médico (válido)",
+        "Foto 3x4",
+        "Carteira de federação (se federado)"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "Athlete",
+    "fieldMapping": {
+      "athleteName": "athlete.name",
+      "birthDate": "athlete.birthDate",
+      "cpf": "athlete.cpf",
+      "sport": "athlete.sport"
+    }
+  },
+  {
+    "code": "ESP_COMPETICAO_003",
+    "name": "Inscrição em Competição Esportiva",
+    "category": "Esporte",
+    "description": "Inscrição de equipes ou atletas em competições e torneios organizados pela prefeitura",
+    "icon": "Users",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "competitionId",
+          "label": "Competição",
+          "type": "select",
+          "required": true,
+          "dynamicOptions": "/api/specialized/sports/competitions?status=inscricoes_abertas"
+        },
+        {
+          "id": "participationType",
+          "label": "Tipo de Inscrição",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Individual",
+            "Equipe"
+          ]
+        },
+        {
+          "id": "teamName",
+          "label": "Nome da Equipe",
+          "type": "text",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "participationType",
+            "value": "Equipe"
+          }
+        },
+        {
+          "id": "athleteName",
+          "label": "Nome do Atleta",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "category",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Infantil",
+            "Juvenil",
+            "Adulto",
+            "Veterano"
+          ]
+        },
+        {
+          "id": "gender",
+          "label": "Gênero",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Masculino",
+            "Feminino",
+            "Misto"
+          ]
+        },
+        {
+          "id": "teamMembers",
+          "label": "Lista de Integrantes da Equipe",
+          "type": "textarea",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "participationType",
+            "value": "Equipe"
+          }
+        },
+        {
+          "id": "coachName",
+          "label": "Nome do Técnico",
+          "type": "text",
+          "required": false
+        },
+        {
+          "id": "coachPhone",
+          "label": "Telefone do Técnico",
+          "type": "phone",
+          "required": false
+        },
+        {
+          "id": "responsibleName",
+          "label": "Nome do Responsável pela Inscrição",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "responsiblePhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "responsibleEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Ficha de inscrição",
+        "Documentos dos atletas",
+        "Atestados médicos",
+        "Autorização dos pais (menores)",
+        "Comprovante de pagamento (se houver taxa)"
+      ]
+    },
+    "estimatedTime": "2 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "Competition",
+    "fieldMapping": {
+      "competitionId": "registration.competitionId",
+      "teamName": "team.name",
+      "athleteName": "athlete.name"
+    }
+  },
+  {
+    "code": "ESP_RESERVA_004",
+    "name": "Reserva de Espaço Esportivo",
+    "category": "Esporte",
+    "description": "Reserva de quadras, campos e ginásios municipais para treinos e eventos esportivos",
+    "icon": "MapPin",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "infrastructureId",
+          "label": "Espaço Esportivo",
+          "type": "select",
+          "required": true,
+          "dynamicOptions": "/api/specialized/sports/infrastructure?status=ativo&isPublic=true"
+        },
+        {
+          "id": "eventDate",
+          "label": "Data Desejada",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "startTime",
+          "label": "Horário de Início",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "endTime",
+          "label": "Horário de Término",
+          "type": "time",
+          "required": true
+        },
+        {
+          "id": "purpose",
+          "label": "Finalidade da Reserva",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Treino de Equipe",
+            "Jogo/Partida",
+            "Evento Esportivo",
+            "Aula",
+            "Torneio",
+            "Lazer"
+          ]
+        },
+        {
+          "id": "sport",
+          "label": "Modalidade",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "expectedParticipants",
+          "label": "Número Estimado de Participantes",
+          "type": "number",
+          "required": true,
+          "min": 1
+        },
+        {
+          "id": "isRecurring",
+          "label": "Reserva Recorrente?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim (semanal)",
+            "Não (data única)"
+          ]
+        },
+        {
+          "id": "requestorName",
+          "label": "Nome do Solicitante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "requestorPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "requestorEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        },
+        {
+          "id": "additionalInfo",
+          "label": "Informações Adicionais",
+          "type": "textarea",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF do solicitante",
+        "Comprovante de representação (se for instituição)",
+        "Ofício da entidade (se aplicável)"
+      ]
+    },
+    "estimatedTime": "3 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "SportsInfrastructure",
+    "fieldMapping": {
+      "infrastructureId": "reservation.infrastructureId",
+      "eventDate": "reservation.date",
+      "requestorName": "requestor.name"
+    }
+  },
+  {
+    "code": "ESP_EQUIPE_005",
+    "name": "Cadastro de Equipe Esportiva",
+    "category": "Esporte",
+    "description": "Cadastramento de equipes esportivas do município para acompanhamento e apoio da secretaria",
+    "icon": "Shield",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "teamName",
+          "label": "Nome da Equipe",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "sport",
+          "label": "Modalidade",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Futebol",
+            "Futsal",
+            "Vôlei",
+            "Basquete",
+            "Handebol",
+            "Outro"
+          ]
+        },
+        {
+          "id": "category",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Infantil",
+            "Juvenil",
+            "Adulto",
+            "Veterano"
+          ]
+        },
+        {
+          "id": "gender",
+          "label": "Gênero",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Masculino",
+            "Feminino",
+            "Misto"
+          ]
+        },
+        {
+          "id": "foundationDate",
+          "label": "Data de Fundação",
+          "type": "date",
+          "required": false
+        },
+        {
+          "id": "numberOfPlayers",
+          "label": "Número de Atletas",
+          "type": "number",
+          "required": true,
+          "min": 5
+        },
+        {
+          "id": "coachName",
+          "label": "Nome do Técnico",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "coachPhone",
+          "label": "Telefone do Técnico",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "trainingLocation",
+          "label": "Local de Treino",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "trainingSchedule",
+          "label": "Dias e Horários de Treino",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "needsSupport",
+          "label": "Necessita Apoio da Prefeitura?",
+          "type": "checkbox-multiple",
+          "required": false,
+          "options": [
+            "Espaço para treino",
+            "Equipamentos",
+            "Transporte",
+            "Uniformes",
+            "Arbitragem",
+            "Inscrições em competições"
+          ]
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Ata de fundação ou estatuto",
+        "Lista de atletas",
+        "Documentos do técnico",
+        "Fotos da equipe"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "SportsTeam",
+    "fieldMapping": {
+      "teamName": "team.name",
+      "sport": "team.sport",
+      "category": "team.category",
+      "coachName": "team.coach"
+    }
+  },
+  {
+    "code": "ESP_EVENTO_006",
+    "name": "Proposta de Evento Esportivo",
+    "category": "Esporte",
+    "description": "Submissão de proposta para realização de evento esportivo com apoio da prefeitura",
+    "icon": "Calendar",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "eventTitle",
+          "label": "Nome do Evento",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "eventType",
+          "label": "Tipo de Evento",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Campeonato",
+            "Torneio",
+            "Festival Esportivo",
+            "Corrida de Rua",
+            "Caminhada",
+            "Clínica Esportiva",
+            "Apresentação"
+          ]
+        },
+        {
+          "id": "sport",
+          "label": "Modalidade(s)",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "eventDate",
+          "label": "Data Prevista",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "estimatedDuration",
+          "label": "Duração Estimada (dias)",
+          "type": "number",
+          "required": true,
+          "min": 1
+        },
+        {
+          "id": "location",
+          "label": "Local Proposto",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "expectedParticipants",
+          "label": "Número Esperado de Participantes",
+          "type": "number",
+          "required": true
+        },
+        {
+          "id": "targetAudience",
+          "label": "Público-Alvo",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Crianças",
+            "Adolescentes",
+            "Adultos",
+            "Idosos",
+            "Pessoas com Deficiência",
+            "Geral"
+          ]
+        },
+        {
+          "id": "isFree",
+          "label": "Evento Gratuito?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "estimatedBudget",
+          "label": "Orçamento Estimado",
+          "type": "currency",
+          "required": true
+        },
+        {
+          "id": "supportNeeded",
+          "label": "Apoio Necessário",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Espaço",
+            "Equipamentos",
+            "Divulgação",
+            "Arbitragem",
+            "Segurança",
+            "Transporte",
+            "Premiação",
+            "Patrocínio"
+          ]
+        },
+        {
+          "id": "organizerName",
+          "label": "Nome do Organizador",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "organizerPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "organizerEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Projeto detalhado do evento",
+        "Orçamento",
+        "RG e CPF do organizador",
+        "Documentação da entidade (se aplicável)"
+      ]
+    },
+    "estimatedTime": "10 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "SportsEvent",
+    "fieldMapping": {
+      "eventTitle": "event.title",
+      "eventType": "event.eventType",
+      "eventDate": "event.date",
+      "organizerName": "organizer.name"
+    }
+  },
+  {
+    "code": "ESP_CORRIDA_007",
+    "name": "Inscrição em Corrida de Rua",
+    "category": "Esporte",
+    "description": "Inscrição em corridas de rua e caminhadas organizadas pela prefeitura",
+    "icon": "Activity",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "eventId",
+          "label": "Evento",
+          "type": "select",
+          "required": true,
+          "dynamicOptions": "/api/specialized/sports/events?eventType=competicao&isPublic=true"
+        },
+        {
+          "id": "runnerName",
+          "label": "Nome do Corredor",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "birthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "cpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "shirtSize",
+          "label": "Tamanho da Camiseta",
+          "type": "select",
+          "required": true,
+          "options": [
+            "PP",
+            "P",
+            "M",
+            "G",
+            "GG",
+            "XG"
+          ]
+        },
+        {
+          "id": "category",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Até 18 anos",
+            "19-29 anos",
+            "30-39 anos",
+            "40-49 anos",
+            "50-59 anos",
+            "60+ anos"
+          ]
+        },
+        {
+          "id": "distance",
+          "label": "Distância",
+          "type": "select",
+          "required": true,
+          "options": [
+            "5 km",
+            "10 km",
+            "Caminhada 3 km"
+          ]
+        },
+        {
+          "id": "hasHealthConditions",
+          "label": "Possui Alguma Condição de Saúde?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "healthDetails",
+          "label": "Especifique",
+          "type": "textarea",
+          "required": false,
+          "conditionalDisplay": {
+            "field": "hasHealthConditions",
+            "value": "Sim"
+          }
+        },
+        {
+          "id": "emergencyContactName",
+          "label": "Contato de Emergência",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "emergencyContactPhone",
+          "label": "Telefone de Emergência",
+          "type": "phone",
+          "required": true
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Atestado médico (se exigido)",
+        "Comprovante de pagamento (se houver taxa)"
+      ]
+    },
+    "estimatedTime": "2 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "SportsEvent",
+    "fieldMapping": {
+      "eventId": "registration.eventId",
+      "runnerName": "participant.name",
+      "cpf": "participant.cpf"
+    }
+  },
+  {
+    "code": "ESP_ARBITRO_008",
+    "name": "Cadastro de Árbitro",
+    "category": "Esporte",
+    "description": "Cadastramento de árbitros e auxiliares para atuação em competições municipais",
+    "icon": "Whistle",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "refereeName",
+          "label": "Nome Completo",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "cpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "birthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "sports",
+          "label": "Modalidades que Arbitra",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Futebol",
+            "Futsal",
+            "Vôlei",
+            "Basquete",
+            "Handebol",
+            "Outro"
+          ]
+        },
+        {
+          "id": "level",
+          "label": "Nível de Arbitragem",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Iniciante",
+            "Municipal",
+            "Regional",
+            "Estadual",
+            "Nacional"
+          ]
+        },
+        {
+          "id": "hasCertification",
+          "label": "Possui Certificação?",
+          "type": "radio",
+          "required": true,
+          "options": [
+            "Sim",
+            "Não"
+          ]
+        },
+        {
+          "id": "certificationDetails",
+          "label": "Detalhes da Certificação",
+          "type": "textarea",
+          "required": false
+        },
+        {
+          "id": "experience",
+          "label": "Experiência (em anos)",
+          "type": "number",
+          "required": true,
+          "min": 0
+        },
+        {
+          "id": "availability",
+          "label": "Disponibilidade",
+          "type": "checkbox-multiple",
+          "required": true,
+          "options": [
+            "Fins de semana",
+            "Semana (manhã)",
+            "Semana (tarde)",
+            "Semana (noite)"
+          ]
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Certificado de árbitro",
+        "Foto 3x4"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "SportsAttendance",
+    "fieldMapping": {
+      "refereeName": "referee.name",
+      "cpf": "referee.cpf",
+      "sports": "referee.sports"
+    }
+  },
+  {
+    "code": "ESP_MANUTENCAO_009",
+    "name": "Solicitação de Manutenção de Espaço Esportivo",
+    "category": "Esporte",
+    "description": "Solicitação de manutenção ou reparo em quadras, campos e ginásios municipais",
+    "icon": "Wrench",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "infrastructureId",
+          "label": "Espaço Esportivo",
+          "type": "select",
+          "required": true,
+          "dynamicOptions": "/api/specialized/sports/infrastructure"
+        },
+        {
+          "id": "problemType",
+          "label": "Tipo de Problema",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Iluminação",
+            "Piso/Superfície",
+            "Traves/Cestas/Redes",
+            "Alambrado/Muros",
+            "Vestiários",
+            "Arquibancadas",
+            "Outro"
+          ]
+        },
+        {
+          "id": "description",
+          "label": "Descrição do Problema",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "severity",
+          "label": "Gravidade",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Baixa",
+            "Média",
+            "Alta",
+            "Urgente"
+          ]
+        },
+        {
+          "id": "photos",
+          "label": "Fotos do Problema",
+          "type": "file-multiple",
+          "required": false,
+          "accept": "image/*",
+          "maxFiles": 5
+        },
+        {
+          "id": "requestorName",
+          "label": "Nome do Solicitante",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "requestorPhone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "requestorEmail",
+          "label": "E-mail",
+          "type": "email",
+          "required": false
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "Fotos do problema",
+        "RG e CPF do solicitante"
+      ]
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "SportsInfrastructure",
+    "fieldMapping": {
+      "infrastructureId": "maintenance.infrastructureId",
+      "problemType": "maintenance.type",
+      "description": "maintenance.description"
+    }
+  },
+  {
+    "code": "ESP_BOLSA_010",
+    "name": "Solicitação de Bolsa Atleta",
+    "category": "Esporte",
+    "description": "Solicitação de bolsa-atleta municipal para apoio a atletas de destaque",
+    "icon": "Award",
+    "defaultFields": {
+      "fields": [
+        {
+          "id": "athleteName",
+          "label": "Nome do Atleta",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "cpf",
+          "label": "CPF",
+          "type": "text",
+          "required": true,
+          "mask": "999.999.999-99"
+        },
+        {
+          "id": "birthDate",
+          "label": "Data de Nascimento",
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "phone",
+          "label": "Telefone",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "email",
+          "label": "E-mail",
+          "type": "email",
+          "required": true
+        },
+        {
+          "id": "sport",
+          "label": "Modalidade",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "category",
+          "label": "Categoria",
+          "type": "select",
+          "required": true,
+          "options": [
+            "Infantil",
+            "Juvenil",
+            "Adulto",
+            "Veterano"
+          ]
+        },
+        {
+          "id": "achievements",
+          "label": "Principais Conquistas",
+          "type": "textarea",
+          "required": true,
+          "placeholder": "Liste títulos, medalhas e participações relevantes"
+        },
+        {
+          "id": "currentClub",
+          "label": "Clube/Equipe Atual",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "monthlyExpenses",
+          "label": "Despesas Mensais com o Esporte",
+          "type": "currency",
+          "required": true
+        },
+        {
+          "id": "expenseDetails",
+          "label": "Detalhamento das Despesas",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "trainingSchedule",
+          "label": "Rotina de Treinos",
+          "type": "textarea",
+          "required": true
+        },
+        {
+          "id": "coachName",
+          "label": "Nome do Técnico",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "coachPhone",
+          "label": "Telefone do Técnico",
+          "type": "phone",
+          "required": true
+        },
+        {
+          "id": "justification",
+          "label": "Justificativa do Pedido",
+          "type": "textarea",
+          "required": true,
+          "minLength": 100
+        }
+      ]
+    },
+    "requiredDocs": {
+      "documents": [
+        "RG e CPF",
+        "Comprovante de residência",
+        "Comprovante de renda familiar",
+        "Certidões de conquistas",
+        "Declaração do técnico",
+        "Calendário de competições"
+      ]
+    },
+    "estimatedTime": "15 dias úteis",
+    "moduleType": "sports",
+    "moduleEntity": "SportsAttendance",
+    "fieldMapping": {
+      "athleteName": "athlete.name",
+      "cpf": "athlete.cpf",
+      "sport": "athlete.sport",
+      "achievements": "athlete.achievements"
+    }
+  },
+  {
+    "code": "SPO_SCHOOL_ENROLL_007",
+    "name": "Inscrição em Escolinha Esportiva",
+    "category": "Esportes",
+    "description": "Inscrever-se em escolinhas esportivas municipais",
+    "icon": "Medal",
+    "defaultFields": {
+      "fields": []
+    },
+    "requiredDocs": {
+      "documents": []
+    },
+    "estimatedTime": "5 dias úteis",
+    "moduleType": "INSCRICAO_ESCOLINHA",
+    "moduleEntity": "SportsSchoolEnrollment",
+    "redirectTo": "/cidadao/servicos/{serviceId}/selecionar",
+    "usesDynamicForm": true,
+    "fieldMapping": {}
+  }
+]
