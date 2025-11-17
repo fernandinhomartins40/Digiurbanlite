@@ -89,49 +89,21 @@ interface FormField {
 }
 
 /**
- * Função auxiliar para formatar data para input type="date" (yyyy-MM-dd)
- * ✅ CORRIGIDO: Usa UTC para evitar problemas de timezone
- */
-function formatDateForInput(dateString: string): string {
-  try {
-    if (!dateString) return '';
-
-    // Se já está no formato yyyy-MM-dd, retornar direto
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      return dateString;
-    }
-
-    // Parse da data em UTC para evitar problemas de timezone
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-
-    // Usar UTC para evitar mudança de dia
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(date.getUTCDate()).padStart(2, '0');
-
-    return `${year}-${month}-${day}`;
-  } catch {
-    return '';
-  }
-}
-
-/**
  * Função para formatar data no formato brasileiro (DD/MM/YYYY)
- * ✅ CORRIGIDO: Usa UTC para evitar problemas de timezone
+ * ✅ Usa para pré-preenchimento de campos de data
  */
 function formatBrazilianDate(dateString: string): string {
   try {
     if (!dateString) return '';
 
-    // Parse da data em UTC para evitar problemas de timezone
+    // Parse da data
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
 
-    // Usar UTC para evitar mudança de dia
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const year = date.getUTCFullYear();
+    // Formatar no padrão brasileiro DD/MM/YYYY
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
 
     return `${day}/${month}/${year}`;
   } catch {
@@ -260,26 +232,25 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
 
   // ============================================================================
   // DATA DE NASCIMENTO - Todas as variações
-  // ✅ IMPORTANTE: Usa formatDateForInput (yyyy-MM-dd) para inputs type="date" HTML5
-  // O formato brasileiro DD/MM/YYYY será aplicado via ModernMaskedInput quando necessário
+  // ✅ IMPORTANTE: Usa formatBrazilianDate (DD/MM/YYYY) para campos de data
   // ============================================================================
   // IDs citizen_* (novos campos do cidadão)
-  'citizen_birthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'citizen_birthdate': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
 
   // IDs diretos
-  'datanascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'data_nascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'birthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'birth_date': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'nascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'dtnascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'dt_nascimento': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'dateofbirth': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'date_of_birth': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'applicantbirthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'requesterbirthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'studentbirthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
-  'participantbirthdate': (c) => c.birthDate ? formatDateForInput(c.birthDate) : '',
+  'datanascimento': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'data_nascimento': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'birthdate': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'birth_date': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'nascimento': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'dtnascimento': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'dt_nascimento': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'dateofbirth': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'date_of_birth': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'applicantbirthdate': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'requesterbirthdate': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'studentbirthdate': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
+  'participantbirthdate': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',
 
   // ============================================================================
   // NOME DA MÃE - Todas as variações
@@ -866,7 +837,7 @@ function trySemanticMapping(
       return citizenData.rg || '';
 
     case 'birthdate':
-      return citizenData.birthDate ? formatDateForInput(citizenData.birthDate) : '';
+      return citizenData.birthDate ? formatBrazilianDate(citizenData.birthDate) : '';
 
     case 'mothername':
       return citizenData.motherName || '';
