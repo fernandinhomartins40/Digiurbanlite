@@ -93,8 +93,15 @@ export function useFormPrefill(options: UseFormPrefillOptions): UseFormPrefillRe
       return;
     }
 
+    console.log('🔍 [HOOK] Inicializando formulário...', {
+      fieldsCount: fields.length,
+      hasCitizen: !!citizen,
+      citizenId: citizen?.id
+    });
+
     // Aguardar cidadão estar carregado antes de pré-preencher
     if (!citizen || !citizen.id) {
+      console.log('⏳ [HOOK] Aguardando dados do cidadão...');
       // Inicializar vazio enquanto aguarda
       const emptyData: Record<string, any> = {};
       fields.forEach(field => {
@@ -104,7 +111,16 @@ export function useFormPrefill(options: UseFormPrefillOptions): UseFormPrefillRe
       return;
     }
 
+    console.log('✅ [HOOK] Cidadão carregado, aplicando pré-preenchimento...', {
+      name: citizen.name,
+      email: citizen.email,
+      hasAddress: !!citizen.address,
+      hasPhone: !!citizen.phone
+    });
+
     const initialData = prefillFormData(fields, citizen);
+
+    console.log('📝 [HOOK] Dados pré-preenchidos:', initialData);
 
     setFormData(initialData);
     setIsInitialized(true);
@@ -112,6 +128,7 @@ export function useFormPrefill(options: UseFormPrefillOptions): UseFormPrefillRe
     // Notificar callback sobre campos preenchidos
     if (onPrefillComplete) {
       const prefilled = getPrefilledFields(fields, initialData);
+      console.log(`✅ [HOOK] ${prefilled.length} campos pré-preenchidos com sucesso`);
       onPrefillComplete(prefilled.length);
     }
   }, [fields, citizen?.id]); // Reexecutar se os campos ou o cidadão mudarem

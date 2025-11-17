@@ -157,7 +157,17 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
 
   const fetchCitizenData = async () => {
     try {
+      console.log('🔍 [CitizenAuth] Buscando dados do cidadão...');
       const data = await apiRequest('/auth/citizen/me');
+
+      console.log('✅ [CitizenAuth] Dados do cidadão recebidos:', {
+        name: data.citizen?.name,
+        email: data.citizen?.email,
+        hasAddress: !!data.citizen?.address,
+        hasPhone: !!data.citizen?.phone,
+        tenantId: data.tenantId
+      });
+
       setCitizen(data.citizen);
 
       // ✅ Armazenar tenantId e tenant completo se vierem do backend
@@ -170,7 +180,7 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
 
       return true;
     } catch (error) {
-      console.error('Erro ao buscar dados do cidadão:', error);
+      console.error('❌ [CitizenAuth] Erro ao buscar dados do cidadão:', error);
       // ✅ CORRIGIDO: Não fazer logout se estiver na página de login
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
         await logout();
