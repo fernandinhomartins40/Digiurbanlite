@@ -90,15 +90,25 @@ interface FormField {
 
 /**
  * Função auxiliar para formatar data para input type="date" (yyyy-MM-dd)
+ * ✅ CORRIGIDO: Usa UTC para evitar problemas de timezone
  */
 function formatDateForInput(dateString: string): string {
   try {
+    if (!dateString) return '';
+
+    // Se já está no formato yyyy-MM-dd, retornar direto
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+
+    // Parse da data em UTC para evitar problemas de timezone
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    // Usar UTC para evitar mudança de dia
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
   } catch {
@@ -108,18 +118,20 @@ function formatDateForInput(dateString: string): string {
 
 /**
  * Função para formatar data no formato brasileiro (DD/MM/YYYY)
- * Converte de yyyy-MM-dd (ISO) ou Date para DD/MM/YYYY
+ * ✅ CORRIGIDO: Usa UTC para evitar problemas de timezone
  */
 function formatBrazilianDate(dateString: string): string {
   try {
     if (!dateString) return '';
 
+    // Parse da data em UTC para evitar problemas de timezone
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
 
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    // Usar UTC para evitar mudança de dia
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
 
     return `${day}/${month}/${year}`;
   } catch {
@@ -514,8 +526,7 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
   // ✅ PADRONIZADO: Usa APENAS nomenclatura do banco (português)
   // ✅ Suporta aliases em inglês por compatibilidade, mas retorna dados do padrão PT
   // ============================================================================
-  // Rua/Logradouro
-  'citizen_address': (c) => c.address?.logradouro || '',  // citizen_address mapeia para logradouro
+  // Rua/Logradouro (citizen_address já definido acima como endereço completo)
   'rua': (c) => c.address?.logradouro || '',
   'logradouro': (c) => c.address?.logradouro || '',
   'street': (c) => c.address?.logradouro || '', // Alias para logradouro
