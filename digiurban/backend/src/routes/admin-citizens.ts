@@ -689,7 +689,7 @@ router.post(
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
-    const { memberId, relationship, isDependent } = authReq.body;
+    const { memberId, relationship, isDependent, monthlyIncome, occupation, education, hasDisability } = authReq.body;
 
     if (!memberId || !relationship) {
       res.status(400).json({
@@ -750,7 +750,12 @@ router.post(
         headId: id,
         memberId,
         relationship,
-        isDependent: isDependent || false
+        isDependent: isDependent || false,
+        // Novos campos Sprint 2
+        monthlyIncome,
+        occupation,
+        education,
+        hasDisability
         },
       include: {
         member: {

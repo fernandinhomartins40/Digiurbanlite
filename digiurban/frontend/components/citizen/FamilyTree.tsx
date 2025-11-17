@@ -8,12 +8,18 @@ interface FamilyMember {
   id: string;
   relationship: string;
   isDependent: boolean;
+  // Novos campos Sprint 2
+  monthlyIncome?: number | null;
+  occupation?: string | null;
+  education?: string | null;
+  hasDisability?: boolean | null;
   member: {
     id: string;
     cpf: string;
     name: string;
     email: string;
     phone?: string;
+    birthDate?: string;
     isActive: boolean;
   };
 }
@@ -58,30 +64,63 @@ export function FamilyTree({
     setExpandedMembers(newExpanded);
   };
 
+  const getRelationshipLabel = (relationship: string) => {
+    const labels: Record<string, string> = {
+      'SPOUSE': 'Cônjuge',
+      'SON': 'Filho',
+      'DAUGHTER': 'Filha',
+      'FATHER': 'Pai',
+      'MOTHER': 'Mãe',
+      'BROTHER': 'Irmão',
+      'SISTER': 'Irmã',
+      'GRANDFATHER': 'Avô',
+      'GRANDMOTHER': 'Avó',
+      'GRANDSON': 'Neto',
+      'GRANDDAUGHTER': 'Neta',
+      'OTHER': 'Outro',
+      'HEAD': 'Responsável',
+    };
+    return labels[relationship] || relationship;
+  };
+
   const getRelationshipIcon = (relationship: string) => {
-    switch (relationship.toLowerCase()) {
-      case 'cônjuge':
+    switch (relationship) {
+      case 'SPOUSE':
         return '💑';
-      case 'filho':
-      case 'filha':
+      case 'SON':
+      case 'DAUGHTER':
         return '👶';
-      case 'pai':
+      case 'FATHER':
         return '👨';
-      case 'mãe':
+      case 'MOTHER':
         return '👩';
-      case 'irmão':
-      case 'irmã':
+      case 'BROTHER':
+      case 'SISTER':
         return '👫';
-      case 'avô':
+      case 'GRANDFATHER':
         return '👴';
-      case 'avó':
+      case 'GRANDMOTHER':
         return '👵';
-      case 'neto':
-      case 'neta':
+      case 'GRANDSON':
+      case 'GRANDDAUGHTER':
         return '👧';
       default:
         return '👤';
     }
+  };
+
+  const calculateAge = (birthDate?: string): number | null => {
+    if (!birthDate) return null;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+
+    return age;
   };
 
   const formatCPF = (cpf: string) => {
@@ -177,11 +216,16 @@ export function FamilyTree({
                         <CardTitle className="text-base">
                           {familyMember.member.name}
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          {familyMember.relationship}
+                        <p className="text-sm text-muted-foreground">
+                          {getRelationshipLabel(familyMember.relationship)}
                           {familyMember.isDependent && (
                             <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                               Dependente
+                            </span>
+                          )}
+                          {familyMember.hasDisability && (
+                            <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
+                              PCD
                             </span>
                           )}
                         </p>
@@ -207,6 +251,14 @@ export function FamilyTree({
                           {formatCPF(familyMember.member.cpf)}
                         </span>
                       </div>
+                      {familyMember.member.birthDate && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Idade:</span>
+                          <span className="font-medium">
+                            {calculateAge(familyMember.member.birthDate)} anos
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Email:</span>
                         <span className="font-medium">{familyMember.member.email}</span>
@@ -216,6 +268,26 @@ export function FamilyTree({
                           <span className="text-muted-foreground">Telefone:</span>
                           <span className="font-medium">
                             {formatPhone(familyMember.member.phone)}
+                          </span>
+                        </div>
+                      )}
+                      {familyMember.occupation && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Ocupação:</span>
+                          <span className="font-medium">{familyMember.occupation}</span>
+                        </div>
+                      )}
+                      {familyMember.education && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Escolaridade:</span>
+                          <span className="font-medium">{familyMember.education}</span>
+                        </div>
+                      )}
+                      {familyMember.monthlyIncome !== null && familyMember.monthlyIncome !== undefined && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Renda Mensal:</span>
+                          <span className="font-medium">
+                            R$ {familyMember.monthlyIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                       )}
@@ -286,8 +358,8 @@ export function FamilyTree({
                       <span className="text-lg">👥</span>
                       <div>
                         <p className="font-medium">{relation.head.name}</p>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          Você é {relation.relationship} nesta família
+                        <p className="text-sm text-muted-foreground">
+                          Você é {getRelationshipLabel(relation.relationship)} nesta família
                         </p>
                       </div>
                     </div>
