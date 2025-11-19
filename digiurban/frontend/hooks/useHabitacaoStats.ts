@@ -39,31 +39,31 @@ export function useHabitacaoStats() {
 
         // Buscar estatísticas da rota /stats
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/secretarias/habitacao/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/habitacao/stats`,
           { headers }
         );
 
-        const statsData = statsRes.data?.data;
+        const statsData = statsRes.data;
 
         if (statsData) {
           setStats({
             families: {
-              total: statsData.families?.total || 0,
-              active: statsData.families?.active || 0
+              total: statsData.applications?.total || 0,
+              active: statsData.applications?.approved || 0
             },
             units: {
-              total: statsData.units?.total || 0,
-              available: statsData.units?.available || 0
+              total: statsData.housing?.total || 0,
+              available: statsData.housing?.units || 0
             },
             programs: {
-              total: statsData.programs?.total || 0,
-              active: statsData.programs?.active || 0
+              total: statsData.construction?.total || 0,
+              active: statsData.construction?.ongoing || 0
             },
             protocols: {
-              total: statsData.protocols?.total || 0,
-              pending: statsData.protocols?.pending || 0,
-              inProgress: statsData.protocols?.inProgress || 0,
-              completed: statsData.protocols?.completed || 0
+              total: 0,
+              pending: 0,
+              inProgress: 0,
+              completed: 0
             }
           });
         } else {

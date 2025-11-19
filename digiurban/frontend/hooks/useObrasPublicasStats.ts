@@ -37,21 +37,28 @@ export function useObrasPublicasStats() {
         const token = localStorage.getItem('adminToken');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Buscar departamento de obras públicas
-        const deptResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/departments`,
+        // Buscar estatísticas de obras públicas
+        const statsRes = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/obras-publicas/stats`,
           { headers }
         );
 
-        const obrasDept = deptResponse.data?.data?.find(
-          (d: any) => d.code === 'OBRAS_PUBLICAS'
-        );
+        const statsData = statsRes.data;
 
-        if (!obrasDept) {
+        if (statsData) {
           setStats({
-            projects: { total: 0, inProgress: 0 },
-            repairs: { total: 0, completed: 0 },
-            inspections: { total: 0, pending: 0 },
+            projects: {
+              total: statsData.projects?.total || 0,
+              inProgress: statsData.projects?.ongoing || 0
+            },
+            repairs: {
+              total: statsData.requests?.total || 0,
+              completed: 0
+            },
+            inspections: {
+              total: 0,
+              pending: statsData.requests?.pending || 0
+            },
             protocols: { total: 0, pending: 0, inProgress: 0, completed: 0 }
           });
           setLoading(false);

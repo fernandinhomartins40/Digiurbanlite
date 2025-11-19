@@ -36,28 +36,35 @@ export function usePlanejamentoUrbanoStats() {
         const token = localStorage.getItem('adminToken');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Buscar departamento de planejamento urbano
-        const deptResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/departments`,
+        // Buscar estatísticas de planejamento urbano
+        const statsRes = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/planejamento-urbano/stats`,
           { headers }
         );
 
-        const planejamentoDept = deptResponse.data?.data?.find(
-          (d: any) => d.code === 'PLANEJAMENTO_URBANO'
-        );
+        const statsData = statsRes.data;
 
-        if (!planejamentoDept) {
+        if (statsData) {
           setStats({
-            permits: { total: 0, thisMonth: 0 },
-            inAnalysis: { total: 0 },
-            approved: { total: 0, thisMonth: 0 },
+            permits: {
+              total: statsData.licenses?.total || 0,
+              thisMonth: 0
+            },
+            inAnalysis: {
+              total: statsData.licenses?.pending || 0
+            },
+            approved: {
+              total: statsData.licenses?.approved || 0,
+              thisMonth: 0
+            },
             protocols: { total: 0, pending: 0, inProgress: 0, completed: 0 }
           });
           setLoading(false);
+          setError(null);
           return;
         }
 
-        // Buscar protocolos
+        // Fallback
         const protocolsRes = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/protocolos?department=planejamento_urbano`,
           { headers }

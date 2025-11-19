@@ -51,44 +51,38 @@ export function useSegurancaPublicaStats() {
           { headers }
         );
 
-        const data = statsRes.data;
+        const statsData = statsRes.data;
 
-        // Buscar protocolos para estatísticas adicionais
-        const protocolsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/protocolos?department=seguranca_publica`,
-          { headers }
-        );
-
-        const protocols = protocolsRes.data?.data || [];
-
-        setStats({
-          modules: data.modules || {
-            attendances: 0,
-            occurrences: 0,
-            patrolRequests: 0,
-            cameraRequests: 0,
-            anonymousTips: 0,
-            criticalPoints: 0,
-            alerts: 0,
-            patrols: 0,
-            guards: 0,
-            surveillanceSystems: 0
-          },
-          highlights: data.highlights || {
-            openOccurrences: 0,
-            urgentOccurrences: 0,
-            activePatrols: 0,
-            pendingPatrolRequests: 0,
-            recentTips: 0,
-            highRiskPoints: 0
-          },
-          protocols: {
-            total: protocols.length,
-            pending: protocols.filter((p: any) => p.status === 'PENDENCIA').length,
-            inProgress: protocols.filter((p: any) => p.status === 'PROGRESSO').length,
-            completed: protocols.filter((p: any) => p.status === 'CONCLUIDO').length
-          }
-        });
+        if (statsData) {
+          setStats({
+            modules: {
+              attendances: 0,
+              occurrences: statsData.occurrences?.total || 0,
+              patrolRequests: 0,
+              cameraRequests: 0,
+              anonymousTips: 0,
+              criticalPoints: 0,
+              alerts: 0,
+              patrols: statsData.patrols?.total || 0,
+              guards: 0,
+              surveillanceSystems: statsData.cameras?.total || 0
+            },
+            highlights: {
+              openOccurrences: statsData.occurrences?.total - (statsData.occurrences?.resolved || 0),
+              urgentOccurrences: statsData.occurrences?.thisMonth || 0,
+              activePatrols: statsData.patrols?.active || 0,
+              pendingPatrolRequests: 0,
+              recentTips: 0,
+              highRiskPoints: 0
+            },
+            protocols: {
+              total: 0,
+              pending: 0,
+              inProgress: 0,
+              completed: 0
+            }
+          });
+        }
 
         setError(null);
       } catch (err: any) {

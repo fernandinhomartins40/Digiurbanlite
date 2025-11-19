@@ -32,22 +32,29 @@ export function useMeioAmbienteStats() {
         const token = localStorage.getItem('adminToken');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Buscar departamento de meio ambiente
-        const deptResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/departments`,
+        // Buscar estatísticas do meio ambiente
+        const statsRes = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/meio-ambiente/stats`,
           { headers }
         );
 
-        const meioAmbienteDept = deptResponse.data?.data?.find(
-          (d: any) => d.code === 'MEIO_AMBIENTE'
-        );
+        const statsData = statsRes.data;
 
-        if (!meioAmbienteDept) {
+        if (statsData) {
           setStats({
-            licencasAmbientais: { ativas: 0, total: 0 },
-            fiscalizacoes: { mesAtual: 0, total: 0 },
-            areasProtegidas: { hectares: 0, quantidade: 0 },
-            protocolosPendentes: 0
+            licencasAmbientais: {
+              ativas: statsData.licenses?.approved || 0,
+              total: statsData.licenses?.total || 0
+            },
+            fiscalizacoes: {
+              mesAtual: 0,
+              total: 0
+            },
+            areasProtegidas: {
+              hectares: 0,
+              quantidade: statsData.parks?.total || 0
+            },
+            protocolosPendentes: statsData.licenses?.pending || 0
           });
           setLoading(false);
           return;

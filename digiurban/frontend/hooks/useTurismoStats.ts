@@ -4,33 +4,26 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface TurismoStats {
-  department: {
-    id: string;
-    name: string;
-    code: string;
+  establishments: {
+    total: number;
+    active: number;
   };
-  modules: {
-    touristAttractions: number;
-    tourismEvents: number;
-    tourismEstablishments: number;
+  guides: {
+    total: number;
+    active: number;
   };
-  protocolsByModule: Record<string, Record<string, number>>;
-  totals: {
-    totalProtocols: number;
-    totalModuleRecords: number;
+  attractions: {
+    total: number;
+    visitors: number;
   };
-}
-
-interface DashboardStats {
-  eventsThisMonth: number;
-  totalAttractions: number;
-  totalEstablishments: number;
-  pendingProtocols: number;
+  events: {
+    total: number;
+    upcoming: number;
+  };
 }
 
 export function useTurismoStats() {
   const [stats, setStats] = useState<TurismoStats | null>(null);
-  const [dashboard, setDashboard] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,18 +35,32 @@ export function useTurismoStats() {
         const token = localStorage.getItem('adminToken');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        // Buscar todas as estatísticas em paralelo
-        const [statsResponse, dashboardResponse] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/turismo/stats`, { headers }),
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/turismo/dashboard`, { headers })
-        ]);
+        const statsRes = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/turismo/stats`,
+          { headers }
+        );
 
-        if (statsResponse.data.success) {
-          setStats(statsResponse.data.data);
-        }
+        const statsData = statsRes.data;
 
-        if (dashboardResponse.data.success) {
-          setDashboard(dashboardResponse.data.data);
+        if (statsData) {
+          setStats({
+            establishments: {
+              total: statsData.establishments?.total || 0,
+              active: statsData.establishments?.active || 0
+            },
+            guides: {
+              total: statsData.guides?.total || 0,
+              active: statsData.guides?.active || 0
+            },
+            attractions: {
+              total: statsData.attractions?.total || 0,
+              visitors: statsData.attractions?.visitors || 0
+            },
+            events: {
+              total: statsData.events?.total || 0,
+              upcoming: statsData.events?.upcoming || 0
+            }
+          });
         }
 
         setError(null);
@@ -68,5 +75,5 @@ export function useTurismoStats() {
     fetchStats();
   }, []);
 
-  return { stats, dashboard, loading, error };
+  return { stats, loading, error };
 }

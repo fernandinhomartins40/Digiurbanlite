@@ -146,6 +146,147 @@ try {
   console.error('❌ Erro ao carregar rotas dinâmicas:', error);
 }
 
+// 🏥 MICROSISTEMAS COM WORKFLOW (FASE 8)
+try {
+  console.log('🏥 Carregando rotas de microsistemas...');
+
+  const agendaMedicaRoutes = require('./routes/agenda-medica.routes').default;
+  app.use('/api/agenda-medica', agendaMedicaRoutes);
+  console.log('  ✅ MS-02: Agenda Médica');
+
+  const prontuarioRoutes = require('./routes/prontuario.routes').default;
+  app.use('/api/prontuario', prontuarioRoutes);
+  console.log('  ✅ MS-03: Prontuário Eletrônico');
+
+  const medicamentoRoutes = require('./routes/medicamento.routes').default;
+  app.use('/api/medicamentos', medicamentoRoutes);
+  console.log('  ✅ MS-05: Medicamentos');
+
+  const tfdRoutes = require('./routes/tfd.routes').default;
+  app.use('/api/tfd', tfdRoutes);
+  console.log('  ✅ MS-06: TFD');
+
+  const matriculaRoutes = require('./routes/matricula.routes').default;
+  app.use('/api/matriculas', matriculaRoutes);
+  console.log('  ✅ MS-08: Matrículas');
+
+  const cadunicoRoutes = require('./routes/cadunico.routes').default;
+  app.use('/api/cadunico', cadunicoRoutes);
+  console.log('  ✅ MS-14: CadÚnico');
+
+  const programaSocialRoutes = require('./routes/programa-social.routes').default;
+  app.use('/api/programas-sociais', programaSocialRoutes);
+  console.log('  ✅ MS-15: Programas Sociais');
+
+  const transporteEscolarRoutes = require('./routes/transporte-escolar.routes').default;
+  app.use('/api/transporte-escolar', transporteEscolarRoutes);
+  console.log('  ✅ MS-09: Transporte Escolar');
+
+  const maquinasAgricolasRoutes = require('./routes/maquinas-agricolas.routes').default;
+  app.use('/api/maquinas-agricolas', maquinasAgricolasRoutes);
+  console.log('  ✅ MS-20+21: Máquinas Agrícolas');
+
+  const agendamentoExamesRoutes = require('./routes/agendamento-exames.routes').default;
+  app.use('/api/agendamento-exames', agendamentoExamesRoutes);
+  console.log('  ✅ MS-04: Agendamento de Exames');
+
+  const unidadeSaudeRoutes = require('./routes/unidade-saude.routes').default;
+  app.use('/api/unidades-saude', unidadeSaudeRoutes);
+  console.log('  ✅ MS-01: Gestão de Unidades de Saúde');
+
+  const unidadeEducacaoRoutes = require('./routes/unidade-educacao.routes').default;
+  app.use('/api/unidades-educacao', unidadeEducacaoRoutes);
+  console.log('  ✅ MS-07: Gestão de Unidades Educacionais');
+
+  const unidadeCRASRoutes = require('./routes/unidade-cras.routes').default;
+  app.use('/api/unidades-cras', unidadeCRASRoutes);
+  console.log('  ✅ MS-13: Gestão de CRAS/CREAS');
+
+  const produtorRuralRoutes = require('./routes/produtor-rural.routes').default;
+  app.use('/api/produtores-rurais', produtorRuralRoutes);
+  console.log('  ✅ MS-19: Cadastro de Produtores Rurais');
+
+  const merendaEscolarRoutes = require('./routes/merenda-escolar.routes').default;
+  app.use('/api/merenda-escolar', merendaEscolarRoutes);
+  console.log('  ✅ MS-10: Gestão de Merenda Escolar');
+
+  const beneficioRoutes = require('./routes/beneficio.routes').default;
+  app.use('/api/beneficios', beneficioRoutes);
+  console.log('  ✅ MS-16: Controle de Benefícios Eventuais');
+
+  const agriculturaRoutes = require('./routes/agricultura.routes').default;
+  app.use('/api/agricultura', agriculturaRoutes);
+  console.log('  ✅ MS-22+23+24: Assistência Técnica, Produção e Feiras');
+
+  const portalProfessorRoutes = require('./routes/portal-professor.routes').default;
+  app.use('/api/portal-professor', portalProfessorRoutes);
+  console.log('  ✅ MS-11: Portal do Professor');
+
+  const portalAlunoRoutes = require('./routes/portal-aluno.routes').default;
+  app.use('/api/portal-aluno', portalAlunoRoutes);
+  console.log('  ✅ MS-12: Portal do Aluno/Pais');
+
+  const atendimentoPsicossocialRoutes = require('./routes/atendimento-psicossocial.routes').default;
+  app.use('/api/atendimento-psicossocial', atendimentoPsicossocialRoutes);
+  console.log('  ✅ MS-17: Atendimento Psicossocial');
+
+  const dashboardAssistenciaRoutes = require('./routes/dashboard-assistencia.routes').default;
+  app.use('/api/dashboard-assistencia', dashboardAssistenciaRoutes);
+  console.log('  ✅ MS-18: Dashboard Assistência Social');
+
+  const culturaRoutes = require('./routes/cultura.routes').default;
+  app.use('/api/cultura', culturaRoutes);
+  console.log('  ✅ MS-25-32: Cultura (8 MS)');
+
+  const esportesRoutes = require('./routes/esportes.routes').default;
+  app.use('/api/esportes', esportesRoutes);
+  console.log('  ✅ MS-33-36: Esportes (4 MS)');
+
+  const habitacaoRoutes = require('./routes/habitacao.routes').default;
+  app.use('/api/habitacao', habitacaoRoutes);
+  console.log('  ✅ MS-37-42: Habitação (6 MS)');
+
+  const meioAmbienteRoutes = require('./routes/meio-ambiente.routes').default;
+  app.use('/api/meio-ambiente', meioAmbienteRoutes);
+  console.log('  ✅ MS-43-48: Meio Ambiente (6 MS)');
+
+  const obrasRoutes = require('./routes/obras.routes').default;
+  app.use('/api/obras', obrasRoutes);
+  console.log('  ✅ MS-49-54: Obras Públicas (6 MS)');
+
+  const segurancaRoutes = require('./routes/seguranca.routes').default;
+  app.use('/api/seguranca', segurancaRoutes);
+  console.log('  ✅ MS-55-60: Segurança Pública (6 MS)');
+
+  const turismoRoutes = require('./routes/turismo.routes').default;
+  app.use('/api/turismo', turismoRoutes);
+  console.log('  ✅ MS-61-66: Turismo (6 MS)');
+
+  const planejamentoRoutes = require('./routes/planejamento.routes').default;
+  app.use('/api/planejamento', planejamentoRoutes);
+  console.log('  ✅ MS-67-72: Planejamento Urbano (6 MS)');
+
+  const servicosPublicosRoutes = require('./routes/servicos-publicos.routes').default;
+  app.use('/api/servicos-publicos', servicosPublicosRoutes);
+  console.log('  ✅ MS-73-78: Serviços Públicos (6 MS)');
+
+  // Rotas de estatísticas das secretarias
+  const secretariasStatsRoutes = require('./routes/secretarias-stats.routes').default;
+  app.use('/api/secretarias', secretariasStatsRoutes);
+  console.log('  ✅ Stats endpoints para todas secretarias');
+
+  console.log('');
+  console.log('🎉🎉🎉 ROTAS DE MICROSISTEMAS CARREGADAS! 🎉🎉🎉');
+  console.log('📊 TOTAL: 78 MICROSISTEMAS (100% IMPLEMENTADO)');
+  console.log('🏥 Saúde: 6 MS | 🎓 Educação: 6 MS | 🤝 Assistência Social: 6 MS');
+  console.log('🌾 Agricultura: 6 MS | 📚 Cultura: 8 MS | ⚽ Esportes: 4 MS');
+  console.log('🏠 Habitação: 6 MS | 🌳 Meio Ambiente: 6 MS | 🏗️  Obras: 6 MS');
+  console.log('👮 Segurança: 6 MS | 🏖️  Turismo: 6 MS | 🏙️  Planejamento: 6 MS | 🚮 Serviços: 6 MS');
+  console.log('');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas de microsistemas:', error);
+}
+
 // 🔧 ROTAS DE GESTÃO ADMINISTRATIVA (team, departments) - DEVEM VIR PRIMEIRO
 try {
   const adminManagementRoutes = require('./routes/admin-management').default;

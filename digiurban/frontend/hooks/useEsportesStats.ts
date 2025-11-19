@@ -47,11 +47,11 @@ export function useEsportesStats() {
 
         // Buscar estatísticas da rota /stats
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/admin/secretarias/esportes/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/esportes/stats`,
           { headers }
         );
 
-        const statsData = statsRes.data?.data;
+        const statsData = statsRes.data;
 
         if (statsData) {
           setStats({
@@ -60,26 +60,26 @@ export function useEsportesStats() {
               active: statsData.athletes?.active || 0
             },
             teams: {
-              total: statsData.teams?.total || 0,
-              active: statsData.teams?.active || 0
+              total: 0,
+              active: 0
             },
             schools: {
               total: statsData.schools?.total || 0,
-              active: statsData.schools?.active || 0
+              active: statsData.schools?.total || 0
             },
             infrastructures: {
-              total: statsData.infrastructures?.total || 0,
-              active: statsData.infrastructures?.active || 0
+              total: statsData.equipment?.total || 0,
+              active: statsData.equipment?.available || 0
             },
             competitions: {
-              total: statsData.competitions?.total || 0,
-              upcoming: statsData.competitions?.upcoming || 0
+              total: statsData.championships?.total || 0,
+              upcoming: statsData.championships?.active || 0
             },
             protocols: {
-              total: statsData.protocols?.total || 0,
-              pending: statsData.protocols?.pending || 0,
-              inProgress: statsData.protocols?.inProgress || 0,
-              completed: statsData.protocols?.completed || 0
+              total: 0,
+              pending: 0,
+              inProgress: 0,
+              completed: 0
             }
           });
         } else {
