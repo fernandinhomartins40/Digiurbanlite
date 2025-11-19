@@ -32,6 +32,7 @@ import {
   type CropArea as CoordCropArea,
   type Point
 } from '@/lib/coordinate-utils'
+import Perspective from 'perspectivets'
 
 type ProcessingMode = 'color' | 'grayscale' | 'blackwhite'
 type EditMode = 'filters' | 'crop' | null
@@ -909,6 +910,64 @@ export function DocumentScanner({
   }, [capturedImage, cropArea, processingMode, applyProcessingMode, showCropTool, editMode, autoProcessingEnabled, contrastLevel])
 
   /**
+   * Aplica transformação de perspectiva usando os 4 cantos editáveis
+   * NOVA FUNCIONALIDADE: Correção de perspectiva real
+   */
+  const applyPerspectiveTransform = useCallback((sourceCanvas: HTMLCanvasElement, corners: DocumentCorners): HTMLCanvasElement => {
+    console.log('[PerspectiveTransform] Aplicando transformação com corners:', corners)
+
+    // Criar canvas de saída
+    const outputCanvas = document.createElement('canvas')
+
+    // Calcular dimensões do retângulo de saída (maior distância entre cantos)
+    const width = Math.max(
+      Math.sqrt(Math.pow(corners.topRight.x - corners.topLeft.x, 2) + Math.pow(corners.topRight.y - corners.topLeft.y, 2)),
+      Math.sqrt(Math.pow(corners.bottomRight.x - corners.bottomLeft.x, 2) + Math.pow(corners.bottomRight.y - corners.bottomLeft.y, 2))
+    )
+    const height = Math.max(
+      Math.sqrt(Math.pow(corners.bottomLeft.x - corners.topLeft.x, 2) + Math.pow(corners.bottomLeft.y - corners.topLeft.y, 2)),
+      Math.sqrt(Math.pow(corners.bottomRight.x - corners.topRight.x, 2) + Math.pow(corners.bottomRight.y - corners.topRight.y, 2))
+    )
+
+    outputCanvas.width = Math.round(width)
+    outputCanvas.height = Math.round(height)
+
+    const ctx = outputCanvas.getContext('2d')
+    if (!ctx) {
+      console.error('[PerspectiveTransform] Não foi possível obter contexto do canvas')
+      return sourceCanvas // Fallback
+    }
+
+    try {
+      // Criar instância da biblioteca perspectivets
+      const perspective = new Perspective(ctx, sourceCanvas)
+
+      // Aplicar transformação com os 4 cantos
+      // Os cantos de destino são as dimensões do outputCanvas (retângulo)
+      perspective.draw({
+        topLeftX: corners.topLeft.x,
+        topLeftY: corners.topLeft.y,
+        topRightX: corners.topRight.x,
+        topRightY: corners.topRight.y,
+        bottomRightX: corners.bottomRight.x,
+        bottomRightY: corners.bottomRight.y,
+        bottomLeftX: corners.bottomLeft.x,
+        bottomLeftY: corners.bottomLeft.y
+      })
+
+      console.log('[PerspectiveTransform] Transformação aplicada com sucesso:', {
+        input: { w: sourceCanvas.width, h: sourceCanvas.height },
+        output: { w: outputCanvas.width, h: outputCanvas.height }
+      })
+
+      return outputCanvas
+    } catch (err) {
+      console.error('[PerspectiveTransform] Erro ao aplicar transformação:', err)
+      return sourceCanvas // Fallback em caso de erro
+    }
+  }, [])
+
+  /**
    * Confirma e processa foto
    */
   const confirmPhoto = useCallback(async () => {
@@ -919,7 +978,35 @@ export function DocumentScanner({
 
     try {
       // Obter imagem processada do canvas de preview
-      const canvas = previewCanvasRef.current
+      let canvas = previewCanvasRef.current
+
+      // Se temos corners editáveis E não estão nos cantos padrão, aplicar perspectiva
+      if (editableCorners && canvasRef.current) {
+        const hasCustomCorners = !(
+          editableCorners.topLeft.x === 0 && editableCorners.topLeft.y === 0 &&
+          editableCorners.topRight.x === canvasRef.current.width &&
+          editableCorners.bottomRight.y === canvasRef.current.height
+        )
+
+        if (hasCustomCorners) {
+          console.log('[ConfirmPhoto] Aplicando transformação de perspectiva')
+          // Aplicar transformação de perspectiva no canvas original (não no preview)
+          const transformedCanvas = applyPerspectiveTransform(canvasRef.current, editableCorners)
+
+          // Aplicar processamento (filtros) no canvas transformado
+          const processedCanvas = document.createElement('canvas')
+          processedCanvas.width = transformedCanvas.width
+          processedCanvas.height = transformedCanvas.height
+          const ctx = processedCanvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(transformedCanvas, 0, 0)
+            if (autoProcessingEnabled) {
+              applyProcessingMode(processedCanvas, processingMode)
+            }
+          }
+          canvas = processedCanvas
+        }
+      }
 
       // Converter canvas para blob
       const blob = await new Promise<Blob>((resolve, reject) => {
@@ -958,7 +1045,7 @@ export function DocumentScanner({
     } finally {
       setProcessing(false)
     }
-  }, [documentName, acceptedFormats, maxSizeMB, onCapture])
+  }, [documentName, acceptedFormats, maxSizeMB, onCapture, editableCorners, applyPerspectiveTransform, autoProcessingEnabled, applyProcessingMode, processingMode])
 
   /**
    * Alterna câmera (frontal/traseira)
