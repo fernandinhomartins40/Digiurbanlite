@@ -127,10 +127,9 @@ export class ProgramaSocialService {
     await prisma.inscricaoProgramaSocial.update({
       where: { id: data.inscricaoId },
       data: {
-        status: 'ATIVO',
+        status: 'ATIVA',
         dataAprovacao: new Date(),
         dataInicio: data.dataInicio,
-        dataFim: data.dataFim,
       },
     });
 
@@ -193,13 +192,12 @@ export class ProgramaSocialService {
         inscricaoId: data.inscricaoId,
         assistenteSocialId: data.assistenteSocialId,
         dataVisita: data.dataVisita,
-        tipoAcompanhamento: data.tipoAcompanhamento,
-        condicoesFamiliares: data.condicoesFamiliares,
-        necessidadesIdentificadas: data.necessidadesIdentificadas,
-        acoesRealizadas: data.acoesRealizadas,
-        proximaVisita: data.proximaVisita,
+        tipo: data.tipoAcompanhamento,
+        responsavelId: data.assistenteSocialId,
+        descricao: `${data.condicoesFamiliares || ''}\n${data.necessidadesIdentificadas || ''}\n${data.acoesRealizadas || ''}`,
+        proximoAcompanhamento: data.proximaVisita,
         observacoes: data.observacoes,
-      },
+      } as any,
     });
   }
 
@@ -216,12 +214,11 @@ export class ProgramaSocialService {
     return await prisma.pagamentoBeneficio.create({
       data: {
         inscricaoId: data.inscricaoId,
-        mesReferencia: data.mesReferencia,
+        competencia: data.mesReferencia,
         valor: data.valor,
-        mecanismoPagamento: data.mecanismoPagamento,
         comprovante: data.comprovante,
         status: 'AGUARDANDO',
-      },
+      } as any,
     });
   }
 

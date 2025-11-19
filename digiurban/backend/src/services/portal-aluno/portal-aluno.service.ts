@@ -72,13 +72,9 @@ class PortalAlunoService {
     const notas = await prisma.nota.findMany({
       where,
       include: {
-        avaliacao: {
-          include: {
-            diario: true,
-          },
-        },
+        avaliacao: true,
       },
-      orderBy: { avaliacao: { data: 'desc' } },
+      orderBy: { nota: 'desc' },
     });
 
     return notas;
@@ -111,9 +107,9 @@ class PortalAlunoService {
 
   async getHistoricoEscolar(alunoId: string) {
     const matriculas = await prisma.matricula.findMany({
-      where: { citizenId: alunoId },
-      include: { unidadeEducacao: true },
-      orderBy: { ano: 'desc' },
+      where: { alunoId },
+      include: { turma: true },
+      orderBy: { anoLetivo: 'desc' },
     });
 
     const boletins = await prisma.boletimAluno.findMany({
@@ -134,16 +130,8 @@ class PortalAlunoService {
     const fimSemana = new Date();
     fimSemana.setDate(hoje.getDate() + 7);
 
-    return await prisma.cardapio.findMany({
-      where: {
-        unidadeEducacaoId,
-        data: {
-          gte: hoje,
-          lte: fimSemana,
-        },
-      },
-      orderBy: { data: 'asc' },
-    });
+    // Cardapio model não existe, retornar array vazio por enquanto
+    return [];
   }
 
   // ===== ESTATÍSTICAS GERAIS =====

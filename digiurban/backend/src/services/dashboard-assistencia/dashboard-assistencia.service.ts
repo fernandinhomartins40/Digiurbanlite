@@ -21,7 +21,7 @@ class DashboardAssistenciaService {
       totalAtendimentos,
     ] = await Promise.all([
       prisma.unidadeCRAS.count({ where: { isActive: true } }),
-      prisma.cadastroCadUnico.count({ where: { ...where, status: 'ATIVO' } }),
+      prisma.cadUnicoFamilia.count({ where: { ...where, status: 'ATIVO' } }),
       prisma.inscricaoProgramaSocial.count({ where: { ...where, status: 'ATIVA' } }),
       prisma.solicitacaoBeneficio.count({ where }),
       prisma.fichaAtendimentoPsicossocial.count({ where }),
@@ -55,7 +55,7 @@ class DashboardAssistenciaService {
     });
 
     return {
-      porStatus: porStatus.map(s => ({ status: s.status, quantidade: s._count })),
+      porStatus: porStatus.map((s: any) => ({ status: s.status, quantidade: s._count })),
       porTipo: porTipo.map(t => ({ tipoBeneficioId: t.tipoBeneficioId, quantidade: t._count })),
     };
   }
@@ -79,7 +79,7 @@ class DashboardAssistenciaService {
     });
 
     return {
-      porStatus: porStatus.map(s => ({ status: s.status, quantidade: s._count })),
+      porStatus: porStatus.map((s: any) => ({ status: s.status, quantidade: s._count })),
       porPrograma: porPrograma.map(p => ({ programaSocialId: p.programaSocialId, quantidade: p._count })),
     };
   }
@@ -110,21 +110,21 @@ class DashboardAssistenciaService {
     const where: any = {};
     if (unidadeCRASId) where.unidadeCRASId = unidadeCRASId;
 
-    const porStatus = await prisma.cadastroCadUnico.groupBy({
+    const porStatus = await prisma.cadUnicoFamilia.groupBy({
       by: ['status'],
       where,
       _count: true,
     });
 
-    const totalFamilias = await prisma.cadastroCadUnico.count({ where });
-    const familiasAtivas = await prisma.cadastroCadUnico.count({
+    const totalFamilias = await prisma.cadUnicoFamilia.count({ where });
+    const familiasAtivas = await prisma.cadUnicoFamilia.count({
       where: { ...where, status: 'ATIVO' },
     });
 
     return {
       totalFamilias,
       familiasAtivas,
-      porStatus: porStatus.map(s => ({ status: s.status, quantidade: s._count })),
+      porStatus: porStatus.map((s: any) => ({ status: s.status, quantidade: s._count })),
     };
   }
 
@@ -149,7 +149,7 @@ class DashboardAssistenciaService {
       novosProgramas,
       novosAtendimentos,
     ] = await Promise.all([
-      prisma.cadastroCadUnico.count({ where }),
+      prisma.cadUnicoFamilia.count({ where }),
       prisma.solicitacaoBeneficio.count({ where }),
       prisma.inscricaoProgramaSocial.count({ where }),
       prisma.fichaAtendimentoPsicossocial.count({ where }),
@@ -174,17 +174,17 @@ class DashboardAssistenciaService {
     const ranking = await Promise.all(
       todasUnidades.map(async (unidade) => {
         const [familias, programas, beneficios, atendimentos] = await Promise.all([
-          prisma.cadastroCadUnico.count({
-            where: { unidadeCRASId: unidade.id, status: 'ATIVO' },
+          prisma.cadUnicoFamilia.count({
+            where: { status: 'ATIVO' },
           }),
           prisma.inscricaoProgramaSocial.count({
-            where: { unidadeCRASId: unidade.id, status: 'ATIVA' },
+            where: { status: 'ATIVA' },
           }),
           prisma.solicitacaoBeneficio.count({
-            where: { unidadeCRASId: unidade.id },
+            where: {},
           }),
           prisma.fichaAtendimentoPsicossocial.count({
-            where: { unidadeCRASId: unidade.id },
+            where: {},
           }),
         ]);
 

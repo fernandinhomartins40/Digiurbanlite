@@ -2351,3 +2351,2351 @@ model TipoDocumento {
   @@index([isActive])
   @@map("tipos_documento")
 }
+
+// ============================================================================
+// ENGINE DE WORKFLOW TRANSVERSAL
+// ============================================================================
+// Sistema genérico de fluxos reutilizável por todos os microsistemas
+// Permite rastreabilidade total, filas inteligentes e SLA tracking
+
+model WorkflowDefinition {
+  id          String   @id @default(cuid())
+  name        String   // "Atendimento Saúde", "Licenciamento Obras"
+  description String?
+  module      String   // "SAUDE", "PLANEJAMENTO", "ASSISTENCIA_SOCIAL"
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+  stages      Json     // Array de stages: [{id, name, role, slaHours, actions}]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  instances   WorkflowInstance[]
+
+  @@index([module, isActive])
+  @@index([isActive])
+  @@map("workflow_definitions")
+}
+
+model WorkflowInstance {
+  id             String   @id @default(cuid())
+  definitionId   String
+  definition     WorkflowDefinition @relation(fields: [definitionId], references: [id])
+  entityType     String   // "ConsultaMedica", "LicencaObra", "SolicitacaoTFD"
+  entityId       String   // ID da entidade relacionada
+  citizenId      String?  // Cidadão vinculado (se aplicável)
+  currentStage   String   // ID do stage atual
+  status         WorkflowStatus
+  priority       Int      @default(0) // 0-10 (maior = mais urgente)
+  metadata       Json?    // Dados adicionais do contexto
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  completedAt    DateTime?
+
+  history        WorkflowHistory[]
+
+  @@index([entityType, entityId])
+  @@index([citizenId])
+  @@index([currentStage, status])
+  @@index([definitionId, status])
+  @@index([status, priority])
+  @@map("workflow_instances")
+}
+
+model WorkflowHistory {
+  id           String   @id @default(cuid())
+  instanceId   String
+  instance     WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  fromStage    String?  // Stage anterior (null se é criação)
+  toStage      String   // Stage atual
+  action       String   // "CREATED", "ADVANCED", "RETURNED", "COMPLETED", "CANCELLED"
+  userId       String   // Quem executou a ação
+  userName     String?  // Nome do usuário (desnormalizado para histórico)
+  notes        String?  // Observações/justificativa
+  attachments  Json?    // Array de anexos
+  timestamp    DateTime @default(now())
+  duration     Int?     // Tempo no stage anterior (minutos)
+
+  @@index([instanceId])
+  @@index([timestamp])
+  @@index([userId])
+  @@map("workflow_history")
+}
+
+enum WorkflowStatus {
+  ACTIVE      // Fluxo em andamento
+  PAUSED      // Pausado temporariamente
+  COMPLETED   // Concluído com sucesso
+  CANCELLED   // Cancelado
+  ERROR       // Erro no processamento
+}
+
+// ============================================================================
+// MICROSISTEMAS - SECRETARIA DE SAÚDE
+// ============================================================================
+
+// MS-02: Agenda Médica Inteligente
+model AgendaMedica {
+  id              String   @id @default(cuid())
+  profissionalId  String
+  unidadeId       String
+  diaSemana       Int      // 1-7
+  horaInicio      String   // "08:00"
+  horaFim         String   // "12:00"
+  tempoPorConsulta Int     // minutos
+  vagasDisponiveis Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  consultas       ConsultaAgendada[]
+
+  @@index([profissionalId, diaSemana])
+  @@index([unidadeId, isActive])
+  @@map("agendas_medicas")
+}
+
+model ConsultaAgendada {
+  id              String   @id @default(cuid())
+  agendaId        String
+  agenda          AgendaMedica @relation(fields: [agendaId], references: [id])
+  citizenId       String
+  dataHora        DateTime
+  status          ConsultaStatus
+  motivoConsulta  String?
+  observacoes     String?
+  canceladoPor    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([agendaId, dataHora])
+  @@index([citizenId])
+  @@index([status])
+  @@map("consultas_agendadas")
+}
+
+enum ConsultaStatus {
+  AGENDADA
+  CONFIRMADA
+  REALIZADA
+  FALTOU
+  CANCELADA
+}
+
+// MS-03: Prontuário Eletrônico do Paciente (PEP)
+model AtendimentoMedico {
+  id                String   @id @default(cuid())
+  workflowId        String   @unique
+  protocolId        String?  @unique
+  consultaAgendadaId String? @unique
+  citizenId         String
+  unidadeId         String
+  dataAtendimento   DateTime @default(now())
+  tipo              TipoAtendimento
+  status            AtendimentoStatus
+  prioridade        Int      @default(0)
+
+  recepcaoId        String?
+  horarioCheckin    DateTime?
+
+  triagemId         String?
+  triagem           TriagemEnfermagem?
+  horarioTriagem    DateTime?
+
+  consultaId        String?
+  consulta          ConsultaMedica?
+  profissionalId    String?
+  horarioConsulta   DateTime?
+
+  farmaciaId        String?
+  horarioFarmacia   DateTime?
+
+  tempoTotalMinutos Int?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([citizenId])
+  @@index([unidadeId, dataAtendimento])
+  @@index([status])
+  @@index([workflowId])
+  @@map("atendimentos_medicos")
+}
+
+enum TipoAtendimento {
+  AGENDADO
+  DEMANDA_ESPONTANEA
+  URGENCIA
+  RETORNO
+}
+
+enum AtendimentoStatus {
+  AGUARDANDO_CHECKIN
+  CHECKIN_REALIZADO
+  AGUARDANDO_TRIAGEM
+  EM_TRIAGEM
+  TRIAGEM_CONCLUIDA
+  AGUARDANDO_MEDICO
+  EM_CONSULTA
+  CONSULTA_CONCLUIDA
+  AGUARDANDO_FARMACIA
+  EM_FARMACIA
+  FINALIZADO
+  CANCELADO
+}
+
+model TriagemEnfermagem {
+  id                String   @id @default(cuid())
+  atendimentoId     String   @unique
+  atendimento       AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
+  enfermeiroId      String
+
+  pressaoArterial   String?
+  temperatura       Float?
+  frequenciaCardiaca Int?
+  frequenciaRespiratoria Int?
+  saturacaoO2       Int?
+  peso              Float?
+  altura            Float?
+  glicemia          Float?
+
+  classificacaoRisco ClassificacaoRisco
+  corProtocolo      String
+
+  queixaPrincipal   String
+  historiaAtual     String?
+  alergias          String?
+  medicamentosUso   String?
+  comorbidades      String?
+
+  observacoes       String?
+  dataHora          DateTime @default(now())
+
+  @@map("triagem_enfermagem")
+}
+
+enum ClassificacaoRisco {
+  EMERGENCIA
+  MUITO_URGENTE
+  URGENTE
+  POUCO_URGENTE
+  NAO_URGENTE
+}
+
+model ConsultaMedica {
+  id                String   @id @default(cuid())
+  atendimentoId     String   @unique
+  atendimento       AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
+  medicoId          String
+  profissionalSaudeId String?
+
+  queixaPrincipal   String
+  historiaDoenca    String?
+  historicoFamiliar String?
+  antecedentesPessoais String?
+  exameFisico       String?
+
+  hipoteseDiagnostica String?
+  diagnosticos      Json
+
+  conduta           String?
+  orientacoes       String?
+
+  retornoNecessario Boolean  @default(false)
+  prazoRetornoDias  Int?
+
+  observacoes       String?
+  dataHora          DateTime @default(now())
+
+  prescricoes       Prescricao[]
+  exameSolicitados  ExameSolicitado[]
+  atestados         Atestado[]
+  encaminhamentos   Encaminhamento[]
+
+  @@map("consultas_medicas")
+}
+
+model Prescricao {
+  id             String   @id @default(cuid())
+  consultaId     String
+  consulta       ConsultaMedica @relation(fields: [consultaId], references: [id])
+  medicamentos   Json
+  observacoes    String?
+  validade       DateTime
+  dispensada     Boolean  @default(false)
+  dataHora       DateTime @default(now())
+
+  @@index([consultaId])
+  @@map("prescricoes")
+}
+
+model ExameSolicitado {
+  id             String   @id @default(cuid())
+  consultaId     String
+  consulta       ConsultaMedica @relation(fields: [consultaId], references: [id])
+  tipoExame      String
+  justificativa  String?
+  prioridade     PrioridadeExame
+  status         StatusExame
+  resultado      String?
+  dataResultado  DateTime?
+  dataHora       DateTime @default(now())
+
+  @@index([consultaId])
+  @@map("exames_solicitados")
+}
+
+enum PrioridadeExame {
+  ROTINA
+  URGENTE
+  EMERGENCIA
+}
+
+enum StatusExame {
+  SOLICITADO
+  AGENDADO
+  COLETADO
+  PROCESSANDO
+  CONCLUIDO
+  CANCELADO
+}
+
+model Atestado {
+  id             String   @id @default(cuid())
+  consultaId     String
+  consulta       ConsultaMedica @relation(fields: [consultaId], references: [id])
+  tipo           TipoAtestado
+  cid10          String?
+  diasAfastamento Int
+  dataInicio     DateTime
+  dataFim        DateTime
+  observacoes    String?
+  dataHora       DateTime @default(now())
+
+  @@index([consultaId])
+  @@map("atestados")
+}
+
+enum TipoAtestado {
+  MEDICO
+  COMPARECIMENTO
+  ACOMPANHANTE
+}
+
+model Encaminhamento {
+  id             String   @id @default(cuid())
+  consultaId     String
+  consulta       ConsultaMedica @relation(fields: [consultaId], references: [id])
+  especialidade  String
+  motivo         String
+  prioridade     PrioridadeEncaminhamento
+  status         StatusEncaminhamento
+  dataAgendamento DateTime?
+  dataHora       DateTime @default(now())
+
+  @@index([consultaId])
+  @@map("encaminhamentos")
+}
+
+enum PrioridadeEncaminhamento {
+  ROTINA
+  PRIORIDADE
+  URGENCIA
+}
+
+enum StatusEncaminhamento {
+  PENDENTE
+  AGENDADO
+  REALIZADO
+  CANCELADO
+}
+
+// MS-05: Gestão de Medicamentos e Farmácia
+
+enum TipoMedicamento {
+  COMPRIMIDO
+  CAPSULA
+  SOLUCAO_ORAL
+  SUSPENSAO
+  POMADA
+  CREME
+  GEL
+  INJETAVEL
+  XAROPE
+  OUTRO
+}
+
+enum UnidadeMedida {
+  MG
+  G
+  ML
+  L
+  UNIDADE
+  FRASCO
+  AMPOLA
+  OUTRO
+}
+
+enum StatusEstoque {
+  DISPONIVEL
+  CRITICO
+  VENCIDO
+  BLOQUEADO
+}
+
+enum StatusDispensacao {
+  AGUARDANDO
+  DISPENSADO
+  PENDENTE
+  CANCELADO
+}
+
+model Medicamento {
+  id              String   @id @default(cuid())
+  nome            String
+  principioAtivo  String
+  apresentacao    String
+  catmat          String?
+  tipo            TipoMedicamento?
+  unidadeMedida   UnidadeMedida?
+  concentracao    String?
+  fabricante      String?
+  codigoBarras    String?
+  isControlado    Boolean  @default(false)
+  isRename        Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  estoques        EstoqueMedicamento[]
+
+  @@index([nome])
+  @@index([isRename])
+  @@map("medicamentos")
+}
+
+model EstoqueMedicamento {
+  id              String   @id @default(cuid())
+  medicamentoId   String
+  medicamento     Medicamento @relation(fields: [medicamentoId], references: [id])
+  unidadeId       String
+  quantidade      Int
+  quantidadeAtual Int?
+  quantidadeMinima Int?
+  lote            String
+  validade        DateTime
+  dataValidade    DateTime?
+  estoqueMinimo   Int
+  status          StatusEstoque?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([medicamentoId, unidadeId])
+  @@index([validade])
+  @@map("estoque_medicamentos")
+}
+
+model DispensacaoMedicamento {
+  id              String   @id @default(cuid())
+  prescricaoId    String?
+  medicamentoId   String
+  estoqueId       String?
+  citizenId       String
+  atendimentoId   String?
+  quantidade      Int
+  data            DateTime @default(now())
+  dispensadoEm    DateTime @default(now())
+  dispensadoPor   String
+  status          StatusDispensacao?
+  observacoes     String?
+
+  @@index([citizenId])
+  @@index([data])
+  @@map("dispensacao_medicamentos")
+}
+
+// MS-06: TFD - Tratamento Fora do Domicílio
+model SolicitacaoTFD {
+  id              String   @id @default(cuid())
+  workflowId      String   @unique
+  protocolId      String   @unique
+  citizenId       String
+  acompanhanteId  String?
+
+  especialidade   String
+  procedimento    String
+  cid10           String?
+  justificativa   String
+  encaminhamentoMedicoUrl String
+  examesUrls      Json?
+
+  prioridade      PrioridadeTFD
+  classificacaoRisco String?
+  prazoMaximoDias Int?
+
+  cidadeDestino   String
+  estadoDestino   String
+  hospitalDestino String?
+
+  status          TFDStatus
+  posicaoFila     Int?
+
+  analisadoPor    String?
+  dataAnalise     DateTime?
+  motivoRecusa    String?
+
+  reguladoPor     String?
+  dataRegulacao   DateTime?
+  parecerRegulador String?
+
+  aprovadoPor     String?
+  dataAprovacao   DateTime?
+  valorEstimado   Float?
+
+  agendadoPor     String?
+  dataConsulta    DateTime?
+  horarioConsulta String?
+  confirmado      Boolean  @default(false)
+
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  viagens         ViagemTFD[]
+
+  @@index([citizenId])
+  @@index([status])
+  @@index([workflowId])
+  @@map("solicitacoes_tfd")
+}
+
+enum PrioridadeTFD {
+  EMERGENCIA
+  ALTA
+  MEDIA
+  ROTINA
+}
+
+enum TFDStatus {
+  AGUARDANDO_ANALISE_DOCUMENTAL
+  DOCUMENTACAO_PENDENTE
+  AGUARDANDO_REGULACAO_MEDICA
+  AGUARDANDO_COMPLEMENTACAO
+  INDEFERIDO
+  APROVADO_REGULACAO
+  AGUARDANDO_APROVACAO_GESTAO
+  SUSPENSO
+  APROVADO_PARA_AGENDAMENTO
+  AGENDANDO
+  AGENDADO
+  AGUARDANDO_VIAGEM
+  EM_VIAGEM
+  REALIZADO
+  CANCELADO
+}
+
+model ViagemTFD {
+  id                String   @id @default(cuid())
+  solicitacaoTFDId  String
+  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoTFDId], references: [id])
+
+  tipo              TipoViagemTFD
+  dataViagem        DateTime
+  horarioSaida      String
+  horarioChegada    String?
+
+  veiculoId         String?
+  motoristaId       String?
+  passageiros       Json
+
+  kmInicial         Int?
+  kmFinal           Int?
+  kmTotal           Int?
+  combustivel       Float?
+  pedagios          Float?
+  hospedagem        Float?
+  alimentacao       Float?
+  outros            Float?
+  totalGasto        Float?
+
+  comprovantes      Json?
+  status            StatusViagemTFD
+  observacoes       String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([solicitacaoTFDId])
+  @@map("viagens_tfd")
+}
+
+enum TipoViagemTFD {
+  IDA
+  RETORNO
+  IDA_E_VOLTA
+}
+
+enum StatusViagemTFD {
+  PLANEJADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+model VeiculoTFD {
+  id              String   @id @default(cuid())
+  placa           String   @unique
+  modelo          String
+  ano             Int
+  capacidade      Int
+  acessibilidade  Boolean  @default(false)
+  status          StatusVeiculoTFD
+  km              Int      @default(0)
+  ultimaRevisao   DateTime?
+  proximaRevisao  DateTime?
+  observacoes     String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@map("veiculos_tfd")
+}
+
+enum StatusVeiculoTFD {
+  DISPONIVEL
+  EM_VIAGEM
+  MANUTENCAO
+  INATIVO
+}
+
+model MotoristaTFD {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  nome            String
+  cpf             String   @unique
+  cnh             String   @unique
+  categoriaCNH    String
+  validadeCNH     DateTime
+  telefone        String
+  status          StatusMotoristaTFD
+  observacoes     String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@map("motoristas_tfd")
+}
+
+enum StatusMotoristaTFD {
+  DISPONIVEL
+  EM_VIAGEM
+  FOLGA
+  INATIVO
+}
+
+// ============================================================================
+// MICROSISTEMAS - SECRETARIA DE EDUCAÇÃO
+// ============================================================================
+
+// MS-08: Sistema de Matrículas
+model InscricaoMatricula {
+  id                String   @id @default(cuid())
+  workflowId        String   @unique
+  alunoId           String
+  responsavelId     String
+  anoLetivo         Int
+  serie             String
+  turno             TurnoPreferencia
+
+  endereco          Json
+
+  escolaPreferencia1 String?
+  escolaPreferencia2 String?
+  escolaPreferencia3 String?
+
+  documentos        Json
+  necessidadeEspecial Boolean @default(false)
+  descricaoNecessidade String?
+
+  isTransferencia   Boolean  @default(false)
+  escolaOrigem      String?
+  motivoTransferencia String?
+
+  validadoPor       String?
+  dataValidacao     DateTime?
+  motivoRecusa      String?
+
+  escolaAtribuida   String?
+  turmaAtribuida    String?
+  dataDistribuicao  DateTime?
+  criterioDesempate String?
+
+  confirmadoEm      DateTime?
+  recusadoEm        DateTime?
+  motivoRecusaResponsavel String?
+
+  status            MatriculaStatus
+  posicaoFilaEspera Int?
+
+  matriculaId       String?  @unique
+  matricula         Matricula?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([serie, turno, status])
+  @@index([escolaAtribuida, status])
+  @@index([workflowId])
+  @@map("inscricoes_matricula")
+}
+
+enum TurnoPreferencia {
+  MATUTINO
+  VESPERTINO
+  INTEGRAL
+  INDIFERENTE
+}
+
+enum MatriculaStatus {
+  INSCRITO_AGUARDANDO_VALIDACAO
+  DOCUMENTACAO_PENDENTE
+  DOCUMENTOS_VALIDADOS
+  AGUARDANDO_DISTRIBUICAO
+  VAGA_ATRIBUIDA
+  LISTA_ESPERA
+  CONFIRMADA
+  RECUSADA
+  EXPIRADA
+  MATRICULADO
+  INDEFERIDA
+  CANCELADA
+}
+
+model Matricula {
+  id              String   @id @default(cuid())
+  inscricaoId     String   @unique
+  inscricao       InscricaoMatricula @relation(fields: [inscricaoId], references: [id])
+  alunoId         String
+  responsavelId   String
+  unidadeEducacaoId String
+  turmaId         String
+  turma           Turma    @relation(fields: [turmaId], references: [id])
+  anoLetivo       Int
+  numeroMatricula String   @unique
+  dataMatricula   DateTime @default(now())
+  dataInicio      DateTime?
+  situacao        SituacaoMatricula
+  dataTransferencia DateTime?
+  motivoTransferencia String?
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([alunoId, anoLetivo])
+  @@index([turmaId, situacao])
+  @@map("matriculas")
+}
+
+enum SituacaoMatricula {
+  ATIVA
+  TRANSFERIDA
+  CANCELADA
+  CONCLUIDA
+}
+
+model Turma {
+  id              String   @id @default(cuid())
+  unidadeEducacaoId String
+  codigo          String   @unique
+  nome            String?
+  serie           String
+  turno           Turno
+  ano             Int
+  professorId     String?
+  sala            String?
+  capacidade      Int
+  vagasOcupadas   Int      @default(0)
+  vagasDisponiveis Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  matriculas      Matricula[]
+
+  @@index([unidadeEducacaoId, serie, turno, ano])
+  @@map("turmas")
+}
+
+enum Turno {
+  MATUTINO
+  VESPERTINO
+  INTEGRAL
+  NOTURNO
+}
+
+enum TipoTurma {
+  REGULAR
+  INTEGRAL
+  EJA
+  ESPECIAL
+}
+
+// MS-09: Gestão de Transporte Escolar
+model VeiculoEscolar {
+  id              String   @id @default(cuid())
+  placa           String   @unique
+  modelo          String
+  capacidade      Int
+  acessibilidade  Boolean  @default(false)
+  status          VeiculoStatus
+  km              Int      @default(0)
+  ultimaRevisao   DateTime?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@map("veiculos_escolares")
+}
+
+enum VeiculoStatus {
+  DISPONIVEL
+  EM_USO
+  MANUTENCAO
+  INATIVO
+}
+
+model RotaEscolar {
+  id              String   @id @default(cuid())
+  nome            String
+  veiculoId       String
+  motoristaId     String
+  turno           Turno
+  horarioSaida    String
+  horarioRetorno  String
+  pontos          Json
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([turno])
+  @@map("rotas_escolares")
+}
+
+model AlunoRota {
+  id              String   @id @default(cuid())
+  alunoId         String
+  rotaId          String
+  pontoEmbarque   String
+  ativo           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([alunoId, rotaId])
+  @@map("alunos_rotas")
+}
+
+// ============================================================================
+// MICROSISTEMAS - SECRETARIA DE ASSISTÊNCIA SOCIAL
+// ============================================================================
+
+// MS-14: CadÚnico Municipal
+model CadUnicoFamilia {
+  id                String   @id @default(cuid())
+  workflowId        String   @unique
+  responsavelFamiliarId String
+  nisResponsavel    String?  @unique
+
+  crasId            String?
+  dataAgendamento   DateTime?
+  horarioAgendamento String?
+  agendadoPor       String?
+
+  entrevistadoPor   String?
+  entrevistadorId   String?
+  dataEntrevista    DateTime?
+  localEntrevista   String?
+
+  membros           MembroFamilia[]
+
+  rendaTotalFamiliar Float   @default(0)
+  rendaPerCapita    Float    @default(0)
+  fontesRenda       Json?
+
+  despesaMoradia    Float?
+  despesaAlimentacao Float?
+  despesaSaude      Float?
+  despesaEducacao   Float?
+  despesaOutros     Float?
+
+  tipoMoradia       TipoMoradia
+  situacaoMoradia   SituacaoMoradia
+  aguaEncanada      Boolean  @default(false)
+  energiaEletrica   Boolean  @default(false)
+  esgoto            Boolean  @default(false)
+  coletaLixo        Boolean  @default(false)
+
+  endereco          Json?
+
+  documentos        Json
+
+  validadoPor       String?
+  dataValidacao     DateTime?
+
+  analisadoPor      String?
+  dataAnalise       DateTime?
+  parecerSocial     String?
+  motivoIndeferimento String?
+
+  nisFamilia        String?  @unique
+  numeroCadUnico    String?  @unique
+  dataCadastro      DateTime?
+  dataUltimaAtualizacao DateTime?
+  proximaAtualizacao DateTime?
+
+  status            CadUnicoStatus
+
+  programasVinculados Json?
+
+  observacoes       String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([responsavelFamiliarId])
+  @@index([nisFamilia])
+  @@index([numeroCadUnico])
+  @@index([status])
+  @@index([proximaAtualizacao])
+  @@index([workflowId])
+  @@map("cadunico_familias")
+}
+
+enum TipoMoradia {
+  CASA
+  CASA_PROPRIA
+  APARTAMENTO
+  COMODO
+  BARRACO
+  OUTRO
+}
+
+enum SituacaoMoradia {
+  PROPRIA_QUITADA
+  PROPRIA_FINANCIADA
+  ADEQUADA
+  ALUGADA
+  CEDIDA
+  OCUPACAO
+  OUTRO
+}
+
+enum CadUnicoStatus {
+  AGENDADO
+  AGUARDANDO_ENTREVISTA
+  EM_ENTREVISTA
+  ENTREVISTA_CONCLUIDA
+  DOCUMENTACAO_PENDENTE
+  DOCUMENTOS_VALIDADOS
+  AGUARDANDO_ANALISE
+  AGUARDANDO_COMPLEMENTACAO
+  APROVADO
+  INDEFERIDO
+  CADASTRADO
+  ATIVO
+  DESATUALIZADO
+  SUSPENSO
+  CANCELADO
+}
+
+model MembroFamilia {
+  id              String   @id @default(cuid())
+  familiaId       String
+  familia         CadUnicoFamilia @relation(fields: [familiaId], references: [id])
+  citizenId       String?
+  nome            String
+  cpf             String?
+  dataNascimento  DateTime
+  parentesco      Parentesco
+  sexo            Sexo
+  raca            Raca
+  escolaridade    Escolaridade
+  trabalha        Boolean  @default(false)
+  rendaMensal     Float    @default(0)
+  fonteRenda      String?
+  deficiencia     Boolean  @default(false)
+  tipoDeficiencia String?
+  frequentaEscola Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([familiaId])
+  @@index([cpf])
+  @@map("membros_familia")
+}
+
+enum Parentesco {
+  RESPONSAVEL_FAMILIAR
+  CONJUGE_COMPANHEIRO
+  FILHO_ENTEADO
+  PAI_MAE
+  SOGRO_SOGRA
+  NETO_BISNETO
+  IRMAO_IRMA
+  GENRO_NORA
+  OUTRO
+}
+
+enum Sexo {
+  MASCULINO
+  FEMININO
+  OUTRO
+}
+
+enum Raca {
+  BRANCA
+  PRETA
+  PARDA
+  AMARELA
+  INDIGENA
+}
+
+enum Escolaridade {
+  SEM_INSTRUCAO
+  FUNDAMENTAL_INCOMPLETO
+  FUNDAMENTAL_COMPLETO
+  MEDIO_INCOMPLETO
+  MEDIO_COMPLETO
+  SUPERIOR_INCOMPLETO
+  SUPERIOR_COMPLETO
+}
+
+// Aliases para compatibilidade
+enum GrauParentesco {
+  RESPONSAVEL_FAMILIAR
+  CONJUGE_COMPANHEIRO
+  FILHO_ENTEADO
+  PAI_MAE
+  SOGRO_SOGRA
+  NETO_BISNETO
+  IRMAO_IRMA
+  GENRO_NORA
+  OUTRO
+}
+
+enum SituacaoTrabalho {
+  EMPREGADO_FORMAL
+  EMPREGADO_INFORMAL
+  AUTONOMO
+  DESEMPREGADO
+  APOSENTADO
+  PENSIONISTA
+  NAO_TRABALHA
+}
+
+// MS-15: Gestão de Programas Sociais
+model InscricaoProgramaSocial {
+  id              String   @id @default(cuid())
+  workflowId      String   @unique
+  programaId      String
+  programaSocialId String?
+  familiaId       String
+  beneficiarioId  String
+
+  cadUnicoValidado Boolean  @default(false)
+  rendaPerCapita  Float?
+  atendeCriterios Boolean  @default(false)
+  motivoNaoElegibilidade String?
+
+  analisadoPor    String?
+  dataAnalise     DateTime?
+  parecerSocial   String?
+  visitaDomiciliar Boolean  @default(false)
+  dataVisita      DateTime?
+  relatorioVisita String?
+
+  psicologoId     String?
+  dataParecer     DateTime?
+  parecerPsicologico String?
+
+  aprovadoPor     String?
+  dataAprovacao   DateTime?
+  motivoIndeferimento String?
+
+  dataConcessao   DateTime?
+  numeroBeneficio String?  @unique
+  valorMensal     Float?
+  diaVencimento   Int?
+  contaBancaria   Json?
+
+  status          ProgramaSocialStatus
+
+  dataUltimaRenovacao DateTime?
+  proximaRenovacao DateTime?
+
+  suspenso        Boolean  @default(false)
+  motivoSuspensao String?
+  dataSuspensao   DateTime?
+  motivoCancelamento String?
+  dataInicio      DateTime?
+
+  observacoes     String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  acompanhamentos AcompanhamentoBeneficio[]
+  pagamentos      PagamentoBeneficio[]
+
+  @@index([programaId, status])
+  @@index([programaSocialId])
+  @@index([beneficiarioId])
+  @@index([numeroBeneficio])
+  @@index([workflowId])
+  @@map("inscricoes_programas_sociais")
+}
+
+enum ProgramaSocialStatus {
+  INSCRITO
+  VERIFICACAO_CADUNICO
+  NAO_ELEGIVEL
+  VERIFICACAO_APROVADA
+  AGUARDANDO_ANALISE
+  AGUARDANDO_VISITA
+  PARECER_FAVORAVEL
+  PARECER_DESFAVORAVEL
+  AGUARDANDO_PARECER_PSICOLOGICO
+  PARECER_PSICOLOGICO_CONCLUIDO
+  AGUARDANDO_APROVACAO
+  APROVADO
+  INDEFERIDO
+  CONCEDIDO
+  ATIVO
+  ATIVA
+  SUSPENSO
+  CANCELADO
+}
+
+model AcompanhamentoBeneficio {
+  id              String   @id @default(cuid())
+  inscricaoId     String
+  inscricao       InscricaoProgramaSocial @relation(fields: [inscricaoId], references: [id])
+  tipo            TipoAcompanhamento
+  assistenteSocialId String?
+  responsavelId   String
+  data            DateTime @default(now())
+  dataVisita      DateTime?
+  descricao       String
+  observacoes     String?
+  proximoAcompanhamento DateTime?
+
+  @@index([inscricaoId])
+  @@map("acompanhamentos_beneficio")
+}
+
+enum TipoAcompanhamento {
+  VISITA_DOMICILIAR
+  ATENDIMENTO_PSICOSSOCIAL
+  VERIFICACAO_CONDICIONALIDADES
+  RENOVACAO
+  OUTRO
+}
+
+model PagamentoBeneficio {
+  id              String   @id @default(cuid())
+  inscricaoId     String
+  inscricao       InscricaoProgramaSocial @relation(fields: [inscricaoId], references: [id])
+  competencia     String
+  valor           Float
+  dataPagamento   DateTime?
+  createdAt       DateTime @default(now())
+  status          StatusPagamento
+  comprovante     String?
+  observacoes     String?
+
+  @@index([inscricaoId, competencia])
+  @@map("pagamentos_beneficio")
+}
+
+enum StatusPagamento {
+  AGUARDANDO
+  PENDENTE
+  PROCESSANDO
+  PAGO
+  FALHA
+  ESTORNADO
+}
+
+enum MeioPagamento {
+  DINHEIRO
+  PIX
+  TRANSFERENCIA
+  CARTAO_DEBITO
+  CARTAO_CREDITO
+  BOLETO
+  OUTRO
+}
+
+// ============================================================================
+// MICROSISTEMAS - SECRETARIA DE AGRICULTURA
+// ============================================================================
+
+// MS-20+21: Gestão de Máquinas e Empréstimos
+model SolicitacaoEmprestimoMaquina {
+  id              String   @id @default(cuid())
+  workflowId      String   @unique
+  produtorRuralId String
+  produtorRural   ProdutorRural @relation(fields: [produtorRuralId], references: [id])
+  maquinaId       String
+  maquina         MaquinaAgricolaMS @relation(fields: [maquinaId], references: [id])
+
+  dataInicio      DateTime
+  dataEmprestimo  DateTime?
+  dataFim         DateTime
+  diasSolicitados Int
+  horasEstimadas  Int?
+  horasUtilizadas Int?
+
+  finalidade      FinalidadeUsoMaquina
+  areaUtilizacao  String
+  tamanhoArea     Float?
+  justificativa   String
+
+  validadoPor     String?
+  dataValidacao   DateTime?
+  motivoPendencia String?
+
+  aprovadoPor     String?
+  dataAprovacao   DateTime?
+  parecerTecnico  String?
+  maquinaAlternativaSugerida String?
+  motivoIndeferimento String?
+
+  dataRetirada    DateTime?
+  horarioRetirada String?
+  condicaoRetirada String?
+
+  vistoriadoPor   String?
+  dataVistoriaRetirada DateTime?
+  checklistRetirada Json?
+  fotosRetirada   Json?
+  odometroInicial Int?
+  horimetroInicial Int?
+  nivelCombustivelInicial String?
+  termoAssinado   Boolean  @default(false)
+
+  dataInicioReal  DateTime?
+
+  dataDevolucao   DateTime?
+  condicaoDevolucao String?
+  vistoriaDevolucaoPor String?
+  checklistDevolucao Json?
+  fotosDevolucao  Json?
+  odometroFinal   Int?
+  horimetroFinal  Int?
+  horasUsadas     Int?
+  nivelCombustivelFinal String?
+  danosDetectados Boolean  @default(false)
+  descricaoDanos  String?
+
+  valorBase       Float?
+  valorHoraExtra  Float?
+  multaAtraso     Float?
+  multaDanos      Float?
+  totalCobrado    Float?
+  statusPagamento StatusPagamentoMaquina
+  dataPagamento   DateTime?
+
+  status          EmprestimoMaquinaStatus
+
+  observacoes     String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([produtorRuralId, status])
+  @@index([maquinaId, dataInicio, dataFim])
+  @@index([workflowId])
+  @@map("solicitacoes_emprestimo_maquina")
+}
+
+enum FinalidadeUsoMaquina {
+  PREPARO_SOLO
+  PLANTIO
+  PULVERIZACAO
+  COLHEITA
+  TRANSPORTE
+  OUTRO
+}
+
+enum EmprestimoMaquinaStatus {
+  SOLICITADO
+  CADASTRO_PENDENTE
+  CADASTRO_VALIDADO
+  AGUARDANDO_APROVACAO
+  INDEFERIDO
+  APROVADO
+  APROVADO_TECNICO
+  AGENDADO
+  AGUARDANDO_RETIRADA
+  EMPRESTIMO_ATIVO
+  ATRASADO
+  AGUARDANDO_DEVOLUCAO
+  DEVOLVIDO
+  DEVOLVIDO_COM_PENDENCIA
+  FINALIZADO
+  CANCELADO
+}
+
+enum StatusPagamentoMaquina {
+  NAO_APLICAVEL
+  PENDENTE
+  PAGO
+  ISENTO
+}
+
+model MaquinaAgricolaMS {
+  id              String   @id @default(cuid())
+  tipo            TipoMaquinaAgricola
+  nome            String?
+  marca           String
+  modelo          String
+  ano             Int?
+  placa           String?  @unique
+  patrimonio      String   @unique
+  numeroPatrimonio String?
+  capacidade      String?
+
+  odometro        Int      @default(0)
+  horimetro       Int      @default(0)
+  horasUso        Int?
+
+  ultimaManutencao DateTime?
+  proximaManutencao DateTime?
+  historicoManutencao Json?
+
+  status          StatusMaquina
+  disponivel      Boolean  @default(true)
+  motivoIndisponibilidade String?
+
+  valorHora       Float?
+  valorDiaria     Float?
+
+  certificados    Json?
+
+  observacoes     String?
+
+  solicitacoes    SolicitacaoEmprestimoMaquina[]
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([tipo, status])
+  @@map("maquinas_agricolas_ms")
+}
+
+enum TipoMaquinaAgricola {
+  TRATOR
+  GRADE_ARADORA
+  PLANTADEIRA
+  PULVERIZADOR
+  COLHEITADEIRA
+  CARRETA
+  ROCADEIRA
+  DISTRIBUIDOR_CALCARIO
+  OUTRO
+}
+
+enum StatusMaquina {
+  DISPONIVEL
+  EMPRESTADA
+  MANUTENCAO
+  QUEBRADA
+  INATIVA
+}
+
+// Alias para compatibilidade
+enum MaquinaStatus {
+  DISPONIVEL
+  EMPRESTADA
+  MANUTENCAO
+  QUEBRADA
+  INATIVA
+}
+
+model ProdutorRural {
+  id              String   @id @default(cuid())
+  citizenId       String   @unique
+  cpf             String   @unique
+  nome            String
+
+  propriedadeNome String?
+  nomePropriedade String?
+  propriedadeEndereco String?
+  endereco        Json
+  areaTotalHectares Float?
+  areaTotal       Float?
+  georreferenciamento Json?
+
+  atividadePrincipal String?
+  tiposProducao   Json?
+
+  inscricaoEstadual String?
+  car             String?
+  CAR             String?
+  dap             String?
+  telefoneContato String?
+
+  emprestimosRealizados Int @default(0)
+  pendencias      Boolean  @default(false)
+  motivoPendencia String?
+
+  solicitacoes    SolicitacaoEmprestimoMaquina[]
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([cpf])
+  @@map("produtores_rurais")
+}
+
+// ============================================================================
+// MS-04: AGENDAMENTO DE EXAMES LABORATORIAIS E DE IMAGEM
+// ============================================================================
+
+model SolicitacaoExame {
+  id                    String   @id @default(cuid())
+  workflowId            String   @unique
+  citizenId             String
+  medicoSolicitante     String
+  unidadeSaude          String
+  tipoExame             TipoExameSolicitacao
+  exameEspecifico       String
+  justificativa         String
+  prioridade            Int      @default(0)
+  status                StatusSolicitacaoExame @default(AGUARDANDO_AGENDAMENTO)
+  documentosAnexados    Json?
+  observacoes           String?
+  agendamento           AgendamentoExame?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([citizenId])
+  @@index([status])
+  @@index([tipoExame])
+  @@index([workflowId])
+  @@map("solicitacoes_exame")
+}
+
+model AgendamentoExame {
+  id                    String   @id @default(cuid())
+  solicitacaoId         String   @unique
+  laboratorioId         String?
+  dataAgendada          DateTime
+  horario               String
+  status                StatusAgendamentoExame @default(AGENDADO)
+  localRealizacao       String
+  preparoNecessario     String?
+  dataRealizacao        DateTime?
+  resultadoDisponivel   Boolean  @default(false)
+  dataResultado         DateTime?
+  laudoUrl              String?
+  medicoLaudador        String?
+  observacoesResultado  String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  solicitacao           SolicitacaoExame @relation(fields: [solicitacaoId], references: [id])
+
+  @@index([dataAgendada])
+  @@index([status])
+  @@map("agendamentos_exame")
+}
+
+enum TipoExameSolicitacao {
+  LABORATORIAL
+  IMAGEM
+  CARDIOLOGICO
+  ULTRASSOM
+  ENDOSCOPIA
+  OUTROS
+}
+
+enum StatusSolicitacaoExame {
+  AGUARDANDO_AGENDAMENTO
+  AGENDADO
+  CONFIRMADO
+  EM_REALIZACAO
+  REALIZADO
+  LAUDADO
+  RESULTADO_ENTREGUE
+  CANCELADO
+}
+
+enum StatusAgendamentoExame {
+  AGENDADO
+  CONFIRMADO
+  REMARCADO
+  REALIZADO
+  FALTOU
+  CANCELADO
+}
+
+// ============================================================================
+// MS-10: GESTÃO DE MERENDA ESCOLAR
+// ============================================================================
+
+model CardapioMerenda {
+  id                String   @id @default(cuid())
+  unidadeEducacaoId String
+  diaSemana         Int      // 0-6 (Domingo a Sábado)
+  turno             String   // MATUTINO, VESPERTINO, INTEGRAL
+  refeicao          String   // CAFE_MANHA, ALMOCO, LANCHE_TARDE
+  alimentos         Json     // Array de {alimento, quantidade, unidade}
+  valorNutricional  Json?    // {calorias, proteinas, carboidratos, etc}
+  alergenicos       Json?    // Array de alertas de alérgenos
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([unidadeEducacaoId, diaSemana])
+  @@index([isActive])
+  @@map("cardapio_merenda")
+}
+
+model EstoqueAlimento {
+  id          String   @id @default(cuid())
+  nome        String
+  categoria   String   // PROTEINA, CARBOIDRATO, VEGETAL, FRUTA, LACTEO, etc
+  unidade     String   // KG, L, UN
+  quantidade  Float
+  validade    DateTime
+  lote        String?
+  fornecedor  String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([nome])
+  @@index([validade])
+  @@index([isActive])
+  @@map("estoque_alimentos")
+}
+
+model ConsumoMerenda {
+  id                String   @id @default(cuid())
+  unidadeEducacaoId String
+  data              DateTime @default(now())
+  turno             String
+  refeicao          String
+  alunosAtendidos   Int
+  alimentosUsados   Json     // Array de {alimentoId, quantidade}
+  observacoes       String?
+  registradoPor     String   // userId
+  createdAt         DateTime @default(now())
+
+  @@index([unidadeEducacaoId, data])
+  @@map("consumo_merenda")
+}
+
+// ============================================================================
+// MS-11: PORTAL DO PROFESSOR
+// ============================================================================
+
+model DiarioClasse {
+  id                String   @id @default(cuid())
+  unidadeEducacaoId String
+  turmaId           String
+  professorId       String   // userId
+  disciplina        String
+  ano               Int
+  semestre          Int      // 1 ou 2
+  aulas             Aula[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([professorId, turmaId])
+  @@index([unidadeEducacaoId])
+  @@map("diario_classe")
+}
+
+model Aula {
+  id               String   @id @default(cuid())
+  diarioId         String
+  diario           DiarioClasse @relation(fields: [diarioId], references: [id], onDelete: Cascade)
+  data             DateTime
+  conteudo         String
+  observacoes      String?
+  frequencias      Frequencia[]
+  avaliacoes       Avaliacao[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([diarioId, data])
+  @@map("aulas")
+}
+
+model Frequencia {
+  id       String  @id @default(cuid())
+  aulaId   String
+  aula     Aula    @relation(fields: [aulaId], references: [id], onDelete: Cascade)
+  alunoId  String
+  presente Boolean @default(true)
+  justificado Boolean @default(false)
+  observacao String?
+
+  @@index([aulaId])
+  @@index([alunoId])
+  @@map("frequencias")
+}
+
+model Avaliacao {
+  id          String   @id @default(cuid())
+  aulaId      String?
+  aula        Aula?    @relation(fields: [aulaId], references: [id])
+  diarioId    String
+  tipo        String   // PROVA, TRABALHO, PARTICIPACAO, etc
+  descricao   String
+  data        DateTime
+  peso        Float    @default(1.0)
+  notas       Nota[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([diarioId])
+  @@map("avaliacoes")
+}
+
+model Nota {
+  id          String   @id @default(cuid())
+  avaliacaoId String
+  avaliacao   Avaliacao @relation(fields: [avaliacaoId], references: [id], onDelete: Cascade)
+  alunoId     String
+  nota        Float
+  observacao  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([avaliacaoId])
+  @@index([alunoId])
+  @@map("notas")
+}
+
+// ============================================================================
+// MS-16: CONTROLE DE BENEFÍCIOS EVENTUAIS
+// ============================================================================
+
+model TipoBeneficio {
+  id          String   @id @default(cuid())
+  nome        String   @unique
+  descricao   String?
+  categoria   String   // EVENTUAL, RECORRENTE
+  valor       Float?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  solicitacoes SolicitacaoBeneficio[]
+
+  @@index([isActive])
+  @@map("tipos_beneficio")
+}
+
+model SolicitacaoBeneficio {
+  id                String   @id @default(cuid())
+  protocolId        String?  @unique
+  citizenId         String
+  tipoBeneficioId   String
+  tipoBeneficio     TipoBeneficio @relation(fields: [tipoBeneficioId], references: [id])
+  unidadeCRASId     String?
+  justificativa     String
+  documentosAnexos  Json?
+  status            StatusBeneficio @default(AGUARDANDO_ANALISE)
+  analisadoPor      String?
+  dataAnalise       DateTime?
+  motivoIndeferimento String?
+  dataEntrega       DateTime?
+  valorConcedido    Float?
+  observacoes       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([citizenId])
+  @@index([status])
+  @@index([tipoBeneficioId])
+  @@map("solicitacoes_beneficio")
+}
+
+enum StatusBeneficio {
+  AGUARDANDO_ANALISE
+  EM_ANALISE
+  DOCUMENTACAO_PENDENTE
+  DEFERIDO
+  INDEFERIDO
+  ENTREGUE
+  CANCELADO
+}
+
+// ============================================================================
+// MS-17: ATENDIMENTO PSICOSSOCIAL
+// ============================================================================
+
+model FichaAtendimentoPsicossocial {
+  id                String   @id @default(cuid())
+  citizenId         String
+  unidadeCRASId     String
+  profissionalId    String   // userId (assistente social ou psicólogo)
+  tipoAtendimento   String   // INDIVIDUAL, FAMILIAR, GRUPAL
+  data              DateTime @default(now())
+  motivoAtendimento String
+  relatoSituacao    String
+  encaminhamentos   Json?    // Array de encaminhamentos
+  proximoAtendimento DateTime?
+  statusCaso        String   // ATIVO, ACOMPANHAMENTO, ENCERRADO
+  observacoes       String?
+  acompanhamentos   Acompanhamento[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([citizenId])
+  @@index([profissionalId])
+  @@index([unidadeCRASId])
+  @@index([statusCaso])
+  @@map("fichas_atendimento_psicossocial")
+}
+
+model Acompanhamento {
+  id                String   @id @default(cuid())
+  fichaId           String
+  ficha             FichaAtendimentoPsicossocial @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  data              DateTime @default(now())
+  descricao         String
+  profissionalId    String
+  anexos            Json?
+  createdAt         DateTime @default(now())
+
+  @@index([fichaId])
+  @@map("acompanhamentos_psicossociais")
+}
+
+// ============================================================================
+// MS-22: ASSISTÊNCIA TÉCNICA RURAL
+// ============================================================================
+
+model VisitaTecnica {
+  id              String   @id @default(cuid())
+  produtorId      String
+  tecnicoId       String   // userId
+  data            DateTime
+  tipo            String   // ORIENTACAO, VISTORIA, ACOMPANHAMENTO
+  assunto         String
+  descricao       String
+  recomendacoes   String?
+  proximaVisita   DateTime?
+  anexos          Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([produtorId])
+  @@index([tecnicoId])
+  @@index([data])
+  @@map("visitas_tecnicas")
+}
+
+// ============================================================================
+// MS-23: CONTROLE DE PRODUÇÃO AGRÍCOLA
+// ============================================================================
+
+model RegistroProducao {
+  id              String   @id @default(cuid())
+  produtorId      String
+  safra           String
+  produto         String
+  area            Float    // hectares
+  quantidadeKg    Float
+  dataColheita    DateTime
+  destinacao      String   // VENDA, CONSUMO, DOACAO
+  valorVenda      Float?
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([produtorId])
+  @@index([safra])
+  @@index([produto])
+  @@map("registros_producao")
+}
+
+// ============================================================================
+// MS-24: GESTÃO DE FEIRAS DO PRODUTOR
+// ============================================================================
+
+model Feira {
+  id          String   @id @default(cuid())
+  nome        String
+  local       String
+  endereco    String?
+  diaSemana   Int      // 0-6
+  horarioInicio String
+  horarioFim  String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  boxes       BoxFeira[]
+
+  @@index([isActive])
+  @@map("feiras")
+}
+
+model BoxFeira {
+  id          String   @id @default(cuid())
+  feiraId     String
+  feira       Feira    @relation(fields: [feiraId], references: [id], onDelete: Cascade)
+  numero      String
+  produtorId  String?
+  ativo       Boolean  @default(true)
+  observacoes String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([feiraId])
+  @@index([produtorId])
+  @@unique([feiraId, numero])
+  @@map("boxes_feira")
+}
+
+// ============================================================================
+// MS-12: PORTAL DO ALUNO/PAIS
+// ============================================================================
+model BoletimAluno {
+  id String @id @default(cuid())
+  alunoId String
+  diarioId String
+  ano Int
+  semestre Int
+  mediaFinal Float
+  frequenciaPercentual Float
+  situacao String
+  observacoes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([alunoId])
+  @@map("boletins_aluno")
+}
+
+// ============================================================================
+// CULTURA (MS-25 a MS-32)
+// ============================================================================
+model EspacoCultural {
+  id String @id @default(cuid())
+  nome String
+  tipo String
+  endereco String
+  capacidade Int
+  recursos Json?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reservas ReservaEspacoCultural[]
+  @@map("espacos_culturais")
+}
+
+model ReservaEspacoCultural {
+  id String @id @default(cuid())
+  espacoId String
+  espaco EspacoCultural @relation(fields: [espacoId], references: [id])
+  citizenId String
+  solicitanteId String?
+  dataReserva DateTime @default(now())
+  dataInicio DateTime
+  dataFim DateTime
+  evento String
+  status String
+  observacoes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([espacoId])
+  @@index([citizenId])
+  @@map("reservas_espaco_cultural")
+}
+
+model Artista {
+  id String @id @default(cuid())
+  citizenId String
+  nomeArtistico String
+  categoria String
+  especialidade String
+  portfolio Json?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("artistas")
+}
+
+model EventoCultural {
+  id String @id @default(cuid())
+  nome String
+  tipo String
+  categoria String?
+  dataInicio DateTime
+  dataFim DateTime
+  local String
+  descricao String?
+  status String @default("AGENDADO")
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("eventos_culturais")
+}
+
+model EditalCultural {
+  id String @id @default(cuid())
+  nome String
+  descricao String
+  dataAbertura DateTime
+  dataFechamento DateTime
+  valorTotal Float
+  status String
+  isActive Boolean @default(true)
+  dataPublicacao DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("editais_culturais")
+}
+
+model LivroBiblioteca {
+  id String @id @default(cuid())
+  titulo String
+  autor String
+  isbn String?
+  categoria String
+  editora String?
+  anoPublicacao Int?
+  disponivel Boolean @default(true)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  emprestimos EmprestimoBiblioteca[]
+  @@map("livros_biblioteca")
+}
+
+model EmprestimoBiblioteca {
+  id String @id @default(cuid())
+  livroId String
+  livro LivroBiblioteca @relation(fields: [livroId], references: [id])
+  citizenId String
+  dataEmprestimo DateTime @default(now())
+  dataPrevistaDevolucao DateTime
+  dataDevolucao DateTime?
+  status String @default("ATIVO")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([livroId])
+  @@index([citizenId])
+  @@map("emprestimos_biblioteca")
+}
+
+model PatrimonioCultural {
+  id String @id @default(cuid())
+  nome String
+  tipo String
+  endereco String
+  descricao String?
+  statusConservacao String
+  anoTombamento Int?
+  visitantes Int @default(0)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("patrimonios_culturais")
+}
+
+model OcorrenciaAluno {
+  id String @id @default(cuid())
+  alunoId String
+  tipo String
+  data DateTime @default(now())
+  descricao String
+  lida Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([alunoId])
+  @@map("ocorrencias_aluno")
+}
+
+// ============================================================================
+// ESPORTES (MS-33 a MS-36)
+// ============================================================================
+model Atleta {
+  id String @id @default(cuid())
+  citizenId String
+  modalidade String
+  categoria String
+  equipe String?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("atletas")
+}
+
+model Campeonato {
+  id String @id @default(cuid())
+  nome String
+  modalidade String
+  dataInicio DateTime
+  dataFim DateTime
+  status String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("campeonatos")
+}
+
+model EscolinhaEsporte {
+  id String @id @default(cuid())
+  nome String
+  modalidade String
+  faixaEtaria String
+  vagasTotal Int
+  vagasOcupadas Int @default(0)
+  alunos Json?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("escolinhas_esporte")
+}
+
+model EquipamentoEsportivo {
+  id String @id @default(cuid())
+  nome String
+  tipo String
+  localizacao String
+  status String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("equipamentos_esportivos")
+}
+
+// ============================================================================
+// HABITAÇÃO (MS-37 a MS-42)
+// ============================================================================
+model InscricaoHabitacao {
+  id String @id @default(cuid())
+  workflowId String @unique
+  citizenId String
+  rendaFamiliar Float
+  composicaoFamiliar Int
+  pontuacao Int?
+  status String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("inscricoes_habitacao")
+}
+
+model ObraHabitacional {
+  id String @id @default(cuid())
+  nome String
+  conjuntoId String?
+  dataInicio DateTime
+  dataPrevisao DateTime?
+  status String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("obras_habitacionais")
+}
+
+// ============================================================================
+// MEIO AMBIENTE (MS-43 a MS-48)
+// ============================================================================
+model ArvoreUrbana {
+  id String @id @default(cuid())
+  especie String
+  localizacao String
+  coordenadas Json?
+  status String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("arvores_urbanas")
+}
+
+model PontoColeta {
+  id String @id @default(cuid())
+  nome String
+  endereco String
+  tipoMaterial String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("pontos_coleta")
+}
+
+model LicencaAmbiental {
+  id String @id @default(cuid())
+  workflowId String @unique
+  solicitanteId String
+  tipoAtividade String
+  status String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("licencas_ambientais")
+}
+
+// ============================================================================
+// OBRAS PÚBLICAS (MS-49 a MS-54)
+// ============================================================================
+model TipoObra {
+  id String @id @default(cuid())
+  nome String
+  descricao String?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("tipos_obra")
+}
+
+model SolicitacaoObra {
+  id String @id @default(cuid())
+  workflowId String @unique
+  tipoObraId String
+  localizacao String
+  descricao String
+  status String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("solicitacoes_obra")
+}
+
+model ObraPublica {
+  id String @id @default(cuid())
+  nome String
+  tipoObraId String
+  dataInicio DateTime
+  dataPrevisao DateTime?
+  status String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("obras_publicas")
+}
+
+model PontoIluminacao {
+  id String @id @default(cuid())
+  localizacao String
+  tipo String
+  status String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("pontos_iluminacao")
+}
+
+// ============================================================================
+// SEGURANÇA PÚBLICA (MS-55 a MS-60)
+// ============================================================================
+model Viatura {
+  id String @id @default(cuid())
+  placa String @unique
+  tipo String
+  modelo String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("viaturas")
+}
+
+model Ocorrencia {
+  id String @id @default(cuid())
+  workflowId String @unique
+  tipo String
+  localizacao String
+  descricao String
+  status String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("ocorrencias")
+}
+
+model RotaPatrulha {
+  id String @id @default(cuid())
+  nome String
+  area String
+  turno String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("rotas_patrulha")
+}
+
+model Camera {
+  id String @id @default(cuid())
+  localizacao String
+  tipo String
+  status String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("cameras")
+}
+
+// ============================================================================
+// TURISMO (MS-61 a MS-66)
+// ============================================================================
+model PontoTuristico {
+  id String @id @default(cuid())
+  nome String
+  tipo String
+  endereco String
+  descricao String?
+  coordenadas Json?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("pontos_turisticos")
+}
+
+model EventoTuristico {
+  id String @id @default(cuid())
+  nome String
+  dataInicio DateTime
+  dataFim DateTime
+  local String
+  descricao String?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("eventos_turisticos")
+}
+
+// ============================================================================
+// PLANEJAMENTO URBANO (MS-67 a MS-72)
+// ============================================================================
+model ZonaUrbana {
+  id String @id @default(cuid())
+  nome String
+  tipo String
+  area Float?
+  regras Json?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("zonas_urbanas")
+}
+
+model LicencaObra {
+  id String @id @default(cuid())
+  workflowId String @unique
+  solicitanteId String
+  endereco String
+  tipoObra String
+  status String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("licencas_obra")
+}
+
+model ImovelUrbano {
+  id String @id @default(cuid())
+  inscricao String @unique
+  endereco String
+  proprietario String
+  area Float?
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("imoveis_urbanos")
+}
+
+model Loteamento {
+  id String @id @default(cuid())
+  nome String
+  localizacao String
+  totalLotes Int
+  status String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("loteamentos")
+}
+
+// ============================================================================
+// SERVIÇOS PÚBLICOS (MS-73 a MS-78)
+// ============================================================================
+model RotaColeta {
+  id String @id @default(cuid())
+  nome String
+  bairros Json
+  diasSemana Json
+  tipo String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("rotas_coleta")
+}
+
+model SolicitacaoManutencao {
+  id String @id @default(cuid())
+  tipo String
+  localizacao String
+  descricao String
+  status String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("solicitacoes_manutencao")
+}
+
+model SolicitacaoPoda {
+  id String @id @default(cuid())
+  localizacao String
+  descricao String
+  urgencia String
+  status String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("solicitacoes_poda")
+}
+
+model Cemiterio {
+  id String @id @default(cuid())
+  nome String
+  endereco String
+  capacidadeTotal Int
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("cemiterios")
+}
+
+model Sepultura {
+  id String @id @default(cuid())
+  cemiterioId String
+  numero String
+  quadra String?
+  ocupada Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("sepulturas")
+}
+
+model FeiraLivre {
+  id String @id @default(cuid())
+  nome String
+  local String
+  diaSemana Int
+  horarioInicio String
+  horarioFim String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("feiras_livres")
+}
+
+// ============================================================================
+// TODOS OS 78 MICROSISTEMAS TÊM SCHEMAS DEFINIDOS
+// ============================================================================

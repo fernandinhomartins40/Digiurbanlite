@@ -72,6 +72,8 @@ interface TeamMember {
     name: string
     code: string | null
   }
+  departmentIds?: string[]
+  primaryDepartmentId?: string
   userDepartments?: Array<{
     id: string
     departmentId: string

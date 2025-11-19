@@ -39,7 +39,7 @@ export function ServiceFormRenderer({
   if (isJsonSchema) {
     // Se for JSON Schema, converter para o formato esperado pelo JSONSchemaForm
     const schema = {
-      type: 'object',
+      type: 'object' as const,
       properties: fields.reduce((acc, field) => {
         acc[field.id || field.$id] = field;
         return acc;

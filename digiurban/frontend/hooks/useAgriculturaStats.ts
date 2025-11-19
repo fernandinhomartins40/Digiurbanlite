@@ -66,15 +66,15 @@ export function useAgriculturaStats() {
         setLoading(true);
 
         // ✅ ATUALIZADO: Buscar estatísticas consolidadas do dashboard (rota genérica)
-        const dashboardResponse = await apiClient.get('/agricultura/dashboard');
+        const dashboardResponse = await apiClient.get<{ success: boolean; data: any }>('/agricultura/dashboard');
 
         if (dashboardResponse.data?.success) {
           const data = dashboardResponse.data.data;
 
           // Buscar estatísticas adicionais em paralelo (rotas genéricas)
           const [producersStatsRes, propertiesStatsRes] = await Promise.allSettled([
-            apiClient.get('/agricultura/producers/stats'),
-            apiClient.get('/agricultura/propriedades/stats'),
+            apiClient.get<{ success: boolean; data: any }>('/agricultura/producers/stats'),
+            apiClient.get<{ success: boolean; data: any }>('/agricultura/propriedades/stats'),
           ]);
 
           // Combinar dados
@@ -105,7 +105,12 @@ export function useAgriculturaStats() {
           };
 
           // Adicionar dados de produtores se disponíveis
-          if (producersStatsRes.status === 'fulfilled' && producersStatsRes.value?.data?.success) {
+          if (
+            producersStatsRes.status === 'fulfilled' &&
+            producersStatsRes.value &&
+            'data' in producersStatsRes.value &&
+            producersStatsRes.value.data?.success
+          ) {
             consolidatedStats.producers = {
               ...consolidatedStats.producers,
               ...producersStatsRes.value.data.data

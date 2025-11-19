@@ -6,12 +6,20 @@ const prisma = new PrismaClient();
 export interface CreateInscricaoMatriculaDTO {
   alunoId: string;
   responsavelId: string;
+  anoLetivo?: number;
   escolaPreferencia1: string;
   escolaPreferencia2?: string;
   escolaPreferencia3?: string;
   serie: string;
   turno?: Turno;
   tipoTurma?: TipoTurma;
+  endereco?: any;
+  documentos?: any;
+  necessidadeEspecial?: boolean;
+  descricaoNecessidade?: string;
+  isTransferencia?: boolean;
+  escolaOrigem?: string;
+  motivoTransferencia?: string;
   necessidadesEspeciais?: string;
   documentosAnexados?: any;
   observacoes?: string;
@@ -51,9 +59,14 @@ export class MatriculaService {
     const inscricao = await prisma.inscricaoMatricula.create({
       data: {
         ...data,
+        anoLetivo: data.anoLetivo || new Date().getFullYear(),
+        serie: data.serie || '',
+        turno: data.turno || 'MATUTINO',
+        endereco: data.endereco || {},
+        documentos: data.documentos || {},
         workflowId: workflow.id,
         status: 'INSCRITO_AGUARDANDO_VALIDACAO',
-      },
+      } as any,
     });
 
     await workflowInstanceService.update(workflow.id, { entityId: inscricao.id });
@@ -139,7 +152,7 @@ export class MatriculaService {
     // Por simplicidade, vou assumir que pegamos a primeira escola de preferência
     const turmas = await prisma.turma.findMany({
       where: {
-        escolaId: inscricao.escolaPreferencia1,
+        unidadeEducacaoId: inscricao.escolaPreferencia1 || '',
         serie: inscricao.serie,
         ano,
         isActive: true,
@@ -152,11 +165,15 @@ export class MatriculaService {
     const matricula = await prisma.matricula.create({
       data: {
         inscricaoId: data.inscricaoId,
+        alunoId: inscricao.alunoId,
+        responsavelId: inscricao.responsavelId,
+        unidadeEducacaoId: turma.unidadeEducacaoId,
+        anoLetivo: inscricao.anoLetivo,
         turmaId: turma.id,
         numeroMatricula,
         dataInicio: data.dataInicio,
-        situacao: 'ATIVO',
-      },
+        situacao: 'ATIVA',
+      } as any,
     });
 
     await prisma.turma.update({

@@ -20,6 +20,7 @@ import {
   Loader2,
   FileCheck
 } from 'lucide-react';
+import { InstallPWABanner } from '@/components/citizen/InstallPWABanner';
 
 export default function CitizenDashboard() {
   const { citizen } = useCitizenAuth();
@@ -355,6 +356,9 @@ export default function CitizenDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Banner PWA */}
+      <InstallPWABanner />
     </CitizenLayout>
   );
 }

@@ -37,7 +37,7 @@ export default function ServicosPage() {
   };
 
   // Função para rolar os sliders
-  const scroll = (ref: React.RefObject<HTMLDivElement> | HTMLDivElement | null, direction: 'left' | 'right') => {
+  const scroll = (ref: React.RefObject<HTMLDivElement | null> | HTMLDivElement | null | undefined, direction: 'left' | 'right') => {
     const container = ref && 'current' in ref ? ref.current : ref;
     if (!container) return;
 

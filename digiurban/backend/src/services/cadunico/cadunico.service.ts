@@ -10,21 +10,32 @@ const prisma = new PrismaClient();
 
 export interface CreateCadUnicoFamiliaDTO {
   responsavelFamiliarId: string;
-  endereco: string;
-  rendaFamiliar?: number;
+  endereco: any;
+  rendaTotalFamiliar?: number;
   membros: CreateMembroFamiliaDTO[];
 }
 
 export interface CreateMembroFamiliaDTO {
-  citizenId: string;
-  grauParentesco: GrauParentesco;
+  citizenId?: string;
+  nome: string;
+  cpf?: string;
+  dataNascimento: Date;
+  parentesco: GrauParentesco;
+  sexo: string;
+  raca: string;
+  escolaridade: string;
+  grauParentesco?: GrauParentesco;
   numeroNIS?: string;
   situacaoTrabalho?: SituacaoTrabalho;
   rendaIndividual?: number;
+  rendaMensal?: number;
+  trabalha?: boolean;
   possuiDeficiencia?: boolean;
   tipoDeficiencia?: string;
+  deficiencia?: boolean;
   frequentaEscola?: boolean;
   nivelEscolaridade?: string;
+  fonteRenda?: string;
 }
 
 export interface AgendarEntrevistaDTO {
@@ -63,7 +74,10 @@ export class CadUnicoService {
         workflowId: workflow.id,
         responsavelFamiliarId: data.responsavelFamiliarId,
         endereco: data.endereco,
-        rendaFamiliar: data.rendaFamiliar,
+        rendaTotalFamiliar: data.rendaTotalFamiliar || 0,
+        tipoMoradia: 'CASA_PROPRIA',
+        situacaoMoradia: 'ADEQUADA',
+        documentos: {},
         status: 'AGENDADO',
       },
     });
@@ -73,7 +87,20 @@ export class CadUnicoService {
       await prisma.membroFamilia.create({
         data: {
           familiaId: familia.id,
-          ...membroData,
+          citizenId: membroData.citizenId,
+          nome: membroData.nome,
+          cpf: membroData.cpf,
+          dataNascimento: membroData.dataNascimento,
+          parentesco: membroData.parentesco || membroData.grauParentesco || 'OUTRO',
+          sexo: membroData.sexo as any,
+          raca: membroData.raca as any,
+          escolaridade: membroData.escolaridade as any,
+          trabalha: membroData.trabalha || false,
+          rendaMensal: membroData.rendaMensal || membroData.rendaIndividual || 0,
+          fonteRenda: membroData.fonteRenda,
+          deficiencia: membroData.deficiencia || membroData.possuiDeficiencia || false,
+          tipoDeficiencia: membroData.tipoDeficiencia,
+          frequentaEscola: membroData.frequentaEscola || false,
         },
       });
     }

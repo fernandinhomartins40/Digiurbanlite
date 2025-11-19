@@ -30,7 +30,7 @@ export class WorkflowDefinitionService {
       },
     });
 
-    return definition;
+    return definition as any;
   }
 
   /**
@@ -41,7 +41,7 @@ export class WorkflowDefinitionService {
       where: { id },
     });
 
-    return definition;
+    return definition as any;
   }
 
   /**
@@ -58,7 +58,7 @@ export class WorkflowDefinitionService {
       },
     });
 
-    return definitions;
+    return definitions as any;
   }
 
   /**
@@ -74,7 +74,7 @@ export class WorkflowDefinitionService {
       },
     });
 
-    return definitions;
+    return definitions as any;
   }
 
   /**
@@ -94,7 +94,7 @@ export class WorkflowDefinitionService {
       },
     });
 
-    return definition;
+    return definition as any;
   }
 
   /**
@@ -138,7 +138,7 @@ export class WorkflowDefinitionService {
     // Desativar versão antiga
     await this.deactivate(id);
 
-    return newDefinition;
+    return newDefinition as any;
   }
 }
 

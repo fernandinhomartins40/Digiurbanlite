@@ -1,4 +1,4 @@
-import { PrismaClient, MaquinaStatus, EmprestimoMaquinaStatus } from '@prisma/client';
+import { PrismaClient, StatusMaquina, EmprestimoMaquinaStatus } from '@prisma/client';
 import workflowInstanceService from '../workflow/workflow-instance.service';
 
 const prisma = new PrismaClient();
@@ -16,6 +16,9 @@ export interface CreateMaquinaAgricolaDTO {
 
 export interface CreateProdutorRuralDTO {
   citizenId: string;
+  cpf?: string;
+  nome?: string;
+  endereco?: any;
   propriedadeNome: string;
   propriedadeEndereco: string;
   areaTotalHectares: number;
@@ -29,7 +32,11 @@ export interface CreateSolicitacaoEmprestimoDTO {
   produtorRuralId: string;
   maquinaId: string;
   finalidade: string;
-  areaTrabalhada: number;
+  areaTrabalhada?: number;
+  areaUtilizacao?: string;
+  tamanhoArea?: number;
+  justificativa?: string;
+  diasSolicitados?: number;
   dataInicio: Date;
   dataFim: Date;
   observacoes?: string;
@@ -58,7 +65,7 @@ export class MaquinasAgricolasService {
   async createMaquina(data: CreateMaquinaAgricolaDTO) {
     if (data.numeroPatrimonio) {
       const existente = await prisma.maquinaAgricolaMS.findUnique({
-        where: { numeroPatrimonio: data.numeroPatrimonio },
+        where: { patrimonio: data.numeroPatrimonio },
       });
 
       if (existente) {
@@ -68,11 +75,18 @@ export class MaquinasAgricolasService {
 
     return await prisma.maquinaAgricolaMS.create({
       data: {
-        ...data,
+        tipo: data.tipo || 'OUTRO',
+        marca: data.fabricante || 'N/A',
+        modelo: data.modelo,
+        nome: data.nome,
+        ano: data.ano,
+        patrimonio: data.numeroPatrimonio || `PAT-${Date.now()}`,
+        numeroPatrimonio: data.numeroPatrimonio,
+        capacidade: data.capacidadeOperacional,
         horasUso: data.horasUso || 0,
         status: 'DISPONIVEL',
         isActive: true,
-      },
+      } as any,
     });
   }
 
@@ -102,11 +116,11 @@ export class MaquinasAgricolasService {
   async updateMaquina(id: string, data: Partial<CreateMaquinaAgricolaDTO>) {
     return await prisma.maquinaAgricolaMS.update({
       where: { id },
-      data,
+      data: data as any,
     });
   }
 
-  async updateMaquinaStatus(id: string, status: MaquinaStatus) {
+  async updateMaquinaStatus(id: string, status: StatusMaquina) {
     return await prisma.maquinaAgricolaMS.update({
       where: { id },
       data: { status },
@@ -163,8 +177,11 @@ export class MaquinasAgricolasService {
     return await prisma.produtorRural.create({
       data: {
         ...data,
+        cpf: data.cpf || '',
+        nome: data.nome || '',
+        endereco: data.endereco || {},
         isActive: true,
-      },
+      } as any,
     });
   }
 
@@ -266,13 +283,17 @@ export class MaquinasAgricolasService {
         workflowId: workflow.id,
         produtorRuralId: data.produtorRuralId,
         maquinaId: data.maquinaId,
-        finalidade: data.finalidade,
-        areaTrabalhada: data.areaTrabalhada,
+        finalidade: data.finalidade as any,
+        areaUtilizacao: data.areaUtilizacao || 'Não especificado',
+        tamanhoArea: data.tamanhoArea,
+        justificativa: data.justificativa || 'Não fornecida',
+        diasSolicitados: data.diasSolicitados || Math.ceil((new Date(data.dataFim).getTime() - new Date(data.dataInicio).getTime()) / (1000 * 60 * 60 * 24)),
         dataInicio: data.dataInicio,
         dataFim: data.dataFim,
         observacoes: data.observacoes,
+        statusPagamento: 'PENDENTE',
         status: 'SOLICITADO',
-      },
+      } as any,
     });
 
     // Atualizar workflow

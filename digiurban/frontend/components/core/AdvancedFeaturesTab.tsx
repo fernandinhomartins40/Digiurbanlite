@@ -13,6 +13,7 @@ import {
   Eye,
   Download,
   X,
+  AlertCircle,
   ExternalLink
 } from 'lucide-react';
 import { format } from 'date-fns';

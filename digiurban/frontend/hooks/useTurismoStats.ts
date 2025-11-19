@@ -24,6 +24,7 @@ interface TurismoStats {
 
 export function useTurismoStats() {
   const [stats, setStats] = useState<TurismoStats | null>(null);
+  const [dashboard, setDashboard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,5 +76,5 @@ export function useTurismoStats() {
     fetchStats();
   }, []);
 
-  return { stats, loading, error };
+  return { stats, dashboard, loading, error };
 }

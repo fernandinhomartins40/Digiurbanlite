@@ -2,7 +2,7 @@
 
 export interface FormFieldSuggestion {
   name: string;
-  type: 'text' | 'email' | 'tel' | 'number' | 'date' | 'select' | 'textarea' | 'cpf' | 'cnpj' | 'cep';
+  type: 'text' | 'email' | 'tel' | 'number' | 'date' | 'select' | 'textarea' | 'cpf' | 'cnpj' | 'cep' | 'checkbox';
   label: string;
   required: boolean;
   placeholder?: string;
@@ -23,4 +23,12 @@ export interface ServiceSuggestion {
   category: string;
   estimatedDays: number;
   requiresDocuments: boolean;
+  linkedCitizensConfig?: {
+    enabled: boolean;
+    minLinked?: number;
+    maxLinked?: number;
+    label?: string;
+    description?: string;
+    links?: Array<Record<string, any>>;
+  };
 }

@@ -34,7 +34,7 @@ export default function ProtocolosPage() {
   const statusScrollRef = useRef<HTMLDivElement>(null);
 
   // Função para rolar os chips de status
-  const scroll = (ref: React.RefObject<HTMLDivElement> | null, direction: 'left' | 'right') => {
+  const scroll = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
     const container = ref?.current;
     if (!container) return;
 

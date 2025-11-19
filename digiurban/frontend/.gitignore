@@ -31,3 +31,14 @@ coverage/
 # Misc
 .cache/
 errors-only.txt
+
+# PWA files
+**/public/sw.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/sw.js.map
+**/public/workbox-*.js.map
+**/public/worker-*.js.map
+**/public/fallback-*.js
+**/public/icon-*.png
+**/public/apple-*.png

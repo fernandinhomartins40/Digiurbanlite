@@ -191,6 +191,36 @@ export const loadImplementationRoutes = () => {
 };
 
 // ============================================================
+// MICROSISTEMAS COM WORKFLOW (Fase 8 - NOVO)
+// ============================================================
+export const loadMicrosystemsRoutes = () => {
+  console.log('  📂 Carregando rotas de microsistemas...');
+  const router = Router();
+
+  // MS-02: Agenda Médica
+  console.log('    - agenda-medica.routes');
+  const agendaMedicaRoutes = require('./agenda-medica.routes').default;
+  router.use('/agenda-medica', agendaMedicaRoutes);
+
+  // MS-03: Prontuário Eletrônico
+  console.log('    - prontuario.routes');
+  const prontuarioRoutes = require('./prontuario.routes').default;
+  router.use('/prontuario', prontuarioRoutes);
+
+  // TODO: Adicionar rotas para demais microsistemas:
+  // MS-05: Medicamentos
+  // MS-06: TFD (Tratamento Fora do Domicílio)
+  // MS-08: Sistema de Matrículas
+  // MS-09: Transporte Escolar
+  // MS-14: CadÚnico
+  // MS-15: Programas Sociais
+  // MS-20+21: Máquinas Agrícolas
+
+  console.log('  ✅ Rotas de microsistemas carregadas');
+  return router;
+};
+
+// ============================================================
 // HELPER: Carregar todas as rotas
 // ============================================================
 export const loadAllRoutes = () => {
@@ -201,6 +231,7 @@ export const loadAllRoutes = () => {
     citizen: loadCitizenRoutes(),
     admin: loadAdminRoutes(),
     secretarias: loadSecretariasRoutes(),
-    implementations: loadImplementationRoutes()
+    implementations: loadImplementationRoutes(),
+    microsystems: loadMicrosystemsRoutes()
   };
 };

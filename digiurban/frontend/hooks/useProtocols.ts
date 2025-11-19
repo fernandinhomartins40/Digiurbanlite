@@ -9,12 +9,19 @@ import { useEffect, useState, useCallback } from 'react';
 export interface Protocol {
   id: string;
   protocolNumber: string;
+  number?: string;
+  title?: string;
   status: string;
   customData: any;
   createdAt: string;
   updatedAt: string;
   citizenId: string;
   serviceId: string;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  department?: string;
+  documents?: any[];
   citizen?: {
     id: string;
     name: string;

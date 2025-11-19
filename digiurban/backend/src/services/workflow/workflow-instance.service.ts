@@ -435,20 +435,20 @@ export class WorkflowInstanceService {
     });
 
     const total = instances.length;
-    const active = instances.filter((i) => i.status === 'ACTIVE').length;
-    const completed = instances.filter((i) => i.status === 'COMPLETED').length;
-    const cancelled = instances.filter((i) => i.status === 'CANCELLED').length;
-    const paused = instances.filter((i) => i.status === 'PAUSED').length;
-    const error = instances.filter((i) => i.status === 'ERROR').length;
+    const active = instances.filter((i: any) => i.status === 'ACTIVE').length;
+    const completed = instances.filter((i: any) => i.status === 'COMPLETED').length;
+    const cancelled = instances.filter((i: any) => i.status === 'CANCELLED').length;
+    const paused = instances.filter((i: any) => i.status === 'PAUSED').length;
+    const error = instances.filter((i: any) => i.status === 'ERROR').length;
 
     // Tempo médio de conclusão
     const completedInstances = instances.filter(
-      (i) => i.status === 'COMPLETED' && i.completedAt
+      (i: any) => i.status === 'COMPLETED' && i.completedAt
     );
 
     let tempoMedioMinutos = 0;
     if (completedInstances.length > 0) {
-      const totalMinutos = completedInstances.reduce((acc, i) => {
+      const totalMinutos = completedInstances.reduce((acc: number, i: any) => {
         const diff = i.completedAt!.getTime() - i.createdAt.getTime();
         return acc + diff / 1000 / 60; // converter para minutos
       }, 0);
@@ -458,8 +458,8 @@ export class WorkflowInstanceService {
     // Distribuição por estágio atual
     const porEstagio: Record<string, number> = {};
     instances
-      .filter((i) => i.status === 'ACTIVE')
-      .forEach((i) => {
+      .filter((i: any) => i.status === 'ACTIVE')
+      .forEach((i: any) => {
         porEstagio[i.currentStage] = (porEstagio[i.currentStage] || 0) + 1;
       });
 
@@ -489,7 +489,7 @@ export class WorkflowInstanceService {
     const tempoLimite = new Date();
     tempoLimite.setMinutes(tempoLimite.getMinutes() - tempoLimiteMinutos);
 
-    return await prisma.workflowInstance.findMany({
+    return await (prisma as any).workflowInstance.findMany({
       where: {
         definitionId,
         status: 'ACTIVE',

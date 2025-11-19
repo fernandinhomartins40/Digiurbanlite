@@ -34,6 +34,7 @@ export interface Service {
 export interface UseSecretariaServicesReturn {
   services: Service[];
   loading: boolean;
+  isLoading: boolean;
   error: string | null;
   refetch: () => void;
 }
@@ -92,6 +93,7 @@ export function useSecretariaServices(departmentCode: string): UseSecretariaServ
   return {
     services,
     loading,
+    isLoading: loading,
     error,
     refetch: fetchServices
   };

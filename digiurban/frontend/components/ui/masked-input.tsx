@@ -49,7 +49,7 @@ export function MaskedInput({
   }
 
   // Definir máscara baseado no tipo
-  const getMask = (): string | ((value: string) => string) => {
+  const getMask = (): string | (string | RegExp)[] | ((value: string) => string) => {
     switch (type) {
       case 'cpf':
         return '999.999.999-99';
@@ -106,15 +106,10 @@ export function MaskedInput({
 
   const mask = getMask();
 
-  // Função para garantir que o valor seja formatado corretamente ao montar
-  const beforeMaskedValueChange = (newState: any, oldState: any, userInput: any) => {
-    return newState;
-  };
-
   return (
     <InputMask
       id={id}
-      mask={mask}
+      mask={mask as any}
       value={cleanValue}
       onChange={onChange}
       onBlur={onBlur}
@@ -122,7 +117,6 @@ export function MaskedInput({
       placeholder={placeholder}
       alwaysShowMask={false}
       maskChar={null}
-      beforeMaskedValueChange={beforeMaskedValueChange}
     >
       {/* @ts-ignore */}
       {(inputProps: any) => (

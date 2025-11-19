@@ -339,7 +339,7 @@ export class AgendaMedicaService {
       data: {
         status: 'CANCELADA',
         canceladoPor: data.canceladoPor,
-        motivoCancelamento: data.motivoCancelamento,
+        observacoes: data.motivoCancelamento,
       },
     });
   }

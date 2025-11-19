@@ -11,8 +11,9 @@ const prisma = new PrismaClient();
 export interface CreateMedicamentoDTO {
   nome: string;
   principioAtivo: string;
-  tipo: TipoMedicamento;
-  unidadeMedida: UnidadeMedida;
+  apresentacao: string;
+  tipo?: TipoMedicamento;
+  unidadeMedida?: UnidadeMedida;
   concentracao?: string;
   fabricante?: string;
   codigoBarras?: string;
@@ -24,10 +25,13 @@ export interface CreateEstoqueDTO {
   unidadeId: string;
   lote: string;
   quantidadeAtual: number;
-  quantidadeMinima: number;
-  quantidadeMaxima: number;
+  quantidade: number;
+  quantidadeMinima?: number;
+  quantidadeMaxima?: number;
+  estoqueMinimo: number;
   dataFabricacao?: Date;
   dataValidade: Date;
+  validade: Date;
 }
 
 export interface DispensarMedicamentoDTO {
@@ -180,13 +184,13 @@ export class MedicamentoService {
         medicamentoId,
         unidadeId,
         status: {
-          in: ['DISPONIVEL', 'ESTOQUE_BAIXO'],
+          in: ['DISPONIVEL', 'CRITICO'],
         },
       },
       include: {
         medicamento: true,
       },
-      orderBy: { dataValidade: 'asc' }, // FIFO: primeiro que vence, primeiro que sai
+      orderBy: { validade: 'asc' }, // FIFO: primeiro que vence, primeiro que sai
     });
   }
 
@@ -202,7 +206,7 @@ export class MedicamentoService {
       include: {
         medicamento: true,
       },
-      orderBy: [{ medicamento: { nome: 'asc' } }, { dataValidade: 'asc' }],
+      orderBy: { validade: 'asc' },
     });
   }
 
@@ -220,13 +224,13 @@ export class MedicamentoService {
 
     // Atualizar status baseado na quantidade
     let novoStatus = data.status || estoque.status;
-    const quantidadeAtual = data.quantidadeAtual ?? estoque.quantidadeAtual;
-    const quantidadeMinima = data.quantidadeMinima ?? estoque.quantidadeMinima;
+    const quantidadeAtual = data.quantidadeAtual ?? (estoque.quantidadeAtual || estoque.quantidade);
+    const quantidadeMinima = data.quantidadeMinima ?? (estoque.quantidadeMinima || estoque.estoqueMinimo);
 
     if (quantidadeAtual === 0) {
-      novoStatus = 'ESGOTADO';
+      novoStatus = 'BLOQUEADO';
     } else if (quantidadeAtual <= quantidadeMinima) {
-      novoStatus = 'ESTOQUE_BAIXO';
+      novoStatus = 'CRITICO';
     } else if (novoStatus !== 'VENCIDO' && novoStatus !== 'BLOQUEADO') {
       novoStatus = 'DISPONIVEL';
     }
@@ -234,7 +238,10 @@ export class MedicamentoService {
     return await prisma.estoqueMedicamento.update({
       where: { id },
       data: {
-        ...data,
+        quantidade: quantidadeAtual,
+        quantidadeAtual: quantidadeAtual,
+        quantidadeMinima: quantidadeMinima,
+        estoqueMinimo: quantidadeMinima,
         status: novoStatus,
       },
     });
@@ -252,7 +259,7 @@ export class MedicamentoService {
       throw new Error('Estoque não encontrado');
     }
 
-    const novaQuantidade = estoque.quantidadeAtual + quantidade;
+    const novaQuantidade = (estoque.quantidadeAtual || estoque.quantidade) + quantidade;
 
     return await this.updateEstoque(id, {
       quantidadeAtual: novaQuantidade,
@@ -271,11 +278,12 @@ export class MedicamentoService {
       throw new Error('Estoque não encontrado');
     }
 
-    if (estoque.quantidadeAtual < quantidade) {
+    const quantAtual = estoque.quantidadeAtual || estoque.quantidade;
+    if (quantAtual < quantidade) {
       throw new Error('Quantidade insuficiente em estoque');
     }
 
-    const novaQuantidade = estoque.quantidadeAtual - quantidade;
+    const novaQuantidade = quantAtual - quantidade;
 
     return await this.updateEstoque(id, {
       quantidadeAtual: novaQuantidade,
@@ -289,12 +297,12 @@ export class MedicamentoService {
     return await prisma.estoqueMedicamento.findMany({
       where: {
         ...(unidadeId && { unidadeId }),
-        status: 'ESTOQUE_BAIXO',
+        status: 'CRITICO',
       },
       include: {
         medicamento: true,
       },
-      orderBy: { quantidadeAtual: 'asc' },
+      orderBy: { quantidade: 'asc' },
     });
   }
 
@@ -308,18 +316,18 @@ export class MedicamentoService {
     return await prisma.estoqueMedicamento.findMany({
       where: {
         ...(unidadeId && { unidadeId }),
-        dataValidade: {
+        validade: {
           lte: dataLimite,
           gte: new Date(),
         },
         status: {
-          notIn: ['VENCIDO', 'ESGOTADO'],
+          notIn: ['VENCIDO', 'BLOQUEADO'],
         },
       },
       include: {
         medicamento: true,
       },
-      orderBy: { dataValidade: 'asc' },
+      orderBy: { validade: 'asc' },
     });
   }
 
@@ -332,7 +340,7 @@ export class MedicamentoService {
     const result = await prisma.estoqueMedicamento.updateMany({
       where: {
         ...(unidadeId && { unidadeId }),
-        dataValidade: {
+        validade: {
           lt: hoje,
         },
         status: {
@@ -369,18 +377,21 @@ export class MedicamentoService {
       throw new Error('Estoque não corresponde ao medicamento solicitado');
     }
 
-    if (estoque.quantidadeAtual < data.quantidade) {
+    const quantAtual = estoque.quantidadeAtual || estoque.quantidade;
+    if (quantAtual < data.quantidade) {
       throw new Error(
-        `Quantidade insuficiente em estoque. Disponível: ${estoque.quantidadeAtual}`
+        `Quantidade insuficiente em estoque. Disponível: ${quantAtual}`
       );
     }
 
-    if (!['DISPONIVEL', 'ESTOQUE_BAIXO'].includes(estoque.status)) {
-      throw new Error(`Estoque não disponível para dispensação. Status: ${estoque.status}`);
+    const statusEstoque = estoque.status || 'DISPONIVEL';
+    if (!['DISPONIVEL', 'CRITICO'].includes(statusEstoque)) {
+      throw new Error(`Estoque não disponível para dispensação. Status: ${statusEstoque}`);
     }
 
     // Verificar se é medicamento controlado
-    if (estoque.medicamento.isControlado && !data.prescricaoId) {
+    const isControlado = estoque.medicamento.isControlado || false;
+    if (isControlado && !data.prescricaoId) {
       throw new Error('Medicamento controlado requer prescrição médica');
     }
 
@@ -390,11 +401,10 @@ export class MedicamentoService {
         prescricaoId: data.prescricaoId,
         atendimentoId: data.atendimentoId,
         citizenId: data.citizenId,
-        farmaceuticoId: data.farmaceuticoId,
+        dispensadoPor: data.farmaceuticoId,
         medicamentoId: data.medicamentoId,
-        estoqueId: data.estoqueId,
         quantidade: data.quantidade,
-        status: 'AGUARDANDO',
+        status: 'PENDENTE',
         observacoes: data.observacoes,
       },
     });
@@ -419,7 +429,9 @@ export class MedicamentoService {
     }
 
     // Baixar do estoque
-    await this.removerQuantidade(dispensacao.estoqueId, dispensacao.quantidade);
+    if (dispensacao.estoqueId) {
+      await this.removerQuantidade(dispensacao.estoqueId, dispensacao.quantidade);
+    }
 
     // Atualizar dispensação
     return await prisma.dispensacaoMedicamento.update({
@@ -445,7 +457,9 @@ export class MedicamentoService {
 
     if (dispensacao.status === 'DISPENSADO') {
       // Se já foi dispensada, devolver ao estoque
-      await this.adicionarQuantidade(dispensacao.estoqueId, dispensacao.quantidade);
+      if (dispensacao.estoqueId) {
+        await this.adicionarQuantidade(dispensacao.estoqueId, dispensacao.quantidade);
+      }
     }
 
     return await prisma.dispensacaoMedicamento.update({
@@ -465,10 +479,7 @@ export class MedicamentoService {
   async findDispensacoesByCitizen(citizenId: string) {
     return await prisma.dispensacaoMedicamento.findMany({
       where: { citizenId },
-      include: {
-        medicamento: true,
-      },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { data: 'desc' },
     });
   }
 
@@ -478,11 +489,7 @@ export class MedicamentoService {
   async findDispensacoesByAtendimento(atendimentoId: string) {
     return await prisma.dispensacaoMedicamento.findMany({
       where: { atendimentoId },
-      include: {
-        medicamento: true,
-        estoque: true,
-      },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { data: 'desc' },
     });
   }
 
@@ -503,12 +510,7 @@ export class MedicamentoService {
           lte: dataFim,
         },
         ...(medicamentoId && { medicamentoId }),
-        estoque: {
-          unidadeId,
-        },
-      },
-      include: {
-        medicamento: true,
+        ...(unidadeId && { estoqueId: unidadeId }),
       },
     });
 
@@ -518,7 +520,7 @@ export class MedicamentoService {
         const key = disp.medicamentoId;
         if (!acc[key]) {
           acc[key] = {
-            medicamento: disp.medicamento,
+            medicamento: { id: key } as any,
             quantidadeTotal: 0,
             numeroDispensacoes: 0,
           };

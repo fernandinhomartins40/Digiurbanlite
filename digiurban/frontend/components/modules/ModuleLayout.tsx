@@ -11,14 +11,14 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 
-interface BreadcrumbItemType {
+export interface BreadcrumbItem {
   label: string
   href?: string
 }
 
 interface ModuleLayoutProps {
   title: string
-  breadcrumb: BreadcrumbItemType[]
+  breadcrumb: BreadcrumbItem[]
   actions?: ReactNode
   children: ReactNode
 }

@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
 import { LogIn, UserPlus, AlertCircle, Users, CheckCircle, MapPin, Eye, EyeOff, Building2, Lock, Mail, Phone, User, IdCard } from 'lucide-react'
 import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator'
+import { InstallPWABanner } from '@/components/citizen/InstallPWABanner'
 import Link from 'next/link'
 
 interface Municipio {
@@ -604,6 +605,9 @@ export default function CitizenLoginPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Banner PWA */}
+      <InstallPWABanner />
     </div>
   )
 }

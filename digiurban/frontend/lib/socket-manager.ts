@@ -106,7 +106,7 @@ export function disconnectSocket(): void {
 // ============================================================
 // RESET CONNECTION - Força nova conexão
 // ============================================================
-export function resetSocket(): void {
+export function resetSocket() {
   disconnectSocket();
   return getSocket();
 }

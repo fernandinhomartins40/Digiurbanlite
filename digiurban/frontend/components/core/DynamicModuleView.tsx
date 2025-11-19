@@ -141,7 +141,11 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
             <p className="text-muted-foreground mt-2">{service.description}</p>
           )}
           <div className="flex gap-2 mt-2">
-            <Badge variant="outline">{service.departmentId}</Badge>
+            <Badge variant="outline">
+              {typeof service.department === 'string'
+                ? service.department
+                : service.department?.name || 'Sem departamento'}
+            </Badge>
             {service.moduleType && (
               <Badge variant="secondary">{service.moduleType}</Badge>
             )}
