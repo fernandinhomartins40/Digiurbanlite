@@ -11,11 +11,27 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Camera, X, RotateCw, Check, AlertCircle, Loader2, ZoomIn, ZoomOut, Crop, Palette, Edit3, Plus } from 'lucide-react'
+import { Camera, X, RotateCw, Check, AlertCircle, Loader2, ZoomIn, ZoomOut, Crop, Palette, Edit3, Plus, Sparkles } from 'lucide-react'
 import { compressImage, validateFile, formatFileSize } from '@/lib/document-utils'
 import { useIsMobile, useHaptics } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/utils'
 import { detectDocument, type DocumentCorners } from '@/lib/document-detection'
+import {
+  scaleCoordinates,
+  scaleCorners,
+  viewportToCanvasCoords,
+  getHandleSize,
+  isPointInCircle,
+  getClosestCorner,
+  clampCropArea,
+  clampPoint,
+  cornersToCropArea,
+  calculateOptimalCanvasSize,
+  debounce,
+  throttle,
+  type CropArea as CoordCropArea,
+  type Point
+} from '@/lib/coordinate-utils'
 
 type ProcessingMode = 'color' | 'grayscale' | 'blackwhite'
 type EditMode = 'filters' | 'crop' | null
@@ -66,6 +82,11 @@ export function DocumentScanner({
   const [detectedCorners, setDetectedCorners] = useState<DocumentCorners | null>(null)
   const [autoDetecting, setAutoDetecting] = useState(false)
   const [detectionConfidence, setDetectionConfidence] = useState<number>(0)
+  const [detectionUsedFallback, setDetectionUsedFallback] = useState<boolean>(false)
+  const [editableCorners, setEditableCorners] = useState<DocumentCorners | null>(null)
+  const [activeCorner, setActiveCorner] = useState<'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' | null>(null)
+  const [autoProcessingEnabled, setAutoProcessingEnabled] = useState<boolean>(true)
+  const [contrastLevel, setContrastLevel] = useState<number>(0)
 
   // Hooks mobile
   const isMobile = useIsMobile()
@@ -219,29 +240,42 @@ export function DocumentScanner({
 
   /**
    * Processa imagem com efeito de cor, escala de cinza ou preto e branco
+   * FASE 2.2: Agora com suporte a ajuste de contraste manual
    */
   const applyProcessingMode = useCallback((canvas: HTMLCanvasElement, mode: ProcessingMode) => {
+    if (!autoProcessingEnabled) return // Pular processamento se desabilitado
+
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     const data = imageData.data
 
+    // Calcular fator de contraste baseado no slider (-50 a +50)
+    // Converter para fator multiplicador (0.5 a 2.0)
+    const contrastFactor = contrastLevel === 0 ? 1.0 : (1.0 + (contrastLevel / 100))
+
     if (mode === 'grayscale') {
-      // Escala de cinza
+      // Escala de cinza com contraste ajustável
       for (let i = 0; i < data.length; i += 4) {
-        const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
+        let gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
+
+        // Aplicar contraste
+        gray = ((gray - 128) * contrastFactor + 128)
+        gray = Math.max(0, Math.min(255, gray))
+
         data[i] = gray
         data[i + 1] = gray
         data[i + 2] = gray
       }
     } else if (mode === 'blackwhite') {
-      // Preto e branco com contraste
+      // Preto e branco com contraste ajustável
       for (let i = 0; i < data.length; i += 4) {
         const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114
 
-        // Aumentar contraste
-        const contrast = 1.5
+        // Aplicar contraste ajustável
+        const baseContrast = 1.5
+        const contrast = baseContrast * contrastFactor
         const brightness = 20
         let adjusted = (gray - 128) * contrast + 128 + brightness
 
@@ -253,11 +287,17 @@ export function DocumentScanner({
         data[i + 1] = adjusted
         data[i + 2] = adjusted
       }
+    } else if (mode === 'color' && contrastLevel !== 0) {
+      // Aplicar apenas contraste em modo colorido se ajustado
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.max(0, Math.min(255, (data[i] - 128) * contrastFactor + 128))
+        data[i + 1] = Math.max(0, Math.min(255, (data[i + 1] - 128) * contrastFactor + 128))
+        data[i + 2] = Math.max(0, Math.min(255, (data[i + 2] - 128) * contrastFactor + 128))
+      }
     }
-    // mode === 'color' não precisa de processamento
 
     ctx.putImageData(imageData, 0, 0)
-  }, [])
+  }, [autoProcessingEnabled, contrastLevel])
 
   /**
    * Detecta automaticamente as bordas do documento
@@ -286,40 +326,20 @@ export function DocumentScanner({
         setDetectedCorners(result.corners)
         setDetectionConfidence(result.confidence)
 
-        // Converter corners para cropArea
-        const minX = Math.min(
-          result.corners.topLeft.x,
-          result.corners.topRight.x,
-          result.corners.bottomLeft.x,
-          result.corners.bottomRight.x
-        )
-        const maxX = Math.max(
-          result.corners.topLeft.x,
-          result.corners.topRight.x,
-          result.corners.bottomLeft.x,
-          result.corners.bottomRight.x
-        )
-        const minY = Math.min(
-          result.corners.topLeft.y,
-          result.corners.topRight.y,
-          result.corners.bottomLeft.y,
-          result.corners.bottomRight.y
-        )
-        const maxY = Math.max(
-          result.corners.topLeft.y,
-          result.corners.topRight.y,
-          result.corners.bottomLeft.y,
-          result.corners.bottomRight.y
-        )
+        // FASE 3.2: Detectar se foi fallback baseado na confiança
+        const isFallback = result.confidence < 50 // Confiança baixa = fallback
+        setDetectionUsedFallback(isFallback)
+        setEditableCorners(result.corners) // Permitir edição dos cantos
 
-        const detectedCropArea = {
-          x: minX,
-          y: minY,
-          width: maxX - minX,
-          height: maxY - minY
+        if (isFallback) {
+          console.warn('[AutoDetect] Confiança baixa - provavelmente fallback automático')
         }
 
+        // Converter corners para cropArea usando utility
+        const detectedCropArea = cornersToCropArea(result.corners)
+
         console.log('[AutoDetect] Área de recorte calculada:', detectedCropArea)
+        console.log('[AutoDetect] Cantos detectados (editáveis):', result.corners)
         setCropArea(detectedCropArea)
 
         // Mostrar mensagem de sucesso com vibração
@@ -327,20 +347,35 @@ export function DocumentScanner({
           vibrate(100)
         }
       } else {
-        console.warn('[AutoDetect] Detecção falhou, usando imagem completa:', result.error)
+        console.warn('[AutoDetect] Detecção falhou, usando fallback:', result.error)
 
-        // Fallback para imagem completa
-        setCropArea({
-          x: 0,
-          y: 0,
-          width: canvasRef.current.width,
-          height: canvasRef.current.height
-        })
+        // Marcar que usou fallback
+        setDetectionUsedFallback(true)
+        setDetectionConfidence(result.confidence || 0)
+
+        // Se o resultado tem corners do fallback, usar eles
+        if (result.corners) {
+          setDetectedCorners(result.corners)
+          setEditableCorners(result.corners)
+          const fallbackCropArea = cornersToCropArea(result.corners)
+          setCropArea(fallbackCropArea)
+        } else {
+          // Fallback para imagem completa
+          setCropArea({
+            x: 0,
+            y: 0,
+            width: canvasRef.current.width,
+            height: canvasRef.current.height
+          })
+        }
       }
     } catch (err) {
       console.error('[AutoDetect] Erro na detecção automática:', err)
 
-      // Fallback para imagem completa
+      // Fallback para imagem completa em caso de erro
+      setDetectionUsedFallback(true)
+      setDetectionConfidence(0)
+
       if (canvasRef.current) {
         setCropArea({
           x: 0,
@@ -414,27 +449,28 @@ export function DocumentScanner({
 
   /**
    * Verifica se o ponto está próximo de um canto (handle)
+   * Agora usa o novo sistema de coordenadas e handles maiores para mobile
    */
   const getCornerAtPoint = useCallback((x: number, y: number): 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' | null => {
+    // Priorizar editable corners (perspectiva) se disponível
+    if (editableCorners) {
+      const handleSizes = getHandleSize(isMobile)
+      return getClosestCorner({ x, y }, editableCorners, handleSizes.touchRadius)
+    }
+
+    // Fallback para cropArea retangular
     if (!cropArea) return null
 
-    const handleRadius = 30 // Área de toque maior para mobile
-    const corners = {
+    const handleSizes = getHandleSize(isMobile)
+    const corners: DocumentCorners = {
       topLeft: { x: cropArea.x, y: cropArea.y },
       topRight: { x: cropArea.x + cropArea.width, y: cropArea.y },
       bottomRight: { x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height },
       bottomLeft: { x: cropArea.x, y: cropArea.y + cropArea.height }
     }
 
-    for (const [name, corner] of Object.entries(corners)) {
-      const distance = Math.sqrt(Math.pow(x - corner.x, 2) + Math.pow(y - corner.y, 2))
-      if (distance <= handleRadius) {
-        return name as 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft'
-      }
-    }
-
-    return null
-  }, [cropArea])
+    return getClosestCorner({ x, y }, corners, handleSizes.touchRadius)
+  }, [cropArea, editableCorners, isMobile])
 
   /**
    * Manipuladores de crop (recorte) - Mouse
@@ -450,21 +486,18 @@ export function DocumentScanner({
     }
 
     const canvas = cropCanvasRef.current
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
+    // Usar utility para conversão correta de coordenadas
+    const point = viewportToCanvasCoords(e.clientX, e.clientY, canvas)
 
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
+    console.log('[MouseDown] Ponto clicado (canvas coords):', point)
 
-    console.log('[MouseDown] Ponto clicado:', { x, y, scaleX, scaleY })
-
-    const corner = getCornerAtPoint(x, y)
+    const corner = getCornerAtPoint(point.x, point.y)
 
     console.log('[MouseDown] Canto detectado:', corner)
 
     if (corner) {
       setDraggingCorner(corner)
+      setActiveCorner(corner) // Marcar canto ativo para highlight visual
       setIsDragging(true)
       if (isMobile) vibrate(20)
       console.log('[MouseDown] Drag iniciado no canto:', corner)
@@ -474,39 +507,51 @@ export function DocumentScanner({
   }, [showCropTool, cropArea, getCornerAtPoint, isMobile, vibrate])
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDragging || !draggingCorner || !cropCanvasRef.current || !cropArea) return
+    if (!isDragging || !draggingCorner || !cropCanvasRef.current) return
 
     const canvas = cropCanvasRef.current
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
+    const point = viewportToCanvasCoords(e.clientX, e.clientY, canvas)
 
-    const x = Math.max(0, Math.min((e.clientX - rect.left) * scaleX, canvas.width))
-    const y = Math.max(0, Math.min((e.clientY - rect.top) * scaleY, canvas.height))
+    // Limitar aos bounds do canvas
+    const clampedPoint = clampPoint(point, canvas.width, canvas.height)
 
-    // Atualizar área baseado no canto sendo arrastado
+    // Se estamos editando corners individuais (perspectiva)
+    if (editableCorners) {
+      const newCorners = { ...editableCorners }
+      newCorners[draggingCorner] = clampedPoint
+      setEditableCorners(newCorners)
+
+      // Atualizar cropArea baseado nos novos corners
+      const newCropArea = cornersToCropArea(newCorners)
+      setCropArea(newCropArea)
+      return
+    }
+
+    // Fallback: editar cropArea retangular
+    if (!cropArea) return
+
     const newCropArea = { ...cropArea }
 
     switch (draggingCorner) {
       case 'topLeft':
-        newCropArea.width = cropArea.x + cropArea.width - x
-        newCropArea.height = cropArea.y + cropArea.height - y
-        newCropArea.x = x
-        newCropArea.y = y
+        newCropArea.width = cropArea.x + cropArea.width - clampedPoint.x
+        newCropArea.height = cropArea.y + cropArea.height - clampedPoint.y
+        newCropArea.x = clampedPoint.x
+        newCropArea.y = clampedPoint.y
         break
       case 'topRight':
-        newCropArea.width = x - cropArea.x
-        newCropArea.height = cropArea.y + cropArea.height - y
-        newCropArea.y = y
+        newCropArea.width = clampedPoint.x - cropArea.x
+        newCropArea.height = cropArea.y + cropArea.height - clampedPoint.y
+        newCropArea.y = clampedPoint.y
         break
       case 'bottomRight':
-        newCropArea.width = x - cropArea.x
-        newCropArea.height = y - cropArea.y
+        newCropArea.width = clampedPoint.x - cropArea.x
+        newCropArea.height = clampedPoint.y - cropArea.y
         break
       case 'bottomLeft':
-        newCropArea.width = cropArea.x + cropArea.width - x
-        newCropArea.height = y - cropArea.y
-        newCropArea.x = x
+        newCropArea.width = cropArea.x + cropArea.width - clampedPoint.x
+        newCropArea.height = clampedPoint.y - cropArea.y
+        newCropArea.x = clampedPoint.x
         break
     }
 
@@ -514,11 +559,12 @@ export function DocumentScanner({
     if (newCropArea.width > 50 && newCropArea.height > 50) {
       setCropArea(newCropArea)
     }
-  }, [isDragging, draggingCorner, cropArea])
+  }, [isDragging, draggingCorner, cropArea, editableCorners])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
     setDraggingCorner(null)
+    setActiveCorner(null) // Limpar highlight do canto ativo
   }, [])
 
   /**
@@ -536,22 +582,18 @@ export function DocumentScanner({
     e.preventDefault()
 
     const canvas = cropCanvasRef.current
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-
     const touch = e.touches[0]
-    const x = (touch.clientX - rect.left) * scaleX
-    const y = (touch.clientY - rect.top) * scaleY
+    const point = viewportToCanvasCoords(touch.clientX, touch.clientY, canvas)
 
-    console.log('[TouchStart] Ponto tocado:', { x, y, scaleX, scaleY })
+    console.log('[TouchStart] Ponto tocado (canvas coords):', point)
 
-    const corner = getCornerAtPoint(x, y)
+    const corner = getCornerAtPoint(point.x, point.y)
 
     console.log('[TouchStart] Canto detectado:', corner)
 
     if (corner) {
       setDraggingCorner(corner)
+      setActiveCorner(corner) // Marcar canto ativo para highlight
       setIsDragging(true)
       if (isMobile) vibrate(20)
       console.log('[TouchStart] Drag iniciado no canto:', corner)
@@ -561,41 +603,53 @@ export function DocumentScanner({
   }, [showCropTool, cropArea, getCornerAtPoint, isMobile, vibrate])
 
   const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDragging || !draggingCorner || !cropCanvasRef.current || !cropArea) return
+    if (!isDragging || !draggingCorner || !cropCanvasRef.current) return
     e.preventDefault()
 
     const canvas = cropCanvasRef.current
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-
     const touch = e.touches[0]
-    const x = Math.max(0, Math.min((touch.clientX - rect.left) * scaleX, canvas.width))
-    const y = Math.max(0, Math.min((touch.clientY - rect.top) * scaleY, canvas.height))
+    const point = viewportToCanvasCoords(touch.clientX, touch.clientY, canvas)
 
-    // Atualizar área baseado no canto sendo arrastado
+    // Limitar aos bounds do canvas
+    const clampedPoint = clampPoint(point, canvas.width, canvas.height)
+
+    // Se estamos editando corners individuais (perspectiva)
+    if (editableCorners) {
+      const newCorners = { ...editableCorners }
+      newCorners[draggingCorner] = clampedPoint
+      setEditableCorners(newCorners)
+
+      // Atualizar cropArea baseado nos novos corners
+      const newCropArea = cornersToCropArea(newCorners)
+      setCropArea(newCropArea)
+      return
+    }
+
+    // Fallback: editar cropArea retangular
+    if (!cropArea) return
+
     const newCropArea = { ...cropArea }
 
     switch (draggingCorner) {
       case 'topLeft':
-        newCropArea.width = cropArea.x + cropArea.width - x
-        newCropArea.height = cropArea.y + cropArea.height - y
-        newCropArea.x = x
-        newCropArea.y = y
+        newCropArea.width = cropArea.x + cropArea.width - clampedPoint.x
+        newCropArea.height = cropArea.y + cropArea.height - clampedPoint.y
+        newCropArea.x = clampedPoint.x
+        newCropArea.y = clampedPoint.y
         break
       case 'topRight':
-        newCropArea.width = x - cropArea.x
-        newCropArea.height = cropArea.y + cropArea.height - y
-        newCropArea.y = y
+        newCropArea.width = clampedPoint.x - cropArea.x
+        newCropArea.height = cropArea.y + cropArea.height - clampedPoint.y
+        newCropArea.y = clampedPoint.y
         break
       case 'bottomRight':
-        newCropArea.width = x - cropArea.x
-        newCropArea.height = y - cropArea.y
+        newCropArea.width = clampedPoint.x - cropArea.x
+        newCropArea.height = clampedPoint.y - cropArea.y
         break
       case 'bottomLeft':
-        newCropArea.width = cropArea.x + cropArea.width - x
-        newCropArea.height = y - cropArea.y
-        newCropArea.x = x
+        newCropArea.width = cropArea.x + cropArea.width - clampedPoint.x
+        newCropArea.height = clampedPoint.y - cropArea.y
+        newCropArea.x = clampedPoint.x
         break
     }
 
@@ -603,11 +657,12 @@ export function DocumentScanner({
     if (newCropArea.width > 50 && newCropArea.height > 50) {
       setCropArea(newCropArea)
     }
-  }, [isDragging, draggingCorner, cropArea])
+  }, [isDragging, draggingCorner, cropArea, editableCorners])
 
   const handleTouchEnd = useCallback(() => {
     setIsDragging(false)
     setDraggingCorner(null)
+    setActiveCorner(null) // Limpar highlight do canto ativo
   }, [])
 
   const resetCrop = useCallback(() => {
@@ -641,85 +696,165 @@ export function DocumentScanner({
       const canvas = cropCanvasRef.current
       if (!canvas) return
 
-      canvas.width = img.width
-      canvas.height = img.height
+      // CORREÇÃO FASE 1.3: Limitar dimensões à viewport em mobile
+      const maxViewportWidth = window.innerWidth
+      const maxViewportHeight = window.innerHeight
+      const optimalSize = calculateOptimalCanvasSize(
+        img.width,
+        img.height,
+        maxViewportWidth,
+        maxViewportHeight,
+        isMobile
+      )
+
+      canvas.width = optimalSize.width
+      canvas.height = optimalSize.height
+
+      console.log('[CropCanvas] Dimensões otimizadas:', {
+        original: { w: img.width, h: img.height },
+        optimal: optimalSize,
+        viewport: { w: maxViewportWidth, h: maxViewportHeight }
+      })
 
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
-      // Desenhar imagem
-      ctx.drawImage(img, 0, 0)
+      // Desenhar imagem escalada
+      ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, canvas.width, canvas.height)
+
+      // Escalar cropArea se necessário
+      const scaleX = canvas.width / img.width
+      const scaleY = canvas.height / img.height
+      const scaledCropArea = cropArea ? {
+        x: cropArea.x * scaleX,
+        y: cropArea.y * scaleY,
+        width: cropArea.width * scaleX,
+        height: cropArea.height * scaleY
+      } : null
 
       // Desenhar área de seleção se existir
-      if (cropArea && cropArea.width > 0 && cropArea.height > 0) {
-        console.log('[CropCanvas] Desenhando area de crop:', cropArea)
+      if (scaledCropArea && scaledCropArea.width > 0 && scaledCropArea.height > 0) {
+        console.log('[CropCanvas] Desenhando area de crop escalada:', scaledCropArea)
+
         // Overlay escuro fora da área selecionada
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
-        ctx.fillRect(0, 0, canvas.width, cropArea.y)
-        ctx.fillRect(0, cropArea.y, cropArea.x, cropArea.height)
-        ctx.fillRect(cropArea.x + cropArea.width, cropArea.y, canvas.width - cropArea.x - cropArea.width, cropArea.height)
-        ctx.fillRect(0, cropArea.y + cropArea.height, canvas.width, canvas.height - cropArea.y - cropArea.height)
+        ctx.fillRect(0, 0, canvas.width, scaledCropArea.y)
+        ctx.fillRect(0, scaledCropArea.y, scaledCropArea.x, scaledCropArea.height)
+        ctx.fillRect(scaledCropArea.x + scaledCropArea.width, scaledCropArea.y, canvas.width - scaledCropArea.x - scaledCropArea.width, scaledCropArea.height)
+        ctx.fillRect(0, scaledCropArea.y + scaledCropArea.height, canvas.width, canvas.height - scaledCropArea.y - scaledCropArea.height)
 
-        // Borda da área selecionada
-        ctx.strokeStyle = '#10b981' // Verde
-        ctx.lineWidth = 3
-        ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height)
+        // Desenhar handles - usar editableCorners se disponível (perspectiva)
+        const handleSizes = getHandleSize(isMobile)
 
-        // Desenhar cantos (handles) para ajuste
-        const handleSize = 24
-        const handles = [
-          { x: cropArea.x, y: cropArea.y }, // Top-left
-          { x: cropArea.x + cropArea.width, y: cropArea.y }, // Top-right
-          { x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height }, // Bottom-right
-          { x: cropArea.x, y: cropArea.y + cropArea.height }, // Bottom-left
-        ]
+        if (editableCorners) {
+          // Desenhar 4 pontos individuais (perspectiva)
+          const scaledCorners: DocumentCorners = {
+            topLeft: { x: editableCorners.topLeft.x * scaleX, y: editableCorners.topLeft.y * scaleY },
+            topRight: { x: editableCorners.topRight.x * scaleX, y: editableCorners.topRight.y * scaleY },
+            bottomRight: { x: editableCorners.bottomRight.x * scaleX, y: editableCorners.bottomRight.y * scaleY },
+            bottomLeft: { x: editableCorners.bottomLeft.x * scaleX, y: editableCorners.bottomLeft.y * scaleY }
+          }
 
-        handles.forEach(handle => {
-          // Círculo branco com borda verde
-          ctx.fillStyle = '#ffffff'
-          ctx.beginPath()
-          ctx.arc(handle.x, handle.y, handleSize / 2, 0, Math.PI * 2)
-          ctx.fill()
-
+          // Desenhar linhas conectando cantos
           ctx.strokeStyle = '#10b981'
           ctx.lineWidth = 3
           ctx.beginPath()
-          ctx.arc(handle.x, handle.y, handleSize / 2, 0, Math.PI * 2)
+          ctx.moveTo(scaledCorners.topLeft.x, scaledCorners.topLeft.y)
+          ctx.lineTo(scaledCorners.topRight.x, scaledCorners.topRight.y)
+          ctx.lineTo(scaledCorners.bottomRight.x, scaledCorners.bottomRight.y)
+          ctx.lineTo(scaledCorners.bottomLeft.x, scaledCorners.bottomLeft.y)
+          ctx.closePath()
           ctx.stroke()
-        })
+
+          // Desenhar handles nos 4 cantos
+          const cornersArray: Array<{ corner: Point, name: 'topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft' }> = [
+            { corner: scaledCorners.topLeft, name: 'topLeft' },
+            { corner: scaledCorners.topRight, name: 'topRight' },
+            { corner: scaledCorners.bottomRight, name: 'bottomRight' },
+            { corner: scaledCorners.bottomLeft, name: 'bottomLeft' }
+          ]
+
+          cornersArray.forEach(({ corner, name }) => {
+            // Highlight se for o canto ativo
+            const isActive = activeCorner === name
+
+            // Círculo branco com borda verde (maior em mobile)
+            ctx.fillStyle = isActive ? '#10b981' : '#ffffff'
+            ctx.beginPath()
+            ctx.arc(corner.x, corner.y, handleSizes.visualRadius, 0, Math.PI * 2)
+            ctx.fill()
+
+            ctx.strokeStyle = isActive ? '#ffffff' : '#10b981'
+            ctx.lineWidth = isActive ? 4 : 3
+            ctx.beginPath()
+            ctx.arc(corner.x, corner.y, handleSizes.visualRadius, 0, Math.PI * 2)
+            ctx.stroke()
+          })
+        } else {
+          // Fallback: desenhar retângulo simples
+          ctx.strokeStyle = '#10b981'
+          ctx.lineWidth = 3
+          ctx.strokeRect(scaledCropArea.x, scaledCropArea.y, scaledCropArea.width, scaledCropArea.height)
+
+          const handles = [
+            { x: scaledCropArea.x, y: scaledCropArea.y, name: 'topLeft' },
+            { x: scaledCropArea.x + scaledCropArea.width, y: scaledCropArea.y, name: 'topRight' },
+            { x: scaledCropArea.x + scaledCropArea.width, y: scaledCropArea.y + scaledCropArea.height, name: 'bottomRight' },
+            { x: scaledCropArea.x, y: scaledCropArea.y + scaledCropArea.height, name: 'bottomLeft' }
+          ]
+
+          handles.forEach(handle => {
+            const isActive = activeCorner === handle.name
+
+            ctx.fillStyle = isActive ? '#10b981' : '#ffffff'
+            ctx.beginPath()
+            ctx.arc(handle.x, handle.y, handleSizes.visualRadius, 0, Math.PI * 2)
+            ctx.fill()
+
+            ctx.strokeStyle = isActive ? '#ffffff' : '#10b981'
+            ctx.lineWidth = isActive ? 4 : 3
+            ctx.beginPath()
+            ctx.arc(handle.x, handle.y, handleSizes.visualRadius, 0, Math.PI * 2)
+            ctx.stroke()
+          })
+        }
 
         // Grade (linhas de terço) para ajudar no enquadramento
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
-        ctx.lineWidth = 1
+        if (!editableCorners) {
+          // Só mostrar grade em modo retangular
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'
+          ctx.lineWidth = 1
 
-        // Linhas verticais
-        ctx.beginPath()
-        ctx.moveTo(cropArea.x + cropArea.width / 3, cropArea.y)
-        ctx.lineTo(cropArea.x + cropArea.width / 3, cropArea.y + cropArea.height)
-        ctx.stroke()
+          // Linhas verticais
+          ctx.beginPath()
+          ctx.moveTo(scaledCropArea.x + scaledCropArea.width / 3, scaledCropArea.y)
+          ctx.lineTo(scaledCropArea.x + scaledCropArea.width / 3, scaledCropArea.y + scaledCropArea.height)
+          ctx.stroke()
 
-        ctx.beginPath()
-        ctx.moveTo(cropArea.x + (cropArea.width * 2) / 3, cropArea.y)
-        ctx.lineTo(cropArea.x + (cropArea.width * 2) / 3, cropArea.y + cropArea.height)
-        ctx.stroke()
+          ctx.beginPath()
+          ctx.moveTo(scaledCropArea.x + (scaledCropArea.width * 2) / 3, scaledCropArea.y)
+          ctx.lineTo(scaledCropArea.x + (scaledCropArea.width * 2) / 3, scaledCropArea.y + scaledCropArea.height)
+          ctx.stroke()
 
-        // Linhas horizontais
-        ctx.beginPath()
-        ctx.moveTo(cropArea.x, cropArea.y + cropArea.height / 3)
-        ctx.lineTo(cropArea.x + cropArea.width, cropArea.y + cropArea.height / 3)
-        ctx.stroke()
+          // Linhas horizontais
+          ctx.beginPath()
+          ctx.moveTo(scaledCropArea.x, scaledCropArea.y + scaledCropArea.height / 3)
+          ctx.lineTo(scaledCropArea.x + scaledCropArea.width, scaledCropArea.y + scaledCropArea.height / 3)
+          ctx.stroke()
 
-        ctx.beginPath()
-        ctx.moveTo(cropArea.x, cropArea.y + (cropArea.height * 2) / 3)
-        ctx.lineTo(cropArea.x + cropArea.width, cropArea.y + (cropArea.height * 2) / 3)
-        ctx.stroke()
+          ctx.beginPath()
+          ctx.moveTo(scaledCropArea.x, scaledCropArea.y + (scaledCropArea.height * 2) / 3)
+          ctx.lineTo(scaledCropArea.x + scaledCropArea.width, scaledCropArea.y + (scaledCropArea.height * 2) / 3)
+          ctx.stroke()
+        }
       }
     }
     img.src = capturedImage
-  }, [capturedImage, showCropTool, cropArea])
+  }, [capturedImage, showCropTool, cropArea, editableCorners, activeCorner, isMobile])
 
   /**
    * Atualiza preview com modo de processamento
+   * FASE 3.3: Otimizado com debounce para evitar re-renders desnecessários
    */
   useEffect(() => {
     if (!capturedImage || !cropArea) return
@@ -748,17 +883,17 @@ export function DocumentScanner({
           0, 0, cropArea.width, cropArea.height
         )
 
-        // Aplicar processamento
-        applyProcessingMode(canvas, processingMode)
+        // Aplicar processamento (apenas se habilitado)
+        if (autoProcessingEnabled) {
+          applyProcessingMode(canvas, processingMode)
+        }
       }
       img.src = capturedImage
     }
 
+    // Executar imediatamente
     updatePreview()
-    const timeout = setTimeout(updatePreview, 100)
-
-    return () => clearTimeout(timeout)
-  }, [capturedImage, cropArea, processingMode, applyProcessingMode, showCropTool, editMode])
+  }, [capturedImage, cropArea, processingMode, applyProcessingMode, showCropTool, editMode, autoProcessingEnabled, contrastLevel])
 
   /**
    * Confirma e processa foto
@@ -879,12 +1014,14 @@ export function DocumentScanner({
 
   /**
    * Desenha bordas verdes da detecção no overlay canvas
+   * CORRIGIDO: Usa escala correta entre canvas original e preview
    */
   useEffect(() => {
-    if (!overlayCanvasRef.current || !previewCanvasRef.current || !detectedCorners || !cropArea || autoDetecting || editMode) {
+    if (!overlayCanvasRef.current || !previewCanvasRef.current || !canvasRef.current || !detectedCorners || !cropArea || autoDetecting || editMode) {
       console.log('[OverlayCanvas] Não desenhar overlay:', {
         overlayCanvas: !!overlayCanvasRef.current,
         previewCanvas: !!previewCanvasRef.current,
+        canvasRef: !!canvasRef.current,
         detectedCorners: !!detectedCorners,
         cropArea: !!cropArea,
         autoDetecting,
@@ -897,6 +1034,7 @@ export function DocumentScanner({
 
     const overlayCanvas = overlayCanvasRef.current
     const previewCanvas = previewCanvasRef.current
+    const originalCanvas = canvasRef.current
 
     // Copiar dimensões do preview canvas
     overlayCanvas.width = previewCanvas.width
@@ -908,52 +1046,102 @@ export function DocumentScanner({
     // Limpar canvas
     ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height)
 
-    // Desenhar bordas verdes ao redor da área detectada
-    ctx.strokeStyle = '#10b981' // Verde
-    ctx.lineWidth = 6
-    ctx.shadowColor = '#10b981'
-    ctx.shadowBlur = 10
+    // CORREÇÃO CRÍTICA: Escalar coordenadas do canvas original para preview
+    // cropArea está em coordenadas do canvas original (ex: 1920x1080)
+    // Precisamos converter para coordenadas do preview canvas (ex: 375px width)
 
-    // Desenhar retângulo da área detectada
-    ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height)
+    // Calcular escala: preview é um recorte do original
+    // O preview mostra cropArea, então escalar baseado nisso
+    const scaleX = previewCanvas.width / cropArea.width
+    const scaleY = previewCanvas.height / cropArea.height
 
-    // Desenhar cantos decorativos em L
-    const cornerSize = 40
-    const corners = [
-      { x: cropArea.x, y: cropArea.y }, // Top-left
-      { x: cropArea.x + cropArea.width, y: cropArea.y }, // Top-right
-      { x: cropArea.x + cropArea.width, y: cropArea.y + cropArea.height }, // Bottom-right
-      { x: cropArea.x, y: cropArea.y + cropArea.height }, // Bottom-left
-    ]
+    console.log('[OverlayCanvas] Escalas calculadas:', { scaleX, scaleY, previewW: previewCanvas.width, cropW: cropArea.width })
 
-    ctx.lineWidth = 8
-    ctx.strokeStyle = '#10b981'
-    ctx.shadowBlur = 15
-
-    corners.forEach((corner, index) => {
-      ctx.beginPath()
-      if (index === 0) { // Top-left
-        ctx.moveTo(corner.x, corner.y + cornerSize)
-        ctx.lineTo(corner.x, corner.y)
-        ctx.lineTo(corner.x + cornerSize, corner.y)
-      } else if (index === 1) { // Top-right
-        ctx.moveTo(corner.x - cornerSize, corner.y)
-        ctx.lineTo(corner.x, corner.y)
-        ctx.lineTo(corner.x, corner.y + cornerSize)
-      } else if (index === 2) { // Bottom-right
-        ctx.moveTo(corner.x, corner.y - cornerSize)
-        ctx.lineTo(corner.x, corner.y)
-        ctx.lineTo(corner.x - cornerSize, corner.y)
-      } else { // Bottom-left
-        ctx.moveTo(corner.x + cornerSize, corner.y)
-        ctx.lineTo(corner.x, corner.y)
-        ctx.lineTo(corner.x, corner.y - cornerSize)
+    // Se temos corners editáveis (perspectiva), usar eles
+    if (editableCorners) {
+      // Converter corners para coordenadas relativas ao cropArea, depois escalar para preview
+      const scaledCorners: DocumentCorners = {
+        topLeft: {
+          x: (editableCorners.topLeft.x - cropArea.x) * scaleX,
+          y: (editableCorners.topLeft.y - cropArea.y) * scaleY
+        },
+        topRight: {
+          x: (editableCorners.topRight.x - cropArea.x) * scaleX,
+          y: (editableCorners.topRight.y - cropArea.y) * scaleY
+        },
+        bottomRight: {
+          x: (editableCorners.bottomRight.x - cropArea.x) * scaleX,
+          y: (editableCorners.bottomRight.y - cropArea.y) * scaleY
+        },
+        bottomLeft: {
+          x: (editableCorners.bottomLeft.x - cropArea.x) * scaleX,
+          y: (editableCorners.bottomLeft.y - cropArea.y) * scaleY
+        }
       }
-      ctx.stroke()
-    })
 
-    console.log('[OverlayCanvas] Bordas desenhadas com sucesso')
-  }, [detectedCorners, cropArea, autoDetecting, editMode])
+      console.log('[OverlayCanvas] Corners escalados para preview:', scaledCorners)
+
+      // Desenhar linhas conectando os 4 cantos (perspectiva)
+      ctx.strokeStyle = '#10b981' // Verde
+      ctx.lineWidth = 4
+      ctx.shadowColor = '#10b981'
+      ctx.shadowBlur = 10
+
+      ctx.beginPath()
+      ctx.moveTo(scaledCorners.topLeft.x, scaledCorners.topLeft.y)
+      ctx.lineTo(scaledCorners.topRight.x, scaledCorners.topRight.y)
+      ctx.lineTo(scaledCorners.bottomRight.x, scaledCorners.bottomRight.y)
+      ctx.lineTo(scaledCorners.bottomLeft.x, scaledCorners.bottomLeft.y)
+      ctx.closePath()
+      ctx.stroke()
+
+      // Desenhar cantos decorativos em L nos 4 pontos
+      const cornerSize = 30
+      const cornersArray = [
+        scaledCorners.topLeft,
+        scaledCorners.topRight,
+        scaledCorners.bottomRight,
+        scaledCorners.bottomLeft
+      ]
+
+      ctx.lineWidth = 6
+      ctx.shadowBlur = 15
+
+      cornersArray.forEach((corner, index) => {
+        ctx.beginPath()
+        if (index === 0) { // Top-left
+          ctx.moveTo(corner.x, corner.y + cornerSize)
+          ctx.lineTo(corner.x, corner.y)
+          ctx.lineTo(corner.x + cornerSize, corner.y)
+        } else if (index === 1) { // Top-right
+          ctx.moveTo(corner.x - cornerSize, corner.y)
+          ctx.lineTo(corner.x, corner.y)
+          ctx.lineTo(corner.x, corner.y + cornerSize)
+        } else if (index === 2) { // Bottom-right
+          ctx.moveTo(corner.x, corner.y - cornerSize)
+          ctx.lineTo(corner.x, corner.y)
+          ctx.lineTo(corner.x - cornerSize, corner.y)
+        } else { // Bottom-left
+          ctx.moveTo(corner.x + cornerSize, corner.y)
+          ctx.lineTo(corner.x, corner.y)
+          ctx.lineTo(corner.x, corner.y - cornerSize)
+        }
+        ctx.stroke()
+      })
+    } else {
+      // Fallback: desenhar retângulo simples (preview mostra cropArea inteira, então desenhar nas bordas)
+      ctx.strokeStyle = '#10b981'
+      ctx.lineWidth = 6
+      ctx.shadowColor = '#10b981'
+      ctx.shadowBlur = 10
+
+      // Desenhar nas bordas do preview (que já é o cropArea)
+      const margin = 10
+      ctx.strokeRect(margin, margin, previewCanvas.width - margin * 2, previewCanvas.height - margin * 2)
+    }
+
+    console.log('[OverlayCanvas] Bordas desenhadas com sucesso (coordenadas corrigidas)')
+  }, [detectedCorners, cropArea, autoDetecting, editMode, editableCorners])
 
   // Interface Mobile Full-Screen
   if (isMobile) {
@@ -1099,13 +1287,30 @@ export function DocumentScanner({
                     </div>
                   )}
 
-                  {/* Indicador de Sucesso da Detecção */}
+                  {/* Indicador de Sucesso da Detecção - FASE 2.3 */}
                   {detectedCorners && !autoDetecting && (
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-500/90 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2">
-                      <Check className="h-4 w-4 text-white" />
-                      <p className="text-sm font-medium text-white">
-                        Documento detectado! ({Math.round(detectionConfidence)}% confiança)
-                      </p>
+                    <div className={cn(
+                      "absolute top-4 left-1/2 -translate-x-1/2 backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg",
+                      detectionUsedFallback
+                        ? "bg-yellow-500/90"
+                        : "bg-green-500/90"
+                    )}>
+                      {detectionUsedFallback ? (
+                        <Sparkles className="h-4 w-4 text-white" />
+                      ) : (
+                        <Check className="h-4 w-4 text-white" />
+                      )}
+                      <div className="text-white">
+                        <p className="text-sm font-medium">
+                          {detectionUsedFallback ? 'Detecção automática' : 'Documento detectado!'}
+                        </p>
+                        <p className="text-xs opacity-90">
+                          {detectionUsedFallback
+                            ? 'Ajuste os cantos se necessário'
+                            : `${Math.round(detectionConfidence)}% de confiança`
+                          }
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1277,48 +1482,99 @@ export function DocumentScanner({
                 </Button>
               </div>
 
-              {/* Conteúdo da Aba Atual */}
+              {/* Conteúdo da Aba Atual - FASE 2.2 Controles Aprimorados */}
               {editMode === 'filters' && (
-                <div className="flex gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-2">
-                  <Button
-                    size="lg"
-                    variant={processingMode === 'color' ? 'default' : 'outline'}
-                    onClick={() => setProcessingMode('color')}
-                    className={cn(
-                      'flex-1 h-12',
-                      processingMode === 'color'
-                        ? 'bg-white text-black hover:bg-gray-200'
-                        : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
-                    )}
-                  >
-                    Colorido
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant={processingMode === 'grayscale' ? 'default' : 'outline'}
-                    onClick={() => setProcessingMode('grayscale')}
-                    className={cn(
-                      'flex-1 h-12',
-                      processingMode === 'grayscale'
-                        ? 'bg-white text-black hover:bg-gray-200'
-                        : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
-                    )}
-                  >
-                    Cinza
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant={processingMode === 'blackwhite' ? 'default' : 'outline'}
-                    onClick={() => setProcessingMode('blackwhite')}
-                    className={cn(
-                      'flex-1 h-12',
-                      processingMode === 'blackwhite'
-                        ? 'bg-white text-black hover:bg-gray-200'
-                        : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
-                    )}
-                  >
-                    P&B
-                  </Button>
+                <div className="space-y-3">
+                  {/* Seletor de Modo */}
+                  <div className="flex gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-2">
+                    <Button
+                      size="lg"
+                      variant={processingMode === 'color' ? 'default' : 'outline'}
+                      onClick={() => setProcessingMode('color')}
+                      className={cn(
+                        'flex-1 h-12',
+                        processingMode === 'color'
+                          ? 'bg-white text-black hover:bg-gray-200'
+                          : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
+                      )}
+                    >
+                      Colorido
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant={processingMode === 'grayscale' ? 'default' : 'outline'}
+                      onClick={() => setProcessingMode('grayscale')}
+                      className={cn(
+                        'flex-1 h-12',
+                        processingMode === 'grayscale'
+                          ? 'bg-white text-black hover:bg-gray-200'
+                          : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
+                      )}
+                    >
+                      Cinza
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant={processingMode === 'blackwhite' ? 'default' : 'outline'}
+                      onClick={() => setProcessingMode('blackwhite')}
+                      className={cn(
+                        'flex-1 h-12',
+                        processingMode === 'blackwhite'
+                          ? 'bg-white text-black hover:bg-gray-200'
+                          : 'bg-white/10 border-white/30 text-white hover:bg-white/20'
+                      )}
+                    >
+                      P&B
+                    </Button>
+                  </div>
+
+                  {/* Slider de Contraste */}
+                  <div className="bg-black/50 backdrop-blur-sm rounded-lg p-4">
+                    <Label className="text-white text-sm font-medium mb-2 block">
+                      Contraste: {contrastLevel > 0 ? '+' : ''}{contrastLevel}%
+                    </Label>
+                    <input
+                      type="range"
+                      min="-50"
+                      max="50"
+                      value={contrastLevel}
+                      onChange={(e) => setContrastLevel(Number(e.target.value))}
+                      className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        accentColor: '#10b981'
+                      }}
+                    />
+                    <div className="flex justify-between text-xs text-white/60 mt-1">
+                      <span>Menos</span>
+                      <span>Mais</span>
+                    </div>
+                  </div>
+
+                  {/* Toggle de Auto-Processamento */}
+                  <div className="bg-black/50 backdrop-blur-sm rounded-lg p-4 flex items-center justify-between">
+                    <div>
+                      <Label className="text-white text-sm font-medium">
+                        Processamento automático
+                      </Label>
+                      <p className="text-xs text-white/60 mt-1">
+                        Aplica melhorias automaticamente
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setAutoProcessingEnabled(!autoProcessingEnabled)}
+                      className={cn(
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                        autoProcessingEnabled ? 'bg-green-600' : 'bg-white/20'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                          autoProcessingEnabled ? 'translate-x-6' : 'translate-x-1'
+                        )}
+                      />
+                    </button>
+                  </div>
                 </div>
               )}
 

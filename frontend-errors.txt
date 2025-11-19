@@ -1,0 +1,142 @@
+app/admin/equipe/page.tsx(139,7): error TS2353: Object literal may only specify known properties, and 'departmentIds' does not exist in type 'TeamMember | ((prevState: TeamMember | null) => TeamMember | null)'.
+app/admin/secretarias/turismo/page.tsx(42,18): error TS2339: Property 'dashboard' does not exist on type '{ stats: TurismoStats | null; loading: boolean; error: string | null; }'.
+app/cidadao/perfil/page.tsx(166,42): error TS2345: Argument of type '{ name: string; email: string; phone: string | null; phoneSecondary: string | null; birthDate: string | null; rg: string | null; motherName: string | null; maritalStatus: string | null; occupation: string | null; familyIncome: string | null; address: { ...; }; }' is not assignable to parameter of type 'UpdateProfileData'.
+  Types of property 'phone' are incompatible.
+    Type 'string | null' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+app/cidadao/protocolos/page.tsx(210,39): error TS2345: Argument of type 'RefObject<HTMLDivElement | null>' is not assignable to parameter of type 'RefObject<HTMLDivElement>'.
+  Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+    Type 'null' is not assignable to type 'HTMLDivElement'.
+app/cidadao/protocolos/page.tsx(217,39): error TS2345: Argument of type 'RefObject<HTMLDivElement | null>' is not assignable to parameter of type 'RefObject<HTMLDivElement>'.
+  Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+    Type 'null' is not assignable to type 'HTMLDivElement'.
+app/cidadao/servicos/page.tsx(245,37): error TS2345: Argument of type 'RefObject<HTMLDivElement | null>' is not assignable to parameter of type 'HTMLDivElement | RefObject<HTMLDivElement> | null'.
+  Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'.
+    Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+      Type 'null' is not assignable to type 'HTMLDivElement'.
+app/cidadao/servicos/page.tsx(252,37): error TS2345: Argument of type 'RefObject<HTMLDivElement | null>' is not assignable to parameter of type 'HTMLDivElement | RefObject<HTMLDivElement> | null'.
+  Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'.
+    Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+      Type 'null' is not assignable to type 'HTMLDivElement'.
+app/cidadao/servicos/page.tsx(316,41): error TS2345: Argument of type 'RefObject<HTMLDivElement | null>' is not assignable to parameter of type 'HTMLDivElement | RefObject<HTMLDivElement> | null'.
+  Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'.
+    Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+      Type 'null' is not assignable to type 'HTMLDivElement'.
+app/cidadao/servicos/page.tsx(323,41): error TS2345: Argument of type 'RefObject<HTMLDivElement | null>' is not assignable to parameter of type 'HTMLDivElement | RefObject<HTMLDivElement> | null'.
+  Type 'RefObject<HTMLDivElement | null>' is not assignable to type 'RefObject<HTMLDivElement>'.
+    Type 'HTMLDivElement | null' is not assignable to type 'HTMLDivElement'.
+      Type 'null' is not assignable to type 'HTMLDivElement'.
+app/cidadao/servicos/page.tsx(365,47): error TS2345: Argument of type 'HTMLDivElement | undefined' is not assignable to parameter of type 'HTMLDivElement | RefObject<HTMLDivElement> | null'.
+  Type 'undefined' is not assignable to type 'HTMLDivElement | RefObject<HTMLDivElement> | null'.
+app/cidadao/servicos/page.tsx(372,47): error TS2345: Argument of type 'HTMLDivElement | undefined' is not assignable to parameter of type 'HTMLDivElement | RefObject<HTMLDivElement> | null'.
+  Type 'undefined' is not assignable to type 'HTMLDivElement | RefObject<HTMLDivElement> | null'.
+components/core/AdvancedFeaturesTab.tsx(40,12): error TS2304: Cannot find name 'AlertCircle'.
+components/core/DynamicModuleView.tsx(94,10): error TS2339: Property 'latitude' does not exist on type 'Protocol'.
+components/core/DynamicModuleView.tsx(94,24): error TS2339: Property 'longitude' does not exist on type 'Protocol'.
+components/core/DynamicModuleView.tsx(144,47): error TS2551: Property 'departmentId' does not exist on type 'ServiceDefinition'. Did you mean 'department'?
+components/core/DynamicModuleView.tsx(313,47): error TS2339: Property 'documents' does not exist on type 'Protocol'.
+components/core/DynamicModuleView.tsx(313,83): error TS2339: Property 'documents' does not exist on type 'Protocol'.
+components/core/DynamicModuleView.tsx(314,30): error TS2339: Property 'documents' does not exist on type 'Protocol'.
+components/core/DynamicModuleView.tsx(323,50): error TS2339: Property 'number' does not exist on type 'Protocol'.
+components/core/DynamicModuleView.tsx(326,39): error TS2339: Property 'title' does not exist on type 'Protocol'.
+components/core/ModuleDashboard.tsx(277,34): error TS18046: 'percent' is of type 'unknown'.
+components/forms/ServiceFormRenderer.tsx(54,11): error TS2322: Type '{ type: string; properties: any; required: any[]; }' is not assignable to type '{ type: "object"; citizenFields?: string[] | undefined; properties: Record<string, any>; required: string[]; }'.
+  Types of property 'type' are incompatible.
+    Type 'string' is not assignable to type '"object"'.
+components/modules/BaseModuleView.tsx(10,10): error TS2459: Module '"./ModuleLayout"' declares 'BreadcrumbItem' locally, but it is not exported.
+components/ui/masked-input.tsx(117,7): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Props): ReactInputMask', gave the following error.
+    Type 'string | ((value: string) => string)' is not assignable to type 'string | (string | RegExp)[]'.
+      Type '(value: string) => string' is not assignable to type 'string | (string | RegExp)[]'.
+  Overload 2 of 2, '(props: Props, context: any): ReactInputMask', gave the following error.
+    Type 'string | ((value: string) => string)' is not assignable to type 'string | (string | RegExp)[]'.
+      Type '(value: string) => string' is not assignable to type 'string | (string | RegExp)[]'.
+contexts/CitizenAuthContext.tsx(5,30): error TS2307: Cannot find module '@/shared/types/address.types' or its corresponding type declarations.
+hooks/useAgriculturaStats.ts(71,37): error TS2339: Property 'success' does not exist on type '{}'.
+hooks/useAgriculturaStats.ts(72,47): error TS2339: Property 'data' does not exist on type '{}'.
+hooks/useAgriculturaStats.ts(108,90): error TS2339: Property 'success' does not exist on type '{}'.
+hooks/useAgriculturaStats.ts(111,47): error TS2339: Property 'data' does not exist on type '{}'.
+hooks/useAgriculturaStats.ts(116,92): error TS2339: Property 'success' does not exist on type '{}'.
+hooks/useAgriculturaStats.ts(117,74): error TS2339: Property 'data' does not exist on type '{}'.
+hooks/useServiceSuggestions.ts(19,21): error TS2339: Property 'isLoading' does not exist on type 'UseSecretariaServicesReturn'.
+lib/form-prefill-mapper.ts(57,30): error TS2307: Cannot find module '@/shared/types/address.types' or its corresponding type declarations.
+lib/socket-manager.ts(111,3): error TS2322: Type 'Socket<DefaultEventsMap, DefaultEventsMap>' is not assignable to type 'void'.
+lib/suggestions/assistencia-social.ts(41,37): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(42,32): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(56,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(57,41): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(88,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(103,5): error TS2353: Object literal may only specify known properties, and 'linkedCitizensConfig' does not exist in type 'ServiceSuggestion'.
+lib/suggestions/assistencia-social.ts(131,38): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(143,33): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(158,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(159,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(227,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(228,29): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(243,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(244,33): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(245,35): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(273,33): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(287,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(300,27): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(384,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(453,40): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(494,39): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(510,35): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(551,32): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(565,30): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(579,36): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/assistencia-social.ts(634,30): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/educacao.ts(17,5): error TS2353: Object literal may only specify known properties, and 'linkedCitizensConfig' does not exist in type 'ServiceSuggestion'.
+lib/suggestions/educacao.ts(70,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/educacao.ts(88,5): error TS2353: Object literal may only specify known properties, and 'linkedCitizensConfig' does not exist in type 'ServiceSuggestion'.
+lib/suggestions/educacao.ts(162,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/educacao.ts(316,27): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/educacao.ts(426,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/educacao.ts(482,35): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/educacao.ts(611,36): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/educacao.ts(627,32): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/educacao.ts(675,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/esportes.ts(17,5): error TS2353: Object literal may only specify known properties, and 'linkedCitizensConfig' does not exist in type 'ServiceSuggestion'.
+lib/suggestions/saude.ts(32,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(45,36): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(76,35): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(92,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(93,29): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(122,30): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(123,27): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(138,36): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(139,27): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(155,38): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(169,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(170,29): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(183,30): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(227,37): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(242,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(255,38): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(256,37): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(271,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(287,33): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(300,36): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(303,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(318,28): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(331,29): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(332,39): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(345,28): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(346,24): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(377,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(407,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(408,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(436,27): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(453,27): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(468,29): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(496,35): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(512,26): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(528,30): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(601,35): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(616,36): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(631,36): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(687,37): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(688,33): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(704,31): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.
+lib/suggestions/saude.ts(731,44): error TS2322: Type '"checkbox"' is not assignable to type '"number" | "text" | "tel" | "email" | "select" | "textarea" | "date" | "cpf" | "cep" | "cnpj"'.

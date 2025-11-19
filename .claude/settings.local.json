@@ -87,7 +87,10 @@
       "Bash(dir:*)",
       "Bash(git init:*)",
       "Bash(git branch:*)",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(mkdir:*)",
+      "Bash(del \"c:\\Projetos Cursor\\Digiurbanlite\\digiurban\\frontend\\hooks\\useSegurancaStats.ts\")",
+      "Bash(jobs)"
     ],
     "deny": [],
     "ask": []

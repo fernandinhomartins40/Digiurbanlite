@@ -79,7 +79,8 @@ export async function detectDocument(canvas: HTMLCanvasElement): Promise<Detecti
     }
 
     // Fallback: usar área central com margem de 10%
-    console.log('[DetectDocument] Usando fallback (área central)')
+    // FASE 3.2: Marcar claramente como fallback (success: false)
+    console.log('[DetectDocument] Usando fallback (área central) - detecção real falhou')
 
     const margin = 0.10
     const fallbackArea = {
@@ -96,10 +97,12 @@ export async function detectDocument(canvas: HTMLCanvasElement): Promise<Detecti
       bottomLeft: { x: fallbackArea.x, y: fallbackArea.y + fallbackArea.height }
     }
 
+    // IMPORTANTE: success=true mas com corners de fallback
+    // O código que chama deve verificar o confidence baixo
     return {
-      success: true,
+      success: true, // Retorna corners válidos mas...
       corners,
-      confidence: 70 // Confiança média para fallback
+      confidence: 30 // Confiança baixa indica fallback!
     }
   } catch (error) {
     console.error('[DetectDocument] Erro na detecção:', error)
