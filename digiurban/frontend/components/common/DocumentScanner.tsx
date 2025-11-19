@@ -32,7 +32,6 @@ import {
   type CropArea as CoordCropArea,
   type Point
 } from '@/lib/coordinate-utils'
-import Perspective from 'perspectivets'
 
 type ProcessingMode = 'color' | 'grayscale' | 'blackwhite'
 type EditMode = 'filters' | 'crop' | null
@@ -910,59 +909,97 @@ export function DocumentScanner({
   }, [capturedImage, cropArea, processingMode, applyProcessingMode, showCropTool, editMode, autoProcessingEnabled, contrastLevel])
 
   /**
-   * Aplica transformação de perspectiva usando os 4 cantos editáveis
-   * NOVA FUNCIONALIDADE: Correção de perspectiva real
+   * Detecta e destaca documento usando jscanify (OpenCV.js)
+   * Retorna canvas com bordas destacadas do documento
    */
-  const applyPerspectiveTransform = useCallback((sourceCanvas: HTMLCanvasElement, corners: DocumentCorners): HTMLCanvasElement => {
-    console.log('[PerspectiveTransform] Aplicando transformação com corners:', corners)
-
-    // Criar canvas de saída
-    const outputCanvas = document.createElement('canvas')
-
-    // Calcular dimensões do retângulo de saída (maior distância entre cantos)
-    const width = Math.max(
-      Math.sqrt(Math.pow(corners.topRight.x - corners.topLeft.x, 2) + Math.pow(corners.topRight.y - corners.topLeft.y, 2)),
-      Math.sqrt(Math.pow(corners.bottomRight.x - corners.bottomLeft.x, 2) + Math.pow(corners.bottomRight.y - corners.bottomLeft.y, 2))
-    )
-    const height = Math.max(
-      Math.sqrt(Math.pow(corners.bottomLeft.x - corners.topLeft.x, 2) + Math.pow(corners.bottomLeft.y - corners.topLeft.y, 2)),
-      Math.sqrt(Math.pow(corners.bottomRight.x - corners.topRight.x, 2) + Math.pow(corners.bottomRight.y - corners.topRight.y, 2))
-    )
-
-    outputCanvas.width = Math.round(width)
-    outputCanvas.height = Math.round(height)
-
-    const ctx = outputCanvas.getContext('2d')
-    if (!ctx) {
-      console.error('[PerspectiveTransform] Não foi possível obter contexto do canvas')
-      return sourceCanvas // Fallback
-    }
+  const highlightDocumentWithJscanify = useCallback(async (sourceCanvas: HTMLCanvasElement): Promise<HTMLCanvasElement | null> => {
+    console.log('[jscanify] Detectando documento automaticamente')
 
     try {
-      // Criar instância da biblioteca perspectivets
-      const perspective = new Perspective(ctx, sourceCanvas)
+      // Verificar se estamos no browser e OpenCV.js está carregado
+      if (typeof window === 'undefined' || !(window as any).cv) {
+        console.warn('[jscanify] OpenCV.js não está carregado ainda')
+        return null
+      }
 
-      // Aplicar transformação com os 4 cantos
-      // Os cantos de destino são as dimensões do outputCanvas (retângulo)
-      perspective.draw({
-        topLeftX: corners.topLeft.x,
-        topLeftY: corners.topLeft.y,
-        topRightX: corners.topRight.x,
-        topRightY: corners.topRight.y,
-        bottomRightX: corners.bottomRight.x,
-        bottomRightY: corners.bottomRight.y,
-        bottomLeftX: corners.bottomLeft.x,
-        bottomLeftY: corners.bottomLeft.y
+      // Importar jscanify dinamicamente APENAS no cliente (evita SSR issues)
+      const { default: jscanify } = await import('jscanify/src/jscanify')
+      const scanner = new jscanify()
+
+      // Converter canvas para imagem
+      const img = new Image()
+      img.src = sourceCanvas.toDataURL()
+
+      await new Promise((resolve) => {
+        img.onload = resolve
       })
 
-      console.log('[PerspectiveTransform] Transformação aplicada com sucesso:', {
-        input: { w: sourceCanvas.width, h: sourceCanvas.height },
-        output: { w: outputCanvas.width, h: outputCanvas.height }
-      })
+      // Destacar documento detectado
+      const highlightedCanvas = scanner.highlightPaper(img)
 
-      return outputCanvas
+      console.log('[jscanify] Documento destacado com sucesso')
+      return highlightedCanvas
     } catch (err) {
-      console.error('[PerspectiveTransform] Erro ao aplicar transformação:', err)
+      console.error('[jscanify] Erro ao detectar documento:', err)
+      return null
+    }
+  }, [])
+
+  /**
+   * Aplica transformação de perspectiva usando jscanify (OpenCV.js)
+   * Correção de perspectiva profissional com detecção automática de bordas
+   */
+  const applyPerspectiveTransform = useCallback(async (sourceCanvas: HTMLCanvasElement, corners?: DocumentCorners): Promise<HTMLCanvasElement> => {
+    console.log('[jscanify] Aplicando transformação de perspectiva')
+
+    try {
+      // Verificar se OpenCV.js está carregado
+      if (typeof window === 'undefined' || !(window as any).cv) {
+        console.warn('[jscanify] OpenCV.js não está carregado ainda, usando imagem original')
+        return sourceCanvas
+      }
+
+      // Importar jscanify dinamicamente APENAS no cliente (evita SSR issues)
+      const { default: jscanify } = await import('jscanify/src/jscanify')
+      const scanner = new jscanify()
+
+      // Converter canvas para imagem
+      const img = new Image()
+      img.src = sourceCanvas.toDataURL()
+
+      await new Promise((resolve) => {
+        img.onload = resolve
+      })
+
+      // Calcular dimensões do documento
+      // Se temos corners customizados, usar a distância entre eles
+      let paperWidth = sourceCanvas.width
+      let paperHeight = sourceCanvas.height
+
+      if (corners) {
+        const width = Math.max(
+          Math.sqrt(Math.pow(corners.topRight.x - corners.topLeft.x, 2) + Math.pow(corners.topRight.y - corners.topLeft.y, 2)),
+          Math.sqrt(Math.pow(corners.bottomRight.x - corners.bottomLeft.x, 2) + Math.pow(corners.bottomRight.y - corners.bottomLeft.y, 2))
+        )
+        const height = Math.max(
+          Math.sqrt(Math.pow(corners.bottomLeft.x - corners.topLeft.x, 2) + Math.pow(corners.bottomLeft.y - corners.topLeft.y, 2)),
+          Math.sqrt(Math.pow(corners.bottomRight.x - corners.topRight.x, 2) + Math.pow(corners.bottomRight.y - corners.topRight.y, 2))
+        )
+        paperWidth = Math.round(width)
+        paperHeight = Math.round(height)
+      }
+
+      // Extrair papel com correção de perspectiva
+      const resultCanvas = scanner.extractPaper(img, paperWidth, paperHeight)
+
+      console.log('[jscanify] Transformação aplicada com sucesso:', {
+        input: { w: sourceCanvas.width, h: sourceCanvas.height },
+        output: { w: resultCanvas.width, h: resultCanvas.height }
+      })
+
+      return resultCanvas
+    } catch (err) {
+      console.error('[jscanify] Erro ao aplicar transformação:', err)
       return sourceCanvas // Fallback em caso de erro
     }
   }, [])
@@ -989,9 +1026,9 @@ export function DocumentScanner({
         )
 
         if (hasCustomCorners) {
-          console.log('[ConfirmPhoto] Aplicando transformação de perspectiva')
+          console.log('[ConfirmPhoto] Aplicando transformação de perspectiva com jscanify')
           // Aplicar transformação de perspectiva no canvas original (não no preview)
-          const transformedCanvas = applyPerspectiveTransform(canvasRef.current, editableCorners)
+          const transformedCanvas = await applyPerspectiveTransform(canvasRef.current, editableCorners)
 
           // Aplicar processamento (filtros) no canvas transformado
           const processedCanvas = document.createElement('canvas')
