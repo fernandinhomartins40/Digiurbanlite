@@ -41,6 +41,20 @@ WORKDIR /app/frontend
 ARG BUILD_TIMESTAMP
 RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
 
+# Instalar dependências para jscanify/canvas (Python, make, g++, cairo, etc.)
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
+    pixman-dev \
+    pangomm-dev \
+    libjpeg-turbo-dev \
+    freetype-dev
+
 # ✅ CRÍTICO: API URL para produção (caminho relativo /api será roteado pelo Nginx)
 # Next.js compila isso no código durante o build
 ARG NEXT_PUBLIC_API_URL=/api
