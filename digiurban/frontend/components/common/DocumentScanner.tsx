@@ -392,6 +392,7 @@ export function DocumentScanner({
 
   /**
    * Captura foto
+   * CORREÇÃO FASE 2: Inicializar cropArea ANTES da detecção
    */
   const capturePhoto = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return
@@ -428,9 +429,21 @@ export function DocumentScanner({
     const imageData = canvas.toDataURL('image/jpeg', 0.95)
     setCapturedImage(imageData)
 
+    // CORREÇÃO CRÍTICA: Inicializar cropArea IMEDIATAMENTE com imagem completa
+    // Antes de rodar detecção, garantir que temos um cropArea válido
+    const initialCropArea = {
+      x: 0,
+      y: 0,
+      width: canvas.width,
+      height: canvas.height
+    }
+    setCropArea(initialCropArea)
+    console.log('[CapturePhoto] cropArea inicializado:', initialCropArea)
+
     stopCamera()
 
     // Executar detecção automática após um pequeno delay
+    // A detecção pode sobrescrever o cropArea se encontrar algo melhor
     setTimeout(() => {
       autoDetectDocument()
     }, 100)
@@ -1157,6 +1170,7 @@ export function DocumentScanner({
               </p>
             </div>
             <Button
+              type="button"
               variant="ghost"
               size="icon"
               onClick={onCancel}
@@ -1165,6 +1179,35 @@ export function DocumentScanner({
               <X className="h-6 w-6" />
             </Button>
           </div>
+
+          {/* CORREÇÃO FASE 3: Badge de Detecção - Sempre visível quando há foto capturada */}
+          {capturedImage && detectedCorners && !autoDetecting && (
+            <div className="px-4 pb-2">
+              <div className={cn(
+                "backdrop-blur-sm rounded-lg px-4 py-2 flex items-center gap-2 shadow-lg",
+                detectionUsedFallback
+                  ? "bg-yellow-500/90"
+                  : "bg-green-500/90"
+              )}>
+                {detectionUsedFallback ? (
+                  <Sparkles className="h-4 w-4 text-white" />
+                ) : (
+                  <Check className="h-4 w-4 text-white" />
+                )}
+                <div className="text-white">
+                  <p className="text-sm font-medium">
+                    {detectionUsedFallback ? 'Detecção automática' : 'Documento detectado!'}
+                  </p>
+                  <p className="text-xs opacity-90">
+                    {detectionUsedFallback
+                      ? 'Ajuste os cantos se necessário'
+                      : `${Math.round(detectionConfidence)}% de confiança`
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Área de Captura/Preview - Full Screen */}
@@ -1221,6 +1264,7 @@ export function DocumentScanner({
               {/* Controles de Zoom */}
               <div className="absolute top-20 right-4 z-20 flex flex-col gap-3">
                 <Button
+                  type="button"
                   size="lg"
                   variant="secondary"
                   className="h-12 w-12 p-0 bg-white/90 hover:bg-white rounded-full shadow-lg"
@@ -1233,6 +1277,7 @@ export function DocumentScanner({
                   {zoom.toFixed(1)}x
                 </div>
                 <Button
+                  type="button"
                   size="lg"
                   variant="secondary"
                   className="h-12 w-12 p-0 bg-white/90 hover:bg-white rounded-full shadow-lg"
@@ -1246,6 +1291,7 @@ export function DocumentScanner({
               {/* Botão Alternar Câmera */}
               <div className="absolute top-20 left-4 z-20">
                 <Button
+                  type="button"
                   size="lg"
                   variant="secondary"
                   className="h-12 w-12 p-0 bg-white/90 hover:bg-white rounded-full shadow-lg"
@@ -1377,6 +1423,7 @@ export function DocumentScanner({
             /* Modo Captura */
             <div className="flex items-center justify-center">
               <Button
+                type="button"
                 size="lg"
                 onClick={capturePhoto}
                 disabled={processing || !isCameraReady}
@@ -1391,6 +1438,7 @@ export function DocumentScanner({
               {/* Botões de Ação Principal */}
               <div className="flex gap-3">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={retakePhoto}
                   disabled={processing}
@@ -1400,6 +1448,7 @@ export function DocumentScanner({
                   Tirar Novamente
                 </Button>
                 <Button
+                  type="button"
                   onClick={confirmPhoto}
                   disabled={processing}
                   className="flex-1 h-14 text-base bg-green-600 hover:bg-green-700"
@@ -1420,6 +1469,7 @@ export function DocumentScanner({
 
               {/* Botão Redetectar */}
               <Button
+                type="button"
                 variant="outline"
                 onClick={autoDetectDocument}
                 disabled={processing || autoDetecting}
@@ -1440,6 +1490,7 @@ export function DocumentScanner({
 
               {/* Botão Editar */}
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => setEditMode('filters')}
                 disabled={processing}
@@ -1455,6 +1506,7 @@ export function DocumentScanner({
               {/* Abas de Edição */}
               <div className="flex gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-1">
                 <Button
+                  type="button"
                   variant={editMode === 'filters' ? 'default' : 'ghost'}
                   onClick={() => setEditMode('filters')}
                   className={cn(
@@ -1468,6 +1520,7 @@ export function DocumentScanner({
                   Filtros
                 </Button>
                 <Button
+                  type="button"
                   variant={editMode === 'crop' ? 'default' : 'ghost'}
                   onClick={() => setEditMode('crop')}
                   className={cn(
@@ -1488,6 +1541,7 @@ export function DocumentScanner({
                   {/* Seletor de Modo */}
                   <div className="flex gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-2">
                     <Button
+                      type="button"
                       size="lg"
                       variant={processingMode === 'color' ? 'default' : 'outline'}
                       onClick={() => setProcessingMode('color')}
@@ -1501,6 +1555,7 @@ export function DocumentScanner({
                       Colorido
                     </Button>
                     <Button
+                      type="button"
                       size="lg"
                       variant={processingMode === 'grayscale' ? 'default' : 'outline'}
                       onClick={() => setProcessingMode('grayscale')}
@@ -1514,6 +1569,7 @@ export function DocumentScanner({
                       Cinza
                     </Button>
                     <Button
+                      type="button"
                       size="lg"
                       variant={processingMode === 'blackwhite' ? 'default' : 'outline'}
                       onClick={() => setProcessingMode('blackwhite')}
@@ -1581,6 +1637,7 @@ export function DocumentScanner({
               {editMode === 'crop' && (
                 <div className="flex gap-2">
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={resetCrop}
                     className="w-full h-12 bg-white/10 border-white/30 text-white hover:bg-white/20"
@@ -1592,6 +1649,7 @@ export function DocumentScanner({
 
               {/* Botão Concluir Edição */}
               <Button
+                type="button"
                 onClick={() => setEditMode(null)}
                 className="w-full h-12 bg-green-600 hover:bg-green-700"
               >
@@ -1619,6 +1677,7 @@ export function DocumentScanner({
               <p className="text-xs sm:text-sm text-gray-500 truncate">{documentName}</p>
             </div>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={onCancel}
@@ -1662,6 +1721,7 @@ export function DocumentScanner({
                 {/* Controles de zoom */}
                 <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex flex-col gap-1 sm:gap-2">
                   <Button
+                    type="button"
                     size="sm"
                     variant="secondary"
                     className="h-8 w-8 sm:h-10 sm:w-10 p-0 bg-white/90 hover:bg-white"
@@ -1671,6 +1731,7 @@ export function DocumentScanner({
                     <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
+                    type="button"
                     size="sm"
                     variant="secondary"
                     className="h-8 w-8 sm:h-10 sm:w-10 p-0 bg-white/90 hover:bg-white"
@@ -1735,6 +1796,7 @@ export function DocumentScanner({
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <Button
+                    type="button"
                     size="sm"
                     variant={processingMode === 'color' ? 'default' : 'outline'}
                     onClick={() => setProcessingMode('color')}
@@ -1744,6 +1806,7 @@ export function DocumentScanner({
                     Colorido
                   </Button>
                   <Button
+                    type="button"
                     size="sm"
                     variant={processingMode === 'grayscale' ? 'default' : 'outline'}
                     onClick={() => setProcessingMode('grayscale')}
@@ -1753,6 +1816,7 @@ export function DocumentScanner({
                     Cinza
                   </Button>
                   <Button
+                    type="button"
                     size="sm"
                     variant={processingMode === 'blackwhite' ? 'default' : 'outline'}
                     onClick={() => setProcessingMode('blackwhite')}
@@ -1772,6 +1836,7 @@ export function DocumentScanner({
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <Button
+                    type="button"
                     size="sm"
                     variant={showCropTool ? 'default' : 'outline'}
                     onClick={() => setShowCropTool(!showCropTool)}
@@ -1782,6 +1847,7 @@ export function DocumentScanner({
                   </Button>
                   {showCropTool && (
                     <Button
+                      type="button"
                       size="sm"
                       variant="ghost"
                       onClick={resetCrop}
@@ -1819,6 +1885,7 @@ export function DocumentScanner({
             {!capturedImage ? (
               <>
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={switchCamera}
                   disabled={processing}
@@ -1829,6 +1896,7 @@ export function DocumentScanner({
                   <span className="sm:hidden">Alternar</span>
                 </Button>
                 <Button
+                  type="button"
                   onClick={capturePhoto}
                   disabled={processing || !isCameraReady}
                   className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700"
@@ -1840,6 +1908,7 @@ export function DocumentScanner({
             ) : (
               <>
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={retakePhoto}
                   disabled={processing}
@@ -1850,6 +1919,7 @@ export function DocumentScanner({
                   <span className="sm:hidden">Repetir</span>
                 </Button>
                 <Button
+                  type="button"
                   onClick={confirmPhoto}
                   disabled={processing}
                   className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
