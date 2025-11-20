@@ -220,6 +220,91 @@ export default function SecretariaAgriculturaPage() {
         </CardContent>
       </Card>
 
+      {/* 🚀 SEÇÃO DE MICRO SISTEMAS */}
+      {(() => {
+        const { allMSConfigs } = require('@/lib/ms-configs');
+        const microSystems = Object.values(allMSConfigs).filter(
+          (ms: any) => ms.departmentSlug === 'agricultura'
+        );
+
+        if (microSystems.length === 0) return null;
+
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 border-b-2 pb-4 border-green-500">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                <TrendingUp className="h-7 w-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                  Micro Sistemas
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Aplicações completas e independentes com gestão avançada, workflows e relatórios
+                </p>
+              </div>
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 text-base shadow-lg">
+                {microSystems.length} MS Disponíveis
+              </Badge>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {microSystems.map((msConfig: any) => (
+                <Card
+                  key={msConfig.id}
+                  className="cursor-pointer hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] border-2 border-green-200 bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 dark:from-green-950 dark:via-emerald-950 dark:to-green-950 relative overflow-hidden group"
+                  onClick={() => router.push(`/admin/ms/${msConfig.id}`)}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg text-white">
+                        {msConfig.icon}
+                      </div>
+                      <Badge variant="secondary" className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-md">
+                        SUPER APP
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-xl font-bold">{msConfig.title}</CardTitle>
+                    <CardDescription className="line-clamp-2 text-sm">
+                      {msConfig.description}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="bg-green-50 dark:bg-green-950/50 rounded-lg p-3 border border-green-200 dark:border-green-800">
+                        <p className="text-xs text-center text-green-700 dark:text-green-300 font-medium">
+                          ✨ Sistema completo pronto para uso
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2 flex-wrap justify-center">
+                        <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-green-300">
+                          Dashboard
+                        </Badge>
+                        {msConfig.hasWorkflow && (
+                          <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-emerald-300">
+                            Workflow
+                          </Badge>
+                        )}
+                        {msConfig.hasReports && (
+                          <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-green-300">
+                            Relatórios
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+
       {/* Módulos Padrões - ✅ AGORA DINÂMICO DO BACKEND */}
       <div>
         <div className="mb-6">
