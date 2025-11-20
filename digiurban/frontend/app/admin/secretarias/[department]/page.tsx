@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { getDepartmentConfig } from '@/lib/department-config';
 import { getServiceRoute } from '@/lib/ms-detection';
+import { allMSConfigs } from '@/lib/ms-configs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -65,10 +66,20 @@ export default function DepartmentPage() {
 
   const Icon = config.icon;
 
-  // ✅ Filtra módulos (serviços COM_DADOS com moduleType)
-  const modules = stats?.services.filter(
+  // ✅ Separa Micro Sistemas de módulos regulares
+  const { isMicroSystem } = require('@/lib/ms-detection');
+
+  // 🚀 MICRO SISTEMAS: Buscados das CONFIGURAÇÕES ESTÁTICAS (não do backend)
+  const microSystemsForDept = Object.values(allMSConfigs).filter(
+    (ms) => ms.departmentSlug === department
+  );
+
+  // 📋 Módulos regulares do backend (apenas os que NÃO são MS)
+  const allModules = stats?.services.filter(
     (s) => s.serviceType === 'COM_DADOS' && s.moduleType
   ) || [];
+
+  const modules = allModules.filter(m => !isMicroSystem(m.moduleType));
 
   // ✅ Filtra serviços SEM_DADOS (certidões, declarações)
   const documents = stats?.services.filter(
@@ -92,7 +103,7 @@ export default function DepartmentPage() {
           <p className="text-muted-foreground mt-2">{config.description}</p>
         </div>
         <Badge variant="outline" className={`${config.color} ${config.borderColor}`}>
-          {modules.length} módulos
+          {allModules.length} módulos
         </Badge>
       </div>
 
@@ -170,7 +181,7 @@ export default function DepartmentPage() {
         </Card>
       </div>
 
-      {/* 🎴 CARDS DOS MÓDULOS - 100% DINÂMICOS */}
+      {/* 🎴 MÓDULOS REGULARES (sem Micro Sistemas) */}
       {modules.length > 0 && (
         <div>
           <div className="mb-6">
@@ -197,184 +208,72 @@ export default function DepartmentPage() {
               </>
             ) : (
               <>
-                {/* Separa MS de serviços normais */}
-                {(() => {
-                  const { isMicroSystem } = require('@/lib/ms-detection');
-                  const microSystems = modules.filter(m => isMicroSystem(m.moduleType));
-                  const regularServices = modules.filter(m => !isMicroSystem(m.moduleType));
+                {modules.map((service) => {
+                  const targetRoute = getServiceRoute(service.moduleType, service.slug, department);
 
                   return (
-                    <>
-                      {/* 🚀 SEÇÃO DE MICRO SISTEMAS */}
-                      {microSystems.length > 0 && (
-                        <div className="space-y-4 mb-8">
-                          <div className="flex items-center gap-3 border-b pb-3">
-                            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                              <TrendingUp className="h-6 w-6 text-white" />
+                    <Card
+                      key={service.id}
+                      className={`cursor-pointer hover:shadow-lg transition-shadow ${config.bgColor} ${config.borderColor}`}
+                      onClick={() => router.push(targetRoute)}
+                    >
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className={`h-5 w-5 ${config.color}`} />
+                          {service.name}
+                        </CardTitle>
+                        <CardDescription className="line-clamp-2">
+                          {service.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {/* Stats do serviço */}
+                          <div className="text-sm space-y-1">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Total:</span>
+                              <span className="font-medium">{service.stats.total}</span>
                             </div>
-                            <div>
-                              <h2 className="text-2xl font-bold">Micro Sistemas</h2>
-                              <p className="text-sm text-muted-foreground">
-                                Aplicações completas com gestão avançada e workflows
-                              </p>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Pendentes:</span>
+                              <span className="font-medium text-orange-600">
+                                {service.stats.pending}
+                              </span>
                             </div>
-                            <Badge className="ml-auto bg-gradient-to-r from-blue-500 to-purple-600">
-                              {microSystems.length} MS Disponíveis
-                            </Badge>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Aprovados:</span>
+                              <span className="font-medium text-green-600">
+                                {service.stats.approved}
+                              </span>
+                            </div>
                           </div>
 
-                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {microSystems.map((ms) => {
-                              const targetRoute = getServiceRoute(ms.moduleType, ms.slug, department);
-
-                              return (
-                                <Card
-                                  key={ms.id}
-                                  className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02] border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950"
-                                  onClick={() => router.push(targetRoute)}
-                                >
-                                  <CardHeader className="pb-3">
-                                    <div className="flex items-start justify-between">
-                                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-2">
-                                        <FileText className="h-6 w-6 text-white" />
-                                      </div>
-                                      <Badge variant="secondary" className="text-xs">
-                                        SUPER APP
-                                      </Badge>
-                                    </div>
-                                    <CardTitle className="text-lg">{ms.name}</CardTitle>
-                                    <CardDescription className="line-clamp-2 text-xs">
-                                      {ms.description}
-                                    </CardDescription>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="space-y-3">
-                                      {/* Stats do MS */}
-                                      <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                                        <div className="bg-white/50 dark:bg-black/20 rounded p-2">
-                                          <div className="font-bold text-lg">{ms.stats.total}</div>
-                                          <div className="text-xs text-muted-foreground">Total</div>
-                                        </div>
-                                        <div className="bg-orange-50 dark:bg-orange-950 rounded p-2">
-                                          <div className="font-bold text-lg text-orange-600">{ms.stats.pending}</div>
-                                          <div className="text-xs text-muted-foreground">Pendente</div>
-                                        </div>
-                                        <div className="bg-green-50 dark:bg-green-950 rounded p-2">
-                                          <div className="font-bold text-lg text-green-600">{ms.stats.approved}</div>
-                                          <div className="text-xs text-muted-foreground">Aprovado</div>
-                                        </div>
-                                      </div>
-
-                                      {/* Features do MS */}
-                                      <div className="flex gap-1 flex-wrap">
-                                        <Badge variant="outline" className="text-xs bg-white/50">
-                                          <LayoutDashboard className="h-3 w-3 mr-1" />
-                                          Dashboard
-                                        </Badge>
-                                        <Badge variant="outline" className="text-xs bg-white/50">
-                                          <CheckCircle className="h-3 w-3 mr-1" />
-                                          Workflow
-                                        </Badge>
-                                        <Badge variant="outline" className="text-xs bg-white/50">
-                                          <FileText className="h-3 w-3 mr-1" />
-                                          Relatórios
-                                        </Badge>
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              );
-                            })}
+                          {/* Features do serviço */}
+                          <div className="flex gap-2 flex-wrap">
+                            {service.hasScheduling && (
+                              <Badge variant="outline" className="text-xs">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                Agenda
+                              </Badge>
+                            )}
+                            {service.hasLocation && (
+                              <Badge variant="outline" className="text-xs">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                Mapa
+                              </Badge>
+                            )}
+                            {service.requiresDocuments && (
+                              <Badge variant="outline" className="text-xs">
+                                <FileCheck className="h-3 w-3 mr-1" />
+                                Documentos
+                              </Badge>
+                            )}
                           </div>
                         </div>
-                      )}
-
-                      {/* 📋 SEÇÃO DE SERVIÇOS REGULARES */}
-                      {regularServices.length > 0 && (
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3 border-b pb-3">
-                            <FileText className="h-8 w-8 text-muted-foreground" />
-                            <div>
-                              <h2 className="text-xl font-semibold">Serviços e Solicitações</h2>
-                              <p className="text-sm text-muted-foreground">
-                                Serviços gerais e solicitações do departamento
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {regularServices.map((service) => {
-                              const targetRoute = getServiceRoute(service.moduleType, service.slug, department);
-
-                              return (
-                                <Card
-                                  key={service.id}
-                                  className={`cursor-pointer hover:shadow-lg transition-shadow ${config.bgColor} ${config.borderColor}`}
-                                  onClick={() => router.push(targetRoute)}
-                                >
-                                  <CardHeader>
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                      <FileText className={`h-5 w-5 ${config.color}`} />
-                                      {service.name}
-                                    </CardTitle>
-                                    <CardDescription className="line-clamp-2">
-                                      {service.description}
-                                    </CardDescription>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="space-y-3">
-                                      {/* Stats do serviço */}
-                                      <div className="text-sm space-y-1">
-                                        <div className="flex justify-between">
-                                          <span className="text-muted-foreground">Total:</span>
-                                          <span className="font-medium">{service.stats.total}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-muted-foreground">Pendentes:</span>
-                                          <span className="font-medium text-orange-600">
-                                            {service.stats.pending}
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-muted-foreground">Aprovados:</span>
-                                          <span className="font-medium text-green-600">
-                                            {service.stats.approved}
-                                          </span>
-                                        </div>
-                                      </div>
-
-                                      {/* Features do serviço */}
-                                      <div className="flex gap-2 flex-wrap">
-                                        {service.hasScheduling && (
-                                          <Badge variant="outline" className="text-xs">
-                                            <Calendar className="h-3 w-3 mr-1" />
-                                            Agenda
-                                          </Badge>
-                                        )}
-                                        {service.hasLocation && (
-                                          <Badge variant="outline" className="text-xs">
-                                            <MapPin className="h-3 w-3 mr-1" />
-                                            Mapa
-                                          </Badge>
-                                        )}
-                                        {service.requiresDocuments && (
-                                          <Badge variant="outline" className="text-xs">
-                                            <FileCheck className="h-3 w-3 mr-1" />
-                                            Documentos
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </>
+                      </CardContent>
+                    </Card>
                   );
-                })()}
+                })}
               </>
             )}
           </div>
@@ -492,6 +391,93 @@ export default function DepartmentPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 🚀 SEÇÃO EXCLUSIVA - MICRO SISTEMAS (baseado em configurações estáticas) */}
+      {microSystemsForDept.length > 0 && (
+        <div className="space-y-4">
+          {/* Header da seção */}
+          <div className="flex items-center gap-3 border-b-2 border-gradient-to-r from-blue-500 to-purple-600 pb-4">
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+              <TrendingUp className="h-7 w-7 text-white" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Micro Sistemas
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Aplicações completas e independentes com gestão avançada, workflows e relatórios
+              </p>
+            </div>
+            <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 text-base shadow-lg">
+              {microSystemsForDept.length} {microSystemsForDept.length === 1 ? 'MS Disponível' : 'MS Disponíveis'}
+            </Badge>
+          </div>
+
+          {/* Cards dos Micro Sistemas */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {microSystemsForDept.map((msConfig) => {
+              const targetRoute = `/admin/ms/${msConfig.id}`;
+
+              return (
+                <Card
+                  key={msConfig.id}
+                  className="cursor-pointer hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 dark:from-blue-950 dark:via-purple-950 dark:to-blue-950 relative overflow-hidden group"
+                  onClick={() => router.push(targetRoute)}
+                >
+                  {/* Efeito de brilho no hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
+                        {msConfig.icon}
+                      </div>
+                      <Badge variant="secondary" className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 shadow-md">
+                        SUPER APP
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-xl font-bold">{msConfig.title}</CardTitle>
+                    <CardDescription className="line-clamp-2 text-sm">
+                      {msConfig.description}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Info: Sistema pronto para uso */}
+                      <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                        <p className="text-xs text-center text-blue-700 dark:text-blue-300 font-medium">
+                          ✨ Sistema completo pronto para uso
+                        </p>
+                      </div>
+
+                      {/* Badges de Features */}
+                      <div className="flex gap-2 flex-wrap justify-center">
+                        <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-blue-300">
+                          <LayoutDashboard className="h-3 w-3 mr-1" />
+                          Dashboard
+                        </Badge>
+                        {msConfig.hasWorkflow && (
+                          <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-purple-300">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Workflow
+                          </Badge>
+                        )}
+                        {msConfig.hasReports && (
+                          <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-blue-300">
+                            <FileText className="h-3 w-3 mr-1" />
+                            Relatórios
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Estado vazio */}
       {!loading && modules.length === 0 && documents.length === 0 && simpleServices.length === 0 && (
