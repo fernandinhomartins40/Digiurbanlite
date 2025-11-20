@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from './StatusBadge';
 import {
   ChevronLeft,
   ChevronRight,
@@ -282,11 +283,34 @@ export function MSDataTable<T extends Record<string, any>>({
                         />
                       </TableCell>
                     )}
-                    {columns.map((column) => (
-                      <TableCell key={column.key}>
-                        {column.render ? column.render(row[column.key], row) : row[column.key]}
-                      </TableCell>
-                    ))}
+                    {columns.map((column) => {
+                      const value = row[column.key];
+                      let displayValue = value;
+
+                      // Auto-render status
+                      if (column.key === 'status') {
+                        displayValue = <StatusBadge status={value} />;
+                      }
+                      // Auto-format dates
+                      else if (column.key.includes('data') || column.key.includes('Data') || column.key.includes('createdAt') || column.key.includes('updatedAt')) {
+                        try {
+                          const date = new Date(value);
+                          if (!isNaN(date.getTime())) {
+                            displayValue = date.toLocaleDateString('pt-BR');
+                          }
+                        } catch {}
+                      }
+                      // Use custom render if provided
+                      else if (column.render) {
+                        displayValue = column.render(value, row);
+                      }
+
+                      return (
+                        <TableCell key={column.key}>
+                          {displayValue}
+                        </TableCell>
+                      );
+                    })}
                     {actions.length > 0 && (
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>

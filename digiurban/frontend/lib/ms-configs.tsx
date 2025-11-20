@@ -49,29 +49,6 @@ import {
   LayoutGrid,
   Megaphone,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-
-// Helper para renderizar badges de status
-const renderStatusBadge = (status: string) => {
-  const statusConfig: Record<string, { label: string; variant: any }> = {
-    AGUARDANDO_ANALISE: { label: 'Aguardando', variant: 'secondary' },
-    AGUARDANDO_VALIDACAO: { label: 'Em Validação', variant: 'secondary' },
-    EM_ANALISE: { label: 'Em Análise', variant: 'default' },
-    APROVADO: { label: 'Aprovado', variant: 'default' },
-    CONCLUIDO: { label: 'Concluído', variant: 'default' },
-    MATRICULADO: { label: 'Matriculado', variant: 'default' },
-    REJEITADO: { label: 'Rejeitado', variant: 'destructive' },
-    CANCELADO: { label: 'Cancelado', variant: 'destructive' },
-    AGENDADO: { label: 'Agendado', variant: 'default' },
-    REALIZADO: { label: 'Realizado', variant: 'default' },
-    FILA_ESPERA: { label: 'Fila de Espera', variant: 'secondary' },
-    ATIVO: { label: 'Ativo', variant: 'default' },
-    INATIVO: { label: 'Inativo', variant: 'outline' },
-  };
-
-  const config = statusConfig[status] || { label: status, variant: 'outline' };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
-};
 
 // MS-01: Consultas Especializadas
 export const msConsultasEspecializadas: MSConfig = {
@@ -85,8 +62,8 @@ export const msConsultasEspecializadas: MSConfig = {
     { key: 'id', label: 'ID', width: '100px' },
     { key: 'pacienteNome', label: 'Paciente', sortable: true },
     { key: 'especialidade', label: 'Especialidade', sortable: true },
-    { key: 'status', label: 'Status', render: (value) => renderStatusBadge(value) },
-    { key: 'createdAt', label: 'Data Solicitação', sortable: true, render: (value) => new Date(value).toLocaleDateString('pt-BR') },
+    { key: 'status', label: 'Status' },
+    { key: 'createdAt', label: 'Data Solicitação', sortable: true },
   ],
   statuses: [
     { value: 'FILA_ESPERA', label: 'Fila de Espera', color: '#f59e0b' },
@@ -116,8 +93,8 @@ export const msAgendaMedica: MSConfig = {
     { key: 'id', label: 'ID', width: '100px' },
     { key: 'pacienteNome', label: 'Paciente', sortable: true },
     { key: 'profissionalNome', label: 'Profissional', sortable: true },
-    { key: 'dataConsulta', label: 'Data/Hora', sortable: true, render: (value) => new Date(value).toLocaleString('pt-BR') },
-    { key: 'status', label: 'Status', render: (value) => renderStatusBadge(value) },
+    { key: 'dataConsulta', label: 'Data/Hora', sortable: true },
+    { key: 'status', label: 'Status' },
   ],
   statuses: [
     { value: 'AGENDADO', label: 'Agendado', color: '#3b82f6' },
@@ -149,7 +126,7 @@ export const msExames: MSConfig = {
     { key: 'id', label: 'ID', width: '100px' },
     { key: 'pacienteNome', label: 'Paciente', sortable: true },
     { key: 'tipoExame', label: 'Tipo de Exame', sortable: true },
-    { key: 'status', label: 'Status', render: (value) => renderStatusBadge(value) },
+    { key: 'status', label: 'Status' },
     { key: 'createdAt', label: 'Data Solicitação', sortable: true },
   ],
   statuses: [
@@ -181,7 +158,7 @@ export const msMedicamentos: MSConfig = {
     { key: 'pacienteNome', label: 'Paciente', sortable: true },
     { key: 'medicamento', label: 'Medicamento', sortable: true },
     { key: 'quantidade', label: 'Quantidade', sortable: true },
-    { key: 'dataRetirada', label: 'Data Retirada', render: (value) => value ? new Date(value).toLocaleDateString('pt-BR') : '-' },
+    { key: 'dataRetirada', label: 'Data Retirada' },
   ],
   metrics: {
     total: { label: 'Total de Dispensações' },
@@ -206,7 +183,7 @@ export const msVacinas: MSConfig = {
     { key: 'pacienteNome', label: 'Paciente', sortable: true },
     { key: 'vacina', label: 'Vacina', sortable: true },
     { key: 'dose', label: 'Dose', sortable: true },
-    { key: 'dataAplicacao', label: 'Data Aplicação', render: (value) => new Date(value).toLocaleDateString('pt-BR') },
+    { key: 'dataAplicacao', label: 'Data Aplicação' },
   ],
   metrics: {
     total: { label: 'Total de Doses Aplicadas' },
@@ -230,7 +207,7 @@ export const msTFD: MSConfig = {
     { key: 'pacienteNome', label: 'Paciente', sortable: true },
     { key: 'destinoCidade', label: 'Destino', sortable: true },
     { key: 'especialidade', label: 'Especialidade', sortable: true },
-    { key: 'status', label: 'Status', render: (value) => renderStatusBadge(value) },
+    { key: 'status', label: 'Status' },
     { key: 'dataViagem', label: 'Data Viagem', sortable: true },
   ],
   statuses: [
@@ -263,7 +240,7 @@ export const msTransporteEscolar: MSConfig = {
     { key: 'alunoNome', label: 'Aluno', sortable: true },
     { key: 'escolaNome', label: 'Escola', sortable: true },
     { key: 'enderecoEmbarque', label: 'Endereço Embarque' },
-    { key: 'status', label: 'Status', render: (value) => renderStatusBadge(value) },
+    { key: 'status', label: 'Status' },
   ],
   statuses: [
     { value: 'AGUARDANDO_ANALISE', label: 'Aguardando', color: '#f59e0b' },
@@ -295,7 +272,7 @@ export const msMatriculas: MSConfig = {
     { key: 'alunoNome', label: 'Aluno', sortable: true },
     { key: 'serie', label: 'Série', sortable: true },
     { key: 'escolaNome', label: 'Escola Preferencial' },
-    { key: 'status', label: 'Status', render: (value) => renderStatusBadge(value) },
+    { key: 'status', label: 'Status' },
     { key: 'createdAt', label: 'Data Inscrição', sortable: true },
   ],
   statuses: [
@@ -402,7 +379,7 @@ export const msAtividadesExtras: MSConfig = {
     { key: 'alunoNome', label: 'Aluno', sortable: true },
     { key: 'atividade', label: 'Atividade', sortable: true },
     { key: 'turno', label: 'Turno', sortable: true },
-    { key: 'status', label: 'Status', render: (value) => renderStatusBadge(value) },
+    { key: 'status', label: 'Status' },
   ],
   metrics: {
     total: { label: 'Total de Inscrições' },
@@ -431,8 +408,8 @@ function createBasicMSConfig(
     columns: [
       { key: 'id', label: 'ID', width: '100px' },
       { key: 'descricao', label: 'Descrição', sortable: true },
-      { key: 'status', label: 'Status', render: (value) => renderStatusBadge(value) },
-      { key: 'createdAt', label: 'Data Criação', sortable: true, render: (value) => new Date(value).toLocaleDateString('pt-BR') },
+      { key: 'status', label: 'Status' },
+      { key: 'createdAt', label: 'Data Criação', sortable: true },
     ],
     metrics: {
       total: { label: 'Total de Registros' },
