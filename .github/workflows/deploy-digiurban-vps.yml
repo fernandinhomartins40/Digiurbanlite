@@ -46,8 +46,8 @@ jobs:
           username: root
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
-          timeout: 300s
-          command_timeout: 300s
+          timeout: 20m
+          command_timeout: 20m
           script: |
             set -e
 
