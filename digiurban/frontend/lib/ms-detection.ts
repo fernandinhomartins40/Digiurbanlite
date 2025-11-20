@@ -4,6 +4,7 @@ export const MS_TYPE_TO_SLUG: Record<string, string> = {
   'CONSULTAS_ESPECIALIZADAS': 'consultas-especializadas',
   'AGENDA_MEDICA': 'agenda-medica',
   'AGENDAMENTO_CONSULTAS': 'agenda-medica',
+  'AGENDAMENTOS_MEDICOS': 'agenda-medica',
   'EXAMES_LABORATORIAIS': 'exames',
   'SOLICITACAO_EXAMES': 'exames',
   'DISTRIBUICAO_MEDICAMENTOS': 'medicamentos',
@@ -15,21 +16,31 @@ export const MS_TYPE_TO_SLUG: Record<string, string> = {
 
   // Educação
   'TRANSPORTE_ESCOLAR': 'transporte-escolar',
+  'SOLICITACAO_TRANSPORTE_ESCOLAR': 'transporte-escolar',
+  'CADASTRO_TRANSPORTE_ESCOLAR': 'transporte-escolar',
   'MATRICULA_ALUNO': 'matriculas',
   'MATRICULAS': 'matriculas',
+  'MATRICULA_ESCOLAR': 'matriculas',
   'MERENDA_ESCOLAR': 'merenda',
+  'GESTAO_MERENDA': 'merenda',
   'MATERIAL_ESCOLAR': 'material-escolar',
   'UNIFORME_ESCOLAR': 'uniforme',
   'ATIVIDADES_EXTRACURRICULARES': 'atividades-extras',
+  'TRANSFERENCIA_ESCOLAR': 'matriculas',
 
   // Assistência Social
   'AUXILIO_EMERGENCIAL': 'auxilio-emergencial',
   'CESTA_BASICA': 'cesta-basica',
   'CRAS': 'cras',
+  'ATENDIMENTO_CRAS': 'cras',
+  'GESTAO_CRAS_CREAS': 'cras',
   'CREAS': 'creas',
   'BOLSA_FAMILIA': 'bolsa-familia',
   'CADASTRO_UNICO': 'cadastro-unico',
   'CADUNICO': 'cadastro-unico',
+  'INSCRICAO_PROGRAMA_SOCIAL': 'bolsa-familia',
+  'GESTAO_BENEFICIOS': 'bolsa-familia',
+  'SOLICITACAO_BENEFICIO': 'auxilio-emergencial',
 
   // Agricultura
   'INSUMOS_AGRICOLAS': 'insumos-agricolas',
