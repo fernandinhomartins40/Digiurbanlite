@@ -221,9 +221,8 @@ export const socialServices: ServiceDefinition[] = [
         {
           id: 'crasReferencia',
           label: 'CRAS de Referência',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_UNIDADES_CRAS',
           required: true
         },
         {

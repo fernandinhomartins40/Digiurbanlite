@@ -92,9 +92,8 @@ export const educationServices: ServiceDefinition[] = [
         {
           id: 'escolaPreferencial',
           label: 'Escola Preferencial',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_UNIDADES_EDUCACAO',
           required: true
         },
         {
@@ -209,17 +208,15 @@ export const educationServices: ServiceDefinition[] = [
         {
           id: 'escolaOrigem',
           label: 'Escola de Origem',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_UNIDADES_EDUCACAO',
           required: true
         },
         {
           id: 'escolaDestino',
           label: 'Escola de Destino',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_UNIDADES_EDUCACAO',
           required: true
         },
         {
@@ -281,9 +278,8 @@ export const educationServices: ServiceDefinition[] = [
         {
           id: 'escola',
           label: 'Escola',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_UNIDADES_EDUCACAO',
           required: true
         },
         {
@@ -368,9 +364,8 @@ export const educationServices: ServiceDefinition[] = [
         {
           id: 'escola',
           label: 'Escola',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_UNIDADES_EDUCACAO',
           required: true
         },
         {

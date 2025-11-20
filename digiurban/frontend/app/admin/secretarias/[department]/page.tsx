@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { getDepartmentConfig } from '@/lib/department-config';
+import { getServiceRoute } from '@/lib/ms-detection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -194,11 +195,15 @@ export default function DepartmentPage() {
                 ))}
               </>
             ) : (
-              modules.map((service) => (
+              modules.map((service) => {
+                // 🎯 Detecta se é Micro Sistema e roteia para painel dedicado usando ms-detection
+                const targetRoute = getServiceRoute(service.moduleType, service.slug, department);
+
+                return (
                 <Card
                   key={service.id}
                   className={`cursor-pointer hover:shadow-lg transition-shadow ${config.bgColor} ${config.borderColor}`}
-                  onClick={() => router.push(`/admin/secretarias/${department}/${service.slug}`)}
+                  onClick={() => router.push(targetRoute)}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -255,7 +260,8 @@ export default function DepartmentPage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
+                );
+              })
             )}
           </div>
         </div>

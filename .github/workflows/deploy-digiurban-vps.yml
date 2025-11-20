@@ -159,6 +159,11 @@ jobs:
             echo "Aguardando containers iniciarem..."
             sleep 30
 
+            # ===== EXECUTAR SEEDS DOS MICRO SISTEMAS =====
+            echo "=== Executando seeds dos Micro Sistemas ==="
+            docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed" || echo "⚠️ Seed falhou mas continuando deploy"
+            echo "✅ Seeds executados"
+
             # ===== DIAGNÓSTICO: Verificar se backend está crashando =====
             echo "=== Verificando status do backend no supervisord ==="
             docker exec digiurban-vps supervisorctl status || true

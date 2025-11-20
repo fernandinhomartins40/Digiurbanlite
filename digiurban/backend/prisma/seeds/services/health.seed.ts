@@ -71,9 +71,8 @@ export const healthServices: ServiceDefinition[] = [
         {
           id: 'unidadeSaude',
           label: 'Unidade de Saúde',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_UNIDADES_SAUDE',
           required: true
         },
         {
@@ -92,9 +91,8 @@ export const healthServices: ServiceDefinition[] = [
         {
           id: 'profissionalResponsavel',
           label: 'Profissional Responsável',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_PROFISSIONAIS_SAUDE',
           required: false
         },
         {
@@ -250,9 +248,8 @@ export const healthServices: ServiceDefinition[] = [
         {
           id: 'unidadePreferencial',
           label: 'Unidade de Saúde Preferencial',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
+          type: 'select',
+          enumSource: 'MS_UNIDADES_SAUDE',
           required: true
         },
         {

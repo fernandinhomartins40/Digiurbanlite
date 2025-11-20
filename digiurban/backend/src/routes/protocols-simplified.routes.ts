@@ -13,6 +13,7 @@ import { AuthenticatedRequest } from '../types';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { protocolServiceSimplified } from '../services/protocol-simplified.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { onProtocolCreated } from '../hooks/protocol-to-ms.hook';
 
 const router = Router();
 
@@ -88,6 +89,21 @@ router.post('/', requireMinRole(UserRole.USER), async (req, res) => {
       address,
       attachments
         });
+
+    // 🔄 Hook: Sincronizar com Micro Sistema (se aplicável)
+    try {
+      await onProtocolCreated({
+        id: result.protocol.id,
+        serviceId: result.protocol.serviceId,
+        citizenId: citizen.id,
+        requesterId: userId,
+        customData: formData || {},
+        createdAt: result.protocol.createdAt
+      });
+    } catch (hookError) {
+      // Log erro mas não bloqueia criação do protocolo
+      console.error('[Hook MS] Erro na sincronização:', hookError);
+    }
 
     return res.status(201).json({
       success: true,

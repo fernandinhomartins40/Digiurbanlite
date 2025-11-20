@@ -4697,5 +4697,207 @@ model FeiraLivre {
 }
 
 // ============================================================================
+// MICRO SISTEMAS ADICIONAIS - Tabelas para Protocolo-MS Sync
+// ============================================================================
+
+// MS-07: Transporte Escolar
+model SolicitacaoTransporteEscolar {
+  id                    String   @id @default(cuid())
+  protocolId            String?  @unique
+  alunoId               String
+  responsavelId         String
+  unidadeEscolarId      String?
+  serie                 String?
+  turno                 String?
+  enderecoEmbarque      String
+  pontoReferenciaEmbarque String?
+  distanciaEscolaKm     Float?
+  necessidadesEspeciais Boolean  @default(false)
+  tipoNecessidade       String?
+  necessitaMonitor      Boolean  @default(false)
+  horarioEntradaEscola  String?
+  necessitaIda          Boolean  @default(true)
+  necessitaVolta        Boolean  @default(true)
+  status                String   @default("AGUARDANDO_ANALISE")
+  rotaAtribuida         String?
+  veiculoAtribuido      String?
+  observacoes           String?
+  dataAprovacao         DateTime?
+  aprovadoPor           String?
+  motivoRecusa          String?
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([protocolId])
+  @@index([alunoId])
+  @@index([status])
+  @@map("solicitacoes_transporte_escolar")
+}
+
+// MS-01: Consultas Especializadas
+model SolicitacaoConsultaEspecializada {
+  id                 String   @id @default(cuid())
+  protocolId         String?  @unique
+  pacienteId         String
+  especialidade      String
+  unidadePreferencial String?
+  motivoConsulta     String
+  urgente            Boolean  @default(false)
+  justificativaUrgencia String?
+  status             String   @default("FILA_ESPERA")
+  dataAgendamento    DateTime?
+  profissionalId     String?
+  unidadeAtendimento String?
+  dataAtendimento    DateTime?
+  compareceu         Boolean?
+  observacoes        String?
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([protocolId])
+  @@index([pacienteId])
+  @@index([especialidade])
+  @@index([status])
+  @@map("solicitacoes_consulta_especializada")
+}
+
+// MS-13: Auxílio Emergencial
+model SolicitacaoAuxilioEmergencial {
+  id                  String   @id @default(cuid())
+  protocolId          String?  @unique
+  familiaId           String
+  responsavelId       String
+  nisResponsavel      String?
+  qtdMembrosFamilia   Int
+  rendaFamiliarTotal  Float
+  situacaoEmergencia  String
+  descricaoSituacao   String
+  comprovacaoAnexada  Boolean  @default(false)
+  valorSolicitado     Float?
+  status              String   @default("EM_ANALISE")
+  parecer             String?
+  valorAprovado       Float?
+  dataAprovacao       DateTime?
+  aprovadoPor         String?
+  dataPagamento       DateTime?
+  formaPagamento      String?
+  motivoRecusa        String?
+  observacoes         String?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([protocolId])
+  @@index([familiaId])
+  @@index([responsavelId])
+  @@index([status])
+  @@map("solicitacoes_auxilio_emergencial")
+}
+
+// MS-14: Cesta Básica
+model SolicitacaoCestaBasica {
+  id                  String   @id @default(cuid())
+  protocolId          String?  @unique
+  familiaId           String
+  responsavelId       String
+  nisResponsavel      String?
+  qtdMembrosFamilia   Int
+  rendaFamiliarTotal  Float
+  unidadeCRAS         String?
+  motivoSolicitacao   String
+  primeiraVez         Boolean  @default(false)
+  ultimaRetirada      DateTime?
+  status              String   @default("AGUARDANDO_ANALISE")
+  parecer             String?
+  dataAprovacao       DateTime?
+  aprovadoPor         String?
+  dataRetirada        DateTime?
+  localRetirada       String?
+  retiradoPor         String?
+  motivoRecusa        String?
+  observacoes         String?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([protocolId])
+  @@index([familiaId])
+  @@index([responsavelId])
+  @@index([status])
+  @@map("solicitacoes_cesta_basica")
+}
+
+// MS-20: Crédito Agrícola
+model SolicitacaoCreditoAgricola {
+  id                   String   @id @default(cuid())
+  protocolId           String?  @unique
+  produtorId           String
+  cpfProdutor          String
+  propriedadeId        String?
+  tipoCredito          String
+  finalidade           String
+  valorSolicitado      Float
+  prazoMeses           Int?
+  culturaDestino       String?
+  areaPlantio          Float?
+  garantiasOferecidas  String?
+  possuiDividas        Boolean  @default(false)
+  descricaoDividas     String?
+  status               String   @default("EM_ANALISE")
+  parecer              String?
+  valorAprovado        Float?
+  taxaJuros            Float?
+  dataAprovacao        DateTime?
+  aprovadoPor          String?
+  dataLiberacao        DateTime?
+  contratoAssinado     Boolean  @default(false)
+  motivoRecusa         String?
+  observacoes          String?
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([protocolId])
+  @@index([produtorId])
+  @@index([status])
+  @@map("solicitacoes_credito_agricola")
+}
+
+// MS-19: Assistência Técnica Rural
+model SolicitacaoAssistenciaTecnica {
+  id                   String   @id @default(cuid())
+  protocolId           String?  @unique
+  produtorId           String
+  cpfProdutor          String
+  propriedadeId        String?
+  enderecoPropriedade  String
+  areaPropriedade      Float?
+  tipoAssistencia      String
+  cultura              String?
+  problemaRelatado     String
+  urgente              Boolean  @default(false)
+  dataPreferencial     DateTime?
+  status               String   @default("AGUARDANDO_VISITA")
+  tecnicoResponsavel   String?
+  dataVisita           DateTime?
+  laudoTecnico         String?
+  recomendacoes        String?
+  dataAtendimento      DateTime?
+  atendimentoRealizado Boolean  @default(false)
+  observacoes          String?
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([protocolId])
+  @@index([produtorId])
+  @@index([status])
+  @@index([tecnicoResponsavel])
+  @@map("solicitacoes_assistencia_tecnica")
+}
+
+// ============================================================================
 // TODOS OS 78 MICROSISTEMAS TÊM SCHEMAS DEFINIDOS
 // ============================================================================
