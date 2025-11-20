@@ -15,7 +15,6 @@ import { Camera, X, RotateCw, Check, AlertCircle, Loader2, ZoomIn, ZoomOut, Crop
 import { compressImage, validateFile, formatFileSize } from '@/lib/document-utils'
 import { useIsMobile, useHaptics } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/utils'
-import { detectDocument, type DocumentCorners } from '@/lib/document-detection'
 import {
   scaleCoordinates,
   scaleCorners,
@@ -32,6 +31,14 @@ import {
   type CropArea as CoordCropArea,
   type Point
 } from '@/lib/coordinate-utils'
+
+// Tipos para corners do documento (migrado de document-detection.ts)
+interface DocumentCorners {
+  topLeft: Point
+  topRight: Point
+  bottomRight: Point
+  bottomLeft: Point
+}
 
 type ProcessingMode = 'color' | 'grayscale' | 'blackwhite'
 type EditMode = 'filters' | 'crop' | null
@@ -300,7 +307,7 @@ export function DocumentScanner({
   }, [autoProcessingEnabled, contrastLevel])
 
   /**
-   * Detecta automaticamente as bordas do documento
+   * Detecta automaticamente as bordas do documento usando jscanify (OpenCV.js)
    */
   const autoDetectDocument = useCallback(async () => {
     if (!canvasRef.current) {
@@ -308,81 +315,101 @@ export function DocumentScanner({
       return
     }
 
-    console.log('[AutoDetect] Iniciando detecção automática...')
+    console.log('[AutoDetect] Iniciando detecção automática com jscanify...')
     setAutoDetecting(true)
-    setDetectedCorners(null) // Limpar detecção anterior
+    setDetectedCorners(null)
 
     try {
-      const result = await detectDocument(canvasRef.current)
+      // Verificar se OpenCV.js está carregado
+      const cv = (window as any).cv
+      if (!cv) {
+        console.warn('[AutoDetect] OpenCV.js não está carregado, usando fallback')
+        throw new Error('OpenCV.js não carregado')
+      }
 
-      console.log('[AutoDetect] Resultado da detecção:', result)
+      // Importar jscanify dinamicamente
+      const { default: jscanify } = await import('jscanify/src/jscanify')
+      const scanner = new jscanify()
 
-      if (result.success && result.corners) {
-        console.log('[AutoDetect] Documento detectado com sucesso!', {
-          corners: result.corners,
-          confidence: result.confidence
-        })
+      // Converter canvas para imagem
+      const img = new Image()
+      img.src = canvasRef.current.toDataURL()
 
-        setDetectedCorners(result.corners)
-        setDetectionConfidence(result.confidence)
+      await new Promise((resolve) => {
+        img.onload = resolve
+      })
 
-        // FASE 3.2: Detectar se foi fallback baseado na confiança
-        const isFallback = result.confidence < 50 // Confiança baixa = fallback
-        setDetectionUsedFallback(isFallback)
-        setEditableCorners(result.corners) // Permitir edição dos cantos
+      // Detectar contorno do documento
+      const mat = cv.imread(img)
+      const contour = scanner.findPaperContour(mat)
 
-        if (isFallback) {
-          console.warn('[AutoDetect] Confiança baixa - provavelmente fallback automático')
+      if (contour && contour.rows > 0) {
+        // Obter corners do contorno detectado
+        const cornerPoints = scanner.getCornerPoints(contour)
+
+        const corners: DocumentCorners = {
+          topLeft: { x: cornerPoints.topLeftCorner.x, y: cornerPoints.topLeftCorner.y },
+          topRight: { x: cornerPoints.topRightCorner.x, y: cornerPoints.topRightCorner.y },
+          bottomRight: { x: cornerPoints.bottomRightCorner.x, y: cornerPoints.bottomRightCorner.y },
+          bottomLeft: { x: cornerPoints.bottomLeftCorner.x, y: cornerPoints.bottomLeftCorner.y }
         }
 
-        // Converter corners para cropArea usando utility
-        const detectedCropArea = cornersToCropArea(result.corners)
+        console.log('[AutoDetect] Documento detectado com jscanify:', corners)
 
-        console.log('[AutoDetect] Área de recorte calculada:', detectedCropArea)
-        console.log('[AutoDetect] Cantos detectados (editáveis):', result.corners)
+        // Calcular confiança baseado na área do contorno
+        const imageArea = canvasRef.current.width * canvasRef.current.height
+        const contourArea = cv.contourArea(contour)
+        const areaRatio = contourArea / imageArea
+
+        // Confiança: 90% se área entre 20-80%, menos fora disso
+        let confidence = 90
+        if (areaRatio < 0.20 || areaRatio > 0.80) {
+          confidence = 60
+        }
+
+        setDetectedCorners(corners)
+        setDetectionConfidence(confidence)
+        setDetectionUsedFallback(false)
+        setEditableCorners(corners)
+
+        const detectedCropArea = cornersToCropArea(corners)
         setCropArea(detectedCropArea)
 
-        // Mostrar mensagem de sucesso com vibração
+        // Limpar memória OpenCV
+        mat.delete()
+        contour.delete()
+
         if (isMobile) {
           vibrate(100)
         }
+
+        console.log('[AutoDetect] Sucesso! Confiança:', confidence)
       } else {
-        console.warn('[AutoDetect] Detecção falhou, usando fallback:', result.error)
-
-        // Marcar que usou fallback
-        setDetectionUsedFallback(true)
-        setDetectionConfidence(result.confidence || 0)
-
-        // Se o resultado tem corners do fallback, usar eles
-        if (result.corners) {
-          setDetectedCorners(result.corners)
-          setEditableCorners(result.corners)
-          const fallbackCropArea = cornersToCropArea(result.corners)
-          setCropArea(fallbackCropArea)
-        } else {
-          // Fallback para imagem completa
-          setCropArea({
-            x: 0,
-            y: 0,
-            width: canvasRef.current.width,
-            height: canvasRef.current.height
-          })
-        }
+        // Contorno não encontrado, usar fallback
+        throw new Error('Contorno não encontrado')
       }
     } catch (err) {
-      console.error('[AutoDetect] Erro na detecção automática:', err)
+      console.warn('[AutoDetect] Usando fallback (área central):', err)
 
-      // Fallback para imagem completa em caso de erro
+      // Fallback: área central com margem de 10%
       setDetectionUsedFallback(true)
-      setDetectionConfidence(0)
+      setDetectionConfidence(30)
 
       if (canvasRef.current) {
-        setCropArea({
-          x: 0,
-          y: 0,
-          width: canvasRef.current.width,
-          height: canvasRef.current.height
-        })
+        const margin = 0.10
+        const width = canvasRef.current.width
+        const height = canvasRef.current.height
+
+        const corners: DocumentCorners = {
+          topLeft: { x: Math.floor(width * margin), y: Math.floor(height * margin) },
+          topRight: { x: Math.floor(width * (1 - margin)), y: Math.floor(height * margin) },
+          bottomRight: { x: Math.floor(width * (1 - margin)), y: Math.floor(height * (1 - margin)) },
+          bottomLeft: { x: Math.floor(width * margin), y: Math.floor(height * (1 - margin)) }
+        }
+
+        setDetectedCorners(corners)
+        setEditableCorners(corners)
+        setCropArea(cornersToCropArea(corners))
       }
     } finally {
       setAutoDetecting(false)
@@ -909,45 +936,8 @@ export function DocumentScanner({
   }, [capturedImage, cropArea, processingMode, applyProcessingMode, showCropTool, editMode, autoProcessingEnabled, contrastLevel])
 
   /**
-   * Detecta e destaca documento usando jscanify (OpenCV.js)
-   * Retorna canvas com bordas destacadas do documento
-   */
-  const highlightDocumentWithJscanify = useCallback(async (sourceCanvas: HTMLCanvasElement): Promise<HTMLCanvasElement | null> => {
-    console.log('[jscanify] Detectando documento automaticamente')
-
-    try {
-      // Verificar se estamos no browser e OpenCV.js está carregado
-      if (typeof window === 'undefined' || !(window as any).cv) {
-        console.warn('[jscanify] OpenCV.js não está carregado ainda')
-        return null
-      }
-
-      // Importar jscanify dinamicamente APENAS no cliente (evita SSR issues)
-      const { default: jscanify } = await import('jscanify/src/jscanify')
-      const scanner = new jscanify()
-
-      // Converter canvas para imagem
-      const img = new Image()
-      img.src = sourceCanvas.toDataURL()
-
-      await new Promise((resolve) => {
-        img.onload = resolve
-      })
-
-      // Destacar documento detectado
-      const highlightedCanvas = scanner.highlightPaper(img)
-
-      console.log('[jscanify] Documento destacado com sucesso')
-      return highlightedCanvas
-    } catch (err) {
-      console.error('[jscanify] Erro ao detectar documento:', err)
-      return null
-    }
-  }, [])
-
-  /**
    * Aplica transformação de perspectiva usando jscanify (OpenCV.js)
-   * Correção de perspectiva profissional com detecção automática de bordas
+   * Usa extractPaper para correção de perspectiva profissional
    */
   const applyPerspectiveTransform = useCallback(async (sourceCanvas: HTMLCanvasElement, corners?: DocumentCorners): Promise<HTMLCanvasElement> => {
     console.log('[jscanify] Aplicando transformação de perspectiva')
