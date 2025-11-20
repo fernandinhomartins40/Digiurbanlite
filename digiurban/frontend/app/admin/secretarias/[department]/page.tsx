@@ -74,6 +74,14 @@ export default function DepartmentPage() {
     (ms) => ms.departmentSlug === department
   );
 
+  // 🔍 DEBUG: Ver quais MS foram encontrados
+  console.log('🔍 DEBUG MS:', {
+    department,
+    totalMSConfigs: Object.keys(allMSConfigs).length,
+    microSystemsForDept: microSystemsForDept.length,
+    msNames: microSystemsForDept.map(ms => ms.title)
+  });
+
   // 📋 Módulos regulares do backend (apenas os que NÃO são MS)
   const allModules = stats?.services.filter(
     (s) => s.serviceType === 'COM_DADOS' && s.moduleType
