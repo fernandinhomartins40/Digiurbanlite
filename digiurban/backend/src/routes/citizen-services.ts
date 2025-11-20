@@ -166,9 +166,12 @@ router.get('/departments/:department/no-data', async (req, res) => {
   try {
     const { department } = req.params;
 
+    // Converter slug para code (saude → SAUDE, assistencia-social → ASSISTENCIA_SOCIAL)
+    const departmentCode = department.toUpperCase().replace(/-/g, '_');
+
     // Buscar departamento pelo code
     const dept = await prisma.department.findUnique({
-      where: { code: department }
+      where: { code: departmentCode }
     });
 
     if (!dept) {
