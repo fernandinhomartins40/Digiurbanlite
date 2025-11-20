@@ -1702,7 +1702,12 @@ export function DocumentScanner({
    * Confirma e processa foto
    */
   const confirmPhoto = useCallback(async () => {
-    if (!previewCanvasRef.current) return
+    console.log('[ConfirmPhoto] Iniciando processamento da foto')
+
+    if (!previewCanvasRef.current) {
+      console.error('[ConfirmPhoto] previewCanvasRef.current não existe!')
+      return
+    }
 
     setProcessing(true)
     setError(null)
@@ -1710,6 +1715,7 @@ export function DocumentScanner({
     try {
       // Obter imagem processada do canvas de preview
       let canvas = previewCanvasRef.current
+      console.log('[ConfirmPhoto] Canvas obtido:', { width: canvas.width, height: canvas.height })
 
       // Se temos corners editáveis E não estão nos cantos padrão, aplicar perspectiva
       if (editableCorners && canvasRef.current) {
@@ -1721,36 +1727,67 @@ export function DocumentScanner({
 
         if (hasCustomCorners) {
           console.log('[ConfirmPhoto] Aplicando transformação de perspectiva com jscanify')
-          // Aplicar transformação de perspectiva no canvas original (não no preview)
-          const transformedCanvas = await applyPerspectiveTransform(canvasRef.current, editableCorners)
+          try {
+            // Aplicar transformação de perspectiva no canvas original (não no preview)
+            const transformedCanvas = await applyPerspectiveTransform(canvasRef.current, editableCorners)
+            console.log('[ConfirmPhoto] Transformação de perspectiva concluída')
 
-          // Aplicar processamento (filtros) no canvas transformado
-          const processedCanvas = document.createElement('canvas')
-          processedCanvas.width = transformedCanvas.width
-          processedCanvas.height = transformedCanvas.height
-          const ctx = processedCanvas.getContext('2d')
-          if (ctx) {
-            ctx.drawImage(transformedCanvas, 0, 0)
-            if (autoProcessingEnabled) {
-              applyProcessingMode(processedCanvas, processingMode)
+            // Aplicar processamento (filtros) no canvas transformado
+            const processedCanvas = document.createElement('canvas')
+            processedCanvas.width = transformedCanvas.width
+            processedCanvas.height = transformedCanvas.height
+            const ctx = processedCanvas.getContext('2d')
+            if (ctx) {
+              ctx.drawImage(transformedCanvas, 0, 0)
+              if (autoProcessingEnabled) {
+                applyProcessingMode(processedCanvas, processingMode)
+              }
             }
+            canvas = processedCanvas
+          } catch (perspectiveError) {
+            console.error('[ConfirmPhoto] Erro ao aplicar transformação de perspectiva:', perspectiveError)
+            // Continuar com o canvas original se a transformação falhar
+            console.warn('[ConfirmPhoto] Usando canvas sem transformação de perspectiva')
           }
-          canvas = processedCanvas
         }
       }
+
+      console.log('[ConfirmPhoto] Convertendo canvas para blob')
 
       // Converter canvas para blob
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((b) => {
-          if (b) resolve(b)
-          else reject(new Error('Erro ao converter canvas'))
+          if (b) {
+            console.log('[ConfirmPhoto] Blob criado:', b.size, 'bytes')
+            resolve(b)
+          } else {
+            reject(new Error('Erro ao converter canvas para blob'))
+          }
         }, 'image/jpeg', 0.95)
       })
 
       const timestamp = Date.now()
-      let file = new (File as any)([blob], `${documentName}_${timestamp}.jpg`, { type: 'image/jpeg' })
+      const fileName = `${documentName}_${timestamp}.jpg`
+
+      // Criar File de forma mais compatível
+      let file: File
+      try {
+        // TypeScript workaround: File constructor
+        const FileConstructor = File as any
+        file = new FileConstructor([blob], fileName, { type: 'image/jpeg' }) as File
+      } catch (fileError) {
+        // Fallback para browsers antigos que não suportam construtor File
+        console.warn('[ConfirmPhoto] File constructor não suportado, usando Blob como fallback')
+        const blobWithName = blob as any
+        blobWithName.name = fileName
+        blobWithName.lastModified = timestamp
+        file = blobWithName as File
+      }
+
+      console.log('[ConfirmPhoto] File criado:', fileName, file.size, 'bytes')
 
       // Validar arquivo
+      console.log('[ConfirmPhoto] Validando arquivo')
       const validation = validateFile(file, {
         name: documentName,
         required: true,
@@ -1760,21 +1797,44 @@ export function DocumentScanner({
       })
 
       if (!validation.valid) {
+        console.error('[ConfirmPhoto] Validação falhou:', validation.error)
         setError(validation.error || 'Arquivo inválido')
         return
       }
+      console.log('[ConfirmPhoto] Arquivo validado com sucesso')
 
       // Comprimir se necessário
       if (file.size > maxSizeMB * 1024 * 1024) {
+        console.log('[ConfirmPhoto] Comprimindo arquivo de', file.size, 'para max', maxSizeMB, 'MB')
         file = await compressImage(file, maxSizeMB, 0.8)
+        console.log('[ConfirmPhoto] Arquivo comprimido para', file.size, 'bytes')
       }
 
+      console.log('[ConfirmPhoto] Chamando onCapture')
       onCapture(file)
+      console.log('[ConfirmPhoto] Processamento concluído com sucesso!')
     } catch (err) {
-      console.error('Erro ao processar foto:', err)
-      setError('Erro ao processar a foto. Tente novamente.')
+      console.error('[ConfirmPhoto] Erro ao processar foto:', err)
+
+      // Mostrar erro mais detalhado
+      let errorMessage = 'Erro ao processar a foto. '
+      if (err instanceof Error) {
+        if (err.message.includes('OpenCV')) {
+          errorMessage += 'Biblioteca de processamento não carregou. '
+        } else if (err.message.includes('blob')) {
+          errorMessage += 'Falha ao converter imagem. '
+        } else if (err.message.includes('File')) {
+          errorMessage += 'Falha ao criar arquivo. '
+        } else {
+          errorMessage += err.message + ' '
+        }
+      }
+      errorMessage += 'Tente novamente.'
+
+      setError(errorMessage)
     } finally {
       setProcessing(false)
+      console.log('[ConfirmPhoto] Finalizando processamento')
     }
   }, [documentName, acceptedFormats, maxSizeMB, onCapture, editableCorners, applyPerspectiveTransform, autoProcessingEnabled, applyProcessingMode, processingMode])
 
