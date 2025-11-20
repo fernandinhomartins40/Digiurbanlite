@@ -477,7 +477,134 @@ export function DocumentScanner({
   }, [autoProcessingEnabled, contrastLevel])
 
   /**
-   * Detecta automaticamente as bordas do documento usando jscanify (OpenCV.js)
+   * FASE 1: Pré-processamento adaptativo da imagem
+   */
+  const preprocessImage = useCallback((cv: any, mat: any, documentType: DocumentType): any => {
+    console.log('[Preprocess] Iniciando pré-processamento para tipo:', documentType)
+
+    // Converter para escala de cinza
+    const gray = new cv.Mat()
+    cv.cvtColor(mat, gray, cv.COLOR_RGBA2GRAY)
+
+    // Aplicar filtro bilateral para reduzir ruído mantendo bordas
+    const blurred = new cv.Mat()
+    cv.bilateralFilter(gray, blurred, 9, 75, 75)
+
+    // Equalizar histograma para melhorar contraste
+    const equalized = new cv.Mat()
+    cv.equalizeHist(blurred, equalized)
+
+    // Aplicar sharpening (nitidez)
+    const kernel = cv.matFromArray(3, 3, cv.CV_32F, [
+      -1, -1, -1,
+      -1,  9, -1,
+      -1, -1, -1
+    ])
+    const sharpened = new cv.Mat()
+    cv.filter2D(equalized, sharpened, cv.CV_8U, kernel)
+
+    // Limpar memória intermediária
+    gray.delete()
+    blurred.delete()
+    equalized.delete()
+    kernel.delete()
+
+    console.log('[Preprocess] Pré-processamento concluído')
+    return sharpened
+  }, [])
+
+  /**
+   * FASE 3: Validação de qualidade do contorno
+   */
+  const validateContour = useCallback((cv: any, contour: any, corners: DocumentCorners, imageArea: number, documentType: DocumentType): { isValid: boolean; confidence: number; reason?: string } => {
+    console.log('[Validate] Validando contorno detectado...')
+
+    // 1. Verificar se temos 4 cantos
+    if (!corners.topLeft || !corners.topRight || !corners.bottomLeft || !corners.bottomRight) {
+      return { isValid: false, confidence: 0, reason: 'Cantos incompletos' }
+    }
+
+    // 2. Calcular área do contorno
+    const contourArea = cv.contourArea(contour)
+    const areaRatio = contourArea / imageArea
+
+    console.log('[Validate] Área ratio:', areaRatio)
+
+    // 3. Definir limites de área por tipo de documento
+    let minArea = 0.15
+    let maxArea = 0.85
+
+    if (documentType === 'card_horizontal' || documentType === 'rg') {
+      minArea = 0.20  // Cartões: 20-60%
+      maxArea = 0.65
+    } else if (documentType === 'a4_vertical' || documentType === 'a4_horizontal') {
+      minArea = 0.35  // A4: 35-85%
+      maxArea = 0.85
+    } else if (documentType === 'ctps') {
+      minArea = 0.25
+      maxArea = 0.70
+    }
+
+    if (areaRatio < minArea || areaRatio > maxArea) {
+      return { isValid: false, confidence: 30, reason: `Área fora do esperado: ${(areaRatio * 100).toFixed(1)}%` }
+    }
+
+    // 4. Verificar se forma um quadrilátero convexo (sem auto-interseções)
+    const isConvex = cv.isContourConvex(contour)
+    if (!isConvex) {
+      return { isValid: false, confidence: 20, reason: 'Contorno não é convexo' }
+    }
+
+    // 5. Calcular ângulos dos cantos
+    const angle1 = Math.abs(Math.atan2(corners.topRight.y - corners.topLeft.y, corners.topRight.x - corners.topLeft.x))
+    const angle2 = Math.abs(Math.atan2(corners.bottomLeft.y - corners.topLeft.y, corners.bottomLeft.x - corners.topLeft.x))
+
+    // Ângulos devem estar próximos de 90 graus (π/2)
+    const angleDiff = Math.abs(angle1 - angle2)
+    const expectedAngle = Math.PI / 2
+    const angleTolerance = Math.PI / 6 // 30 graus de tolerância
+
+    if (Math.abs(angleDiff - expectedAngle) > angleTolerance && Math.abs(angleDiff) > angleTolerance) {
+      console.log('[Validate] Ângulos suspeitos:', { angle1, angle2, diff: angleDiff })
+      return { isValid: false, confidence: 40, reason: 'Ângulos irregulares' }
+    }
+
+    // 6. Verificar aspect ratio esperado
+    const width = Math.sqrt(Math.pow(corners.topRight.x - corners.topLeft.x, 2) + Math.pow(corners.topRight.y - corners.topLeft.y, 2))
+    const height = Math.sqrt(Math.pow(corners.bottomLeft.x - corners.topLeft.x, 2) + Math.pow(corners.bottomLeft.y - corners.topLeft.y, 2))
+    const detectedAspectRatio = width / height
+
+    const documentFormat = detectDocumentFormat()
+    const expectedAspectRatio = documentFormat.aspectRatio
+    const aspectRatioDiff = Math.abs(detectedAspectRatio - expectedAspectRatio) / expectedAspectRatio
+
+    console.log('[Validate] Aspect ratio - esperado:', expectedAspectRatio, 'detectado:', detectedAspectRatio, 'diff:', aspectRatioDiff)
+
+    // Tolerância de 40% no aspect ratio
+    if (aspectRatioDiff > 0.4) {
+      return { isValid: false, confidence: 50, reason: `Proporção incorreta (${(aspectRatioDiff * 100).toFixed(1)}% diferença)` }
+    }
+
+    // 7. Calcular score de confiança final
+    let confidence = 90
+
+    // Penalizar se área não está no centro ideal
+    const idealAreaRatio = (minArea + maxArea) / 2
+    const areaDeviation = Math.abs(areaRatio - idealAreaRatio) / idealAreaRatio
+    confidence -= areaDeviation * 20
+
+    // Penalizar se aspect ratio não é perfeito
+    confidence -= aspectRatioDiff * 30
+
+    // Garantir confiança entre 60-95
+    confidence = Math.max(60, Math.min(95, confidence))
+
+    console.log('[Validate] Contorno válido! Confiança:', confidence)
+    return { isValid: true, confidence }
+  }, [detectDocumentFormat])
+
+  /**
+   * FASE 2 e 4: Detecção multi-pass com ajustes por tipo de documento
    */
   const autoDetectDocument = useCallback(async () => {
     if (!canvasRef.current) {
@@ -485,9 +612,12 @@ export function DocumentScanner({
       return
     }
 
-    console.log('[AutoDetect] Iniciando detecção automática com jscanify...')
+    console.log('[AutoDetect] Iniciando detecção automática avançada com jscanify...')
     setAutoDetecting(true)
     setDetectedCorners(null)
+
+    const documentFormat = detectDocumentFormat()
+    const documentType = documentFormat.type
 
     try {
       // Verificar se OpenCV.js está carregado
@@ -509,73 +639,217 @@ export function DocumentScanner({
         img.onload = resolve
       })
 
-      // Detectar contorno do documento
-      const mat = cv.imread(img)
-      const contour = scanner.findPaperContour(mat)
+      const imageArea = canvasRef.current.width * canvasRef.current.height
+      let bestCorners: DocumentCorners | null = null
+      let bestConfidence = 0
+      let matsToClean: any[] = []
 
-      if (contour && contour.rows > 0) {
-        // Obter corners do contorno detectado
-        const cornerPoints = scanner.getCornerPoints(contour)
+      // PASS 1: Detecção com imagem pré-processada
+      console.log('[AutoDetect] PASS 1: Detecção com pré-processamento')
+      try {
+        const mat = cv.imread(img)
+        matsToClean.push(mat)
 
-        const corners: DocumentCorners = {
-          topLeft: { x: cornerPoints.topLeftCorner.x, y: cornerPoints.topLeftCorner.y },
-          topRight: { x: cornerPoints.topRightCorner.x, y: cornerPoints.topRightCorner.y },
-          bottomRight: { x: cornerPoints.bottomRightCorner.x, y: cornerPoints.bottomRightCorner.y },
-          bottomLeft: { x: cornerPoints.bottomLeftCorner.x, y: cornerPoints.bottomLeftCorner.y }
+        const processed = preprocessImage(cv, mat, documentType)
+        matsToClean.push(processed)
+
+        const contour = scanner.findPaperContour(processed)
+
+        if (contour && contour.rows > 0) {
+          matsToClean.push(contour)
+
+          const cornerPoints = scanner.getCornerPoints(contour)
+          const corners: DocumentCorners = {
+            topLeft: { x: cornerPoints.topLeftCorner.x, y: cornerPoints.topLeftCorner.y },
+            topRight: { x: cornerPoints.topRightCorner.x, y: cornerPoints.topRightCorner.y },
+            bottomRight: { x: cornerPoints.bottomRightCorner.x, y: cornerPoints.bottomRightCorner.y },
+            bottomLeft: { x: cornerPoints.bottomLeftCorner.x, y: cornerPoints.bottomLeftCorner.y }
+          }
+
+          const validation = validateContour(cv, contour, corners, imageArea, documentType)
+
+          if (validation.isValid && validation.confidence > bestConfidence) {
+            bestCorners = corners
+            bestConfidence = validation.confidence
+            console.log('[AutoDetect] PASS 1 bem-sucedido! Confiança:', bestConfidence)
+          } else {
+            console.log('[AutoDetect] PASS 1 falhou na validação:', validation.reason)
+          }
+        } else {
+          console.log('[AutoDetect] PASS 1: Nenhum contorno encontrado')
         }
+      } catch (err) {
+        console.warn('[AutoDetect] PASS 1 erro:', err)
+      }
 
-        console.log('[AutoDetect] Documento detectado com jscanify:', corners)
+      // PASS 2: Detecção com threshold mais agressivo (se PASS 1 falhou ou confiança baixa)
+      if (bestConfidence < 70) {
+        console.log('[AutoDetect] PASS 2: Threshold agressivo')
+        try {
+          const mat = cv.imread(img)
+          matsToClean.push(mat)
 
-        // Calcular confiança baseado na área do contorno
-        const imageArea = canvasRef.current.width * canvasRef.current.height
-        const contourArea = cv.contourArea(contour)
-        const areaRatio = contourArea / imageArea
+          const gray = new cv.Mat()
+          cv.cvtColor(mat, gray, cv.COLOR_RGBA2GRAY)
+          matsToClean.push(gray)
 
-        // Confiança: 90% se área entre 20-80%, menos fora disso
-        let confidence = 90
-        if (areaRatio < 0.20 || areaRatio > 0.80) {
-          confidence = 60
+          // Threshold adaptativo mais agressivo
+          const thresh = new cv.Mat()
+          cv.adaptiveThreshold(gray, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2)
+          matsToClean.push(thresh)
+
+          const contour = scanner.findPaperContour(thresh)
+
+          if (contour && contour.rows > 0) {
+            matsToClean.push(contour)
+
+            const cornerPoints = scanner.getCornerPoints(contour)
+            const corners: DocumentCorners = {
+              topLeft: { x: cornerPoints.topLeftCorner.x, y: cornerPoints.topLeftCorner.y },
+              topRight: { x: cornerPoints.topRightCorner.x, y: cornerPoints.topRightCorner.y },
+              bottomRight: { x: cornerPoints.bottomRightCorner.x, y: cornerPoints.bottomRightCorner.y },
+              bottomLeft: { x: cornerPoints.bottomLeftCorner.x, y: cornerPoints.bottomLeftCorner.y }
+            }
+
+            const validation = validateContour(cv, contour, corners, imageArea, documentType)
+
+            if (validation.isValid && validation.confidence > bestConfidence) {
+              bestCorners = corners
+              bestConfidence = validation.confidence
+              console.log('[AutoDetect] PASS 2 bem-sucedido! Confiança:', bestConfidence)
+            }
+          }
+        } catch (err) {
+          console.warn('[AutoDetect] PASS 2 erro:', err)
         }
+      }
 
-        setDetectedCorners(corners)
-        setDetectionConfidence(confidence)
+      // PASS 3: Redimensionar imagem e tentar novamente (se ainda não encontrou)
+      if (bestConfidence < 70) {
+        console.log('[AutoDetect] PASS 3: Imagem redimensionada')
+        try {
+          const mat = cv.imread(img)
+          matsToClean.push(mat)
+
+          // Redimensionar para 50% do tamanho
+          const resized = new cv.Mat()
+          const dsize = new cv.Size()
+          dsize.width = Math.floor(mat.cols * 0.5)
+          dsize.height = Math.floor(mat.rows * 0.5)
+          cv.resize(mat, resized, dsize, 0, 0, cv.INTER_AREA)
+          matsToClean.push(resized)
+
+          const processed = preprocessImage(cv, resized, documentType)
+          matsToClean.push(processed)
+
+          const contour = scanner.findPaperContour(processed)
+
+          if (contour && contour.rows > 0) {
+            matsToClean.push(contour)
+
+            const cornerPoints = scanner.getCornerPoints(contour)
+
+            // Escalar corners de volta para tamanho original
+            const corners: DocumentCorners = {
+              topLeft: { x: cornerPoints.topLeftCorner.x * 2, y: cornerPoints.topLeftCorner.y * 2 },
+              topRight: { x: cornerPoints.topRightCorner.x * 2, y: cornerPoints.topRightCorner.y * 2 },
+              bottomRight: { x: cornerPoints.bottomRightCorner.x * 2, y: cornerPoints.bottomRightCorner.y * 2 },
+              bottomLeft: { x: cornerPoints.bottomLeftCorner.x * 2, y: cornerPoints.bottomLeftCorner.y * 2 }
+            }
+
+            const validation = validateContour(cv, contour, corners, imageArea, documentType)
+
+            if (validation.isValid && validation.confidence > bestConfidence) {
+              bestCorners = corners
+              bestConfidence = validation.confidence
+              console.log('[AutoDetect] PASS 3 bem-sucedido! Confiança:', bestConfidence)
+            }
+          }
+        } catch (err) {
+          console.warn('[AutoDetect] PASS 3 erro:', err)
+        }
+      }
+
+      // Se encontrou um bom resultado, usar
+      if (bestCorners && bestConfidence >= 60) {
+        console.log('[AutoDetect] Documento detectado! Corners:', bestCorners, 'Confiança:', bestConfidence)
+
+        setDetectedCorners(bestCorners)
+        setDetectionConfidence(bestConfidence)
         setDetectionUsedFallback(false)
-        setEditableCorners(corners)
+        setEditableCorners(bestCorners)
 
-        const detectedCropArea = cornersToCropArea(corners)
+        const detectedCropArea = cornersToCropArea(bestCorners)
         setCropArea(detectedCropArea)
-
-        // Limpar memória OpenCV
-        mat.delete()
-        contour.delete()
 
         if (isMobile) {
           vibrate(100)
         }
 
-        console.log('[AutoDetect] Sucesso! Confiança:', confidence)
+        console.log('[AutoDetect] Sucesso! Confiança final:', bestConfidence)
       } else {
-        // Contorno não encontrado, usar fallback
-        throw new Error('Contorno não encontrado')
+        // PASS 4: Fallback inteligente baseado no aspect ratio
+        throw new Error('Confiança insuficiente, usando fallback inteligente')
       }
-    } catch (err) {
-      console.warn('[AutoDetect] Usando fallback (área central):', err)
 
-      // Fallback: área central com margem de 10%
+      // Limpar memória OpenCV
+      matsToClean.forEach(mat => {
+        try {
+          mat.delete()
+        } catch (e) {
+          // Ignorar erros de limpeza
+        }
+      })
+
+    } catch (err) {
+      console.warn('[AutoDetect] Usando fallback inteligente:', err)
+
+      // PASS 4: Fallback inteligente baseado no aspect ratio do documento
       setDetectionUsedFallback(true)
-      setDetectionConfidence(30)
+      setDetectionConfidence(40)
 
       if (canvasRef.current) {
-        const margin = 0.10
         const width = canvasRef.current.width
         const height = canvasRef.current.height
+        const imageAspectRatio = width / height
+
+        const expectedAspectRatio = documentFormat.aspectRatio
+        let margin = 0.10
+
+        // Calcular área central baseada no aspect ratio esperado
+        let frameWidth, frameHeight
+
+        if (documentFormat.orientation === 'vertical') {
+          // Para documentos verticais (A4)
+          frameHeight = height * 0.80
+          frameWidth = frameHeight * expectedAspectRatio
+        } else {
+          // Para documentos horizontais (cartões)
+          frameWidth = width * 0.80
+          frameHeight = frameWidth / expectedAspectRatio
+        }
+
+        // Garantir que não ultrapasse os limites
+        if (frameWidth > width * 0.85) {
+          frameWidth = width * 0.85
+          frameHeight = frameWidth / expectedAspectRatio
+        }
+        if (frameHeight > height * 0.85) {
+          frameHeight = height * 0.85
+          frameWidth = frameHeight * expectedAspectRatio
+        }
+
+        const x = (width - frameWidth) / 2
+        const y = (height - frameHeight) / 2
 
         const corners: DocumentCorners = {
-          topLeft: { x: Math.floor(width * margin), y: Math.floor(height * margin) },
-          topRight: { x: Math.floor(width * (1 - margin)), y: Math.floor(height * margin) },
-          bottomRight: { x: Math.floor(width * (1 - margin)), y: Math.floor(height * (1 - margin)) },
-          bottomLeft: { x: Math.floor(width * margin), y: Math.floor(height * (1 - margin)) }
+          topLeft: { x: Math.floor(x), y: Math.floor(y) },
+          topRight: { x: Math.floor(x + frameWidth), y: Math.floor(y) },
+          bottomRight: { x: Math.floor(x + frameWidth), y: Math.floor(y + frameHeight) },
+          bottomLeft: { x: Math.floor(x), y: Math.floor(y + frameHeight) }
         }
+
+        console.log('[AutoDetect] Fallback inteligente aplicado com aspect ratio:', expectedAspectRatio)
 
         setDetectedCorners(corners)
         setEditableCorners(corners)
@@ -585,7 +859,7 @@ export function DocumentScanner({
       setAutoDetecting(false)
       console.log('[AutoDetect] Detecção finalizada')
     }
-  }, [isMobile, vibrate])
+  }, [isMobile, vibrate, detectDocumentFormat, preprocessImage, validateContour])
 
   /**
    * Captura foto
