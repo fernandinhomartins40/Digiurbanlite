@@ -11,7 +11,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Camera, X, RotateCw, Check, AlertCircle, Loader2, ZoomIn, ZoomOut, Crop, Palette, Edit3, Plus, Sparkles } from 'lucide-react'
+import { Camera, X, RotateCw, Check, AlertCircle, Loader2, ZoomIn, ZoomOut, Crop, Palette, Edit3, Plus, Sparkles, CreditCard, FileText, Briefcase, File } from 'lucide-react'
 import { compressImage, validateFile, formatFileSize } from '@/lib/document-utils'
 import { useIsMobile, useHaptics } from '@/hooks/useIsMobile'
 import { cn } from '@/lib/utils'
@@ -58,12 +58,25 @@ interface DocumentScannerProps {
   onCancel: () => void
 }
 
-type DocumentType = 'cpf' | 'rg' | 'cnh' | 'a4' | 'generic'
+type DocumentType =
+  | 'card_horizontal'    // Cartão formato horizontal (CPF, CNH, SUS, Título)
+  | 'rg'                 // RG (formato cartão moderno)
+  | 'a4_vertical'        // Documentos A4 vertical (certidões, comprovantes)
+  | 'a4_horizontal'      // Documentos A4 horizontal
+  | 'ctps'               // Carteira de Trabalho
+  | 'generic'            // Genérico
+
+type DocumentOrientation = 'horizontal' | 'vertical'
 
 interface DocumentFormat {
   type: DocumentType
   aspectRatio: number
   label: string
+  orientation: DocumentOrientation
+  icon: string
+  guideText: string
+  borderRadius: number // px para bordas arredondadas
+  color: string // cor do tema do molde
 }
 
 export function DocumentScanner({
@@ -101,33 +114,190 @@ export function DocumentScanner({
 
   /**
    * Detecta o tipo de documento baseado no nome
+   * Retorna formato com aspectRatio, orientação, ícone e cores apropriadas
    */
   const detectDocumentFormat = useCallback((): DocumentFormat => {
     const nameLower = documentName.toLowerCase()
 
-    // CPF: 85.6mm x 53.98mm ≈ 1.59 (formato cartão de crédito)
+    // CPF - Formato cartão horizontal (ISO ID-1: 85.6 x 53.98 mm)
     if (nameLower.includes('cpf')) {
-      return { type: 'cpf', aspectRatio: 1.59, label: 'CPF' }
+      return {
+        type: 'card_horizontal',
+        aspectRatio: 1.586,
+        label: 'CPF',
+        orientation: 'horizontal',
+        icon: '💳',
+        guideText: 'Posicione o cartão CPF na área',
+        borderRadius: 12,
+        color: '#2563eb' // Azul
+      }
     }
 
-    // RG: 74mm x 105mm ≈ 1.42 (vertical) ou 105mm x 74mm ≈ 1.42 (horizontal)
+    // RG - Formato cartão horizontal (modelo novo polycarbonate)
     if (nameLower.includes('rg') || nameLower.includes('identidade')) {
-      return { type: 'rg', aspectRatio: 1.42, label: 'RG' }
+      return {
+        type: 'rg',
+        aspectRatio: 1.586,
+        label: 'RG',
+        orientation: 'horizontal',
+        icon: '🪪',
+        guideText: 'Posicione o RG na área',
+        borderRadius: 12,
+        color: '#059669' // Verde
+      }
     }
 
-    // CNH: 85.6mm x 53.98mm ≈ 1.59 (formato cartão de crédito)
-    if (nameLower.includes('cnh') || nameLower.includes('habilitação') || nameLower.includes('carteira')) {
-      return { type: 'cnh', aspectRatio: 1.59, label: 'CNH' }
+    // CNH - Formato cartão horizontal (ISO ID-1)
+    if (nameLower.includes('cnh') || nameLower.includes('habilitação')) {
+      return {
+        type: 'card_horizontal',
+        aspectRatio: 1.586,
+        label: 'CNH',
+        orientation: 'horizontal',
+        icon: '🚗',
+        guideText: 'Posicione a CNH na área',
+        borderRadius: 12,
+        color: '#dc2626' // Vermelho
+      }
     }
 
-    // A4: 210mm x 297mm ≈ 1.41 (vertical) ou 297mm x 210mm ≈ 1.41 (horizontal)
-    if (nameLower.includes('a4') || nameLower.includes('contrato') || nameLower.includes('certidão') ||
-        nameLower.includes('comprovante') || nameLower.includes('declaração')) {
-      return { type: 'a4', aspectRatio: 1.41, label: 'A4' }
+    // Cartão do SUS - Formato cartão horizontal
+    if (nameLower.includes('sus') || nameLower.includes('saúde')) {
+      return {
+        type: 'card_horizontal',
+        aspectRatio: 1.586,
+        label: 'Cartão SUS',
+        orientation: 'horizontal',
+        icon: '🏥',
+        guideText: 'Posicione o Cartão do SUS na área',
+        borderRadius: 12,
+        color: '#ea580c' // Laranja
+      }
     }
 
-    // Genérico: 1.5 (proporção padrão)
-    return { type: 'generic', aspectRatio: 1.5, label: 'Documento' }
+    // Título de Eleitor - Formato cartão horizontal
+    if (nameLower.includes('título') || nameLower.includes('eleitor')) {
+      return {
+        type: 'card_horizontal',
+        aspectRatio: 1.586,
+        label: 'Título de Eleitor',
+        orientation: 'horizontal',
+        icon: '🗳️',
+        guideText: 'Posicione o Título de Eleitor na área',
+        borderRadius: 12,
+        color: '#7c3aed' // Roxo
+      }
+    }
+
+    // Carteira de Trabalho - Formato vertical (livro pequeno)
+    if (nameLower.includes('carteira') && nameLower.includes('trabalho')) {
+      return {
+        type: 'ctps',
+        aspectRatio: 0.714,
+        label: 'Carteira de Trabalho',
+        orientation: 'vertical',
+        icon: '📒',
+        guideText: 'Posicione a CTPS na área',
+        borderRadius: 4,
+        color: '#0891b2' // Ciano
+      }
+    }
+
+    // Certidões - Formato A4 vertical
+    if (nameLower.includes('certidão') || nameLower.includes('nascimento') || nameLower.includes('casamento')) {
+      return {
+        type: 'a4_vertical',
+        aspectRatio: 0.707,
+        label: 'Certidão',
+        orientation: 'vertical',
+        icon: '📜',
+        guideText: 'Posicione a Certidão na área',
+        borderRadius: 0,
+        color: '#ca8a04' // Dourado
+      }
+    }
+
+    // Comprovante de Residência - Formato A4 vertical
+    if (nameLower.includes('residência') || nameLower.includes('endereco') || nameLower.includes('endereço')) {
+      return {
+        type: 'a4_vertical',
+        aspectRatio: 0.707,
+        label: 'Comprovante',
+        orientation: 'vertical',
+        icon: '🏠',
+        guideText: 'Posicione o Comprovante na área',
+        borderRadius: 0,
+        color: '#4f46e5' // Índigo
+      }
+    }
+
+    // Comprovante de Renda - Formato A4 vertical
+    if (nameLower.includes('renda') || nameLower.includes('salário') || nameLower.includes('holerite')) {
+      return {
+        type: 'a4_vertical',
+        aspectRatio: 0.707,
+        label: 'Comprovante de Renda',
+        orientation: 'vertical',
+        icon: '💰',
+        guideText: 'Posicione o Comprovante na área',
+        borderRadius: 0,
+        color: '#16a34a' // Verde
+      }
+    }
+
+    // Declaração Escolar - Formato A4 vertical
+    if (nameLower.includes('escolar') || nameLower.includes('declaração') || nameLower.includes('matrícula')) {
+      return {
+        type: 'a4_vertical',
+        aspectRatio: 0.707,
+        label: 'Declaração',
+        orientation: 'vertical',
+        icon: '🎓',
+        guideText: 'Posicione a Declaração na área',
+        borderRadius: 0,
+        color: '#0284c7' // Azul claro
+      }
+    }
+
+    // Laudo Médico - Formato A4 vertical
+    if (nameLower.includes('laudo') || nameLower.includes('médico') || nameLower.includes('atestado')) {
+      return {
+        type: 'a4_vertical',
+        aspectRatio: 0.707,
+        label: 'Laudo Médico',
+        orientation: 'vertical',
+        icon: '🏥',
+        guideText: 'Posicione o Laudo na área',
+        borderRadius: 0,
+        color: '#dc2626' // Vermelho
+      }
+    }
+
+    // Contrato - Formato A4 vertical
+    if (nameLower.includes('contrato')) {
+      return {
+        type: 'a4_vertical',
+        aspectRatio: 0.707,
+        label: 'Contrato',
+        orientation: 'vertical',
+        icon: '📝',
+        guideText: 'Posicione o Contrato na área',
+        borderRadius: 0,
+        color: '#475569' // Cinza
+      }
+    }
+
+    // Genérico - Formato horizontal padrão
+    return {
+      type: 'generic',
+      aspectRatio: 1.414,
+      label: 'Documento',
+      orientation: 'horizontal',
+      icon: '📄',
+      guideText: 'Posicione o documento na área',
+      borderRadius: 4,
+      color: '#6366f1' // Índigo
+    }
   }, [documentName])
 
   const documentFormat = detectDocumentFormat()
@@ -1347,28 +1517,71 @@ export function DocumentScanner({
 
                 {/* Moldura do Documento - Adaptada ao Tipo */}
                 <div
-                  className="relative z-10 border-4 border-white/90 rounded-lg"
+                  className="relative z-10 border-4 border-white/90"
                   style={{
-                    width: '85%',
-                    maxWidth: '500px',
+                    width: documentFormat.orientation === 'vertical' ? '70%' : '85%',
+                    maxWidth: documentFormat.orientation === 'vertical' ? '350px' : '500px',
                     aspectRatio: documentFormat.aspectRatio.toString(),
-                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)'
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)',
+                    borderRadius: `${documentFormat.borderRadius}px`
                   }}
                 >
-                  {/* Cantos Decorativos */}
-                  <div className="absolute -top-1 -left-1 w-10 h-10 border-t-[5px] border-l-[5px] border-green-400 rounded-tl-lg" />
-                  <div className="absolute -top-1 -right-1 w-10 h-10 border-t-[5px] border-r-[5px] border-green-400 rounded-tr-lg" />
-                  <div className="absolute -bottom-1 -left-1 w-10 h-10 border-b-[5px] border-l-[5px] border-green-400 rounded-bl-lg" />
-                  <div className="absolute -bottom-1 -right-1 w-10 h-10 border-b-[5px] border-r-[5px] border-green-400 rounded-br-lg" />
+                  {/* Cantos Decorativos - Cor dinâmica */}
+                  <div
+                    className="absolute -top-1 -left-1 w-10 h-10 border-t-[5px] border-l-[5px]"
+                    style={{
+                      borderColor: documentFormat.color,
+                      borderTopLeftRadius: `${Math.min(documentFormat.borderRadius, 8)}px`
+                    }}
+                  />
+                  <div
+                    className="absolute -top-1 -right-1 w-10 h-10 border-t-[5px] border-r-[5px]"
+                    style={{
+                      borderColor: documentFormat.color,
+                      borderTopRightRadius: `${Math.min(documentFormat.borderRadius, 8)}px`
+                    }}
+                  />
+                  <div
+                    className="absolute -bottom-1 -left-1 w-10 h-10 border-b-[5px] border-l-[5px]"
+                    style={{
+                      borderColor: documentFormat.color,
+                      borderBottomLeftRadius: `${Math.min(documentFormat.borderRadius, 8)}px`
+                    }}
+                  />
+                  <div
+                    className="absolute -bottom-1 -right-1 w-10 h-10 border-b-[5px] border-r-[5px]"
+                    style={{
+                      borderColor: documentFormat.color,
+                      borderBottomRightRadius: `${Math.min(documentFormat.borderRadius, 8)}px`
+                    }}
+                  />
 
-                  {/* Instrução Central com Tipo de Documento */}
+                  {/* Instrução Central com Ícone e Tipo de Documento */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2">
-                      <p className="text-green-400 text-xs font-semibold text-center uppercase tracking-wider mb-1">
+                    <div className="bg-black/70 backdrop-blur-sm rounded-lg px-4 py-3">
+                      {/* Ícone do tipo de documento */}
+                      <div className="flex justify-center mb-2">
+                        {documentFormat.icon === 'credit-card' && (
+                          <CreditCard className="h-6 w-6" style={{ color: documentFormat.color }} />
+                        )}
+                        {documentFormat.icon === 'file-text' && (
+                          <FileText className="h-6 w-6" style={{ color: documentFormat.color }} />
+                        )}
+                        {documentFormat.icon === 'briefcase' && (
+                          <Briefcase className="h-6 w-6" style={{ color: documentFormat.color }} />
+                        )}
+                        {documentFormat.icon === 'file' && (
+                          <File className="h-6 w-6" style={{ color: documentFormat.color }} />
+                        )}
+                      </div>
+                      <p
+                        className="text-xs font-semibold text-center uppercase tracking-wider mb-1"
+                        style={{ color: documentFormat.color }}
+                      >
                         {documentFormat.label}
                       </p>
                       <p className="text-white text-sm font-medium text-center">
-                        Alinhe o documento<br />dentro da moldura
+                        {documentFormat.guideText}
                       </p>
                     </div>
                   </div>
