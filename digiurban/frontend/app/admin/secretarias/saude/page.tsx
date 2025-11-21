@@ -208,6 +208,214 @@ export default function SecretariaSaudePage() {
         </Card>
       </div>
 
+      {/* MICRO SISTEMAS (APPS) - Secretaria de Saúde */}
+      <div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
+            <Stethoscope className="h-6 w-6 text-red-600" />
+            Micro Sistemas (APPS) - Secretaria de Saúde
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Aplicações especializadas para gestão completa dos serviços de saúde municipal
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* APP 1: Gestão de Unidades e Agenda */}
+          <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all cursor-pointer group">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2 text-blue-900">
+                <MapPin className="h-5 w-5 text-blue-600" />
+                Unidades e Agenda
+              </CardTitle>
+              <CardDescription className="text-blue-700">
+                Gestão de unidades de saúde e agendamento de consultas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm text-blue-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                  <span>Cadastro de UBS, UPA, Hospitais</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                  <span>Agenda médica inteligente</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                  <span>Agendamento online</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                  <span>Controle de filas</span>
+                </div>
+              </div>
+              <Badge className="mt-4 bg-blue-600 hover:bg-blue-700">
+                Em Desenvolvimento
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* APP 2: Prontuário Eletrônico */}
+          <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all cursor-pointer group">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2 text-green-900">
+                <FileText className="h-5 w-5 text-green-600" />
+                Prontuário Eletrônico
+              </CardTitle>
+              <CardDescription className="text-green-700">
+                Sistema completo de prontuário e atendimento médico
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm text-green-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                  <span>Prontuário único por cidadão</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                  <span>Triagem e consultas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                  <span>Prescrições e exames</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                  <span>Atestados e encaminhamentos</span>
+                </div>
+              </div>
+              <Badge className="mt-4 bg-green-600 hover:bg-green-700">
+                Em Desenvolvimento
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* APP 3: Farmácia Municipal */}
+          <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all cursor-pointer group">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2 text-purple-900">
+                <Heart className="h-5 w-5 text-purple-600" />
+                Farmácia Municipal
+              </CardTitle>
+              <CardDescription className="text-purple-700">
+                Controle de medicamentos e dispensação
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm text-purple-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-purple-500"></div>
+                  <span>Cadastro de medicamentos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-purple-500"></div>
+                  <span>Controle de estoque</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-purple-500"></div>
+                  <span>Dispensação de receitas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-purple-500"></div>
+                  <span>Alertas e relatórios</span>
+                </div>
+              </div>
+              <Badge className="mt-4 bg-purple-600 hover:bg-purple-700">
+                Em Desenvolvimento
+              </Badge>
+            </CardContent>
+          </Card>
+
+          {/* APP 4: TFD - Tratamento Fora do Domicílio */}
+          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all cursor-pointer group">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2 text-orange-900">
+                <FileBarChart className="h-5 w-5 text-orange-600" />
+                TFD - Fora do Domicílio
+              </CardTitle>
+              <CardDescription className="text-orange-700">
+                Gestão completa de tratamentos em outras cidades
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm text-orange-800">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-orange-500"></div>
+                  <span>Fluxo de aprovação completo</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-orange-500"></div>
+                  <span>Montador de listas automático</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-orange-500"></div>
+                  <span>Gestão de frota e motoristas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-orange-500"></div>
+                  <span>Prestação de contas</span>
+                </div>
+              </div>
+              <Badge className="mt-4 bg-orange-600 hover:bg-orange-700">
+                Documentado
+              </Badge>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Card informativo sobre os APPS */}
+        <Card className="mt-6 border-red-200 bg-red-50/50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Info className="h-5 w-5 text-red-600" />
+              Sobre os Micro Sistemas de Saúde
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 text-sm">
+              <p className="text-muted-foreground">
+                Os <strong>4 APPS da Secretaria de Saúde</strong> são aplicações especializadas que utilizam os
+                <strong> models Prisma existentes</strong> para fornecer funcionalidades avançadas de gestão.
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">📊 Status Atual:</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>✅ Models Prisma: <strong>Implementados</strong></li>
+                    <li>✅ Documentação: <strong>Completa</strong></li>
+                    <li>✅ Algoritmos: <strong>Especificados</strong></li>
+                    <li>⏳ Interfaces: <strong>Em desenvolvimento</strong></li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">🎯 Próximos Passos:</h4>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>• Implementação das APIs no backend</li>
+                    <li>• Criação dos componentes React</li>
+                    <li>• Desenvolvimento das páginas Next.js</li>
+                    <li>• Testes e validação</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="pt-3 border-t border-red-200">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-300 hover:bg-red-100"
+                  onClick={() => window.open('/docs/APPS-SAUDE.md', '_blank')}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Ver Documentação Completa
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Ações Rápidas */}
       <Card>
         <CardHeader>
