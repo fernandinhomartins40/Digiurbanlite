@@ -3,8 +3,6 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { getDepartmentConfig } from '@/lib/department-config';
-import { getServiceRoute } from '@/lib/ms-detection';
-import { allMSConfigs } from '@/lib/ms-configs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -66,28 +64,10 @@ export default function DepartmentPage() {
 
   const Icon = config.icon;
 
-  // ✅ Separa Micro Sistemas de módulos regulares
-  const { isMicroSystem } = require('@/lib/ms-detection');
-
-  // 🚀 MICRO SISTEMAS: Buscados das CONFIGURAÇÕES ESTÁTICAS (não do backend)
-  const microSystemsForDept = Object.values(allMSConfigs).filter(
-    (ms) => ms.departmentSlug === department
-  );
-
-  // 🔍 DEBUG: Ver quais MS foram encontrados
-  console.log('🔍 DEBUG MS:', {
-    department,
-    totalMSConfigs: Object.keys(allMSConfigs).length,
-    microSystemsForDept: microSystemsForDept.length,
-    msNames: microSystemsForDept.map(ms => ms.title)
-  });
-
-  // 📋 Módulos regulares do backend (apenas os que NÃO são MS)
-  const allModules = stats?.services.filter(
+  // 📋 Módulos do backend
+  const modules = stats?.services.filter(
     (s) => s.serviceType === 'COM_DADOS' && s.moduleType
   ) || [];
-
-  const modules = allModules.filter(m => !isMicroSystem(m.moduleType));
 
   // ✅ Filtra serviços SEM_DADOS (certidões, declarações)
   const documents = stats?.services.filter(
@@ -111,7 +91,7 @@ export default function DepartmentPage() {
           <p className="text-muted-foreground mt-2">{config.description}</p>
         </div>
         <Badge variant="outline" className={`${config.color} ${config.borderColor}`}>
-          {allModules.length} módulos
+          {modules.length} módulos
         </Badge>
       </div>
 
@@ -217,7 +197,7 @@ export default function DepartmentPage() {
             ) : (
               <>
                 {modules.map((service) => {
-                  const targetRoute = getServiceRoute(service.moduleType, service.slug, department);
+                  const targetRoute = `/admin/secretarias/${department}/${service.slug}`;
 
                   return (
                     <Card
@@ -399,93 +379,6 @@ export default function DepartmentPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* 🚀 SEÇÃO EXCLUSIVA - MICRO SISTEMAS (baseado em configurações estáticas) */}
-      {microSystemsForDept.length > 0 && (
-        <div className="space-y-4">
-          {/* Header da seção */}
-          <div className="flex items-center gap-3 border-b-2 border-gradient-to-r from-blue-500 to-purple-600 pb-4">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-              <TrendingUp className="h-7 w-7 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Micro Sistemas
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Aplicações completas e independentes com gestão avançada, workflows e relatórios
-              </p>
-            </div>
-            <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 text-base shadow-lg">
-              {microSystemsForDept.length} {microSystemsForDept.length === 1 ? 'MS Disponível' : 'MS Disponíveis'}
-            </Badge>
-          </div>
-
-          {/* Cards dos Micro Sistemas */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {microSystemsForDept.map((msConfig) => {
-              const targetRoute = `/admin/ms/${msConfig.id}`;
-
-              return (
-                <Card
-                  key={msConfig.id}
-                  className="cursor-pointer hover:shadow-2xl transition-all duration-300 hover:scale-[1.03] border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 dark:from-blue-950 dark:via-purple-950 dark:to-blue-950 relative overflow-hidden group"
-                  onClick={() => router.push(targetRoute)}
-                >
-                  {/* Efeito de brilho no hover */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
-                        {msConfig.icon}
-                      </div>
-                      <Badge variant="secondary" className="bg-gradient-to-r from-blue-500 to-purple-600 text-white border-0 shadow-md">
-                        SUPER APP
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-xl font-bold">{msConfig.title}</CardTitle>
-                    <CardDescription className="line-clamp-2 text-sm">
-                      {msConfig.description}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* Info: Sistema pronto para uso */}
-                      <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-                        <p className="text-xs text-center text-blue-700 dark:text-blue-300 font-medium">
-                          ✨ Sistema completo pronto para uso
-                        </p>
-                      </div>
-
-                      {/* Badges de Features */}
-                      <div className="flex gap-2 flex-wrap justify-center">
-                        <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-blue-300">
-                          <LayoutDashboard className="h-3 w-3 mr-1" />
-                          Dashboard
-                        </Badge>
-                        {msConfig.hasWorkflow && (
-                          <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-purple-300">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Workflow
-                          </Badge>
-                        )}
-                        {msConfig.hasReports && (
-                          <Badge variant="outline" className="text-xs bg-white/70 dark:bg-black/30 border-blue-300">
-                            <FileText className="h-3 w-3 mr-1" />
-                            Relatórios
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Estado vazio */}
       {!loading && modules.length === 0 && documents.length === 0 && simpleServices.length === 0 && (

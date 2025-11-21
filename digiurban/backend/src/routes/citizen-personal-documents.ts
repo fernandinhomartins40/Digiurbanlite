@@ -150,9 +150,19 @@ function deleteFile(filePath: string): boolean {
 }
 
 function validateUploadedFiles(req: Request, res: Response, next: NextFunction): void {
-  const files = (req as any).files as MulterFile[];
+  // Suporta tanto req.file (single) quanto req.files (array)
+  const singleFile = (req as any).file as MulterFile | undefined;
+  const multipleFiles = (req as any).files as MulterFile[] | undefined;
 
-  if (!files || files.length === 0) {
+  // Normaliza para sempre trabalhar com array
+  let files: MulterFile[] = [];
+  if (singleFile) {
+    files = [singleFile];
+  } else if (multipleFiles && multipleFiles.length > 0) {
+    files = multipleFiles;
+  }
+
+  if (files.length === 0) {
     res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'Nenhum arquivo foi enviado'));
     return;
   }
@@ -528,12 +538,15 @@ router.post(
       // Remover arquivo antigo
       deleteFile(existingDocument.filePath);
 
+      // Mover novo arquivo para diretório do cidadão
+      const filePath = await moveFileToCitizenDocuments(file, citizen.id);
+
       // Atualizar documento com novo arquivo
       const updatedDocument = await prisma.citizenDocument.update({
         where: { id: documentId },
         data: {
           fileName: file.originalname,
-          filePath: file.path,
+          filePath,
           fileSize: file.size,
           mimeType: file.mimetype,
           status: 'PENDING',
