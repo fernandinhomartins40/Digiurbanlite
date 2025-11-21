@@ -4,7 +4,6 @@ import esportesService from '../services/esportes/esportes.service';
 import habitacaoService from '../services/habitacao/habitacao.service';
 import meioAmbienteService from '../services/meio-ambiente/meio-ambiente.service';
 import obrasService from '../services/obras/obras.service';
-import segurancaService from '../services/seguranca/seguranca.service';
 import planejamentoService from '../services/planejamento/planejamento.service';
 
 const router = Router();
@@ -181,33 +180,14 @@ router.get('/obras-publicas/stats', async (req, res) => {
   }
 });
 
-// SEGURANÇA PÚBLICA
+// SEGURANÇA PÚBLICA - Service deletado (MS)
 router.get('/seguranca-publica/stats', async (req, res) => {
-  try {
-    const stats = await segurancaService.getEstatisticasSeguranca();
-
-    res.json({
-      vehicles: {
-        total: stats.totalViaturas,
-        active: stats.totalViaturas,
-      },
-      occurrences: {
-        total: stats.totalOcorrencias,
-        thisMonth: 0,
-        resolved: 0,
-      },
-      patrols: {
-        total: stats.totalRotas,
-        active: stats.totalRotas,
-      },
-      cameras: {
-        total: stats.totalCameras,
-        operational: stats.totalCameras,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    vehicles: { total: 0, active: 0 },
+    occurrences: { total: 0, thisMonth: 0, resolved: 0 },
+    patrols: { total: 0, active: 0 },
+    cameras: { total: 0, operational: 0 },
+  });
 });
 
 // TURISMO - Service deletado (MS)
