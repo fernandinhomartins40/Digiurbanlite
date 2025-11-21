@@ -116,24 +116,11 @@ router.put('/produtores/:id', async (req, res) => {
   }
 });
 
-// Adicionar tipo de produção
-router.post('/produtores/:id/tipos-producao', async (req, res) => {
+// Atualizar atividade principal
+router.patch('/produtores/:id/atividade-principal', async (req, res) => {
   try {
-    const { tipoProducao } = req.body;
-    const produtor = await produtorRuralService.addTipoProducao(req.params.id, tipoProducao);
-    res.json(produtor);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Remover tipo de produção
-router.delete('/produtores/:id/tipos-producao/:tipoProducao', async (req, res) => {
-  try {
-    const produtor = await produtorRuralService.removeTipoProducao(
-      req.params.id,
-      req.params.tipoProducao
-    );
+    const { atividadePrincipal } = req.body;
+    const produtor = await produtorRuralService.updateAtividadePrincipal(req.params.id, atividadePrincipal);
     res.json(produtor);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

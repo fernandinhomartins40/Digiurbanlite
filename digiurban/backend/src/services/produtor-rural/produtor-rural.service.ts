@@ -99,10 +99,7 @@ class ProdutorRuralService {
     }
 
     const produtor = await prisma.produtorRural.create({
-      data: {
-        ...data,
-        tiposProducao: data.tiposProducao || [],
-      },
+      data,
     });
 
     return produtor;
@@ -172,17 +169,7 @@ class ProdutorRuralService {
       orderBy: { nome: 'asc' },
     });
 
-    // Filtrar por tipo de produção
-    let filtered = produtores;
-
-    if (filters?.tipoProducao) {
-      filtered = filtered.filter(p => {
-        const tipos = p.tiposProducao as any;
-        return tipos && Array.isArray(tipos) && tipos.includes(filters.tipoProducao);
-      });
-    }
-
-    return filtered;
+    return produtores;
   }
 
   // Listar produtores ativos
@@ -195,18 +182,19 @@ class ProdutorRuralService {
     return produtores;
   }
 
-  // Buscar produtores por tipo de produção
+  // Buscar produtores por atividade principal
   async findProdutoresByTipo(tipoProducao: string) {
     const produtores = await prisma.produtorRural.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        atividadePrincipal: {
+          contains: tipoProducao,
+          mode: 'insensitive',
+        },
+      },
     });
 
-    const filtered = produtores.filter(p => {
-      const tipos = p.tiposProducao as any;
-      return tipos && Array.isArray(tipos) && tipos.includes(tipoProducao);
-    });
-
-    return filtered;
+    return produtores;
   }
 
   // Buscar produtores com pendências
@@ -234,35 +222,13 @@ class ProdutorRuralService {
     return updated;
   }
 
-  // Adicionar tipo de produção
-  async addTipoProducao(id: string, tipoProducao: string) {
+  // Atualizar atividade principal
+  async updateAtividadePrincipal(id: string, atividadePrincipal: string) {
     const produtor = await this.findProdutorById(id);
-    const tipos = (produtor.tiposProducao as any) || [];
-
-    if (tipos.includes(tipoProducao)) {
-      throw new Error('Tipo de produção já cadastrado');
-    }
-
-    tipos.push(tipoProducao);
 
     const updated = await prisma.produtorRural.update({
       where: { id },
-      data: { tiposProducao: tipos },
-    });
-
-    return updated;
-  }
-
-  // Remover tipo de produção
-  async removeTipoProducao(id: string, tipoProducao: string) {
-    const produtor = await this.findProdutorById(id);
-    let tipos = (produtor.tiposProducao as any) || [];
-
-    tipos = tipos.filter((t: string) => t !== tipoProducao);
-
-    const updated = await prisma.produtorRural.update({
-      where: { id },
-      data: { tiposProducao: tipos },
+      data: { atividadePrincipal },
     });
 
     return updated;
@@ -378,11 +344,6 @@ class ProdutorRuralService {
       where: { NOT: { dap: null }, isActive: true },
     });
 
-    const areaTotal = await prisma.produtorRural.aggregate({
-      _sum: { areaTotal: true },
-      where: { isActive: true },
-    });
-
     return {
       total,
       ativos,
@@ -390,7 +351,6 @@ class ProdutorRuralService {
       comPendencias,
       comCAR,
       comDAP,
-      areaTotalHectares: areaTotal._sum.areaTotal || 0,
     };
   }
 
