@@ -10,30 +10,62 @@ interface CreateProdutorRuralDTO {
   citizenId: string;
   cpf: string;
   nome: string;
-  nomePropriedade?: string;
-  endereco: {
-    logradouro: string;
-    numero?: string;
-    complemento?: string;
-    bairro: string;
-    cep?: string;
-  };
-  areaTotal?: number;
-  georreferenciamento?: any;
-  tiposProducao?: string[];
-  car?: string; // Cadastro Ambiental Rural
-  dap?: string; // Declaração de Aptidão ao PRONAF
+  rg?: string;
+  rgOrgaoEmissor?: string;
+  dataNascimento?: Date;
+  estadoCivil?: string;
+
+  // Contato
+  telefone?: string;
+  celular?: string;
+  email?: string;
+
+  // Endereço residencial
+  enderecoResidencial?: any;
+
+  // Documentação rural
+  dap?: string;
+  dataValidadeDap?: Date;
+  car?: string;
+  inscricaoEstadual?: string;
+
+  // Informações profissionais
+  atividadePrincipal?: string;
+  tempoAtuacao?: number;
+  associacao?: string;
+
+  // Documentos anexados
+  documentos?: any[];
+  foto?: string;
+
+  // Carteirinha do produtor
+  numeroCarteirinha?: string;
+  dataEmissaoCarteirinha?: Date;
+
+  // Observações
+  observacoes?: string;
 }
 
 interface UpdateProdutorRuralDTO {
   nome?: string;
-  nomePropriedade?: string;
-  endereco?: any;
-  areaTotal?: number;
-  georreferenciamento?: any;
-  tiposProducao?: string[];
-  car?: string;
+  rg?: string;
+  rgOrgaoEmissor?: string;
+  dataNascimento?: Date;
+  estadoCivil?: string;
+  telefone?: string;
+  celular?: string;
+  email?: string;
+  enderecoResidencial?: any;
   dap?: string;
+  dataValidadeDap?: Date;
+  car?: string;
+  inscricaoEstadual?: string;
+  atividadePrincipal?: string;
+  tempoAtuacao?: number;
+  associacao?: string;
+  documentos?: any[];
+  foto?: string;
+  observacoes?: string;
   isActive?: boolean;
 }
 
@@ -360,6 +392,173 @@ class ProdutorRuralService {
       comDAP,
       areaTotalHectares: areaTotal._sum.areaTotal || 0,
     };
+  }
+
+  // Upload de foto
+  async uploadFoto(id: string, fotoUrl: string) {
+    const produtor = await this.findProdutorById(id);
+
+    const updated = await prisma.produtorRural.update({
+      where: { id },
+      data: { foto: fotoUrl },
+    });
+
+    return updated;
+  }
+
+  // Adicionar documento
+  async addDocumento(id: string, documento: any) {
+    const produtor = await this.findProdutorById(id);
+    const documentos = (produtor.documentos as any) || [];
+
+    documentos.push({
+      ...documento,
+      dataUpload: new Date(),
+    });
+
+    const updated = await prisma.produtorRural.update({
+      where: { id },
+      data: { documentos },
+    });
+
+    return updated;
+  }
+
+  // Remover documento
+  async removeDocumento(id: string, documentoIndex: number) {
+    const produtor = await this.findProdutorById(id);
+    const documentos = (produtor.documentos as any) || [];
+
+    if (documentoIndex < 0 || documentoIndex >= documentos.length) {
+      throw new Error('Documento não encontrado');
+    }
+
+    documentos.splice(documentoIndex, 1);
+
+    const updated = await prisma.produtorRural.update({
+      where: { id },
+      data: { documentos },
+    });
+
+    return updated;
+  }
+
+  // Emitir carteirinha
+  async emitirCarteirinha(id: string) {
+    const produtor = await this.findProdutorById(id);
+
+    if (produtor.numeroCarteirinha) {
+      throw new Error('Produtor já possui carteirinha emitida');
+    }
+
+    // Gerar número da carteirinha (formato: ano + sequencial)
+    const ano = new Date().getFullYear();
+    const count = await prisma.produtorRural.count({
+      where: {
+        numeroCarteirinha: {
+          startsWith: `${ano}`,
+        },
+      },
+    });
+
+    const numeroCarteirinha = `${ano}${String(count + 1).padStart(6, '0')}`;
+
+    const updated = await prisma.produtorRural.update({
+      where: { id },
+      data: {
+        numeroCarteirinha,
+        dataEmissaoCarteirinha: new Date(),
+      },
+    });
+
+    return updated;
+  }
+
+  // Buscar por número de carteirinha
+  async findByCarteirinha(numeroCarteirinha: string) {
+    const produtor = await prisma.produtorRural.findUnique({
+      where: { numeroCarteirinha },
+      include: {
+        propriedades: true,
+        distribuicoesSementes: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+        },
+        visitasAssistencia: {
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!produtor) {
+      throw new Error('Carteirinha não encontrada');
+    }
+
+    return produtor;
+  }
+
+  // Buscar com propriedades
+  async findProdutorComPropriedades(id: string) {
+    const produtor = await prisma.produtorRural.findUnique({
+      where: { id },
+      include: {
+        propriedades: {
+          where: { isActive: true },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!produtor) {
+      throw new Error('Produtor rural não encontrado');
+    }
+
+    return produtor;
+  }
+
+  // Buscar histórico completo
+  async findHistoricoCompleto(id: string) {
+    const produtor = await prisma.produtorRural.findUnique({
+      where: { id },
+      include: {
+        propriedades: {
+          where: { isActive: true },
+        },
+        distribuicoesSementes: {
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        },
+        visitasAssistencia: {
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        },
+        solicitacoesMaquinas: {
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        },
+      },
+    });
+
+    if (!produtor) {
+      throw new Error('Produtor rural não encontrado');
+    }
+
+    return produtor;
+  }
+
+  // Validar DAP
+  async validarDAP(id: string, dataValidade: Date) {
+    const produtor = await this.findProdutorById(id);
+
+    const updated = await prisma.produtorRural.update({
+      where: { id },
+      data: {
+        dataValidadeDap: dataValidade,
+      },
+    });
+
+    return updated;
   }
 
   // Deletar produtor (apenas para testes/admin)

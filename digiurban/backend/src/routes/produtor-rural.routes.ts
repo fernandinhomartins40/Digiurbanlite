@@ -203,6 +203,89 @@ router.patch('/produtores/:id/reactivate', async (req, res) => {
   }
 });
 
+// Upload de foto
+router.post('/produtores/:id/foto', async (req, res) => {
+  try {
+    const { fotoUrl } = req.body;
+    const produtor = await produtorRuralService.uploadFoto(req.params.id, fotoUrl);
+    res.json(produtor);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Adicionar documento
+router.post('/produtores/:id/documentos', async (req, res) => {
+  try {
+    const produtor = await produtorRuralService.addDocumento(req.params.id, req.body);
+    res.json(produtor);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Remover documento
+router.delete('/produtores/:id/documentos/:index', async (req, res) => {
+  try {
+    const index = parseInt(req.params.index);
+    const produtor = await produtorRuralService.removeDocumento(req.params.id, index);
+    res.json(produtor);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Emitir carteirinha
+router.post('/produtores/:id/carteirinha', async (req, res) => {
+  try {
+    const produtor = await produtorRuralService.emitirCarteirinha(req.params.id);
+    res.json(produtor);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Buscar por número de carteirinha
+router.get('/produtores/carteirinha/:numero', async (req, res) => {
+  try {
+    const produtor = await produtorRuralService.findByCarteirinha(req.params.numero);
+    res.json(produtor);
+  } catch (error: any) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+// Buscar com propriedades
+router.get('/produtores/:id/propriedades', async (req, res) => {
+  try {
+    const produtor = await produtorRuralService.findProdutorComPropriedades(req.params.id);
+    res.json(produtor);
+  } catch (error: any) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+// Buscar histórico completo
+router.get('/produtores/:id/historico', async (req, res) => {
+  try {
+    const produtor = await produtorRuralService.findHistoricoCompleto(req.params.id);
+    res.json(produtor);
+  } catch (error: any) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+// Validar DAP
+router.patch('/produtores/:id/validar-dap', async (req, res) => {
+  try {
+    const { dataValidade } = req.body;
+    const produtor = await produtorRuralService.validarDAP(req.params.id, new Date(dataValidade));
+    res.json(produtor);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Deletar produtor
 router.delete('/produtores/:id', async (req, res) => {
   try {

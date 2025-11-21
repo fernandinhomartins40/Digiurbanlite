@@ -15,7 +15,10 @@
       "Bash(git add:*)",
       "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Implementar 100% da FASE 4 - Todos os 78 Micro Sistemas com painéis completos\n\n🎯 FASE 4 COMPLETA - Sistema Super App com 78 MS funcionais\n\n## Componentes Compartilhados Criados\n- MSLayout: Layout padrão com tabs e métricas\n- MSDataTable: Tabela completa com busca, filtros, paginação, ações\n- WorkflowPanel: Timeline de workflows com ações e histórico\n- MSDashboard: Dashboards com gráficos e métricas\n- MSTemplate: Template unificado para todos os MS\n\n## Hooks e Utilitários\n- useMS: Hook completo para CRUD com paginação e filtros\n- ms-detection: Sistema inteligente de roteamento para MS\n- ms-configs: Configurações completas dos 78 MS\n\n## Geração Automática\n- Script generate-ms-pages.js: Gerou 78 páginas automaticamente\n- Todos os 78 MS com painéis completos em /admin/ms/*\n\n## Features por MS\n✅ Dashboard com métricas e gráficos\n✅ Listagem com busca, ordenação e paginação\n✅ Workflow com timeline visual\n✅ Relatórios\n✅ Configurações\n\n## Backend\n- Hook protocol-to-ms: Sincronização protocolo → MS\n- Rotas enums: Enums dinâmicos para formulários\n- EnumField: Campo de formulário com dados de MS\n- Seeds atualizados com enumSource\n\n## Roteamento Inteligente\n- Detecção automática de MS\n- Redirecionamento correto: /admin/ms/{slug}\n- Integração perfeita com departamentos\n\n## Resultados\n- 78/78 MS implementados (100%)\n- 0 erros TypeScript\n- ~2.500 linhas de código\n- Arquitetura escalável e reutilizável\n\n🚀 DigiUrban agora é oficialmente um SUPER APP municipal!\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(node scripts/add-ms-to-all-depts.js:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx prisma:*)"
     ],
     "deny": [],
     "ask": []

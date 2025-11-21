@@ -36,19 +36,19 @@ model MunicipioConfig {
 }
 
 model User {
-  id                            String                       @id @default(cuid())
-  email                         String                       @unique
-  name                          String
-  password                      String
-  role                          UserRole                     @default(USER)
-  isActive                      Boolean                      @default(true)
-  departmentId                  String?                      // ✅ MANTIDO: compatibilidade (primary department)
-  failedLoginAttempts           Int                          @default(0)
-  lockedUntil                   DateTime?
-  mustChangePassword            Boolean                      @default(false)
-  createdAt                     DateTime                     @default(now())
-  updatedAt                     DateTime                     @updatedAt
-  lastLogin                     DateTime?
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  name                String
+  password            String
+  role                UserRole  @default(USER)
+  isActive            Boolean   @default(true)
+  departmentId        String? // ✅ MANTIDO: compatibilidade (primary department)
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  mustChangePassword  Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lastLogin           DateTime?
 
   // Relacionamentos
   agendaEvents                AgendaEvent[]            @relation("AgendaEventCreator")
@@ -59,7 +59,7 @@ model User {
   department                  Department?              @relation("UserPrimaryDepartment", fields: [departmentId], references: [id])
 
   // ✅ NOVO: Múltiplos departamentos (N:N)
-  userDepartments             UserDepartment[]
+  userDepartments UserDepartment[]
 
   @@map("users")
 }
@@ -69,8 +69,8 @@ model UserDepartment {
   id           String   @id @default(cuid())
   userId       String
   departmentId String
-  isPrimary    Boolean  @default(false)  // Departamento principal
-  isActive     Boolean  @default(true)   // Pode desativar específico
+  isPrimary    Boolean  @default(false) // Departamento principal
+  isActive     Boolean  @default(true) // Pode desativar específico
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -86,13 +86,13 @@ model UserDepartment {
 }
 
 model Department {
-  id                  String               @id @default(cuid())
-  name                String               @unique
-  code                String?              @unique
-  description         String?
-  isActive            Boolean              @default(true)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  id          String   @id @default(cuid())
+  name        String   @unique
+  code        String?  @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relacionamentos
   protocolsSimplified ProtocolSimplified[]
@@ -100,7 +100,7 @@ model Department {
   users               User[]               @relation("UserPrimaryDepartment")
 
   // ✅ NOVO: Múltiplos usuários (N:N)
-  userDepartments     UserDepartment[]
+  userDepartments UserDepartment[]
 
   @@map("departments")
 }
@@ -128,12 +128,12 @@ model Citizen {
   lastLogin           DateTime?
 
   // Campos adicionais para perfil completo do cidadão (endereço já está em address JSON)
-  rg                          String?
-  phoneSecondary              String?
-  motherName                  String?
-  maritalStatus               String?
-  occupation                  String?
-  familyIncome                String?
+  rg                  String?
+  phoneSecondary      String?
+  motherName          String?
+  maritalStatus       String?
+  occupation          String?
+  familyIncome        String?
   auditLogs           AuditLog[]
   transferRequests    CitizenTransferRequest[]
   familyAsMember      FamilyComposition[]      @relation("FamilyMember")
@@ -152,23 +152,23 @@ model Citizen {
 // ========================================
 
 model CitizenDocument {
-  id              String               @id @default(cuid())
+  id              String         @id @default(cuid())
   citizenId       String
-  documentType    String               // RG, CPF, Comprovante de Residência, etc.
+  documentType    String // RG, CPF, Comprovante de Residência, etc.
   fileName        String
   filePath        String
   fileSize        Int
   mimeType        String
-  status          DocumentStatus       @default(PENDING)
-  notes           String?              // Observações de análise/rejeição
-  uploadedAt      DateTime             @default(now())
-  reviewedBy      String?              // ID do admin que revisou
-  reviewedAt      DateTime?            // Data da revisão
-  rejectionReason String?              // Motivo da rejeição
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
+  status          DocumentStatus @default(PENDING)
+  notes           String? // Observações de análise/rejeição
+  uploadedAt      DateTime       @default(now())
+  reviewedBy      String? // ID do admin que revisou
+  reviewedAt      DateTime? // Data da revisão
+  rejectionReason String? // Motivo da rejeição
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-  citizen         Citizen              @relation("CitizenDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
+  citizen Citizen @relation("CitizenDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
 
   @@index([citizenId])
   @@index([status])
@@ -211,22 +211,22 @@ model Lead {
 }
 
 model FamilyComposition {
-  id            String               @id @default(cuid())
-  headId        String
-  memberId      String
-  relationship  FamilyRelationship
-  isDependent   Boolean              @default(false)
+  id           String             @id @default(cuid())
+  headId       String
+  memberId     String
+  relationship FamilyRelationship
+  isDependent  Boolean            @default(false)
 
   // Campos calculados adicionados na Sprint 2
-  monthlyIncome Decimal?             // Renda mensal do membro
-  occupation    String?              // Ocupação
-  education     String?              // Escolaridade
-  hasDisability Boolean?             // Possui deficiência
+  monthlyIncome Decimal? // Renda mensal do membro
+  occupation    String? // Ocupação
+  education     String? // Escolaridade
+  hasDisability Boolean? // Possui deficiência
 
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  member        Citizen              @relation("FamilyMember", fields: [memberId], references: [id], onDelete: Cascade)
-  head          Citizen              @relation("FamilyHead", fields: [headId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  member    Citizen  @relation("FamilyMember", fields: [memberId], references: [id], onDelete: Cascade)
+  head      Citizen  @relation("FamilyHead", fields: [headId], references: [id], onDelete: Cascade)
 
   @@unique([headId, memberId])
   @@map("family_compositions")
@@ -237,7 +237,7 @@ model FamilyComposition {
 // ========================================
 
 model ProtocolCitizenLink {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   protocolId String
 
   // Vínculo com cidadão cadastrado
@@ -245,24 +245,24 @@ model ProtocolCitizenLink {
   linkedCitizen   Citizen @relation("LinkedCitizens", fields: [linkedCitizenId], references: [id], onDelete: Cascade)
 
   // Tipo de vínculo no contexto do protocolo
-  linkType     CitizenLinkType
+  linkType CitizenLinkType
 
   // Relacionamento com o solicitante (alinha com FamilyComposition)
-  relationship String?  // SON, SPOUSE, PARENT, OTHER (opcional se já existe em FamilyComposition)
+  relationship String? // SON, SPOUSE, PARENT, OTHER (opcional se já existe em FamilyComposition)
 
   // Papel no serviço
-  role         ServiceRole
+  role ServiceRole
 
   // Dados contextuais específicos do vínculo (série escolar, escola, etc)
-  contextData  Json?
+  contextData Json?
 
   // Campos de validação
-  isVerified   Boolean  @default(false)  // Se o vínculo foi verificado contra FamilyComposition
-  verifiedAt   DateTime?
-  verifiedBy   String?  // userId do admin que verificou
+  isVerified Boolean   @default(false) // Se o vínculo foi verificado contra FamilyComposition
+  verifiedAt DateTime?
+  verifiedBy String? // userId do admin que verificou
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
 
@@ -290,8 +290,8 @@ model ServiceSimplified {
   serviceType ServiceType
 
   // Para serviços COM_DADOS
-  moduleType String? @unique // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc - DEVE SER ÚNICO
-  formSchema Json? // Schema do formulário
+  moduleType           String? @unique // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc - DEVE SER ÚNICO
+  formSchema           Json? // Schema do formulário
   linkedCitizensConfig Json? // Configuração de vinculação de cidadãos (alunos, dependentes, etc)
 
   // Configuração de campos do formulário
@@ -1503,25 +1503,25 @@ enum ServiceType {
 }
 
 enum CitizenLinkType {
-  STUDENT              // Aluno
-  GUARDIAN             // Responsável Legal
-  PATIENT              // Paciente
-  COMPANION            // Acompanhante
-  DEPENDENT            // Dependente
-  FAMILY_MEMBER        // Membro Familiar
-  AUTHORIZED_PERSON    // Pessoa Autorizada
-  BENEFICIARY          // Beneficiário
-  WITNESS              // Testemunha
-  OTHER                // Outro
+  STUDENT // Aluno
+  GUARDIAN // Responsável Legal
+  PATIENT // Paciente
+  COMPANION // Acompanhante
+  DEPENDENT // Dependente
+  FAMILY_MEMBER // Membro Familiar
+  AUTHORIZED_PERSON // Pessoa Autorizada
+  BENEFICIARY // Beneficiário
+  WITNESS // Testemunha
+  OTHER // Outro
 }
 
 enum ServiceRole {
-  BENEFICIARY    // Quem recebe o benefício
-  RESPONSIBLE    // Responsável legal
-  AUTHORIZED     // Pessoa autorizada
-  COMPANION      // Acompanhante
-  WITNESS        // Testemunha
-  OTHER          // Outro
+  BENEFICIARY // Quem recebe o benefício
+  RESPONSIBLE // Responsável legal
+  AUTHORIZED // Pessoa autorizada
+  COMPANION // Acompanhante
+  WITNESS // Testemunha
+  OTHER // Outro
 }
 
 enum TenantStatus {
@@ -1637,18 +1637,18 @@ enum VerificationStatus {
 }
 
 enum FamilyRelationship {
-  SPOUSE        // Cônjuge
-  SON           // Filho
-  DAUGHTER      // Filha
-  FATHER        // Pai
-  MOTHER        // Mãe
-  BROTHER       // Irmão
-  SISTER        // Irmã
-  GRANDFATHER   // Avô
-  GRANDMOTHER   // Avó
-  GRANDSON      // Neto
+  SPOUSE // Cônjuge
+  SON // Filho
+  DAUGHTER // Filha
+  FATHER // Pai
+  MOTHER // Mãe
+  BROTHER // Irmão
+  SISTER // Irmã
+  GRANDFATHER // Avô
+  GRANDMOTHER // Avó
+  GRANDSON // Neto
   GRANDDAUGHTER // Neta
-  OTHER         // Outro
+  OTHER // Outro
 }
 
 enum CulturalAttendanceType {
@@ -1800,17 +1800,17 @@ model CustomDataRecord {
 
 // Unidades de Saúde (UBS, UPA, Hospitais, etc.)
 model UnidadeSaude {
-  id          String   @id @default(cuid())
-  nome        String
-  tipo        String   // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
-  endereco    String?
-  bairro      String?
-  telefone    String?
-  horario     String?
-  especialidades Json?  // Array de especialidades disponíveis
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  nome           String
+  tipo           String // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
+  endereco       String?
+  bairro         String?
+  telefone       String?
+  horario        String?
+  especialidades Json? // Array de especialidades disponíveis
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([tipo, isActive])
   @@index([isActive])
@@ -1819,19 +1819,19 @@ model UnidadeSaude {
 
 // Unidades Educacionais (Escolas, Creches, etc.)
 model UnidadeEducacao {
-  id          String   @id @default(cuid())
-  nome        String
-  tipo        String   // 'Escola', 'Creche', 'EMEI', 'EMEF', 'CEI', 'Outro'
-  endereco    String?
-  bairro      String?
-  telefone    String?
-  email       String?
-  niveisEnsino Json?   // ['Infantil', 'Fundamental I', 'Fundamental II', 'EJA']
-  turnos      Json?    // ['Matutino', 'Vespertino', 'Integral', 'Noturno']
-  vagas       Int?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  nome         String
+  tipo         String // 'Escola', 'Creche', 'EMEI', 'EMEF', 'CEI', 'Outro'
+  endereco     String?
+  bairro       String?
+  telefone     String?
+  email        String?
+  niveisEnsino Json? // ['Infantil', 'Fundamental I', 'Fundamental II', 'EJA']
+  turnos       Json? // ['Matutino', 'Vespertino', 'Integral', 'Noturno']
+  vagas        Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([tipo, isActive])
   @@index([isActive])
@@ -1840,18 +1840,18 @@ model UnidadeEducacao {
 
 // Unidades de Assistência Social (CRAS, CREAS)
 model UnidadeCRAS {
-  id          String   @id @default(cuid())
-  nome        String
-  tipo        String   // 'CRAS', 'CREAS'
-  endereco    String?
-  bairro      String?
-  telefone    String?
-  email       String?
-  horario     String?
-  programas   Json?    // Array de programas oferecidos
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  nome      String
+  tipo      String // 'CRAS', 'CREAS'
+  endereco  String?
+  bairro    String?
+  telefone  String?
+  email     String?
+  horario   String?
+  programas Json? // Array de programas oferecidos
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tipo, isActive])
   @@index([isActive])
@@ -1862,13 +1862,13 @@ model UnidadeCRAS {
 model EspacoPublico {
   id          String   @id @default(cuid())
   nome        String
-  tipo        String   // 'Quadra', 'Ginásio', 'Campo', 'Piscina', 'Teatro', 'Centro Cultural', 'Praça', 'Outro'
-  categoria   String?  // 'Esportivo', 'Cultural', 'Lazer', 'Misto'
+  tipo        String // 'Quadra', 'Ginásio', 'Campo', 'Piscina', 'Teatro', 'Centro Cultural', 'Praça', 'Outro'
+  categoria   String? // 'Esportivo', 'Cultural', 'Lazer', 'Misto'
   endereco    String?
   bairro      String?
   telefone    String?
   capacidade  Int?
-  comodidades Json?    // Array de comodidades disponíveis
+  comodidades Json? // Array de comodidades disponíveis
   horario     String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -1893,11 +1893,11 @@ model ConjuntoHabitacional {
   totalUnidades       Int?
   unidadesOcupadas    Int      @default(0)
   unidadesDisponiveis Int      @default(0)
-  tipologias          Json?    // ['1 quarto', '2 quartos', '3 quartos']
-  programaOrigem      String?  // 'MCMV', 'CDHU', 'Municipal'
+  tipologias          Json? // ['1 quarto', '2 quartos', '3 quartos']
+  programaOrigem      String? // 'MCMV', 'CDHU', 'Municipal'
   latitude            Float?
   longitude           Float?
-  infraestrutura      Json?    // ['água', 'esgoto', 'pavimentação', 'iluminação']
+  infraestrutura      Json? // ['água', 'esgoto', 'pavimentação', 'iluminação']
   isActive            Boolean  @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -1908,21 +1908,21 @@ model ConjuntoHabitacional {
 
 // Viaturas e Equipamentos de Segurança
 model ViaturaSeguranca {
-  id                String   @id @default(cuid())
-  codigo            String   @unique
-  tipo              String   // 'Patrulha', 'Moto', 'Bicicleta', 'Viatura Especial'
+  id                String    @id @default(cuid())
+  codigo            String    @unique
+  tipo              String // 'Patrulha', 'Moto', 'Bicicleta', 'Viatura Especial'
   placa             String?
   modelo            String?
   ano               Int?
-  status            String   @default("Ativa") // 'Ativa', 'Manutenção', 'Inativa'
-  equipamentos      Json?    // ['Rádio', 'Câmera', 'GPS']
+  status            String    @default("Ativa") // 'Ativa', 'Manutenção', 'Inativa'
+  equipamentos      Json? // ['Rádio', 'Câmera', 'GPS']
   baseOperacional   String?
-  horasUso          Int      @default(0)
-  kmRodados         Int      @default(0)
+  horasUso          Int       @default(0)
+  kmRodados         Int       @default(0)
   proximaManutencao DateTime?
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@index([status, isActive])
   @@index([isActive])
@@ -1931,23 +1931,23 @@ model ViaturaSeguranca {
 
 // Parques e Praças
 model ParquePraca {
-  id                 String    @id @default(cuid())
-  nome               String
-  tipo               String    // 'Parque', 'Praça', 'Jardim', 'Área Verde'
-  endereco           String?
-  bairro             String?
-  latitude           Float?
-  longitude          Float?
-  area               Float?    // m²
-  equipamentos       Json?     // ['Playground', 'Quadra', 'Academia ao Ar Livre']
+  id                   String    @id @default(cuid())
+  nome                 String
+  tipo                 String // 'Parque', 'Praça', 'Jardim', 'Área Verde'
+  endereco             String?
+  bairro               String?
+  latitude             Float?
+  longitude            Float?
+  area                 Float? // m²
+  equipamentos         Json? // ['Playground', 'Quadra', 'Academia ao Ar Livre']
   horarioFuncionamento String?
-  permiteEventos     Boolean   @default(true)
-  capacidadeEventos  Int?
-  ultimaManutencao   DateTime?
-  proximaManutencao  DateTime?
-  isActive           Boolean   @default(true)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  permiteEventos       Boolean   @default(true)
+  capacidadeEventos    Int?
+  ultimaManutencao     DateTime?
+  proximaManutencao    DateTime?
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([tipo, isActive])
   @@index([isActive])
@@ -1956,23 +1956,23 @@ model ParquePraca {
 
 // Estabelecimentos Turísticos
 model EstabelecimentoTuristico {
-  id           String   @id @default(cuid())
-  nome         String
-  tipo         String   // 'Hotel', 'Pousada', 'Restaurante', 'Atração Turística'
-  endereco     String?
-  bairro       String?
-  telefone     String?
-  email        String?
-  site         String?
-  categoria    String?  // Classificação (estrelas, etc.)
-  latitude     Float?
-  longitude    Float?
-  capacidade   Int?
-  servicos     Json?    // ['Wi-Fi', 'Estacionamento', 'Acessibilidade']
-  horario      String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         String   @id @default(cuid())
+  nome       String
+  tipo       String // 'Hotel', 'Pousada', 'Restaurante', 'Atração Turística'
+  endereco   String?
+  bairro     String?
+  telefone   String?
+  email      String?
+  site       String?
+  categoria  String? // Classificação (estrelas, etc.)
+  latitude   Float?
+  longitude  Float?
+  capacidade Int?
+  servicos   Json? // ['Wi-Fi', 'Estacionamento', 'Acessibilidade']
+  horario    String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([tipo, isActive])
   @@index([isActive])
@@ -1988,11 +1988,11 @@ model ProgramaSocial {
   id                     String    @id @default(cuid())
   nome                   String    @unique
   descricao              String?
-  tipo                   String?   // 'Transferência de Renda', 'Apoio Social', 'Capacitação'
-  criteriosElegibilidade Json?     // Critérios estruturados
+  tipo                   String? // 'Transferência de Renda', 'Apoio Social', 'Capacitação'
+  criteriosElegibilidade Json? // Critérios estruturados
   valorBeneficio         Float?
-  periodicidade          String?   // 'Mensal', 'Único', 'Anual'
-  documentosNecessarios  Json?     // Array de documentos
+  periodicidade          String? // 'Mensal', 'Único', 'Anual'
+  documentosNecessarios  Json? // Array de documentos
   orgaoResponsavel       String?
   legislacao             String?
   dataInicio             DateTime?
@@ -2008,17 +2008,17 @@ model ProgramaSocial {
 
 // Tipos de Obras e Serviços
 model TipoObraServico {
-  id                   String   @id @default(cuid())
-  nome                 String   @unique
-  categoria            String   // 'Pavimentação', 'Drenagem', 'Iluminação', 'Saneamento'
-  descricao            String?
-  tempoMedioExecucao   Int?     // Dias
-  requisitosPrevios    Json?    // ['Projeto', 'Licença Ambiental']
+  id                      String   @id @default(cuid())
+  nome                    String   @unique
+  categoria               String // 'Pavimentação', 'Drenagem', 'Iluminação', 'Saneamento'
+  descricao               String?
+  tempoMedioExecucao      Int? // Dias
+  requisitosPrevios       Json? // ['Projeto', 'Licença Ambiental']
   equipamentosNecessarios Json? // Array de equipamentos
-  materiaisComuns      Json?    // Array de materiais
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  materiaisComuns         Json? // Array de materiais
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   @@index([categoria, isActive])
   @@index([isActive])
@@ -2027,17 +2027,17 @@ model TipoObraServico {
 
 // Especialidades Médicas
 model EspecialidadeMedica {
-  id                    String   @id @default(cuid())
-  nome                  String   @unique
-  descricao             String?
-  area                  String?  // 'Clínica Médica', 'Cirúrgica', 'Diagnóstica'
-  tempoMedioConsulta    Int?     // Minutos
-  requisitosPaciente    String?  // 'Encaminhamento', 'Livre'
-  examesComuns          Json?    // Array de exames
-  unidadesQueOferecem   Json?    // IDs das unidades (pode ser calculado)
-  isActive              Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  nome                String   @unique
+  descricao           String?
+  area                String? // 'Clínica Médica', 'Cirúrgica', 'Diagnóstica'
+  tempoMedioConsulta  Int? // Minutos
+  requisitosPaciente  String? // 'Encaminhamento', 'Livre'
+  examesComuns        Json? // Array de exames
+  unidadesQueOferecem Json? // IDs das unidades (pode ser calculado)
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([area, isActive])
   @@index([isActive])
@@ -2046,16 +2046,16 @@ model EspecialidadeMedica {
 
 // Tipos de Produção Agrícola
 model TipoProducaoAgricola {
-  id                          String   @id @default(cuid())
-  nome                        String   @unique
-  categoria                   String   // 'Vegetal', 'Animal'
-  subcategoria                String?  // 'Grãos', 'Hortaliças', 'Pecuária Leiteira'
-  sazonalidade                Json?    // Meses de plantio/colheita
+  id                           String   @id @default(cuid())
+  nome                         String   @unique
+  categoria                    String // 'Vegetal', 'Animal'
+  subcategoria                 String? // 'Grãos', 'Hortaliças', 'Pecuária Leiteira'
+  sazonalidade                 Json? // Meses de plantio/colheita
   assistenciaTecnicaDisponivel Boolean  @default(false)
-  programasApoio              Json?    // Array de programas
-  isActive                    Boolean  @default(true)
-  createdAt                   DateTime @default(now())
-  updatedAt                   DateTime @updatedAt
+  programasApoio               Json? // Array de programas
+  isActive                     Boolean  @default(true)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
 
   @@index([categoria, isActive])
   @@index([isActive])
@@ -2065,7 +2065,7 @@ model TipoProducaoAgricola {
 // Máquinas e Equipamentos Agrícolas
 model MaquinaAgricola {
   id                    String    @id @default(cuid())
-  tipo                  String    // 'Trator', 'Arado', 'Grade', 'Plantadeira'
+  tipo                  String // 'Trator', 'Arado', 'Grade', 'Plantadeira'
   modelo                String?
   identificacao         String    @unique
   status                String    @default("Disponível") // 'Disponível', 'Emprestada', 'Manutenção'
@@ -2074,8 +2074,8 @@ model MaquinaAgricola {
   horasUso              Int       @default(0)
   ultimaManutencao      DateTime?
   proximaManutencao     DateTime?
-  valorHoraUso          Float?    // Se cobrado
-  documentosNecessarios Json?     // Para empréstimo
+  valorHoraUso          Float? // Se cobrado
+  documentosNecessarios Json? // Para empréstimo
   isActive              Boolean   @default(true)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
@@ -2087,23 +2087,23 @@ model MaquinaAgricola {
 
 // Espécies de Árvores
 model EspecieArvore {
-  id                  String   @id @default(cuid())
-  nomeComum           String   @unique
-  nomeCientifico      String?
-  familia             String?
-  origem              String?  // 'Nativa', 'Exótica'
-  porte               String?  // 'Pequeno', 'Médio', 'Grande'
-  tipoRaiz            String?
-  crescimento         String?  // 'Rápido', 'Médio', 'Lento'
-  adequadaCalcada     Boolean  @default(false)
-  adequadaParque      Boolean  @default(true)
-  flores              String?
-  frutificacao        String?
-  cuidadosEspeciais   String?
-  disponibilidadeMudas Int     @default(0)
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  nomeComum            String   @unique
+  nomeCientifico       String?
+  familia              String?
+  origem               String? // 'Nativa', 'Exótica'
+  porte                String? // 'Pequeno', 'Médio', 'Grande'
+  tipoRaiz             String?
+  crescimento          String? // 'Rápido', 'Médio', 'Lento'
+  adequadaCalcada      Boolean  @default(false)
+  adequadaParque       Boolean  @default(true)
+  flores               String?
+  frutificacao         String?
+  cuidadosEspeciais    String?
+  disponibilidadeMudas Int      @default(0)
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@index([origem, isActive])
   @@index([isActive])
@@ -2112,16 +2112,16 @@ model EspecieArvore {
 
 // Tipos de Estabelecimentos Turísticos (Categorias)
 model TipoEstabelecimentoTuristico {
-  id                  String   @id @default(cuid())
-  nome                String   @unique
-  categoria           String?  // 'Hospedagem', 'Alimentação', 'Atração', 'Serviço'
-  requisitosLegais    Json?    // ['Alvará', 'Licença Sanitária']
-  documentosNecessarios Json?  // Array de documentos
-  classificacao       String?  // Sistema de classificação (estrelas, etc.)
-  inspectionRequired  Boolean  @default(false)
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  nome                  String   @unique
+  categoria             String? // 'Hospedagem', 'Alimentação', 'Atração', 'Serviço'
+  requisitosLegais      Json? // ['Alvará', 'Licença Sanitária']
+  documentosNecessarios Json? // Array de documentos
+  classificacao         String? // Sistema de classificação (estrelas, etc.)
+  inspectionRequired    Boolean  @default(false)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   @@index([categoria, isActive])
   @@index([isActive])
@@ -2130,17 +2130,17 @@ model TipoEstabelecimentoTuristico {
 
 // Modalidades Esportivas
 model ModalidadeEsportiva {
-  id                      String   @id @default(cuid())
-  nome                    String   @unique
-  categoria               String   // 'Individual', 'Coletivo'
-  tipo                    String?  // 'Quadra', 'Campo', 'Piscina', 'Tatame'
-  faixasEtarias           Json?    // ['Infantil', 'Juvenil', 'Adulto', 'Sênior']
-  equipamentosNecessarios Json?    // Array de equipamentos
-  profissionaisNecessarios Json?   // ['Professor', 'Técnico', 'Árbitro']
-  espacosDisponiveis      Json?    // IDs dos espaços (pode ser calculado)
-  isActive                Boolean  @default(true)
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  nome                     String   @unique
+  categoria                String // 'Individual', 'Coletivo'
+  tipo                     String? // 'Quadra', 'Campo', 'Piscina', 'Tatame'
+  faixasEtarias            Json? // ['Infantil', 'Juvenil', 'Adulto', 'Sênior']
+  equipamentosNecessarios  Json? // Array de equipamentos
+  profissionaisNecessarios Json? // ['Professor', 'Técnico', 'Árbitro']
+  espacosDisponiveis       Json? // IDs dos espaços (pode ser calculado)
+  isActive                 Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   @@index([categoria, isActive])
   @@index([isActive])
@@ -2149,17 +2149,17 @@ model ModalidadeEsportiva {
 
 // Tipos de Atividades Culturais
 model TipoAtividadeCultural {
-  id                  String   @id @default(cuid())
-  nome                String   @unique
-  categoria           String?  // 'Artes Visuais', 'Artes Cênicas', 'Música', 'Literatura'
-  materialNecessario  Json?    // Array de materiais
-  faixasEtarias       Json?    // Idades recomendadas
-  duracaoMedia        Int?     // Horas/aula
-  espacosAdequados    Json?    // IDs dos espaços (pode ser calculado)
+  id                       String   @id @default(cuid())
+  nome                     String   @unique
+  categoria                String? // 'Artes Visuais', 'Artes Cênicas', 'Música', 'Literatura'
+  materialNecessario       Json? // Array de materiais
+  faixasEtarias            Json? // Idades recomendadas
+  duracaoMedia             Int? // Horas/aula
+  espacosAdequados         Json? // IDs dos espaços (pode ser calculado)
   profissionaisNecessarios String?
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  isActive                 Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   @@index([categoria, isActive])
   @@index([isActive])
@@ -2168,17 +2168,17 @@ model TipoAtividadeCultural {
 
 // Tipos de Ocorrências
 model TipoOcorrencia {
-  id                     String   @id @default(cuid())
-  nome                   String   @unique
-  categoria              String   // 'Contra Pessoa', 'Contra Patrimônio', 'Ordem Pública'
-  gravidade              Int      @default(3) // 1-5
-  requererBoletimOcorrencia Boolean @default(false)
-  tempoRespostaPadrao    Int?     // Minutos
-  equipesCompetentes     Json?    // Array de equipes
-  procedimentosPadrao    String?
-  isActive               Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                        String   @id @default(cuid())
+  nome                      String   @unique
+  categoria                 String // 'Contra Pessoa', 'Contra Patrimônio', 'Ordem Pública'
+  gravidade                 Int      @default(3) // 1-5
+  requererBoletimOcorrencia Boolean  @default(false)
+  tempoRespostaPadrao       Int? // Minutos
+  equipesCompetentes        Json? // Array de equipes
+  procedimentosPadrao       String?
+  isActive                  Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
 
   @@index([categoria, gravidade, isActive])
   @@index([isActive])
@@ -2189,16 +2189,16 @@ model TipoOcorrencia {
 model CursoProfissionalizante {
   id                   String    @id @default(cuid())
   nome                 String    @unique
-  categoria            String?   // 'Informática', 'Artesanato', 'Mecânica'
+  categoria            String? // 'Informática', 'Artesanato', 'Mecânica'
   area                 String?
-  cargaHoraria         Int?      // Horas totais
-  duracao              Int?      // Meses
+  cargaHoraria         Int? // Horas totais
+  duracao              Int? // Meses
   requisitos           String?
   certificacao         String?
-  conteudoProgramatico Json?     // Estrutura do curso
+  conteudoProgramatico Json? // Estrutura do curso
   vagas                Int       @default(0)
   vagasOcupadas        Int       @default(0)
-  instrutorId          String?   // FK para Professor (opcional)
+  instrutorId          String? // FK para Professor (opcional)
   localCurso           String?
   horario              String?
   dataInicio           DateTime?
@@ -2217,13 +2217,13 @@ model ProgramaHabitacional {
   id                     String    @id @default(cuid())
   nome                   String    @unique
   descricao              String?
-  tipo                   String    // 'Aquisição', 'Melhoria', 'Regularização'
-  criteriosElegibilidade Json?     // Critérios estruturados
+  tipo                   String // 'Aquisição', 'Melhoria', 'Regularização'
+  criteriosElegibilidade Json? // Critérios estruturados
   rendaMaxima            Float?
   rendaMinima            Float?
-  documentosNecessarios  Json?     // Array de documentos
+  documentosNecessarios  Json? // Array de documentos
   beneficiosOferecidos   String?
-  prazoAtendimento       Int?      // Dias
+  prazoAtendimento       Int? // Dias
   orgaoGestor            String?
   legislacao             String?
   dataInicioInscricoes   DateTime?
@@ -2242,13 +2242,13 @@ model ProgramaAmbiental {
   id                       String    @id @default(cuid())
   nome                     String    @unique
   descricao                String?
-  tipo                     String?   // 'Coleta Seletiva', 'Arborização', 'Educação Ambiental'
+  tipo                     String? // 'Coleta Seletiva', 'Arborização', 'Educação Ambiental'
   objetivos                String?
-  metasAnuais              Json?     // Metas estruturadas
+  metasAnuais              Json? // Metas estruturadas
   publicoAlvo              String?
-  parcerias                Json?     // Array de parceiros
+  parcerias                Json? // Array de parceiros
   recursosNecessarios      String?
-  indicadoresMonitoramento Json?     // KPIs do programa
+  indicadoresMonitoramento Json? // KPIs do programa
   dataInicio               DateTime?
   dataFim                  DateTime?
   isActive                 Boolean   @default(true)
@@ -2266,20 +2266,20 @@ model ProgramaAmbiental {
 
 // Profissionais de Saúde
 model ProfissionalSaude {
-  id                  String   @id @default(cuid())
-  nome                String
-  cpf                 String   @unique
-  registroProfissional String  @unique // CRM, CRO, CRP, etc.
-  especialidade       String?
-  categoria           String   // 'Médico', 'Enfermeiro', 'Dentista', 'Psicólogo'
-  unidadesAtendimento Json?    // Array de IDs das unidades
-  horarioAtendimento  Json?    // Horários estruturados
-  diasSemana          Json?    // Array de dias
-  tempoMedioConsulta  Int?     // Minutos
-  aceitaAgendamento   Boolean  @default(true)
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  nome                 String
+  cpf                  String   @unique
+  registroProfissional String   @unique // CRM, CRO, CRP, etc.
+  especialidade        String?
+  categoria            String // 'Médico', 'Enfermeiro', 'Dentista', 'Psicólogo'
+  unidadesAtendimento  Json? // Array de IDs das unidades
+  horarioAtendimento   Json? // Horários estruturados
+  diasSemana           Json? // Array de dias
+  tempoMedioConsulta   Int? // Minutos
+  aceitaAgendamento    Boolean  @default(true)
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   @@index([categoria, isActive])
   @@index([especialidade, isActive])
@@ -2293,12 +2293,12 @@ model Professor {
   nome            String
   cpf             String   @unique
   formacao        String?
-  especializacoes Json?    // Array de especializações
-  areasAtuacao    Json?    // Array de áreas
-  vinculo         String?  // 'Efetivo', 'Contratado', 'Voluntário'
-  cargaHoraria    Int?     // Horas/semana
-  disponibilidade Json?    // Horários disponíveis
-  avaliacaoMedia  Float?   // Nota 0-5
+  especializacoes Json? // Array de especializações
+  areasAtuacao    Json? // Array de áreas
+  vinculo         String? // 'Efetivo', 'Contratado', 'Voluntário'
+  cargaHoraria    Int? // Horas/semana
+  disponibilidade Json? // Horários disponíveis
+  avaliacaoMedia  Float? // Nota 0-5
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -2314,12 +2314,12 @@ model GuiaTuristico {
   nome            String
   cpf             String   @unique
   cadastur        String?  @unique // Cadastro do Ministério do Turismo
-  idiomas         Json?    // Array de idiomas
-  especialidades  Json?    // ['Histórico', 'Ecológico', 'Aventura']
-  certificacoes   Json?    // Array de certificações
-  disponibilidade Json?    // Calendário
+  idiomas         Json? // Array de idiomas
+  especialidades  Json? // ['Histórico', 'Ecológico', 'Aventura']
+  certificacoes   Json? // Array de certificações
+  disponibilidade Json? // Calendário
   valorDiaria     Float?
-  avaliacaoMedia  Float?   // Nota 0-5
+  avaliacaoMedia  Float? // Nota 0-5
   totalTours      Int      @default(0)
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
@@ -2335,17 +2335,17 @@ model GuiaTuristico {
 
 // Tipos de Documentos
 model TipoDocumento {
-  id               String   @id @default(cuid())
-  nome             String   @unique
-  descricao        String?
-  categoria        String   // 'Identificação', 'Comprovante', 'Declaração', 'Licença'
-  formatosAceitos  Json?    // ['PDF', 'JPG', 'PNG']
-  tamanhoMaximo    Int?     // MB
-  requisitosPadrao String?  // Texto com requisitos
-  validadeDocumento Int?    // Dias de validade
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                String   @id @default(cuid())
+  nome              String   @unique
+  descricao         String?
+  categoria         String // 'Identificação', 'Comprovante', 'Declaração', 'Licença'
+  formatosAceitos   Json? // ['PDF', 'JPG', 'PNG']
+  tamanhoMaximo     Int? // MB
+  requisitosPadrao  String? // Texto com requisitos
+  validadeDocumento Int? // Dias de validade
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([categoria, isActive])
   @@index([isActive])
@@ -2360,16 +2360,16 @@ model TipoDocumento {
 
 model WorkflowDefinition {
   id          String   @id @default(cuid())
-  name        String   // "Atendimento Saúde", "Licenciamento Obras"
+  name        String // "Atendimento Saúde", "Licenciamento Obras"
   description String?
-  module      String   // "SAUDE", "PLANEJAMENTO", "ASSISTENCIA_SOCIAL"
+  module      String // "SAUDE", "PLANEJAMENTO", "ASSISTENCIA_SOCIAL"
   version     Int      @default(1)
   isActive    Boolean  @default(true)
-  stages      Json     // Array de stages: [{id, name, role, slaHours, actions}]
+  stages      Json // Array de stages: [{id, name, role, slaHours, actions}]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  instances   WorkflowInstance[]
+  instances WorkflowInstance[]
 
   @@index([module, isActive])
   @@index([isActive])
@@ -2377,21 +2377,21 @@ model WorkflowDefinition {
 }
 
 model WorkflowInstance {
-  id             String   @id @default(cuid())
-  definitionId   String
-  definition     WorkflowDefinition @relation(fields: [definitionId], references: [id])
-  entityType     String   // "ConsultaMedica", "LicencaObra", "SolicitacaoTFD"
-  entityId       String   // ID da entidade relacionada
-  citizenId      String?  // Cidadão vinculado (se aplicável)
-  currentStage   String   // ID do stage atual
-  status         WorkflowStatus
-  priority       Int      @default(0) // 0-10 (maior = mais urgente)
-  metadata       Json?    // Dados adicionais do contexto
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  completedAt    DateTime?
+  id           String             @id @default(cuid())
+  definitionId String
+  definition   WorkflowDefinition @relation(fields: [definitionId], references: [id])
+  entityType   String // "ConsultaMedica", "LicencaObra", "SolicitacaoTFD"
+  entityId     String // ID da entidade relacionada
+  citizenId    String? // Cidadão vinculado (se aplicável)
+  currentStage String // ID do stage atual
+  status       WorkflowStatus
+  priority     Int                @default(0) // 0-10 (maior = mais urgente)
+  metadata     Json? // Dados adicionais do contexto
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  completedAt  DateTime?
 
-  history        WorkflowHistory[]
+  history WorkflowHistory[]
 
   @@index([entityType, entityId])
   @@index([citizenId])
@@ -2402,18 +2402,18 @@ model WorkflowInstance {
 }
 
 model WorkflowHistory {
-  id           String   @id @default(cuid())
-  instanceId   String
-  instance     WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  fromStage    String?  // Stage anterior (null se é criação)
-  toStage      String   // Stage atual
-  action       String   // "CREATED", "ADVANCED", "RETURNED", "COMPLETED", "CANCELLED"
-  userId       String   // Quem executou a ação
-  userName     String?  // Nome do usuário (desnormalizado para histórico)
-  notes        String?  // Observações/justificativa
-  attachments  Json?    // Array de anexos
-  timestamp    DateTime @default(now())
-  duration     Int?     // Tempo no stage anterior (minutos)
+  id          String           @id @default(cuid())
+  instanceId  String
+  instance    WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  fromStage   String? // Stage anterior (null se é criação)
+  toStage     String // Stage atual
+  action      String // "CREATED", "ADVANCED", "RETURNED", "COMPLETED", "CANCELLED"
+  userId      String // Quem executou a ação
+  userName    String? // Nome do usuário (desnormalizado para histórico)
+  notes       String? // Observações/justificativa
+  attachments Json? // Array de anexos
+  timestamp   DateTime         @default(now())
+  duration    Int? // Tempo no stage anterior (minutos)
 
   @@index([instanceId])
   @@index([timestamp])
@@ -2422,11 +2422,11 @@ model WorkflowHistory {
 }
 
 enum WorkflowStatus {
-  ACTIVE      // Fluxo em andamento
-  PAUSED      // Pausado temporariamente
-  COMPLETED   // Concluído com sucesso
-  CANCELLED   // Cancelado
-  ERROR       // Erro no processamento
+  ACTIVE // Fluxo em andamento
+  PAUSED // Pausado temporariamente
+  COMPLETED // Concluído com sucesso
+  CANCELLED // Cancelado
+  ERROR // Erro no processamento
 }
 
 // ============================================================================
@@ -2435,19 +2435,19 @@ enum WorkflowStatus {
 
 // MS-02: Agenda Médica Inteligente
 model AgendaMedica {
-  id              String   @id @default(cuid())
-  profissionalId  String
-  unidadeId       String
-  diaSemana       Int      // 1-7
-  horaInicio      String   // "08:00"
-  horaFim         String   // "12:00"
-  tempoPorConsulta Int     // minutos
+  id               String   @id @default(cuid())
+  profissionalId   String
+  unidadeId        String
+  diaSemana        Int // 1-7
+  horaInicio       String // "08:00"
+  horaFim          String // "12:00"
+  tempoPorConsulta Int // minutos
   vagasDisponiveis Int
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  consultas       ConsultaAgendada[]
+  consultas ConsultaAgendada[]
 
   @@index([profissionalId, diaSemana])
   @@index([unidadeId, isActive])
@@ -2455,17 +2455,17 @@ model AgendaMedica {
 }
 
 model ConsultaAgendada {
-  id              String   @id @default(cuid())
-  agendaId        String
-  agenda          AgendaMedica @relation(fields: [agendaId], references: [id])
-  citizenId       String
-  dataHora        DateTime
-  status          ConsultaStatus
-  motivoConsulta  String?
-  observacoes     String?
-  canceladoPor    String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String         @id @default(cuid())
+  agendaId       String
+  agenda         AgendaMedica   @relation(fields: [agendaId], references: [id])
+  citizenId      String
+  dataHora       DateTime
+  status         ConsultaStatus
+  motivoConsulta String?
+  observacoes    String?
+  canceladoPor   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
   @@index([agendaId, dataHora])
   @@index([citizenId])
@@ -2483,36 +2483,36 @@ enum ConsultaStatus {
 
 // MS-03: Prontuário Eletrônico do Paciente (PEP)
 model AtendimentoMedico {
-  id                String   @id @default(cuid())
-  workflowId        String   @unique
-  protocolId        String?  @unique
-  consultaAgendadaId String? @unique
-  citizenId         String
-  unidadeId         String
-  dataAtendimento   DateTime @default(now())
-  tipo              TipoAtendimento
-  status            AtendimentoStatus
-  prioridade        Int      @default(0)
+  id                 String            @id @default(cuid())
+  workflowId         String            @unique
+  protocolId         String?           @unique
+  consultaAgendadaId String?           @unique
+  citizenId          String
+  unidadeId          String
+  dataAtendimento    DateTime          @default(now())
+  tipo               TipoAtendimento
+  status             AtendimentoStatus
+  prioridade         Int               @default(0)
 
-  recepcaoId        String?
-  horarioCheckin    DateTime?
+  recepcaoId     String?
+  horarioCheckin DateTime?
 
-  triagemId         String?
-  triagem           TriagemEnfermagem?
-  horarioTriagem    DateTime?
+  triagemId      String?
+  triagem        TriagemEnfermagem?
+  horarioTriagem DateTime?
 
-  consultaId        String?
-  consulta          ConsultaMedica?
-  profissionalId    String?
-  horarioConsulta   DateTime?
+  consultaId      String?
+  consulta        ConsultaMedica?
+  profissionalId  String?
+  horarioConsulta DateTime?
 
-  farmaciaId        String?
-  horarioFarmacia   DateTime?
+  farmaciaId      String?
+  horarioFarmacia DateTime?
 
   tempoTotalMinutos Int?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([citizenId])
   @@index([unidadeId, dataAtendimento])
@@ -2544,31 +2544,31 @@ enum AtendimentoStatus {
 }
 
 model TriagemEnfermagem {
-  id                String   @id @default(cuid())
-  atendimentoId     String   @unique
-  atendimento       AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
-  enfermeiroId      String
+  id            String            @id @default(cuid())
+  atendimentoId String            @unique
+  atendimento   AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
+  enfermeiroId  String
 
-  pressaoArterial   String?
-  temperatura       Float?
-  frequenciaCardiaca Int?
+  pressaoArterial        String?
+  temperatura            Float?
+  frequenciaCardiaca     Int?
   frequenciaRespiratoria Int?
-  saturacaoO2       Int?
-  peso              Float?
-  altura            Float?
-  glicemia          Float?
+  saturacaoO2            Int?
+  peso                   Float?
+  altura                 Float?
+  glicemia               Float?
 
   classificacaoRisco ClassificacaoRisco
-  corProtocolo      String
+  corProtocolo       String
 
-  queixaPrincipal   String
-  historiaAtual     String?
-  alergias          String?
-  medicamentosUso   String?
-  comorbidades      String?
+  queixaPrincipal String
+  historiaAtual   String?
+  alergias        String?
+  medicamentosUso String?
+  comorbidades    String?
 
-  observacoes       String?
-  dataHora          DateTime @default(now())
+  observacoes String?
+  dataHora    DateTime @default(now())
 
   @@map("triagem_enfermagem")
 }
@@ -2582,63 +2582,63 @@ enum ClassificacaoRisco {
 }
 
 model ConsultaMedica {
-  id                String   @id @default(cuid())
-  atendimentoId     String   @unique
-  atendimento       AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
-  medicoId          String
+  id                  String            @id @default(cuid())
+  atendimentoId       String            @unique
+  atendimento         AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
+  medicoId            String
   profissionalSaudeId String?
 
-  queixaPrincipal   String
-  historiaDoenca    String?
-  historicoFamiliar String?
+  queixaPrincipal      String
+  historiaDoenca       String?
+  historicoFamiliar    String?
   antecedentesPessoais String?
-  exameFisico       String?
+  exameFisico          String?
 
   hipoteseDiagnostica String?
-  diagnosticos      Json
+  diagnosticos        Json
 
-  conduta           String?
-  orientacoes       String?
+  conduta     String?
+  orientacoes String?
 
-  retornoNecessario Boolean  @default(false)
+  retornoNecessario Boolean @default(false)
   prazoRetornoDias  Int?
 
-  observacoes       String?
-  dataHora          DateTime @default(now())
+  observacoes String?
+  dataHora    DateTime @default(now())
 
-  prescricoes       Prescricao[]
-  exameSolicitados  ExameSolicitado[]
-  atestados         Atestado[]
-  encaminhamentos   Encaminhamento[]
+  prescricoes      Prescricao[]
+  exameSolicitados ExameSolicitado[]
+  atestados        Atestado[]
+  encaminhamentos  Encaminhamento[]
 
   @@map("consultas_medicas")
 }
 
 model Prescricao {
-  id             String   @id @default(cuid())
-  consultaId     String
-  consulta       ConsultaMedica @relation(fields: [consultaId], references: [id])
-  medicamentos   Json
-  observacoes    String?
-  validade       DateTime
-  dispensada     Boolean  @default(false)
-  dataHora       DateTime @default(now())
+  id           String         @id @default(cuid())
+  consultaId   String
+  consulta     ConsultaMedica @relation(fields: [consultaId], references: [id])
+  medicamentos Json
+  observacoes  String?
+  validade     DateTime
+  dispensada   Boolean        @default(false)
+  dataHora     DateTime       @default(now())
 
   @@index([consultaId])
   @@map("prescricoes")
 }
 
 model ExameSolicitado {
-  id             String   @id @default(cuid())
-  consultaId     String
-  consulta       ConsultaMedica @relation(fields: [consultaId], references: [id])
-  tipoExame      String
-  justificativa  String?
-  prioridade     PrioridadeExame
-  status         StatusExame
-  resultado      String?
-  dataResultado  DateTime?
-  dataHora       DateTime @default(now())
+  id            String          @id @default(cuid())
+  consultaId    String
+  consulta      ConsultaMedica  @relation(fields: [consultaId], references: [id])
+  tipoExame     String
+  justificativa String?
+  prioridade    PrioridadeExame
+  status        StatusExame
+  resultado     String?
+  dataResultado DateTime?
+  dataHora      DateTime        @default(now())
 
   @@index([consultaId])
   @@map("exames_solicitados")
@@ -2660,16 +2660,16 @@ enum StatusExame {
 }
 
 model Atestado {
-  id             String   @id @default(cuid())
-  consultaId     String
-  consulta       ConsultaMedica @relation(fields: [consultaId], references: [id])
-  tipo           TipoAtestado
-  cid10          String?
+  id              String         @id @default(cuid())
+  consultaId      String
+  consulta        ConsultaMedica @relation(fields: [consultaId], references: [id])
+  tipo            TipoAtestado
+  cid10           String?
   diasAfastamento Int
-  dataInicio     DateTime
-  dataFim        DateTime
-  observacoes    String?
-  dataHora       DateTime @default(now())
+  dataInicio      DateTime
+  dataFim         DateTime
+  observacoes     String?
+  dataHora        DateTime       @default(now())
 
   @@index([consultaId])
   @@map("atestados")
@@ -2682,15 +2682,15 @@ enum TipoAtestado {
 }
 
 model Encaminhamento {
-  id             String   @id @default(cuid())
-  consultaId     String
-  consulta       ConsultaMedica @relation(fields: [consultaId], references: [id])
-  especialidade  String
-  motivo         String
-  prioridade     PrioridadeEncaminhamento
-  status         StatusEncaminhamento
+  id              String                   @id @default(cuid())
+  consultaId      String
+  consulta        ConsultaMedica           @relation(fields: [consultaId], references: [id])
+  especialidade   String
+  motivo          String
+  prioridade      PrioridadeEncaminhamento
+  status          StatusEncaminhamento
   dataAgendamento DateTime?
-  dataHora       DateTime @default(now())
+  dataHora        DateTime                 @default(now())
 
   @@index([consultaId])
   @@map("encaminhamentos")
@@ -2750,23 +2750,23 @@ enum StatusDispensacao {
 }
 
 model Medicamento {
-  id              String   @id @default(cuid())
-  nome            String
-  principioAtivo  String
-  apresentacao    String
-  catmat          String?
-  tipo            TipoMedicamento?
-  unidadeMedida   UnidadeMedida?
-  concentracao    String?
-  fabricante      String?
-  codigoBarras    String?
-  isControlado    Boolean  @default(false)
-  isRename        Boolean  @default(false)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String           @id @default(cuid())
+  nome           String
+  principioAtivo String
+  apresentacao   String
+  catmat         String?
+  tipo           TipoMedicamento?
+  unidadeMedida  UnidadeMedida?
+  concentracao   String?
+  fabricante     String?
+  codigoBarras   String?
+  isControlado   Boolean          @default(false)
+  isRename       Boolean          @default(false)
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  estoques        EstoqueMedicamento[]
+  estoques EstoqueMedicamento[]
 
   @@index([nome])
   @@index([isRename])
@@ -2774,20 +2774,20 @@ model Medicamento {
 }
 
 model EstoqueMedicamento {
-  id              String   @id @default(cuid())
-  medicamentoId   String
-  medicamento     Medicamento @relation(fields: [medicamentoId], references: [id])
-  unidadeId       String
-  quantidade      Int
-  quantidadeAtual Int?
+  id               String         @id @default(cuid())
+  medicamentoId    String
+  medicamento      Medicamento    @relation(fields: [medicamentoId], references: [id])
+  unidadeId        String
+  quantidade       Int
+  quantidadeAtual  Int?
   quantidadeMinima Int?
-  lote            String
-  validade        DateTime
-  dataValidade    DateTime?
-  estoqueMinimo   Int
-  status          StatusEstoque?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  lote             String
+  validade         DateTime
+  dataValidade     DateTime?
+  estoqueMinimo    Int
+  status           StatusEstoque?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   @@index([medicamentoId, unidadeId])
   @@index([validade])
@@ -2795,18 +2795,18 @@ model EstoqueMedicamento {
 }
 
 model DispensacaoMedicamento {
-  id              String   @id @default(cuid())
-  prescricaoId    String?
-  medicamentoId   String
-  estoqueId       String?
-  citizenId       String
-  atendimentoId   String?
-  quantidade      Int
-  data            DateTime @default(now())
-  dispensadoEm    DateTime @default(now())
-  dispensadoPor   String
-  status          StatusDispensacao?
-  observacoes     String?
+  id            String             @id @default(cuid())
+  prescricaoId  String?
+  medicamentoId String
+  estoqueId     String?
+  citizenId     String
+  atendimentoId String?
+  quantidade    Int
+  data          DateTime           @default(now())
+  dispensadoEm  DateTime           @default(now())
+  dispensadoPor String
+  status        StatusDispensacao?
+  observacoes   String?
 
   @@index([citizenId])
   @@index([data])
@@ -2815,52 +2815,52 @@ model DispensacaoMedicamento {
 
 // MS-06: TFD - Tratamento Fora do Domicílio
 model SolicitacaoTFD {
-  id              String   @id @default(cuid())
-  workflowId      String   @unique
-  protocolId      String   @unique
-  citizenId       String
-  acompanhanteId  String?
+  id             String  @id @default(cuid())
+  workflowId     String  @unique
+  protocolId     String  @unique
+  citizenId      String
+  acompanhanteId String?
 
-  especialidade   String
-  procedimento    String
-  cid10           String?
-  justificativa   String
+  especialidade           String
+  procedimento            String
+  cid10                   String?
+  justificativa           String
   encaminhamentoMedicoUrl String
-  examesUrls      Json?
+  examesUrls              Json?
 
-  prioridade      PrioridadeTFD
+  prioridade         PrioridadeTFD
   classificacaoRisco String?
-  prazoMaximoDias Int?
+  prazoMaximoDias    Int?
 
   cidadeDestino   String
   estadoDestino   String
   hospitalDestino String?
 
-  status          TFDStatus
-  posicaoFila     Int?
+  status      TFDStatus
+  posicaoFila Int?
 
-  analisadoPor    String?
-  dataAnalise     DateTime?
-  motivoRecusa    String?
+  analisadoPor String?
+  dataAnalise  DateTime?
+  motivoRecusa String?
 
-  reguladoPor     String?
-  dataRegulacao   DateTime?
+  reguladoPor      String?
+  dataRegulacao    DateTime?
   parecerRegulador String?
 
-  aprovadoPor     String?
-  dataAprovacao   DateTime?
-  valorEstimado   Float?
+  aprovadoPor   String?
+  dataAprovacao DateTime?
+  valorEstimado Float?
 
   agendadoPor     String?
   dataConsulta    DateTime?
   horarioConsulta String?
-  confirmado      Boolean  @default(false)
+  confirmado      Boolean   @default(false)
 
-  observacoes     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  observacoes String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  viagens         ViagemTFD[]
+  viagens ViagemTFD[]
 
   @@index([citizenId])
   @@index([status])
@@ -2894,35 +2894,35 @@ enum TFDStatus {
 }
 
 model ViagemTFD {
-  id                String   @id @default(cuid())
-  solicitacaoTFDId  String
-  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoTFDId], references: [id])
+  id               String         @id @default(cuid())
+  solicitacaoTFDId String
+  solicitacao      SolicitacaoTFD @relation(fields: [solicitacaoTFDId], references: [id])
 
-  tipo              TipoViagemTFD
-  dataViagem        DateTime
-  horarioSaida      String
-  horarioChegada    String?
+  tipo           TipoViagemTFD
+  dataViagem     DateTime
+  horarioSaida   String
+  horarioChegada String?
 
-  veiculoId         String?
-  motoristaId       String?
-  passageiros       Json
+  veiculoId   String?
+  motoristaId String?
+  passageiros Json
 
-  kmInicial         Int?
-  kmFinal           Int?
-  kmTotal           Int?
-  combustivel       Float?
-  pedagios          Float?
-  hospedagem        Float?
-  alimentacao       Float?
-  outros            Float?
-  totalGasto        Float?
+  kmInicial   Int?
+  kmFinal     Int?
+  kmTotal     Int?
+  combustivel Float?
+  pedagios    Float?
+  hospedagem  Float?
+  alimentacao Float?
+  outros      Float?
+  totalGasto  Float?
 
-  comprovantes      Json?
-  status            StatusViagemTFD
-  observacoes       String?
+  comprovantes Json?
+  status       StatusViagemTFD
+  observacoes  String?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([solicitacaoTFDId])
   @@map("viagens_tfd")
@@ -2942,20 +2942,20 @@ enum StatusViagemTFD {
 }
 
 model VeiculoTFD {
-  id              String   @id @default(cuid())
-  placa           String   @unique
-  modelo          String
-  ano             Int
-  capacidade      Int
-  acessibilidade  Boolean  @default(false)
-  status          StatusVeiculoTFD
-  km              Int      @default(0)
-  ultimaRevisao   DateTime?
-  proximaRevisao  DateTime?
-  observacoes     String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String           @id @default(cuid())
+  placa          String           @unique
+  modelo         String
+  ano            Int
+  capacidade     Int
+  acessibilidade Boolean          @default(false)
+  status         StatusVeiculoTFD
+  km             Int              @default(0)
+  ultimaRevisao  DateTime?
+  proximaRevisao DateTime?
+  observacoes    String?
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   @@index([status])
   @@map("veiculos_tfd")
@@ -2969,19 +2969,19 @@ enum StatusVeiculoTFD {
 }
 
 model MotoristaTFD {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  nome            String
-  cpf             String   @unique
-  cnh             String   @unique
-  categoriaCNH    String
-  validadeCNH     DateTime
-  telefone        String
-  status          StatusMotoristaTFD
-  observacoes     String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String             @id @default(cuid())
+  userId       String             @unique
+  nome         String
+  cpf          String             @unique
+  cnh          String             @unique
+  categoriaCNH String
+  validadeCNH  DateTime
+  telefone     String
+  status       StatusMotoristaTFD
+  observacoes  String?
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 
   @@index([status])
   @@map("motoristas_tfd")
@@ -3000,49 +3000,49 @@ enum StatusMotoristaTFD {
 
 // MS-08: Sistema de Matrículas
 model InscricaoMatricula {
-  id                String   @id @default(cuid())
-  workflowId        String   @unique
-  alunoId           String
-  responsavelId     String
-  anoLetivo         Int
-  serie             String
-  turno             TurnoPreferencia
+  id            String           @id @default(cuid())
+  workflowId    String           @unique
+  alunoId       String
+  responsavelId String
+  anoLetivo     Int
+  serie         String
+  turno         TurnoPreferencia
 
-  endereco          Json
+  endereco Json
 
   escolaPreferencia1 String?
   escolaPreferencia2 String?
   escolaPreferencia3 String?
 
-  documentos        Json
-  necessidadeEspecial Boolean @default(false)
+  documentos           Json
+  necessidadeEspecial  Boolean @default(false)
   descricaoNecessidade String?
 
-  isTransferencia   Boolean  @default(false)
-  escolaOrigem      String?
+  isTransferencia     Boolean @default(false)
+  escolaOrigem        String?
   motivoTransferencia String?
 
-  validadoPor       String?
-  dataValidacao     DateTime?
-  motivoRecusa      String?
+  validadoPor   String?
+  dataValidacao DateTime?
+  motivoRecusa  String?
 
   escolaAtribuida   String?
   turmaAtribuida    String?
   dataDistribuicao  DateTime?
   criterioDesempate String?
 
-  confirmadoEm      DateTime?
-  recusadoEm        DateTime?
+  confirmadoEm            DateTime?
+  recusadoEm              DateTime?
   motivoRecusaResponsavel String?
 
   status            MatriculaStatus
   posicaoFilaEspera Int?
 
-  matriculaId       String?  @unique
-  matricula         Matricula?
+  matriculaId String?    @unique
+  matricula   Matricula?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([serie, turno, status])
   @@index([escolaAtribuida, status])
@@ -3073,24 +3073,24 @@ enum MatriculaStatus {
 }
 
 model Matricula {
-  id              String   @id @default(cuid())
-  inscricaoId     String   @unique
-  inscricao       InscricaoMatricula @relation(fields: [inscricaoId], references: [id])
-  alunoId         String
-  responsavelId   String
-  unidadeEducacaoId String
-  turmaId         String
-  turma           Turma    @relation(fields: [turmaId], references: [id])
-  anoLetivo       Int
-  numeroMatricula String   @unique
-  dataMatricula   DateTime @default(now())
-  dataInicio      DateTime?
-  situacao        SituacaoMatricula
-  dataTransferencia DateTime?
+  id                  String             @id @default(cuid())
+  inscricaoId         String             @unique
+  inscricao           InscricaoMatricula @relation(fields: [inscricaoId], references: [id])
+  alunoId             String
+  responsavelId       String
+  unidadeEducacaoId   String
+  turmaId             String
+  turma               Turma              @relation(fields: [turmaId], references: [id])
+  anoLetivo           Int
+  numeroMatricula     String             @unique
+  dataMatricula       DateTime           @default(now())
+  dataInicio          DateTime?
+  situacao            SituacaoMatricula
+  dataTransferencia   DateTime?
   motivoTransferencia String?
-  observacoes     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  observacoes         String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
   @@index([alunoId, anoLetivo])
   @@index([turmaId, situacao])
@@ -3105,23 +3105,23 @@ enum SituacaoMatricula {
 }
 
 model Turma {
-  id              String   @id @default(cuid())
+  id                String   @id @default(cuid())
   unidadeEducacaoId String
-  codigo          String   @unique
-  nome            String?
-  serie           String
-  turno           Turno
-  ano             Int
-  professorId     String?
-  sala            String?
-  capacidade      Int
-  vagasOcupadas   Int      @default(0)
-  vagasDisponiveis Int
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  codigo            String   @unique
+  nome              String?
+  serie             String
+  turno             Turno
+  ano               Int
+  professorId       String?
+  sala              String?
+  capacidade        Int
+  vagasOcupadas     Int      @default(0)
+  vagasDisponiveis  Int
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  matriculas      Matricula[]
+  matriculas Matricula[]
 
   @@index([unidadeEducacaoId, serie, turno, ano])
   @@map("turmas")
@@ -3143,17 +3143,17 @@ enum TipoTurma {
 
 // MS-09: Gestão de Transporte Escolar
 model VeiculoEscolar {
-  id              String   @id @default(cuid())
-  placa           String   @unique
-  modelo          String
-  capacidade      Int
-  acessibilidade  Boolean  @default(false)
-  status          VeiculoStatus
-  km              Int      @default(0)
-  ultimaRevisao   DateTime?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String        @id @default(cuid())
+  placa          String        @unique
+  modelo         String
+  capacidade     Int
+  acessibilidade Boolean       @default(false)
+  status         VeiculoStatus
+  km             Int           @default(0)
+  ultimaRevisao  DateTime?
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([status])
   @@map("veiculos_escolares")
@@ -3167,30 +3167,30 @@ enum VeiculoStatus {
 }
 
 model RotaEscolar {
-  id              String   @id @default(cuid())
-  nome            String
-  veiculoId       String
-  motoristaId     String
-  turno           Turno
-  horarioSaida    String
-  horarioRetorno  String
-  pontos          Json
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(cuid())
+  nome           String
+  veiculoId      String
+  motoristaId    String
+  turno          Turno
+  horarioSaida   String
+  horarioRetorno String
+  pontos         Json
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([turno])
   @@map("rotas_escolares")
 }
 
 model AlunoRota {
-  id              String   @id @default(cuid())
-  alunoId         String
-  rotaId          String
-  pontoEmbarque   String
-  ativo           Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String   @id @default(cuid())
+  alunoId       String
+  rotaId        String
+  pontoEmbarque String
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@unique([alunoId, rotaId])
   @@map("alunos_rotas")
@@ -3202,66 +3202,66 @@ model AlunoRota {
 
 // MS-14: CadÚnico Municipal
 model CadUnicoFamilia {
-  id                String   @id @default(cuid())
-  workflowId        String   @unique
+  id                    String  @id @default(cuid())
+  workflowId            String  @unique
   responsavelFamiliarId String
-  nisResponsavel    String?  @unique
+  nisResponsavel        String? @unique
 
-  crasId            String?
-  dataAgendamento   DateTime?
+  crasId             String?
+  dataAgendamento    DateTime?
   horarioAgendamento String?
-  agendadoPor       String?
+  agendadoPor        String?
 
-  entrevistadoPor   String?
-  entrevistadorId   String?
-  dataEntrevista    DateTime?
-  localEntrevista   String?
+  entrevistadoPor String?
+  entrevistadorId String?
+  dataEntrevista  DateTime?
+  localEntrevista String?
 
-  membros           MembroFamilia[]
+  membros MembroFamilia[]
 
-  rendaTotalFamiliar Float   @default(0)
-  rendaPerCapita    Float    @default(0)
-  fontesRenda       Json?
+  rendaTotalFamiliar Float @default(0)
+  rendaPerCapita     Float @default(0)
+  fontesRenda        Json?
 
-  despesaMoradia    Float?
+  despesaMoradia     Float?
   despesaAlimentacao Float?
-  despesaSaude      Float?
-  despesaEducacao   Float?
-  despesaOutros     Float?
+  despesaSaude       Float?
+  despesaEducacao    Float?
+  despesaOutros      Float?
 
-  tipoMoradia       TipoMoradia
-  situacaoMoradia   SituacaoMoradia
-  aguaEncanada      Boolean  @default(false)
-  energiaEletrica   Boolean  @default(false)
-  esgoto            Boolean  @default(false)
-  coletaLixo        Boolean  @default(false)
+  tipoMoradia     TipoMoradia
+  situacaoMoradia SituacaoMoradia
+  aguaEncanada    Boolean         @default(false)
+  energiaEletrica Boolean         @default(false)
+  esgoto          Boolean         @default(false)
+  coletaLixo      Boolean         @default(false)
 
-  endereco          Json?
+  endereco Json?
 
-  documentos        Json
+  documentos Json
 
-  validadoPor       String?
-  dataValidacao     DateTime?
+  validadoPor   String?
+  dataValidacao DateTime?
 
-  analisadoPor      String?
-  dataAnalise       DateTime?
-  parecerSocial     String?
+  analisadoPor        String?
+  dataAnalise         DateTime?
+  parecerSocial       String?
   motivoIndeferimento String?
 
-  nisFamilia        String?  @unique
-  numeroCadUnico    String?  @unique
-  dataCadastro      DateTime?
+  nisFamilia            String?   @unique
+  numeroCadUnico        String?   @unique
+  dataCadastro          DateTime?
   dataUltimaAtualizacao DateTime?
-  proximaAtualizacao DateTime?
+  proximaAtualizacao    DateTime?
 
-  status            CadUnicoStatus
+  status CadUnicoStatus
 
   programasVinculados Json?
 
-  observacoes       String?
+  observacoes String?
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([responsavelFamiliarId])
   @@index([nisFamilia])
@@ -3310,7 +3310,7 @@ enum CadUnicoStatus {
 }
 
 model MembroFamilia {
-  id              String   @id @default(cuid())
+  id              String          @id @default(cuid())
   familiaId       String
   familia         CadUnicoFamilia @relation(fields: [familiaId], references: [id])
   citizenId       String?
@@ -3321,14 +3321,14 @@ model MembroFamilia {
   sexo            Sexo
   raca            Raca
   escolaridade    Escolaridade
-  trabalha        Boolean  @default(false)
-  rendaMensal     Float    @default(0)
+  trabalha        Boolean         @default(false)
+  rendaMensal     Float           @default(0)
   fonteRenda      String?
-  deficiencia     Boolean  @default(false)
+  deficiencia     Boolean         @default(false)
   tipoDeficiencia String?
-  frequentaEscola Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  frequentaEscola Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@index([familiaId])
   @@index([cpf])
@@ -3396,54 +3396,54 @@ enum SituacaoTrabalho {
 
 // MS-15: Gestão de Programas Sociais
 model InscricaoProgramaSocial {
-  id              String   @id @default(cuid())
-  workflowId      String   @unique
-  programaId      String
+  id               String  @id @default(cuid())
+  workflowId       String  @unique
+  programaId       String
   programaSocialId String?
-  familiaId       String
-  beneficiarioId  String
+  familiaId        String
+  beneficiarioId   String
 
-  cadUnicoValidado Boolean  @default(false)
-  rendaPerCapita  Float?
-  atendeCriterios Boolean  @default(false)
+  cadUnicoValidado       Boolean @default(false)
+  rendaPerCapita         Float?
+  atendeCriterios        Boolean @default(false)
   motivoNaoElegibilidade String?
 
-  analisadoPor    String?
-  dataAnalise     DateTime?
-  parecerSocial   String?
-  visitaDomiciliar Boolean  @default(false)
-  dataVisita      DateTime?
-  relatorioVisita String?
+  analisadoPor     String?
+  dataAnalise      DateTime?
+  parecerSocial    String?
+  visitaDomiciliar Boolean   @default(false)
+  dataVisita       DateTime?
+  relatorioVisita  String?
 
-  psicologoId     String?
-  dataParecer     DateTime?
+  psicologoId        String?
+  dataParecer        DateTime?
   parecerPsicologico String?
 
-  aprovadoPor     String?
-  dataAprovacao   DateTime?
+  aprovadoPor         String?
+  dataAprovacao       DateTime?
   motivoIndeferimento String?
 
   dataConcessao   DateTime?
-  numeroBeneficio String?  @unique
+  numeroBeneficio String?   @unique
   valorMensal     Float?
   diaVencimento   Int?
   contaBancaria   Json?
 
-  status          ProgramaSocialStatus
+  status ProgramaSocialStatus
 
   dataUltimaRenovacao DateTime?
-  proximaRenovacao DateTime?
+  proximaRenovacao    DateTime?
 
-  suspenso        Boolean  @default(false)
-  motivoSuspensao String?
-  dataSuspensao   DateTime?
+  suspenso           Boolean   @default(false)
+  motivoSuspensao    String?
+  dataSuspensao      DateTime?
   motivoCancelamento String?
-  dataInicio      DateTime?
+  dataInicio         DateTime?
 
-  observacoes     String?
+  observacoes String?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   acompanhamentos AcompanhamentoBeneficio[]
   pagamentos      PagamentoBeneficio[]
@@ -3478,16 +3478,16 @@ enum ProgramaSocialStatus {
 }
 
 model AcompanhamentoBeneficio {
-  id              String   @id @default(cuid())
-  inscricaoId     String
-  inscricao       InscricaoProgramaSocial @relation(fields: [inscricaoId], references: [id])
-  tipo            TipoAcompanhamento
-  assistenteSocialId String?
-  responsavelId   String
-  data            DateTime @default(now())
-  dataVisita      DateTime?
-  descricao       String
-  observacoes     String?
+  id                    String                  @id @default(cuid())
+  inscricaoId           String
+  inscricao             InscricaoProgramaSocial @relation(fields: [inscricaoId], references: [id])
+  tipo                  TipoAcompanhamento
+  assistenteSocialId    String?
+  responsavelId         String
+  data                  DateTime                @default(now())
+  dataVisita            DateTime?
+  descricao             String
+  observacoes           String?
   proximoAcompanhamento DateTime?
 
   @@index([inscricaoId])
@@ -3503,16 +3503,16 @@ enum TipoAcompanhamento {
 }
 
 model PagamentoBeneficio {
-  id              String   @id @default(cuid())
-  inscricaoId     String
-  inscricao       InscricaoProgramaSocial @relation(fields: [inscricaoId], references: [id])
-  competencia     String
-  valor           Float
-  dataPagamento   DateTime?
-  createdAt       DateTime @default(now())
-  status          StatusPagamento
-  comprovante     String?
-  observacoes     String?
+  id            String                  @id @default(cuid())
+  inscricaoId   String
+  inscricao     InscricaoProgramaSocial @relation(fields: [inscricaoId], references: [id])
+  competencia   String
+  valor         Float
+  dataPagamento DateTime?
+  createdAt     DateTime                @default(now())
+  status        StatusPagamento
+  comprovante   String?
+  observacoes   String?
 
   @@index([inscricaoId, competencia])
   @@map("pagamentos_beneficio")
@@ -3543,10 +3543,10 @@ enum MeioPagamento {
 
 // MS-20+21: Gestão de Máquinas e Empréstimos
 model SolicitacaoEmprestimoMaquina {
-  id              String   @id @default(cuid())
-  workflowId      String   @unique
+  id              String            @id @default(cuid())
+  workflowId      String            @unique
   produtorRuralId String
-  produtorRural   ProdutorRural @relation(fields: [produtorRuralId], references: [id])
+  produtorRural   ProdutorRural     @relation(fields: [produtorRuralId], references: [id])
   maquinaId       String
   maquina         MaquinaAgricolaMS @relation(fields: [maquinaId], references: [id])
 
@@ -3557,47 +3557,47 @@ model SolicitacaoEmprestimoMaquina {
   horasEstimadas  Int?
   horasUtilizadas Int?
 
-  finalidade      FinalidadeUsoMaquina
-  areaUtilizacao  String
-  tamanhoArea     Float?
-  justificativa   String
+  finalidade     FinalidadeUsoMaquina
+  areaUtilizacao String
+  tamanhoArea    Float?
+  justificativa  String
 
   validadoPor     String?
   dataValidacao   DateTime?
   motivoPendencia String?
 
-  aprovadoPor     String?
-  dataAprovacao   DateTime?
-  parecerTecnico  String?
+  aprovadoPor                String?
+  dataAprovacao              DateTime?
+  parecerTecnico             String?
   maquinaAlternativaSugerida String?
-  motivoIndeferimento String?
+  motivoIndeferimento        String?
 
-  dataRetirada    DateTime?
-  horarioRetirada String?
+  dataRetirada     DateTime?
+  horarioRetirada  String?
   condicaoRetirada String?
 
-  vistoriadoPor   String?
-  dataVistoriaRetirada DateTime?
-  checklistRetirada Json?
-  fotosRetirada   Json?
-  odometroInicial Int?
-  horimetroInicial Int?
+  vistoriadoPor           String?
+  dataVistoriaRetirada    DateTime?
+  checklistRetirada       Json?
+  fotosRetirada           Json?
+  odometroInicial         Int?
+  horimetroInicial        Int?
   nivelCombustivelInicial String?
-  termoAssinado   Boolean  @default(false)
+  termoAssinado           Boolean   @default(false)
 
-  dataInicioReal  DateTime?
+  dataInicioReal DateTime?
 
-  dataDevolucao   DateTime?
-  condicaoDevolucao String?
-  vistoriaDevolucaoPor String?
-  checklistDevolucao Json?
-  fotosDevolucao  Json?
-  odometroFinal   Int?
-  horimetroFinal  Int?
-  horasUsadas     Int?
+  dataDevolucao         DateTime?
+  condicaoDevolucao     String?
+  vistoriaDevolucaoPor  String?
+  checklistDevolucao    Json?
+  fotosDevolucao        Json?
+  odometroFinal         Int?
+  horimetroFinal        Int?
+  horasUsadas           Int?
   nivelCombustivelFinal String?
-  danosDetectados Boolean  @default(false)
-  descricaoDanos  String?
+  danosDetectados       Boolean   @default(false)
+  descricaoDanos        String?
 
   valorBase       Float?
   valorHoraExtra  Float?
@@ -3607,12 +3607,12 @@ model SolicitacaoEmprestimoMaquina {
   statusPagamento StatusPagamentoMaquina
   dataPagamento   DateTime?
 
-  status          EmprestimoMaquinaStatus
+  status EmprestimoMaquinaStatus
 
-  observacoes     String?
+  observacoes String?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([produtorRuralId, status])
   @@index([maquinaId, dataInicio, dataFim])
@@ -3656,41 +3656,41 @@ enum StatusPagamentoMaquina {
 }
 
 model MaquinaAgricolaMS {
-  id              String   @id @default(cuid())
-  tipo            TipoMaquinaAgricola
-  nome            String?
-  marca           String
-  modelo          String
-  ano             Int?
-  placa           String?  @unique
-  patrimonio      String   @unique
+  id               String              @id @default(cuid())
+  tipo             TipoMaquinaAgricola
+  nome             String?
+  marca            String
+  modelo           String
+  ano              Int?
+  placa            String?             @unique
+  patrimonio       String              @unique
   numeroPatrimonio String?
-  capacidade      String?
+  capacidade       String?
 
-  odometro        Int      @default(0)
-  horimetro       Int      @default(0)
-  horasUso        Int?
+  odometro  Int  @default(0)
+  horimetro Int  @default(0)
+  horasUso  Int?
 
-  ultimaManutencao DateTime?
-  proximaManutencao DateTime?
+  ultimaManutencao    DateTime?
+  proximaManutencao   DateTime?
   historicoManutencao Json?
 
-  status          StatusMaquina
-  disponivel      Boolean  @default(true)
+  status                  StatusMaquina
+  disponivel              Boolean       @default(true)
   motivoIndisponibilidade String?
 
-  valorHora       Float?
-  valorDiaria     Float?
+  valorHora   Float?
+  valorDiaria Float?
 
-  certificados    Json?
+  certificados Json?
 
-  observacoes     String?
+  observacoes String?
 
-  solicitacoes    SolicitacaoEmprestimoMaquina[]
+  solicitacoes SolicitacaoEmprestimoMaquina[]
 
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tipo, status])
   @@map("maquinas_agricolas_ms")
@@ -3725,41 +3725,431 @@ enum MaquinaStatus {
   INATIVA
 }
 
+// ============================================================================
+// MS-01: CADASTRO DE PRODUTORES RURAIS
+// ============================================================================
+
 model ProdutorRural {
-  id              String   @id @default(cuid())
-  citizenId       String   @unique
-  cpf             String   @unique
-  nome            String
+  id             String    @id @default(cuid())
+  citizenId      String    @unique
+  cpf            String    @unique
+  nome           String
+  rg             String?
+  rgOrgaoEmissor String?
+  dataNascimento DateTime?
+  estadoCivil    String?
 
-  propriedadeNome String?
-  nomePropriedade String?
-  propriedadeEndereco String?
-  endereco        Json
-  areaTotalHectares Float?
-  areaTotal       Float?
-  georreferenciamento Json?
+  // Contato
+  telefone String?
+  celular  String?
+  email    String?
 
-  atividadePrincipal String?
-  tiposProducao   Json?
+  // Endereço residencial
+  enderecoResidencial Json? // {logradouro, numero, complemento, bairro, cidade, uf, cep}
 
+  // Documentação rural
+  dap               String? // Declaração de Aptidão ao PRONAF
+  dataValidadeDap   DateTime?
+  car               String? // Cadastro Ambiental Rural
   inscricaoEstadual String?
-  car             String?
-  CAR             String?
-  dap             String?
-  telefoneContato String?
 
-  emprestimosRealizados Int @default(0)
-  pendencias      Boolean  @default(false)
+  // Informações profissionais
+  atividadePrincipal String?
+  tempoAtuacao       Int? // Anos de atuação
+  associacao         String? // Associação/Sindicato
+
+  // Documentos anexados
+  documentos Json? // Array de {tipo, url, dataUpload}
+  foto       String? // URL da foto
+
+  // Carteirinha do produtor
+  numeroCarteirinha      String?   @unique
+  dataEmissaoCarteirinha DateTime?
+
+  // Controle administrativo
+  pendencias      Boolean @default(false)
   motivoPendencia String?
+  observacoes     String?
 
-  solicitacoes    SolicitacaoEmprestimoMaquina[]
+  // Relacionamentos
+  propriedades          PropriedadeRural[]
+  distribuicoesSementes DistribuicaoSemente[]
+  visitasAssistencia    VisitaAssistenciaTecnica[]
+  solicitacoesMaquinas  SolicitacaoEmprestimoMaquina[]
 
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([cpf])
+  @@index([dap])
+  @@index([numeroCarteirinha])
+  @@index([isActive])
   @@map("produtores_rurais")
+}
+
+// ============================================================================
+// MS-02: CADASTRO DE PROPRIEDADES RURAIS
+// ============================================================================
+
+model PropriedadeRural {
+  id         String        @id @default(cuid())
+  produtorId String
+  produtor   ProdutorRural @relation(fields: [produtorId], references: [id], onDelete: Cascade)
+
+  // Identificação
+  nome              String
+  nomeFantasia      String?
+  inscricaoEstadual String?
+
+  // Localização
+  endereco            Json // {logradouro, numero, zona, distrito, cidade, uf, cep}
+  latitude            Float?
+  longitude           Float?
+  coordenadasPoligono Json? // Array de coordenadas GPS para desenhar área
+
+  // Área
+  areaTotalHectares    Float
+  areaAgricolaHectares Float?
+  areaPastoHectares    Float?
+  areaReservaHectares  Float?
+
+  // Documentação
+  car       String? // Cadastro Ambiental Rural
+  itr       String? // Inscrição ITR
+  matricula String? // Matrícula do imóvel
+  ccir      String? // Certificado de Cadastro de Imóvel Rural
+
+  // Infraestrutura
+  temEnergia    Boolean @default(false)
+  temAgua       Boolean @default(false)
+  fontesAgua    Json? // Array: poço, rio, açude, etc
+  temIrrigacao  Boolean @default(false)
+  tipoIrrigacao String?
+  acessoEstrada String? // pavimentada, terra, etc
+  distanciaSede Float? // km da sede do município
+
+  // Produção
+  atividadesPrincipais Json? // Array de atividades
+  culturas             Json? // Array de culturas
+  criacoes             Json? // Array de criações
+
+  // Galeria de fotos
+  fotos Json? // Array de {url, descricao, dataUpload}
+
+  // Observações
+  observacoes String?
+
+  // Relacionamentos
+  visitasAssistencia    VisitaAssistenciaTecnica[]
+  distribuicoesSementes DistribuicaoSemente[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([produtorId])
+  @@index([car])
+  @@index([isActive])
+  @@map("propriedades_rurais")
+}
+
+// ============================================================================
+// MS-03: DISTRIBUIÇÃO DE SEMENTES E MUDAS
+// ============================================================================
+
+model EstoqueSemente {
+  id String @id @default(cuid())
+
+  // Identificação
+  tipo      TipoInsumoAgricola // SEMENTE ou MUDA
+  nome      String
+  especie   String?
+  variedade String?
+
+  // Controle de estoque
+  quantidadeAtual Float
+  unidadeMedida   String // kg, unidade, bandeja, etc
+  estoqueMinimo   Float
+  estoqueMaximo   Float?
+
+  // Lote
+  numeroLote    String   @unique
+  dataEntrada   DateTime
+  fornecedor    String?
+  notaFiscal    String?
+  valorUnitario Float?
+
+  // Qualidade
+  dataValidade   DateTime?
+  taxaGerminacao Float? // Percentual
+  tratamento     String? // Tratado, orgânico, etc
+  certificacao   String? // Certificação orgânica, etc
+
+  // Armazenamento
+  localArmazenamento    String?
+  condicaoArmazenamento String?
+
+  // Observações
+  observacoes String?
+
+  // Relacionamentos
+  distribuicoes DistribuicaoSemente[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tipo])
+  @@index([numeroLote])
+  @@index([dataValidade])
+  @@index([isActive])
+  @@map("estoque_sementes")
+}
+
+model DistribuicaoSemente {
+  id         String  @id @default(cuid())
+  protocolId String? @unique
+
+  // Beneficiário
+  produtorId    String
+  produtor      ProdutorRural     @relation(fields: [produtorId], references: [id])
+  propriedadeId String?
+  propriedade   PropriedadeRural? @relation(fields: [propriedadeId], references: [id])
+
+  // Insumo
+  estoqueId String
+  estoque   EstoqueSemente @relation(fields: [estoqueId], references: [id])
+
+  // Distribuição
+  quantidade       Float
+  unidadeMedida    String
+  dataDistribuicao DateTime @default(now())
+
+  // Finalidade
+  finalidade      String // plantio, replantio, etc
+  areaPrevista    Float? // Hectares
+  culturaPrevista String?
+
+  // Limite e controle
+  jaPegouEsteAno     Boolean @default(false)
+  quantidadeAnoAtual Float   @default(0)
+  limiteAnual        Float?
+
+  // Comprovante
+  comprovanteUrl    String?
+  assinaturaDigital String?
+
+  // Responsável pela entrega
+  entregadoPor String
+
+  // Observações
+  observacoes String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([produtorId])
+  @@index([estoqueId])
+  @@index([dataDistribuicao])
+  @@index([protocolId])
+  @@index([isActive])
+  @@map("distribuicoes_sementes")
+}
+
+enum TipoInsumoAgricola {
+  SEMENTE
+  MUDA
+}
+
+// ============================================================================
+// MS-04: ASSISTÊNCIA TÉCNICA RURAL (ATER)
+// ============================================================================
+
+model TecnicoAgricola {
+  id String @id @default(cuid())
+
+  // Identificação
+  nome           String
+  cpf            String  @unique
+  crea           String? // Registro profissional
+  especialidade  String // Agrônomo, Veterinário, Zootecnista, etc
+  especialidades Json? // Array de especialidades
+
+  // Contato
+  telefone String?
+  celular  String
+  email    String?
+
+  // Vínculo
+  vinculo   String // Efetivo, Terceirizado, Contratado
+  matricula String? @unique
+
+  // Agenda
+  disponibilidade Json? // Array de dias/horários disponíveis
+
+  // Foto
+  foto String?
+
+  // Relacionamentos
+  visitas VisitaAssistenciaTecnica[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cpf])
+  @@index([especialidade])
+  @@index([isActive])
+  @@map("tecnicos_agricolas")
+}
+
+model SolicitacaoAssistencia {
+  id         String  @id @default(cuid())
+  protocolId String? @unique
+
+  // Solicitante
+  produtorId    String
+  propriedadeId String?
+
+  // Solicitação
+  tipoAssistencia   TipoAssistenciaTecnica
+  assunto           String
+  descricaoProblema String
+  urgente           Boolean                @default(false)
+
+  // Informações adicionais
+  cultura             String?
+  areaAfetada         Float?
+  dataPreferencial    DateTime?
+  periodoPreferencial String? // manhã, tarde
+
+  // Workflow
+  status     StatusAssistencia @default(AGUARDANDO_AGENDAMENTO)
+  dataStatus DateTime          @default(now())
+
+  // Anexos
+  fotos      Json? // Array de URLs
+  documentos Json? // Array de URLs
+
+  // Relacionamento
+  visita VisitaAssistenciaTecnica?
+
+  // Observações
+  observacoes String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([produtorId])
+  @@index([status])
+  @@index([urgente])
+  @@index([protocolId])
+  @@index([isActive])
+  @@map("solicitacoes_assistencia")
+}
+
+model VisitaAssistenciaTecnica {
+  id String @id @default(cuid())
+
+  // Solicitação origem
+  solicitacaoId String                 @unique
+  solicitacao   SolicitacaoAssistencia @relation(fields: [solicitacaoId], references: [id])
+
+  // Produtor e propriedade
+  produtorId    String
+  produtor      ProdutorRural     @relation(fields: [produtorId], references: [id])
+  propriedadeId String?
+  propriedade   PropriedadeRural? @relation(fields: [propriedadeId], references: [id])
+
+  // Técnico
+  tecnicoId String
+  tecnico   TecnicoAgricola @relation(fields: [tecnicoId], references: [id])
+
+  // Agendamento
+  dataAgendada  DateTime
+  horarioInicio String
+  horarioFim    String?
+
+  // Realização
+  dataRealizacao DateTime?
+  horaChegada    String?
+  horaSaida      String?
+
+  // Atendimento
+  assuntoVisita       String
+  diagnostico         String?
+  recomendacoes       String?
+  prescricoesTecnicas String?
+
+  // Análise
+  analiseRealizada  String?
+  amostrasColetadas Boolean @default(false)
+  tipoAmostras      String?
+
+  // Registro fotográfico
+  fotos Json? // Array de {url, descricao, latitude, longitude, dataHora}
+
+  // Assinaturas
+  assinaturaProdutor String? // URL ou base64
+  assinaturaTecnico  String? // URL ou base64
+
+  // Status
+  status StatusVisita @default(AGENDADA)
+
+  // Retorno/Follow-up
+  necessitaRetorno    Boolean   @default(false)
+  dataRetornoPrevisto DateTime?
+  motivoRetorno       String?
+
+  // Observações
+  observacoes String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([solicitacaoId])
+  @@index([produtorId])
+  @@index([tecnicoId])
+  @@index([dataAgendada])
+  @@index([status])
+  @@index([isActive])
+  @@map("visitas_assistencia_tecnica")
+}
+
+enum TipoAssistenciaTecnica {
+  ORIENTACAO_PLANTIO
+  CONTROLE_PRAGAS
+  ANALISE_SOLO
+  MANEJO_IRRIGACAO
+  ORIENTACAO_COLHEITA
+  SANIDADE_ANIMAL
+  NUTRICAO_ANIMAL
+  GESTAO_PROPRIEDADE
+  AGROECOLOGIA
+  OUTROS
+}
+
+enum StatusAssistencia {
+  AGUARDANDO_AGENDAMENTO
+  AGENDADA
+  EM_ATENDIMENTO
+  CONCLUIDA
+  CANCELADA
+  NECESSITA_RETORNO
+}
+
+enum StatusVisita {
+  AGENDADA
+  CONFIRMADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  NAO_REALIZADA
+  REMARCADA
+  CANCELADA
 }
 
 // ============================================================================
@@ -3767,21 +4157,21 @@ model ProdutorRural {
 // ============================================================================
 
 model SolicitacaoExame {
-  id                    String   @id @default(cuid())
-  workflowId            String   @unique
-  citizenId             String
-  medicoSolicitante     String
-  unidadeSaude          String
-  tipoExame             TipoExameSolicitacao
-  exameEspecifico       String
-  justificativa         String
-  prioridade            Int      @default(0)
-  status                StatusSolicitacaoExame @default(AGUARDANDO_AGENDAMENTO)
-  documentosAnexados    Json?
-  observacoes           String?
-  agendamento           AgendamentoExame?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                 String                 @id @default(cuid())
+  workflowId         String                 @unique
+  citizenId          String
+  medicoSolicitante  String
+  unidadeSaude       String
+  tipoExame          TipoExameSolicitacao
+  exameEspecifico    String
+  justificativa      String
+  prioridade         Int                    @default(0)
+  status             StatusSolicitacaoExame @default(AGUARDANDO_AGENDAMENTO)
+  documentosAnexados Json?
+  observacoes        String?
+  agendamento        AgendamentoExame?
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
 
   @@index([citizenId])
   @@index([status])
@@ -3791,24 +4181,24 @@ model SolicitacaoExame {
 }
 
 model AgendamentoExame {
-  id                    String   @id @default(cuid())
-  solicitacaoId         String   @unique
-  laboratorioId         String?
-  dataAgendada          DateTime
-  horario               String
-  status                StatusAgendamentoExame @default(AGENDADO)
-  localRealizacao       String
-  preparoNecessario     String?
-  dataRealizacao        DateTime?
-  resultadoDisponivel   Boolean  @default(false)
-  dataResultado         DateTime?
-  laudoUrl              String?
-  medicoLaudador        String?
-  observacoesResultado  String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                   String                 @id @default(cuid())
+  solicitacaoId        String                 @unique
+  laboratorioId        String?
+  dataAgendada         DateTime
+  horario              String
+  status               StatusAgendamentoExame @default(AGENDADO)
+  localRealizacao      String
+  preparoNecessario    String?
+  dataRealizacao       DateTime?
+  resultadoDisponivel  Boolean                @default(false)
+  dataResultado        DateTime?
+  laudoUrl             String?
+  medicoLaudador       String?
+  observacoesResultado String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
 
-  solicitacao           SolicitacaoExame @relation(fields: [solicitacaoId], references: [id])
+  solicitacao SolicitacaoExame @relation(fields: [solicitacaoId], references: [id])
 
   @@index([dataAgendada])
   @@index([status])
@@ -3851,12 +4241,12 @@ enum StatusAgendamentoExame {
 model CardapioMerenda {
   id                String   @id @default(cuid())
   unidadeEducacaoId String
-  diaSemana         Int      // 0-6 (Domingo a Sábado)
-  turno             String   // MATUTINO, VESPERTINO, INTEGRAL
-  refeicao          String   // CAFE_MANHA, ALMOCO, LANCHE_TARDE
-  alimentos         Json     // Array de {alimento, quantidade, unidade}
-  valorNutricional  Json?    // {calorias, proteinas, carboidratos, etc}
-  alergenicos       Json?    // Array de alertas de alérgenos
+  diaSemana         Int // 0-6 (Domingo a Sábado)
+  turno             String // MATUTINO, VESPERTINO, INTEGRAL
+  refeicao          String // CAFE_MANHA, ALMOCO, LANCHE_TARDE
+  alimentos         Json // Array de {alimento, quantidade, unidade}
+  valorNutricional  Json? // {calorias, proteinas, carboidratos, etc}
+  alergenicos       Json? // Array de alertas de alérgenos
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -3867,17 +4257,17 @@ model CardapioMerenda {
 }
 
 model EstoqueAlimento {
-  id          String   @id @default(cuid())
-  nome        String
-  categoria   String   // PROTEINA, CARBOIDRATO, VEGETAL, FRUTA, LACTEO, etc
-  unidade     String   // KG, L, UN
-  quantidade  Float
-  validade    DateTime
-  lote        String?
-  fornecedor  String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  nome       String
+  categoria  String // PROTEINA, CARBOIDRATO, VEGETAL, FRUTA, LACTEO, etc
+  unidade    String // KG, L, UN
+  quantidade Float
+  validade   DateTime
+  lote       String?
+  fornecedor String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([nome])
   @@index([validade])
@@ -3892,9 +4282,9 @@ model ConsumoMerenda {
   turno             String
   refeicao          String
   alunosAtendidos   Int
-  alimentosUsados   Json     // Array de {alimentoId, quantidade}
+  alimentosUsados   Json // Array de {alimentoId, quantidade}
   observacoes       String?
-  registradoPor     String   // userId
+  registradoPor     String // userId
   createdAt         DateTime @default(now())
 
   @@index([unidadeEducacaoId, data])
@@ -3909,10 +4299,10 @@ model DiarioClasse {
   id                String   @id @default(cuid())
   unidadeEducacaoId String
   turmaId           String
-  professorId       String   // userId
+  professorId       String // userId
   disciplina        String
   ano               Int
-  semestre          Int      // 1 ou 2
+  semestre          Int // 1 ou 2
   aulas             Aula[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -3923,29 +4313,29 @@ model DiarioClasse {
 }
 
 model Aula {
-  id               String   @id @default(cuid())
-  diarioId         String
-  diario           DiarioClasse @relation(fields: [diarioId], references: [id], onDelete: Cascade)
-  data             DateTime
-  conteudo         String
-  observacoes      String?
-  frequencias      Frequencia[]
-  avaliacoes       Avaliacao[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id          String       @id @default(cuid())
+  diarioId    String
+  diario      DiarioClasse @relation(fields: [diarioId], references: [id], onDelete: Cascade)
+  data        DateTime
+  conteudo    String
+  observacoes String?
+  frequencias Frequencia[]
+  avaliacoes  Avaliacao[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([diarioId, data])
   @@map("aulas")
 }
 
 model Frequencia {
-  id       String  @id @default(cuid())
-  aulaId   String
-  aula     Aula    @relation(fields: [aulaId], references: [id], onDelete: Cascade)
-  alunoId  String
-  presente Boolean @default(true)
+  id          String  @id @default(cuid())
+  aulaId      String
+  aula        Aula    @relation(fields: [aulaId], references: [id], onDelete: Cascade)
+  alunoId     String
+  presente    Boolean @default(true)
   justificado Boolean @default(false)
-  observacao String?
+  observacao  String?
 
   @@index([aulaId])
   @@index([alunoId])
@@ -3953,31 +4343,31 @@ model Frequencia {
 }
 
 model Avaliacao {
-  id          String   @id @default(cuid())
-  aulaId      String?
-  aula        Aula?    @relation(fields: [aulaId], references: [id])
-  diarioId    String
-  tipo        String   // PROVA, TRABALHO, PARTICIPACAO, etc
-  descricao   String
-  data        DateTime
-  peso        Float    @default(1.0)
-  notas       Nota[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  aulaId    String?
+  aula      Aula?    @relation(fields: [aulaId], references: [id])
+  diarioId  String
+  tipo      String // PROVA, TRABALHO, PARTICIPACAO, etc
+  descricao String
+  data      DateTime
+  peso      Float    @default(1.0)
+  notas     Nota[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([diarioId])
   @@map("avaliacoes")
 }
 
 model Nota {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   avaliacaoId String
   avaliacao   Avaliacao @relation(fields: [avaliacaoId], references: [id], onDelete: Cascade)
   alunoId     String
   nota        Float
   observacao  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([avaliacaoId])
   @@index([alunoId])
@@ -3989,14 +4379,14 @@ model Nota {
 // ============================================================================
 
 model TipoBeneficio {
-  id          String   @id @default(cuid())
-  nome        String   @unique
-  descricao   String?
-  categoria   String   // EVENTUAL, RECORRENTE
-  valor       Float?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  nome      String   @unique
+  descricao String?
+  categoria String // EVENTUAL, RECORRENTE
+  valor     Float?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   solicitacoes SolicitacaoBeneficio[]
 
@@ -4005,23 +4395,23 @@ model TipoBeneficio {
 }
 
 model SolicitacaoBeneficio {
-  id                String   @id @default(cuid())
-  protocolId        String?  @unique
-  citizenId         String
-  tipoBeneficioId   String
-  tipoBeneficio     TipoBeneficio @relation(fields: [tipoBeneficioId], references: [id])
-  unidadeCRASId     String?
-  justificativa     String
-  documentosAnexos  Json?
-  status            StatusBeneficio @default(AGUARDANDO_ANALISE)
-  analisadoPor      String?
-  dataAnalise       DateTime?
+  id                  String          @id @default(cuid())
+  protocolId          String?         @unique
+  citizenId           String
+  tipoBeneficioId     String
+  tipoBeneficio       TipoBeneficio   @relation(fields: [tipoBeneficioId], references: [id])
+  unidadeCRASId       String?
+  justificativa       String
+  documentosAnexos    Json?
+  status              StatusBeneficio @default(AGUARDANDO_ANALISE)
+  analisadoPor        String?
+  dataAnalise         DateTime?
   motivoIndeferimento String?
-  dataEntrega       DateTime?
-  valorConcedido    Float?
-  observacoes       String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  dataEntrega         DateTime?
+  valorConcedido      Float?
+  observacoes         String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 
   @@index([citizenId])
   @@index([status])
@@ -4044,21 +4434,21 @@ enum StatusBeneficio {
 // ============================================================================
 
 model FichaAtendimentoPsicossocial {
-  id                String   @id @default(cuid())
-  citizenId         String
-  unidadeCRASId     String
-  profissionalId    String   // userId (assistente social ou psicólogo)
-  tipoAtendimento   String   // INDIVIDUAL, FAMILIAR, GRUPAL
-  data              DateTime @default(now())
-  motivoAtendimento String
-  relatoSituacao    String
-  encaminhamentos   Json?    // Array de encaminhamentos
+  id                 String           @id @default(cuid())
+  citizenId          String
+  unidadeCRASId      String
+  profissionalId     String // userId (assistente social ou psicólogo)
+  tipoAtendimento    String // INDIVIDUAL, FAMILIAR, GRUPAL
+  data               DateTime         @default(now())
+  motivoAtendimento  String
+  relatoSituacao     String
+  encaminhamentos    Json? // Array de encaminhamentos
   proximoAtendimento DateTime?
-  statusCaso        String   // ATIVO, ACOMPANHAMENTO, ENCERRADO
-  observacoes       String?
-  acompanhamentos   Acompanhamento[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  statusCaso         String // ATIVO, ACOMPANHAMENTO, ENCERRADO
+  observacoes        String?
+  acompanhamentos    Acompanhamento[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   @@index([citizenId])
   @@index([profissionalId])
@@ -4068,14 +4458,14 @@ model FichaAtendimentoPsicossocial {
 }
 
 model Acompanhamento {
-  id                String   @id @default(cuid())
-  fichaId           String
-  ficha             FichaAtendimentoPsicossocial @relation(fields: [fichaId], references: [id], onDelete: Cascade)
-  data              DateTime @default(now())
-  descricao         String
-  profissionalId    String
-  anexos            Json?
-  createdAt         DateTime @default(now())
+  id             String                       @id @default(cuid())
+  fichaId        String
+  ficha          FichaAtendimentoPsicossocial @relation(fields: [fichaId], references: [id], onDelete: Cascade)
+  data           DateTime                     @default(now())
+  descricao      String
+  profissionalId String
+  anexos         Json?
+  createdAt      DateTime                     @default(now())
 
   @@index([fichaId])
   @@map("acompanhamentos_psicossociais")
@@ -4086,18 +4476,18 @@ model Acompanhamento {
 // ============================================================================
 
 model VisitaTecnica {
-  id              String   @id @default(cuid())
-  produtorId      String
-  tecnicoId       String   // userId
-  data            DateTime
-  tipo            String   // ORIENTACAO, VISTORIA, ACOMPANHAMENTO
-  assunto         String
-  descricao       String
-  recomendacoes   String?
-  proximaVisita   DateTime?
-  anexos          Json?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String    @id @default(cuid())
+  produtorId    String
+  tecnicoId     String // userId
+  data          DateTime
+  tipo          String // ORIENTACAO, VISTORIA, ACOMPANHAMENTO
+  assunto       String
+  descricao     String
+  recomendacoes String?
+  proximaVisita DateTime?
+  anexos        Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([produtorId])
   @@index([tecnicoId])
@@ -4110,18 +4500,18 @@ model VisitaTecnica {
 // ============================================================================
 
 model RegistroProducao {
-  id              String   @id @default(cuid())
-  produtorId      String
-  safra           String
-  produto         String
-  area            Float    // hectares
-  quantidadeKg    Float
-  dataColheita    DateTime
-  destinacao      String   // VENDA, CONSUMO, DOACAO
-  valorVenda      Float?
-  observacoes     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String   @id @default(cuid())
+  produtorId   String
+  safra        String
+  produto      String
+  area         Float // hectares
+  quantidadeKg Float
+  dataColheita DateTime
+  destinacao   String // VENDA, CONSUMO, DOACAO
+  valorVenda   Float?
+  observacoes  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([produtorId])
   @@index([safra])
@@ -4134,18 +4524,18 @@ model RegistroProducao {
 // ============================================================================
 
 model Feira {
-  id          String   @id @default(cuid())
-  nome        String
-  local       String
-  endereco    String?
-  diaSemana   Int      // 0-6
+  id            String   @id @default(cuid())
+  nome          String
+  local         String
+  endereco      String?
+  diaSemana     Int // 0-6
   horarioInicio String
-  horarioFim  String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  horarioFim    String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  boxes       BoxFeira[]
+  boxes BoxFeira[]
 
   @@index([isActive])
   @@map("feiras")
@@ -4162,9 +4552,9 @@ model BoxFeira {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@unique([feiraId, numero])
   @@index([feiraId])
   @@index([produtorId])
-  @@unique([feiraId, numero])
   @@map("boxes_feira")
 }
 
@@ -4172,17 +4562,18 @@ model BoxFeira {
 // MS-12: PORTAL DO ALUNO/PAIS
 // ============================================================================
 model BoletimAluno {
-  id String @id @default(cuid())
-  alunoId String
-  diarioId String
-  ano Int
-  semestre Int
-  mediaFinal Float
+  id                   String   @id @default(cuid())
+  alunoId              String
+  diarioId             String
+  ano                  Int
+  semestre             Int
+  mediaFinal           Float
   frequenciaPercentual Float
-  situacao String
-  observacoes String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  situacao             String
+  observacoes          String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
   @@index([alunoId])
   @@map("boletins_aluno")
 }
@@ -4191,138 +4582,147 @@ model BoletimAluno {
 // CULTURA (MS-25 a MS-32)
 // ============================================================================
 model EspacoCultural {
-  id String @id @default(cuid())
-  nome String
-  tipo String
-  endereco String
+  id         String                  @id @default(cuid())
+  nome       String
+  tipo       String
+  endereco   String
   capacidade Int
-  recursos Json?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  reservas ReservaEspacoCultural[]
+  recursos   Json?
+  isActive   Boolean                 @default(true)
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  reservas   ReservaEspacoCultural[]
+
   @@map("espacos_culturais")
 }
 
 model ReservaEspacoCultural {
-  id String @id @default(cuid())
-  espacoId String
-  espaco EspacoCultural @relation(fields: [espacoId], references: [id])
-  citizenId String
+  id            String         @id @default(cuid())
+  espacoId      String
+  espaco        EspacoCultural @relation(fields: [espacoId], references: [id])
+  citizenId     String
   solicitanteId String?
-  dataReserva DateTime @default(now())
-  dataInicio DateTime
-  dataFim DateTime
-  evento String
-  status String
-  observacoes String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dataReserva   DateTime       @default(now())
+  dataInicio    DateTime
+  dataFim       DateTime
+  evento        String
+  status        String
+  observacoes   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
   @@index([espacoId])
   @@index([citizenId])
   @@map("reservas_espaco_cultural")
 }
 
 model Artista {
-  id String @id @default(cuid())
-  citizenId String
+  id            String   @id @default(cuid())
+  citizenId     String
   nomeArtistico String
-  categoria String
+  categoria     String
   especialidade String
-  portfolio Json?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  portfolio     Json?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   @@map("artistas")
 }
 
 model EventoCultural {
-  id String @id @default(cuid())
-  nome String
-  tipo String
-  categoria String?
+  id         String   @id @default(cuid())
+  nome       String
+  tipo       String
+  categoria  String?
   dataInicio DateTime
-  dataFim DateTime
-  local String
-  descricao String?
-  status String @default("AGENDADO")
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dataFim    DateTime
+  local      String
+  descricao  String?
+  status     String   @default("AGENDADO")
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@map("eventos_culturais")
 }
 
 model EditalCultural {
-  id String @id @default(cuid())
-  nome String
-  descricao String
-  dataAbertura DateTime
+  id             String    @id @default(cuid())
+  nome           String
+  descricao      String
+  dataAbertura   DateTime
   dataFechamento DateTime
-  valorTotal Float
-  status String
-  isActive Boolean @default(true)
+  valorTotal     Float
+  status         String
+  isActive       Boolean   @default(true)
   dataPublicacao DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
   @@map("editais_culturais")
 }
 
 model LivroBiblioteca {
-  id String @id @default(cuid())
-  titulo String
-  autor String
-  isbn String?
-  categoria String
-  editora String?
+  id            String                 @id @default(cuid())
+  titulo        String
+  autor         String
+  isbn          String?
+  categoria     String
+  editora       String?
   anoPublicacao Int?
-  disponivel Boolean @default(true)
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  emprestimos EmprestimoBiblioteca[]
+  disponivel    Boolean                @default(true)
+  isActive      Boolean                @default(true)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  emprestimos   EmprestimoBiblioteca[]
+
   @@map("livros_biblioteca")
 }
 
 model EmprestimoBiblioteca {
-  id String @id @default(cuid())
-  livroId String
-  livro LivroBiblioteca @relation(fields: [livroId], references: [id])
-  citizenId String
-  dataEmprestimo DateTime @default(now())
+  id                    String          @id @default(cuid())
+  livroId               String
+  livro                 LivroBiblioteca @relation(fields: [livroId], references: [id])
+  citizenId             String
+  dataEmprestimo        DateTime        @default(now())
   dataPrevistaDevolucao DateTime
-  dataDevolucao DateTime?
-  status String @default("ATIVO")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dataDevolucao         DateTime?
+  status                String          @default("ATIVO")
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
   @@index([livroId])
   @@index([citizenId])
   @@map("emprestimos_biblioteca")
 }
 
 model PatrimonioCultural {
-  id String @id @default(cuid())
-  nome String
-  tipo String
-  endereco String
-  descricao String?
+  id                String   @id @default(cuid())
+  nome              String
+  tipo              String
+  endereco          String
+  descricao         String?
   statusConservacao String
-  anoTombamento Int?
-  visitantes Int @default(0)
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  anoTombamento     Int?
+  visitantes        Int      @default(0)
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
   @@map("patrimonios_culturais")
 }
 
 model OcorrenciaAluno {
-  id String @id @default(cuid())
-  alunoId String
-  tipo String
-  data DateTime @default(now())
+  id        String   @id @default(cuid())
+  alunoId   String
+  tipo      String
+  data      DateTime @default(now())
   descricao String
-  lida Boolean @default(false)
+  lida      Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@index([alunoId])
   @@map("ocorrencias_aluno")
 }
@@ -4331,53 +4731,57 @@ model OcorrenciaAluno {
 // ESPORTES (MS-33 a MS-36)
 // ============================================================================
 model Atleta {
-  id String @id @default(cuid())
-  citizenId String
+  id         String   @id @default(cuid())
+  citizenId  String
   modalidade String
-  categoria String
-  equipe String?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  categoria  String
+  equipe     String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@map("atletas")
 }
 
 model Campeonato {
-  id String @id @default(cuid())
-  nome String
+  id         String   @id @default(cuid())
+  nome       String
   modalidade String
   dataInicio DateTime
-  dataFim DateTime
-  status String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dataFim    DateTime
+  status     String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@map("campeonatos")
 }
 
 model EscolinhaEsporte {
-  id String @id @default(cuid())
-  nome String
-  modalidade String
-  faixaEtaria String
-  vagasTotal Int
-  vagasOcupadas Int @default(0)
-  alunos Json?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  nome          String
+  modalidade    String
+  faixaEtaria   String
+  vagasTotal    Int
+  vagasOcupadas Int      @default(0)
+  alunos        Json?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   @@map("escolinhas_esporte")
 }
 
 model EquipamentoEsportivo {
-  id String @id @default(cuid())
-  nome String
-  tipo String
+  id          String   @id @default(cuid())
+  nome        String
+  tipo        String
   localizacao String
-  status String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status      String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("equipamentos_esportivos")
 }
 
@@ -4385,28 +4789,30 @@ model EquipamentoEsportivo {
 // HABITAÇÃO (MS-37 a MS-42)
 // ============================================================================
 model InscricaoHabitacao {
-  id String @id @default(cuid())
-  workflowId String @unique
-  citizenId String
-  rendaFamiliar Float
+  id                 String   @id @default(cuid())
+  workflowId         String   @unique
+  citizenId          String
+  rendaFamiliar      Float
   composicaoFamiliar Int
-  pontuacao Int?
-  status String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  pontuacao          Int?
+  status             String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
   @@map("inscricoes_habitacao")
 }
 
 model ObraHabitacional {
-  id String @id @default(cuid())
-  nome String
-  conjuntoId String?
-  dataInicio DateTime
+  id           String    @id @default(cuid())
+  nome         String
+  conjuntoId   String?
+  dataInicio   DateTime
   dataPrevisao DateTime?
-  status String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status       String
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
   @@map("obras_habitacionais")
 }
 
@@ -4414,36 +4820,39 @@ model ObraHabitacional {
 // MEIO AMBIENTE (MS-43 a MS-48)
 // ============================================================================
 model ArvoreUrbana {
-  id String @id @default(cuid())
-  especie String
+  id          String   @id @default(cuid())
+  especie     String
   localizacao String
   coordenadas Json?
-  status String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status      String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("arvores_urbanas")
 }
 
 model PontoColeta {
-  id String @id @default(cuid())
-  nome String
-  endereco String
+  id           String   @id @default(cuid())
+  nome         String
+  endereco     String
   tipoMaterial String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   @@map("pontos_coleta")
 }
 
 model LicencaAmbiental {
-  id String @id @default(cuid())
-  workflowId String @unique
+  id            String   @id @default(cuid())
+  workflowId    String   @unique
   solicitanteId String
   tipoAtividade String
-  status String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   @@map("licencas_ambientais")
 }
 
@@ -4451,48 +4860,52 @@ model LicencaAmbiental {
 // OBRAS PÚBLICAS (MS-49 a MS-54)
 // ============================================================================
 model TipoObra {
-  id String @id @default(cuid())
-  nome String
+  id        String   @id @default(cuid())
+  nome      String
   descricao String?
-  isActive Boolean @default(true)
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("tipos_obra")
 }
 
 model SolicitacaoObra {
-  id String @id @default(cuid())
-  workflowId String @unique
-  tipoObraId String
+  id          String   @id @default(cuid())
+  workflowId  String   @unique
+  tipoObraId  String
   localizacao String
-  descricao String
-  status String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  descricao   String
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("solicitacoes_obra")
 }
 
 model ObraPublica {
-  id String @id @default(cuid())
-  nome String
-  tipoObraId String
-  dataInicio DateTime
+  id           String    @id @default(cuid())
+  nome         String
+  tipoObraId   String
+  dataInicio   DateTime
   dataPrevisao DateTime?
-  status String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status       String
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
   @@map("obras_publicas")
 }
 
 model PontoIluminacao {
-  id String @id @default(cuid())
+  id          String   @id @default(cuid())
   localizacao String
-  tipo String
-  status String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tipo        String
+  status      String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("pontos_iluminacao")
 }
 
@@ -4500,47 +4913,51 @@ model PontoIluminacao {
 // SEGURANÇA PÚBLICA (MS-55 a MS-60)
 // ============================================================================
 model Viatura {
-  id String @id @default(cuid())
-  placa String @unique
-  tipo String
-  modelo String
-  isActive Boolean @default(true)
+  id        String   @id @default(cuid())
+  placa     String   @unique
+  tipo      String
+  modelo    String
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("viaturas")
 }
 
 model Ocorrencia {
-  id String @id @default(cuid())
-  workflowId String @unique
-  tipo String
+  id          String   @id @default(cuid())
+  workflowId  String   @unique
+  tipo        String
   localizacao String
-  descricao String
-  status String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  descricao   String
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("ocorrencias")
 }
 
 model RotaPatrulha {
-  id String @id @default(cuid())
-  nome String
-  area String
-  turno String
-  isActive Boolean @default(true)
+  id        String   @id @default(cuid())
+  nome      String
+  area      String
+  turno     String
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("rotas_patrulha")
 }
 
 model Camera {
-  id String @id @default(cuid())
+  id          String   @id @default(cuid())
   localizacao String
-  tipo String
-  status String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tipo        String
+  status      String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("cameras")
 }
 
@@ -4548,28 +4965,30 @@ model Camera {
 // TURISMO (MS-61 a MS-66)
 // ============================================================================
 model PontoTuristico {
-  id String @id @default(cuid())
-  nome String
-  tipo String
-  endereco String
-  descricao String?
+  id          String   @id @default(cuid())
+  nome        String
+  tipo        String
+  endereco    String
+  descricao   String?
   coordenadas Json?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("pontos_turisticos")
 }
 
 model EventoTuristico {
-  id String @id @default(cuid())
-  nome String
+  id         String   @id @default(cuid())
+  nome       String
   dataInicio DateTime
-  dataFim DateTime
-  local String
-  descricao String?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dataFim    DateTime
+  local      String
+  descricao  String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@map("eventos_turisticos")
 }
 
@@ -4577,50 +4996,54 @@ model EventoTuristico {
 // PLANEJAMENTO URBANO (MS-67 a MS-72)
 // ============================================================================
 model ZonaUrbana {
-  id String @id @default(cuid())
-  nome String
-  tipo String
-  area Float?
-  regras Json?
-  isActive Boolean @default(true)
+  id        String   @id @default(cuid())
+  nome      String
+  tipo      String
+  area      Float?
+  regras    Json?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   @@map("zonas_urbanas")
 }
 
 model LicencaObra {
-  id String @id @default(cuid())
-  workflowId String @unique
+  id            String   @id @default(cuid())
+  workflowId    String   @unique
   solicitanteId String
-  endereco String
-  tipoObra String
-  status String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  endereco      String
+  tipoObra      String
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   @@map("licencas_obra")
 }
 
 model ImovelUrbano {
-  id String @id @default(cuid())
-  inscricao String @unique
-  endereco String
+  id           String   @id @default(cuid())
+  inscricao    String   @unique
+  endereco     String
   proprietario String
-  area Float?
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  area         Float?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   @@map("imoveis_urbanos")
 }
 
 model Loteamento {
-  id String @id @default(cuid())
-  nome String
+  id          String   @id @default(cuid())
+  nome        String
   localizacao String
-  totalLotes Int
-  status String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  totalLotes  Int
+  status      String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("loteamentos")
 }
 
@@ -4628,71 +5051,77 @@ model Loteamento {
 // SERVIÇOS PÚBLICOS (MS-73 a MS-78)
 // ============================================================================
 model RotaColeta {
-  id String @id @default(cuid())
-  nome String
-  bairros Json
+  id         String   @id @default(cuid())
+  nome       String
+  bairros    Json
   diasSemana Json
-  tipo String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tipo       String
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   @@map("rotas_coleta")
 }
 
 model SolicitacaoManutencao {
-  id String @id @default(cuid())
-  tipo String
+  id          String   @id @default(cuid())
+  tipo        String
   localizacao String
-  descricao String
-  status String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  descricao   String
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("solicitacoes_manutencao")
 }
 
 model SolicitacaoPoda {
-  id String @id @default(cuid())
+  id          String   @id @default(cuid())
   localizacao String
-  descricao String
-  urgencia String
-  status String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  descricao   String
+  urgencia    String
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("solicitacoes_poda")
 }
 
 model Cemiterio {
-  id String @id @default(cuid())
-  nome String
-  endereco String
+  id              String   @id @default(cuid())
+  nome            String
+  endereco        String
   capacidadeTotal Int
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
   @@map("cemiterios")
 }
 
 model Sepultura {
-  id String @id @default(cuid())
+  id          String   @id @default(cuid())
   cemiterioId String
-  numero String
-  quadra String?
-  ocupada Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  numero      String
+  quadra      String?
+  ocupada     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("sepulturas")
 }
 
 model FeiraLivre {
-  id String @id @default(cuid())
-  nome String
-  local String
-  diaSemana Int
+  id            String   @id @default(cuid())
+  nome          String
+  local         String
+  diaSemana     Int
   horarioInicio String
-  horarioFim String
-  isActive Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  horarioFim    String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
   @@map("feiras_livres")
 }
 
@@ -4702,32 +5131,32 @@ model FeiraLivre {
 
 // MS-07: Transporte Escolar
 model SolicitacaoTransporteEscolar {
-  id                    String   @id @default(cuid())
-  protocolId            String?  @unique
-  alunoId               String
-  responsavelId         String
-  unidadeEscolarId      String?
-  serie                 String?
-  turno                 String?
-  enderecoEmbarque      String
+  id                      String    @id @default(cuid())
+  protocolId              String?   @unique
+  alunoId                 String
+  responsavelId           String
+  unidadeEscolarId        String?
+  serie                   String?
+  turno                   String?
+  enderecoEmbarque        String
   pontoReferenciaEmbarque String?
-  distanciaEscolaKm     Float?
-  necessidadesEspeciais Boolean  @default(false)
-  tipoNecessidade       String?
-  necessitaMonitor      Boolean  @default(false)
-  horarioEntradaEscola  String?
-  necessitaIda          Boolean  @default(true)
-  necessitaVolta        Boolean  @default(true)
-  status                String   @default("AGUARDANDO_ANALISE")
-  rotaAtribuida         String?
-  veiculoAtribuido      String?
-  observacoes           String?
-  dataAprovacao         DateTime?
-  aprovadoPor           String?
-  motivoRecusa          String?
-  isActive              Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  distanciaEscolaKm       Float?
+  necessidadesEspeciais   Boolean   @default(false)
+  tipoNecessidade         String?
+  necessitaMonitor        Boolean   @default(false)
+  horarioEntradaEscola    String?
+  necessitaIda            Boolean   @default(true)
+  necessitaVolta          Boolean   @default(true)
+  status                  String    @default("AGUARDANDO_ANALISE")
+  rotaAtribuida           String?
+  veiculoAtribuido        String?
+  observacoes             String?
+  dataAprovacao           DateTime?
+  aprovadoPor             String?
+  motivoRecusa            String?
+  isActive                Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   @@index([protocolId])
   @@index([alunoId])
@@ -4737,24 +5166,24 @@ model SolicitacaoTransporteEscolar {
 
 // MS-01: Consultas Especializadas
 model SolicitacaoConsultaEspecializada {
-  id                 String   @id @default(cuid())
-  protocolId         String?  @unique
-  pacienteId         String
-  especialidade      String
-  unidadePreferencial String?
-  motivoConsulta     String
-  urgente            Boolean  @default(false)
+  id                    String    @id @default(cuid())
+  protocolId            String?   @unique
+  pacienteId            String
+  especialidade         String
+  unidadePreferencial   String?
+  motivoConsulta        String
+  urgente               Boolean   @default(false)
   justificativaUrgencia String?
-  status             String   @default("FILA_ESPERA")
-  dataAgendamento    DateTime?
-  profissionalId     String?
-  unidadeAtendimento String?
-  dataAtendimento    DateTime?
-  compareceu         Boolean?
-  observacoes        String?
-  isActive           Boolean  @default(true)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  status                String    @default("FILA_ESPERA")
+  dataAgendamento       DateTime?
+  profissionalId        String?
+  unidadeAtendimento    String?
+  dataAtendimento       DateTime?
+  compareceu            Boolean?
+  observacoes           String?
+  isActive              Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([protocolId])
   @@index([pacienteId])
@@ -4765,29 +5194,29 @@ model SolicitacaoConsultaEspecializada {
 
 // MS-13: Auxílio Emergencial
 model SolicitacaoAuxilioEmergencial {
-  id                  String   @id @default(cuid())
-  protocolId          String?  @unique
-  familiaId           String
-  responsavelId       String
-  nisResponsavel      String?
-  qtdMembrosFamilia   Int
-  rendaFamiliarTotal  Float
-  situacaoEmergencia  String
-  descricaoSituacao   String
-  comprovacaoAnexada  Boolean  @default(false)
-  valorSolicitado     Float?
-  status              String   @default("EM_ANALISE")
-  parecer             String?
-  valorAprovado       Float?
-  dataAprovacao       DateTime?
-  aprovadoPor         String?
-  dataPagamento       DateTime?
-  formaPagamento      String?
-  motivoRecusa        String?
-  observacoes         String?
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  protocolId         String?   @unique
+  familiaId          String
+  responsavelId      String
+  nisResponsavel     String?
+  qtdMembrosFamilia  Int
+  rendaFamiliarTotal Float
+  situacaoEmergencia String
+  descricaoSituacao  String
+  comprovacaoAnexada Boolean   @default(false)
+  valorSolicitado    Float?
+  status             String    @default("EM_ANALISE")
+  parecer            String?
+  valorAprovado      Float?
+  dataAprovacao      DateTime?
+  aprovadoPor        String?
+  dataPagamento      DateTime?
+  formaPagamento     String?
+  motivoRecusa       String?
+  observacoes        String?
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   @@index([protocolId])
   @@index([familiaId])
@@ -4798,29 +5227,29 @@ model SolicitacaoAuxilioEmergencial {
 
 // MS-14: Cesta Básica
 model SolicitacaoCestaBasica {
-  id                  String   @id @default(cuid())
-  protocolId          String?  @unique
-  familiaId           String
-  responsavelId       String
-  nisResponsavel      String?
-  qtdMembrosFamilia   Int
-  rendaFamiliarTotal  Float
-  unidadeCRAS         String?
-  motivoSolicitacao   String
-  primeiraVez         Boolean  @default(false)
-  ultimaRetirada      DateTime?
-  status              String   @default("AGUARDANDO_ANALISE")
-  parecer             String?
-  dataAprovacao       DateTime?
-  aprovadoPor         String?
-  dataRetirada        DateTime?
-  localRetirada       String?
-  retiradoPor         String?
-  motivoRecusa        String?
-  observacoes         String?
-  isActive            Boolean  @default(true)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String    @id @default(cuid())
+  protocolId         String?   @unique
+  familiaId          String
+  responsavelId      String
+  nisResponsavel     String?
+  qtdMembrosFamilia  Int
+  rendaFamiliarTotal Float
+  unidadeCRAS        String?
+  motivoSolicitacao  String
+  primeiraVez        Boolean   @default(false)
+  ultimaRetirada     DateTime?
+  status             String    @default("AGUARDANDO_ANALISE")
+  parecer            String?
+  dataAprovacao      DateTime?
+  aprovadoPor        String?
+  dataRetirada       DateTime?
+  localRetirada      String?
+  retiradoPor        String?
+  motivoRecusa       String?
+  observacoes        String?
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   @@index([protocolId])
   @@index([familiaId])
@@ -4831,33 +5260,33 @@ model SolicitacaoCestaBasica {
 
 // MS-20: Crédito Agrícola
 model SolicitacaoCreditoAgricola {
-  id                   String   @id @default(cuid())
-  protocolId           String?  @unique
-  produtorId           String
-  cpfProdutor          String
-  propriedadeId        String?
-  tipoCredito          String
-  finalidade           String
-  valorSolicitado      Float
-  prazoMeses           Int?
-  culturaDestino       String?
-  areaPlantio          Float?
-  garantiasOferecidas  String?
-  possuiDividas        Boolean  @default(false)
-  descricaoDividas     String?
-  status               String   @default("EM_ANALISE")
-  parecer              String?
-  valorAprovado        Float?
-  taxaJuros            Float?
-  dataAprovacao        DateTime?
-  aprovadoPor          String?
-  dataLiberacao        DateTime?
-  contratoAssinado     Boolean  @default(false)
-  motivoRecusa         String?
-  observacoes          String?
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  protocolId          String?   @unique
+  produtorId          String
+  cpfProdutor         String
+  propriedadeId       String?
+  tipoCredito         String
+  finalidade          String
+  valorSolicitado     Float
+  prazoMeses          Int?
+  culturaDestino      String?
+  areaPlantio         Float?
+  garantiasOferecidas String?
+  possuiDividas       Boolean   @default(false)
+  descricaoDividas    String?
+  status              String    @default("EM_ANALISE")
+  parecer             String?
+  valorAprovado       Float?
+  taxaJuros           Float?
+  dataAprovacao       DateTime?
+  aprovadoPor         String?
+  dataLiberacao       DateTime?
+  contratoAssinado    Boolean   @default(false)
+  motivoRecusa        String?
+  observacoes         String?
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([protocolId])
   @@index([produtorId])
@@ -4867,8 +5296,8 @@ model SolicitacaoCreditoAgricola {
 
 // MS-19: Assistência Técnica Rural
 model SolicitacaoAssistenciaTecnica {
-  id                   String   @id @default(cuid())
-  protocolId           String?  @unique
+  id                   String    @id @default(cuid())
+  protocolId           String?   @unique
   produtorId           String
   cpfProdutor          String
   propriedadeId        String?
@@ -4877,19 +5306,19 @@ model SolicitacaoAssistenciaTecnica {
   tipoAssistencia      String
   cultura              String?
   problemaRelatado     String
-  urgente              Boolean  @default(false)
+  urgente              Boolean   @default(false)
   dataPreferencial     DateTime?
-  status               String   @default("AGUARDANDO_VISITA")
+  status               String    @default("AGUARDANDO_VISITA")
   tecnicoResponsavel   String?
   dataVisita           DateTime?
   laudoTecnico         String?
   recomendacoes        String?
   dataAtendimento      DateTime?
-  atendimentoRealizado Boolean  @default(false)
+  atendimentoRealizado Boolean   @default(false)
   observacoes          String?
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([protocolId])
   @@index([produtorId])
