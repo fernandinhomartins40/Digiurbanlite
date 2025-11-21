@@ -200,7 +200,7 @@ export class MaquinasAgricolasService {
   async listAllProdutores() {
     return await prisma.produtorRural.findMany({
       where: { isActive: true },
-      orderBy: { propriedadeNome: 'asc' },
+      orderBy: { nome: 'asc' },
     });
   }
 
