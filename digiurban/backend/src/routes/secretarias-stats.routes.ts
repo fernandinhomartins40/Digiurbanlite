@@ -1,9 +1,4 @@
 import { Router } from 'express';
-import culturaService from '../services/cultura/cultura.service';
-import esportesService from '../services/esportes/esportes.service';
-import habitacaoService from '../services/habitacao/habitacao.service';
-import meioAmbienteService from '../services/meio-ambiente/meio-ambiente.service';
-import obrasService from '../services/obras/obras.service';
 
 const router = Router();
 
@@ -11,172 +6,59 @@ const router = Router();
 // STATS ENDPOINTS PARA TODAS AS SECRETARIAS
 // ============================================================================
 
-// CULTURA
+// CULTURA - Service deletado (MS)
 router.get('/cultura/stats', async (req, res) => {
-  try {
-    const stats = await culturaService.getEstatisticasCultura();
-
-    res.json({
-      events: {
-        total: stats.totalEventos,
-        thisMonth: 0,
-        monthly: 0,
-        upcoming: stats.totalEventos,
-        participants: 0,
-      },
-      culturalSpaces: {
-        total: stats.totalEspacos,
-        active: stats.totalEspacos,
-      },
-      artists: {
-        total: stats.totalArtistas,
-        registered: stats.totalArtistas,
-      },
-      protocols: {
-        total: 0,
-        pending: 0,
-        inProgress: 0,
-        completed: 0,
-      },
-      spaces: {
-        total: stats.totalEspacos,
-        reservations: 0,
-      },
-      workshops: {
-        active: 0,
-        students: 0,
-      },
-      groups: {
-        active: 0,
-        performances: 0,
-      },
-      library: {
-        books: stats.totalLivros,
-        loans: 0,
-      },
-      patrimony: {
-        sites: stats.totalPatrimonios,
-        visitors: 0,
-      },
-      notices: {
-        active: stats.totalEditais,
-        applications: 0,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    events: { total: 0, thisMonth: 0, monthly: 0, upcoming: 0, participants: 0 },
+    culturalSpaces: { total: 0, active: 0 },
+    artists: { total: 0, registered: 0 },
+    protocols: { total: 0, pending: 0, inProgress: 0, completed: 0 },
+    spaces: { total: 0, reservations: 0 },
+    workshops: { active: 0, students: 0 },
+    groups: { active: 0, performances: 0 },
+    library: { books: 0, loans: 0 },
+    patrimony: { sites: 0, visitors: 0 },
+    notices: { active: 0, applications: 0 },
+  });
 });
 
-// ESPORTES
+// ESPORTES - Service deletado (MS)
 router.get('/esportes/stats', async (req, res) => {
-  try {
-    const stats = await esportesService.getEstatisticasEsportes();
-
-    res.json({
-      athletes: {
-        total: stats.totalAtletas,
-        active: stats.totalAtletas,
-      },
-      championships: {
-        total: stats.totalCampeonatos,
-        active: stats.campeonatosAtivos,
-      },
-      schools: {
-        total: stats.totalEscolinhas,
-        students: stats.vagasOcupadas,
-        vacancies: stats.vagasLivres,
-      },
-      equipment: {
-        total: stats.totalEquipamentos,
-        available: stats.totalEquipamentos,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    athletes: { total: 0, active: 0 },
+    championships: { total: 0, active: 0 },
+    schools: { total: 0, students: 0, vacancies: 0 },
+    equipment: { total: 0, available: 0 },
+  });
 });
 
-// HABITAÇÃO
+// HABITAÇÃO - Service deletado (MS)
 router.get('/habitacao/stats', async (req, res) => {
-  try {
-    const stats = await habitacaoService.getEstatisticasHabitacao();
-
-    res.json({
-      housing: {
-        total: stats.totalConjuntos,
-        units: 0,
-      },
-      applications: {
-        total: stats.totalInscricoes,
-        approved: stats.inscricoesAprovadas,
-        pending: stats.totalInscricoes - stats.inscricoesAprovadas,
-      },
-      construction: {
-        total: stats.totalObras,
-        ongoing: stats.obrasEmAndamento,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    housing: { total: 0, units: 0 },
+    applications: { total: 0, approved: 0, pending: 0 },
+    construction: { total: 0, ongoing: 0 },
+  });
 });
 
-// MEIO AMBIENTE
+// MEIO AMBIENTE - Service deletado (MS)
 router.get('/meio-ambiente/stats', async (req, res) => {
-  try {
-    const stats = await meioAmbienteService.getEstatisticasMeioAmbiente();
-
-    res.json({
-      trees: {
-        total: stats.totalArvores,
-        planted: 0,
-      },
-      parks: {
-        total: stats.totalParques,
-        maintained: stats.totalParques,
-      },
-      collectionPoints: {
-        total: stats.totalPontosColeta,
-        active: stats.totalPontosColeta,
-      },
-      licenses: {
-        total: stats.totalLicencas,
-        pending: 0,
-        approved: 0,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    trees: { total: 0, planted: 0 },
+    parks: { total: 0, maintained: 0 },
+    collectionPoints: { total: 0, active: 0 },
+    licenses: { total: 0, pending: 0, approved: 0 },
+  });
 });
 
-// OBRAS PÚBLICAS
+// OBRAS PÚBLICAS - Service deletado (MS)
 router.get('/obras-publicas/stats', async (req, res) => {
-  try {
-    const stats = await obrasService.getEstatisticasObras();
-
-    res.json({
-      projects: {
-        total: stats.totalObras,
-        ongoing: 0,
-        completed: 0,
-      },
-      requests: {
-        total: stats.totalSolicitacoes,
-        pending: 0,
-      },
-      lighting: {
-        total: stats.totalPontosIluminacao,
-        working: stats.totalPontosIluminacao,
-      },
-      types: {
-        total: stats.totalTipos,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    projects: { total: 0, ongoing: 0, completed: 0 },
+    requests: { total: 0, pending: 0 },
+    lighting: { total: 0, working: 0 },
+    types: { total: 0 },
+  });
 });
 
 // SEGURANÇA PÚBLICA - Service deletado (MS)

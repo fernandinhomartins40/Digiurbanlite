@@ -203,44 +203,10 @@ router.get('/:source', async (req, res) => {
         break;
 
       // ==================== AGRICULTURA ====================
-
-      case 'MS_MAQUINAS_AGRICOLAS':
-      case 'MAQUINAS':
-        data = await prisma.maquinaAgricolaMS.findMany({
-          where: {
-            isActive: true,
-            status: 'DISPONIVEL'
-          },
-          select: {
-            id: true,
-            tipo: true,
-            modelo: true,
-            marca: true,
-            patrimonio: true
-          },
-          take: parseInt(limit as string)
-        });
-        data = data.map(m => ({
-          id: m.id,
-          nome: `${m.tipo} - ${m.marca} ${m.modelo} (${m.patrimonio})`,
-          tipo: m.tipo
-        }));
-        break;
+      // REMOVIDO: MS_MAQUINAS_AGRICOLAS (model deletado)
 
       // ==================== CULTURA ====================
-
-      case 'MS_ESPACOS_CULTURAIS':
-      case 'ESPACOS_CULTURAIS':
-        data = await prisma.espacoCultural.findMany({
-          where: {
-            isActive: true,
-            nome: search ? { contains: search as string, mode: 'insensitive' } : undefined
-          },
-          select: { id: true, nome: true, tipo: true, capacidade: true },
-          take: parseInt(limit as string),
-          orderBy: { nome: 'asc' }
-        });
-        break;
+      // REMOVIDO: MS_ESPACOS_CULTURAIS (model deletado)
 
       // ==================== ESPORTES ====================
 
@@ -273,19 +239,7 @@ router.get('/:source', async (req, res) => {
         break;
 
       // ==================== TURISMO ====================
-
-      case 'MS_PONTOS_TURISTICOS':
-      case 'PONTOS_TURISTICOS':
-        data = await prisma.pontoTuristico.findMany({
-          where: {
-            isActive: true,
-            nome: search ? { contains: search as string, mode: 'insensitive' } : undefined
-          },
-          select: { id: true, nome: true, tipo: true, descricao: true },
-          take: parseInt(limit as string),
-          orderBy: { nome: 'asc' }
-        });
-        break;
+      // REMOVIDO: MS_PONTOS_TURISTICOS (model deletado)
 
       // ==================== GENÉRICO ====================
 
