@@ -4,7 +4,6 @@ import esportesService from '../services/esportes/esportes.service';
 import habitacaoService from '../services/habitacao/habitacao.service';
 import meioAmbienteService from '../services/meio-ambiente/meio-ambiente.service';
 import obrasService from '../services/obras/obras.service';
-import planejamentoService from '../services/planejamento/planejamento.service';
 
 const router = Router();
 
@@ -200,33 +199,14 @@ router.get('/turismo/stats', async (req, res) => {
   });
 });
 
-// PLANEJAMENTO URBANO
+// PLANEJAMENTO URBANO - Service deletado (MS)
 router.get('/planejamento-urbano/stats', async (req, res) => {
-  try {
-    const stats = await planejamentoService.getEstatisticasPlanejamento();
-
-    res.json({
-      zones: {
-        total: stats.totalZonas,
-        types: 0,
-      },
-      licenses: {
-        total: stats.totalLicencas,
-        pending: 0,
-        approved: 0,
-      },
-      properties: {
-        total: stats.totalImoveis,
-        registered: stats.totalImoveis,
-      },
-      subdivisions: {
-        total: stats.totalLoteamentos,
-        approved: 0,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    zones: { total: 0, types: 0 },
+    licenses: { total: 0, pending: 0, approved: 0 },
+    properties: { total: 0, registered: 0 },
+    subdivisions: { total: 0, approved: 0 },
+  });
 });
 
 // SERVIÇOS PÚBLICOS - Service deletado (MS)
