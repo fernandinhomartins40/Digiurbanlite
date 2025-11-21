@@ -5,9 +5,7 @@ import habitacaoService from '../services/habitacao/habitacao.service';
 import meioAmbienteService from '../services/meio-ambiente/meio-ambiente.service';
 import obrasService from '../services/obras/obras.service';
 import segurancaService from '../services/seguranca/seguranca.service';
-import turismoService from '../services/turismo/turismo.service';
 import planejamentoService from '../services/planejamento/planejamento.service';
-import servicosPublicosService from '../services/servicos-publicos/servicos-publicos.service';
 
 const router = Router();
 
@@ -212,32 +210,14 @@ router.get('/seguranca-publica/stats', async (req, res) => {
   }
 });
 
-// TURISMO
+// TURISMO - Service deletado (MS)
 router.get('/turismo/stats', async (req, res) => {
-  try {
-    const stats = await turismoService.getEstatisticasTurismo();
-
-    res.json({
-      establishments: {
-        total: stats.totalEstabelecimentos,
-        active: stats.totalEstabelecimentos,
-      },
-      guides: {
-        total: stats.totalGuias,
-        active: stats.totalGuias,
-      },
-      attractions: {
-        total: stats.totalPontos,
-        visitors: 0,
-      },
-      events: {
-        total: stats.totalEventos,
-        upcoming: stats.totalEventos,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    establishments: { total: 0, active: 0 },
+    guides: { total: 0, active: 0 },
+    attractions: { total: 0, visitors: 0 },
+    events: { total: 0, upcoming: 0 },
+  });
 });
 
 // PLANEJAMENTO URBANO
@@ -269,37 +249,15 @@ router.get('/planejamento-urbano/stats', async (req, res) => {
   }
 });
 
-// SERVIÇOS PÚBLICOS
+// SERVIÇOS PÚBLICOS - Service deletado (MS)
 router.get('/servicos-publicos/stats', async (req, res) => {
-  try {
-    const stats = await servicosPublicosService.getEstatisticasServicos();
-
-    res.json({
-      collectionRoutes: {
-        total: stats.totalRotas,
-        active: stats.totalRotas,
-      },
-      maintenanceRequests: {
-        total: stats.totalManutencoes,
-        pending: 0,
-        completed: 0,
-      },
-      pruningRequests: {
-        total: stats.totalPodas,
-        pending: 0,
-      },
-      cemeteries: {
-        total: stats.totalCemiterios,
-        graves: stats.totalSepulturas,
-      },
-      markets: {
-        total: stats.totalFeiras,
-        active: stats.totalFeiras,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+  res.json({
+    collectionRoutes: { total: 0, active: 0 },
+    maintenanceRequests: { total: 0, pending: 0, completed: 0 },
+    pruningRequests: { total: 0, pending: 0 },
+    cemeteries: { total: 0, graves: 0 },
+    markets: { total: 0, active: 0 },
+  });
 });
 
 export default router;
