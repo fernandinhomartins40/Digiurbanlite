@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   CheckCircle2,
   Clock,
@@ -10,7 +11,6 @@ import {
   Users,
   TrendingUp,
   ChevronRight,
-  Building2,
   Heart,
   GraduationCap,
   HandHeart,
@@ -30,15 +30,16 @@ export default function LandingPage() {
       <nav className="fixed top-0 w-full bg-white/80 backdrop-blur-xl border-b border-gray-100 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[#0f6fbe] to-[#193642] flex items-center justify-center">
-                <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
-              <div>
-                <div className="text-base sm:text-lg font-semibold text-[#193642]">DigiUrban</div>
-                <div className="text-[10px] sm:text-xs text-gray-500 hidden xs:block">Plataforma Municipal Digital</div>
-              </div>
-            </div>
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo-digiurban.png"
+                alt="DigiUrban"
+                width={180}
+                height={50}
+                className="h-8 sm:h-10 w-auto"
+                priority
+              />
+            </Link>
 
             <div className="hidden md:flex items-center gap-8">
               <a href="#servicos" className="text-sm font-medium text-gray-600 hover:text-[#0f6fbe] transition-colors">Serviços</a>
@@ -507,14 +508,14 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 lg:gap-12 mb-8 sm:mb-10 lg:mb-12">
             <div className="sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[#0f6fbe] to-[#0fffbf] flex items-center justify-center">
-                  <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div>
-                  <div className="text-base sm:text-lg font-semibold">DigiUrban</div>
-                  <div className="text-[10px] sm:text-xs text-white/60">Plataforma Municipal</div>
-                </div>
+              <div className="mb-4 sm:mb-6">
+                <Image
+                  src="/logo-digiurban-branco.png"
+                  alt="DigiUrban"
+                  width={180}
+                  height={50}
+                  className="h-10 sm:h-12 w-auto"
+                />
               </div>
               <p className="text-xs sm:text-sm text-white/60 leading-relaxed max-w-xs">
                 Plataforma digital para facilitar o acesso aos serviços municipais de forma moderna e eficiente.
