@@ -222,7 +222,10 @@ export default function SecretariaSaudePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* APP 1: Gestão de Unidades e Agenda */}
-          <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all cursor-pointer group">
+          <Card
+            className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/saude/unidades-agenda')}
+          >
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-blue-900">
                 <MapPin className="h-5 w-5 text-blue-600" />
@@ -258,7 +261,10 @@ export default function SecretariaSaudePage() {
           </Card>
 
           {/* APP 2: Prontuário Eletrônico */}
-          <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all cursor-pointer group">
+          <Card
+            className="border-green-200 bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/saude/prontuario')}
+          >
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-green-900">
                 <FileText className="h-5 w-5 text-green-600" />
@@ -294,7 +300,10 @@ export default function SecretariaSaudePage() {
           </Card>
 
           {/* APP 3: Farmácia Municipal */}
-          <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all cursor-pointer group">
+          <Card
+            className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/saude/farmacia')}
+          >
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-purple-900">
                 <Heart className="h-5 w-5 text-purple-600" />
@@ -330,7 +339,10 @@ export default function SecretariaSaudePage() {
           </Card>
 
           {/* APP 4: TFD - Tratamento Fora do Domicílio */}
-          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all cursor-pointer group">
+          <Card
+            className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/saude/tfd')}
+          >
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-orange-900">
                 <FileBarChart className="h-5 w-5 text-orange-600" />
@@ -360,7 +372,7 @@ export default function SecretariaSaudePage() {
                 </div>
               </div>
               <Badge className="mt-4 bg-orange-600 hover:bg-orange-700">
-                Documentado
+                ✅ Implementado
               </Badge>
             </CardContent>
           </Card>
