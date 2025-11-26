@@ -1,5 +1,8 @@
-import { PrismaClient, TFDStatus, MeioPagamento } from '@prisma/client';
+import { PrismaClient, TFDStatus, MeioPagamento, DocumentStatus, PendingType } from '@prisma/client';
 import workflowInstanceService from '../workflow/workflow-instance.service';
+import * as protocolDocumentService from '../protocol-document.service';
+import * as protocolPendingService from '../protocol-pending.service';
+import protocolToTFDService from './protocol-to-tfd.service';
 
 const prisma = new PrismaClient();
 
@@ -140,10 +143,42 @@ export class TFDService {
       novoStatus = 'AGUARDANDO_REGULACAO_MEDICA';
       proximoStage = 'REGULACAO_MEDICA';
       action = 'DOCUMENTACAO_APROVADA';
+
+      // ✅ INTEGRAÇÃO: Aprovar documentos no protocolo
+      const documentos = await protocolDocumentService.getProtocolDocuments(solicitacao.protocolId);
+      for (const doc of documentos) {
+        if (doc.status === DocumentStatus.UPLOADED || doc.status === DocumentStatus.UNDER_REVIEW) {
+          await protocolDocumentService.approveDocument(doc.id, data.analistaId);
+        }
+      }
     } else {
       novoStatus = 'DOCUMENTACAO_PENDENTE';
       proximoStage = 'ANALISE_DOCUMENTAL';
       action = 'DOCUMENTACAO_PENDENTE';
+
+      // ✅ INTEGRAÇÃO: Criar pendências para documentos rejeitados
+      if (data.documentosPendentes && data.documentosPendentes.length > 0) {
+        for (const docType of data.documentosPendentes) {
+          await protocolPendingService.createDocumentPending(
+            solicitacao.protocolId,
+            docType,
+            data.analistaId,
+            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Prazo: 7 dias
+          );
+        }
+      }
+
+      // ✅ INTEGRAÇÃO: Rejeitar documentos específicos no protocolo
+      const documentos = await protocolDocumentService.getProtocolDocuments(solicitacao.protocolId);
+      for (const doc of documentos) {
+        if (data.documentosPendentes?.includes(doc.documentType)) {
+          await protocolDocumentService.rejectDocument(
+            doc.id,
+            data.analistaId,
+            data.observacoes || 'Documento não atende aos requisitos'
+          );
+        }
+      }
     }
 
     // Atualizar solicitação
@@ -169,6 +204,9 @@ export class TFDService {
           ? 'Documentação aprovada'
           : `Documentação pendente: ${data.documentosPendentes?.join(', ')}`)
     );
+
+    // ✅ INTEGRAÇÃO: Sincronizar status com protocolo
+    await protocolToTFDService.syncTFDStatusToProtocol(data.solicitacaoId);
 
     return await this.findById(data.solicitacaoId);
   }
@@ -203,6 +241,21 @@ export class TFDService {
       novoStatus = 'CANCELADO';
       proximoStage = 'CANCELADO';
       action = 'REGULACAO_NEGADA';
+
+      // ✅ INTEGRAÇÃO: Criar pendência informando a negação
+      await protocolPendingService.createPending({
+        protocolId: solicitacao.protocolId,
+        type: PendingType.APPROVAL,
+        title: 'Solicitação TFD Negada pela Regulação Médica',
+        description: data.justificativa || 'Solicitação não atende aos critérios médicos para TFD',
+        createdBy: data.reguladorId,
+        blocksProgress: true,
+        metadata: {
+          etapa: 'REGULACAO_MEDICA',
+          motivo: data.justificativa,
+          dataDecisao: new Date().toISOString(),
+        },
+      });
     }
 
     // Atualizar solicitação
@@ -235,13 +288,16 @@ export class TFDService {
       );
     }
 
+    // ✅ INTEGRAÇÃO: Sincronizar status com protocolo
+    await protocolToTFDService.syncTFDStatusToProtocol(data.solicitacaoId);
+
     return await this.findById(data.solicitacaoId);
   }
 
   /**
    * Aprovação da gestão
    */
-  async aprovarGestao(data: AprovarGestaoDTO) {
+  async aprovarGestao(data: AprovarGestaoDTO & { valorEstimado?: number }) {
     const solicitacao = await prisma.solicitacaoTFD.findUnique({
       where: { id: data.solicitacaoId },
     });
@@ -270,6 +326,21 @@ export class TFDService {
       novoStatus = 'CANCELADO';
       proximoStage = 'CANCELADO';
       action = 'GESTAO_NEGADA';
+
+      // ✅ INTEGRAÇÃO: Criar pendência informando a negação
+      await protocolPendingService.createPending({
+        protocolId: solicitacao.protocolId,
+        type: PendingType.APPROVAL,
+        title: 'Solicitação TFD Negada pela Gestão',
+        description: data.justificativa || 'Solicitação não atende aos critérios orçamentários',
+        createdBy: data.gestorId,
+        blocksProgress: true,
+        metadata: {
+          etapa: 'APROVACAO_GESTAO',
+          motivo: data.justificativa,
+          dataDecisao: new Date().toISOString(),
+        },
+      });
     }
 
     // Atualizar solicitação
@@ -283,14 +354,17 @@ export class TFDService {
       },
     });
 
-    // Transição do workflow
+    // Transição do workflow com metadata incluindo valor estimado
     await workflowInstanceService.transition(
       solicitacao.workflowId,
       proximoStage,
       action,
       data.gestorId,
       undefined,
-      data.justificativa || (data.aprovado ? 'Aprovado pela gestão' : 'Negado pela gestão')
+      data.justificativa || (data.aprovado ? 'Aprovado pela gestão' : 'Negado pela gestão'),
+      data.aprovado && (data as any).valorEstimado
+        ? { valorEstimado: (data as any).valorEstimado }
+        : undefined
     );
 
     if (!data.aprovado) {
@@ -301,6 +375,9 @@ export class TFDService {
         'Solicitação negada pela gestão'
       );
     }
+
+    // ✅ INTEGRAÇÃO: Sincronizar status com protocolo
+    await protocolToTFDService.syncTFDStatusToProtocol(data.solicitacaoId);
 
     return await this.findById(data.solicitacaoId);
   }
@@ -735,11 +812,11 @@ export class TFDService {
         }
       },
       _sum: {
-        valorDespesas: true
+        totalGasto: true
       }
     });
 
-    const despesasMes = despesasMesAggregate._sum.valorDespesas || 0;
+    const despesasMes = despesasMesAggregate._sum?.totalGasto || 0;
 
     return {
       totalSolicitacoes,
