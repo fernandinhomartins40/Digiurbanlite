@@ -5,7 +5,49 @@ import protocolToTFDService from '../services/tfd/protocol-to-tfd.service';
 
 const router = Router();
 
+// ==================== DASHBOARD ====================
+
+router.get('/dashboard/stats', async (req, res) => {
+  try {
+    const stats = await tfdService.getDashboardStats();
+    res.json(stats);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== SOLICITAÇÕES ====================
+
+// Listagem com filtros
+router.get('/solicitacoes', async (req, res) => {
+  try {
+    const { status, prioridade, search } = req.query;
+
+    const where: any = {};
+
+    // Filtro por status
+    if (status && status !== 'all') {
+      where.status = status;
+    }
+
+    // Filtro por prioridade
+    if (prioridade && prioridade !== 'all') {
+      where.prioridade = prioridade;
+    }
+
+    // Busca por protocolo ID ou nome do cidadão
+    if (search) {
+      where.OR = [
+        { protocolId: { contains: search as string, mode: 'insensitive' } }
+      ];
+    }
+
+    const solicitacoes = await tfdService.findAll(where);
+    res.json({ data: solicitacoes });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 router.post('/solicitacoes', async (req, res) => {
   try {

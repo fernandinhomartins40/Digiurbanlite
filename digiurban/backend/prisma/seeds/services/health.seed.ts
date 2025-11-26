@@ -1630,5 +1630,276 @@ export const healthServices: ServiceDefinition[] = [
       category: 'Certidões',
       icon: 'Award',
       color: '#8b5cf6'
+    },
+
+  // ========================================
+  // SERVIÇO COM_DADOS: TFD
+  // ========================================
+  {
+    name: 'Encaminhamento TFD (Tratamento Fora do Domicílio)',
+    description: 'Solicitação de tratamento médico especializado em outras cidades quando não disponível no município',
+    departmentCode: 'SAUDE',
+    serviceType: 'COM_DADOS',
+    moduleType: 'ENCAMINHAMENTOS_TFD',
+    requiresDocuments: true,
+    requiredDocuments: [
+      { id: 'encaminhamento_medico', name: 'Encaminhamento Médico', required: true },
+      { id: 'exames', name: 'Exames Médicos', required: false },
+      { id: 'documentos_pessoais', name: 'Documentos Pessoais (RG, CPF, Cartão SUS)', required: true }
+    ],
+    estimatedDays: 30,
+    priority: 1,
+    category: 'Assistência à Saúde',
+    icon: 'FileBarChart',
+    color: '#f97316',
+
+    formSchema: {
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_phone',
+        'citizen_email',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood'
+      ],
+      fields: [
+        // ========== DADOS MÉDICOS ==========
+        {
+          id: 'cartaoSUS',
+          label: 'Cartão SUS (CNS)',
+          type: 'text',
+          pattern: '^\\d{15}$',
+          minLength: 15,
+          maxLength: 15,
+          required: true
+        },
+        {
+          id: 'especialidade',
+          label: 'Especialidade Médica Necessária',
+          type: 'select',
+          required: true,
+          options: [
+            'Cardiologia',
+            'Oncologia',
+            'Neurologia',
+            'Ortopedia',
+            'Oftalmologia',
+            'Nefrologia',
+            'Urologia',
+            'Cirurgia Cardíaca',
+            'Cirurgia Vascular',
+            'Hematologia',
+            'Endocrinologia',
+            'Outras'
+          ]
+        },
+        {
+          id: 'especialidadeOutra',
+          label: 'Especifique a Especialidade',
+          type: 'text',
+          required: false,
+          maxLength: 100,
+          visibleWhen: { field: 'especialidade', value: 'Outras' }
+        },
+        {
+          id: 'procedimento',
+          label: 'Procedimento/Tratamento Necessário',
+          type: 'textarea',
+          required: true,
+          minLength: 20,
+          maxLength: 500,
+          placeholder: 'Descreva detalhadamente o procedimento ou tratamento necessário'
+        },
+        {
+          id: 'justificativaMedica',
+          label: 'Justificativa Médica',
+          type: 'textarea',
+          required: true,
+          minLength: 50,
+          maxLength: 1000,
+          placeholder: 'Justifique a necessidade do tratamento fora do domicílio (por que não pode ser realizado no município)'
+        },
+        {
+          id: 'medicoSolicitante',
+          label: 'Nome do Médico Solicitante',
+          type: 'text',
+          required: true,
+          maxLength: 200
+        },
+        {
+          id: 'crmMedico',
+          label: 'CRM do Médico',
+          type: 'text',
+          required: true,
+          pattern: '^\\d{4,8}$',
+          placeholder: 'Somente números'
+        },
+        {
+          id: 'crmEstado',
+          label: 'Estado do CRM',
+          type: 'select',
+          required: true,
+          options: ['SP', 'RJ', 'MG', 'PR', 'SC', 'RS', 'BA', 'PE', 'CE', 'GO', 'DF', 'Outro']
+        },
+        {
+          id: 'cid10',
+          label: 'CID-10',
+          type: 'text',
+          required: false,
+          maxLength: 10,
+          placeholder: 'Ex: C50.9'
+        },
+        {
+          id: 'diagnostico',
+          label: 'Diagnóstico',
+          type: 'textarea',
+          required: true,
+          minLength: 20,
+          maxLength: 500
+        },
+
+        // ========== DESTINO ==========
+        {
+          id: 'cidadeDestino',
+          label: 'Cidade de Destino',
+          type: 'text',
+          required: true,
+          maxLength: 100,
+          placeholder: 'Ex: São Paulo'
+        },
+        {
+          id: 'estadoDestino',
+          label: 'Estado de Destino',
+          type: 'select',
+          required: true,
+          options: ['SP', 'RJ', 'MG', 'PR', 'SC', 'RS', 'BA', 'PE', 'CE', 'GO', 'DF', 'Outro']
+        },
+        {
+          id: 'hospitalDestino',
+          label: 'Hospital/Clínica de Destino (se já definido)',
+          type: 'text',
+          required: false,
+          maxLength: 200
+        },
+
+        // ========== PRIORIDADE ==========
+        {
+          id: 'prioridade',
+          label: 'Nível de Prioridade',
+          type: 'select',
+          required: true,
+          options: ['EMERGENCIA', 'ALTA', 'MEDIA', 'ROTINA'],
+          default: 'MEDIA'
+        },
+        {
+          id: 'justificativaPrioridade',
+          label: 'Justificativa da Prioridade',
+          type: 'textarea',
+          required: false,
+          maxLength: 500,
+          visibleWhen: { field: 'prioridade', value: ['EMERGENCIA', 'ALTA'] }
+        },
+
+        // ========== ACOMPANHANTE ==========
+        {
+          id: 'necessitaAcompanhante',
+          label: 'Necessita Acompanhante?',
+          type: 'checkbox',
+          required: false,
+          default: false
+        },
+        {
+          id: 'justificativaAcompanhante',
+          label: 'Justificativa para Acompanhante',
+          type: 'textarea',
+          required: false,
+          maxLength: 500,
+          placeholder: 'Ex: Paciente menor de idade, idoso com mobilidade reduzida, necessita auxílio...',
+          visibleWhen: { field: 'necessitaAcompanhante', value: true }
+        },
+        {
+          id: 'nomeAcompanhante',
+          label: 'Nome Completo do Acompanhante',
+          type: 'text',
+          required: false,
+          maxLength: 200,
+          visibleWhen: { field: 'necessitaAcompanhante', value: true }
+        },
+        {
+          id: 'cpfAcompanhante',
+          label: 'CPF do Acompanhante',
+          type: 'text',
+          required: false,
+          pattern: '^\\d{11}$',
+          placeholder: 'Somente números',
+          visibleWhen: { field: 'necessitaAcompanhante', value: true }
+        },
+        {
+          id: 'parentescoAcompanhante',
+          label: 'Parentesco do Acompanhante',
+          type: 'select',
+          required: false,
+          options: ['Pai', 'Mãe', 'Filho(a)', 'Cônjuge', 'Irmão(ã)', 'Outro Familiar', 'Cuidador'],
+          visibleWhen: { field: 'necessitaAcompanhante', value: true }
+        },
+
+        // ========== INFORMAÇÕES ADICIONAIS ==========
+        {
+          id: 'dataPreferencialConsulta',
+          label: 'Data Preferencial para Consulta/Procedimento',
+          type: 'date',
+          required: false
+        },
+        {
+          id: 'necessidadesEspeciais',
+          label: 'Possui Necessidades Especiais?',
+          type: 'checkbox',
+          required: false,
+          default: false
+        },
+        {
+          id: 'descricaoNecessidadesEspeciais',
+          label: 'Descreva as Necessidades Especiais',
+          type: 'textarea',
+          required: false,
+          maxLength: 500,
+          visibleWhen: { field: 'necessidadesEspeciais', value: true }
+        },
+        {
+          id: 'observacoes',
+          label: 'Observações Adicionais',
+          type: 'textarea',
+          required: false,
+          maxLength: 1000,
+          placeholder: 'Informações complementares relevantes para a análise da solicitação'
+        }
+      ]
+    },
+
+    // ========== CONFIGURAÇÃO DE CITIZEN LINKS ==========
+    linkedCitizensConfig: {
+      enabled: true,
+      links: [
+        {
+          linkType: 'COMPANION',
+          role: 'COMPANION',
+          label: 'Acompanhante',
+          required: false,
+          mapFromLegacyFields: {
+            name: 'nomeAcompanhante',
+            cpf: 'cpfAcompanhante'
+          },
+          onlyIfCondition: {
+            field: 'necessitaAcompanhante',
+            value: true
+          }
+        }
+      ]
     }
+  }
 ];

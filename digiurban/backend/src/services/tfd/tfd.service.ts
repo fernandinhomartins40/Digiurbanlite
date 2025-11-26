@@ -668,6 +668,94 @@ export class TFDService {
       despesaMedia: realizados > 0 ? despesaTotal / realizados : 0,
     };
   }
+
+  /**
+   * Buscar todas as solicitações com filtros
+   */
+  async findAll(where: any = {}) {
+    return await prisma.solicitacaoTFD.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  /**
+   * Obter estatísticas para o dashboard
+   */
+  async getDashboardStats() {
+    // Buscar contagens de solicitações por status em paralelo
+    const [
+      totalSolicitacoes,
+      aguardandoAnalise,
+      aguardandoRegulacao,
+      aguardandoGestao,
+      agendados,
+      emViagem,
+      realizados,
+      cancelados,
+      veiculosDisponiveis,
+      motoristasDisponiveis
+    ] = await Promise.all([
+      prisma.solicitacaoTFD.count(),
+      prisma.solicitacaoTFD.count({ where: { status: 'AGUARDANDO_ANALISE_DOCUMENTAL' } }),
+      prisma.solicitacaoTFD.count({ where: { status: 'AGUARDANDO_REGULACAO_MEDICA' } }),
+      prisma.solicitacaoTFD.count({ where: { status: 'AGUARDANDO_APROVACAO_GESTAO' } }),
+      prisma.solicitacaoTFD.count({ where: { status: 'AGENDADO' } }),
+      prisma.solicitacaoTFD.count({ where: { status: 'EM_VIAGEM' } }),
+      prisma.solicitacaoTFD.count({ where: { status: 'REALIZADO' } }),
+      prisma.solicitacaoTFD.count({ where: { status: 'CANCELADO' } }),
+      prisma.veiculoTFD.count({ where: { status: 'DISPONIVEL' } }),
+      prisma.motoristaTFD.count({ where: { status: 'DISPONIVEL' } })
+    ]);
+
+    // Buscar viagens de hoje
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const fimHoje = new Date();
+    fimHoje.setHours(23, 59, 59, 999);
+
+    const viagensHoje = await prisma.viagemTFD.count({
+      where: {
+        dataViagem: {
+          gte: hoje,
+          lte: fimHoje
+        }
+      }
+    });
+
+    // Calcular despesas do mês
+    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59, 999);
+
+    const despesasMesAggregate = await prisma.viagemTFD.aggregate({
+      where: {
+        dataViagem: {
+          gte: inicioMes,
+          lte: fimMes
+        }
+      },
+      _sum: {
+        valorDespesas: true
+      }
+    });
+
+    const despesasMes = despesasMesAggregate._sum.valorDespesas || 0;
+
+    return {
+      totalSolicitacoes,
+      aguardandoAnalise,
+      aguardandoRegulacao,
+      aguardandoGestao,
+      agendados,
+      emViagem,
+      realizados,
+      cancelados,
+      viagensHoje,
+      despesasMes,
+      veiculosDisponiveis,
+      motoristasDisponiveis
+    };
+  }
 }
 
 export default new TFDService();

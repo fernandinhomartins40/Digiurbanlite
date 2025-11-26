@@ -190,6 +190,23 @@ export class ProtocolModuleService {
       // Não falhar a criação do protocolo se citizen links falharem
     }
 
+    // ============================================================================
+    // ⭐ HOOK AUTOMÁTICO: CONVERTER PROTOCOLO TFD → SOLICITAÇÃO TFD
+    // ============================================================================
+
+    if (result.protocol.moduleType === 'ENCAMINHAMENTOS_TFD') {
+      try {
+        const protocolToTFDService = (await import('./tfd/protocol-to-tfd.service')).default;
+        const solicitacaoTFD = await protocolToTFDService.convertProtocolToTFD(result.protocol.id);
+
+        console.log(`✅ Protocolo ${result.protocol.number} convertido automaticamente para solicitação TFD ${solicitacaoTFD.id}`);
+      } catch (error) {
+        console.error('❌ Erro ao converter protocolo para TFD:', error);
+        // Não falhar a criação do protocolo se conversão TFD falhar
+        // O protocolo continua existindo e pode ser convertido manualmente depois
+      }
+    }
+
     return result;
   }
 

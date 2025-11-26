@@ -47,27 +47,35 @@ export default function DashboardTFDPage() {
 
   const loadStats = async () => {
     try {
-      // TODO: Implementar chamada real à API
-      // const response = await fetch('/api/tfd/dashboard/stats');
-      // const data = await response.json();
+      setLoading(true);
 
-      // Mock data temporário
-      setStats({
-        totalSolicitacoes: 156,
-        aguardandoAnalise: 12,
-        aguardandoRegulacao: 8,
-        aguardandoGestao: 5,
-        agendados: 23,
-        emViagem: 4,
-        realizados: 98,
-        cancelados: 6,
-        viagensHoje: 4,
-        despesasMes: 45820.50,
-        veiculosDisponiveis: 8,
-        motoristasDisponiveis: 12,
-      });
+      // ✅ Chamada real à API
+      const response = await fetch('/api/tfd/dashboard/stats');
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar estatísticas');
+      }
+
+      const data = await response.json();
+      setStats(data);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
+
+      // Fallback com dados vazios
+      setStats({
+        totalSolicitacoes: 0,
+        aguardandoAnalise: 0,
+        aguardandoRegulacao: 0,
+        aguardandoGestao: 0,
+        agendados: 0,
+        emViagem: 0,
+        realizados: 0,
+        cancelados: 0,
+        viagensHoje: 0,
+        despesasMes: 0,
+        veiculosDisponiveis: 0,
+        motoristasDisponiveis: 0,
+      });
     } finally {
       setLoading(false);
     }
@@ -102,10 +110,10 @@ export default function DashboardTFDPage() {
         <Button
           size="lg"
           className="bg-orange-600 hover:bg-orange-700"
-          onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes/nova')}
+          onClick={() => router.push('/admin/servicos?search=TFD')}
         >
           <Plus className="h-5 w-5 mr-2" />
-          Nova Solicitação
+          Nova Solicitação (via Protocolo)
         </Button>
       </div>
 
@@ -270,10 +278,10 @@ export default function DashboardTFDPage() {
               <Button
                 variant="outline"
                 className="w-full justify-start"
-                onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes/nova')}
+                onClick={() => router.push('/admin/servicos?search=TFD')}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Nova solicitação
+                Nova via Protocolo
               </Button>
             </div>
           </CardContent>

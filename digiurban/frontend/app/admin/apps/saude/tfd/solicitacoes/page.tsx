@@ -50,53 +50,25 @@ export default function SolicitacoesPage() {
 
   const loadSolicitacoes = async () => {
     try {
-      // TODO: Implementar chamada real à API
-      // let url = '/api/tfd/solicitacoes?';
-      // if (statusFilter !== 'all') url += `status=${statusFilter}&`;
-      // if (prioridadeFilter !== 'all') url += `prioridade=${prioridadeFilter}`;
-      // const response = await fetch(url);
-      // const data = await response.json();
+      setLoading(true);
 
-      // Mock data temporário
-      setSolicitacoes([
-        {
-          id: '1',
-          protocolId: 'TFD-2025-001',
-          citizenName: 'Maria Silva Santos',
-          citizenCpf: '123.456.789-00',
-          especialidade: 'Oncologia',
-          cidadeDestino: 'São Paulo - SP',
-          status: 'AGUARDANDO_ANALISE_DOCUMENTAL',
-          prioridade: 'ALTA',
-          createdAt: '2025-11-20',
-        },
-        {
-          id: '2',
-          protocolId: 'TFD-2025-002',
-          citizenName: 'João Santos Oliveira',
-          citizenCpf: '987.654.321-00',
-          especialidade: 'Cardiologia',
-          cidadeDestino: 'Campinas - SP',
-          status: 'AGUARDANDO_REGULACAO_MEDICA',
-          prioridade: 'EMERGENCIA',
-          dataConsulta: '2025-11-28',
-          createdAt: '2025-11-19',
-        },
-        {
-          id: '3',
-          protocolId: 'TFD-2025-003',
-          citizenName: 'Ana Paula Costa',
-          citizenCpf: '456.789.123-00',
-          especialidade: 'Neurologia',
-          cidadeDestino: 'São Paulo - SP',
-          status: 'AGENDADO',
-          prioridade: 'MEDIA',
-          dataConsulta: '2025-12-05',
-          createdAt: '2025-11-18',
-        },
-      ]);
+      // ✅ Chamada real à API
+      let url = '/api/tfd/solicitacoes?';
+      if (statusFilter !== 'all') url += `status=${statusFilter}&`;
+      if (prioridadeFilter !== 'all') url += `prioridade=${prioridadeFilter}&`;
+      if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar solicitações');
+      }
+
+      const data = await response.json();
+      setSolicitacoes(data.data || []);
     } catch (error) {
       console.error('Erro ao carregar solicitações:', error);
+      setSolicitacoes([]);
     } finally {
       setLoading(false);
     }
@@ -159,10 +131,10 @@ export default function SolicitacoesPage() {
         <Button
           size="lg"
           className="bg-orange-600 hover:bg-orange-700"
-          onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes/nova')}
+          onClick={() => router.push('/admin/servicos?search=TFD')}
         >
           <Plus className="h-5 w-5 mr-2" />
-          Nova Solicitação
+          Nova via Protocolo
         </Button>
       </div>
 

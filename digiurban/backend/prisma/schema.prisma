@@ -361,14 +361,15 @@ model ProtocolSimplified {
   createdBy    User?             @relation("CreatedByUserSimplified", fields: [createdById], references: [id])
 
   // Relacionamentos núcleo do protocolo
-  history       ProtocolHistorySimplified[]
-  evaluations   ProtocolEvaluationSimplified[]
-  interactions  ProtocolInteraction[]
-  documentFiles ProtocolDocument[]
-  pendings      ProtocolPending[]
-  stages        ProtocolStage[]
-  sla           ProtocolSLA?
-  citizenLinks  ProtocolCitizenLink[]
+  history        ProtocolHistorySimplified[]
+  evaluations    ProtocolEvaluationSimplified[]
+  interactions   ProtocolInteraction[]
+  documentFiles  ProtocolDocument[]
+  pendings       ProtocolPending[]
+  stages         ProtocolStage[]
+  sla            ProtocolSLA?
+  citizenLinks   ProtocolCitizenLink[]
+  tfdSolicitacao SolicitacaoTFD?                @relation("TFDProtocol")
 
   @@index([status])
   @@index([createdAt])
@@ -2860,11 +2861,14 @@ model SolicitacaoTFD {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  viagens ViagemTFD[]
+  // Relações
+  protocol ProtocolSimplified @relation("TFDProtocol", fields: [protocolId], references: [id], onDelete: Cascade)
+  viagens  ViagemTFD[]
 
   @@index([citizenId])
   @@index([status])
   @@index([workflowId])
+  @@index([protocolId])
   @@map("solicitacoes_tfd")
 }
 
