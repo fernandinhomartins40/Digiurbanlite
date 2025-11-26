@@ -75,7 +75,7 @@ Recepção → Triagem (Enfermagem) → Fila Médica → Consulta (Médico) → 
 ---
 
 ### APP-SAUDE-04: TFD - Tratamento Fora do Domicílio 🚌
-**Status:** ✅ **IMPLEMENTAÇÃO COMPLETA**
+**Status:** 🟡 **Backend Completo (95%) / Frontend em Implementação (0%)**
 
 **Por que TFD é o app mais complexo?**
 - ✅ Fluxo de aprovação com 3 etapas (Documental, Regulação Médica, Gestão)

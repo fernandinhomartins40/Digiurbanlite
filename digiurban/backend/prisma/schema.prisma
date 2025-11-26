@@ -2898,24 +2898,29 @@ model ViagemTFD {
   solicitacaoTFDId String
   solicitacao      SolicitacaoTFD @relation(fields: [solicitacaoTFDId], references: [id])
 
-  tipo           TipoViagemTFD
-  dataViagem     DateTime
-  horarioSaida   String
-  horarioChegada String?
+  tipo            TipoViagemTFD
+  dataViagem      DateTime
+  dataRetornoReal DateTime?
+  horarioSaida    String
+  horarioChegada  String?
 
   veiculoId   String?
+  veiculo     VeiculoTFD?   @relation(fields: [veiculoId], references: [id])
   motoristaId String?
+  motorista   MotoristaTFD? @relation(fields: [motoristaId], references: [id])
   passageiros Json
 
-  kmInicial   Int?
-  kmFinal     Int?
-  kmTotal     Int?
-  combustivel Float?
-  pedagios    Float?
-  hospedagem  Float?
-  alimentacao Float?
-  outros      Float?
-  totalGasto  Float?
+  kmInicial          Int?
+  kmFinal            Int?
+  kmTotal            Int?
+  combustivel        Float?
+  pedagios           Float?
+  hospedagem         Float?
+  alimentacao        Float?
+  outros             Float?
+  valorDespesas      Float?
+  totalGasto         Float?
+  mecanismoPagamento MeioPagamento?
 
   comprovantes Json?
   status       StatusViagemTFD
@@ -2925,6 +2930,8 @@ model ViagemTFD {
   updatedAt DateTime @updatedAt
 
   @@index([solicitacaoTFDId])
+  @@index([veiculoId])
+  @@index([motoristaId])
   @@map("viagens_tfd")
 }
 
@@ -2957,6 +2964,8 @@ model VeiculoTFD {
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
+  viagens ViagemTFD[]
+
   @@index([status])
   @@map("veiculos_tfd")
 }
@@ -2982,6 +2991,8 @@ model MotoristaTFD {
   isActive     Boolean            @default(true)
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
+
+  viagens ViagemTFD[]
 
   @@index([status])
   @@map("motoristas_tfd")

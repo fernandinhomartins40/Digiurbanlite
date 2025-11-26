@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import tfdService from '../services/tfd/tfd.service';
+import tfdMontadorService from '../services/tfd/tfd-montador.service';
+import protocolToTFDService from '../services/tfd/protocol-to-tfd.service';
 
 const router = Router();
 
@@ -210,6 +212,58 @@ router.get('/relatorios', async (req, res) => {
     res.json(relatorio);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== MONTADOR DE LISTAS (ALGORITMO) ====================
+
+router.post('/viagens/montar-lista', async (req, res) => {
+  try {
+    const resultado = await tfdMontadorService.montarListaAutomatica(req.body);
+    res.status(201).json(resultado);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/viagens/preview-lista', async (req, res) => {
+  try {
+    const preview = await tfdMontadorService.previewLista(req.body);
+    res.json(preview);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ==================== INTEGRAÇÃO COM PROTOCOLOS ====================
+
+router.post('/convert-protocol/:protocolId', async (req, res) => {
+  try {
+    const solicitacao = await protocolToTFDService.convertProtocolToTFD(req.params.protocolId);
+    res.status(201).json(solicitacao);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/by-protocol/:protocolId', async (req, res) => {
+  try {
+    const solicitacao = await protocolToTFDService.findByProtocolId(req.params.protocolId);
+    if (!solicitacao) {
+      return res.status(404).json({ error: 'Solicitação TFD não encontrada para este protocolo' });
+    }
+    res.json(solicitacao);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/sync-status/:solicitacaoId', async (req, res) => {
+  try {
+    await protocolToTFDService.syncTFDStatusToProtocol(req.params.solicitacaoId);
+    res.json({ message: 'Status sincronizado com sucesso' });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
   }
 });
 
