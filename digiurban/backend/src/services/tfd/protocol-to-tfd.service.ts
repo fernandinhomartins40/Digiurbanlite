@@ -23,7 +23,7 @@ export class ProtocolToTFDService {
     console.log(`🔄 Convertendo protocolo ${protocolId} para TFD...`);
 
     // 1. Buscar protocolo
-    const protocol = await prisma.protocol.findUnique({
+    const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: protocolId },
       include: {
         service: true,
@@ -37,10 +37,8 @@ export class ProtocolToTFDService {
 
     // 2. Verificar se é serviço TFD
     const isTFDService =
-      protocol.service.moduleType?.includes('TFD') ||
-      protocol.service.category === 'TFD' ||
-      protocol.service.name.toLowerCase().includes('tfd') ||
-      protocol.service.name.toLowerCase().includes('fora do domicílio');
+      protocol.moduleType?.includes('TFD') ||
+      protocol.moduleType?.toLowerCase().includes('tfd');
 
     if (!isTFDService) {
       throw new Error('Este protocolo não é do tipo TFD');
@@ -56,22 +54,23 @@ export class ProtocolToTFDService {
       return existente;
     }
 
-    // 4. Extrair dados do formData do protocolo
-    const formData = protocol.formData as any;
+    // 4. Extrair dados do customData do protocolo
+    const customData = protocol.customData as any;
 
     // 5. Criar solicitação TFD
     const solicitacaoData = {
       citizenId: protocol.citizenId,
-      especialidade: formData.especialidade || 'Não informado',
-      procedimento: formData.procedimento || 'Não informado',
-      justificativaMedica: formData.justificativa || formData.justificativaMedica || 'Não informado',
-      cid10: formData.cid10,
-      cidadeDestino: formData.cidadeDestino || 'Não informado',
-      estadoDestino: formData.estadoDestino || 'SP',
-      hospitalDestino: formData.hospitalDestino,
-      prioridade: this.mapPrioridade(formData.prioridade),
-      acompanhanteId: formData.acompanhanteId,
-      observacoes: formData.observacoes,
+      especialidade: customData?.especialidade || 'Não informado',
+      procedimento: customData?.procedimento || 'Não informado',
+      justificativaMedica: customData?.justificativa || customData?.justificativaMedica || 'Não informado',
+      medicoSolicitante: customData?.medicoSolicitante || 'Não informado',
+      cid10: customData?.cid10,
+      cidadeDestino: customData?.cidadeDestino || 'Não informado',
+      estadoDestino: customData?.estadoDestino || 'SP',
+      hospitalDestino: customData?.hospitalDestino,
+      prioridade: this.mapPrioridade(customData?.prioridade),
+      acompanhanteId: customData?.acompanhanteId,
+      observacoes: customData?.observacoes,
       // URLs de documentos
       encaminhamentoMedicoUrl: this.extractDocumentUrl(protocol, 'encaminhamento'),
       examesUrls: this.extractExamesUrls(protocol),
@@ -79,14 +78,18 @@ export class ProtocolToTFDService {
 
     const solicitacao = await tfdService.createSolicitacao(solicitacaoData);
 
+    if (!solicitacao) {
+      throw new Error('Erro ao criar solicitação TFD');
+    }
+
     console.log(`✅ Solicitação TFD criada: ${solicitacao.id}`);
 
     // 6. Atualizar protocolo com link para solicitação TFD
-    await prisma.protocol.update({
+    await prisma.protocolSimplified.update({
       where: { id: protocolId },
       data: {
-        metadata: {
-          ...(protocol.metadata as any),
+        customData: {
+          ...(protocol.customData as any),
           tfdSolicitacaoId: solicitacao.id,
           convertedToTFD: true,
           convertedAt: new Date().toISOString(),
@@ -134,11 +137,11 @@ export class ProtocolToTFDService {
         break;
     }
 
-    await prisma.protocol.update({
+    await prisma.protocolSimplified.update({
       where: { id: solicitacao.protocolId },
       data: {
-        status: protocolStatus,
-        metadata: {
+        status: protocolStatus as any,
+        customData: {
           tfdStatus: solicitacao.status,
           lastSyncAt: new Date().toISOString(),
         },
