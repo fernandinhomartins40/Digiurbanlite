@@ -264,8 +264,24 @@ export default function SolicitarServicoPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao enviar solicitação');
+        // Tentar extrair erro em JSON, se falhar usar status HTTP
+        let errorMessage = 'Erro ao enviar solicitação';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || errorMessage;
+          } else {
+            // Resposta não é JSON (provavelmente HTML de erro)
+            const textResponse = await response.text();
+            console.error('Resposta de erro (não-JSON):', textResponse.substring(0, 200));
+            errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+          }
+        } catch (parseError) {
+          console.error('Erro ao processar resposta de erro:', parseError);
+          errorMessage = `Erro HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
