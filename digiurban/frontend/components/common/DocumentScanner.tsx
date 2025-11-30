@@ -1621,79 +1621,115 @@ export function DocumentScanner({
   }, [capturedImage, cropArea, processingMode, applyProcessingMode, showCropTool, editMode, autoProcessingEnabled, contrastLevel])
 
   /**
-   * Aplica transformação de perspectiva usando jscanify (OpenCV.js)
-   * Usa extractPaper para correção de perspectiva profissional
+   * Aplica transformação de perspectiva usando OpenCV.js diretamente
+   * CORRIGIDO: Usa warpPerspective com corners explícitos para garantir precisão
    */
   const applyPerspectiveTransform = useCallback(async (sourceCanvas: HTMLCanvasElement, corners?: DocumentCorners): Promise<HTMLCanvasElement> => {
-    console.log('[jscanify] Aplicando transformação de perspectiva')
+    console.log('[Perspectiva] Aplicando transformação de perspectiva')
+    console.log('[Perspectiva] Corners recebidos:', corners)
 
     try {
-      // FASE 7: Aguardar OpenCV.js carregar com retry
+      // Aguardar OpenCV.js carregar com retry
       const opencvReady = await waitForOpenCV(8000)
       if (!opencvReady) {
-        console.warn('[jscanify] OpenCV.js não carregou, usando imagem original')
+        console.warn('[Perspectiva] OpenCV.js não carregou, usando imagem original')
         return sourceCanvas
       }
 
-      // Importar jscanify dinamicamente APENAS no cliente (evita SSR issues)
-      const { default: JScanify } = await import('jscanify/src/jscanify')
-      const scanner = new JScanify()
+      const cv = (window as any).cv
 
-      // Converter canvas para imagem
-      const img = new Image()
-      img.src = sourceCanvas.toDataURL()
-
-      await new Promise((resolve) => {
-        img.onload = resolve
-      })
-
-      // Calcular dimensões do documento
-      let paperWidth = sourceCanvas.width
-      let paperHeight = sourceCanvas.height
-      let resultCanvas: HTMLCanvasElement
-
-      // FASE 4: Se temos corners customizados, passar explicitamente ao jscanify
-      if (corners) {
-        console.log('[jscanify] Usando corners detectados para extractPaper')
-
-        const width = Math.max(
-          Math.sqrt(Math.pow(corners.topRight.x - corners.topLeft.x, 2) + Math.pow(corners.topRight.y - corners.topLeft.y, 2)),
-          Math.sqrt(Math.pow(corners.bottomRight.x - corners.bottomLeft.x, 2) + Math.pow(corners.bottomRight.y - corners.bottomLeft.y, 2))
-        )
-        const height = Math.max(
-          Math.sqrt(Math.pow(corners.bottomLeft.x - corners.topLeft.x, 2) + Math.pow(corners.bottomLeft.y - corners.topLeft.y, 2)),
-          Math.sqrt(Math.pow(corners.bottomRight.x - corners.topRight.x, 2) + Math.pow(corners.bottomRight.y - corners.topRight.y, 2))
-        )
-        paperWidth = Math.round(width)
-        paperHeight = Math.round(height)
-
-        // Criar Mat do OpenCV com corners explícitos
-        const cv = (window as any).cv
-        const mat = cv.imread(img)
-
-        // Criar contour a partir dos corners (não é usado pelo jscanify nesta forma)
-        // jscanify.extractPaper detecta automaticamente ou usa os corners do último findPaperContour
-        // const contour = new cv.Mat(4, 1, cv.CV_32SC2)
-        // contour.data32S[0] = corners.topLeft.x
-        // ... (código removido - jscanify não aceita contour customizado em extractPaper)
-
-        resultCanvas = scanner.extractPaper(mat, paperWidth, paperHeight)
-
-        mat.delete()
-      } else {
-        console.log('[jscanify] Sem corners, extractPaper vai auto-detectar')
-        // Sem corners, extractPaper detecta automaticamente
-        resultCanvas = scanner.extractPaper(img, paperWidth, paperHeight)
+      // Se não temos corners, retornar canvas original
+      if (!corners) {
+        console.log('[Perspectiva] Sem corners, retornando canvas original')
+        return sourceCanvas
       }
 
-      console.log('[jscanify] Transformação aplicada com sucesso:', {
+      // Calcular dimensões do documento de saída
+      const widthTop = Math.sqrt(
+        Math.pow(corners.topRight.x - corners.topLeft.x, 2) +
+        Math.pow(corners.topRight.y - corners.topLeft.y, 2)
+      )
+      const widthBottom = Math.sqrt(
+        Math.pow(corners.bottomRight.x - corners.bottomLeft.x, 2) +
+        Math.pow(corners.bottomRight.y - corners.bottomLeft.y, 2)
+      )
+      const heightLeft = Math.sqrt(
+        Math.pow(corners.bottomLeft.x - corners.topLeft.x, 2) +
+        Math.pow(corners.bottomLeft.y - corners.topLeft.y, 2)
+      )
+      const heightRight = Math.sqrt(
+        Math.pow(corners.bottomRight.x - corners.topRight.x, 2) +
+        Math.pow(corners.bottomRight.y - corners.topRight.y, 2)
+      )
+
+      const maxWidth = Math.max(widthTop, widthBottom)
+      const maxHeight = Math.max(heightLeft, heightRight)
+      const outputWidth = Math.round(maxWidth)
+      const outputHeight = Math.round(maxHeight)
+
+      console.log('[Perspectiva] Dimensões calculadas:', { outputWidth, outputHeight })
+
+      // Criar Mat do OpenCV
+      const src = cv.imread(sourceCanvas)
+
+      // Criar pontos de origem (corners detectados)
+      const srcPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
+        corners.topLeft.x, corners.topLeft.y,
+        corners.topRight.x, corners.topRight.y,
+        corners.bottomRight.x, corners.bottomRight.y,
+        corners.bottomLeft.x, corners.bottomLeft.y
+      ])
+
+      // Criar pontos de destino (retângulo normalizado)
+      const dstPoints = cv.matFromArray(4, 1, cv.CV_32FC2, [
+        0, 0,
+        outputWidth, 0,
+        outputWidth, outputHeight,
+        0, outputHeight
+      ])
+
+      console.log('[Perspectiva] Calculando matriz de transformação...')
+
+      // Calcular matriz de transformação de perspectiva
+      const M = cv.getPerspectiveTransform(srcPoints, dstPoints)
+
+      // Criar canvas de saída
+      const dst = new cv.Mat()
+
+      // Aplicar transformação de perspectiva
+      cv.warpPerspective(
+        src,
+        dst,
+        M,
+        new cv.Size(outputWidth, outputHeight),
+        cv.INTER_LINEAR,
+        cv.BORDER_CONSTANT,
+        new cv.Scalar(255, 255, 255, 255)
+      )
+
+      console.log('[Perspectiva] Transformação aplicada, gerando canvas...')
+
+      // Criar canvas para resultado
+      const resultCanvas = document.createElement('canvas')
+      resultCanvas.width = outputWidth
+      resultCanvas.height = outputHeight
+      cv.imshow(resultCanvas, dst)
+
+      // Limpar memória
+      src.delete()
+      srcPoints.delete()
+      dstPoints.delete()
+      M.delete()
+      dst.delete()
+
+      console.log('[Perspectiva] Transformação concluída com sucesso:', {
         input: { w: sourceCanvas.width, h: sourceCanvas.height },
         output: { w: resultCanvas.width, h: resultCanvas.height }
       })
 
       return resultCanvas
     } catch (err) {
-      console.error('[jscanify] Erro ao aplicar transformação:', err)
+      console.error('[Perspectiva] Erro ao aplicar transformação:', err)
       return sourceCanvas // Fallback em caso de erro
     }
   }, [])
@@ -1752,9 +1788,24 @@ export function DocumentScanner({
         }
       }
 
-      console.log('[ConfirmPhoto] Convertendo canvas para blob')
+      console.log('[ConfirmPhoto] Convertendo canvas para blob com compressão otimizada')
 
-      // Converter canvas para blob
+      // OTIMIZADO: Calcular qualidade inicial baseada na resolução
+      const resolution = canvas.width * canvas.height
+      const isTextHeavy = documentName.toLowerCase().includes('laudo') ||
+                          documentName.toLowerCase().includes('certidão') ||
+                          documentName.toLowerCase().includes('contrato')
+
+      let initialQuality = 0.85 // Padrão otimizado (reduzido de 0.95)
+      if (resolution > 4000000) { // >4MP
+        initialQuality = isTextHeavy ? 0.80 : 0.75
+      } else if (resolution > 2000000) { // 2-4MP
+        initialQuality = isTextHeavy ? 0.85 : 0.80
+      }
+
+      console.log('[ConfirmPhoto] Qualidade JPEG calculada:', initialQuality, '(resolução:', resolution, ')')
+
+      // Converter canvas para blob com qualidade otimizada
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((b) => {
           if (b) {
@@ -1763,7 +1814,7 @@ export function DocumentScanner({
           } else {
             reject(new Error('Erro ao converter canvas para blob'))
           }
-        }, 'image/jpeg', 0.95)
+        }, 'image/jpeg', initialQuality)
       })
 
       const timestamp = Date.now()
@@ -1803,11 +1854,15 @@ export function DocumentScanner({
       }
       console.log('[ConfirmPhoto] Arquivo validado com sucesso')
 
-      // Comprimir se necessário
+      // OTIMIZADO: Comprimir APENAS se necessário, passando tipo de documento
       if (file.size > maxSizeMB * 1024 * 1024) {
-        console.log('[ConfirmPhoto] Comprimindo arquivo de', file.size, 'para max', maxSizeMB, 'MB')
-        file = await compressImage(file, maxSizeMB, 0.8)
-        console.log('[ConfirmPhoto] Arquivo comprimido para', file.size, 'bytes')
+        console.log('[ConfirmPhoto] Arquivo acima do limite, comprimindo de', file.size, 'para max', maxSizeMB, 'MB')
+        const tamanhoAntes = file.size
+        file = await compressImage(file, maxSizeMB, undefined, documentName)
+        const economia = ((tamanhoAntes - file.size) / tamanhoAntes * 100).toFixed(1)
+        console.log('[ConfirmPhoto] Arquivo comprimido para', file.size, 'bytes (economia:', economia, '%)')
+      } else {
+        console.log('[ConfirmPhoto] Arquivo já dentro do limite, pulando compressão adicional')
       }
 
       console.log('[ConfirmPhoto] Chamando onCapture')

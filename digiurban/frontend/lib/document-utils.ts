@@ -133,22 +133,77 @@ export function fileToBase64(file: File): Promise<string> {
 }
 
 /**
- * Comprime imagem se necessário
+ * Determina qualidade ótima baseada na resolução da imagem
+ * OTIMIZADO: Reduz consumo VPS mantendo qualidade visual
+ */
+function getOptimalQuality(resolution: number, documentType?: string): number {
+  // Documentos com texto pequeno precisam de mais qualidade
+  const isTextHeavy = documentType?.toLowerCase().includes('laudo') ||
+                      documentType?.toLowerCase().includes('certidão') ||
+                      documentType?.toLowerCase().includes('contrato')
+
+  if (resolution > 4000000) { // >4MP
+    return isTextHeavy ? 0.80 : 0.75
+  } else if (resolution > 2000000) { // 2-4MP
+    return isTextHeavy ? 0.85 : 0.80
+  } else { // <2MP
+    return 0.85
+  }
+}
+
+/**
+ * Calcula dimensão máxima baseada no tipo de documento
+ * OTIMIZADO: Preserva detalhes importantes sem desperdício
+ */
+function getMaxDimension(documentType?: string): number {
+  const typeLower = documentType?.toLowerCase() || ''
+
+  // Documentos com texto pequeno ou detalhes finos
+  if (typeLower.includes('laudo') ||
+      typeLower.includes('certidão') ||
+      typeLower.includes('receita') ||
+      typeLower.includes('exame')) {
+    return 3500
+  }
+
+  // Documentos A4 padrão
+  if (typeLower.includes('comprovante') ||
+      typeLower.includes('declaração') ||
+      typeLower.includes('contrato')) {
+    return 3000
+  }
+
+  // Cartões (RG, CPF, CNH, etc)
+  return 2500
+}
+
+/**
+ * Comprime imagem de forma otimizada (1 passo único)
+ * OTIMIZADO: Remove dupla compressão e ajusta qualidade por contexto
  */
 export async function compressImage(
   file: File,
   maxSizeMB: number,
-  quality: number = 0.8
+  quality?: number,
+  documentType?: string
 ): Promise<File> {
   // Se o arquivo já está dentro do limite, retornar sem modificar
   if (file.size <= maxSizeMB * 1024 * 1024) {
+    console.log('[Compress] Arquivo já dentro do limite:', file.size, 'bytes')
     return file;
   }
 
   // Se não for imagem, retornar sem modificar
   if (!file.type.startsWith('image/')) {
+    console.log('[Compress] Não é imagem, pulando compressão')
     return file;
   }
+
+  console.log('[Compress] Iniciando compressão otimizada:', {
+    tamanhoOriginal: file.size,
+    limiteMaxMB: maxSizeMB,
+    documentType
+  })
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -162,9 +217,16 @@ export async function compressImage(
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
+        const originalResolution = width * height
 
-        // Redimensionar mantendo proporção se muito grande
-        const maxDimension = 2048;
+        // Calcular qualidade ótima (se não fornecida)
+        const finalQuality = quality || getOptimalQuality(originalResolution, documentType)
+        console.log('[Compress] Qualidade calculada:', finalQuality)
+
+        // Redimensionar baseado no tipo de documento
+        const maxDimension = getMaxDimension(documentType);
+        console.log('[Compress] maxDimension para tipo:', maxDimension)
+
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
             height = (height / width) * maxDimension;
@@ -173,6 +235,7 @@ export async function compressImage(
             width = (width / height) * maxDimension;
             height = maxDimension;
           }
+          console.log('[Compress] Redimensionado para:', { width, height })
         }
 
         canvas.width = width;
@@ -184,17 +247,49 @@ export async function compressImage(
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              const compressedFile = new File([blob], file.name, {
-                type: file.type,
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
+              console.log('[Compress] Blob gerado:', blob.size, 'bytes')
+
+              // Se ainda está acima do limite, tentar redimensionar mais
+              if (blob.size > maxSizeMB * 1024 * 1024) {
+                console.log('[Compress] Ainda acima do limite, reduzindo mais...')
+
+                const scale = Math.sqrt((maxSizeMB * 1024 * 1024 * 0.9) / blob.size)
+                const newWidth = Math.round(width * scale)
+                const newHeight = Math.round(height * scale)
+
+                canvas.width = newWidth
+                canvas.height = newHeight
+                ctx?.drawImage(img, 0, 0, newWidth, newHeight)
+
+                canvas.toBlob(
+                  (blob2) => {
+                    if (blob2) {
+                      console.log('[Compress] Blob final:', blob2.size, 'bytes')
+                      const compressedFile = new File([blob2], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now(),
+                      });
+                      resolve(compressedFile);
+                    } else {
+                      resolve(file);
+                    }
+                  },
+                  'image/jpeg',
+                  finalQuality * 0.95 // Reduzir um pouco mais a qualidade
+                )
+              } else {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              }
             } else {
               resolve(file);
             }
           },
-          file.type,
-          quality
+          'image/jpeg',
+          finalQuality
         );
       };
 
