@@ -52,11 +52,10 @@ export default function SolicitacoesPage() {
     try {
       setLoading(true);
 
-      // ✅ Chamada real à API
-      let url = '/api/tfd/solicitacoes?';
-      if (statusFilter !== 'all') url += `status=${statusFilter}&`;
-      if (prioridadeFilter !== 'all') url += `prioridade=${prioridadeFilter}&`;
-      if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}`;
+      // ✅ Buscar protocolos TFD diretamente
+      let url = '/api/protocols?moduleType=ENCAMINHAMENTOS_TFD';
+      if (statusFilter !== 'all') url += `&status=${statusFilter}`;
+      if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
 
       const response = await fetch(url);
 
@@ -65,7 +64,25 @@ export default function SolicitacoesPage() {
       }
 
       const data = await response.json();
-      setSolicitacoes(data.data || []);
+
+      // Mapear protocolos para formato de solicitações
+      const solicitacoesMapeadas = (data.protocols || data.data || []).map((protocol: any) => {
+        const customData = protocol.customData || {};
+        return {
+          id: protocol.id,
+          protocolId: protocol.number,
+          citizenName: protocol.citizen?.name || 'Não informado',
+          citizenCpf: protocol.citizen?.cpf || '',
+          especialidade: customData.especialidade || customData.especialidadeOutra || 'Não informado',
+          cidadeDestino: customData.cidadeDestino || 'Não informado',
+          status: protocol.status,
+          prioridade: customData.prioridade || 'ROTINA',
+          dataConsulta: customData.dataPreferencialConsulta || null,
+          createdAt: protocol.createdAt,
+        };
+      });
+
+      setSolicitacoes(solicitacoesMapeadas);
     } catch (error) {
       console.error('Erro ao carregar solicitações:', error);
       setSolicitacoes([]);
