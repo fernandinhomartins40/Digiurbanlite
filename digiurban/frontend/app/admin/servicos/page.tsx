@@ -75,12 +75,23 @@ export default function ServicesManagementPage() {
     try {
       setLoading(true)
       const response = await apiRequest('/api/services')
-      setServices(response.data || [])
+
+      // ✅ CORREÇÃO: Aceitar múltiplos formatos de resposta
+      const servicesData = response.data || response.services || []
+
+      console.log('✅ Serviços carregados:', {
+        total: servicesData.length,
+        responseKeys: Object.keys(response),
+        hasData: !!response.data,
+        hasServices: !!response.services
+      })
+
+      setServices(servicesData)
     } catch (error) {
-      console.error('Erro ao carregar serviços:', error)
+      console.error('❌ Erro ao carregar serviços:', error)
       toast({
         title: 'Erro ao carregar serviços',
-        description: 'Não foi possível carregar a lista de serviços.',
+        description: error instanceof Error ? error.message : 'Não foi possível carregar a lista de serviços.',
         variant: 'destructive',
       })
     } finally {

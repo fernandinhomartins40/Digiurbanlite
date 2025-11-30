@@ -298,8 +298,17 @@ export default function AdminSolicitarServicoPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao enviar solicitação');
+        // ✅ CORREÇÃO: Verificar se resposta é JSON antes de parsear
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Erro ao enviar solicitação');
+        } else {
+          // Resposta HTML (página de erro do servidor)
+          const htmlText = await response.text();
+          console.error('❌ Erro HTML recebido do servidor:', htmlText.substring(0, 500));
+          throw new Error(`Erro no servidor (Status ${response.status}). Verifique os logs do backend.`);
+        }
       }
 
       const data = await response.json();

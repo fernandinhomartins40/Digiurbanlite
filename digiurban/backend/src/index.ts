@@ -397,16 +397,22 @@ try { console.log('   → workflows...'); app.use('/api/workflows', require('./r
 
 console.log('✅ Todas as rotas carregadas com sucesso!');
 
-// Error handling middleware
-app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err instanceof Error ? err.stack : err);
-  res.status(500).json({ message: 'Something went wrong!' });
+// ============================================================
+// MIDDLEWARE DE TRATAMENTO DE ERROS (DEVE VIR POR ÚLTIMO)
+// ============================================================
+import { errorHandler } from './middleware/error-handler';
+
+// 404 handler (antes do error handler)
+app.use((_req, res: express.Response) => {
+  res.status(404).json({
+    success: false,
+    error: 'Route not found',
+    message: 'A rota solicitada não existe'
+  });
 });
 
-// 404 handler
-app.use((_req, res: express.Response) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+// ✅ Error handling middleware global (SEMPRE retorna JSON)
+app.use(errorHandler);
 
 // ========== REGISTRAR MODULE HANDLERS (TODAS AS FASES) ==========
 // DIA 3: DISABLED temporariamente para acelerar startup

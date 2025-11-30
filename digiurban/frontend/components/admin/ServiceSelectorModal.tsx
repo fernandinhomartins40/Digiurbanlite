@@ -72,15 +72,24 @@ export function ServiceSelectorModal({
         ? `/api/services?departmentCode=${departmentFilter}`
         : '/api/services?isActive=true';
 
+      console.log('📥 [ServiceSelector] Carregando serviços:', url);
       const response = await apiRequest(url);
 
-      if (response.success && response.data) {
-        setServices(response.data.filter((s: Service) => s.isActive));
-      } else {
-        setServices([]);
-      }
+      // ✅ CORREÇÃO: Aceitar múltiplos formatos de resposta
+      const servicesData = response.data || response.services || [];
+      const activeServices = servicesData.filter((s: Service) => s.isActive);
+
+      console.log('✅ [ServiceSelector] Serviços carregados:', {
+        total: servicesData.length,
+        active: activeServices.length,
+        responseKeys: Object.keys(response),
+        hasData: !!response.data,
+        hasServices: !!response.services
+      });
+
+      setServices(activeServices);
     } catch (error) {
-      console.error('Erro ao carregar serviços:', error);
+      console.error('❌ [ServiceSelector] Erro ao carregar serviços:', error);
       setServices([]);
     } finally {
       setLoading(false);
