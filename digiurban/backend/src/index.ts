@@ -56,8 +56,10 @@ app.use(
         })
 );
 app.use(morgan('combined'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// ✅ CORREÇÃO: Aumentar limite para suportar múltiplos uploads (TFD, etc)
+// Multer permite 20 arquivos x 10MB = 200MB, mas express.json/urlencoded limitava em 10MB
+app.use(express.json({ limit: '50mb' })); // JSON requests (API calls)
+app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Form URL encoded
 app.use(cookieParser()); // Parser de cookies para httpOnly tokens
 
 // Servir arquivos de upload de forma segura
