@@ -4,6 +4,7 @@
 
 import { StageStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { checkAllDocumentsApproved } from './protocol-document.service';
 
 /**
  * Interface para criação de etapa
@@ -90,7 +91,7 @@ export async function startStage(stageId: string, userId?: string) {
 }
 
 /**
- * Completa uma etapa
+ * Completa uma etapa com validação de documentos
  */
 export async function completeStage(
   stageId: string,
@@ -98,6 +99,47 @@ export async function completeStage(
   result?: string,
   notes?: string
 ) {
+  // Buscar informações da stage
+  const stage = await prisma.protocolStage.findUnique({
+    where: { id: stageId },
+    select: {
+      protocolId: true,
+      stageName: true
+    }
+  });
+
+  if (!stage) {
+    throw new Error('Etapa não encontrada');
+  }
+
+  // Se for etapa de "Análise Documental", validar documentos
+  if (stage.stageName.toLowerCase().includes('análise') &&
+      stage.stageName.toLowerCase().includes('document')) {
+
+    const docCheck = await checkAllDocumentsApproved(stage.protocolId);
+
+    if (!docCheck.allApproved) {
+      const pendingDocs = await prisma.protocolDocument.findMany({
+        where: {
+          protocolId: stage.protocolId,
+          isRequired: true,
+          status: { not: 'APPROVED' }
+        },
+        select: { documentType: true, status: true }
+      });
+
+      const pendingList = pendingDocs
+        .map(d => `${d.documentType} (${d.status})`)
+        .join(', ');
+
+      throw new Error(
+        `Não é possível completar a etapa "Análise Documental". ` +
+        `Documentos pendentes: ${pendingList}`
+      );
+    }
+  }
+
+  // Completar etapa
   return await prisma.protocolStage.update({
     where: { id: stageId },
     data: {

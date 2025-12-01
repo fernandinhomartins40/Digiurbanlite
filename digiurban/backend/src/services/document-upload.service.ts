@@ -133,17 +133,45 @@ export class DocumentUploadService {
           // 4.4 Mover arquivo para diretório do protocolo
           const finalPath = await this.moveFileToProtocol(file, protocolId, uploadedBy);
 
-          // 4.5 Criar registro no ProtocolDocument
-          const document = await this.createDocumentRecord({
-            protocolId,
-            documentType,
-            fileName: path.basename(finalPath),
-            fileUrl: finalPath,
-            fileSize: file.size,
-            mimeType: file.mimetype,
-            uploadedBy,
-            isRequired: docConfig?.required || false
+          // 4.5 Buscar documento PENDING correspondente ou criar novo
+          const existingDoc = await prisma.protocolDocument.findFirst({
+            where: {
+              protocolId,
+              documentType,
+              status: { in: [DocumentStatus.PENDING, DocumentStatus.REJECTED] }
+            },
+            orderBy: { createdAt: 'desc' }
           });
+
+          let document;
+          if (existingDoc) {
+            // Atualizar documento PENDING → UPLOADED
+            document = await prisma.protocolDocument.update({
+              where: { id: existingDoc.id },
+              data: {
+                fileName: path.basename(finalPath),
+                fileUrl: finalPath,
+                fileSize: file.size,
+                mimeType: file.mimetype,
+                uploadedBy,
+                uploadedAt: new Date(),
+                status: DocumentStatus.UPLOADED,
+                rejectionReason: null // Limpar rejeição anterior
+              }
+            });
+          } else {
+            // Criar novo documento
+            document = await this.createDocumentRecord({
+              protocolId,
+              documentType,
+              fileName: path.basename(finalPath),
+              fileUrl: finalPath,
+              fileSize: file.size,
+              mimeType: file.mimetype,
+              uploadedBy,
+              isRequired: docConfig?.required || false
+            });
+          }
 
           uploadedDocuments.push({
             id: document.id,

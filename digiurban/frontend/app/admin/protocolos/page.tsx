@@ -336,42 +336,15 @@ export default function ProtocolsPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col space-y-2 ml-4">
+                  <div className="flex flex-col ml-4">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => router.push(`/admin/protocolos/${protocol.id}`)}
                     >
                       <Eye className="h-4 w-4 mr-1" />
-                      Ver
+                      Mais Detalhes
                     </Button>
-
-                    {hasPermission('protocols:assign') && !protocol.assignedUser && (
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setSelectedProtocol(protocol)
-                          setShowAssignDialog(true)
-                        }}
-                      >
-                        <UserPlus className="h-4 w-4 mr-1" />
-                        Atribuir
-                      </Button>
-                    )}
-
-                    {hasPermission('protocols:update') && protocol.status !== 'CONCLUIDO' && (
-                      <Select onValueChange={(value) => updateStatus(protocol.id, value)}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue placeholder="Alterar Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PROGRESSO">Em Progresso</SelectItem>
-                          <SelectItem value="ATUALIZACAO">Atualização</SelectItem>
-                          <SelectItem value="CONCLUIDO">Concluir</SelectItem>
-                          <SelectItem value="PENDENCIA">Pendência</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
                   </div>
                 </div>
               </CardContent>

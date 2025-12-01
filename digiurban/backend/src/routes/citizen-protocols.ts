@@ -11,8 +11,86 @@ import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import { upload, getFileUrl } from '../config/upload';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { DocumentStatus } from '@prisma/client';
 
 const router = Router();
+
+/**
+ * Helper: Cria documentos PENDING baseado nas configurações do serviço
+ */
+async function createPendingDocumentsForProtocol(
+  protocolId: string,
+  service: any,
+  uploadedFiles: any[]
+): Promise<void> {
+  try {
+    // Verificar se serviço requer documentos
+    if (!service.requiresDocuments || !service.requiredDocuments) {
+      return;
+    }
+
+    // Parsear requiredDocuments
+    let requiredDocs: any[] = [];
+    if (typeof service.requiredDocuments === 'string') {
+      try {
+        requiredDocs = JSON.parse(service.requiredDocuments);
+      } catch (e) {
+        console.warn('Erro ao parsear requiredDocuments:', e);
+        return;
+      }
+    } else if (Array.isArray(service.requiredDocuments)) {
+      requiredDocs = service.requiredDocuments;
+    }
+
+    if (requiredDocs.length === 0) {
+      return;
+    }
+
+    // Criar documentos PENDING ou UPLOADED
+    for (const docConfig of requiredDocs) {
+      const docName = docConfig.name || docConfig.id || docConfig;
+      const isRequired = typeof docConfig === 'object' ? (docConfig.required !== false) : true;
+
+      // Verificar se já foi enviado um arquivo para este tipo de documento
+      const uploadedFile = uploadedFiles.find(f =>
+        f.id === docConfig.id ||
+        f.name.toLowerCase().includes(docName.toLowerCase())
+      );
+
+      if (uploadedFile) {
+        // Criar como UPLOADED se já enviou arquivo
+        await prisma.protocolDocument.create({
+          data: {
+            protocolId,
+            documentType: docName,
+            isRequired,
+            fileName: uploadedFile.name,
+            fileUrl: uploadedFile.url,
+            fileSize: uploadedFile.size,
+            mimeType: uploadedFile.mimetype,
+            status: DocumentStatus.UPLOADED,
+            uploadedAt: new Date()
+          }
+        });
+      } else {
+        // Criar como PENDING se não enviou
+        await prisma.protocolDocument.create({
+          data: {
+            protocolId,
+            documentType: docName,
+            isRequired,
+            status: DocumentStatus.PENDING
+          }
+        });
+      }
+    }
+
+    console.log(`   ✓ ${requiredDocs.length} documento(s) criado(s) para protocolo`);
+  } catch (error) {
+    console.error('Erro ao criar documentos PENDING:', error);
+    // Não falhar a criação do protocolo se documentos falharem
+  }
+}
 
 // Middleware de autenticação do cidadão
 router.use(citizenAuthMiddleware);
@@ -136,6 +214,9 @@ router.post('/', upload.array('documents'), async (req, res) => {
         isRead: false
         }
         });
+
+    // Criar documentos PENDING/UPLOADED na tabela ProtocolDocument
+    await createPendingDocumentsForProtocol(protocol.id, service, uploadedDocuments);
 
     console.log('✅ Protocolo criado:', protocol.number);
     console.log('========== FIM POST /protocols ==========\n');

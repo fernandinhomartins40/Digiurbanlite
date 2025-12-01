@@ -134,13 +134,24 @@ export async function uploadDocument(
 }
 
 /**
- * Aprova um documento
+ * Aprova um documento e verifica se todos estão aprovados
  */
 export async function approveDocument(
   documentId: string,
   validatedBy: string
 ) {
-  return prisma.protocolDocument.update({
+  // Buscar documento para obter protocolId
+  const document = await prisma.protocolDocument.findUnique({
+    where: { id: documentId },
+    select: { protocolId: true, documentType: true }
+  });
+
+  if (!document) {
+    throw new Error('Documento não encontrado');
+  }
+
+  // Atualizar documento
+  const updatedDocument = await prisma.protocolDocument.update({
     where: { id: documentId },
     data: {
       status: DocumentStatus.APPROVED,
@@ -149,17 +160,71 @@ export async function approveDocument(
       rejectionReason: null
         }
         });
+
+  // Criar histórico
+  await prisma.protocolHistorySimplified.create({
+    data: {
+      protocolId: document.protocolId,
+      action: 'DOCUMENTO_APROVADO',
+      comment: `Documento "${document.documentType}" aprovado`,
+      userId: validatedBy
+    }
+  }).catch(err => console.error('Erro ao criar histórico:', err));
+
+  // Verificar se todos documentos obrigatórios foram aprovados
+  const check = await checkAllDocumentsApproved(document.protocolId);
+
+  if (check.allApproved) {
+    // Todos aprovados! Atualizar protocolo para PROGRESSO
+    await prisma.protocolSimplified.update({
+      where: { id: document.protocolId },
+      data: {
+        status: 'PROGRESSO'
+      }
+    });
+
+    // Criar notificação para cidadão
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: document.protocolId },
+      select: { citizenId: true, number: true }
+    });
+
+    if (protocol) {
+      await prisma.notification.create({
+        data: {
+          citizenId: protocol.citizenId,
+          title: 'Documentos Aprovados',
+          message: `Todos os documentos do protocolo ${protocol.number} foram aprovados! Seu processo está em andamento.`,
+          type: 'SUCCESS',
+          protocolId: document.protocolId
+        }
+      }).catch(err => console.error('Erro ao criar notificação:', err));
+    }
+  }
+
+  return updatedDocument;
 }
 
 /**
- * Rejeita um documento
+ * Rejeita um documento e atualiza status do protocolo
  */
 export async function rejectDocument(
   documentId: string,
   validatedBy: string,
   rejectionReason: string
 ) {
-  return prisma.protocolDocument.update({
+  // Buscar documento para obter protocolId
+  const document = await prisma.protocolDocument.findUnique({
+    where: { id: documentId },
+    select: { protocolId: true, documentType: true }
+  });
+
+  if (!document) {
+    throw new Error('Documento não encontrado');
+  }
+
+  // Atualizar documento
+  const updatedDocument = await prisma.protocolDocument.update({
     where: { id: documentId },
     data: {
       status: DocumentStatus.REJECTED,
@@ -168,6 +233,44 @@ export async function rejectDocument(
       rejectionReason
         }
         });
+
+  // Atualizar protocolo para PENDENCIA
+  await prisma.protocolSimplified.update({
+    where: { id: document.protocolId },
+    data: {
+      status: 'PENDENCIA'
+    }
+  });
+
+  // Criar histórico
+  await prisma.protocolHistorySimplified.create({
+    data: {
+      protocolId: document.protocolId,
+      action: 'DOCUMENTO_REJEITADO',
+      comment: `Documento "${document.documentType}" rejeitado. Motivo: ${rejectionReason}`,
+      userId: validatedBy
+    }
+  }).catch(err => console.error('Erro ao criar histórico:', err));
+
+  // Criar notificação para cidadão
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: document.protocolId },
+    select: { citizenId: true, number: true }
+  });
+
+  if (protocol) {
+    await prisma.notification.create({
+      data: {
+        citizenId: protocol.citizenId,
+        title: 'Documento Rejeitado',
+        message: `O documento "${document.documentType}" do protocolo ${protocol.number} foi rejeitado. Motivo: ${rejectionReason}. Por favor, envie um novo documento.`,
+        type: 'WARNING',
+        protocolId: document.protocolId
+      }
+    }).catch(err => console.error('Erro ao criar notificação:', err));
+  }
+
+  return updatedDocument;
 }
 
 /**

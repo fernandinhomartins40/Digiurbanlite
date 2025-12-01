@@ -16,6 +16,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { migrateDocumentsToTable } from './migrations-data/migrate-documents-to-table';
 
 const prisma = new PrismaClient();
 
@@ -366,6 +367,19 @@ async function main() {
     console.log(`   Email: jose.silva@example.com`);
     console.log(`   CPF: ${citizenCPF}`);
     console.log(`   Senha: ${citizenPassword}\n`);
+
+    // ========================================================================
+    // 7. MIGRAÇÃO DE DOCUMENTOS (JSON → Tabela)
+    // ========================================================================
+    console.log('7️⃣  Migração de Documentos');
+    console.log('   ─────────────────────────────');
+
+    try {
+      await migrateDocumentsToTable();
+    } catch (migrationError) {
+      console.error('   ⚠️  Erro na migração de documentos (continuando):', migrationError);
+      // Não falhar o seed se migração der erro
+    }
 
     console.log('╔════════════════════════════════════════════════════════╗');
     console.log('║  🚀 Sistema pronto para uso!                          ║');
