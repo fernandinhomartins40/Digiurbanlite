@@ -13,7 +13,7 @@ export const agricultureServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'CADASTRO_PRODUTOR',
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'Comprovante de Residência', 'DAP (se aplicável)'],
+    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }, { id: 'dap', name: 'DAP (se aplicável)', required: false }],
     estimatedDays: 10,
     priority: 4,
     category: 'Cadastro',
@@ -64,7 +64,7 @@ export const agricultureServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'SOLICITACAO_MAQUINAS',
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'Comprovante de Propriedade'],
+    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'comprovante_propriedade', name: 'Comprovante de Propriedade', required: true }],
     estimatedDays: 7,
     priority: 4,
     category: 'Máquinas',
@@ -114,7 +114,7 @@ export const agricultureServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'FEIRA_PRODUTOR',
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'Comprovante de Residência'],
+    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }],
     estimatedDays: 5,
     priority: 3,
     category: 'Feira',
@@ -163,7 +163,7 @@ export const agricultureServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'PROGRAMA_SEMENTES',
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'DAP'],
+    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'dap', name: 'DAP', required: true }],
     estimatedDays: 10,
     priority: 4,
     category: 'Programas',
@@ -227,7 +227,11 @@ export const agricultureServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'DAP'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'dap', name: 'DAP', required: true }
+    ],
     estimatedDays: 7,
     priority: 3,
     category: 'Declarações',
@@ -631,7 +635,10 @@ export const agricultureServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true }
+      ],
       estimatedDays: 3,
       priority: 2,
       category: 'Documentos',
@@ -687,7 +694,10 @@ export const agricultureServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true }
+      ],
       estimatedDays: 7,
       priority: 4,
       category: 'Documentos',
@@ -715,7 +725,10 @@ export const agricultureServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true }
+      ],
       estimatedDays: 5,
       priority: 3,
       category: 'Certidões',
@@ -743,7 +756,10 @@ export const agricultureServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true }
+      ],
       estimatedDays: 3,
       priority: 3,
       category: 'Certidões',

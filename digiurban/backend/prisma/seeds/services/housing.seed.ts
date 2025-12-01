@@ -13,7 +13,11 @@ export const housingServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'REGULARIZACAO_FUNDIARIA',
     requiresDocuments: true,
-    requiredDocuments: ['Escritura', 'IPTU', 'Comprovante de Residência'],
+    requiredDocuments: [
+      { id: 'escritura', name: 'Escritura', required: true },
+      { id: 'iptu', name: 'IPTU', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }
+    ],
     estimatedDays: 60,
     priority: 5,
     category: 'Regularização',
@@ -84,7 +88,12 @@ export const housingServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'MINHA_CASA',
     requiresDocuments: true,
-    requiredDocuments: ['Comprovante de Renda', 'RG', 'CPF', 'Certidão de Casamento'],
+    requiredDocuments: [
+      { id: 'comprovante_renda', name: 'Comprovante de Renda', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'certidao_casamento', name: 'Certidão de Casamento', required: true }
+    ],
     estimatedDays: 90,
     priority: 5,
     category: 'Programas',
@@ -168,7 +177,11 @@ export const housingServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Matrícula'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'matricula', name: 'Matrícula', required: true }
+    ],
     estimatedDays: 10,
     priority: 3,
     category: 'Certidões',
@@ -182,7 +195,11 @@ export const housingServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }
+    ],
     estimatedDays: 5,
     priority: 2,
     category: 'Declarações',
@@ -196,7 +213,11 @@ export const housingServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Endereço do Imóvel'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'endereco_imovel', name: 'Endereço do Imóvel', required: true }
+    ],
     estimatedDays: 20,
     priority: 4,
     category: 'Laudos',
@@ -210,7 +231,11 @@ export const housingServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'AUTORIZACAO_CONSTRUCAO',
     requiresDocuments: true,
-    requiredDocuments: ['Projeto', 'ART', 'Matrícula'],
+    requiredDocuments: [
+      { id: 'projeto', name: 'Projeto', required: true },
+      { id: 'art', name: 'ART', required: true },
+      { id: 'matricula', name: 'Matrícula', required: true }
+    ],
     estimatedDays: 30,
     priority: 4,
     category: 'Construção',
@@ -324,7 +349,13 @@ export const housingServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'INSCRICAO_PROGRAMA_HABITACIONAL',
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG', 'Comprovante de Renda', 'CadÚnico', 'Comprovante de Endereço'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true },
+        { id: 'comprovante_renda', name: 'Comprovante de Renda', required: true },
+        { id: 'cadunico', name: 'CadÚnico', required: true },
+        { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }
+      ],
       estimatedDays: 30,
       priority: 5,
       category: 'Programas',
@@ -374,7 +405,12 @@ export const housingServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'SOLICITACAO_AUXILIO_ALUGUEL',
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG', 'Comprovante de Renda', 'Declaração de Vulnerabilidade'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true },
+        { id: 'comprovante_renda', name: 'Comprovante de Renda', required: true },
+        { id: 'declaracao_vulnerabilidade', name: 'Declaração de Vulnerabilidade', required: true }
+      ],
       estimatedDays: 15,
       priority: 5,
       category: 'Auxílio',
@@ -423,7 +459,11 @@ export const housingServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'CADASTRO_UNIDADE_HABITACIONAL',
       requiresDocuments: true,
-      requiredDocuments: ['Matrícula do Imóvel', 'Planta', 'Documentação do Proprietário'],
+      requiredDocuments: [
+        { id: 'matricula_imovel', name: 'Matrícula do Imóvel', required: true },
+        { id: 'planta', name: 'Planta', required: true },
+        { id: 'documentacao_proprietario', name: 'Documentação do Proprietário', required: true }
+      ],
       estimatedDays: 20,
       priority: 3,
       category: 'Cadastro',
@@ -473,7 +513,12 @@ export const housingServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'INSCRICAO_FILA_HABITACAO',
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG', 'Comprovante de Renda', 'CadÚnico'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true },
+        { id: 'comprovante_renda', name: 'Comprovante de Renda', required: true },
+        { id: 'cadunico', name: 'CadÚnico', required: true }
+      ],
       estimatedDays: 7,
       priority: 4,
       category: 'Inscrição',
@@ -528,10 +573,10 @@ export const housingServices: ServiceDefinition[] = [
       icon: 'Info',
       color: '#94a3b8',
     },
-  {name: 'Certidão de Inscrição Habitacional', description: 'Certidão comprovando inscrição em programas habitacionais', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: ['CPF', 'RG', 'Comprovante de Renda'], estimatedDays: 5, priority: 3, category: 'Certidões', icon: 'FileText', color: '#f59e0b'},
-  {name: 'Declaração de Moradia', description: 'Declaração de situação de moradia', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço'], estimatedDays: 3, priority: 3, category: 'Certidões', icon: 'Home', color: '#10b981'},
-  {name: 'Atestado de Regularização Fundiária', description: 'Atestado do processo de regularização fundiária', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: ['CPF', 'Documentos do Imóvel'], estimatedDays: 7, priority: 4, category: 'Certidões', icon: 'FileCheck', color: '#3b82f6'},
-  {name: 'Consulta de Situação no Programa', description: 'Consulta de situação em programas habitacionais', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: ['CPF'], estimatedDays: 2, priority: 2, category: 'Consultas', icon: 'Search', color: '#8b5cf6'},
-  {name: 'Segunda Via de Contrato Habitacional', description: 'Reemissão de contrato habitacional', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: ['CPF', 'RG'], estimatedDays: 5, priority: 2, category: 'Documentos', icon: 'Copy', color: '#6b7280'},
-  {name: 'Comprovante de Cadastro Habitacional', description: 'Comprovante oficial de cadastro habitacional', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: ['CPF'], estimatedDays: 2, priority: 3, category: 'Documentos', icon: 'FileText', color: '#ec4899'}
+  {name: 'Certidão de Inscrição Habitacional', description: 'Certidão comprovando inscrição em programas habitacionais', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'comprovante_renda', name: 'Comprovante de Renda', required: true }], estimatedDays: 5, priority: 3, category: 'Certidões', icon: 'FileText', color: '#f59e0b'},
+  {name: 'Declaração de Moradia', description: 'Declaração de situação de moradia', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }], estimatedDays: 3, priority: 3, category: 'Certidões', icon: 'Home', color: '#10b981'},
+  {name: 'Atestado de Regularização Fundiária', description: 'Atestado do processo de regularização fundiária', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'documentos_imovel', name: 'Documentos do Imóvel', required: true }], estimatedDays: 7, priority: 4, category: 'Certidões', icon: 'FileCheck', color: '#3b82f6'},
+  {name: 'Consulta de Situação no Programa', description: 'Consulta de situação em programas habitacionais', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }], estimatedDays: 2, priority: 2, category: 'Consultas', icon: 'Search', color: '#8b5cf6'},
+  {name: 'Segunda Via de Contrato Habitacional', description: 'Reemissão de contrato habitacional', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }], estimatedDays: 5, priority: 2, category: 'Documentos', icon: 'Copy', color: '#6b7280'},
+  {name: 'Comprovante de Cadastro Habitacional', description: 'Comprovante oficial de cadastro habitacional', departmentCode: 'HABITACAO', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }], estimatedDays: 2, priority: 3, category: 'Documentos', icon: 'FileText', color: '#ec4899'}
 ];
