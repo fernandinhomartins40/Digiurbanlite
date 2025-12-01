@@ -170,7 +170,10 @@ export const healthServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'AGENDAMENTOS_MEDICOS',
     requiresDocuments: true,
-    requiredDocuments: ['Cartão SUS', 'Documento de Identidade'],
+    requiredDocuments: [
+      { id: 'cartao_sus', name: 'Cartão SUS', required: true },
+      { id: 'documento_identidade', name: 'Documento de Identidade', required: true }
+    ],
     estimatedDays: 7,
     priority: 4,
     category: 'Agendamento',
@@ -312,7 +315,10 @@ export const healthServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'CONTROLE_MEDICAMENTOS',
     requiresDocuments: true,
-    requiredDocuments: ['Receita Médica', 'Cartão SUS'],
+    requiredDocuments: [
+      { id: 'receita_medica', name: 'Receita Médica', required: true },
+      { id: 'cartao_sus', name: 'Cartão SUS', required: true }
+    ],
     estimatedDays: 2,
     priority: 5,
     category: 'Medicamentos',
@@ -530,7 +536,10 @@ export const healthServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'CAMPANHAS_SAUDE',
     requiresDocuments: true,
-    requiredDocuments: ['Cartão de Vacina', 'Documento de Identidade'],
+    requiredDocuments: [
+      { id: 'cartao_vacina', name: 'Cartão de Vacina', required: true },
+      { id: 'documento_identidade', name: 'Documento de Identidade', required: true }
+    ],
     estimatedDays: 1,
     priority: 5,
     category: 'Prevenção',
@@ -618,7 +627,10 @@ export const healthServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'PROGRAMAS_SAUDE',
     requiresDocuments: true,
-    requiredDocuments: ['Laudo Médico', 'Cartão SUS'],
+    requiredDocuments: [
+      { id: 'laudo_medico', name: 'Laudo Médico', required: true },
+      { id: 'cartao_sus', name: 'Cartão SUS', required: true }
+    ],
     estimatedDays: 5,
     priority: 4,
     category: 'Programas',
@@ -710,292 +722,16 @@ export const healthServices: ServiceDefinition[] = [
     }
   },
   {
-    name: 'Encaminhamento TFD (Tratamento Fora do Domicílio)',
-    description: 'Solicitação de transporte e tratamento fora do município',
-    departmentCode: 'SAUDE',
-    serviceType: 'COM_DADOS',
-    moduleType: 'ENCAMINHAMENTOS_TFD',
-    requiresDocuments: true,
-    requiredDocuments: ['Encaminhamento Médico', 'Exames', 'Cartão SUS'],
-    estimatedDays: 15,
-    priority: 5,
-    category: 'TFD',
-    icon: 'Ambulance',
-    color: '#f59e0b',
-    formSchema: {
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência (opcional)',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'cartaoSUS',
-          label: 'Cartão SUS (CNS)',
-          type: 'text',
-          pattern: '^\\d{15}$',
-          minLength: 15,
-          maxLength: 15,
-          required: true
-        },
-        {
-          id: 'alergiasMedicamentos',
-          label: 'Alergias a Medicamentos (se houver)',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        },
-        {
-          id: 'necessidadesEspeciais',
-          label: 'Necessidades Especiais',
-          type: 'select',
-          options: ['Nenhuma', 'Cadeirante', 'Deficiente Visual', 'Deficiente Auditivo (LIBRAS)', 'Mobilidade Reduzida', 'Acamado', 'Outra'],
-          required: false
-        },
-        {
-          id: 'nomeMedicoSolicitante',
-          label: 'Médico Solicitante',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
-          required: true
-        },
-        {
-          id: 'crmMedico',
-          label: 'CRM do Médico',
-          type: 'text',
-          pattern: '^\\d{4,8}$',
-          required: true
-        },
-        {
-          id: 'especialidadeMedicoSolicitante',
-          label: 'Especialidade do Médico',
-          type: 'text',
-          maxLength: 100,
-          required: false
-        },
-        {
-          id: 'dataEncaminhamento',
-          label: 'Data do Encaminhamento Médico',
-          type: 'date',
-          required: true
-        },
-        {
-          id: 'numeroEncaminhamento',
-          label: 'Número do Encaminhamento',
-          type: 'text',
-          maxLength: 50,
-          required: false
-        },
-        {
-          id: 'especialidadeDestino',
-          label: 'Especialidade de Destino',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
-          required: true
-        },
-        {
-          id: 'tipoTratamento',
-          label: 'Tipo de Tratamento',
-          type: 'select',
-          options: ['Consulta Especializada', 'Cirurgia', 'Exames Especializados', 'Radioterapia', 'Quimioterapia', 'Hemodiálise', 'Fisioterapia', 'Outro'],
-          required: true
-        },
-        {
-          id: 'motivoEncaminhamento',
-          label: 'Motivo do Encaminhamento',
-          type: 'textarea',
-          minLength: 20,
-          maxLength: 1000,
-          required: true
-        },
-        {
-          id: 'diagnostico',
-          label: 'Diagnóstico Principal (CID-10)',
-          type: 'textarea',
-          maxLength: 500,
-          required: true
-        },
-        {
-          id: 'historicoDoenca',
-          label: 'Histórico da Doença',
-          type: 'textarea',
-          maxLength: 1000,
-          required: false
-        },
-        {
-          id: 'urgente',
-          label: 'Caso Urgente?',
-          type: 'checkbox',
-          defaultValue: false,
-          required: false
-        },
-        {
-          id: 'cidadeDestino',
-          label: 'Cidade de Destino',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
-          required: true
-        },
-        {
-          id: 'estadoDestino',
-          label: 'Estado de Destino (UF)',
-          type: 'text',
-          pattern: '^[A-Z]{2}$',
-          minLength: 2,
-          maxLength: 2,
-          required: true
-        },
-        {
-          id: 'hospitalDestino',
-          label: 'Hospital/Clínica de Destino (se conhecido)',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'dataPreferencialAtendimento',
-          label: 'Data Preferencial de Atendimento',
-          type: 'date',
-          required: false
-        },
-        {
-          id: 'necessitaAcompanhante',
-          label: 'Necessita Acompanhante?',
-          type: 'checkbox',
-          defaultValue: false,
-          required: false
-        },
-        {
-          id: 'nomeAcompanhante',
-          label: 'Nome Completo do Acompanhante',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'cpfAcompanhante',
-          label: 'CPF do Acompanhante',
-          type: 'text',
-          pattern: '^\\d{11}$',
-          minLength: 11,
-          maxLength: 11,
-          required: false
-        },
-        {
-          id: 'rgAcompanhante',
-          label: 'RG do Acompanhante',
-          type: 'text',
-          maxLength: 20,
-          required: false
-        },
-        {
-          id: 'telefoneAcompanhante',
-          label: 'Telefone do Acompanhante',
-          type: 'text',
-          pattern: '^\\d{10,11}$',
-          required: false
-        },
-        {
-          id: 'parentescoAcompanhante',
-          label: 'Grau de Parentesco',
-          type: 'select',
-          options: ['Cônjuge', 'Filho(a)', 'Pai/Mãe', 'Irmão(ã)', 'Neto(a)', 'Outro'],
-          required: false
-        },
-        {
-          id: 'necessitaTransporte',
-          label: 'Necessita Transporte?',
-          type: 'checkbox',
-          defaultValue: true,
-          required: false
-        },
-        {
-          id: 'tipoTransporte',
-          label: 'Tipo de Transporte Necessário',
-          type: 'select',
-          options: ['Veículo Comum', 'Ambulância Simples', 'Ambulância UTI', 'Outro'],
-          required: false
-        },
-        {
-          id: 'necessitaHospedagem',
-          label: 'Necessita Hospedagem?',
-          type: 'checkbox',
-          defaultValue: false,
-          required: false
-        },
-        {
-          id: 'diasEstimadosHospedagem',
-          label: 'Dias Estimados de Hospedagem',
-          type: 'number',
-          minimum: 1,
-          maximum: 90,
-          required: false
-        },
-        {
-          id: 'necessitaAjudaCusto',
-          label: 'Necessita Ajuda de Custo?',
-          type: 'checkbox',
-          defaultValue: false,
-          required: false
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações Gerais',
-          type: 'textarea',
-          maxLength: 1000,
-          required: false
-        }
-      ]
-    },
-    linkedCitizensConfig: {
-      enabled: true,
-      links: [{
-        linkType: 'COMPANION',
-        role: 'COMPANION',
-        label: 'Acompanhante',
-        required: false,
-        mapFromLegacyFields: {
-          name: 'nomeAcompanhante',
-          cpf: 'cpfAcompanhante'
-        },
-        contextFields: [
-          { id: 'parentescoAcompanhante', sourceField: 'parentescoAcompanhante' }
-        ],
-        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING']
-      }]
-    }
-  },
-  {
     name: 'Solicitação de Exames',
     description: 'Agendamento de exames laboratoriais e de imagem',
     departmentCode: 'SAUDE',
     serviceType: 'COM_DADOS',
     moduleType: 'EXAMES',
     requiresDocuments: true,
-    requiredDocuments: ['Pedido Médico', 'Cartão SUS'],
+    requiredDocuments: [
+      { id: 'pedido_medico', name: 'Pedido Médico', required: true },
+      { id: 'cartao_sus', name: 'Cartão SUS', required: true }
+    ],
     estimatedDays: 10,
     priority: 4,
     category: 'Exames',
@@ -1214,7 +950,10 @@ export const healthServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'TRANSPORTE_PACIENTES',
     requiresDocuments: true,
-    requiredDocuments: ['Atestado Médico', 'Comprovante de Endereço'],
+    requiredDocuments: [
+      { id: 'atestado_medico', name: 'Atestado Médico', required: true },
+      { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }
+    ],
     estimatedDays: 3,
     priority: 5,
     category: 'Transporte',
@@ -1382,7 +1121,11 @@ export const healthServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'CADASTRO_PACIENTE',
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true },
+        { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }
+      ],
       estimatedDays: 7,
       priority: 3,
       category: 'Cadastro',
@@ -1426,7 +1169,10 @@ export const healthServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'VACINACAO',
       requiresDocuments: true,
-      requiredDocuments: ['Cartão de Vacina', 'Documento de Identidade'],
+      requiredDocuments: [
+        { id: 'cartao_vacina', name: 'Cartão de Vacina', required: true },
+        { id: 'documento_identidade', name: 'Documento de Identidade', required: true }
+      ],
       estimatedDays: 1,
       priority: 5,
       category: 'Vacinação',
@@ -1554,7 +1300,10 @@ export const healthServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'Cartão SUS'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'cartao_sus', name: 'Cartão SUS', required: true }
+      ],
       estimatedDays: 3,
       priority: 3,
       category: 'Certidões',
@@ -1568,7 +1317,11 @@ export const healthServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'Cartão SUS', 'Carteira de Vacinação'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'cartao_sus', name: 'Cartão SUS', required: true },
+        { id: 'carteira_vacinacao', name: 'Carteira de Vacinação', required: true }
+      ],
       estimatedDays: 2,
       priority: 3,
       category: 'Certidões',
@@ -1582,7 +1335,10 @@ export const healthServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'Cartão SUS'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'cartao_sus', name: 'Cartão SUS', required: true }
+      ],
       estimatedDays: 5,
       priority: 3,
       category: 'Certidões',
@@ -1596,7 +1352,11 @@ export const healthServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'rg', name: 'RG', required: true },
+        { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }
+      ],
       estimatedDays: 7,
       priority: 2,
       category: 'Documentos',
@@ -1610,7 +1370,10 @@ export const healthServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'Cartão SUS'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'cartao_sus', name: 'Cartão SUS', required: true }
+      ],
       estimatedDays: 1,
       priority: 2,
       category: 'Consultas',

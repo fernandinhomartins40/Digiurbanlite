@@ -13,7 +13,12 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'CADASTRO_UNICO',
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência', 'Comprovante de Renda'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true },
+      { id: 'comprovante_renda', name: 'Comprovante de Renda', required: true }
+    ],
     estimatedDays: 10,
     priority: 5,
     category: 'Benefícios',
@@ -107,7 +112,11 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'BOLSA_FAMILIA',
     requiresDocuments: true,
-    requiredDocuments: ['CadÚnico', 'Comprovante de Renda', 'Cartão de Vacina das Crianças'],
+    requiredDocuments: [
+      { id: 'cadunico', name: 'CadÚnico', required: true },
+      { id: 'comprovante_renda', name: 'Comprovante de Renda', required: true },
+      { id: 'cartao_vacina_criancas', name: 'Cartão de Vacina das Crianças', required: true }
+    ],
     estimatedDays: 30,
     priority: 5,
     category: 'Benefícios',
@@ -185,7 +194,11 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'ATENDIMENTO_CRAS',
     requiresDocuments: true,
-    requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
+    requiredDocuments: [
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }
+    ],
     estimatedDays: 3,
     priority: 4,
     category: 'Atendimento',
@@ -263,7 +276,11 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'CESTA_BASICA',
     requiresDocuments: true,
-    requiredDocuments: ['Comprovante de Residência', 'Declaração de Renda', 'Laudo Social'],
+    requiredDocuments: [
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true },
+      { id: 'declaracao_renda', name: 'Declaração de Renda', required: true },
+      { id: 'laudo_social', name: 'Laudo Social', required: true }
+    ],
     estimatedDays: 5,
     priority: 5,
     category: 'Assistência',
@@ -400,7 +417,10 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true }
+    ],
     estimatedDays: 5,
     priority: 3,
     category: 'Certidões',
@@ -414,7 +434,11 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'NIS'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'nis', name: 'NIS', required: true }
+    ],
     estimatedDays: 5,
     priority: 3,
     category: 'Declarações',
@@ -428,7 +452,11 @@ export const socialServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }
+    ],
     estimatedDays: 15,
     priority: 4,
     category: 'Laudos',
@@ -522,7 +550,11 @@ export const socialServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'SOLICITACAO_BENEFICIO',
       requiresDocuments: true,
-      requiredDocuments: ['CadÚnico', 'Documentos Pessoais', 'Comprovante de Renda'],
+      requiredDocuments: [
+        { id: 'cadunico', name: 'CadÚnico', required: true },
+        { id: 'documentos_pessoais', name: 'Documentos Pessoais', required: true },
+        { id: 'comprovante_renda', name: 'Comprovante de Renda', required: true }
+      ],
       estimatedDays: 15,
       priority: 5,
       category: 'Benefícios',
@@ -601,7 +633,11 @@ export const socialServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'ENTREGA_EMERGENCIAL',
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'Comprovante de Endereço', 'Declaração de Vulnerabilidade'],
+      requiredDocuments: [
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true },
+        { id: 'declaracao_vulnerabilidade', name: 'Declaração de Vulnerabilidade', required: true }
+      ],
       estimatedDays: 3,
       priority: 5,
       category: 'Emergencial',
@@ -649,7 +685,11 @@ export const socialServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'INSCRICAO_GRUPO_OFICINA',
       requiresDocuments: true,
-      requiredDocuments: ['RG', 'CPF', 'Comprovante de Endereço'],
+      requiredDocuments: [
+        { id: 'rg', name: 'RG', required: true },
+        { id: 'cpf', name: 'CPF', required: true },
+        { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }
+      ],
       estimatedDays: 5,
       priority: 3,
       category: 'Programas',
@@ -693,7 +733,9 @@ export const socialServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'VISITAS_DOMICILIARES',
       requiresDocuments: true,
-      requiredDocuments: ['Comprovante de Endereço'],
+      requiredDocuments: [
+        { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }
+      ],
       estimatedDays: 7,
       priority: 4,
       category: 'Atendimento',
@@ -737,7 +779,10 @@ export const socialServices: ServiceDefinition[] = [
       serviceType: 'COM_DADOS',
       moduleType: 'INSCRICAO_PROGRAMA_SOCIAL',
       requiresDocuments: true,
-      requiredDocuments: ['CadÚnico', 'Documentos Pessoais'],
+      requiredDocuments: [
+        { id: 'cadunico', name: 'CadÚnico', required: true },
+        { id: 'documentos_pessoais', name: 'Documentos Pessoais', required: true }
+      ],
       estimatedDays: 10,
       priority: 4,
       category: 'Programas',

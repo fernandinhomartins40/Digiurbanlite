@@ -13,7 +13,11 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'MATRICULA_ESCOLAR',
     requiresDocuments: true,
-    requiredDocuments: ['Certidão de Nascimento', 'Comprovante de Residência', 'Cartão de Vacina'],
+    requiredDocuments: [
+      { id: 'certidao_nascimento', name: 'Certidão de Nascimento', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true },
+      { id: 'cartao_vacina', name: 'Cartão de Vacina', required: true }
+    ],
     estimatedDays: 5,
     priority: 5,
     category: 'Matrícula',
@@ -164,7 +168,11 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'TRANSFERENCIA_ESCOLAR',
     requiresDocuments: true,
-    requiredDocuments: ['Histórico Escolar', 'Comprovante de Residência', 'Declaração de Transferência'],
+    requiredDocuments: [
+      { id: 'historico_escolar', name: 'Histórico Escolar', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true },
+      { id: 'declaracao_transferencia', name: 'Declaração de Transferência', required: true }
+    ],
     estimatedDays: 7,
     priority: 4,
     category: 'Transferência',
@@ -320,7 +328,10 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'SOLICITACAO_TRANSPORTE_ESCOLAR',
     requiresDocuments: true,
-    requiredDocuments: ['Comprovante de Matrícula', 'Comprovante de Residência'],
+    requiredDocuments: [
+      { id: 'comprovante_matricula', name: 'Comprovante de Matrícula', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }
+    ],
     estimatedDays: 10,
     priority: 4,
     category: 'Transporte',
@@ -407,7 +418,11 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'INSCRICAO_CURSO_LIVRE',
     requiresDocuments: true,
-    requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
+    requiredDocuments: [
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }
+    ],
     estimatedDays: 3,
     priority: 3,
     category: 'Cursos',
@@ -478,7 +493,11 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'COM_DADOS',
     moduleType: 'CADASTRO_PROFESSOR',
     requiresDocuments: true,
-    requiredDocuments: ['Diploma', 'Currículo', 'Comprovante de Residência'],
+    requiredDocuments: [
+      { id: 'diploma', name: 'Diploma', required: true },
+      { id: 'curriculo', name: 'Currículo', required: true },
+      { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }
+    ],
     estimatedDays: 15,
     priority: 4,
     category: 'Cadastro',
@@ -583,7 +602,11 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Histórico Escolar'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'historico_escolar', name: 'Histórico Escolar', required: true }
+    ],
     estimatedDays: 7,
     priority: 3,
     category: 'Certidões',
@@ -597,7 +620,11 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Nome do Aluno'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'nome_aluno', name: 'Nome do Aluno', required: true }
+    ],
     estimatedDays: 3,
     priority: 2,
     category: 'Declarações',
@@ -611,7 +638,11 @@ export const educationServices: ServiceDefinition[] = [
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Nome do Aluno'],
+    requiredDocuments: [
+      { id: 'cpf', name: 'CPF', required: true },
+      { id: 'rg', name: 'RG', required: true },
+      { id: 'nome_aluno', name: 'Nome do Aluno', required: true }
+    ],
     estimatedDays: 3,
     priority: 2,
     category: 'Atestados',
