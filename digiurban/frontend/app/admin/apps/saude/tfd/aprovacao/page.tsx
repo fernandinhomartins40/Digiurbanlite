@@ -21,6 +21,7 @@ interface Solicitacao {
   hospitalDestino?: string;
   prioridade: string;
   createdAt: string;
+  stageId?: string;
 }
 
 export default function FilaAprovacaoGestaoPage() {
@@ -39,15 +40,55 @@ export default function FilaAprovacaoGestaoPage() {
     try {
       setLoading(true);
 
-      // ✅ Chamada real à API - busca por ambos os status possíveis
-      const response = await fetch('/api/tfd/solicitacoes?status=APROVADO_REGULACAO');
+      // ✅ Buscar protocolos TFD em progresso
+      const response = await fetch('/api/protocols?moduleType=ENCAMINHAMENTOS_TFD&status=PROGRESSO');
 
       if (!response.ok) {
         throw new Error('Erro ao carregar fila');
       }
 
       const data = await response.json();
-      setSolicitacoes(data.data || []);
+      const protocols = data.protocols || data.data || [];
+
+      // ✅ Filtrar apenas protocolos na etapa de Aprovação Gestão
+      const protocolsComStages = await Promise.all(
+        protocols.map(async (protocol: any) => {
+          const stagesRes = await fetch(`/api/protocol-stages/${protocol.id}`);
+          if (stagesRes.ok) {
+            const stages = await stagesRes.json();
+            return { ...protocol, stages };
+          }
+          return { ...protocol, stages: [] };
+        })
+      );
+
+      // Filtrar apenas protocolos na etapa "Aprovação Gestão" com status PENDING ou IN_PROGRESS
+      const protocolsNaEtapa = protocolsComStages.filter((protocol: any) => {
+        const stageAprovacao = protocol.stages?.find(
+          (s: any) => s.stageName === 'Aprovação Gestão'
+        );
+        return stageAprovacao && ['PENDING', 'IN_PROGRESS'].includes(stageAprovacao.status);
+      });
+
+      // ✅ Mapear protocolos para formato de solicitações
+      const solicitacoesMapeadas = protocolsNaEtapa.map((protocol: any) => {
+        const customData = protocol.customData || {};
+        return {
+          id: protocol.id,
+          protocolId: protocol.number,
+          citizenId: protocol.citizenId,
+          especialidade: customData.especialidade || 'Não informado',
+          procedimento: customData.procedimento || customData.motivoEncaminhamento || 'Não informado',
+          cidadeDestino: customData.cidadeDestino || 'Não informado',
+          estadoDestino: customData.estadoDestino || '',
+          hospitalDestino: customData.hospitalDestino,
+          prioridade: customData.prioridade || 'ROTINA',
+          createdAt: protocol.createdAt,
+          stageId: protocol.stages?.find((s: any) => s.stageName === 'Aprovação Gestão')?.id,
+        };
+      });
+
+      setSolicitacoes(solicitacoesMapeadas);
     } catch (error) {
       console.error('Erro ao carregar fila:', error);
       toast({
@@ -92,21 +133,43 @@ export default function FilaAprovacaoGestaoPage() {
 
     setLoading(true);
     try {
-      // ✅ Chamada real à API
-      const response = await fetch(`/api/tfd/solicitacoes/${selectedSolicitacao.id}/aprovar-gestao`, {
+      // ✅ Atualizar a stage de Aprovação Gestão
+      const stageId = selectedSolicitacao.stageId;
+
+      if (!stageId) {
+        throw new Error('Stage ID não encontrado');
+      }
+
+      const response = await fetch(`/api/protocol-stages/${stageId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          gestorId: 'CURRENT_USER_ID', // TODO: Pegar do contexto de autenticação
-          aprovado,
-          justificativa,
-          valorEstimado: aprovado ? parseFloat(valorEstimado) : undefined,
+          status: aprovado ? 'COMPLETED' : 'FAILED',
+          completedBy: 'CURRENT_USER_ID', // TODO: Pegar do contexto de autenticação
+          result: aprovado ? 'APROVADO' : 'NEGADO',
+          notes: justificativa,
+          metadata: {
+            valorEstimado: aprovado ? parseFloat(valorEstimado) : undefined,
+            dataAprovacao: new Date().toISOString(),
+          },
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Erro ao processar aprovação');
+      }
+
+      // Atualizar status do protocolo
+      if (!aprovado) {
+        // Se negado, protocolo é CANCELADO
+        await fetch(`/api/protocols/${selectedSolicitacao.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'CANCELADO',
+          }),
+        });
       }
 
       toast({

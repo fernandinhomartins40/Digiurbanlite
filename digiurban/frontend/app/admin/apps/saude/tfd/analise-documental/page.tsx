@@ -47,15 +47,52 @@ export default function FilaAnaliseDocumentalPage() {
     try {
       setLoading(true);
 
-      // ✅ Chamada real à API
-      const response = await fetch('/api/tfd/solicitacoes?status=AGUARDANDO_ANALISE_DOCUMENTAL');
+      // ✅ Buscar protocolos TFD em progresso
+      const response = await fetch('/api/protocols?moduleType=ENCAMINHAMENTOS_TFD&status=PROGRESSO');
 
       if (!response.ok) {
         throw new Error('Erro ao carregar fila');
       }
 
       const data = await response.json();
-      setSolicitacoes(data.data || []);
+      const protocols = data.protocols || data.data || [];
+
+      // ✅ Filtrar apenas protocolos na etapa de Análise Documental
+      const protocolsComStages = await Promise.all(
+        protocols.map(async (protocol: any) => {
+          const stagesRes = await fetch(`/api/protocol-stages/${protocol.id}`);
+          if (stagesRes.ok) {
+            const stages = await stagesRes.json();
+            return { ...protocol, stages };
+          }
+          return { ...protocol, stages: [] };
+        })
+      );
+
+      // Filtrar apenas protocolos na etapa "Análise Documental" com status PENDING ou IN_PROGRESS
+      const protocolsNaEtapa = protocolsComStages.filter((protocol: any) => {
+        const stageAnalise = protocol.stages?.find(
+          (s: any) => s.stageName === 'Análise Documental'
+        );
+        return stageAnalise && ['PENDING', 'IN_PROGRESS'].includes(stageAnalise.status);
+      });
+
+      // ✅ Mapear protocolos para formato de solicitações
+      const solicitacoesMapeadas = protocolsNaEtapa.map((protocol: any) => {
+        const customData = protocol.customData || {};
+        return {
+          id: protocol.id,
+          protocolId: protocol.number,
+          citizenId: protocol.citizenId,
+          especialidade: customData.especialidade || 'Não informado',
+          procedimento: customData.procedimento || customData.motivoEncaminhamento || 'Não informado',
+          prioridade: customData.prioridade || 'ROTINA',
+          createdAt: protocol.createdAt,
+          stageId: protocol.stages?.find((s: any) => s.stageName === 'Análise Documental')?.id,
+        };
+      });
+
+      setSolicitacoes(solicitacoesMapeadas);
     } catch (error) {
       console.error('Erro ao carregar fila:', error);
       toast({
@@ -115,15 +152,25 @@ export default function FilaAnaliseDocumentalPage() {
 
     setLoading(true);
     try {
-      // ✅ Chamada real à API
-      const response = await fetch(`/api/tfd/solicitacoes/${selectedSolicitacao.id}/analisar-documentacao`, {
+      // ✅ Atualizar a stage de Análise Documental
+      const stageId = (selectedSolicitacao as any).stageId;
+
+      if (!stageId) {
+        throw new Error('Stage ID não encontrado');
+      }
+
+      const response = await fetch(`/api/protocol-stages/${stageId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          analistaId: 'CURRENT_USER_ID', // TODO: Pegar do contexto de autenticação
-          aprovado,
-          documentosPendentes: aprovado ? [] : documentosPendentes,
-          observacoes,
+          status: aprovado ? 'COMPLETED' : 'FAILED',
+          completedBy: 'CURRENT_USER_ID', // TODO: Pegar do contexto de autenticação
+          result: aprovado ? 'APROVADO' : 'RECUSADO',
+          notes: observacoes,
+          metadata: {
+            documentosPendentes: aprovado ? [] : documentosPendentes,
+            dataAnalise: new Date().toISOString(),
+          },
         }),
       });
 
@@ -132,10 +179,21 @@ export default function FilaAnaliseDocumentalPage() {
         throw new Error(error.error || 'Erro ao processar análise');
       }
 
+      // Se recusado, atualizar status do protocolo para PENDENCIA
+      if (!aprovado) {
+        await fetch(`/api/protocols/${selectedSolicitacao.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'PENDENCIA',
+          }),
+        });
+      }
+
       toast({
         title: aprovado ? 'Documentação Aprovada' : 'Documentação Recusada',
-        description: `Solicitação ${selectedSolicitacao.protocolId} ${
-          aprovado ? 'avançou para Regulação Médica' : 'retornou para o cidadão com pendências'
+        description: `Protocolo ${selectedSolicitacao.protocolId} ${
+          aprovado ? 'avançou para Regulação Médica' : 'retornou com pendências documentais'
         }.`,
       });
 

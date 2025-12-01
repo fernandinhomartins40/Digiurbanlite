@@ -19,6 +19,7 @@ interface Solicitacao {
   justificativa: string;
   prioridade: string;
   createdAt: string;
+  stageId?: string;
 }
 
 export default function FilaRegulacaoMedicaPage() {
@@ -37,15 +38,53 @@ export default function FilaRegulacaoMedicaPage() {
     try {
       setLoading(true);
 
-      // ✅ Chamada real à API
-      const response = await fetch('/api/tfd/solicitacoes?status=AGUARDANDO_REGULACAO_MEDICA');
+      // ✅ Buscar protocolos TFD em progresso
+      const response = await fetch('/api/protocols?moduleType=ENCAMINHAMENTOS_TFD&status=PROGRESSO');
 
       if (!response.ok) {
         throw new Error('Erro ao carregar fila');
       }
 
       const data = await response.json();
-      setSolicitacoes(data.data || []);
+      const protocols = data.protocols || data.data || [];
+
+      // ✅ Filtrar apenas protocolos na etapa de Regulação Médica
+      const protocolsComStages = await Promise.all(
+        protocols.map(async (protocol: any) => {
+          const stagesRes = await fetch(`/api/protocol-stages/${protocol.id}`);
+          if (stagesRes.ok) {
+            const stages = await stagesRes.json();
+            return { ...protocol, stages };
+          }
+          return { ...protocol, stages: [] };
+        })
+      );
+
+      // Filtrar apenas protocolos na etapa "Regulação Médica" com status PENDING ou IN_PROGRESS
+      const protocolsNaEtapa = protocolsComStages.filter((protocol: any) => {
+        const stageRegulacao = protocol.stages?.find(
+          (s: any) => s.stageName === 'Regulação Médica'
+        );
+        return stageRegulacao && ['PENDING', 'IN_PROGRESS'].includes(stageRegulacao.status);
+      });
+
+      // ✅ Mapear protocolos para formato de solicitações
+      const solicitacoesMapeadas = protocolsNaEtapa.map((protocol: any) => {
+        const customData = protocol.customData || {};
+        return {
+          id: protocol.id,
+          protocolId: protocol.number,
+          citizenId: protocol.citizenId,
+          especialidade: customData.especialidade || 'Não informado',
+          procedimento: customData.procedimento || customData.motivoEncaminhamento || 'Não informado',
+          justificativa: customData.justificativaClinica || 'Não informada',
+          prioridade: customData.prioridade || 'ROTINA',
+          createdAt: protocol.createdAt,
+          stageId: protocol.stages?.find((s: any) => s.stageName === 'Regulação Médica')?.id,
+        };
+      });
+
+      setSolicitacoes(solicitacoesMapeadas);
     } catch (error) {
       console.error('Erro ao carregar fila:', error);
       toast({
@@ -80,15 +119,25 @@ export default function FilaRegulacaoMedicaPage() {
 
     setLoading(true);
     try {
-      // ✅ Chamada real à API
-      const response = await fetch(`/api/tfd/solicitacoes/${selectedSolicitacao.id}/regulacao-medica`, {
+      // ✅ Atualizar a stage de Regulação Médica
+      const stageId = selectedSolicitacao.stageId;
+
+      if (!stageId) {
+        throw new Error('Stage ID não encontrado');
+      }
+
+      const response = await fetch(`/api/protocol-stages/${stageId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          reguladorId: 'CURRENT_USER_ID', // TODO: Pegar do contexto de autenticação
-          aprovado,
-          justificativa: parecer,
-          prioridade: aprovado ? prioridade : undefined,
+          status: aprovado ? 'COMPLETED' : 'FAILED',
+          completedBy: 'CURRENT_USER_ID', // TODO: Pegar do contexto de autenticação
+          result: aprovado ? 'APROVADO' : 'NEGADO',
+          notes: parecer,
+          metadata: {
+            prioridade: aprovado ? prioridade : undefined,
+            dataRegulacao: new Date().toISOString(),
+          },
         }),
       });
 
@@ -97,10 +146,21 @@ export default function FilaRegulacaoMedicaPage() {
         throw new Error(error.error || 'Erro ao processar regulação');
       }
 
+      // Se negado, atualizar status do protocolo para CANCELADO
+      if (!aprovado) {
+        await fetch(`/api/protocols/${selectedSolicitacao.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'CANCELADO',
+          }),
+        });
+      }
+
       toast({
         title: aprovado ? 'Regulação Aprovada' : 'Regulação Negada',
-        description: `Solicitação ${selectedSolicitacao.protocolId} foi ${
-          aprovado ? 'aprovada e encaminhada para Aprovação da Gestão' : 'negada e cancelada'
+        description: `Protocolo ${selectedSolicitacao.protocolId} foi ${
+          aprovado ? 'aprovado e encaminhado para Aprovação da Gestão' : 'negado e cancelado'
         }.`,
       });
 
