@@ -194,17 +194,23 @@ router.get('/viagens/agendadas', async (req, res) => {
   }
 });
 
-// ==================== VEÍCULOS ====================
+// ==================== VEÍCULOS (CRUD COMPLETO) ====================
 
-router.post('/veiculos', async (req, res) => {
+// Listar todos os veículos
+router.get('/veiculos', async (req, res) => {
   try {
-    const veiculo = await tfdService.createVeiculo(req.body);
-    res.status(201).json(veiculo);
+    const filters = {
+      isActive: req.query.isActive === 'false' ? false : undefined,
+      status: req.query.status as string | undefined
+    };
+    const veiculos = await tfdService.listarVeiculos(filters);
+    res.json(veiculos);
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
+// Listar veículos disponíveis
 router.get('/veiculos/disponiveis', async (req, res) => {
   try {
     const veiculos = await tfdService.listarVeiculosDisponiveis();
@@ -214,6 +220,40 @@ router.get('/veiculos/disponiveis', async (req, res) => {
   }
 });
 
+// Buscar veículo por ID
+router.get('/veiculos/:id', async (req, res) => {
+  try {
+    const veiculo = await tfdService.findVeiculoById(req.params.id);
+    if (!veiculo) {
+      return res.status(404).json({ error: 'Veículo não encontrado' });
+    }
+    res.json(veiculo);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Criar veículo
+router.post('/veiculos', async (req, res) => {
+  try {
+    const veiculo = await tfdService.createVeiculo(req.body);
+    res.status(201).json(veiculo);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Atualizar veículo
+router.put('/veiculos/:id', async (req, res) => {
+  try {
+    const veiculo = await tfdService.updateVeiculo(req.params.id, req.body);
+    res.json(veiculo);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Atualizar apenas status do veículo
 router.put('/veiculos/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
@@ -224,8 +264,56 @@ router.put('/veiculos/:id/status', async (req, res) => {
   }
 });
 
-// ==================== MOTORISTAS ====================
+// Deletar veículo (soft delete)
+router.delete('/veiculos/:id', async (req, res) => {
+  try {
+    const veiculo = await tfdService.deleteVeiculo(req.params.id);
+    res.json(veiculo);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
+// ==================== MOTORISTAS (CRUD COMPLETO) ====================
+
+// Listar todos os motoristas
+router.get('/motoristas', async (req, res) => {
+  try {
+    const filters = {
+      isActive: req.query.isActive === 'false' ? false : undefined,
+      status: req.query.status as string | undefined
+    };
+    const motoristas = await tfdService.listarMotoristas(filters);
+    res.json(motoristas);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Listar motoristas disponíveis
+router.get('/motoristas/disponiveis', async (req, res) => {
+  try {
+    const motoristas = await tfdService.listarMotoristasDisponiveis();
+    res.json(motoristas);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Buscar motorista por ID
+router.get('/motoristas/:id', async (req, res) => {
+  try {
+    const motorista = await tfdService.findMotoristaById(req.params.id);
+    if (!motorista) {
+      return res.status(404).json({ error: 'Motorista não encontrado' });
+    }
+    res.json(motorista);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Criar motorista
 router.post('/motoristas', async (req, res) => {
   try {
     const motorista = await tfdService.createMotorista(req.body);
@@ -235,12 +323,135 @@ router.post('/motoristas', async (req, res) => {
   }
 });
 
-router.get('/motoristas/disponiveis', async (req, res) => {
+// Atualizar motorista
+router.put('/motoristas/:id', async (req, res) => {
   try {
-    const motoristas = await tfdService.listarMotoristasDisponiveis();
-    res.json(motoristas);
+    const motorista = await tfdService.updateMotorista(req.params.id, req.body);
+    res.json(motorista);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Deletar motorista (soft delete)
+router.delete('/motoristas/:id', async (req, res) => {
+  try {
+    const motorista = await tfdService.deleteMotorista(req.params.id);
+    res.json(motorista);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ==================== ESPECIALIDADES (CRUD COMPLETO) ====================
+
+// Listar especialidades
+router.get('/especialidades', async (req, res) => {
+  try {
+    const apenasAtivas = req.query.apenasAtivas !== 'false';
+    const especialidades = await tfdService.listarEspecialidades(apenasAtivas);
+    res.json(especialidades);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Buscar especialidade por ID
+router.get('/especialidades/:id', async (req, res) => {
+  try {
+    const especialidade = await tfdService.findEspecialidadeById(req.params.id);
+    if (!especialidade) {
+      return res.status(404).json({ error: 'Especialidade não encontrada' });
+    }
+    res.json(especialidade);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Criar especialidade
+router.post('/especialidades', async (req, res) => {
+  try {
+    const especialidade = await tfdService.createEspecialidade(req.body);
+    res.status(201).json(especialidade);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Atualizar especialidade
+router.put('/especialidades/:id', async (req, res) => {
+  try {
+    const especialidade = await tfdService.updateEspecialidade(req.params.id, req.body);
+    res.json(especialidade);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Deletar especialidade (soft delete)
+router.delete('/especialidades/:id', async (req, res) => {
+  try {
+    const especialidade = await tfdService.deleteEspecialidade(req.params.id);
+    res.json(especialidade);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ==================== DESTINOS (CRUD COMPLETO) ====================
+
+// Listar destinos
+router.get('/destinos', async (req, res) => {
+  try {
+    const apenasAtivos = req.query.apenasAtivos !== 'false';
+    const destinos = await tfdService.listarDestinos(apenasAtivos);
+    res.json(destinos);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Buscar destino por ID
+router.get('/destinos/:id', async (req, res) => {
+  try {
+    const destino = await tfdService.findDestinoById(req.params.id);
+    if (!destino) {
+      return res.status(404).json({ error: 'Destino não encontrado' });
+    }
+    res.json(destino);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Criar destino
+router.post('/destinos', async (req, res) => {
+  try {
+    const destino = await tfdService.createDestino(req.body);
+    res.status(201).json(destino);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Atualizar destino
+router.put('/destinos/:id', async (req, res) => {
+  try {
+    const destino = await tfdService.updateDestino(req.params.id, req.body);
+    res.json(destino);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Deletar destino (soft delete)
+router.delete('/destinos/:id', async (req, res) => {
+  try {
+    const destino = await tfdService.deleteDestino(req.params.id);
+    res.json(destino);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -274,6 +485,53 @@ router.post('/viagens/preview-lista', async (req, res) => {
     res.json(preview);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// ==================== ENUMS DINÂMICOS (FASE 2) ====================
+
+/**
+ * Endpoint genérico para buscar dados dinâmicos de entidades do APP
+ * Usado por formulários de serviços via enumSource
+ */
+router.get('/enums/:entity', async (req, res) => {
+  try {
+    const { entity } = req.params;
+    const { filters } = req.query;
+
+    let parsedFilters: any = {};
+    if (filters) {
+      try {
+        parsedFilters = JSON.parse(filters as string);
+      } catch (e) {
+        // Ignora se não for JSON válido
+      }
+    }
+
+    switch (entity) {
+      case 'especialidades':
+        const especialidades = await tfdService.listarEspecialidades(true);
+        return res.json(especialidades);
+
+      case 'veiculos':
+        const veiculosFilters = parsedFilters.status ? { status: parsedFilters.status } : {};
+        const veiculos = await tfdService.listarVeiculos(veiculosFilters);
+        return res.json(veiculos);
+
+      case 'motoristas':
+        const motoristasFilters = parsedFilters.status ? { status: parsedFilters.status } : {};
+        const motoristas = await tfdService.listarMotoristas(motoristasFilters);
+        return res.json(motoristas);
+
+      case 'destinos':
+        const destinos = await tfdService.listarDestinos(true);
+        return res.json(destinos);
+
+      default:
+        return res.status(404).json({ error: `Entity '${entity}' not found` });
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 

@@ -3009,6 +3009,41 @@ enum StatusMotoristaTFD {
   INATIVO
 }
 
+// Especialidades TFD (gerenciadas dinamicamente pelo APP)
+model EspecialidadeTFD {
+  id        String   @id @default(cuid())
+  nome      String   @unique
+  descricao String?
+  ativo     Boolean  @default(true)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ativo])
+  @@index([ordem])
+  @@map("especialidades_tfd")
+}
+
+// Destinos TFD (cidades/hospitais frequentes)
+model DestinoTFD {
+  id             String   @id @default(cuid())
+  cidade         String
+  estado         String
+  hospital       String?
+  especialidades Json?    // Array de especialidades disponíveis
+  distanciaKm    Int?
+  tempoViagem    String?  // Ex: "2h30min"
+  observacoes    String?
+  ativo          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([cidade, estado, hospital])
+  @@index([ativo])
+  @@index([cidade])
+  @@map("destinos_tfd")
+}
+
 // ============================================================================
 // MICROSISTEMAS - SECRETARIA DE EDUCAÇÃO
 // ============================================================================

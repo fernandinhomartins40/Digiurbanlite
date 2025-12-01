@@ -756,6 +756,200 @@ export class TFDService {
     });
   }
 
+  // ==================== CRUD COMPLETO: VEÍCULOS ====================
+
+  /**
+   * Listar todos os veículos (com filtros opcionais)
+   */
+  async listarVeiculos(filters: any = {}) {
+    return await prisma.veiculoTFD.findMany({
+      where: {
+        isActive: filters.isActive !== undefined ? filters.isActive : true,
+        ...(filters.status && { status: filters.status }),
+      },
+      orderBy: { modelo: 'asc' },
+    });
+  }
+
+  /**
+   * Buscar veículo por ID
+   */
+  async findVeiculoById(id: string) {
+    return await prisma.veiculoTFD.findUnique({
+      where: { id },
+      include: {
+        viagens: {
+          take: 10,
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+  }
+
+  /**
+   * Atualizar veículo
+   */
+  async updateVeiculo(id: string, data: Partial<any>) {
+    return await prisma.veiculoTFD.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
+   * Deletar veículo (soft delete)
+   */
+  async deleteVeiculo(id: string) {
+    return await prisma.veiculoTFD.update({
+      where: { id },
+      data: { isActive: false },
+    });
+  }
+
+  // ==================== CRUD COMPLETO: MOTORISTAS ====================
+
+  /**
+   * Listar todos os motoristas (com filtros opcionais)
+   */
+  async listarMotoristas(filters: any = {}) {
+    return await prisma.motoristaTFD.findMany({
+      where: {
+        isActive: filters.isActive !== undefined ? filters.isActive : true,
+        ...(filters.status && { status: filters.status }),
+      },
+      orderBy: { nome: 'asc' },
+    });
+  }
+
+  /**
+   * Buscar motorista por ID
+   */
+  async findMotoristaById(id: string) {
+    return await prisma.motoristaTFD.findUnique({
+      where: { id },
+      include: {
+        viagens: {
+          take: 10,
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+  }
+
+  /**
+   * Atualizar motorista
+   */
+  async updateMotorista(id: string, data: Partial<any>) {
+    return await prisma.motoristaTFD.update({
+      where: { id },
+      data,
+    });
+  }
+
+  /**
+   * Deletar motorista (soft delete)
+   */
+  async deleteMotorista(id: string) {
+    return await prisma.motoristaTFD.update({
+      where: { id },
+      data: { isActive: false },
+    });
+  }
+
+  // ==================== CRUD COMPLETO: ESPECIALIDADES ====================
+
+  /**
+   * Listar especialidades (apenas ativas por padrão)
+   */
+  async listarEspecialidades(apenasAtivas: boolean = true) {
+    return await prisma.especialidadeTFD.findMany({
+      where: apenasAtivas ? { ativo: true } : undefined,
+      orderBy: [{ ordem: 'asc' }, { nome: 'asc' }],
+    });
+  }
+
+  /**
+   * Criar especialidade
+   */
+  async createEspecialidade(data: { nome: string; descricao?: string; ordem?: number }) {
+    return await prisma.especialidadeTFD.create({ data });
+  }
+
+  /**
+   * Buscar especialidade por ID
+   */
+  async findEspecialidadeById(id: string) {
+    return await prisma.especialidadeTFD.findUnique({ where: { id } });
+  }
+
+  /**
+   * Atualizar especialidade
+   */
+  async updateEspecialidade(id: string, data: Partial<any>) {
+    return await prisma.especialidadeTFD.update({ where: { id }, data });
+  }
+
+  /**
+   * Deletar especialidade (soft delete)
+   */
+  async deleteEspecialidade(id: string) {
+    return await prisma.especialidadeTFD.update({
+      where: { id },
+      data: { ativo: false },
+    });
+  }
+
+  // ==================== CRUD COMPLETO: DESTINOS ====================
+
+  /**
+   * Listar destinos (apenas ativos por padrão)
+   */
+  async listarDestinos(apenasAtivos: boolean = true) {
+    return await prisma.destinoTFD.findMany({
+      where: apenasAtivos ? { ativo: true } : undefined,
+      orderBy: [{ cidade: 'asc' }, { hospital: 'asc' }],
+    });
+  }
+
+  /**
+   * Criar destino
+   */
+  async createDestino(data: {
+    cidade: string;
+    estado: string;
+    hospital?: string;
+    especialidades?: any;
+    distanciaKm?: number;
+    tempoViagem?: string;
+    observacoes?: string;
+  }) {
+    return await prisma.destinoTFD.create({ data });
+  }
+
+  /**
+   * Buscar destino por ID
+   */
+  async findDestinoById(id: string) {
+    return await prisma.destinoTFD.findUnique({ where: { id } });
+  }
+
+  /**
+   * Atualizar destino
+   */
+  async updateDestino(id: string, data: Partial<any>) {
+    return await prisma.destinoTFD.update({ where: { id }, data });
+  }
+
+  /**
+   * Deletar destino (soft delete)
+   */
+  async deleteDestino(id: string) {
+    return await prisma.destinoTFD.update({
+      where: { id },
+      data: { ativo: false },
+    });
+  }
+
   /**
    * Obter estatísticas para o dashboard
    */
