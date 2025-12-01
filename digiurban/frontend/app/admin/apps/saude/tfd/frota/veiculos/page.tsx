@@ -22,32 +22,33 @@ export default function VeiculosPage() {
   }, []);
 
   const loadVeiculos = async () => {
-    setVeiculos([
-      {
-        id: '1',
-        modelo: 'Van Fiat Ducato',
-        placa: 'ABC-1234',
-        ano: 2022,
-        capacidade: 15,
-        acessibilidade: true,
-        km: 45000,
-        status: 'DISPONIVEL',
-      },
-      {
-        id: '2',
-        modelo: 'Carro Toyota Corolla',
-        placa: 'XYZ-5678',
-        ano: 2021,
-        capacidade: 5,
-        acessibilidade: false,
-        km: 32000,
-        status: 'EM_VIAGEM',
-      },
-    ]);
+    try {
+      const response = await fetch('/api/tfd/veiculos');
+      const data = await response.json();
+      setVeiculos(data);
+    } catch (error) {
+      console.error('Erro ao carregar veículos:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar os veículos',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSave = async (data: any) => {
     try {
+      const method = editando ? 'PUT' : 'POST';
+      const url = editando ? `/api/tfd/veiculos/${editando.id}` : '/api/tfd/veiculos';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error('Falha ao salvar veículo');
+
       toast({
         title: 'Veículo salvo!',
         description: 'As informações do veículo foram atualizadas.',
@@ -59,6 +60,30 @@ export default function VeiculosPage() {
       toast({
         title: 'Erro',
         description: 'Não foi possível salvar o veículo',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja realmente excluir este veículo?')) return;
+
+    try {
+      const response = await fetch(`/api/tfd/veiculos/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Falha ao excluir veículo');
+
+      toast({
+        title: 'Veículo excluído!',
+        description: 'O veículo foi removido com sucesso.',
+      });
+      loadVeiculos();
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir o veículo',
         variant: 'destructive',
       });
     }
@@ -157,10 +182,21 @@ export default function VeiculosPage() {
                   <TableCell>{getStatusBadge(veiculo.status)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="ghost">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditando(veiculo);
+                          setOpen(true);
+                        }}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDelete(veiculo.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

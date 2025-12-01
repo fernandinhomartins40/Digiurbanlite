@@ -21,28 +21,70 @@ export default function MotoristasPage() {
   }, []);
 
   const loadMotoristas = async () => {
-    setMotoristas([
-      {
-        id: '1',
-        nome: 'João Silva',
-        cpf: '123.456.789-00',
-        cnh: '12345678900',
-        categoriaCNH: 'D',
-        validadeCNH: '2026-12-31',
-        telefone: '(11) 98765-4321',
-        status: 'DISPONIVEL',
-      },
-      {
-        id: '2',
-        nome: 'Maria Santos',
-        cpf: '987.654.321-00',
-        cnh: '98765432100',
-        categoriaCNH: 'D',
-        validadeCNH: '2025-06-30',
-        telefone: '(11) 91234-5678',
-        status: 'EM_VIAGEM',
-      },
-    ]);
+    try {
+      const response = await fetch('/api/tfd/motoristas');
+      const data = await response.json();
+      setMotoristas(data);
+    } catch (error) {
+      console.error('Erro ao carregar motoristas:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar os motoristas',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSave = async (data: any) => {
+    try {
+      const method = 'POST';
+      const url = '/api/tfd/motoristas';
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error('Falha ao salvar motorista');
+
+      toast({
+        title: 'Motorista salvo!',
+        description: 'As informações do motorista foram atualizadas.',
+      });
+      setOpen(false);
+      loadMotoristas();
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível salvar o motorista',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Deseja realmente excluir este motorista?')) return;
+
+    try {
+      const response = await fetch(`/api/tfd/motoristas/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Falha ao excluir motorista');
+
+      toast({
+        title: 'Motorista excluído!',
+        description: 'O motorista foi removido com sucesso.',
+      });
+      loadMotoristas();
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível excluir o motorista',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -158,10 +200,11 @@ export default function MotoristasPage() {
                   <TableCell>{getStatusBadge(motorista.status)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="ghost">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDelete(motorista.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
