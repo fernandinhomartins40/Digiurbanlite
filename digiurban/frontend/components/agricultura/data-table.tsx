@@ -61,7 +61,7 @@ export function DataTable<T extends { id: string }>({
     <div className="space-y-4">
       {/* Busca */}
       {searchable && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -74,14 +74,14 @@ export function DataTable<T extends { id: string }>({
               className="pl-10"
             />
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground text-center sm:text-left shrink-0">
             {filteredData.length} {filteredData.length === 1 ? 'item' : 'itens'}
           </div>
         </div>
       )}
 
-      {/* Tabela */}
-      <div className="border rounded-lg overflow-hidden">
+      {/* Tabela com scroll horizontal */}
+      <div className="border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -156,27 +156,29 @@ export function DataTable<T extends { id: string }>({
 
       {/* Paginação */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-sm text-muted-foreground order-2 sm:order-1">
             Página {currentPage} de {totalPages}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 order-1 sm:order-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
+              className="min-w-[100px]"
             >
               <ChevronLeft className="h-4 w-4" />
-              Anterior
+              <span className="hidden sm:inline">Anterior</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
+              className="min-w-[100px]"
             >
-              Próxima
+              <span className="hidden sm:inline">Próxima</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

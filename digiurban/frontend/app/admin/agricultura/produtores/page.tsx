@@ -173,24 +173,26 @@ export default function CadastroProdutoresPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
             size="icon"
             onClick={() => router.push('/admin/secretarias/agricultura')}
+            className="shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg shrink-0">
                 <Users className="h-6 w-6 text-white" />
               </div>
-              Cadastro de Produtores Rurais
+              <span className="hidden sm:inline">Cadastro de Produtores Rurais</span>
+              <span className="sm:hidden">Produtores</span>
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
               Gerencie o cadastro completo dos produtores rurais do município
             </p>
           </div>
@@ -201,10 +203,11 @@ export default function CadastroProdutoresPage() {
             <DialogTrigger asChild>
               <Button className="bg-green-600 hover:bg-green-700">
                 <Plus className="h-4 w-4 mr-2" />
-                Novo Produtor
+                <span className="hidden sm:inline">Novo Produtor</span>
+                <span className="sm:hidden">Novo</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Cadastrar Novo Produtor</DialogTitle>
                 <DialogDescription>
@@ -212,7 +215,7 @@ export default function CadastroProdutoresPage() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="citizenId">ID do Cidadão *</Label>
                     <Input
@@ -235,7 +238,7 @@ export default function CadastroProdutoresPage() {
                       required
                     />
                   </div>
-                  <div className="col-span-2 space-y-2">
+                  <div className="sm:col-span-2 space-y-2">
                     <Label htmlFor="nome">Nome Completo *</Label>
                     <Input
                       id="nome"
@@ -268,7 +271,7 @@ export default function CadastroProdutoresPage() {
                       }
                     />
                   </div>
-                  <div className="col-span-2 space-y-2">
+                  <div className="sm:col-span-2 space-y-2">
                     <Label htmlFor="atividadePrincipal">Atividade Principal</Label>
                     <Input
                       id="atividadePrincipal"
@@ -323,7 +326,7 @@ export default function CadastroProdutoresPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total de Produtores"
           value={statistics?.total || 0}
