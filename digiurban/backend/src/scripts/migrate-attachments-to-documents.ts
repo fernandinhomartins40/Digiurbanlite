@@ -9,7 +9,7 @@
  *   npx ts-node src/scripts/migrate-attachments-to-documents.ts
  */
 
-import { PrismaClient, DocumentStatus } from '@prisma/client';
+import { PrismaClient, DocumentStatus, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -21,8 +21,8 @@ async function migrateAttachmentsToDocuments() {
     const protocols = await prisma.protocolSimplified.findMany({
       where: {
         OR: [
-          { attachments: { not: null } },
-          { documents: { not: null } }
+          { attachments: { not: Prisma.AnyNull } },
+          { documents: { not: Prisma.AnyNull } }
         ]
       },
       select: {
