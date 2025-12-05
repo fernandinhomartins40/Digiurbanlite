@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Search, Download, Eye, Edit, FileText, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ModuleConfig } from '../BaseModuleView'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface ManagementTabProps {
   config: ModuleConfig
@@ -78,7 +79,6 @@ export function ManagementTab({ config }: ManagementTabProps) {
   const [editData, setEditData] = useState<Record<string, any>>({})
 
   const [department, module] = config.apiEndpoint.split('/')
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
   // Buscar configuração do módulo
   useEffect(() => {
@@ -95,7 +95,7 @@ export function ManagementTab({ config }: ManagementTabProps) {
   const fetchConfig = async () => {
     try {
       const response = await fetch(
-        `${baseUrl}/admin/secretarias/${department}/${module}/management`,
+        getFullApiUrl(`/admin/secretarias/${department}/${module}/management`),
         {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -126,7 +126,7 @@ export function ManagementTab({ config }: ManagementTabProps) {
       }
 
       const response = await fetch(
-        `${baseUrl}/admin/secretarias/${department}/${module}/management/data?${params}`,
+        getFullApiUrl(`/admin/secretarias/${department}/${module}/management/data?${params}`),
         {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -148,7 +148,7 @@ export function ManagementTab({ config }: ManagementTabProps) {
   const viewDetails = async (record: DataRecord) => {
     try {
       const response = await fetch(
-        `${baseUrl}/admin/secretarias/${department}/${module}/management/data/${record.id}`,
+        getFullApiUrl(`/admin/secretarias/${department}/${module}/management/data/${record.id}`),
         {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -183,7 +183,7 @@ export function ManagementTab({ config }: ManagementTabProps) {
 
     try {
       const response = await fetch(
-        `${baseUrl}/admin/secretarias/${department}/${module}/management/data/${selectedRecord.id}`,
+        getFullApiUrl(`/admin/secretarias/${department}/${module}/management/data/${selectedRecord.id}`),
         {
           method: 'PUT',
           credentials: 'include',
@@ -209,7 +209,7 @@ export function ManagementTab({ config }: ManagementTabProps) {
   const exportData = async () => {
     try {
       const response = await fetch(
-        `${baseUrl}/admin/secretarias/${department}/${module}/management/export`,
+        getFullApiUrl(`/admin/secretarias/${department}/${module}/management/export`),
         {
           method: 'POST',
           credentials: 'include',

@@ -8,6 +8,7 @@ import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, Cart
 import { useToast } from '@/components/ui/use-toast'
 import { TrendingUp, TrendingDown, Users, Clock, CheckCircle, AlertTriangle, Download, Loader2, FileText, Image as ImageIcon } from 'lucide-react'
 import { ModuleConfig } from '../BaseModuleView'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface DashboardTabProps {
   config: ModuleConfig
@@ -63,8 +64,8 @@ export function DashboardTab({ config }: DashboardTabProps) {
       })
 
       const [dept, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const response = await fetch(`${baseUrl}/admin/secretarias/${dept}/${module}/dashboard?${params}`, {
+      const url = getFullApiUrl(`/admin/secretarias/${dept}/${module}/dashboard?${params}`)
+      const response = await fetch(url, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -112,7 +113,6 @@ export function DashboardTab({ config }: DashboardTabProps) {
     setExportLoading(true)
     try {
       const [dept, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
       const params = new URLSearchParams({
         period,
@@ -120,7 +120,8 @@ export function DashboardTab({ config }: DashboardTabProps) {
         ...(department !== 'all' && { department }),
       })
 
-      const response = await fetch(`${baseUrl}/admin/secretarias/${dept}/${module}/dashboard/export?${params}`, {
+      const url = getFullApiUrl(`/admin/secretarias/${dept}/${module}/dashboard/export?${params}`)
+      const response = await fetch(url, {
         credentials: 'include',
       })
 
@@ -156,7 +157,6 @@ export function DashboardTab({ config }: DashboardTabProps) {
     setExportLoading(true)
     try {
       const [dept, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
       const params = new URLSearchParams({
         period,
@@ -164,7 +164,8 @@ export function DashboardTab({ config }: DashboardTabProps) {
         ...(department !== 'all' && { department }),
       })
 
-      const response = await fetch(`${baseUrl}/admin/secretarias/${dept}/${module}/dashboard/export?${params}`, {
+      const url = getFullApiUrl(`/admin/secretarias/${dept}/${module}/dashboard/export?${params}`)
+      const response = await fetch(url, {
         credentials: 'include',
       })
 

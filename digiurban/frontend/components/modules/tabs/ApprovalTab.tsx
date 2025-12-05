@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from '@/components/ui/use-toast'
 import { CheckCircle, XCircle, Clock, MessageSquare, User, Calendar, Loader2 } from 'lucide-react'
 import { ModuleConfig } from '../BaseModuleView'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface ApprovalTabProps {
   config: ModuleConfig
@@ -55,8 +56,7 @@ export function ApprovalTab({ config }: ApprovalTabProps) {
     setLoading(true)
     try {
       const [department, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const url = `${baseUrl}/admin/secretarias/${department}/${module}/approval`
+      const url = getFullApiUrl(`/admin/secretarias/${department}/${module}/approval`)
 
       console.log('[ApprovalTab] Fetching:', url)
 
@@ -85,8 +85,7 @@ export function ApprovalTab({ config }: ApprovalTabProps) {
     setActionLoading(true)
     try {
       const [department, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const url = `${baseUrl}/admin/secretarias/${department}/${module}/approval/${itemId}/approve`
+      const url = getFullApiUrl(`/admin/secretarias/${department}/${module}/approval/${itemId}/approve`)
 
       const response = await fetch(url, {
         method: 'POST',
@@ -130,8 +129,7 @@ export function ApprovalTab({ config }: ApprovalTabProps) {
     setActionLoading(true)
     try {
       const [department, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const url = `${baseUrl}/admin/secretarias/${department}/${module}/approval/${itemId}/reject`
+      const url = getFullApiUrl(`/admin/secretarias/${department}/${module}/approval/${itemId}/reject`)
 
       const response = await fetch(url, {
         method: 'POST',
@@ -175,8 +173,7 @@ export function ApprovalTab({ config }: ApprovalTabProps) {
     setActionLoading(true)
     try {
       const [department, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const url = `${baseUrl}/admin/secretarias/${department}/${module}/approval/${itemId}/comment`
+      const url = getFullApiUrl(`/admin/secretarias/${department}/${module}/approval/${itemId}/comment`)
 
       const response = await fetch(url, {
         method: 'POST',

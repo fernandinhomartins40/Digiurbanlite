@@ -10,7 +10,8 @@
       "Bash(done)",
       "Bash(for file in digiurban/backend/prisma/seeds/services/{culture,environment,public-safety,public-services,public-works,sports,tourism,urban-planning}.seed.ts)",
       "Bash(do python /tmp/convert_docs.py \"$file\")",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(docker logs:*)"
     ],
     "deny": [],
     "ask": []

@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/components/ui/use-toast'
 import { Search, Filter, Eye, Edit, Download, Plus, Loader2 } from 'lucide-react'
 import { ModuleConfig } from '../BaseModuleView'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface ListTabProps {
   config: ModuleConfig
@@ -86,8 +87,7 @@ export function ListTab({ config }: ListTabProps) {
 
       // Rota unificada: /api/admin/secretarias/:department/:module/list
       const [department, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const url = `${baseUrl}/admin/secretarias/${department}/${module}/list?${params}`
+      const url = getFullApiUrl(`/admin/secretarias/${department}/${module}/list?${params}`)
 
       console.log('[ListTab] Fetching:', url)
       console.log('[ListTab] Config:', config)
@@ -140,8 +140,7 @@ export function ListTab({ config }: ListTabProps) {
     setActionLoading(true)
     try {
       const [department, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const url = `${baseUrl}/admin/secretarias/${department}/${module}/update/${selectedItem.id}`
+      const url = getFullApiUrl(`/admin/secretarias/${department}/${module}/update/${selectedItem.id}`)
 
       const response = await fetch(url, {
         method: 'PUT',
@@ -182,8 +181,7 @@ export function ListTab({ config }: ListTabProps) {
     setActionLoading(true)
     try {
       const [department, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const url = `${baseUrl}/admin/secretarias/${department}/${module}/create`
+      const url = getFullApiUrl(`/admin/secretarias/${department}/${module}/create`)
 
       const response = await fetch(url, {
         method: 'POST',
@@ -220,8 +218,6 @@ export function ListTab({ config }: ListTabProps) {
     setActionLoading(true)
     try {
       const [department, module] = config.apiEndpoint.split('/')
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-
       const params = new URLSearchParams({
         format: 'csv',
       })
@@ -229,7 +225,7 @@ export function ListTab({ config }: ListTabProps) {
       if (search) params.append('search', search)
       if (statusFilter !== 'all') params.append('status', statusFilter)
 
-      const url = `${baseUrl}/admin/secretarias/${department}/${module}/export?${params}`
+      const url = getFullApiUrl(`/admin/secretarias/${department}/${module}/export?${params}`)
 
       const response = await fetch(url, {
         credentials: 'include',

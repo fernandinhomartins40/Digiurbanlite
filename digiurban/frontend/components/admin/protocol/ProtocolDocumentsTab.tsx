@@ -34,6 +34,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface ProtocolDocumentsTabProps {
   protocolId: string
@@ -55,13 +56,12 @@ export function ProtocolDocumentsTab({
 
   // Função para gerar URL de download correta
   const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
     // Se fileUrl já é uma URL completa, usar diretamente
     if (doc.fileUrl?.startsWith('http')) {
       return doc.fileUrl
     }
-    // Se é um path relativo, construir URL completa
-    const baseUrl = `${apiUrl}/protocols/${protocolId}/documents/${doc.id}/download`
+    // Usar helper centralizado para consistência entre dev e produção
+    const baseUrl = getFullApiUrl(`/protocols/${protocolId}/documents/${doc.id}/download`)
     return inline ? `${baseUrl}?inline=true` : baseUrl
   }
 
@@ -148,8 +148,8 @@ export function ProtocolDocumentsTab({
 
   const handleApprove = async (documentId: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const response = await fetch(`${apiUrl}/protocols/${protocolId}/documents/${documentId}/approve`, {
+      const url = getFullApiUrl(`/protocols/${protocolId}/documents/${documentId}/approve`)
+      const response = await fetch(url, {
         method: 'PUT',
         credentials: 'include',
         headers: {
@@ -187,8 +187,8 @@ export function ProtocolDocumentsTab({
     }
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-      const response = await fetch(`${apiUrl}/protocols/${protocolId}/documents/${documentId}/reject`, {
+      const url = getFullApiUrl(`/protocols/${protocolId}/documents/${documentId}/reject`)
+      const response = await fetch(url, {
         method: 'PUT',
         credentials: 'include',
         headers: {
