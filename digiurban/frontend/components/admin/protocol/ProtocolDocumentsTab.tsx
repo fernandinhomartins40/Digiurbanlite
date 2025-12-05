@@ -502,13 +502,15 @@ export function ProtocolDocumentsTab({
           </div>
 
           <DialogFooter className="gap-2">
-            {viewingDoc?.status === DocumentStatus.UPLOADED && (
+            {viewingDoc?.status === DocumentStatus.UPLOADED && viewingDoc && (
               <>
                 <Button
                   variant="default"
                   onClick={() => {
-                    handleApprove(viewingDoc.id)
-                    setViewingDoc(null)
+                    if (viewingDoc) {
+                      handleApprove(viewingDoc.id)
+                      setViewingDoc(null)
+                    }
                   }}
                 >
                   <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -541,8 +543,10 @@ export function ProtocolDocumentsTab({
                       <Button
                         variant="destructive"
                         onClick={() => {
-                          handleReject(viewingDoc.id)
-                          setViewingDoc(null)
+                          if (viewingDoc) {
+                            handleReject(viewingDoc.id)
+                            setViewingDoc(null)
+                          }
                         }}
                       >
                         Confirmar Rejeição
@@ -552,20 +556,22 @@ export function ProtocolDocumentsTab({
                 </Dialog>
               </>
             )}
-            <Button
-              variant="outline"
-              asChild
-            >
-              <a
-                href={getDownloadUrl(viewingDoc!)}
-                download={viewingDoc?.fileName}
-                target="_blank"
-                rel="noopener noreferrer"
+            {viewingDoc && (
+              <Button
+                variant="outline"
+                asChild
               >
-                <Download className="h-4 w-4 mr-2" />
-                Baixar
-              </a>
-            </Button>
+                <a
+                  href={getDownloadUrl(viewingDoc)}
+                  download={viewingDoc.fileName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar
+                </a>
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
