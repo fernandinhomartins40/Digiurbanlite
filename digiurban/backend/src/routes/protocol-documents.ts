@@ -311,7 +311,8 @@ router.get(
 
 /**
  * GET /api/protocols/:protocolId/documents/:documentId/download
- * Download de um documento
+ * Download/Visualização de um documento
+ * Query params: ?inline=true para visualização, sem parâmetro para download
  */
 router.get(
   '/:protocolId/documents/:documentId/download',
@@ -319,6 +320,7 @@ router.get(
   async (req, res) => {
     try {
       const { documentId } = req.params;
+      const inline = req.query.inline === 'true';
 
       const document = await documentService.getDocumentById(documentId);
 
@@ -354,9 +356,14 @@ router.get(
           });
         }
 
-        // Configurar headers para download
-        res.setHeader('Content-Disposition', `attachment; filename="${document.fileName || 'documento'}"`);
+        // Configurar headers - inline para visualização, attachment para download
+        const disposition = inline ? 'inline' : 'attachment';
+        res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'}"`);
         res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+
+        // Adicionar headers CORS para permitir visualização
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET');
 
         // Stream do arquivo
         const fileStream = fs.createReadStream(filePath);

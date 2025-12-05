@@ -54,14 +54,15 @@ export function ProtocolDocumentsTab({
   const { toast } = useToast()
 
   // Função para gerar URL de download correta
-  const getDownloadUrl = (doc: ProtocolDocument) => {
+  const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
     // Se fileUrl já é uma URL completa, usar diretamente
     if (doc.fileUrl?.startsWith('http')) {
       return doc.fileUrl
     }
     // Se é um path relativo, construir URL completa
-    return `${apiUrl}/protocols/${protocolId}/documents/${doc.id}/download`
+    const baseUrl = `${apiUrl}/protocols/${protocolId}/documents/${doc.id}/download`
+    return inline ? `${baseUrl}?inline=true` : baseUrl
   }
 
   const getStatusBadge = (status: DocumentStatus) => {
@@ -545,13 +546,13 @@ export function ProtocolDocumentsTab({
             <div className="border rounded-lg p-4 bg-muted/30 min-h-[400px] flex items-center justify-center">
               {viewingDoc?.mimeType?.startsWith('image/') ? (
                 <img
-                  src={getDownloadUrl(viewingDoc)}
+                  src={getDownloadUrl(viewingDoc, true)}
                   alt={viewingDoc.fileName}
                   className="max-w-full max-h-[500px] object-contain"
                 />
               ) : viewingDoc?.mimeType === 'application/pdf' ? (
                 <iframe
-                  src={getDownloadUrl(viewingDoc)}
+                  src={getDownloadUrl(viewingDoc, true)}
                   className="w-full h-[500px] rounded"
                   title={viewingDoc.fileName}
                 />
