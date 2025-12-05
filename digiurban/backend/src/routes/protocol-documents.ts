@@ -313,25 +313,31 @@ router.get(
  * GET /api/protocols/:protocolId/documents/:documentId/download
  * Download/Visualização de um documento
  * Query params: ?inline=true para visualização, sem parâmetro para download
+ * NOTA: Rota pública para permitir visualização em <img> e <iframe>
  */
 router.get(
   '/:protocolId/documents/:documentId/download',
-  adminAuthMiddleware,
   async (req, res) => {
     try {
       const { documentId } = req.params;
       const inline = req.query.inline === 'true';
 
+      console.log(`\n[DOWNLOAD] DocumentId: ${documentId}, Inline: ${inline}`);
+
       const document = await documentService.getDocumentById(documentId);
 
       if (!document) {
+        console.log(`[DOWNLOAD] Documento não encontrado: ${documentId}`);
         return res.status(404).json({
           success: false,
           error: 'Documento não encontrado'
         });
       }
 
+      console.log(`[DOWNLOAD] Documento encontrado: ${document.fileName}, fileUrl: ${document.fileUrl}`);
+
       if (!document.fileUrl) {
+        console.log(`[DOWNLOAD] Arquivo não disponível para documento: ${documentId}`);
         return res.status(404).json({
           success: false,
           error: 'Arquivo não disponível'
@@ -348,13 +354,19 @@ router.get(
           ? document.fileUrl
           : path.join(process.cwd(), document.fileUrl);
 
+        console.log(`[DOWNLOAD] Caminho do arquivo: ${filePath}`);
+
         // Verificar se arquivo existe
         if (!fs.existsSync(filePath)) {
+          console.log(`[DOWNLOAD] Arquivo não existe no caminho: ${filePath}`);
           return res.status(404).json({
             success: false,
-            error: 'Arquivo não encontrado no servidor'
+            error: 'Arquivo não encontrado no servidor',
+            path: filePath
           });
         }
+
+        console.log(`[DOWNLOAD] Arquivo existe, enviando... MimeType: ${document.mimeType}`);
 
         // Configurar headers - inline para visualização, attachment para download
         const disposition = inline ? 'inline' : 'attachment';
@@ -370,10 +382,11 @@ router.get(
         fileStream.pipe(res);
       } else {
         // Se é URL externa, redirecionar
+        console.log(`[DOWNLOAD] Redirecionando para URL externa: ${document.fileUrl}`);
         return res.redirect(document.fileUrl);
       }
     } catch (error) {
-      console.error('Erro ao fazer download do documento:', error);
+      console.error('[DOWNLOAD] Erro ao fazer download do documento:', error);
       return res.status(500).json({
         success: false,
         error: 'Erro ao fazer download do documento',
