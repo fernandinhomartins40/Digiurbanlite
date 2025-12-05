@@ -240,16 +240,13 @@ export default function SolicitarServicoPage() {
         formData.append('customFormData', jsonString);
       }
 
-      // Adicionar arquivos
-      const documentIds: string[] = [];
-      Object.entries(uploadedFiles).forEach(([docId, file]) => {
+      // Adicionar arquivos com IDs corretos para mapeamento no backend
+      const filesArray = Object.entries(uploadedFiles);
+      filesArray.forEach(([docId, file], index) => {
         formData.append('documents', file);
-        documentIds.push(docId);
-      });
-
-      // Adicionar IDs dos documentos
-      documentIds.forEach(id => {
-        formData.append('documentIds[]', id);
+        // Backend espera: documents[index][id] ou documents[index][documentId]
+        formData.append(`documents[${index}][id]`, docId);
+        formData.append(`documents[${index}][documentId]`, docId);
       });
 
       console.log('📤 Enviando solicitação com', Object.keys(uploadedFiles).length, 'arquivo(s)');
