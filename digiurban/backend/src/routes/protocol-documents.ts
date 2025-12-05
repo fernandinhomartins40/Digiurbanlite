@@ -319,12 +319,20 @@ router.get(
   '/:protocolId/documents/:documentId/download',
   async (req, res) => {
     try {
-      const { documentId } = req.params;
+      const { protocolId, documentId } = req.params;
       const inline = req.query.inline === 'true';
 
-      console.log(`\n[DOWNLOAD] DocumentId: ${documentId}, Inline: ${inline}`);
+      console.log(`\n[DOWNLOAD] ProtocolId: ${protocolId}, DocumentId: ${documentId}, Inline: ${inline}`);
 
-      const document = await documentService.getDocumentById(documentId);
+      // Tentar buscar documento do banco
+      let document = await documentService.getDocumentById(documentId);
+
+      // Se não encontrou e é um documento legacy, buscar dos documentos legacy do protocolo
+      if (!document && documentId.startsWith('legacy_')) {
+        console.log(`[DOWNLOAD] Documento legacy detectado, buscando do protocolo...`);
+        const allDocs = await documentService.getProtocolDocuments(protocolId);
+        document = allDocs.find(doc => doc.id === documentId);
+      }
 
       if (!document) {
         console.log(`[DOWNLOAD] Documento não encontrado: ${documentId}`);
