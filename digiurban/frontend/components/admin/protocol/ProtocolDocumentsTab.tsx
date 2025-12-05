@@ -50,7 +50,19 @@ export function ProtocolDocumentsTab({
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
+  const [viewingDoc, setViewingDoc] = useState<ProtocolDocument | null>(null)
   const { toast } = useToast()
+
+  // Função para gerar URL de download correta
+  const getDownloadUrl = (doc: ProtocolDocument) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+    // Se fileUrl já é uma URL completa, usar diretamente
+    if (doc.fileUrl?.startsWith('http')) {
+      return doc.fileUrl
+    }
+    // Se é um path relativo, construir URL completa
+    return `${apiUrl}/protocols/${protocolId}/documents/${doc.id}/download`
+  }
 
   const getStatusBadge = (status: DocumentStatus) => {
     const statusConfig = {
@@ -135,7 +147,19 @@ export function ProtocolDocumentsTab({
 
   const handleApprove = async (documentId: string) => {
     try {
-      // Implementar chamada à API
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+      const response = await fetch(`${apiUrl}/protocols/${protocolId}/documents/${documentId}/approve`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao aprovar documento')
+      }
+
       toast({
         title: 'Documento aprovado',
         description: 'O documento foi aprovado com sucesso',
@@ -162,7 +186,20 @@ export function ProtocolDocumentsTab({
     }
 
     try {
-      // Implementar chamada à API
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+      const response = await fetch(`${apiUrl}/protocols/${protocolId}/documents/${documentId}/reject`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rejectionReason }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao rejeitar documento')
+      }
+
       toast({
         title: 'Documento rejeitado',
         description: 'O documento foi rejeitado',
@@ -253,6 +290,34 @@ export function ProtocolDocumentsTab({
 
                     {/* Ações */}
                     <div className="flex flex-col gap-2 ml-4">
+                      {doc.fileUrl && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setViewingDoc(doc)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Visualizar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            asChild
+                          >
+                            <a
+                              href={getDownloadUrl(doc)}
+                              download={doc.fileName}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Baixar
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+
                       {doc.status === DocumentStatus.PENDING && (
                         <div className="flex flex-col gap-2">
                           <Input
@@ -273,7 +338,7 @@ export function ProtocolDocumentsTab({
 
                       {doc.status === DocumentStatus.UPLOADED && (
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleApprove(doc.id)}>
+                          <Button size="sm" variant="default" onClick={() => handleApprove(doc.id)}>
                             <CheckCircle2 className="h-4 w-4 mr-2" />
                             Aprovar
                           </Button>
@@ -313,15 +378,6 @@ export function ProtocolDocumentsTab({
                             </DialogContent>
                           </Dialog>
                         </div>
-                      )}
-
-                      {doc.fileUrl && (
-                        <Button size="sm" variant="outline" asChild>
-                          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4 mr-2" />
-                            Baixar
-                          </a>
-                        </Button>
                       )}
                     </div>
                   </div>
@@ -375,6 +431,144 @@ export function ProtocolDocumentsTab({
           </CardContent>
         </Card>
       )}
+
+      {/* Modal de Visualização */}
+      <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>
+              {viewingDoc?.documentType}
+            </DialogTitle>
+            <DialogDescription>
+              {viewingDoc?.fileName} • {getStatusBadge(viewingDoc?.status || DocumentStatus.PENDING)}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Preview do documento */}
+            <div className="border rounded-lg p-4 bg-muted/30 min-h-[400px] flex items-center justify-center">
+              {viewingDoc?.mimeType?.startsWith('image/') ? (
+                <img
+                  src={getDownloadUrl(viewingDoc)}
+                  alt={viewingDoc.fileName}
+                  className="max-w-full max-h-[500px] object-contain"
+                />
+              ) : viewingDoc?.mimeType === 'application/pdf' ? (
+                <iframe
+                  src={getDownloadUrl(viewingDoc)}
+                  className="w-full h-[500px] rounded"
+                  title={viewingDoc.fileName}
+                />
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p>Pré-visualização não disponível para este tipo de arquivo</p>
+                  <p className="text-sm mt-2">{viewingDoc?.mimeType}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Informações */}
+            {viewingDoc && (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Tamanho</p>
+                  <p className="font-medium">
+                    {viewingDoc.fileSize ? `${(viewingDoc.fileSize / 1024).toFixed(2)} KB` : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Tipo</p>
+                  <p className="font-medium">{viewingDoc.mimeType || 'N/A'}</p>
+                </div>
+                {viewingDoc.uploadedAt && (
+                  <div>
+                    <p className="text-muted-foreground">Enviado em</p>
+                    <p className="font-medium">
+                      {format(new Date(viewingDoc.uploadedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                )}
+                {viewingDoc.validatedAt && (
+                  <div>
+                    <p className="text-muted-foreground">Validado em</p>
+                    <p className="font-medium">
+                      {format(new Date(viewingDoc.validatedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            {viewingDoc?.status === DocumentStatus.UPLOADED && (
+              <>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    handleApprove(viewingDoc.id)
+                    setViewingDoc(null)
+                  }}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Aprovar Documento
+                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive">
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Rejeitar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Rejeitar Documento</DialogTitle>
+                      <DialogDescription>
+                        Informe o motivo da rejeição
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div>
+                      <Label>Motivo da Rejeição</Label>
+                      <Textarea
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        placeholder="Ex: Documento ilegível, data expirada..."
+                        rows={3}
+                      />
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          handleReject(viewingDoc.id)
+                          setViewingDoc(null)
+                        }}
+                      >
+                        Confirmar Rejeição
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
+            )}
+            <Button
+              variant="outline"
+              asChild
+            >
+              <a
+                href={getDownloadUrl(viewingDoc!)}
+                download={viewingDoc?.fileName}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Baixar
+              </a>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

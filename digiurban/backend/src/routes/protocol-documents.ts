@@ -310,6 +310,73 @@ router.get(
 );
 
 /**
+ * GET /api/protocols/:protocolId/documents/:documentId/download
+ * Download de um documento
+ */
+router.get(
+  '/:protocolId/documents/:documentId/download',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { documentId } = req.params;
+
+      const document = await documentService.getDocumentById(documentId);
+
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          error: 'Documento não encontrado'
+        });
+      }
+
+      if (!document.fileUrl) {
+        return res.status(404).json({
+          success: false,
+          error: 'Arquivo não disponível'
+        });
+      }
+
+      // Se fileUrl é um caminho local
+      if (!document.fileUrl.startsWith('http')) {
+        const path = require('path');
+        const fs = require('fs');
+
+        // Construir caminho absoluto
+        const filePath = document.fileUrl.startsWith('/')
+          ? document.fileUrl
+          : path.join(process.cwd(), document.fileUrl);
+
+        // Verificar se arquivo existe
+        if (!fs.existsSync(filePath)) {
+          return res.status(404).json({
+            success: false,
+            error: 'Arquivo não encontrado no servidor'
+          });
+        }
+
+        // Configurar headers para download
+        res.setHeader('Content-Disposition', `attachment; filename="${document.fileName || 'documento'}"`);
+        res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+
+        // Stream do arquivo
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+      } else {
+        // Se é URL externa, redirecionar
+        return res.redirect(document.fileUrl);
+      }
+    } catch (error) {
+      console.error('Erro ao fazer download do documento:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao fazer download do documento',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+  }
+);
+
+/**
  * DELETE /api/protocols/:protocolId/documents/:documentId
  * Deletar um documento
  */
