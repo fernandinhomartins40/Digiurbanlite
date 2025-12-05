@@ -48,14 +48,24 @@ async function createPendingDocumentsForProtocol(
 
     // Criar documentos PENDING ou UPLOADED
     for (const docConfig of requiredDocs) {
+      const docId = docConfig.id || docConfig.name || docConfig;
       const docName = docConfig.name || docConfig.id || docConfig;
       const isRequired = typeof docConfig === 'object' ? (docConfig.required !== false) : true;
 
       // Verificar se já foi enviado um arquivo para este tipo de documento
-      const uploadedFile = uploadedFiles.find(f =>
-        f.id === docConfig.id ||
-        f.name.toLowerCase().includes(docName.toLowerCase())
-      );
+      // Tentar mapear por: documentId, id, ou nome do arquivo
+      const uploadedFile = uploadedFiles.find(f => {
+        const fileDocId = f.documentId || f.id;
+        const matches = fileDocId === docId ||
+                       fileDocId === docName ||
+                       f.id === docId ||
+                       f.name.toLowerCase().includes(docName.toLowerCase());
+
+        if (matches) {
+          console.log(`   ✓ Mapeado: ${docName} → ${f.name}`);
+        }
+        return matches;
+      });
 
       if (uploadedFile) {
         // Criar como UPLOADED se já enviou arquivo
@@ -72,6 +82,7 @@ async function createPendingDocumentsForProtocol(
             uploadedAt: new Date()
           }
         });
+        console.log(`   ✓ Documento UPLOADED: ${docName}`);
       } else {
         // Criar como PENDING se não enviou
         await prisma.protocolDocument.create({
@@ -82,6 +93,7 @@ async function createPendingDocumentsForProtocol(
             status: DocumentStatus.PENDING
           }
         });
+        console.log(`   → Documento PENDING: ${docName}`);
       }
     }
 
@@ -125,15 +137,27 @@ router.post('/', upload.array('documents'), async (req, res) => {
     console.log('Files:', files ? files.length : 0);
     console.log('Form Data:', formData);
 
-    // Processar arquivos enviados
-    const uploadedDocuments = files ? files.map((file, index) => ({
-      id: req.body[`documents[${index}][id]`] || `doc_${index}`,
-      name: file.originalname,
-      url: getFileUrl(file.filename),
-      uploadedAt: new Date().toISOString(),
-      size: file.size,
-      mimetype: file.mimetype
-        })) : [];
+    // Processar arquivos enviados - Novo formato com documentId
+    const uploadedDocuments = files ? files.map((file, index) => {
+      const documentId = req.body[`documents[${index}][id]`] ||
+                        req.body[`documents[${index}][documentId]`] ||
+                        req.body[`documentId`] ||
+                        `doc_${index}`;
+
+      console.log(`   → Arquivo ${index}: ${file.originalname} (documentId: ${documentId})`);
+
+      return {
+        id: documentId,
+        documentId: documentId,
+        name: file.originalname,
+        url: getFileUrl(file.filename),
+        uploadedAt: new Date().toISOString(),
+        size: file.size,
+        mimetype: file.mimetype,
+        filename: file.filename,
+        path: file.path
+      };
+    }) : [];
 
     console.log('Uploaded Documents:', uploadedDocuments.length);
 

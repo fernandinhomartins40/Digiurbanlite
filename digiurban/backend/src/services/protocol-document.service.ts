@@ -53,15 +53,86 @@ export async function createProtocolDocument(data: CreateDocumentData) {
 
 /**
  * Lista todos os documentos de um protocolo
+ * COM RETROCOMPATIBILIDADE: lê de protocol_documents OU do campo attachments antigo
  */
 export async function getProtocolDocuments(protocolId: string) {
-  return prisma.protocolDocument.findMany({
+  // Buscar documentos da nova tabela
+  const documentsFromTable = await prisma.protocolDocument.findMany({
     where: { protocolId },
     orderBy: [
       { isRequired: 'desc' },
       { createdAt: 'asc' },
     ]
-        });
+  });
+
+  // Se encontrou documentos na tabela, retornar
+  if (documentsFromTable.length > 0) {
+    return documentsFromTable;
+  }
+
+  // RETROCOMPATIBILIDADE: Se não encontrou, buscar do campo attachments antigo
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: {
+      attachments: true,
+      documents: true
+    }
+  });
+
+  if (!protocol) {
+    return [];
+  }
+
+  // Tentar parsear attachments (pode ser string JSON ou array)
+  let attachments: any[] = [];
+
+  if (protocol.attachments) {
+    try {
+      if (typeof protocol.attachments === 'string') {
+        attachments = JSON.parse(protocol.attachments);
+      } else if (Array.isArray(protocol.attachments)) {
+        attachments = protocol.attachments;
+      }
+    } catch (e) {
+      console.warn('Erro ao parsear attachments:', e);
+    }
+  }
+
+  // Tentar parsear documents (campo antigo alternativo)
+  if (attachments.length === 0 && protocol.documents) {
+    try {
+      if (typeof protocol.documents === 'string') {
+        attachments = JSON.parse(protocol.documents);
+      } else if (Array.isArray(protocol.documents)) {
+        attachments = protocol.documents;
+      }
+    } catch (e) {
+      console.warn('Erro ao parsear documents:', e);
+    }
+  }
+
+  // Converter attachments antigos para formato de ProtocolDocument
+  return attachments.map((att: any, index: number) => ({
+    id: `legacy_${index}`,
+    protocolId,
+    documentType: att.documentId || att.id || 'Documento',
+    isRequired: false,
+    status: DocumentStatus.UPLOADED,
+    fileName: att.originalName || att.filename || att.name || 'arquivo',
+    fileUrl: att.path || att.url,
+    fileSize: att.size || 0,
+    mimeType: att.mimetype || 'application/octet-stream',
+    uploadedAt: att.uploadedAt ? new Date(att.uploadedAt) : new Date(),
+    uploadedBy: null,
+    validatedAt: null,
+    validatedBy: null,
+    rejectedAt: null,
+    rejectionReason: null,
+    version: 1,
+    previousDocId: null,
+    createdAt: att.uploadedAt ? new Date(att.uploadedAt) : new Date(),
+    updatedAt: att.uploadedAt ? new Date(att.uploadedAt) : new Date()
+  }));
 }
 
 /**
