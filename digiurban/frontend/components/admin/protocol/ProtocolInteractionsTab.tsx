@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
@@ -239,8 +239,12 @@ export function ProtocolInteractionsTab({
                 <div
                   key={interaction.id}
                   className={`p-4 rounded-lg border ${
-                    !interaction.isRead ? 'bg-blue-50 border-blue-200' : 'bg-gray-50'
-                  } ${interaction.isInternal ? 'border-l-4 border-l-yellow-500' : ''}`}
+                    interaction.authorType === 'SERVER'
+                      ? 'bg-blue-50 border-blue-200 ml-8'
+                      : 'bg-gray-50 border-gray-200 mr-8'
+                  } ${interaction.isInternal ? 'border-l-4 border-l-yellow-500' : ''} ${
+                    !interaction.isRead ? 'ring-2 ring-blue-300' : ''
+                  }`}
                   onClick={() =>
                     !interaction.isRead && handleMarkAsRead(interaction.id)
                   }
