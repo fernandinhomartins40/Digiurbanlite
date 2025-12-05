@@ -404,17 +404,113 @@ export function ProtocolDocumentsTab({
                         {getStatusBadge(doc.status)}
                       </div>
                       {doc.fileName && (
-                        <p className="text-sm text-muted-foreground">{doc.fileName}</p>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          <strong>Arquivo:</strong> {doc.fileName} (
+                          {doc.fileSize ? `${(doc.fileSize / 1024).toFixed(2)} KB` : ''})
+                        </p>
+                      )}
+                      {doc.uploadedAt && (
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Enviado em:</strong>{' '}
+                          {format(new Date(doc.uploadedAt), "dd/MM/yyyy 'às' HH:mm", {
+                            locale: ptBR,
+                          })}
+                        </p>
                       )}
                     </div>
-                    {doc.fileUrl && (
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-4 w-4 mr-2" />
-                          Baixar
-                        </a>
-                      </Button>
-                    )}
+
+                    {/* Ações */}
+                    <div className="flex flex-col gap-2 ml-4">
+                      {doc.fileUrl && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setViewingDoc(doc)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Visualizar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            asChild
+                          >
+                            <a
+                              href={getDownloadUrl(doc)}
+                              download={doc.fileName}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Baixar
+                            </a>
+                          </Button>
+                        </div>
+                      )}
+
+                      {doc.status === DocumentStatus.PENDING && (
+                        <div className="flex flex-col gap-2">
+                          <Input
+                            type="file"
+                            onChange={(e) => handleFileSelect(e, doc.id)}
+                            className="text-sm"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleUpload(doc.id)}
+                            disabled={isUploading || !selectedFile || selectedDocId !== doc.id}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Enviar
+                          </Button>
+                        </div>
+                      )}
+
+                      {doc.status === DocumentStatus.UPLOADED && (
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="default" onClick={() => handleApprove(doc.id)}>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Aprovar
+                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="destructive">
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Rejeitar
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Rejeitar Documento</DialogTitle>
+                                <DialogDescription>
+                                  Informe o motivo da rejeição do documento
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label>Motivo da Rejeição</Label>
+                                  <Textarea
+                                    value={rejectionReason}
+                                    onChange={(e) => setRejectionReason(e.target.value)}
+                                    placeholder="Ex: Documento ilegível, data expirada..."
+                                    rows={3}
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleReject(doc.id)}
+                                >
+                                  Confirmar Rejeição
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
