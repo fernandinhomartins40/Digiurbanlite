@@ -62,7 +62,18 @@ export function ProtocolDocumentsTab({
     }
     // Usar helper centralizado para consistência entre dev e produção
     const baseUrl = getFullApiUrl(`/protocols/${protocolId}/documents/${doc.id}/download`)
-    return inline ? `${baseUrl}?inline=true` : baseUrl
+    const url = inline ? `${baseUrl}?inline=true` : baseUrl
+
+    console.log('[ProtocolDocumentsTab] Download URL:', {
+      docId: doc.id,
+      fileName: doc.fileName,
+      fileUrl: doc.fileUrl,
+      mimeType: doc.mimeType,
+      inline,
+      generatedUrl: url
+    })
+
+    return url
   }
 
   const getStatusBadge = (status: DocumentStatus) => {
@@ -547,8 +558,17 @@ export function ProtocolDocumentsTab({
               {viewingDoc?.mimeType?.startsWith('image/') ? (
                 <img
                   src={getDownloadUrl(viewingDoc, true)}
-                  alt={viewingDoc.fileName}
+                  alt={viewingDoc.fileName || 'Documento'}
                   className="max-w-full max-h-[500px] object-contain"
+                  onError={(e) => {
+                    console.error('[ProtocolDocumentsTab] Erro ao carregar imagem:', {
+                      src: e.currentTarget.src,
+                      doc: viewingDoc
+                    })
+                  }}
+                  onLoad={() => {
+                    console.log('[ProtocolDocumentsTab] Imagem carregada com sucesso:', viewingDoc.fileName)
+                  }}
                 />
               ) : viewingDoc?.mimeType === 'application/pdf' ? (
                 <iframe
