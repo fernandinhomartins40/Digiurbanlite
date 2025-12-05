@@ -17,14 +17,8 @@ async function migrateAttachmentsToDocuments() {
   console.log('🔄 Iniciando migração de attachments → protocol_documents...\n');
 
   try {
-    // Buscar todos os protocolos que têm attachments ou documents
-    const protocols = await prisma.protocolSimplified.findMany({
-      where: {
-        OR: [
-          { attachments: { not: Prisma.AnyNull } },
-          { documents: { not: Prisma.AnyNull } }
-        ]
-      },
+    // Buscar todos os protocolos (filtraremos depois os que têm attachments)
+    const allProtocols = await prisma.protocolSimplified.findMany({
       select: {
         id: true,
         number: true,
@@ -32,6 +26,12 @@ async function migrateAttachmentsToDocuments() {
         documents: true
       }
     });
+
+    // Filtrar apenas protocolos que realmente têm attachments ou documents
+    const protocols = allProtocols.filter(p =>
+      (p.attachments && p.attachments !== '') ||
+      (p.documents && typeof p.documents === 'object' && p.documents !== null)
+    );
 
     console.log(`📋 Encontrados ${protocols.length} protocolos com documentos antigos\n`);
 
