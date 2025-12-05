@@ -331,7 +331,10 @@ router.get(
       if (!document && documentId.startsWith('legacy_')) {
         console.log(`[DOWNLOAD] Documento legacy detectado, buscando do protocolo...`);
         const allDocs = await documentService.getProtocolDocuments(protocolId);
-        document = allDocs.find(doc => doc.id === documentId);
+        const foundDoc = allDocs.find(doc => doc.id === documentId);
+        if (foundDoc) {
+          document = foundDoc;
+        }
       }
 
       if (!document) {
