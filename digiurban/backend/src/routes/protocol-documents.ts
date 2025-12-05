@@ -325,7 +325,7 @@ router.get(
       console.log(`\n[DOWNLOAD] ProtocolId: ${protocolId}, DocumentId: ${documentId}, Inline: ${inline}`);
 
       // Tentar buscar documento do banco
-      let document = await documentService.getDocumentById(documentId);
+      let document: any = await documentService.getDocumentById(documentId);
 
       // Se não encontrou e é um documento legacy, buscar dos documentos legacy do protocolo
       if (!document && documentId.startsWith('legacy_')) {
