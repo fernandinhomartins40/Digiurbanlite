@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ============================================================================
  * DOCUMENT UPLOAD ROUTES
  * ============================================================================
@@ -19,7 +19,7 @@ const router = Router();
 
 /**
  * POST /api/document-upload/protocol/:protocolId
- * Upload de documentos para protocolo (cidadão)
+ * Upload de documentos para protocolo (cidadÃ£o)
  */
 router.post(
   '/protocol/:protocolId',
@@ -44,7 +44,7 @@ router.post(
       if (!protocolId) {
         return res.status(400).json({
           success: false,
-          error: 'ID do protocolo é obrigatório'
+          error: 'ID do protocolo Ã© obrigatÃ³rio'
         });
       }
 
@@ -92,8 +92,79 @@ router.post(
 );
 
 /**
+ * POST /api/document-upload/admin/protocol/:protocolId
+ * Upload de documentos para protocolo (admin)
+ */
+router.post(
+  '/admin/protocol/:protocolId',
+  adminAuthMiddleware,
+  (req: Request, res: Response, next: NextFunction) => {
+    const upload = createSecureUploadMiddleware(undefined, {
+      maxFileSize: 10 * 1024 * 1024,
+      maxFiles: 10
+    });
+    upload.array('documents', 10)(req, res, next);
+  },
+  validateUploadedFilesMiddleware(),
+  async (req: any, res: Response) => {
+    try {
+      const { protocolId } = req.params;
+      const files = req.files as Express.Multer.File[];
+      const documentTypes = req.body.documentTypes
+        ? JSON.parse(req.body.documentTypes)
+        : undefined;
+      const userId = req.userId;
+
+      if (!protocolId) {
+        return res.status(400).json({
+          success: false,
+          error: 'ID do protocolo é obrigatório'
+        });
+      }
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Nenhum arquivo foi enviado'
+        });
+      }
+
+      const result = await documentUploadService.uploadDocumentsToProtocol({
+        protocolId,
+        files,
+        uploadedBy: userId,
+        documentTypes
+      });
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: 'Falha no upload de documentos',
+          errors: result.errors
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: 'Documentos enviados com sucesso',
+        protocol: {
+          id: result.protocolId,
+          number: result.protocolNumber
+        },
+        uploadedDocuments: result.uploadedDocuments,
+        warnings: result.errors
+      });
+    } catch (error) {
+      console.error('Erro no upload (admin):', error);
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Erro interno do servidor'
+      });
+    }
+  }
+);/**
  * GET /api/document-upload/service/:serviceId/requirements
- * Obtém requisitos de documentos de um serviço
+ * ObtÃ©m requisitos de documentos de um serviÃ§o
  */
 router.get(
   '/service/:serviceId/requirements',
@@ -223,7 +294,7 @@ router.post(
 
 /**
  * POST /api/document-upload/validate-cpf
- * Valida CPF extraído do documento
+ * Valida CPF extraÃ­do do documento
  */
 router.post(
   '/validate-cpf',
@@ -234,7 +305,7 @@ router.post(
       if (!cpf) {
         return res.status(400).json({
           success: false,
-          error: 'CPF é obrigatório'
+          error: 'CPF Ã© obrigatÃ³rio'
         });
       }
 
@@ -245,13 +316,14 @@ router.post(
         valid: isValid
       });
     } catch (error) {
-      console.error('Erro na validação de CPF:', error);
+      console.error('Erro na validaÃ§Ã£o de CPF:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Erro na validação'
+        error: error instanceof Error ? error.message : 'Erro na validaÃ§Ã£o'
       });
     }
   }
 );
 
 export default router;
+

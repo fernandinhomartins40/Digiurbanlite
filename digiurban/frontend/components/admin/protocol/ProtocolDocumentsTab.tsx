@@ -67,6 +67,31 @@ export function ProtocolDocumentsTab({
     return null
   }
 
+  const uploadFile = async (doc: ProtocolDocument) => {
+    if (!selectedFile) return
+
+    const formData = new FormData()
+    formData.append("documents", selectedFile)
+    formData.append("documentTypes", JSON.stringify([doc.documentType]))
+
+    const uploadUrl = getFullApiUrl(`/document-upload/admin/protocol/${protocolId}`)
+
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      body: formData,
+      credentials: "include"
+    })
+
+    if (!response.ok) {
+      throw new Error("Falha no upload do documento")
+    }
+
+    const result = await response.json()
+    const uploaded = result.uploadedDocuments?.[0]
+    if (uploaded) {
+      console.log('[ProtocolDocumentsTab] Upload concluído', uploaded)
+    }
+  }
   // FunÃ§Ã£o para gerar URL de download correta
   const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
     const directUrl = resolveDirectFileUrl(doc)
@@ -149,8 +174,12 @@ export function ProtocolDocumentsTab({
 
     try {
       setIsUploading(true)
-      // SimulaÃ§Ã£o de upload - implementar integraÃ§Ã£o real
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const targetDoc = documents.find((d) => d.id === documentId)
+      if (!targetDoc) {
+        throw new Error('Documento nao encontrado para upload')
+      }
+
+      await uploadFile(targetDoc)
 
       toast({
         title: 'Documento enviado',
@@ -715,6 +744,7 @@ export function ProtocolDocumentsTab({
     </div>
   )
 }
+
 
 
 

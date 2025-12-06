@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -136,6 +136,15 @@ try {
   console.log('✅ Rotas de stats de departamentos carregadas!');
 } catch (error) {
   console.error('❌ Erro ao carregar rotas de stats:', error);
+}
+
+// Upload seguro de documentos (cidadao/admin)
+try {
+  const documentUploadRoutes = require('./routes/document-upload.routes').default;
+  app.use('/api/document-upload', documentUploadRoutes);
+  console.log('Rotas de upload de documentos carregadas!');
+} catch (error) {
+  console.error('Erro ao carregar rotas de upload de documentos:', error);
 }
 
 // 🔥 NOVAS ROTAS DINÂMICAS (Sistema Híbrido)
