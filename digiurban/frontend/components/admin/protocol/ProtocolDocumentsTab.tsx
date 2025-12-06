@@ -58,7 +58,7 @@ export function ProtocolDocumentsTab({
   const resolveDirectFileUrl = (doc: ProtocolDocument) => {
     if (!doc.fileUrl) return null
     const normalized = doc.fileUrl.includes('/backend/uploads')
-      ? doc.fileUrl.replace(/(?:^|\\/)?:?app\\/backend\\/uploads/i, '/uploads')
+      ? doc.fileUrl.replace(/(?:^|\/)?(?:app\/)?backend\/uploads/i, '/uploads')
       : doc.fileUrl
     if (normalized.startsWith('http')) return normalized
     if (normalized.startsWith('/uploads') || normalized.startsWith('uploads/')) {
