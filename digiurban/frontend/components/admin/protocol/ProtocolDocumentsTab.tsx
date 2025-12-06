@@ -54,6 +54,26 @@ export function ProtocolDocumentsTab({
   const [viewingDoc, setViewingDoc] = useState<ProtocolDocument | null>(null)
   const { toast } = useToast()
 
+  // Helpers para detecÇõÇœo confiÇável de preview
+  const isImageDoc = (doc?: ProtocolDocument | null) => {
+    if (!doc) return false
+    const mime = doc.mimeType?.toLowerCase() || ''
+    if (mime.startsWith('image/')) return true
+    const fileName = doc.fileName?.toLowerCase() || ''
+    const url = doc.fileUrl?.toLowerCase() || ''
+    const imageExtPattern = /\.(jpg|jpeg|png|gif|webp|bmp|tiff|heic|heif)$/i
+    return imageExtPattern.test(fileName) || imageExtPattern.test(url)
+  }
+
+  const isPdfDoc = (doc?: ProtocolDocument | null) => {
+    if (!doc) return false
+    const mime = doc.mimeType?.toLowerCase() || ''
+    if (mime === 'application/pdf' || mime === 'application/x-pdf') return true
+    const fileName = doc.fileName?.toLowerCase() || ''
+    const url = doc.fileUrl?.toLowerCase() || ''
+    return fileName.endsWith('.pdf') || url.endsWith('.pdf')
+  }
+
   // Função para gerar URL de download correta
   const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
     // Se fileUrl já é uma URL completa, usar diretamente
@@ -74,6 +94,13 @@ export function ProtocolDocumentsTab({
     })
 
     return url
+  }
+
+  const getPreviewUrl = (doc: ProtocolDocument) => {
+    if (doc.fileUrl?.startsWith('data:') || doc.fileUrl?.startsWith('http')) {
+      return doc.fileUrl
+    }
+    return getDownloadUrl(doc, true)
   }
 
   const getStatusBadge = (status: DocumentStatus) => {
@@ -555,9 +582,9 @@ export function ProtocolDocumentsTab({
           <div className="space-y-4">
             {/* Preview do documento */}
             <div className="border rounded-lg p-4 bg-muted/30 min-h-[400px] flex items-center justify-center">
-              {viewingDoc?.mimeType?.startsWith('image/') ? (
+              {isImageDoc(viewingDoc) ? (
                 <img
-                  src={getDownloadUrl(viewingDoc, true)}
+                  src={getPreviewUrl(viewingDoc!)}
                   alt={viewingDoc.fileName || 'Documento'}
                   className="max-w-full max-h-[500px] object-contain"
                   onError={(e) => {
@@ -570,9 +597,9 @@ export function ProtocolDocumentsTab({
                     console.log('[ProtocolDocumentsTab] Imagem carregada com sucesso:', viewingDoc.fileName)
                   }}
                 />
-              ) : viewingDoc?.mimeType === 'application/pdf' ? (
+              ) : isPdfDoc(viewingDoc) ? (
                 <iframe
-                  src={getDownloadUrl(viewingDoc, true)}
+                  src={getPreviewUrl(viewingDoc!)}
                   className="w-full h-[500px] rounded"
                   title={viewingDoc.fileName}
                 />
