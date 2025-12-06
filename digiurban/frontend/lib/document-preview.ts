@@ -30,11 +30,11 @@ export const resolvePreviewUrl = (
   doc: ProtocolDocument,
   getDownloadUrl: (d: ProtocolDocument) => string
 ) => {
-  if (doc.id?.startsWith('legacy_') && doc.fileUrl && !doc.fileUrl.startsWith('http') && !doc.fileUrl.startsWith('data:')) {
-    return buildAbsoluteFromRelative(doc.fileUrl)
-  }
+  // data URL ou externa: usar direto
   if (doc.fileUrl?.startsWith('data:') || doc.fileUrl?.startsWith('http')) {
     return doc.fileUrl
   }
+  // Demais casos (incluindo legados com caminho relativo): usar rota de download,
+  // que centraliza a resoluÇõÇœo de caminho e CORS.
   return getDownloadUrl(doc)
 }
