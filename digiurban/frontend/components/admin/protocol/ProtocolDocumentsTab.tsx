@@ -35,6 +35,7 @@ import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getFullApiUrl } from '@/lib/api-config'
+import { isImageDoc, isPdfDoc, resolvePreviewUrl } from '@/lib/document-preview'
 
 interface ProtocolDocumentsTabProps {
   protocolId: string
@@ -53,32 +54,6 @@ export function ProtocolDocumentsTab({
   const [rejectionReason, setRejectionReason] = useState('')
   const [viewingDoc, setViewingDoc] = useState<ProtocolDocument | null>(null)
   const { toast } = useToast()
-
-  // Helpers para detecÇõÇœo confiÇável de preview
-  const isImageDoc = (doc?: ProtocolDocument | null) => {
-    if (!doc) return false
-    const mime = doc.mimeType?.toLowerCase() || ''
-    if (mime.startsWith('image/')) return true
-    const fileName = doc.fileName?.toLowerCase() || ''
-    const url = doc.fileUrl?.toLowerCase() || ''
-    const imageExtPattern = /\.(jpg|jpeg|png|gif|webp|bmp|tiff|heic|heif)$/i
-    return imageExtPattern.test(fileName) || imageExtPattern.test(url)
-  }
-
-  const isPdfDoc = (doc?: ProtocolDocument | null) => {
-    if (!doc) return false
-    const mime = doc.mimeType?.toLowerCase() || ''
-    if (mime === 'application/pdf' || mime === 'application/x-pdf') return true
-    const fileName = doc.fileName?.toLowerCase() || ''
-    const url = doc.fileUrl?.toLowerCase() || ''
-    return fileName.endsWith('.pdf') || url.endsWith('.pdf')
-  }
-
-  const buildAbsoluteFromRelative = (relativePath: string) => {
-    if (typeof window === 'undefined') return relativePath
-    const clean = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath
-    return `${window.location.origin}/${clean}`
-  }
 
   // Função para gerar URL de download correta
   const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
@@ -103,13 +78,7 @@ export function ProtocolDocumentsTab({
   }
 
   const getPreviewUrl = (doc: ProtocolDocument) => {
-    if (doc.id?.startsWith('legacy_') && doc.fileUrl && !doc.fileUrl.startsWith('http') && !doc.fileUrl.startsWith('data:')) {
-      return buildAbsoluteFromRelative(doc.fileUrl)
-    }
-    if (doc.fileUrl?.startsWith('data:') || doc.fileUrl?.startsWith('http')) {
-      return doc.fileUrl
-    }
-    return getDownloadUrl(doc, true)
+    return resolvePreviewUrl(doc, (d) => getDownloadUrl(d, true))
   }
 
   const getStatusBadge = (status: DocumentStatus) => {
