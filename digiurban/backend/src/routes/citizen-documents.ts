@@ -290,6 +290,15 @@ const router = Router();
 // Middleware para verificar tenant em todas as rotas
 router.use(citizenAuthMiddleware);
 
+// Rota legada desativada: fluxo oficial é /api/document-upload/*
+router.use((req, res) => {
+  return res.status(410).json({
+    success: false,
+    error: 'LEGACY_ROUTE_DISABLED',
+    message: 'Use /api/document-upload/... para enviar ou visualizar documentos de protocolo'
+  });
+});
+
 // ====================== ROUTES ======================
 
 /**

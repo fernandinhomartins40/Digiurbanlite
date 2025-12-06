@@ -261,8 +261,9 @@ export class DocumentUploadService {
     // Mover arquivo
     fs.renameSync(file.path, targetPath);
 
-    // Retornar caminho relativo
-    return path.relative(process.cwd(), targetPath);
+    // Retornar caminho pÇ§blico normalizado (usado pelo static /uploads)
+    const publicPath = path.posix.join('/uploads', 'protocols', protocolId, secureFilename);
+    return publicPath;
   }
 
   /**
@@ -307,10 +308,20 @@ export class DocumentUploadService {
 
     if (!protocol) return;
 
-    // Obter documentos atuais
-    const currentDocs = Array.isArray(protocol.documents)
-      ? (protocol.documents as any[])
-      : [];
+    // Obter documentos atuais (aceitar string JSON ou objeto)
+    let currentDocs: any[] = [];
+    if (Array.isArray(protocol.documents)) {
+      currentDocs = protocol.documents as any[];
+    } else if (typeof protocol.documents === 'string') {
+      try {
+        currentDocs = JSON.parse(protocol.documents);
+      } catch (e) {
+        console.warn('Erro ao parsear protocol.documents (string):', e);
+        currentDocs = [];
+      }
+    } else if (protocol.documents && typeof protocol.documents === 'object') {
+      currentDocs = [protocol.documents];
+    }
 
     // Adicionar novos documentos
     const updatedDocs = [...currentDocs, ...newDocuments.map(doc => ({

@@ -329,9 +329,13 @@ export function createSecureUploadMiddleware(
  */
 export function secureDeleteFile(filePath: string): boolean {
   try {
-    const fullPath = path.isAbsolute(filePath)
-      ? filePath
-      : path.join(process.cwd(), filePath);
+    const normalizedPath = filePath.startsWith('/uploads/')
+      ? path.join(process.cwd(), filePath.slice(1))
+      : filePath;
+
+    const fullPath = path.isAbsolute(normalizedPath)
+      ? normalizedPath
+      : path.join(process.cwd(), normalizedPath);
 
     // Verificar que o arquivo está dentro do diretório de uploads
     const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -361,12 +365,19 @@ export function secureMoveFile(
 ): boolean {
   try {
     const uploadsDir = path.join(process.cwd(), 'uploads');
-    const fullSourcePath = path.isAbsolute(sourcePath)
-      ? sourcePath
-      : path.join(process.cwd(), sourcePath);
-    const fullTargetPath = path.isAbsolute(targetPath)
-      ? targetPath
-      : path.join(process.cwd(), targetPath);
+    const normalizedSource = sourcePath.startsWith('/uploads/')
+      ? path.join(process.cwd(), sourcePath.slice(1))
+      : sourcePath;
+    const normalizedTarget = targetPath.startsWith('/uploads/')
+      ? path.join(process.cwd(), targetPath.slice(1))
+      : targetPath;
+
+    const fullSourcePath = path.isAbsolute(normalizedSource)
+      ? normalizedSource
+      : path.join(process.cwd(), normalizedSource);
+    const fullTargetPath = path.isAbsolute(normalizedTarget)
+      ? normalizedTarget
+      : path.join(process.cwd(), normalizedTarget);
 
     // Verificar que ambos os caminhos estão dentro de uploads
     if (!fullSourcePath.startsWith(uploadsDir) || !fullTargetPath.startsWith(uploadsDir)) {
