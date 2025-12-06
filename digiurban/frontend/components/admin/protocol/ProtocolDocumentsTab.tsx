@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getFullApiUrl } from '@/lib/api-config'
-import { buildAbsoluteFromRelative, isImageDoc, isPdfDoc, resolvePreviewUrl } from '@/lib/document-preview'
+import { isImageDoc, isPdfDoc, resolvePreviewUrl } from '@/lib/document-preview'
 
 interface ProtocolDocumentsTabProps {
   protocolId: string
@@ -54,18 +54,6 @@ export function ProtocolDocumentsTab({
   const [rejectionReason, setRejectionReason] = useState('')
   const [viewingDoc, setViewingDoc] = useState<ProtocolDocument | null>(null)
   const { toast } = useToast()
-
-  const resolveDirectFileUrl = (doc: ProtocolDocument) => {
-    if (!doc.fileUrl) return null
-    const normalized = doc.fileUrl.includes('/backend/uploads')
-      ? doc.fileUrl.replace(/(?:^|\/)?(?:app\/)?backend\/uploads/i, '/uploads')
-      : doc.fileUrl
-    if (normalized.startsWith('http')) return normalized
-    if (normalized.startsWith('/uploads') || normalized.startsWith('uploads/')) {
-      return buildAbsoluteFromRelative(normalized)
-    }
-    return null
-  }
 
   const uploadFile = async (doc: ProtocolDocument) => {
     if (!selectedFile) return
@@ -92,11 +80,17 @@ export function ProtocolDocumentsTab({
       console.log('[ProtocolDocumentsTab] Upload concluído', uploaded)
     }
   }
-  // FunÃ§Ã£o para gerar URL de download correta
+
+  // Função para gerar URL de download correta
+  // SEMPRE usa a rota de download do backend para garantir resolução correta de caminhos
   const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
-    const directUrl = resolveDirectFileUrl(doc)
-    if (directUrl) return directUrl
-    // Usar helper centralizado para consistência entre dev e produção
+    // Para URLs externas (http/https), usar diretamente
+    if (doc.fileUrl && doc.fileUrl.startsWith('http')) {
+      return doc.fileUrl
+    }
+
+    // Para todos os outros casos (caminhos locais), usar a rota de download do backend
+    // que tem toda a lógica de resolução de caminhos (legacy, protocols, etc)
     const baseUrl = getFullApiUrl(`/protocols/${protocolId}/documents/${doc.id}/download`)
     const url = inline ? `${baseUrl}?inline=true` : baseUrl
 

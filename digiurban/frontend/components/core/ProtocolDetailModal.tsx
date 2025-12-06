@@ -81,6 +81,18 @@ export function ProtocolDetailModal({
   );
   const hasAdvancedFeatures = hasLocation || hasImages || hasScheduling;
 
+  // Função para gerar URL de download correta
+  const getDocumentUrl = (doc: any) => {
+    // Para URLs externas (http/https), usar diretamente
+    if (doc.fileUrl && doc.fileUrl.startsWith('http')) {
+      return doc.fileUrl;
+    }
+
+    // Para todos os outros casos (caminhos locais), usar a rota de download do backend
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    return `${backendUrl}/api/protocols/${protocol.id}/documents/${doc.id}/download`;
+  };
+
   // 📝 Atualizar protocolo
   const handleUpdate = async (data: Record<string, any>) => {
     setIsSubmitting(true);
@@ -538,7 +550,7 @@ export function ProtocolDetailModal({
                                 </div>
                                 {doc.fileUrl && (
                                   <Button size="sm" variant="outline" asChild>
-                                    <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+                                    <a href={getDocumentUrl(doc)} target="_blank" rel="noopener noreferrer">
                                       <FileText className="h-4 w-4 mr-2" />
                                       Abrir
                                     </a>
@@ -593,7 +605,7 @@ export function ProtocolDetailModal({
                                 </div>
                                 {doc.fileUrl && (
                                   <Button size="sm" variant="outline" asChild>
-                                    <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+                                    <a href={getDocumentUrl(doc)} target="_blank" rel="noopener noreferrer">
                                       <FileText className="h-4 w-4 mr-2" />
                                       Abrir
                                     </a>
