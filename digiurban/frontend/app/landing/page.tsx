@@ -560,9 +560,10 @@ export default function LandingPage() {
               </p>
               <Link
                 href="/super-admin/login"
-                className="text-xs text-white/30 hover:text-white/60 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg text-xs text-white/60 hover:text-white/90 transition-all backdrop-blur-sm"
               >
-                Administração
+                <Shield className="w-3 h-3" />
+                Painel Super Admin
               </Link>
             </div>
           </div>

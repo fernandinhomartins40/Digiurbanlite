@@ -11,6 +11,8 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
+import emailServerRouter from './email-server';
+import emailDomainsRouter from './email-domains';
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -820,7 +822,7 @@ router.get('/email-server/config', adminAuthMiddleware, superAdminOnly, async (r
   }
 });
 
-// PUT /api/super-admin/email-server/config - Atualizar configuração SMTP
+// PUT /api/super-admin/email-server/config - Atualizar configuração SMTP (DEPRECATED - usar /email-server)
 router.put('/email-server/config', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
     const { hostname, mxPort, submissionPort, tlsEnabled, maxConnections, maxMessageSize } = req.body;
@@ -833,5 +835,9 @@ router.put('/email-server/config', adminAuthMiddleware, superAdminOnly, async (r
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
+
+// Mount email server management routes
+router.use('/email-server', emailServerRouter);
+router.use('/email-server/domains', emailDomainsRouter);
 
 export default router;
