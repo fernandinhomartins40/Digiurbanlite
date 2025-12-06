@@ -1,4 +1,6 @@
 import express from 'express';
+import path from 'path';
+import fs from 'fs';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { requireRole } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
@@ -6,6 +8,50 @@ import { UserRole } from '@prisma/client';
 import * as documentService from '../services/protocol-document.service';
 
 const router = express.Router();
+const UPLOAD_BASE_PATH = process.env.UPLOAD_BASE_PATH || path.join(process.cwd(), 'uploads');
+
+const guessMimeFromExtension = (fileName?: string, fallback?: string) => {
+  if (!fileName) return fallback || 'application/octet-stream';
+  const lower = fileName.toLowerCase();
+  if (lower.endsWith('.pdf')) return 'application/pdf';
+  if (lower.match(/\.(jpg|jpeg)$/)) return 'image/jpeg';
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.match(/\.(tif|tiff)$/)) return 'image/tiff';
+  if (lower.endsWith('.bmp')) return 'image/bmp';
+  return fallback || 'application/octet-stream';
+};
+
+const resolveLocalFilePath = (rawPath: string) => {
+  const candidates: string[] = [];
+
+  // Absoluto
+  if (path.isAbsolute(rawPath)) {
+    candidates.push(rawPath);
+  }
+
+  // Relativo ao base de uploads configurado
+  const cleaned = rawPath.startsWith('/') ? rawPath.slice(1) : rawPath;
+  candidates.push(path.join(UPLOAD_BASE_PATH, cleaned));
+
+  // Relativo ao cwd
+  candidates.push(path.join(process.cwd(), cleaned));
+
+  // Relativo a backend/ (caso cwd seja raiz do mono)
+  candidates.push(path.join(process.cwd(), 'backend', cleaned));
+
+  const tried: string[] = [];
+  for (const candidate of candidates) {
+    if (tried.includes(candidate)) continue;
+    tried.push(candidate);
+    if (fs.existsSync(candidate)) {
+      return { found: true, filePath: candidate, tried };
+    }
+  }
+
+  return { found: false, tried };
+};
 
 /**
  * POST /api/protocols/:protocolId/documents
@@ -327,7 +373,7 @@ router.get(
       // Tentar buscar documento do banco
       let document: any = await documentService.getDocumentById(documentId);
 
-      // Se não encontrou e é um documento legacy, buscar dos documentos legacy do protocolo
+      // Se nÇœo encontrou e Ç¸ um documento legacy, buscar dos documentos legacy do protocolo
       if (!document && documentId.startsWith('legacy_')) {
         console.log(`[DOWNLOAD] Documento legacy detectado, buscando do protocolo...`);
         const allDocs = await documentService.getProtocolDocuments(protocolId);
@@ -338,53 +384,47 @@ router.get(
       }
 
       if (!document) {
-        console.log(`[DOWNLOAD] Documento não encontrado: ${documentId}`);
+        console.log(`[DOWNLOAD] Documento nÇœo encontrado: ${documentId}`);
         return res.status(404).json({
           success: false,
-          error: 'Documento não encontrado'
+          error: 'Documento nÇœo encontrado'
         });
       }
 
       console.log(`[DOWNLOAD] Documento encontrado: ${document.fileName}, fileUrl: ${document.fileUrl}`);
 
       if (!document.fileUrl) {
-        console.log(`[DOWNLOAD] Arquivo não disponível para documento: ${documentId}`);
+        console.log(`[DOWNLOAD] Arquivo nÇœo disponÇðvel para documento: ${documentId}`);
         return res.status(404).json({
           success: false,
-          error: 'Arquivo não disponível'
+          error: 'Arquivo nÇœo disponÇðvel'
         });
       }
 
-      // Se fileUrl é um caminho local
+      // Se fileUrl Ç¸ um caminho local
       if (!document.fileUrl.startsWith('http')) {
-        const path = require('path');
-        const fs = require('fs');
+        const resolution = resolveLocalFilePath(document.fileUrl);
 
-        // Construir caminho absoluto
-        const filePath = document.fileUrl.startsWith('/')
-          ? document.fileUrl
-          : path.join(process.cwd(), document.fileUrl);
-
-        console.log(`[DOWNLOAD] Caminho do arquivo: ${filePath}`);
-
-        // Verificar se arquivo existe
-        if (!fs.existsSync(filePath)) {
-          console.log(`[DOWNLOAD] Arquivo não existe no caminho: ${filePath}`);
+        if (!resolution.found) {
+          console.log(`[DOWNLOAD] Arquivo nÇœo existe nas tentativas: ${resolution.tried.join(' | ')}`);
           return res.status(404).json({
             success: false,
-            error: 'Arquivo não encontrado no servidor',
-            path: filePath
+            error: 'Arquivo nÇœo encontrado no servidor',
+            tried: resolution.tried
           });
         }
 
-        console.log(`[DOWNLOAD] Arquivo existe, enviando... MimeType: ${document.mimeType}`);
+        const filePath = (resolution as any).filePath;
+        const mimeType = document.mimeType || guessMimeFromExtension(document.fileName, 'application/octet-stream');
 
-        // Configurar headers - inline para visualização, attachment para download
+        console.log(`[DOWNLOAD] Arquivo existe, enviando... MimeType: ${mimeType}, Caminho: ${filePath}`);
+
+        // Configurar headers - inline para visualizaÇõÇœo, attachment para download
         const disposition = inline ? 'inline' : 'attachment';
         res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'}"`);
-        res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
+        res.setHeader('Content-Type', mimeType);
 
-        // Adicionar headers CORS para permitir visualização
+        // Adicionar headers CORS para permitir visualizaÇõÇœo
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET');
 
@@ -392,7 +432,7 @@ router.get(
         const fileStream = fs.createReadStream(filePath);
         fileStream.pipe(res);
       } else {
-        // Se é URL externa, redirecionar
+        // Se Ç¸ URL externa, redirecionar
         console.log(`[DOWNLOAD] Redirecionando para URL externa: ${document.fileUrl}`);
         return res.redirect(document.fileUrl);
       }
@@ -436,3 +476,5 @@ router.delete(
 );
 
 export default router;
+
+
