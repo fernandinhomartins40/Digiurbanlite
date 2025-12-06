@@ -74,6 +74,12 @@ export function ProtocolDocumentsTab({
     return fileName.endsWith('.pdf') || url.endsWith('.pdf')
   }
 
+  const buildAbsoluteFromRelative = (relativePath: string) => {
+    if (typeof window === 'undefined') return relativePath
+    const clean = relativePath.startsWith('/') ? relativePath.slice(1) : relativePath
+    return `${window.location.origin}/${clean}`
+  }
+
   // Função para gerar URL de download correta
   const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
     // Se fileUrl já é uma URL completa, usar diretamente
@@ -97,6 +103,9 @@ export function ProtocolDocumentsTab({
   }
 
   const getPreviewUrl = (doc: ProtocolDocument) => {
+    if (doc.id?.startsWith('legacy_') && doc.fileUrl && !doc.fileUrl.startsWith('http') && !doc.fileUrl.startsWith('data:')) {
+      return buildAbsoluteFromRelative(doc.fileUrl)
+    }
     if (doc.fileUrl?.startsWith('data:') || doc.fileUrl?.startsWith('http')) {
       return doc.fileUrl
     }
