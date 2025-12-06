@@ -124,7 +124,7 @@ export class ProtocolModuleService {
           serviceId,
           departmentId: service.departmentId,
           status: ProtocolStatus.VINCULADO,
-          moduleType: service.moduleType || null,
+          moduleType: service.moduleType || 'GENERICO',
           customData: customDataPayload as Prisma.JsonObject,
           createdById,
           latitude: rest.latitude,
