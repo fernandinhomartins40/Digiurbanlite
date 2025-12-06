@@ -253,11 +253,8 @@ router.get(
           createdAt: true,
           _count: {
             select: {
-              documents: {
-                where: {
-                  status: 'PENDING'
-                }
-              }
+              documents: true,
+              protocolsSimplified: true
             }
           }
         },
