@@ -3,6 +3,8 @@ import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { requireRole } from '../middleware/auth';
 import { UserRole } from '@prisma/client';
 import * as slaService from '../services/protocol-sla.service';
+import * as workflowService from '../services/module-workflow.service';
+import { prisma } from '../lib/prisma';
 
 const router = express.Router();
 
@@ -30,19 +32,19 @@ router.post(
         protocolId,
         workingDays,
         startDate: startDate ? new Date(startDate) : undefined
-        });
+      });
 
       return res.status(201).json({
         success: true,
         data: sla
-        });
+      });
     } catch (error) {
       console.error('Erro ao criar SLA:', error);
       return res.status(500).json({
         success: false,
         error: 'Erro ao criar SLA',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      });
     }
   }
 );
@@ -58,23 +60,27 @@ router.get('/:protocolId/sla', adminAuthMiddleware, async (req, res) => {
     const sla = await slaService.getProtocolSLA(protocolId);
 
     if (!sla) {
+      const created = await ensureSLAFromWorkflow(protocolId);
+      if (created) {
+        return res.json({ success: true, data: created });
+      }
       return res.status(404).json({
         success: false,
         error: 'SLA não encontrado para este protocolo'
-        });
+      });
     }
 
     return res.json({
       success: true,
       data: sla
-        });
+    });
   } catch (error) {
     console.error('Erro ao obter SLA:', error);
     return res.status(500).json({
       success: false,
       error: 'Erro ao obter SLA',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+    });
   }
 });
 
@@ -103,14 +109,14 @@ router.put(
       return res.json({
         success: true,
         data: sla
-        });
+      });
     } catch (error) {
       console.error('Erro ao pausar SLA:', error);
       return res.status(500).json({
         success: false,
         error: 'Erro ao pausar SLA',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      });
     }
   }
 );
@@ -132,14 +138,14 @@ router.put(
       return res.json({
         success: true,
         data: sla
-        });
+      });
     } catch (error) {
       console.error('Erro ao retomar SLA:', error);
       return res.status(500).json({
         success: false,
         error: 'Erro ao retomar SLA',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      });
     }
   }
 );
@@ -161,14 +167,14 @@ router.put(
       return res.json({
         success: true,
         data: sla
-        });
+      });
     } catch (error) {
       console.error('Erro ao finalizar SLA:', error);
       return res.status(500).json({
         success: false,
         error: 'Erro ao finalizar SLA',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      });
     }
   }
 );
@@ -190,14 +196,14 @@ router.put(
       return res.json({
         success: true,
         data: sla
-        });
+      });
     } catch (error) {
       console.error('Erro ao atualizar status do SLA:', error);
       return res.status(500).json({
         success: false,
         error: 'Erro ao atualizar status do SLA',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      });
     }
   }
 );
@@ -217,14 +223,14 @@ router.get('/overdue', requireRole(UserRole.USER), async (req, res) => {
     return res.json({
       success: true,
       data: slas
-        });
+    });
   } catch (error) {
     console.error('Erro ao obter SLAs em atraso:', error);
     return res.status(500).json({
       success: false,
       error: 'Erro ao obter SLAs em atraso',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+    });
   }
 });
 
@@ -243,14 +249,14 @@ router.get('/near-due', requireRole(UserRole.USER), async (req, res) => {
     return res.json({
       success: true,
       data: slas
-        });
+    });
   } catch (error) {
     console.error('Erro ao obter SLAs próximos do vencimento:', error);
     return res.status(500).json({
       success: false,
       error: 'Erro ao obter SLAs próximos do vencimento',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+    });
   }
 });
 
@@ -270,14 +276,14 @@ router.get(
       return res.json({
         success: true,
         data: stats
-        });
+      });
     } catch (error) {
       console.error('Erro ao calcular estatísticas de SLA:', error);
       return res.status(500).json({
         success: false,
         error: 'Erro ao calcular estatísticas de SLA',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      });
     }
   }
 );
@@ -298,16 +304,41 @@ router.delete(
       return res.json({
         success: true,
         message: 'SLA deletado com sucesso'
-        });
+      });
     } catch (error) {
       console.error('Erro ao deletar SLA:', error);
       return res.status(500).json({
         success: false,
         error: 'Erro ao deletar SLA',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      });
     }
   }
 );
+
+/**
+ * Tenta criar SLA automaticamente a partir do workflow do módulo do protocolo.
+ */
+async function ensureSLAFromWorkflow(protocolId: string) {
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: { moduleType: true }
+  });
+
+  if (!protocol?.moduleType) return null;
+
+  const workflow =
+    (await workflowService.getWorkflowByModuleType(protocol.moduleType)) ||
+    (await workflowService.getWorkflowByModuleType('GENERICO'));
+
+  if (workflow?.defaultSLA) {
+    return slaService.createSLA({
+      protocolId,
+      workingDays: workflow.defaultSLA
+    });
+  }
+
+  return null;
+}
 
 export default router;
