@@ -1,14 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { authenticateToken, requireSuperAdmin } from '../middleware/auth';
 import dns from 'dns/promises';
 import crypto from 'crypto';
 
 const router = Router();
 
-// Aplicar middleware de autenticação e super admin em todas as rotas
-router.use(authenticateToken);
-router.use(requireSuperAdmin);
+// Middleware já aplicado no email-server parent router
 
 /**
  * GET /api/super-admin/email-server/domains

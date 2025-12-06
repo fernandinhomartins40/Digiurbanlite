@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getFullApiUrl } from '@/lib/api-config'
-import { isImageDoc, isPdfDoc, resolvePreviewUrl } from '@/lib/document-preview'
+import { buildAbsoluteFromRelative, isImageDoc, isPdfDoc, resolvePreviewUrl } from '@/lib/document-preview'
 
 interface ProtocolDocumentsTabProps {
   protocolId: string
@@ -55,12 +55,19 @@ export function ProtocolDocumentsTab({
   const [viewingDoc, setViewingDoc] = useState<ProtocolDocument | null>(null)
   const { toast } = useToast()
 
-  // Função para gerar URL de download correta
-  const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
-    // Se fileUrl já é uma URL completa, usar diretamente
-    if (doc.fileUrl?.startsWith('http')) {
-      return doc.fileUrl
+  const resolveDirectFileUrl = (doc: ProtocolDocument) => {
+    if (!doc.fileUrl) return null
+    if (doc.fileUrl.startsWith('http')) return doc.fileUrl
+    if (doc.fileUrl.startsWith('/uploads') || doc.fileUrl.startsWith('uploads/')) {
+      return buildAbsoluteFromRelative(doc.fileUrl)
     }
+    return null
+  }
+
+  // FunÃ§Ã£o para gerar URL de download correta
+  const getDownloadUrl = (doc: ProtocolDocument, inline = false) => {
+    const directUrl = resolveDirectFileUrl(doc)
+    if (directUrl) return directUrl
     // Usar helper centralizado para consistência entre dev e produção
     const baseUrl = getFullApiUrl(`/protocols/${protocolId}/documents/${doc.id}/download`)
     const url = inline ? `${baseUrl}?inline=true` : baseUrl
@@ -95,7 +102,7 @@ export function ProtocolDocumentsTab({
       },
       [DocumentStatus.UNDER_REVIEW]: {
         icon: Eye,
-        label: 'Em Análise',
+        label: 'Em AnÃ¡lise',
         className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
       },
       [DocumentStatus.APPROVED]: {
@@ -139,7 +146,7 @@ export function ProtocolDocumentsTab({
 
     try {
       setIsUploading(true)
-      // Simulação de upload - implementar integração real
+      // SimulaÃ§Ã£o de upload - implementar integraÃ§Ã£o real
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
       toast({
@@ -195,8 +202,8 @@ export function ProtocolDocumentsTab({
   const handleReject = async (documentId: string) => {
     if (!rejectionReason.trim()) {
       toast({
-        title: 'Motivo obrigatório',
-        description: 'Informe o motivo da rejeição',
+        title: 'Motivo obrigatÃ³rio',
+        description: 'Informe o motivo da rejeiÃ§Ã£o',
         variant: 'destructive',
       })
       return
@@ -241,7 +248,7 @@ export function ProtocolDocumentsTab({
 
   return (
     <div className="space-y-4">
-      {/* Cabeçalho */}
+      {/* CabeÃ§alho */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-muted-foreground" />
@@ -251,12 +258,12 @@ export function ProtocolDocumentsTab({
         </div>
       </div>
 
-      {/* Documentos Obrigatórios */}
+      {/* Documentos ObrigatÃ³rios */}
       {requiredDocs.length > 0 && (
         <div>
           <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-red-500" />
-            Documentos Obrigatórios
+            Documentos ObrigatÃ³rios
           </h4>
           <div className="space-y-3">
             {requiredDocs.map((doc) => (
@@ -269,11 +276,11 @@ export function ProtocolDocumentsTab({
                         <h5 className="font-medium">{doc.documentType}</h5>
                         {getStatusBadge(doc.status)}
                         <Badge variant="destructive" className="text-xs">
-                          Obrigatório
+                          ObrigatÃ³rio
                         </Badge>
                       </div>
 
-                      {/* Informações do documento */}
+                      {/* InformaÃ§Ãµes do documento */}
                       <div className="text-sm text-muted-foreground space-y-1">
                         {doc.fileName && (
                           <p>
@@ -284,7 +291,7 @@ export function ProtocolDocumentsTab({
                         {doc.uploadedAt && (
                           <p>
                             <strong>Enviado em:</strong>{' '}
-                            {format(new Date(doc.uploadedAt), "dd/MM/yyyy 'às' HH:mm", {
+                            {format(new Date(doc.uploadedAt), "dd/MM/yyyy 'Ã s' HH:mm", {
                               locale: ptBR,
                             })}
                           </p>
@@ -292,20 +299,20 @@ export function ProtocolDocumentsTab({
                         {doc.validatedAt && (
                           <p>
                             <strong>Validado em:</strong>{' '}
-                            {format(new Date(doc.validatedAt), "dd/MM/yyyy 'às' HH:mm", {
+                            {format(new Date(doc.validatedAt), "dd/MM/yyyy 'Ã s' HH:mm", {
                               locale: ptBR,
                             })}
                           </p>
                         )}
                         {doc.rejectionReason && (
                           <p className="text-red-600">
-                            <strong>Motivo da rejeição:</strong> {doc.rejectionReason}
+                            <strong>Motivo da rejeiÃ§Ã£o:</strong> {doc.rejectionReason}
                           </p>
                         )}
                       </div>
                     </div>
 
-                    {/* Ações */}
+                    {/* AÃ§Ãµes */}
                     <div className="flex flex-col gap-2 ml-4">
                       {doc.fileUrl && (
                         <div className="flex gap-2">
@@ -370,16 +377,16 @@ export function ProtocolDocumentsTab({
                               <DialogHeader>
                                 <DialogTitle>Rejeitar Documento</DialogTitle>
                                 <DialogDescription>
-                                  Informe o motivo da rejeição do documento
+                                  Informe o motivo da rejeiÃ§Ã£o do documento
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="space-y-4">
                                 <div>
-                                  <Label>Motivo da Rejeição</Label>
+                                  <Label>Motivo da RejeiÃ§Ã£o</Label>
                                   <Textarea
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
-                                    placeholder="Ex: Documento ilegível, data expirada..."
+                                    placeholder="Ex: Documento ilegÃ­vel, data expirada..."
                                     rows={3}
                                   />
                                 </div>
@@ -389,7 +396,7 @@ export function ProtocolDocumentsTab({
                                   variant="destructive"
                                   onClick={() => handleReject(doc.id)}
                                 >
-                                  Confirmar Rejeição
+                                  Confirmar RejeiÃ§Ã£o
                                 </Button>
                               </DialogFooter>
                             </DialogContent>
@@ -429,14 +436,14 @@ export function ProtocolDocumentsTab({
                       {doc.uploadedAt && (
                         <p className="text-sm text-muted-foreground">
                           <strong>Enviado em:</strong>{' '}
-                          {format(new Date(doc.uploadedAt), "dd/MM/yyyy 'às' HH:mm", {
+                          {format(new Date(doc.uploadedAt), "dd/MM/yyyy 'Ã s' HH:mm", {
                             locale: ptBR,
                           })}
                         </p>
                       )}
                     </div>
 
-                    {/* Ações */}
+                    {/* AÃ§Ãµes */}
                     <div className="flex flex-col gap-2 ml-4">
                       {doc.fileUrl && (
                         <div className="flex gap-2">
@@ -501,16 +508,16 @@ export function ProtocolDocumentsTab({
                               <DialogHeader>
                                 <DialogTitle>Rejeitar Documento</DialogTitle>
                                 <DialogDescription>
-                                  Informe o motivo da rejeição do documento
+                                  Informe o motivo da rejeiÃ§Ã£o do documento
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="space-y-4">
                                 <div>
-                                  <Label>Motivo da Rejeição</Label>
+                                  <Label>Motivo da RejeiÃ§Ã£o</Label>
                                   <Textarea
                                     value={rejectionReason}
                                     onChange={(e) => setRejectionReason(e.target.value)}
-                                    placeholder="Ex: Documento ilegível, data expirada..."
+                                    placeholder="Ex: Documento ilegÃ­vel, data expirada..."
                                     rows={3}
                                   />
                                 </div>
@@ -520,7 +527,7 @@ export function ProtocolDocumentsTab({
                                   variant="destructive"
                                   onClick={() => handleReject(doc.id)}
                                 >
-                                  Confirmar Rejeição
+                                  Confirmar RejeiÃ§Ã£o
                                 </Button>
                               </DialogFooter>
                             </DialogContent>
@@ -545,7 +552,7 @@ export function ProtocolDocumentsTab({
         </Card>
       )}
 
-      {/* Modal de Visualização */}
+      {/* Modal de VisualizaÃ§Ã£o */}
       <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
@@ -553,7 +560,7 @@ export function ProtocolDocumentsTab({
               {viewingDoc?.documentType}
             </DialogTitle>
             <DialogDescription>
-              {viewingDoc?.fileName} • {getStatusBadge(viewingDoc?.status || DocumentStatus.PENDING)}
+              {viewingDoc?.fileName} â€¢ {getStatusBadge(viewingDoc?.status || DocumentStatus.PENDING)}
             </DialogDescription>
           </DialogHeader>
 
@@ -563,9 +570,14 @@ export function ProtocolDocumentsTab({
               {isImageDoc(viewingDoc) ? (
                 <img
                   src={getPreviewUrl(viewingDoc!)}
-                  alt={viewingDoc.fileName || 'Documento'}
+                  alt={viewingDoc?.fileName || 'Documento'}
                   className="max-w-full max-h-[500px] object-contain"
                   onError={(e) => {
+                    const fallbackUrl = viewingDoc ? getDownloadUrl(viewingDoc, true) : ''
+                    if (fallbackUrl && e.currentTarget.src !== fallbackUrl) {
+                      e.currentTarget.src = fallbackUrl
+                      return
+                    }
                     console.error('[ProtocolDocumentsTab] Erro ao carregar imagem:', {
                       src: e.currentTarget.src,
                       doc: viewingDoc
@@ -584,13 +596,13 @@ export function ProtocolDocumentsTab({
               ) : (
                 <div className="text-center text-muted-foreground">
                   <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p>Pré-visualização não disponível para este tipo de arquivo</p>
+                  <p>PrÃ©-visualizaÃ§Ã£o nÃ£o disponÃ­vel para este tipo de arquivo</p>
                   <p className="text-sm mt-2">{viewingDoc?.mimeType}</p>
                 </div>
               )}
             </div>
 
-            {/* Informações */}
+            {/* InformaÃ§Ãµes */}
             {viewingDoc && (
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -607,7 +619,7 @@ export function ProtocolDocumentsTab({
                   <div>
                     <p className="text-muted-foreground">Enviado em</p>
                     <p className="font-medium">
-                      {format(new Date(viewingDoc.uploadedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      {format(new Date(viewingDoc.uploadedAt), "dd/MM/yyyy 'Ã s' HH:mm", { locale: ptBR })}
                     </p>
                   </div>
                 )}
@@ -615,7 +627,7 @@ export function ProtocolDocumentsTab({
                   <div>
                     <p className="text-muted-foreground">Validado em</p>
                     <p className="font-medium">
-                      {format(new Date(viewingDoc.validatedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      {format(new Date(viewingDoc.validatedAt), "dd/MM/yyyy 'Ã s' HH:mm", { locale: ptBR })}
                     </p>
                   </div>
                 )}
@@ -649,15 +661,15 @@ export function ProtocolDocumentsTab({
                     <DialogHeader>
                       <DialogTitle>Rejeitar Documento</DialogTitle>
                       <DialogDescription>
-                        Informe o motivo da rejeição
+                        Informe o motivo da rejeiÃ§Ã£o
                       </DialogDescription>
                     </DialogHeader>
                     <div>
-                      <Label>Motivo da Rejeição</Label>
+                      <Label>Motivo da RejeiÃ§Ã£o</Label>
                       <Textarea
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
-                        placeholder="Ex: Documento ilegível, data expirada..."
+                        placeholder="Ex: Documento ilegÃ­vel, data expirada..."
                         rows={3}
                       />
                     </div>
@@ -671,7 +683,7 @@ export function ProtocolDocumentsTab({
                           }
                         }}
                       >
-                        Confirmar Rejeição
+                        Confirmar RejeiÃ§Ã£o
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -700,3 +712,8 @@ export function ProtocolDocumentsTab({
     </div>
   )
 }
+
+
+
+
+

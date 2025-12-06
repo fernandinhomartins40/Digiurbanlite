@@ -838,6 +838,5 @@ router.put('/email-server/config', adminAuthMiddleware, superAdminOnly, async (r
 
 // Mount email server management routes
 router.use('/email-server', emailServerRouter);
-router.use('/email-server/domains', emailDomainsRouter);
 
 export default router;
