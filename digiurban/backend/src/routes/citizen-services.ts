@@ -536,8 +536,10 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
     const documentIds = req.body.documentIds || [];
 
     // Extrair documentTypes enviados no FormData (documents[0][id], documents[0][documentId], etc)
-    const documentTypes: string[] = uploadedFiles.map((_, index: number) => {
-      const idField = (req.body as any)[`documents[${index}][id]`] || (req.body as any)[`documents[${index}][documentId]`];
+    const documentTypes: string[] = uploadedFiles.map((_: Express.Multer.File, index: number) => {
+      const idField =
+        (req.body as any)[`documents[${index}][id]`] ||
+        (req.body as any)[`documents[${index}][documentId]`];
       if (idField) return idField;
       if (Array.isArray(documentIds) && documentIds[index]) return documentIds[index];
       return `Documento ${index + 1}`;
@@ -595,6 +597,7 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
 
     // Validar customFormData contra o JSON Schema do servi+ºo (se houver)
     if (customFormData && Object.keys(customFormData).length > 0) {
+      const validation = validateServiceFormData(service, customFormData);
 
       if (!validation.valid) {
         console.warn('ÔØî [Service Request] Valida+º+úo falhou:', {
@@ -784,6 +787,9 @@ function toRad(deg: number): number {
 }
 
 export default router;
+
+
+
 
 
 
