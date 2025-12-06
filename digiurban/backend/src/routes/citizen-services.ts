@@ -1,32 +1,18 @@
 ﻿import { Router, Response } from 'express';
-export default router;
-    // Persistir documentos reais na tabela protocol_documents
-    if (uploadedFiles.length > 0) {
-      try {
-        await documentUploadService.uploadDocumentsToProtocol({
-          protocolId: result.protocol.id,
-          files: uploadedFiles,
-          uploadedBy: citizenId,
-          documentTypes
-        });
-        console.log(`Documentos salvos em protocol_documents para o protocolo ${result.protocol.id}`);
-      } catch (docErr) {
-        console.error('Erro ao salvar documentos do protocolo:', docErr);
-      }
-    }
-
-import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import { uploadDocuments } from '../config/upload';
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse, WhereCondition } from '../types';
+import { validateServiceFormData } from '../lib/json-schema-validator';
+import { DocumentUploadService } from '../services/document-upload.service';
+
 // REMOVED: generateProtocolNumber - agora usa protocolModuleService.createProtocolWithModule
 // REMOVED: ModuleHandler - agora usa protocolModuleService.createProtocolWithModule
 
-// FASE 2 - Interface para serviÃ§os de cidadÃ£os
+// FASE 2 - Interface para servi+ºos de cidad+úos
 // WhereClause interface removida - usando WhereCondition do sistema centralizado
 
-// Classe de erro para validaÃ§Ãµes de negÃ³cio
+// Classe de erro para valida+º+Áes de neg+¦cio
 class ValidationError extends Error {
   constructor(message: string) {
     super(message);
@@ -35,9 +21,10 @@ class ValidationError extends Error {
 }
 
 const router = Router();
+const documentUploadService = new DocumentUploadService();
 
 
-// GET /api/services - Listar serviÃ§os ativos
+// GET /api/services - Listar servi+ºos ativos
 router.get('/', async (req, res) => {
   try {
     const { category, search, page = 1, limit = 1000 } = req.query;
@@ -60,7 +47,7 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    // Buscar serviÃ§os com paginaÃ§Ã£o
+    // Buscar servi+ºos com pagina+º+úo
     const [services, total] = await Promise.all([
       prisma.serviceSimplified.findMany({
         where,
@@ -91,12 +78,12 @@ router.get('/', async (req, res) => {
         }
         });
   } catch (error) {
-    console.error('Erro ao buscar serviÃ§os:', error);
+    console.error('Erro ao buscar servi+ºos:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
-// GET /api/services/categories - Listar categorias de serviÃ§os
+// GET /api/services/categories - Listar categorias de servi+ºos
 router.get('/categories', async (req, res) => {
   try {
     const categories = await prisma.serviceSimplified.findMany({
@@ -138,12 +125,12 @@ router.get('/categories', async (req, res) => {
   }
 });
 
-// GET /api/services/popular - ServiÃ§os mais utilizados
+// GET /api/services/popular - Servi+ºos mais utilizados
 router.get('/popular', async (req, res) => {
   try {
     const { limit = 10 } = req.query;
 
-    // Buscar serviÃ§os com mais protocolos
+    // Buscar servi+ºos com mais protocolos
     const popularServices = await prisma.serviceSimplified.findMany({
       where: {
         isActive: true
@@ -173,17 +160,17 @@ router.get('/popular', async (req, res) => {
       services: popularServices
         });
   } catch (error) {
-    console.error('Erro ao buscar serviÃ§os populares:', error);
+    console.error('Erro ao buscar servi+ºos populares:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
-// GET /api/citizen/services/departments/:department/no-data - Buscar serviÃ§os SEM_DADOS de um departamento
+// GET /api/citizen/services/departments/:department/no-data - Buscar servi+ºos SEM_DADOS de um departamento
 router.get('/departments/:department/no-data', async (req, res) => {
   try {
     const { department } = req.params;
 
-    // Converter slug para code (saude â†’ SAUDE, assistencia-social â†’ ASSISTENCIA_SOCIAL)
+    // Converter slug para code (saude ÔåÆ SAUDE, assistencia-social ÔåÆ ASSISTENCIA_SOCIAL)
     const departmentCode = department.toUpperCase().replace(/-/g, '_');
 
     // Buscar departamento pelo code
@@ -194,11 +181,11 @@ router.get('/departments/:department/no-data', async (req, res) => {
     if (!dept) {
       return res.status(404).json({
         success: false,
-        error: 'Departamento nÃ£o encontrado'
+        error: 'Departamento n+úo encontrado'
       });
     }
 
-    // Buscar serviÃ§os SEM_DADOS do departamento
+    // Buscar servi+ºos SEM_DADOS do departamento
     const services = await prisma.serviceSimplified.findMany({
       where: {
         departmentId: dept.id,
@@ -224,7 +211,7 @@ router.get('/departments/:department/no-data', async (req, res) => {
       services
     });
   } catch (error) {
-    console.error('Erro ao buscar serviÃ§os SEM_DADOS:', error);
+    console.error('Erro ao buscar servi+ºos SEM_DADOS:', error);
     return res.status(500).json({
       success: false,
       error: 'Erro interno do servidor'
@@ -232,7 +219,7 @@ router.get('/departments/:department/no-data', async (req, res) => {
   }
 });
 
-// GET /api/services/:id - Detalhes de um serviÃ§o especÃ­fico
+// GET /api/services/:id - Detalhes de um servi+ºo espec+¡fico
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -259,10 +246,10 @@ router.get('/:id', async (req, res) => {
         });
 
     if (!service) {
-      return res.status(404).json({ error: 'ServiÃ§o nÃ£o encontrado' });
+      return res.status(404).json({ error: 'Servi+ºo n+úo encontrado' });
     }
 
-    // Buscar estatÃ­sticas do serviÃ§o
+    // Buscar estat+¡sticas do servi+ºo
     const stats = await prisma.protocolSimplified.groupBy({
       by: ['status'],
       where: {
@@ -273,7 +260,7 @@ router.get('/:id', async (req, res) => {
         }
         });
 
-    // Calcular tempo mÃ©dio de conclusÃ£o
+    // Calcular tempo m+®dio de conclus+úo
     const completedProtocols = await prisma.protocolSimplified.findMany({
       where: {
         serviceId: id,
@@ -309,16 +296,16 @@ router.get('/:id', async (req, res) => {
         enabledFieldIds = (service.formFieldsConfig as any[])
           .filter((field: any) => field.enabled === true)
           .map((field: any) => field.id);
-        console.log('ðŸ” [Schema Conversion] formFieldsConfig encontrado, campos habilitados:', enabledFieldIds);
+        console.log('­ƒöì [Schema Conversion] formFieldsConfig encontrado, campos habilitados:', enabledFieldIds);
       } else if (service.enabledFields && Array.isArray(service.enabledFields)) {
         // Fallback: usar enabledFields se existir
         enabledFieldIds = service.enabledFields as string[];
-        console.log('ðŸ” [Schema Conversion] enabledFields encontrado:', enabledFieldIds);
+        console.log('­ƒöì [Schema Conversion] enabledFields encontrado:', enabledFieldIds);
       } else {
-        console.log('ðŸ” [Schema Conversion] Nenhuma configuraÃ§Ã£o de campos encontrada, mostrando todos');
+        console.log('­ƒöì [Schema Conversion] Nenhuma configura+º+úo de campos encontrada, mostrando todos');
       }
 
-      // âœ… SEPARAR: citizen fields de custom fields para evitar duplicaÃ§Ã£o
+      // Ô£à SEPARAR: citizen fields de custom fields para evitar duplica+º+úo
       const citizenFields: string[] = [];
       const customFields: any[] = [];
 
@@ -346,12 +333,12 @@ router.get('/:id', async (req, res) => {
         .forEach(([id, prop]: [string, any]) => {
           const lowerCaseId = id.toLowerCase();
 
-          // âœ… SEPARAÃ‡ÃƒO: Identificar se Ã© campo citizen (legacy OU prefixado)
+          // Ô£à SEPARA+ç+âO: Identificar se +® campo citizen (legacy OU prefixado)
           if (lowerCaseId.startsWith('citizen_') || citizenFieldNames.includes(lowerCaseId)) {
             citizenFields.push(id);
-            console.log(`ðŸ” [Schema Conversion] Campo citizen identificado: ${id}`);
+            console.log(`­ƒöì [Schema Conversion] Campo citizen identificado: ${id}`);
           } else {
-            // Campo customizado do serviÃ§o
+            // Campo customizado do servi+ºo
             customFields.push({
               id,
               label: prop.title || id,
@@ -360,7 +347,7 @@ router.get('/:id', async (req, res) => {
               placeholder: prop.description,
               options: prop.enum || undefined,
               mask: prop.mask || undefined,
-              // âœ… Incluir regras de validaÃ§Ã£o para o frontend
+              // Ô£à Incluir regras de valida+º+úo para o frontend
               minLength: prop.minLength,
               maxLength: prop.maxLength,
               min: prop.minimum,
@@ -370,17 +357,17 @@ router.get('/:id', async (req, res) => {
           }
         });
 
-      // âœ… FORMATO FINAL: Separado e sem duplicaÃ§Ã£o
+      // Ô£à FORMATO FINAL: Separado e sem duplica+º+úo
       // citizenFields pode vir de properties OU de formSchema.citizenFields (formato legado)
       const legacyCitizenFields = (service.formSchema as any).citizenFields || [];
       const allCitizenFields = Array.from(new Set([...citizenFields, ...legacyCitizenFields]));
 
       formSchemaConverted = {
-        fields: customFields,  // âœ… Apenas campos customizados do serviÃ§o
-        citizenFields: allCitizenFields  // âœ… Lista unificada de citizen_* (sem duplicaÃ§Ã£o)
+        fields: customFields,  // Ô£à Apenas campos customizados do servi+ºo
+        citizenFields: allCitizenFields  // Ô£à Lista unificada de citizen_* (sem duplica+º+úo)
       };
 
-      console.log('âœ… [Schema Conversion] Schema convertido:', {
+      console.log('Ô£à [Schema Conversion] Schema convertido:', {
         customFieldsCount: customFields.length,
         citizenFieldsCount: allCitizenFields.length,
         customFields: customFields.map(f => f.id),
@@ -399,7 +386,7 @@ router.get('/:id', async (req, res) => {
       }
     }
 
-    console.log('ðŸ“„ [Backend] Retornando serviÃ§o:', {
+    console.log('­ƒôä [Backend] Retornando servi+ºo:', {
       name: service.name,
       requiresDocuments: service.requiresDocuments,
       requiredDocuments: normalizedRequiredDocuments,
@@ -420,12 +407,12 @@ router.get('/:id', async (req, res) => {
         }
         });
   } catch (error) {
-    console.error('Erro ao buscar detalhes do serviÃ§o:', error);
+    console.error('Erro ao buscar detalhes do servi+ºo:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
-// GET /api/services/:id/requirements - Requisitos do serviÃ§o
+// GET /api/services/:id/requirements - Requisitos do servi+ºo
 router.get('/:id/requirements', async (req, res) => {
   try {
     const { id } = req.params;
@@ -444,7 +431,7 @@ router.get('/:id/requirements', async (req, res) => {
       });
 
     if (!service) {
-      return res.status(404).json({ error: 'ServiÃ§o nÃ£o encontrado' });
+      return res.status(404).json({ error: 'Servi+ºo n+úo encontrado' });
     }
 
     return res.json({
@@ -456,18 +443,18 @@ router.get('/:id/requirements', async (req, res) => {
         }
         });
   } catch (error) {
-    console.error('Erro ao buscar requisitos do serviÃ§o:', error);
+    console.error('Erro ao buscar requisitos do servi+ºo:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
-// GET /api/services/:id/similar - ServiÃ§os similares
+// GET /api/services/:id/similar - Servi+ºos similares
 router.get('/:id/similar', async (req, res) => {
   try {
     const { id } = req.params;
     const { limit = 5 } = req.query;
 
-    // Buscar o serviÃ§o atual
+    // Buscar o servi+ºo atual
     const currentService = await prisma.serviceSimplified.findFirst({
       where: {
         id,
@@ -480,10 +467,10 @@ router.get('/:id/similar', async (req, res) => {
       });
 
     if (!currentService) {
-      return res.status(404).json({ error: 'ServiÃ§o nÃ£o encontrado' });
+      return res.status(404).json({ error: 'Servi+ºo n+úo encontrado' });
     }
 
-    // Buscar serviÃ§os similares (mesma categoria ou departamento)
+    // Buscar servi+ºos similares (mesma categoria ou departamento)
     const similarServices = await prisma.serviceSimplified.findMany({
       where: {
         isActive: true,
@@ -515,18 +502,14 @@ router.get('/:id/similar', async (req, res) => {
       services: similarServices
         });
   } catch (error) {
-    console.error('Erro ao buscar serviÃ§os similares:', error);
+    console.error('Erro ao buscar servi+ºos similares:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
-// Middleware de autenticaÃ§Ã£o para rota de solicitaÃ§Ã£o (outras rotas nÃ£o precisam de auth)
-// POST /api/services/:id/request - Solicitar um serviÃ§o
-// IMPORTANTE: Aplicar middlewares na ordem: upload -> auth -> validaÃ§Ã£o
-import { validateServiceFormData } from '../lib/json-schema-validator';
-import { DocumentUploadService } from '../services/document-upload.service';
-
-const documentUploadService = new DocumentUploadService();
+// Middleware de autentica+º+úo para rota de solicita+º+úo (outras rotas n+úo precisam de auth)
+// POST /api/services/:id/request - Solicitar um servi+ºo
+// IMPORTANTE: Aplicar middlewares na ordem: upload -> auth -> valida+º+úo
 
 router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, res) => {
   try {
@@ -534,7 +517,7 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
     const citizenId = (req as any).citizen?.id;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃ£o nÃ£o autenticado' });
+      return res.status(401).json({ error: 'Cidad+úo n+úo autenticado' });
     }
 
     const service = await prisma.serviceSimplified.findFirst({
@@ -545,7 +528,7 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       });
 
     if (!service) {
-      return res.status(404).json({ error: 'ServiÃ§o nÃ£o encontrado ou inativo' });
+      return res.status(404).json({ error: 'Servi+ºo n+úo encontrado ou inativo' });
     }
 
     // Processar arquivos enviados (se houver)
@@ -560,8 +543,8 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       return `Documento ${index + 1}`;
     });
 
-    console.log('ðŸ“Ž Arquivos recebidos:', uploadedFiles.length);
-    console.log('ðŸ“‹ Document IDs:', documentIds);
+    console.log('­ƒôÄ Arquivos recebidos:', uploadedFiles.length);
+    console.log('­ƒôï Document IDs:', documentIds);
 
     // Mapear arquivos para estrutura de attachments
     const attachments = uploadedFiles.map((file: Express.Multer.File, index: number) => ({
@@ -573,7 +556,7 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       documentId: Array.isArray(documentIds) ? documentIds[index] : documentIds || documentTypes[index]
         }));
 
-    console.log('ðŸ“¦ Attachments processados:', attachments.length);
+    console.log('­ƒôª Attachments processados:', attachments.length);
 
     // Parse customFormData se for string (vindo de FormData)
     let customFormData = req.body.customFormData;
@@ -586,36 +569,35 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       }
     }
 
-    console.log('ðŸ“‹ [Service Request] customFormData recebido:', {
+    console.log('­ƒôï [Service Request] customFormData recebido:', {
       fields: Object.keys(customFormData || {}),
       data: customFormData,
       hasData: customFormData && Object.keys(customFormData).length > 0
     });
 
     // ============================================================================
-    // DOCUMENTAÃ‡ÃƒO: Estrutura do customFormData
+    // DOCUMENTA+ç+âO: Estrutura do customFormData
     // ============================================================================
     // customFormData deve conter APENAS:
-    // 1. Campos especÃ­ficos do serviÃ§o (ex: cartaoSUS, tipoAtendimento, descricao)
-    // 2. programId (se for inscriÃ§Ã£o em programa)
-    // 3. linkedCitizens (se houver vinculaÃ§Ã£o de cidadÃ£os estruturada)
+    // 1. Campos espec+¡ficos do servi+ºo (ex: cartaoSUS, tipoAtendimento, descricao)
+    // 2. programId (se for inscri+º+úo em programa)
+    // 3. linkedCitizens (se houver vincula+º+úo de cidad+úos estruturada)
     //    Formato: [{ linkedCitizenId, linkType, role, contextData }]
     //
-    // customFormData NÃƒO deve conter:
+    // customFormData N+âO deve conter:
     // - citizen_name, citizen_cpf, citizen_email, etc. (preenchidos automaticamente pelo backend via citizenId)
-    // - Dados do cidadÃ£o autenticado (vÃªm do token JWT httpOnly)
+    // - Dados do cidad+úo autenticado (v+¬m do token JWT httpOnly)
     //
     // O backend enriquece automaticamente com:
-    // - citizenId (do token de autenticaÃ§Ã£o)
-    // - Dados de composiÃ§Ã£o familiar (familyStatsService)
+    // - citizenId (do token de autentica+º+úo)
+    // - Dados de composi+º+úo familiar (familyStatsService)
     // ============================================================================
 
-    // Validar customFormData contra o JSON Schema do serviÃ§o (se houver)
+    // Validar customFormData contra o JSON Schema do servi+ºo (se houver)
     if (customFormData && Object.keys(customFormData).length > 0) {
-      const validation = validateServiceFormData(service, customFormData);
 
       if (!validation.valid) {
-        console.warn('âŒ [Service Request] ValidaÃ§Ã£o falhou:', {
+        console.warn('ÔØî [Service Request] Valida+º+úo falhou:', {
           errors: validation.errors,
           receivedFields: Object.keys(customFormData),
           serviceName: service.name,
@@ -623,9 +605,9 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
         });
 
         return res.status(400).json({
-          error: 'Dados do formulÃ¡rio invÃ¡lidos',
+          error: 'Dados do formul+írio inv+ílidos',
           details: validation.errors,
-          // âœ… DEBUG INFO: Ajuda a identificar qual campo estÃ¡ falhando
+          // Ô£à DEBUG INFO: Ajuda a identificar qual campo est+í falhando
           debug: process.env.NODE_ENV === 'development' ? {
             receivedFields: Object.keys(customFormData),
             failedFields: validation.errors
@@ -636,9 +618,9 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
         });
       }
 
-      console.log('âœ… [Service Request] ValidaÃ§Ã£o OK - campos vÃ¡lidos:', Object.keys(customFormData));
+      console.log('Ô£à [Service Request] Valida+º+úo OK - campos v+ílidos:', Object.keys(customFormData));
     } else {
-      console.log('â„¹ï¸ [Service Request] Nenhum customFormData enviado (serviÃ§o SEM_DADOS ou apenas description)');
+      console.log('Ôä¦´©Å [Service Request] Nenhum customFormData enviado (servi+ºo SEM_DADOS ou apenas description)');
     }
 
     const {
@@ -649,7 +631,7 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
         } = req.body;
 
     if (!description || description.trim().length === 0) {
-      return res.status(400).json({ error: 'DescriÃ§Ã£o Ã© obrigatÃ³ria' });
+      return res.status(400).json({ error: 'Descri+º+úo +® obrigat+¦ria' });
     }
     const { protocolModuleService } = await import('../services/protocol-module.service');
 
@@ -659,7 +641,7 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       ...customFormData
         };
 
-    console.log('ðŸ“¥ Dados recebidos do frontend:');
+    console.log('­ƒôÑ Dados recebidos do frontend:');
     console.log('  - citizenId:', citizenId);
     console.log('  - serviceId:', serviceId);
     console.log('  - customFormData:', JSON.stringify(customFormData, null, 2));
@@ -669,17 +651,22 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       citizenId,
       serviceId,
       formData: moduleFormData,
-      description, // DescriÃ§Ã£o fornecida pelo cidadÃ£o
-      createdById: undefined, // CidadÃ£o criando
+      description, // Descri+º+úo fornecida pelo cidad+úo
+      createdById: undefined, // Cidad+úo criando
       latitude: locationData?.latitude,
       longitude: locationData?.longitude,
       address: locationData?.address,
       attachments: attachments as any
         });
 
-    console.log(`âœ… Protocolo ${result.protocol.number} criado ${result.hasModule ? 'COM mÃ³dulo' : 'SEM mÃ³dulo'}`);
+    console.log(`Ô£à Protocolo ${result.protocol.number} criado ${result.hasModule ? 'COM m+¦dulo' : 'SEM m+¦dulo'}`);
     if (result.hasModule) {
-      console.log(`   Protocolo vinculado ao mÃ³dulo: ${result.protocol.moduleType}`);
+      console.log(`   Protocolo vinculado ao m+¦dulo: ${result.protocol.moduleType}`);
+    }
+
+    console.log(`Protocolo ${result.protocol.number} criado ${result.hasModule ? 'COM módulo' : 'SEM módulo'}`);
+    if (result.hasModule) {
+      console.log(`   Protocolo vinculado ao módulo: ${result.protocol.moduleType}`);
     }
 
     // Persistir documentos reais na tabela protocol_documents
@@ -724,29 +711,29 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
       protocol: fullProtocol
         });
   } catch (error) {
-    console.error('Erro ao solicitar serviÃ§o:', error);
+    console.error('Erro ao solicitar servi+ºo:', error);
 
-    // Verificar se Ã© erro de validaÃ§Ã£o de negÃ³cio
+    // Verificar se +® erro de valida+º+úo de neg+¦cio
     if (error instanceof Error) {
       const errorMessage = error.message.toLowerCase();
 
-      // Erros de duplicaÃ§Ã£o/validaÃ§Ã£o devem retornar 400 (Bad Request) ou 409 (Conflict)
+      // Erros de duplica+º+úo/valida+º+úo devem retornar 400 (Bad Request) ou 409 (Conflict)
       if (
-        errorMessage.includes('jÃ¡ estÃ¡ cadastrado') ||
-        errorMessage.includes('jÃ¡ existe') ||
+        errorMessage.includes('j+í est+í cadastrado') ||
+        errorMessage.includes('j+í existe') ||
         errorMessage.includes('duplicado') ||
-        errorMessage.includes('nÃ£o encontrado') ||
-        errorMessage.includes('obrigatÃ³rio') ||
-        errorMessage.includes('invÃ¡lido')
+        errorMessage.includes('n+úo encontrado') ||
+        errorMessage.includes('obrigat+¦rio') ||
+        errorMessage.includes('inv+ílido')
       ) {
         return res.status(400).json({
           error: error.message,
-          details: 'Erro de validaÃ§Ã£o'
+          details: 'Erro de valida+º+úo'
         });
       }
     }
 
-    // Outros erros sÃ£o 500
+    // Outros erros s+úo 500
     return res.status(500).json({
       error: 'Erro interno do servidor',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
@@ -754,13 +741,13 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
   }
 });
 
-// POST /api/services/:id/favorite - Favoritar serviÃ§o (futuro)
+// POST /api/services/:id/favorite - Favoritar servi+ºo (futuro)
 router.post('/:id/favorite', async (req, res) => {
   try {
-    // ImplementaÃ§Ã£o futura para favoritos
+    // Implementa+º+úo futura para favoritos
     res.json({ message: 'Funcionalidade de favoritos em desenvolvimento' });
   } catch (error) {
-    console.error('Erro ao favoritar serviÃ§o:', error);
+    console.error('Erro ao favoritar servi+ºo:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
@@ -770,8 +757,8 @@ router.post('/:id/favorite', async (req, res) => {
 // ============================================================================
 
 /**
- * Calcula distÃ¢ncia entre dois pontos (fÃ³rmula de Haversine)
- * Retorna distÃ¢ncia em km
+ * Calcula dist+óncia entre dois pontos (f+¦rmula de Haversine)
+ * Retorna dist+óncia em km
  */
 function calculateDistance(
   lat1: number,
@@ -797,3 +784,7 @@ function toRad(deg: number): number {
 }
 
 export default router;
+
+
+
+
