@@ -47,6 +47,8 @@ async function createPendingDocumentsForProtocol(
     }
 
     // Criar documentos PENDING ou UPLOADED
+    const usedFiles = new Set<number>(); // Track which files have been used
+
     for (const docConfig of requiredDocs) {
       const docId = docConfig.id || docConfig.name || docConfig;
       const docName = docConfig.name || docConfig.id || docConfig;
@@ -54,7 +56,10 @@ async function createPendingDocumentsForProtocol(
 
       // Verificar se já foi enviado um arquivo para este tipo de documento
       // Tentar mapear por: documentId, id, ou nome do arquivo
-      const uploadedFile = uploadedFiles.find(f => {
+      const uploadedFileIndex = uploadedFiles.findIndex((f, idx) => {
+        // Skip files already used
+        if (usedFiles.has(idx)) return false;
+
         const fileDocId = f.documentId || f.id;
         const matches = fileDocId === docId ||
                        fileDocId === docName ||
@@ -62,12 +67,15 @@ async function createPendingDocumentsForProtocol(
                        f.name.toLowerCase().includes(docName.toLowerCase());
 
         if (matches) {
-          console.log(`   ✓ Mapeado: ${docName} → ${f.name}`);
+          console.log(`   ✓ Mapeado: ${docName} → ${f.name} (documentId: ${fileDocId})`);
         }
         return matches;
       });
 
-      if (uploadedFile) {
+      if (uploadedFileIndex !== -1) {
+        const uploadedFile = uploadedFiles[uploadedFileIndex];
+        usedFiles.add(uploadedFileIndex);
+
         // Criar como UPLOADED se já enviou arquivo
         await prisma.protocolDocument.create({
           data: {
@@ -82,7 +90,7 @@ async function createPendingDocumentsForProtocol(
             uploadedAt: new Date()
           }
         });
-        console.log(`   ✓ Documento UPLOADED: ${docName}`);
+        console.log(`   ✓ Documento UPLOADED: ${docName} (${uploadedFile.name})`);
       } else {
         // Criar como PENDING se não enviou
         await prisma.protocolDocument.create({
@@ -93,11 +101,34 @@ async function createPendingDocumentsForProtocol(
             status: DocumentStatus.PENDING
           }
         });
-        console.log(`   → Documento PENDING: ${docName}`);
+        console.log(`   → Documento PENDING: ${docName} (não mapeado)`);
       }
     }
 
-    console.log(`   ✓ ${requiredDocs.length} documento(s) criado(s) para protocolo`);
+    // Se sobraram arquivos não mapeados, criar documentos UPLOADED para eles
+    for (let idx = 0; idx < uploadedFiles.length; idx++) {
+      if (!usedFiles.has(idx)) {
+        const file = uploadedFiles[idx];
+        console.log(`   ⚠ Arquivo não mapeado, criando documento genérico: ${file.name} (documentId: ${file.documentId})`);
+
+        await prisma.protocolDocument.create({
+          data: {
+            protocolId,
+            documentType: file.documentId || `Documento ${idx + 1}`,
+            isRequired: false, // Arquivos não mapeados são considerados opcionais
+            fileName: file.name,
+            fileUrl: file.url,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            status: DocumentStatus.UPLOADED,
+            uploadedAt: new Date()
+          }
+        });
+        console.log(`   ✓ Documento genérico UPLOADED: ${file.name}`);
+      }
+    }
+
+    console.log(`   ✓ Total de documentos processados: ${requiredDocs.length} requeridos + ${uploadedFiles.length - usedFiles.size} não mapeados`);
   } catch (error) {
     console.error('Erro ao criar documentos PENDING:', error);
     // Não falhar a criação do protocolo se documentos falharem
@@ -137,14 +168,24 @@ router.post('/', upload.array('documents'), async (req, res) => {
     console.log('Files:', files ? files.length : 0);
     console.log('Form Data:', formData);
 
+    // Debug: Mostrar todos os campos do req.body
+    console.log('   📋 req.body keys:', Object.keys(req.body));
+
     // Processar arquivos enviados - Novo formato com documentId
     const uploadedDocuments = files ? files.map((file, index) => {
+      // Tentar múltiplas formas de extrair o documentId
       const documentId = req.body[`documents[${index}][id]`] ||
                         req.body[`documents[${index}][documentId]`] ||
+                        req.body[`documents_${index}_id`] ||
+                        req.body[`documents_${index}_documentId`] ||
+                        req.body[`file_${index}_documentId`] ||
+                        req.body[`documentId_${index}`] ||
                         req.body[`documentId`] ||
                         `doc_${index}`;
 
-      console.log(`   → Arquivo ${index}: ${file.originalname} (documentId: ${documentId})`);
+      console.log(`   → Arquivo ${index}: ${file.originalname}`);
+      console.log(`      - documentId extraído: ${documentId}`);
+      console.log(`      - Tentativas: documents[${index}][id]=${req.body[`documents[${index}][id]`]}, documents[${index}][documentId]=${req.body[`documents[${index}][documentId]`]}`);
 
       return {
         id: documentId,
