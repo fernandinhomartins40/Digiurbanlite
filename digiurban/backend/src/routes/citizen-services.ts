@@ -576,7 +576,18 @@ router.get('/:id/similar', async (req, res) => {
 // POST /api/services/:id/request - Solicitar um servi+ºo
 // IMPORTANTE: Aplicar middlewares na ordem: upload -> auth -> valida+º+úo
 
-router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, res) => {
+router.post('/:id/request', (req, res, next) => {
+  uploadDocuments(req, res, (err) => {
+    if (err) {
+      console.error('Erro no Multer:', err);
+      return res.status(400).json({
+        error: 'Erro ao processar upload de arquivos',
+        details: err.message
+      });
+    }
+    next();
+  });
+}, citizenAuthMiddleware, async (req, res) => {
   try {
     const { id: serviceId } = req.params;
     const citizenId = (req as any).citizen?.id;

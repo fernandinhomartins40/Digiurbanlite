@@ -14,7 +14,8 @@
       "Bash(docker logs:*)",
       "Bash(npx tsx:*)",
       "Bash(docker-compose restart:*)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

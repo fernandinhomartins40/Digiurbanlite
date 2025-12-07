@@ -45,15 +45,23 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
     'image/jpg',
     'image/png',
     'image/gif',
+    'image/webp',
+    'image/bmp',
+    'image/svg+xml',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/plain',
+    'application/zip',
+    'application/x-zip-compressed'
   ];
 
-  if (allowedMimes.includes(file.mimetype)) {
+  // Aceitar qualquer tipo de imagem
+  if (file.mimetype.startsWith('image/') || allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
+    console.error(`MIME type rejeitado: ${file.mimetype} para arquivo ${file.originalname}`);
     cb(new Error(`Formato de arquivo não permitido: ${file.mimetype}`));
   }
 };
