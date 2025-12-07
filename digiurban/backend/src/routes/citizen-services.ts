@@ -600,18 +600,45 @@ router.post('/:id/request', uploadDocuments, citizenAuthMiddleware, async (req, 
     const uploadedFiles = (req as any).files || [];
     const documentIds = req.body.documentIds || [];
 
+    console.log('\n========== POST /api/citizen/services/:id/request ==========');
+    console.log('Service ID:', serviceId);
+    console.log('Citizen ID:', citizenId);
+    console.log('Files received:', uploadedFiles.length);
+
+    // Debug detalhado de arquivos
+    if (uploadedFiles && uploadedFiles.length > 0) {
+      console.log('📁 Arquivos processados pelo Multer:');
+      uploadedFiles.forEach((file: Express.Multer.File, idx: number) => {
+        console.log(`  [${idx}] ${file.originalname} - ${file.size} bytes - ${file.mimetype}`);
+        console.log(`      fieldname: ${file.fieldname}`);
+        console.log(`      path: ${file.path}`);
+      });
+    } else {
+      console.log('⚠️  NENHUM arquivo recebido pelo Multer!');
+      console.log('   req.files:', (req as any).files);
+      console.log('   req.file:', (req as any).file);
+    }
+
+    console.log('📋 req.body keys:', Object.keys(req.body));
+    console.log('🔍 documentIds raw:', documentIds);
+
     // Extrair documentTypes enviados no FormData (documents[0][id], documents[0][documentId], etc)
     const documentTypes: string[] = uploadedFiles.map((_: Express.Multer.File, index: number) => {
       const idField =
         (req.body as any)[`documents[${index}][id]`] ||
         (req.body as any)[`documents[${index}][documentId]`];
+
+      console.log(`   → Extraindo tipo para arquivo ${index}:`);
+      console.log(`      documents[${index}][id] = ${(req.body as any)[`documents[${index}][id]`]}`);
+      console.log(`      documents[${index}][documentId] = ${(req.body as any)[`documents[${index}][documentId]`]}`);
+      console.log(`      resultado: ${idField || `Documento ${index + 1}`}`);
+
       if (idField) return idField;
       if (Array.isArray(documentIds) && documentIds[index]) return documentIds[index];
       return `Documento ${index + 1}`;
     });
 
-    console.log('­ƒôÄ Arquivos recebidos:', uploadedFiles.length);
-    console.log('­ƒôï Document IDs:', documentIds);
+    console.log('🏷️  Document Types extraídos:', documentTypes);
 
     // Mapear arquivos para estrutura de attachments
     const attachments = uploadedFiles.map((file: Express.Multer.File, index: number) => ({
