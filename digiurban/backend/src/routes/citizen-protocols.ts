@@ -165,8 +165,22 @@ router.post('/', upload.array('documents'), async (req, res) => {
     console.log('Service ID:', serviceId);
     console.log('Module Type:', moduleType);
     console.log('Program ID:', programId);
-    console.log('Files:', files ? files.length : 0);
+    console.log('Files received:', files ? files.length : 0);
     console.log('Form Data:', formData);
+
+    // Debug detalhado de arquivos
+    if (files && files.length > 0) {
+      console.log('📁 Arquivos recebidos:');
+      files.forEach((file, idx) => {
+        console.log(`  [${idx}] ${file.originalname} - ${file.size} bytes - ${file.mimetype}`);
+        console.log(`      fieldname: ${file.fieldname}`);
+        console.log(`      path: ${file.path}`);
+      });
+    } else {
+      console.log('⚠️  NENHUM arquivo recebido!');
+      console.log('   req.files:', req.files);
+      console.log('   req.file:', (req as any).file);
+    }
 
     // Debug: Mostrar todos os campos do req.body
     console.log('   📋 req.body keys:', Object.keys(req.body));
