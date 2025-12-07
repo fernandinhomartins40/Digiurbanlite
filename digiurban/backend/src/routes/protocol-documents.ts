@@ -326,17 +326,19 @@ router.get(
 
       console.log(`\n[DOWNLOAD] ProtocolId: ${protocolId}, DocumentId: ${documentId}, Inline: ${inline}`);
 
-      // Tentar buscar documento do banco
-      let document: any = await documentService.getDocumentById(documentId);
-
-      // Se nÇœo encontrou e Ç¸ um documento legacy, buscar dos documentos legacy do protocolo
-      if (!document && documentId.startsWith('legacy_')) {
+      // Se é um documento legacy, buscar direto dos documentos do protocolo
+      let document: any;
+      if (documentId.startsWith('legacy_')) {
         console.log(`[DOWNLOAD] Documento legacy detectado, buscando do protocolo...`);
         const allDocs = await documentService.getProtocolDocuments(protocolId);
         const foundDoc = allDocs.find(doc => doc.id === documentId);
         if (foundDoc) {
           document = foundDoc;
+          console.log(`[DOWNLOAD] Documento legacy encontrado: ${document.fileName}, fileUrl: ${document.fileUrl}`);
         }
+      } else {
+        // Documentos normais: buscar do banco
+        document = await documentService.getDocumentById(documentId);
       }
 
       if (!document) {

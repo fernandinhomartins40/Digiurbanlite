@@ -12,7 +12,8 @@
       "Bash(do python /tmp/convert_docs.py \"$file\")",
       "Bash(git push:*)",
       "Bash(docker logs:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(docker-compose restart:*)"
     ],
     "deny": [],
     "ask": []
