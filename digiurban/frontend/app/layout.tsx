@@ -116,8 +116,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
-        {/* OpenCV.js para jscanify (document scanner) */}
-        <script src="https://docs.opencv.org/4.7.0/opencv.js" async></script>
+        {/* OpenCV.js para jscanify (document scanner) - usando CDN com CORS habilitado */}
+        <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.7.0-release.1/opencv.js" async></script>
       </head>
       <body className={inter.className}>
         <QueryProvider>

@@ -31,14 +31,23 @@ export interface CitizenLink {
 interface UseCitizenLinksOptions {
   protocolId?: string
   autoLoad?: boolean
+  readonly?: boolean // Se true, usa endpoint do cidadão (somente leitura)
 }
 
 export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
-  const { protocolId, autoLoad = false } = options
+  const { protocolId, autoLoad = false, readonly = false } = options
   const [links, setLinks] = useState<CitizenLink[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
+
+  // Define o endpoint base dependendo do modo
+  const getEndpointBase = (pId: string) => {
+    if (readonly) {
+      return `/api/citizen/protocols/${pId}/citizen-links`
+    }
+    return `/api/admin/protocols/${pId}/citizen-links`
+  }
 
   /**
    * Carregar vínculos de um protocolo
@@ -54,7 +63,7 @@ export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/admin/protocols/${id}/citizen-links`, {
+      const response = await fetch(getEndpointBase(id), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -77,12 +86,21 @@ export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
     } finally {
       setLoading(false)
     }
-  }, [protocolId, toast])
+  }, [protocolId, toast, readonly])
 
   /**
    * Adicionar novo vínculo
    */
   const addLink = useCallback(async (link: Omit<CitizenLink, 'id'>, pId?: string) => {
+    if (readonly) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Operação não permitida no modo somente leitura'
+      })
+      return null
+    }
+
     const id = pId || protocolId
     if (!id) {
       toast({

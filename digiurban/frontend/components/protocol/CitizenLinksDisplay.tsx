@@ -68,7 +68,10 @@ export function CitizenLinksDisplay({
     updateLink,
     verifyLink,
     removeLink
-  } = useCitizenLinks({ protocolId })
+  } = useCitizenLinks({
+    protocolId,
+    readonly: !editable  // Usa modo readonly quando não é editável
+  })
 
   const [displayLinks, setDisplayLinks] = useState<CitizenLink[]>(initialLinks || [])
   const [editingLink, setEditingLink] = useState<CitizenLink | null>(null)

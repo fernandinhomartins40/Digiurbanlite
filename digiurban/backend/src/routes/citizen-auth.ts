@@ -340,25 +340,53 @@ router.get('/me', asyncHandler(async (req: Request, res: Response) => {
       },
       include: {
         protocolsSimplified: {
-          include: {
-            service: true,
-            department: true
-        },
+          select: {
+            id: true,
+            protocolNumber: true,
+            status: true,
+            createdAt: true,
+            service: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
+            department: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          },
           orderBy: { createdAt: 'desc' },
           take: 10
         },
         familyAsHead: {
-          include: {
-            member: true
-        }
-      },
+          select: {
+            id: true,
+            relationship: true,
+            member: {
+              select: {
+                id: true,
+                name: true,
+                cpf: true
+              }
+            }
+          }
+        },
         notifications: {
           where: { isRead: false },
+          select: {
+            id: true,
+            title: true,
+            message: true,
+            createdAt: true
+          },
           orderBy: { createdAt: 'desc' },
           take: 10
         }
-        }
-        });
+      }
+    });
 
     if (!citizen) {
       return res.status(404).json({ error: 'Cidadão não encontrado' });

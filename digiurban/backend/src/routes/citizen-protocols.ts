@@ -745,4 +745,64 @@ router.get('/:id/can-cancel', async (req, res) => {
   }
 });
 
+// ========================================
+// GET CITIZEN LINKS (READ-ONLY)
+// ========================================
+
+/**
+ * GET /api/citizen/protocols/:id/citizen-links
+ * Listar vínculos de cidadãos do protocolo (somente leitura)
+ */
+router.get('/:id/citizen-links', citizenAuthMiddleware, async (req, res) => {
+  try {
+    const { id: protocolId } = req.params;
+    const citizenId = (req as any).citizenId;
+
+    // Verificar se o protocolo pertence ao cidadão logado
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId: citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Buscar vínculos do protocolo
+    const links = await prisma.protocolCitizenLink.findMany({
+      where: { protocolId },
+      include: {
+        linkedCitizen: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            email: true,
+            phone: true,
+            birthDate: true,
+            rg: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    return res.json({
+      success: true,
+      data: { links }
+    });
+  } catch (error: any) {
+    console.error('Error fetching protocol citizen links:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao buscar vínculos do protocolo'
+    });
+  }
+});
+
 export default router;
