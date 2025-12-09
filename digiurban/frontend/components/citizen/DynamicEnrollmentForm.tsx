@@ -443,7 +443,7 @@ export function DynamicEnrollmentForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {program.requiredDocuments.map(renderDocumentUpload)}
+              {Array.isArray(program.requiredDocuments) && program.requiredDocuments.map(renderDocumentUpload)}
             </CardContent>
           </Card>
         )}

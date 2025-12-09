@@ -15,6 +15,7 @@ export interface Service {
   departmentId: string
   department: Department
   requiresDocuments: boolean
+  requiredDocuments?: string[] | null
   estimatedDays: number | null
   priority: number
   isActive: boolean

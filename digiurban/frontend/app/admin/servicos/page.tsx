@@ -463,7 +463,7 @@ export default function ServicesManagementPage() {
                 <p>{selectedService.requiresDocuments ? 'Sim' : 'Não'}</p>
               </div>
 
-              {selectedService.requiresDocuments && selectedService.requiredDocuments && selectedService.requiredDocuments.length > 0 && (
+              {selectedService.requiresDocuments && Array.isArray(selectedService.requiredDocuments) && selectedService.requiredDocuments.length > 0 && (
                 <div>
                   <Label className="text-gray-600">Documentos Necessários</Label>
                   <div className="flex flex-wrap gap-2 mt-2">

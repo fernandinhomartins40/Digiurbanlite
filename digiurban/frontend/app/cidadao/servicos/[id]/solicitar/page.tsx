@@ -470,7 +470,7 @@ export default function SolicitarServicoPage() {
                     Faça o upload dos documentos solicitados para completar sua solicitação
                   </p>
 
-                  {service.requiredDocuments.map((doc: any, index: number) => {
+                  {Array.isArray(service.requiredDocuments) && service.requiredDocuments.map((doc: any, index: number) => {
                     const docId = typeof doc === 'string' ? doc : (doc.id || doc.name || `doc-${index}`);
                     const uploadedFile = uploadedFiles[docId];
 
@@ -507,7 +507,7 @@ export default function SolicitarServicoPage() {
                     Faça o upload dos documentos solicitados para completar sua inscrição
                   </p>
 
-                  {selectedProgram.requiredDocuments.map((doc: any, index: number) => {
+                  {Array.isArray(selectedProgram.requiredDocuments) && selectedProgram.requiredDocuments.map((doc: any, index: number) => {
                     const docId = doc.id || doc.name || `doc-${index}`;
                     const uploadedFile = uploadedFiles[docId];
 

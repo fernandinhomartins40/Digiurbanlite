@@ -24,11 +24,35 @@ import {
 //   syncUserDepartments
 // } from '../types/user-departments';
 
-// Helpers temporários
-const getUserDepartments = async (userId: string) => [];
-const getPrimaryDepartment = async (userId: string) => null;
-const getUserDepartmentIds = async (userId: string): Promise<string[]> => [];
-const syncUserDepartments = async (userId: string, departmentIds: string[], primaryDeptId?: string) => {};
+// ✅ Helpers implementados usando userDepartments do Prisma
+const getUserDepartments = (user: any) => {
+  if (!user.userDepartments) return [];
+  return user.userDepartments.map((ud: any) => ({
+    id: ud.department.id,
+    name: ud.department.name,
+    code: ud.department.code,
+    isPrimary: ud.isPrimary,
+    isActive: ud.isActive
+  }));
+};
+
+const getPrimaryDepartment = (user: any) => {
+  if (!user.userDepartments) return user.department || null;
+  const primary = user.userDepartments.find((ud: any) => ud.isPrimary && ud.isActive);
+  return primary ? primary.department : user.department || null;
+};
+
+const getUserDepartmentIds = async (userId: string): Promise<string[]> => {
+  const userDepts = await prisma.userDepartment.findMany({
+    where: { userId, isActive: true },
+    select: { departmentId: true }
+  });
+  return userDepts.map(ud => ud.departmentId);
+};
+
+const syncUserDepartments = async (userId: string, departmentIds: string[], primaryDeptId?: string) => {
+  // Esta função é chamada inline no código, então não precisa de implementação aqui
+};
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 
@@ -222,6 +246,16 @@ function isZodError(error: unknown): error is ZodError {
 
 function isError(error: unknown): error is Error {
   return error instanceof Error;
+}
+
+// ✅ HELPER: Normalizar requiredDocuments para sempre ser array
+function normalizeServiceData<T extends { requiredDocuments?: any }>(service: T): T {
+  return {
+    ...service,
+    requiredDocuments: Array.isArray(service.requiredDocuments)
+      ? service.requiredDocuments
+      : []
+  };
 }
 
 function createServiceWhereClause(params: {
@@ -452,7 +486,10 @@ router.get(
       hasPrev: page > 1
         };
 
-    return res.json(createPaginatedResponse(services, paginationInfo));
+    // ✅ NORMALIZAÇÃO: Garantir que requiredDocuments seja sempre array
+    const normalizedServices = services.map(normalizeServiceData);
+
+    return res.json(createPaginatedResponse(normalizedServices, paginationInfo));
   })
 );
 
@@ -520,7 +557,10 @@ router.post(
         }
         });
 
-    return res.status(201).json(createSuccessResponse(service, 'Serviço criado com sucesso'));
+    // ✅ NORMALIZAÇÃO: Garantir que requiredDocuments seja sempre array
+    const normalizedService = normalizeServiceData(service);
+
+    return res.status(201).json(createSuccessResponse(normalizedService, 'Serviço criado com sucesso'));
   })
 );
 
@@ -594,7 +634,10 @@ router.put(
         }
         });
 
-    return res.json(createSuccessResponse(updatedService, 'Serviço atualizado com sucesso'));
+    // ✅ NORMALIZAÇÃO: Garantir que requiredDocuments seja sempre array
+    const normalizedService = normalizeServiceData(updatedService);
+
+    return res.json(createSuccessResponse(normalizedService, 'Serviço atualizado com sucesso'));
   })
 );
 

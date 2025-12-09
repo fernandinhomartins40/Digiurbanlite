@@ -214,7 +214,7 @@ export function ProgramSelector({ serviceType, onSelectProgram }: ProgramSelecto
                 <div className="pt-2 border-t">
                   <p className="text-sm font-medium mb-2">Documentos Necessários:</p>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    {program.requiredDocuments.map((doc: any, idx: number) => (
+                    {Array.isArray(program.requiredDocuments) && program.requiredDocuments.map((doc: any, idx: number) => (
                       <li key={idx} className="flex items-start gap-2">
                         <span className="text-primary mt-0.5">•</span>
                         <span>{typeof doc === 'string' ? doc : (doc.name || JSON.stringify(doc))}</span>
