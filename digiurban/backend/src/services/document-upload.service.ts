@@ -297,50 +297,15 @@ export class DocumentUploadService {
 
   /**
    * Atualiza campo documents do protocolo (JSON)
+   * REMOVIDO: Agora usa apenas ProtocolDocument table
    */
   private async updateProtocolDocuments(
     protocolId: string,
     newDocuments: any[]
   ) {
-    const protocol = await prisma.protocolSimplified.findUnique({
-      where: { id: protocolId }
-    });
-
-    if (!protocol) return;
-
-    // Obter documentos atuais (aceitar string JSON ou objeto)
-    let currentDocs: any[] = [];
-    if (Array.isArray(protocol.documents)) {
-      currentDocs = protocol.documents as any[];
-    } else if (typeof protocol.documents === 'string') {
-      try {
-        currentDocs = JSON.parse(protocol.documents);
-      } catch (e) {
-        console.warn('Erro ao parsear protocol.documents (string):', e);
-        currentDocs = [];
-      }
-    } else if (protocol.documents && typeof protocol.documents === 'object') {
-      currentDocs = [protocol.documents];
-    }
-
-    // Adicionar novos documentos
-    const updatedDocs = [...currentDocs, ...newDocuments.map(doc => ({
-      originalName: doc.fileName,
-      filename: doc.fileName,
-      mimetype: doc.mimeType,
-      size: doc.fileSize,
-      path: doc.fileUrl,
-      uploadedAt: new Date(),
-      documentType: doc.documentType
-    }))];
-
-    // Atualizar protocolo
-    await prisma.protocolSimplified.update({
-      where: { id: protocolId },
-      data: {
-        documents: updatedDocs as unknown as Prisma.InputJsonValue
-      }
-    });
+    // Método mantido por compatibilidade mas não faz nada
+    // Documentos já estão salvos na tabela ProtocolDocument
+    return;
   }
 
   /**

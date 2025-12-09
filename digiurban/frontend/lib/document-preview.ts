@@ -3,15 +3,6 @@ import { ProtocolDocument } from '@/types/protocol-enhancements'
 const imageExtPattern = /\.(jpg|jpeg|png|gif|webp|bmp|tiff|heic|heif)$/i
 const absoluteUrlPattern = /^https?:\/\//i
 
-// Normaliza caminhos legados salvos como caminhos absolutos do contêiner (/app/backend/uploads/...)
-const normalizeLegacyPath = (rawUrl: string) => {
-  const legacyMatch = rawUrl.match(/(?:^|\/)(?:app\/)?backend\/uploads(\/.*)$/i)
-  if (legacyMatch?.[1]) {
-    return `/uploads${legacyMatch[1]}`
-  }
-  return rawUrl
-}
-
 export const isImageDoc = (doc?: ProtocolDocument | null) => {
   if (!doc) return false
   const mime = doc.mimeType?.toLowerCase() || ''
@@ -36,35 +27,26 @@ export const buildAbsoluteFromRelative = (relativePath: string) => {
   return `${window.location.origin}/${clean}`
 }
 
-// Garante que caminhos relativos tenham a barra inicial
-const withLeadingSlash = (path: string) => (path.startsWith('/') ? path : `/${path}`)
-
+/**
+ * Resolve URL de preview para documentos
+ * Estratégia simplificada: sempre usar rota de download do backend
+ */
 export const resolvePreviewUrl = (
   doc: ProtocolDocument,
   getDownloadUrl: (d: ProtocolDocument) => string
 ) => {
   const rawUrl = doc.fileUrl || ''
-  const normalizedUrl = normalizeLegacyPath(rawUrl)
 
   if (!rawUrl) {
     return getDownloadUrl(doc)
   }
 
-  // data URL ou externa: usar direto
-  if (normalizedUrl.startsWith('data:')) {
-    return normalizedUrl
+  // data URL ou URL externa: usar direto
+  if (rawUrl.startsWith('data:') || absoluteUrlPattern.test(rawUrl)) {
+    return rawUrl
   }
 
-  if (absoluteUrlPattern.test(normalizedUrl)) {
-    return normalizedUrl
-  }
-
-  // Caminhos de upload expostos diretamente pelo backend
-  if (normalizedUrl.startsWith('/uploads') || normalizedUrl.startsWith('uploads/')) {
-    return buildAbsoluteFromRelative(withLeadingSlash(normalizedUrl))
-  }
-
-  // Demais casos (incluindo legados com caminho relativo diferente): usar rota de download,
-  // que centraliza a resoluÇõÇœo de caminho e CORS.
+  // Para todos os caminhos locais: usar rota de download do backend
+  // que tem toda a lógica de resolução centralizada
   return getDownloadUrl(doc)
 }

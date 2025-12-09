@@ -16,6 +16,10 @@ export const guessMimeFromExtension = (fileName?: string, fallback?: string) => 
   return fallback || 'application/octet-stream';
 };
 
+/**
+ * Resolve caminho de arquivo local com estratégia simplificada
+ * PADRÃO ÚNICO: /uploads/protocols/{protocolId}/{filename}
+ */
 export const resolveLocalFilePath = (rawPath: string) => {
   const candidates: string[] = [];
 
@@ -23,37 +27,19 @@ export const resolveLocalFilePath = (rawPath: string) => {
     if (p && !candidates.includes(p)) candidates.push(p);
   };
 
-  // Absoluto original
-  if (path.isAbsolute(rawPath)) add(rawPath);
-
+  // Limpar caminho (remover barra inicial se existir)
   const cleaned = rawPath.startsWith('/') ? rawPath.slice(1) : rawPath;
 
-  // Relativo ao base configurado / cwd / backend
-  add(path.join(UPLOAD_BASE_PATH, cleaned));
+  // Estratégia 1: Caminho relativo ao diretório de trabalho atual
   add(path.join(process.cwd(), cleaned));
-  add(path.join(process.cwd(), 'backend', cleaned));
 
-  // Legado: caminhos salvos como /app/backend/uploads/...
-  if (rawPath.includes('/backend/uploads/')) {
-    const relativeAfterUploads = rawPath.split('/backend/uploads/')[1];
-    add(path.join('/app/uploads', relativeAfterUploads));
-    add(path.join(UPLOAD_BASE_PATH, relativeAfterUploads));
-    add(path.join(process.cwd(), 'uploads', relativeAfterUploads));
+  // Estratégia 2: Caminho relativo ao UPLOAD_BASE_PATH configurado
+  add(path.join(UPLOAD_BASE_PATH, cleaned));
+
+  // Estratégia 3: Se for caminho absoluto, usar direto
+  if (path.isAbsolute(rawPath)) {
+    add(rawPath);
   }
-
-  // Legado: caminhos absolutos começando em /app/backend/uploads
-  if (rawPath.startsWith('/app/backend/uploads')) {
-    const after = rawPath.replace('/app/backend/uploads', '').replace(/^\/+/, '');
-    add(path.join('/app/backend/uploads', after));
-    add(path.join('/app/uploads', after));
-    add(path.join(UPLOAD_BASE_PATH, after));
-    add(path.join(process.cwd(), 'uploads', after));
-  }
-
-  // Heurística: buscar pelo basename no diretório uploads/documents
-  const baseName = path.basename(rawPath);
-  add(path.join(process.cwd(), 'uploads', baseName));
-  add(path.join(process.cwd(), 'uploads', 'documents', baseName));
 
   const tried: string[] = [];
   for (const candidate of candidates) {

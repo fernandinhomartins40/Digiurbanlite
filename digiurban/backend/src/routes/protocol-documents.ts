@@ -321,79 +321,67 @@ router.get(
   '/:protocolId/documents/:documentId/download',
   async (req, res) => {
     try {
-      const { protocolId, documentId } = req.params;
+      const { documentId } = req.params;
       const inline = req.query.inline === 'true';
 
-      console.log(`\n[DOWNLOAD] ProtocolId: ${protocolId}, DocumentId: ${documentId}, Inline: ${inline}`);
+      console.log(`\n[DOWNLOAD] DocumentId: ${documentId}, Inline: ${inline}`);
 
-      // Se é um documento legacy, buscar direto dos documentos do protocolo
-      let document: any;
-      if (documentId.startsWith('legacy_')) {
-        console.log(`[DOWNLOAD] Documento legacy detectado, buscando do protocolo...`);
-        const allDocs = await documentService.getProtocolDocuments(protocolId);
-        const foundDoc = allDocs.find(doc => doc.id === documentId);
-        if (foundDoc) {
-          document = foundDoc;
-          console.log(`[DOWNLOAD] Documento legacy encontrado: ${document.fileName}, fileUrl: ${document.fileUrl}`);
-        }
-      } else {
-        // Documentos normais: buscar do banco
-        document = await documentService.getDocumentById(documentId);
-      }
+      // Buscar documento
+      const document = await documentService.getDocumentById(documentId);
 
       if (!document) {
-        console.log(`[DOWNLOAD] Documento nÇœo encontrado: ${documentId}`);
+        console.log(`[DOWNLOAD] Documento não encontrado: ${documentId}`);
         return res.status(404).json({
           success: false,
-          error: 'Documento nÇœo encontrado'
+          error: 'Documento não encontrado'
         });
       }
 
       console.log(`[DOWNLOAD] Documento encontrado: ${document.fileName}, fileUrl: ${document.fileUrl}`);
 
       if (!document.fileUrl) {
-        console.log(`[DOWNLOAD] Arquivo nÇœo disponÇðvel para documento: ${documentId}`);
+        console.log(`[DOWNLOAD] Arquivo não disponível para documento: ${documentId}`);
         return res.status(404).json({
           success: false,
-          error: 'Arquivo nÇœo disponÇðvel'
+          error: 'Arquivo não disponível'
         });
       }
 
-      // Se fileUrl Ç¸ um caminho local
-      if (!document.fileUrl.startsWith('http')) {
-        const resolution = resolveLocalFilePath(document.fileUrl);
-
-        if (!resolution.found) {
-          console.log(`[DOWNLOAD] Arquivo nÇœo existe nas tentativas: ${resolution.tried.join(' | ')}`);
-          return res.status(404).json({
-            success: false,
-            error: 'Arquivo nÇœo encontrado no servidor',
-            tried: resolution.tried
-          });
-        }
-
-        const filePath = (resolution as any).filePath;
-        const mimeType = document.mimeType || guessMimeFromExtension(document.fileName, 'application/octet-stream');
-
-        console.log(`[DOWNLOAD] Arquivo existe, enviando... MimeType: ${mimeType}, Caminho: ${filePath}`);
-
-        // Configurar headers - inline para visualizaÇõÇœo, attachment para download
-        const disposition = inline ? 'inline' : 'attachment';
-        res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'}"`);
-        res.setHeader('Content-Type', mimeType);
-
-        // Adicionar headers CORS para permitir visualizaÇõÇœo
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET');
-
-        // Stream do arquivo
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
-      } else {
-        // Se Ç¸ URL externa, redirecionar
+      // Se fileUrl é uma URL externa
+      if (document.fileUrl.startsWith('http')) {
         console.log(`[DOWNLOAD] Redirecionando para URL externa: ${document.fileUrl}`);
         return res.redirect(document.fileUrl);
       }
+
+      // Caminho local - usar resolveLocalFilePath
+      const resolution = resolveLocalFilePath(document.fileUrl);
+
+      if (!resolution.found) {
+        console.log(`[DOWNLOAD] Arquivo não existe nas tentativas: ${resolution.tried.join(' | ')}`);
+        return res.status(404).json({
+          success: false,
+          error: 'Arquivo não encontrado no servidor',
+          tried: resolution.tried
+        });
+      }
+
+      const filePath = (resolution as any).filePath;
+      const mimeType = document.mimeType || guessMimeFromExtension(document.fileName, 'application/octet-stream');
+
+      console.log(`[DOWNLOAD] Arquivo existe, enviando... MimeType: ${mimeType}, Caminho: ${filePath}`);
+
+      // Configurar headers - inline para visualização, attachment para download
+      const disposition = inline ? 'inline' : 'attachment';
+      res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'}"`);
+      res.setHeader('Content-Type', mimeType);
+
+      // Adicionar headers CORS para permitir visualização
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+
+      // Stream do arquivo
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
     } catch (error) {
       console.error('[DOWNLOAD] Erro ao fazer download do documento:', error);
       return res.status(500).json({

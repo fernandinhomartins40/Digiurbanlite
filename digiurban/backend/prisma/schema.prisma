@@ -339,10 +339,6 @@ model ProtocolSimplified {
   longitude Float?
   address   String?
 
-  // Documentos
-  documents   Json?
-  attachments String?
-
   // Gestão
   assignedUserId String?
   createdById    String?

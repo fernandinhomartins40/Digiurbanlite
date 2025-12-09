@@ -15,7 +15,14 @@
       "Bash(npx tsx:*)",
       "Bash(docker-compose restart:*)",
       "Bash(scp:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(find:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx prisma migrate reset:*)",
+      "Bash(npx prisma:*)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma migrate reset:*)",
+      "Bash(npm run seed:*)"
     ],
     "deny": [],
     "ask": []
