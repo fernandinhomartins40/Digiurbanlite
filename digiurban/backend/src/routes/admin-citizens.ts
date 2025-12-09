@@ -216,6 +216,8 @@ router.get(
     const authReq = req as AuthenticatedRequest;
     const { page = '1', limit = '50', status, search } = authReq.query;
 
+    console.log('📋 [CITIZENS] Listando cidadãos:', { page, limit, status, search });
+
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
@@ -229,52 +231,59 @@ router.get(
 
     if (search && typeof search === 'string') {
       where.OR = [
-        { name: { contains: search } },
+        { name: { contains: search, mode: 'insensitive' } },
         { cpf: { contains: search } },
-        { email: { contains: search } },
+        { email: { contains: search, mode: 'insensitive' } },
       ];
     }
 
-    const [citizens, total] = await Promise.all([
-      prisma.citizen.findMany({
-        where,
-        select: {
-          id: true,
-          name: true,
-          cpf: true,
-          email: true,
-          phone: true,
-          address: true,
-          isActive: true,
-          verificationStatus: true,
-          registrationSource: true,
-          verifiedAt: true,
-          verifiedBy: true,
-          createdAt: true,
-          _count: {
-            select: {
-              documents: true,
-              protocolsSimplified: true
+    try {
+      const [citizens, total] = await Promise.all([
+        prisma.citizen.findMany({
+          where,
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            email: true,
+            phone: true,
+            address: true,
+            isActive: true,
+            verificationStatus: true,
+            registrationSource: true,
+            verifiedAt: true,
+            verifiedBy: true,
+            createdAt: true,
+            _count: {
+              select: {
+                documents: true,
+                protocolsSimplified: true
+              }
             }
-          }
-        },
-        skip,
-        take: limitNum,
-        orderBy: { createdAt: 'desc' }
-        }),
-      prisma.citizen.count({ where }),
-    ]);
+          },
+          skip,
+          take: limitNum,
+          orderBy: { createdAt: 'desc' }
+          }),
+        prisma.citizen.count({ where }),
+      ]);
 
-    res.json({
-      success: true,
-      citizens,
-      pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        totalPages: Math.ceil(total / limitNum)
-        }
-        });
+      console.log(`✅ [CITIZENS] Retornando ${citizens.length} cidadãos de ${total} total`);
+
+      res.json({
+        success: true,
+        citizens,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum)
+          }
+          });
+    } catch (error) {
+      console.error('❌ [CITIZENS] Erro ao buscar cidadãos:', error);
+      throw error; // asyncHandler vai pegar e retornar erro 500
+    }
   })
 );
 

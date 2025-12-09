@@ -158,6 +158,8 @@ try {
 }
 
 // 🏥 MICROSISTEMAS COM WORKFLOW (FASE 8)
+// ⚠️ TEMPORARIAMENTE DESABILITADO - Arquivos de rotas ainda não criados
+/*
 try {
   console.log('🏥 Carregando rotas de microsistemas...');
 
@@ -297,6 +299,7 @@ try {
 } catch (error) {
   console.error('❌ Erro ao carregar rotas de microsistemas:', error);
 }
+*/
 
 // 🔧 ROTAS DE GESTÃO ADMINISTRATIVA (team, departments) - DEVEM VIR PRIMEIRO
 try {
@@ -476,5 +479,3 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
-
-
