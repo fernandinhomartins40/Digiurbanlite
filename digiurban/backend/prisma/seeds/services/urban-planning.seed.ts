@@ -753,7 +753,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG', 'Comprovante de Propriedade', 'ART do Responsável'],
+      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'comprovante_de_propriedade', name: 'Comprovante de Propriedade', required: true }, { id: 'art_do_responsavel', name: 'ART do Responsável', required: true }],
       estimatedDays: 15,
       priority: 3,
       category: 'Laudos',

@@ -797,7 +797,7 @@ export const cultureServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }],
+      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'protocolo_original', name: 'Protocolo Original', required: false }],
       estimatedDays: 3,
       priority: 2,
       category: 'Documentos',

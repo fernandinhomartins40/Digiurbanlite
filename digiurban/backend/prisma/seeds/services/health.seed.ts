@@ -1355,7 +1355,8 @@ export const healthServices: ServiceDefinition[] = [
       requiredDocuments: [
         { id: 'cpf', name: 'CPF', required: true },
         { id: 'rg', name: 'RG', required: true },
-        { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }
+        { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true },
+        { id: 'protocolo_original', name: 'Protocolo Original', required: false }
       ],
       estimatedDays: 7,
       priority: 2,
@@ -1387,7 +1388,7 @@ export const healthServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'Cartão SUS'],
+      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'cartao_sus', name: 'Cartão SUS', required: true }],
       estimatedDays: 3,
       priority: 3,
       category: 'Certidões',

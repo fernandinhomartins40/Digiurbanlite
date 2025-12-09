@@ -690,7 +690,7 @@ export const publicSafetyServices: ServiceDefinition[] = [
       serviceType: 'SEM_DADOS',
       moduleType: null,
       requiresDocuments: true,
-      requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'comprovante_de_residencia', name: 'Comprovante de Residência', required: true }],
       estimatedDays: 7,
       priority: 3,
       category: 'Atestados',
