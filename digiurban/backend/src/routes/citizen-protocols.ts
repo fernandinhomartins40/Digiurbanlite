@@ -46,28 +46,28 @@ async function createPendingDocumentsForProtocol(
       return;
     }
 
-    // Criar documentos PENDING ou UPLOADED
-    const usedFiles = new Set<number>(); // Track which files have been used
+    // ✅ MAPEAMENTO ROBUSTO E EXATO
+    const usedFiles = new Set<number>();
 
     for (const docConfig of requiredDocs) {
       const docId = docConfig.id || docConfig.name || docConfig;
       const docName = docConfig.name || docConfig.id || docConfig;
-      const isRequired = typeof docConfig === 'object' ? (docConfig.required !== false) : true;
+      const isRequired = docConfig.required !== false;  // ✅ TRUE por padrão
 
-      // Verificar se já foi enviado um arquivo para este tipo de documento
-      // Tentar mapear por: documentId, id, ou nome do arquivo
+      // ✅ MAPEAMENTO EXATO (sem .includes() permissivo)
       const uploadedFileIndex = uploadedFiles.findIndex((f, idx) => {
-        // Skip files already used
         if (usedFiles.has(idx)) return false;
 
         const fileDocId = f.documentId || f.id;
-        const matches = fileDocId === docId ||
-                       fileDocId === docName ||
-                       f.id === docId ||
-                       f.name.toLowerCase().includes(docName.toLowerCase());
+        // Match EXATO: apenas igualdade direta (case-insensitive)
+        const matches =
+          fileDocId === docId ||
+          fileDocId === docName ||
+          fileDocId?.toLowerCase() === docId?.toLowerCase() ||
+          fileDocId?.toLowerCase() === docName?.toLowerCase();
 
         if (matches) {
-          console.log(`   ✓ Mapeado: ${docName} → ${f.name} (documentId: ${fileDocId})`);
+          console.log(`   ✓ Mapeado EXATO: ${docName} → ${f.name} (documentId: ${fileDocId})`);
         }
         return matches;
       });
@@ -76,12 +76,12 @@ async function createPendingDocumentsForProtocol(
         const uploadedFile = uploadedFiles[uploadedFileIndex];
         usedFiles.add(uploadedFileIndex);
 
-        // Criar como UPLOADED se já enviou arquivo
+        // Criar como UPLOADED
         await prisma.protocolDocument.create({
           data: {
             protocolId,
             documentType: docName,
-            isRequired,
+            isRequired,  // ✅ Preserva required do seed
             fileName: uploadedFile.name,
             fileUrl: uploadedFile.url,
             fileSize: uploadedFile.size,
@@ -90,45 +90,32 @@ async function createPendingDocumentsForProtocol(
             uploadedAt: new Date()
           }
         });
-        console.log(`   ✓ Documento UPLOADED: ${docName} (${uploadedFile.name})`);
+        console.log(`   ✓ Documento UPLOADED: ${docName} (isRequired=${isRequired})`);
       } else {
-        // Criar como PENDING se não enviou
+        // Criar como PENDING
         await prisma.protocolDocument.create({
           data: {
             protocolId,
             documentType: docName,
-            isRequired,
+            isRequired,  // ✅ Preserva required do seed
             status: DocumentStatus.PENDING
           }
         });
-        console.log(`   → Documento PENDING: ${docName} (não mapeado)`);
+        console.log(`   → Documento PENDING: ${docName} (isRequired=${isRequired})`);
       }
     }
 
-    // Se sobraram arquivos não mapeados, criar documentos UPLOADED para eles
+    // ⚠️  AVISO: Arquivos sem mapeamento (não deveria acontecer se frontend enviar corretamente)
     for (let idx = 0; idx < uploadedFiles.length; idx++) {
       if (!usedFiles.has(idx)) {
         const file = uploadedFiles[idx];
-        console.log(`   ⚠ Arquivo não mapeado, criando documento genérico: ${file.name} (documentId: ${file.documentId})`);
-
-        await prisma.protocolDocument.create({
-          data: {
-            protocolId,
-            documentType: file.documentId || `Documento ${idx + 1}`,
-            isRequired: false, // Arquivos não mapeados são considerados opcionais
-            fileName: file.name,
-            fileUrl: file.url,
-            fileSize: file.size,
-            mimeType: file.mimetype,
-            status: DocumentStatus.UPLOADED,
-            uploadedAt: new Date()
-          }
-        });
-        console.log(`   ✓ Documento genérico UPLOADED: ${file.name}`);
+        console.warn(`   ⚠️  ATENÇÃO: Arquivo não mapeado: ${file.name} (documentId: ${file.documentId})`);
+        console.warn(`   → Este arquivo NÃO será salvo no protocolo!`);
+        console.warn(`   → Frontend deve enviar documentTypes correspondentes aos requiredDocuments do seed`);
       }
     }
 
-    console.log(`   ✓ Total de documentos processados: ${requiredDocs.length} requeridos + ${uploadedFiles.length - usedFiles.size} não mapeados`);
+    console.log(`   ✅ Total processado: ${requiredDocs.length} requeridos | ${usedFiles.size} enviados | ${uploadedFiles.length - usedFiles.size} não mapeados`);
   } catch (error) {
     console.error('Erro ao criar documentos PENDING:', error);
     // Não falhar a criação do protocolo se documentos falharem
@@ -185,23 +172,41 @@ router.post('/', upload.array('documents'), async (req, res) => {
     // Debug: Mostrar todos os campos do req.body
     console.log('   📋 req.body keys:', Object.keys(req.body));
 
-    // Extrair tipos de documentos do body (array correspondente aos arquivos por índice)
-    const documentTypes: string[] = req.body.documentTypes
-      ? (typeof req.body.documentTypes === 'string' ? JSON.parse(req.body.documentTypes) : req.body.documentTypes)
-      : [];
+    // ✅ EXTRAÇÃO ROBUSTA: Aceitar múltiplos formatos
+    let documentTypes: string[] = [];
 
-    console.log('   🏷️  Document Types recebidos:', documentTypes);
+    // Formato 1: Array documentTypes (preferido)
+    if (req.body.documentTypes) {
+      documentTypes = typeof req.body.documentTypes === 'string'
+        ? JSON.parse(req.body.documentTypes)
+        : req.body.documentTypes;
+    }
+    // Formato 2: Indexed fields documents[i][id]
+    else if (files) {
+      documentTypes = files.map((_, index) =>
+        req.body[`documents[${index}][id]`] ||
+        req.body[`documents[${index}][documentId]`] ||
+        ''
+      ).filter(Boolean);
+    }
+
+    console.log('   🏷️  Document Types extraídos:', documentTypes);
+    console.log('   📦 Total de arquivos:', files?.length || 0);
 
     // Processar arquivos enviados - Mapear com documentTypes por índice
     const uploadedDocuments = files ? files.map((file, index) => {
-      const documentType = documentTypes[index] || file.originalname;
+      const documentType = documentTypes[index];
+
+      if (!documentType) {
+        console.warn(`   ⚠️  Arquivo ${index} (${file.originalname}) SEM documentType definido!`);
+      }
 
       console.log(`   → Arquivo ${index}: ${file.originalname}`);
-      console.log(`      - Tipo de documento: ${documentType}`);
+      console.log(`      - Tipo de documento: ${documentType || 'INDEFINIDO'}`);
 
       return {
-        id: documentType,
-        documentId: documentType,
+        id: documentType || file.originalname,
+        documentId: documentType || file.originalname,
         name: file.originalname,
         url: getFileUrl(file.filename),
         uploadedAt: new Date().toISOString(),

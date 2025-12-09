@@ -631,18 +631,36 @@ router.post('/:id/request', (req, res, next) => {
 
     console.log('📋 req.body keys:', Object.keys(req.body));
 
-    // Extrair tipos de documentos do body (array correspondente aos arquivos por índice)
-    const documentTypes: string[] = req.body.documentTypes
-      ? (typeof req.body.documentTypes === 'string' ? JSON.parse(req.body.documentTypes) : req.body.documentTypes)
-      : [];
+    // ✅ EXTRAÇÃO ROBUSTA: Aceitar múltiplos formatos
+    let documentTypes: string[] = [];
 
-    console.log('🏷️  Document Types recebidos:', documentTypes);
+    // Formato 1: Array documentTypes (preferido)
+    if (req.body.documentTypes) {
+      documentTypes = typeof req.body.documentTypes === 'string'
+        ? JSON.parse(req.body.documentTypes)
+        : req.body.documentTypes;
+    }
+    // Formato 2: Indexed fields documents[i][id]
+    else if (uploadedFiles.length > 0) {
+      documentTypes = uploadedFiles.map((_: Express.Multer.File, index: number) =>
+        (req.body as any)[`documents[${index}][id]`] ||
+        (req.body as any)[`documents[${index}][documentId]`] ||
+        ''
+      ).filter(Boolean);
+    }
+
+    console.log('🏷️  Document Types extraídos:', documentTypes);
+    console.log('📦 Total de arquivos:', uploadedFiles.length);
 
     // Mapear arquivos para estrutura de attachments
     const attachments = uploadedFiles.map((file: Express.Multer.File, index: number) => {
-      const documentType = documentTypes[index] || file.originalname;
+      const documentType = documentTypes[index];
 
-      console.log(`   → Arquivo ${index}: ${file.originalname} → Tipo: ${documentType}`);
+      if (!documentType) {
+        console.warn(`   ⚠️  Arquivo ${index} (${file.originalname}) SEM documentType definido!`);
+      }
+
+      console.log(`   → Arquivo ${index}: ${file.originalname} → Tipo: ${documentType || 'INDEFINIDO'}`);
 
       return {
         filename: file.filename,
@@ -650,7 +668,7 @@ router.post('/:id/request', (req, res, next) => {
         mimetype: file.mimetype,
         size: file.size,
         path: file.path,
-        documentId: documentType
+        documentId: documentType || file.originalname
       };
     });
 

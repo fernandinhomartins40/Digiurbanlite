@@ -240,13 +240,16 @@ export default function SolicitarServicoPage() {
         formData.append('customFormData', jsonString);
       }
 
-      // Adicionar arquivos com IDs corretos para mapeamento no backend
+      // ✅ FORMATO SIMPLES: Enviar array documentTypes (mais robusto)
       const filesArray = Object.entries(uploadedFiles);
-      filesArray.forEach(([docId, file], index) => {
+      const documentTypesArray = filesArray.map(([docId]) => docId);
+
+      // Enviar array de tipos (formato preferido pelo backend)
+      formData.append('documentTypes', JSON.stringify(documentTypesArray));
+
+      // Adicionar arquivos (sem metadados extras)
+      filesArray.forEach(([_, file]) => {
         formData.append('documents', file);
-        // Backend espera: documents[index][id] ou documents[index][documentId]
-        formData.append(`documents[${index}][id]`, docId);
-        formData.append(`documents[${index}][documentId]`, docId);
       });
 
       console.log('📤 Enviando solicitação com', Object.keys(uploadedFiles).length, 'arquivo(s)');

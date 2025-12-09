@@ -187,6 +187,7 @@ export function validateDocuments(
 
 /**
  * Normaliza configurações de documentos do formato do banco para o formato validável
+ * ✅ CORREÇÃO: required=TRUE por padrão (era false antes)
  */
 export function normalizeDocumentConfigs(requiredDocuments: any[]): DocumentConfig[] {
   if (!Array.isArray(requiredDocuments)) {
@@ -195,11 +196,11 @@ export function normalizeDocumentConfigs(requiredDocuments: any[]): DocumentConf
 
   return requiredDocuments.map(doc => {
     if (typeof doc === 'string') {
-      // Formato antigo: apenas string
+      // Formato antigo: apenas string → SEMPRE obrigatório
       return {
         name: doc,
         description: '',
-        required: false,
+        required: true,  // ✅ DEFAULT: TRUE (era false)
         acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
         allowCameraUpload: true,
         maxSizeMB: 5
@@ -208,11 +209,11 @@ export function normalizeDocumentConfigs(requiredDocuments: any[]): DocumentConf
 
     // Formato novo: objeto completo
     return {
-      name: doc.name || doc,
+      name: doc.name || doc.id || doc,
       description: doc.description || '',
-      required: doc.required !== undefined ? doc.required : false,
+      required: doc.required !== false,  // ✅ TRUE por padrão, FALSE apenas se explícito
       acceptedFormats: doc.acceptedFormats || ['pdf', 'jpg', 'jpeg', 'png'],
-      allowCameraUpload: doc.allowCameraUpload !== undefined ? doc.allowCameraUpload : true,
+      allowCameraUpload: doc.allowCameraUpload !== false,  // ✅ TRUE por padrão
       maxSizeMB: doc.maxSizeMB || 5
     };
   });
