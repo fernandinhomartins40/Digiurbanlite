@@ -136,10 +136,13 @@ export class ProtocolModuleService {
       // Criar documentos na tabela ProtocolDocument se houver attachments
       if (attachments.length > 0) {
         for (const attachment of attachments) {
+          // Usar documentId do attachment (já vem processado das rotas)
+          const documentType = attachment.documentId || attachment.id || attachment.filename || attachment.originalName;
+
           await tx.protocolDocument.create({
             data: {
               protocolId: protocol.id,
-              documentType: attachment.documentId || attachment.id || 'Documento',
+              documentType, // Tipo específico sem fallback genérico
               fileName: attachment.filename || attachment.originalName || attachment.name,
               fileUrl: attachment.path || attachment.url,
               fileSize: attachment.size || 0,

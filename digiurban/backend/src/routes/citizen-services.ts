@@ -609,7 +609,6 @@ router.post('/:id/request', (req, res, next) => {
 
     // Processar arquivos enviados (se houver)
     const uploadedFiles = (req as any).files || [];
-    const documentIds = req.body.documentIds || [];
 
     console.log('\n========== POST /api/citizen/services/:id/request ==========');
     console.log('Service ID:', serviceId);
@@ -631,35 +630,29 @@ router.post('/:id/request', (req, res, next) => {
     }
 
     console.log('📋 req.body keys:', Object.keys(req.body));
-    console.log('🔍 documentIds raw:', documentIds);
 
-    // Extrair documentTypes enviados no FormData (documents[0][id], documents[0][documentId], etc)
-    const documentTypes: string[] = uploadedFiles.map((_: Express.Multer.File, index: number) => {
-      const idField =
-        (req.body as any)[`documents[${index}][id]`] ||
-        (req.body as any)[`documents[${index}][documentId]`];
+    // Extrair tipos de documentos do body (array correspondente aos arquivos por índice)
+    const documentTypes: string[] = req.body.documentTypes
+      ? (typeof req.body.documentTypes === 'string' ? JSON.parse(req.body.documentTypes) : req.body.documentTypes)
+      : [];
 
-      console.log(`   → Extraindo tipo para arquivo ${index}:`);
-      console.log(`      documents[${index}][id] = ${(req.body as any)[`documents[${index}][id]`]}`);
-      console.log(`      documents[${index}][documentId] = ${(req.body as any)[`documents[${index}][documentId]`]}`);
-      console.log(`      resultado: ${idField || `Documento ${index + 1}`}`);
-
-      if (idField) return idField;
-      if (Array.isArray(documentIds) && documentIds[index]) return documentIds[index];
-      return `Documento ${index + 1}`;
-    });
-
-    console.log('🏷️  Document Types extraídos:', documentTypes);
+    console.log('🏷️  Document Types recebidos:', documentTypes);
 
     // Mapear arquivos para estrutura de attachments
-    const attachments = uploadedFiles.map((file: Express.Multer.File, index: number) => ({
-      filename: file.filename,
-      originalName: file.originalname,
-      mimetype: file.mimetype,
-      size: file.size,
-      path: file.path,
-      documentId: Array.isArray(documentIds) ? documentIds[index] : documentIds || documentTypes[index]
-        }));
+    const attachments = uploadedFiles.map((file: Express.Multer.File, index: number) => {
+      const documentType = documentTypes[index] || file.originalname;
+
+      console.log(`   → Arquivo ${index}: ${file.originalname} → Tipo: ${documentType}`);
+
+      return {
+        filename: file.filename,
+        originalName: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        path: file.path,
+        documentId: documentType
+      };
+    });
 
     console.log('­ƒôª Attachments processados:', attachments.length);
 

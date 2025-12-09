@@ -185,25 +185,23 @@ router.post('/', upload.array('documents'), async (req, res) => {
     // Debug: Mostrar todos os campos do req.body
     console.log('   📋 req.body keys:', Object.keys(req.body));
 
-    // Processar arquivos enviados - Novo formato com documentId
+    // Extrair tipos de documentos do body (array correspondente aos arquivos por índice)
+    const documentTypes: string[] = req.body.documentTypes
+      ? (typeof req.body.documentTypes === 'string' ? JSON.parse(req.body.documentTypes) : req.body.documentTypes)
+      : [];
+
+    console.log('   🏷️  Document Types recebidos:', documentTypes);
+
+    // Processar arquivos enviados - Mapear com documentTypes por índice
     const uploadedDocuments = files ? files.map((file, index) => {
-      // Tentar múltiplas formas de extrair o documentId
-      const documentId = req.body[`documents[${index}][id]`] ||
-                        req.body[`documents[${index}][documentId]`] ||
-                        req.body[`documents_${index}_id`] ||
-                        req.body[`documents_${index}_documentId`] ||
-                        req.body[`file_${index}_documentId`] ||
-                        req.body[`documentId_${index}`] ||
-                        req.body[`documentId`] ||
-                        `doc_${index}`;
+      const documentType = documentTypes[index] || file.originalname;
 
       console.log(`   → Arquivo ${index}: ${file.originalname}`);
-      console.log(`      - documentId extraído: ${documentId}`);
-      console.log(`      - Tentativas: documents[${index}][id]=${req.body[`documents[${index}][id]`]}, documents[${index}][documentId]=${req.body[`documents[${index}][documentId]`]}`);
+      console.log(`      - Tipo de documento: ${documentType}`);
 
       return {
-        id: documentId,
-        documentId: documentId,
+        id: documentType,
+        documentId: documentType,
         name: file.originalname,
         url: getFileUrl(file.filename),
         uploadedAt: new Date().toISOString(),
