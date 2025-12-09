@@ -342,7 +342,7 @@ router.get('/me', asyncHandler(async (req: Request, res: Response) => {
         protocolsSimplified: {
           select: {
             id: true,
-            protocolNumber: true,
+            number: true,
             status: true,
             createdAt: true,
             service: {
