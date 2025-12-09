@@ -350,21 +350,25 @@ router.post(
         return res.status(403).json(createErrorResponse('ACCESS_DENIED', 'Acesso negado'));
       }
 
-      // Mover arquivos para diretório do protocolo
+      // Mover arquivos para diretório do protocolo e criar registros em ProtocolDocument
       const uploadedFiles = await moveFilesToProtocol(files, protocolId);
 
-      // Atualizar documentos do protocolo
-      const currentDocuments = Array.isArray(protocol.documents)
-        ? (protocol.documents as unknown as ProtocolDocument[])
-        : [];
-      const updatedDocuments = [...currentDocuments, ...uploadedFiles];
-
-      await prisma.protocolSimplified.update({
-        where: { id: protocolId },
-        data: {
-          documents: updatedDocuments as unknown as Prisma.InputJsonValue
-        }
+      // Criar documentos na tabela ProtocolDocument
+      for (const file of uploadedFiles) {
+        await prisma.protocolDocument.create({
+          data: {
+            protocolId,
+            documentType: file.documentId || 'Documento',
+            fileName: file.filename,
+            fileUrl: file.path,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            status: 'UPLOADED',
+            isRequired: false,
+            uploadedAt: new Date()
+          }
         });
+      }
 
       // Criar histórico
       await prisma.protocolHistorySimplified.create({
@@ -446,17 +450,24 @@ router.get(
       return res.status(403).json(createErrorResponse('ACCESS_DENIED', 'Acesso negado'));
     }
 
-    const documents = Array.isArray(protocol.documents)
-      ? (protocol.documents as unknown as ProtocolDocument[])
-      : [];
+    // Buscar documentos da tabela ProtocolDocument
+    const documents = await prisma.protocolDocument.findMany({
+      where: { protocolId },
+      orderBy: { createdAt: 'asc' }
+    });
 
     // Verificar se os arquivos ainda existem e obter informações atualizadas
     const documentsWithStatus = documents.map(doc => {
-      const exists = fileExists(doc.path);
-      const fileInfo = exists ? getFileInfo(doc.path) : null;
+      const exists = doc.fileUrl ? fileExists(doc.fileUrl) : false;
+      const fileInfo = (exists && doc.fileUrl) ? getFileInfo(doc.fileUrl) : null;
 
       return {
-        ...doc,
+        id: doc.id,
+        documentId: doc.documentType,
+        filename: doc.fileName,
+        path: doc.fileUrl,
+        size: doc.fileSize,
+        mimetype: doc.mimeType,
         exists,
         currentSize: fileInfo?.size,
         lastModified: fileInfo?.modifiedAt
@@ -515,25 +526,27 @@ router.get(
       return res.status(403).json(createErrorResponse('ACCESS_DENIED', 'Acesso negado'));
     }
 
-    // Verificar se o documento existe no protocolo
-    const documents = Array.isArray(protocol.documents)
-      ? (protocol.documents as unknown as ProtocolDocument[])
-      : [];
-    const document = documents.find(doc => doc.filename === filename);
+    // Buscar documento da tabela ProtocolDocument por fileName
+    const document = await prisma.protocolDocument.findFirst({
+      where: {
+        protocolId,
+        fileName: filename
+      }
+    });
 
-    if (!document) {
+    if (!document || !document.fileUrl) {
       return res.status(404).json(createErrorResponse('NOT_FOUND', 'Documento não encontrado'));
     }
 
     // Verificar se o arquivo existe fisicamente
-    const filePath = path.join(process.cwd(), document.path);
+    const filePath = path.join(process.cwd(), document.fileUrl);
     if (!fs.existsSync(filePath)) {
       return res.status(404).json(createErrorResponse('FILE_NOT_FOUND', 'Arquivo não encontrado no servidor'));
     }
 
     // Definir headers para download
-    res.setHeader('Content-Disposition', `attachment; filename="${document.originalName}"`);
-    res.setHeader('Content-Type', document.mimetype || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${document.fileName || 'documento'}"`);
+    res.setHeader('Content-Type', document.mimeType || 'application/octet-stream');
 
     // Enviar arquivo
     return res.sendFile(filePath);
@@ -585,35 +598,29 @@ router.delete(
       return res.status(400).json(createErrorResponse('INVALID_STATUS', 'Não é possível remover documentos de protocolos concluídos'));
     }
 
-    const documents = Array.isArray(protocol.documents)
-      ? (protocol.documents as unknown as ProtocolDocument[])
-      : [];
-    const documentIndex = documents.findIndex(doc => doc.filename === filename);
+    // Buscar documento da tabela ProtocolDocument
+    const document = await prisma.protocolDocument.findFirst({
+      where: {
+        protocolId,
+        fileName: filename
+      }
+    });
 
-    if (documentIndex === -1) {
-      return res.status(404).json(createErrorResponse('NOT_FOUND', 'Documento não encontrado'));
-    }
-
-    const document = documents[documentIndex];
     if (!document) {
       return res.status(404).json(createErrorResponse('NOT_FOUND', 'Documento não encontrado'));
     }
 
     // Remover arquivo físico
-    const deleted = deleteFile(document.path);
-    if (!deleted) {
-      console.warn(`Arquivo não pôde ser deletado: ${document.path}`);
+    if (document.fileUrl) {
+      const deleted = deleteFile(document.fileUrl);
+      if (!deleted) {
+        console.warn(`Arquivo não pôde ser deletado: ${document.fileUrl}`);
+      }
     }
 
-    // Remover documento da lista
-    const updatedDocuments = documents.filter((_, index) => index !== documentIndex);
-
-    // Atualizar protocolo
-    await prisma.protocolSimplified.update({
-      where: { id: protocolId },
-      data: {
-        documents: updatedDocuments as unknown as Prisma.InputJsonValue
-        }
+    // Deletar documento da tabela
+    await prisma.protocolDocument.delete({
+      where: { id: document.id }
         });
 
     // Criar histórico

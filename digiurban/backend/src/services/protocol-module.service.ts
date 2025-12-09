@@ -92,10 +92,10 @@ export class ProtocolModuleService {
       // Gerar número do protocolo - Sistema centralizado com lock
       const protocolNumber = await generateProtocolNumberSafe(tx);
 
-      // Converter attachments de array para string JSON se necessário
-      const attachmentsData = rest.attachments
-        ? (Array.isArray(rest.attachments) ? JSON.stringify(rest.attachments) : rest.attachments)
-        : undefined;
+      // Parsear attachments se existirem (para criar na tabela ProtocolDocument)
+      const attachments = rest.attachments
+        ? (Array.isArray(rest.attachments) ? rest.attachments : JSON.parse(rest.attachments))
+        : [];
 
       // Preparar customData com metadados da entidade virtual
       const customDataPayload = isComDados && service.moduleType
@@ -129,10 +129,28 @@ export class ProtocolModuleService {
           createdById,
           latitude: rest.latitude,
           longitude: rest.longitude,
-          address: rest.address,
-          attachments: attachmentsData
+          address: rest.address
         }
       });
+
+      // Criar documentos na tabela ProtocolDocument se houver attachments
+      if (attachments.length > 0) {
+        for (const attachment of attachments) {
+          await tx.protocolDocument.create({
+            data: {
+              protocolId: protocol.id,
+              documentType: attachment.documentId || attachment.id || 'Documento',
+              fileName: attachment.filename || attachment.originalName || attachment.name,
+              fileUrl: attachment.path || attachment.url,
+              fileSize: attachment.size || 0,
+              mimeType: attachment.mimetype || 'application/octet-stream',
+              status: 'UPLOADED',
+              isRequired: false,
+              uploadedAt: new Date()
+            }
+          });
+        }
+      }
 
       // Criar histórico
       await tx.protocolHistorySimplified.create({

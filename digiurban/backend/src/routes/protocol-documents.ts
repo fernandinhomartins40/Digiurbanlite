@@ -366,7 +366,7 @@ router.get(
       }
 
       const filePath = (resolution as any).filePath;
-      const mimeType = document.mimeType || guessMimeFromExtension(document.fileName, 'application/octet-stream');
+      const mimeType = document.mimeType || guessMimeFromExtension(document.fileName || undefined, 'application/octet-stream');
 
       console.log(`[DOWNLOAD] Arquivo existe, enviando... MimeType: ${mimeType}, Caminho: ${filePath}`);
 
