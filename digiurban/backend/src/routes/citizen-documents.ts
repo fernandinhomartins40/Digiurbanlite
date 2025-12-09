@@ -353,12 +353,20 @@ router.post(
       // Mover arquivos para diretório do protocolo e criar registros em ProtocolDocument
       const uploadedFiles = await moveFilesToProtocol(files, protocolId);
 
+      // Extrair tipos de documentos do body (array correspondente aos arquivos por índice)
+      const documentTypes: string[] = req.body.documentTypes
+        ? (typeof req.body.documentTypes === 'string' ? JSON.parse(req.body.documentTypes) : req.body.documentTypes)
+        : [];
+
       // Criar documentos na tabela ProtocolDocument
-      for (const file of uploadedFiles) {
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+        const documentType = documentTypes[i] || file.filename; // Usar tipo específico ou filename como fallback
+
         await prisma.protocolDocument.create({
           data: {
             protocolId,
-            documentType: file.documentId || 'Documento',
+            documentType,
             fileName: file.filename,
             fileUrl: file.path,
             fileSize: file.size,
@@ -628,7 +636,7 @@ router.delete(
       data: {
         protocolId: protocolId,
         action: 'DOCUMENTO_REMOVIDO',
-        comment: `Documento "${document.originalName}" removido pelo cidadão`
+        comment: `Documento "${document.fileName}" removido pelo cidadão`
         }
         });
 
