@@ -34,6 +34,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/services/api'
+import Link from 'next/link'
 
 interface Citizen {
   id: string
