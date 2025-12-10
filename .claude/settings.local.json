@@ -47,7 +47,10 @@
       "Bash(docker-compose logs:*)",
       "Bash(bash:*)",
       "Bash(npm install:*)",
-      "Bash(npx shadcn@latest add command)"
+      "Bash(npx shadcn@latest add command)",
+      "Bash(xargs -I {} taskkill /F /PID {})",
+      "Bash(npx kill-port:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ExternalLink, TrendingUp, TrendingDown } from 'lucide-react'
 import useSWR from 'swr'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface DepartmentStat {
   id: string
@@ -19,7 +20,8 @@ interface DepartmentStat {
 }
 
 const fetcher = async (url: string) => {
-  const response = await fetch(url, { credentials: 'include' })
+  const fullUrl = getFullApiUrl(url)
+  const response = await fetch(fullUrl, { credentials: 'include' })
   if (!response.ok) throw new Error('Erro ao buscar dados')
   return response.json()
 }

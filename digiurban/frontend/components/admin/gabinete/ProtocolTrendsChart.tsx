@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Skeleton } from '@/components/ui/skeleton'
 import useSWR from 'swr'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface TrendData {
   date: string
@@ -13,7 +14,8 @@ interface TrendData {
 }
 
 const fetcher = async (url: string) => {
-  const response = await fetch(url, { credentials: 'include' })
+  const fullUrl = getFullApiUrl(url)
+  const response = await fetch(fullUrl, { credentials: 'include' })
   if (!response.ok) throw new Error('Erro ao buscar dados')
   return response.json()
 }

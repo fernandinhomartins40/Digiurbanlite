@@ -1,4 +1,5 @@
 import useSWR from 'swr'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface StatsData {
   totalActive: number
@@ -10,7 +11,8 @@ interface StatsData {
 }
 
 const fetcher = async (url: string) => {
-  const response = await fetch(url, { credentials: 'include' })
+  const fullUrl = getFullApiUrl(url)
+  const response = await fetch(fullUrl, { credentials: 'include' })
   if (!response.ok) {
     throw new Error('Erro ao buscar dados')
   }

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Trophy, Award, Medal } from 'lucide-react'
 import useSWR from 'swr'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface Server {
   id: string
@@ -16,7 +17,8 @@ interface Server {
 }
 
 const fetcher = async (url: string) => {
-  const response = await fetch(url, { credentials: 'include' })
+  const fullUrl = getFullApiUrl(url)
+  const response = await fetch(fullUrl, { credentials: 'include' })
   if (!response.ok) throw new Error('Erro ao buscar dados')
   return response.json()
 }
