@@ -20,60 +20,56 @@ const requireAdmin = (req: Request, res: Response, next: Function): void => {
 // GET /api/admin/gabinete/painel-prefeito/stats
 router.get('/stats', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
   try {
-    // 1. Total de protocolos ativos (não concluídos)
-    const totalActive = await prisma.protocolSimplified.count({
-      where: {
-        status: {
-          not: 'CONCLUIDO'
-        }
-      }
-    })
+    // ⚡ Otimização: Usar Promise.all para executar queries em paralelo
+    const [
+      totalActive,
+      totalProtocols,
+      totalCompleted,
+      completedProtocolsSample
+    ] = await Promise.all([
+      // 1. Total de protocolos ativos (não concluídos)
+      prisma.protocolSimplified.count({
+        where: { status: { not: 'CONCLUIDO' } }
+      }),
+      // 2. Total de protocolos (todos)
+      prisma.protocolSimplified.count(),
+      // 3. Total de protocolos concluídos
+      prisma.protocolSimplified.count({
+        where: { status: 'CONCLUIDO' }
+      }),
+      // 4. Amostra para cálculo de tempo médio
+      prisma.protocolSimplified.findMany({
+        where: {
+          status: 'CONCLUIDO',
+          concludedAt: { not: null }
+        },
+        select: {
+          createdAt: true,
+          concludedAt: true
+        },
+        take: 100, // Amostra de 100 protocolos para performance
+        orderBy: { concludedAt: 'desc' } // Mais recentes
+      })
+    ])
 
-    // 2. Total de protocolos (todos)
-    const totalProtocols = await prisma.protocolSimplified.count()
-
-    // 3. Total de protocolos concluídos
-    const totalCompleted = await prisma.protocolSimplified.count({
-      where: {
-        status: 'CONCLUIDO'
-      }
-    })
-
-    // 4. Taxa de conclusão (%)
+    // Cálculos derivados
     const completionRate = totalProtocols > 0
       ? Math.round((totalCompleted / totalProtocols) * 100)
       : 0
 
-    // 5. Tempo médio de resposta em horas
-    // Calcular diferença entre createdAt e concludedAt para protocolos concluídos
-    const completedProtocols = await prisma.protocolSimplified.findMany({
-      where: {
-        status: 'CONCLUIDO',
-        concludedAt: { not: null }
-      },
-      select: {
-        createdAt: true,
-        concludedAt: true
-      },
-      take: 100 // Últimos 100 protocolos concluídos para performance
-    })
-
     let avgResponseTime = 0
-    if (completedProtocols.length > 0) {
-      const totalHours = completedProtocols.reduce((sum, protocol) => {
+    if (completedProtocolsSample.length > 0) {
+      const totalHours = completedProtocolsSample.reduce((sum, protocol) => {
         if (protocol.concludedAt) {
           const diff = protocol.concludedAt.getTime() - protocol.createdAt.getTime()
-          const hours = diff / (1000 * 60 * 60)
-          return sum + hours
+          return sum + (diff / (1000 * 60 * 60))
         }
         return sum
       }, 0)
-      avgResponseTime = Math.round(totalHours / completedProtocols.length)
+      avgResponseTime = Math.round(totalHours / completedProtocolsSample.length)
     }
 
-    // 6. Satisfação do cidadão (média das avaliações)
-    // Retornar 4.5 como padrão por enquanto (implementar sistema de avaliações depois)
-    const citizenSatisfaction = 4.5
+    const citizenSatisfaction = 4.5 // TODO: Implementar sistema de avaliações
 
     res.json({
       success: true,
@@ -175,85 +171,63 @@ router.get('/trends', adminAuthMiddleware, requireAdmin, async (req: Request, re
 // GET /api/admin/gabinete/painel-prefeito/departments-performance
 router.get('/departments-performance', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
   try {
-    const departments = await prisma.department.findMany({
+    // ⚡ Otimização: Usar agregação do Prisma em vez de múltiplas queries
+    const departmentStats = await prisma.department.findMany({
       select: {
         id: true,
-        name: true
-      }
-    })
-
-    const departmentStats = await Promise.all(
-      departments.map(async (dept) => {
-        // Contar protocolos por status
-        const total = await prisma.protocolSimplified.count({
-          where: {
-            departmentId: dept.id
-          }
-        })
-
-        const completed = await prisma.protocolSimplified.count({
-          where: {
-            departmentId: dept.id,
-            status: 'CONCLUIDO'
-          }
-        })
-
-        const pending = await prisma.protocolSimplified.count({
-          where: {
-            departmentId: dept.id,
-            status: {
-              notIn: ['CONCLUIDO']
-            }
-          }
-        })
-
-        // Calcular eficiência
-        const efficiency = total > 0 ? Math.round((completed / total) * 100) : 0
-
-        // Calcular tempo médio de resposta
-        const completedProtocols = await prisma.protocolSimplified.findMany({
-          where: {
-            departmentId: dept.id,
-            status: 'CONCLUIDO',
-            concludedAt: { not: null }
-          },
+        name: true,
+        _count: {
           select: {
+            protocolsSimplified: true // Total de protocolos
+          }
+        },
+        protocolsSimplified: {
+          where: { status: 'CONCLUIDO' },
+          select: {
+            id: true,
             createdAt: true,
             concludedAt: true
           },
-          take: 50
-        })
-
-        let avgResponseTime = 0
-        if (completedProtocols.length > 0) {
-          const totalHours = completedProtocols.reduce((sum, p) => {
-            if (p.concludedAt) {
-              const diff = p.concludedAt.getTime() - p.createdAt.getTime()
-              return sum + (diff / (1000 * 60 * 60))
-            }
-            return sum
-          }, 0)
-          avgResponseTime = Math.round(totalHours / completedProtocols.length)
+          take: 50 // Amostra para tempo médio
         }
+      }
+    })
 
-        return {
-          id: dept.id,
-          name: dept.name,
-          total,
-          completed,
-          pending,
-          efficiency,
-          avgResponseTime
-        }
-      })
-    )
+    // Calcular métricas para cada departamento
+    const performance = departmentStats.map(dept => {
+      const total = dept._count.protocolsSimplified
+      const completed = dept.protocolsSimplified.length
+      const pending = total - completed
+      const efficiency = total > 0 ? Math.round((completed / total) * 100) : 0
+
+      // Calcular tempo médio de resposta
+      let avgResponseTime = 0
+      const completedProtocols = dept.protocolsSimplified.filter(p => p.concludedAt)
+      if (completedProtocols.length > 0) {
+        const totalHours = completedProtocols.reduce((sum, p) => {
+          const diff = p.concludedAt!.getTime() - p.createdAt.getTime()
+          return sum + (diff / (1000 * 60 * 60))
+        }, 0)
+        avgResponseTime = Math.round(totalHours / completedProtocols.length)
+      }
+
+      return {
+        id: dept.id,
+        name: dept.name,
+        total,
+        completed,
+        pending,
+        efficiency,
+        avgResponseTime
+      }
+    })
 
     // Ordenar por eficiência (maior primeiro)
-    departmentStats.sort((a, b) => b.efficiency - a.efficiency)
+    performance.sort((a, b) => b.efficiency - a.efficiency)
 
     res.json({
       success: true,
-      data: { departments: departmentStats }
+      data: { departments: performance }
     })
   } catch (error) {
     console.error('Erro ao buscar performance das secretarias:', error)
@@ -387,48 +361,56 @@ router.get('/critical-alerts', adminAuthMiddleware, requireAdmin, async (req: Re
 // GET /api/admin/gabinete/painel-prefeito/top-servers
 router.get('/top-servers', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
   try {
-    // Buscar usuários com protocolos atribuídos
-    const users = await prisma.user.findMany({
+    // ⚡ Otimização: Usar agregação e filtrar apenas usuários com protocolos
+    const userStats = await prisma.user.findMany({
+      where: {
+        assignedProtocolsSimplified: {
+          some: {} // Apenas usuários que têm protocolos atribuídos
+        }
+      },
       select: {
         id: true,
         name: true,
-        email: true
+        email: true,
+        _count: {
+          select: {
+            assignedProtocolsSimplified: true // Total de protocolos atribuídos
+          }
+        },
+        assignedProtocolsSimplified: {
+          where: { status: 'CONCLUIDO' },
+          select: { id: true } // Apenas contar
+        }
       }
     })
 
-    const userStats = await Promise.all(
-      users.map(async (user) => {
-        const totalAssigned = await prisma.protocolSimplified.count({
-          where: {
-            assignedUserId: user.id
-          }
-        })
+    // Calcular taxa de conclusão
+    const serversWithStats = userStats.map(user => {
+      const totalAssigned = user._count.assignedProtocolsSimplified
+      const totalCompleted = user.assignedProtocolsSimplified.length
+      const completionRate = totalAssigned > 0
+        ? Math.round((totalCompleted / totalAssigned) * 100)
+        : 0
 
-        const totalCompleted = await prisma.protocolSimplified.count({
-          where: {
-            assignedUserId: user.id,
-            status: 'CONCLUIDO'
-          }
-        })
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        completionRate,
+        totalCompleted,
+        totalAssigned
+      }
+    })
 
-        const completionRate = totalAssigned > 0
-          ? Math.round((totalCompleted / totalAssigned) * 100)
-          : 0
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          completionRate,
-          totalCompleted,
-          totalAssigned
+    // Ordenar por taxa de conclusão e pegar top 5
+    const topServers = serversWithStats
+      .sort((a, b) => {
+        // Priorizar por taxa de conclusão, depois por total concluído
+        if (b.completionRate === a.completionRate) {
+          return b.totalCompleted - a.totalCompleted
         }
+        return b.completionRate - a.completionRate
       })
-    )
-
-    // Ordenar por taxa de conclusão (maior primeiro) e pegar top 5
-    const topServers = userStats
-      .sort((a, b) => b.completionRate - a.completionRate)
       .slice(0, 5)
 
     res.json({

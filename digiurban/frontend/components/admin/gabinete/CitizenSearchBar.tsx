@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Loader2, User } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
@@ -23,8 +23,19 @@ export function CitizenSearchBar() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Citizen[]>([])
   const [loading, setLoading] = useState(false)
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
 
-  const handleSearch = async (searchQuery: string) => {
+  // ⚡ Limpar timeout ao desmontar
+  useEffect(() => {
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current)
+      }
+    }
+  }, [])
+
+  // ⚡ Função de busca com debounce (500ms)
+  const handleSearch = useCallback(async (searchQuery: string) => {
     if (searchQuery.length < 3) {
       setResults([])
       return
@@ -43,6 +54,27 @@ export function CitizenSearchBar() {
       setResults([])
     } finally {
       setLoading(false)
+    }
+  }, [])
+
+  // ⚡ Handler com debounce
+  const handleInputChange = (value: string) => {
+    setQuery(value)
+
+    // Limpar timeout anterior
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current)
+    }
+
+    // Criar novo timeout
+    if (value.length >= 3) {
+      debounceTimeout.current = setTimeout(() => {
+        handleSearch(value)
+        setOpen(true)
+      }, 500) // ⚡ 500ms de debounce
+    } else {
+      setResults([])
+      setOpen(false)
     }
   }
 
@@ -74,15 +106,9 @@ export function CitizenSearchBar() {
             placeholder="Buscar cidadão por nome ou CPF..."
             className="pl-12 h-14 text-lg border-2 border-gray-300 focus:border-blue-500 transition-colors"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              handleSearch(e.target.value)
-              if (e.target.value.length >= 3) {
-                setOpen(true)
-              }
-            }}
+            onChange={(e) => handleInputChange(e.target.value)}
             onFocus={() => {
-              if (query.length >= 3) {
+              if (query.length >= 3 && results.length > 0) {
                 setOpen(true)
               }
             }}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense, lazy } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -8,12 +8,23 @@ import { Circle, RefreshCw, AlertTriangle, Bell } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { CitizenSearchBar } from '@/components/admin/gabinete/CitizenSearchBar'
 import { LiveStatsCards } from '@/components/admin/gabinete/LiveStatsCards'
-import { ProtocolTrendsChart } from '@/components/admin/gabinete/ProtocolTrendsChart'
-import { DepartmentPerformanceTable } from '@/components/admin/gabinete/DepartmentPerformanceTable'
-import { CriticalAlerts } from '@/components/admin/gabinete/CriticalAlerts'
-import { TopServersCard } from '@/components/admin/gabinete/TopServersCard'
 import { useLiveStats } from '@/hooks/useLiveStats'
 import { useToast } from '@/hooks/use-toast'
+
+// ⚡ Lazy load dos componentes pesados
+const ProtocolTrendsChart = lazy(() => import('@/components/admin/gabinete/ProtocolTrendsChart').then(m => ({ default: m.ProtocolTrendsChart })))
+const DepartmentPerformanceTable = lazy(() => import('@/components/admin/gabinete/DepartmentPerformanceTable').then(m => ({ default: m.DepartmentPerformanceTable })))
+const CriticalAlerts = lazy(() => import('@/components/admin/gabinete/CriticalAlerts').then(m => ({ default: m.CriticalAlerts })))
+const TopServersCard = lazy(() => import('@/components/admin/gabinete/TopServersCard').then(m => ({ default: m.TopServersCard })))
+
+// Componente de loading
+function ComponentLoader() {
+  return (
+    <div className="flex items-center justify-center p-8">
+      <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
+    </div>
+  )
+}
 
 interface PendingProtocol {
   id: string
@@ -181,17 +192,25 @@ export default function PainelPrefeitoPage() {
       {/* Grid de Gráficos e Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfico de Tendências */}
-        <ProtocolTrendsChart />
+        <Suspense fallback={<Card><CardContent className="p-6"><ComponentLoader /></CardContent></Card>}>
+          <ProtocolTrendsChart />
+        </Suspense>
 
         {/* Top Servidores */}
-        <TopServersCard />
+        <Suspense fallback={<Card><CardContent className="p-6"><ComponentLoader /></CardContent></Card>}>
+          <TopServersCard />
+        </Suspense>
       </div>
 
       {/* Alertas Críticos */}
-      <CriticalAlerts />
+      <Suspense fallback={<Card><CardContent className="p-6"><ComponentLoader /></CardContent></Card>}>
+        <CriticalAlerts />
+      </Suspense>
 
       {/* Performance por Secretaria */}
-      <DepartmentPerformanceTable />
+      <Suspense fallback={<Card><CardContent className="p-6"><ComponentLoader /></CardContent></Card>}>
+        <DepartmentPerformanceTable />
+      </Suspense>
 
       {/* Protocolos que Requerem Atenção */}
       <Card>

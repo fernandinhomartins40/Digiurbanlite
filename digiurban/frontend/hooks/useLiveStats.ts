@@ -19,19 +19,22 @@ const fetcher = async (url: string) => {
 }
 
 export function useLiveStats() {
-  const { data, error, mutate, isLoading } = useSWR<{ success: boolean; data: StatsData }>(
+  const { data, error, mutate, isLoading, isValidating } = useSWR<{ success: boolean; data: StatsData }>(
     '/api/admin/gabinete/painel-prefeito/stats',
     fetcher,
     {
-      refreshInterval: 30000,      // Auto-refresh a cada 30 segundos
-      revalidateOnFocus: true,     // Recarregar ao focar janela
-      revalidateOnReconnect: true  // Recarregar ao reconectar
+      refreshInterval: 60000,      // ⚡ Aumentado para 60s (menos requests)
+      revalidateOnFocus: false,    // ⚡ Desabilitar refresh ao focar (evita requests desnecessários)
+      revalidateOnReconnect: true, // Recarregar ao reconectar
+      dedupingInterval: 30000,     // ⚡ Evitar múltiplas chamadas em 30s
+      revalidateIfStale: false,    // ⚡ Não revalidar automaticamente se já tem dados
+      keepPreviousData: true       // ⚡ Manter dados anteriores durante revalidação
     }
   )
 
   return {
     stats: data?.data ?? null,
-    isLoading,
+    isLoading: isLoading || isValidating,
     isError: error,
     refresh: mutate,
     lastUpdate: data ? new Date() : null
