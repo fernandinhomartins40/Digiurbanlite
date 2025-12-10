@@ -104,7 +104,7 @@ export function CitizenSearchBar() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input
             placeholder="Buscar cidadão por nome ou CPF..."
-            className="pl-12 h-14 text-lg border-2 border-gray-300 focus:border-blue-500 transition-colors"
+            className="pl-12 h-14 text-lg border-2 border-gray-300 focus:border-blue-500 transition-colors text-gray-900 placeholder:text-gray-400"
             value={query}
             onChange={(e) => handleInputChange(e.target.value)}
             onFocus={() => {
@@ -133,10 +133,11 @@ export function CitizenSearchBar() {
                   return (
                     <CommandItem
                       key={citizen.id}
+                      value={citizen.id}
                       onSelect={() => handleSelectCitizen(citizen.id)}
-                      className="cursor-pointer py-3"
+                      className="cursor-pointer py-3 hover:bg-gray-100"
                     >
-                      <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center justify-between w-full" onClick={() => handleSelectCitizen(citizen.id)}>
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
                             <User className="h-5 w-5 text-blue-600" />

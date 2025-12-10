@@ -22,27 +22,18 @@ const fetcher = async (url: string) => {
 }
 
 export function TopServersCard() {
-  const { data, isLoading } = useSWR<{ success: boolean; data: { servers: Server[] } }>(
+  const { data } = useSWR<{ success: boolean; data: { servers: Server[] } }>(
     '/api/admin/gabinete/painel-prefeito/top-servers',
     fetcher,
-    { refreshInterval: 60000 }
+    {
+      refreshInterval: 120000, // ⚡ 2 minutos
+      revalidateOnFocus: false,
+      dedupingInterval: 60000
+    }
   )
 
-  if (isLoading || !data) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-64" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
+  if (!data?.data?.servers) {
+    return null // ⚡ Suspense já mostra loading
   }
 
   const servers = data.data.servers

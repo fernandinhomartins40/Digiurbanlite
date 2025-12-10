@@ -32,30 +32,33 @@ const fetcher = async (url: string) => {
 }
 
 export function CriticalAlerts() {
-  const { data, isLoading } = useSWR<{ success: boolean; data: { alerts: Alert[] } }>(
+  const { data } = useSWR<{ success: boolean; data: { alerts: Alert[] } }>(
     '/api/admin/gabinete/painel-prefeito/critical-alerts',
     fetcher,
-    { refreshInterval: 60000 }
+    {
+      refreshInterval: 120000, // ⚡ 2 minutos
+      revalidateOnFocus: false,
+      dedupingInterval: 60000
+    }
   )
 
-  if (isLoading || !data) {
+  if (!data?.data?.alerts) {
+    return null // ⚡ Suspense já mostra loading
+  }
+
+  const alerts = data.data.alerts
+
+  if (alerts.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <Skeleton className="h-6 w-64" />
+          <CardTitle className="text-xl">🎉 Sem Alertas Críticos</CardTitle>
+          <CardDescription>Todos os protocolos estão sob controle</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
-          </div>
-        </CardContent>
       </Card>
     )
   }
 
-  const alerts = data.data.alerts
 
   const getAlertConfig = (type: Alert['type']) => {
     switch (type) {

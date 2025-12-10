@@ -25,23 +25,18 @@ const fetcher = async (url: string) => {
 }
 
 export function DepartmentPerformanceTable() {
-  const { data, isLoading } = useSWR<{ success: boolean; data: { departments: DepartmentStat[] } }>(
+  const { data } = useSWR<{ success: boolean; data: { departments: DepartmentStat[] } }>(
     '/api/admin/gabinete/painel-prefeito/departments-performance',
     fetcher,
-    { refreshInterval: 60000 }
+    {
+      refreshInterval: 120000, // ⚡ 2 minutos
+      revalidateOnFocus: false,
+      dedupingInterval: 60000
+    }
   )
 
-  if (isLoading || !data) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-64" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
-    )
+  if (!data?.data?.departments) {
+    return null // ⚡ Suspense já mostra loading
   }
 
   const departments = data.data.departments

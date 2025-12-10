@@ -19,24 +19,18 @@ const fetcher = async (url: string) => {
 }
 
 export function ProtocolTrendsChart() {
-  const { data, isLoading } = useSWR<{ success: boolean; data: { daily: TrendData[] } }>(
+  const { data } = useSWR<{ success: boolean; data: { daily: TrendData[] } }>(
     '/api/admin/gabinete/painel-prefeito/trends',
     fetcher,
-    { refreshInterval: 60000 } // Atualizar a cada 1 minuto
+    {
+      refreshInterval: 120000, // ⚡ 2 minutos (menos carga)
+      revalidateOnFocus: false,
+      dedupingInterval: 60000
+    }
   )
 
-  if (isLoading || !data) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-64" />
-          <Skeleton className="h-4 w-48 mt-2" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-[300px] w-full" />
-        </CardContent>
-      </Card>
-    )
+  if (!data?.data?.daily) {
+    return null // ⚡ Suspense já mostra loading
   }
 
   const chartData = data.data.daily.map(item => ({
