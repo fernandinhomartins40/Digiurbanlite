@@ -12,7 +12,8 @@ import {
   FileText,
   MapPin,
   Image,
-  AlertTriangle
+  AlertTriangle,
+  User
 } from 'lucide-react';
 
 interface ProtocolListProps {
@@ -160,6 +161,14 @@ export function ProtocolList({ protocols, onSelect }: ProtocolListProps) {
               <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2 border-t">
                 {protocol.citizen?.name && (
                   <span>👤 {protocol.citizen.name}</span>
+                )}
+                {protocol.assignedUser && (
+                  <span className="flex items-center gap-1">
+                    <Badge variant="secondary" className="text-xs">
+                      <User className="h-3 w-3 mr-1" />
+                      {protocol.assignedUser.name}
+                    </Badge>
+                  </span>
                 )}
                 {protocol.createdAt && (
                   <span>📅 {format(new Date(protocol.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>

@@ -5,9 +5,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useService } from '@/hooks/useService';
 import { useProtocols } from '@/hooks/useProtocols';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { ProtocolList } from './ProtocolList';
 import { ApprovalQueue } from './ApprovalQueue';
 import { GenericDataTable } from './GenericDataTable';
@@ -16,12 +17,14 @@ import { ModuleDashboard } from './ModuleDashboard';
 import { ProtocolDocumentsTab } from '@/components/admin/protocol/ProtocolDocumentsTab';
 import { DynamicForm } from '@/components/forms/DynamicForm';
 import { ProtocolDetailModal } from './ProtocolDetailModal';
+import { AssignProtocolDialog } from '@/components/admin/AssignProtocolDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, RefreshCw, List, CheckCircle, BarChart3, FileText, MapPin, PieChart } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, RefreshCw, List, CheckCircle, BarChart3, FileText, MapPin, PieChart, UserPlus, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DynamicModuleViewProps {
@@ -30,17 +33,35 @@ interface DynamicModuleViewProps {
 }
 
 export function DynamicModuleView({ department, module }: DynamicModuleViewProps) {
+  const { user } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('list');
   const [selectedProtocol, setSelectedProtocol] = useState<any>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [assignedFilter, setAssignedFilter] = useState<string>('all');
 
   // Hook busca service do backend
   const { service, loading: serviceLoading, error: serviceError } = useService(department, module);
 
   // Hook busca protocolos do módulo
   const { protocols, loading: protocolsLoading, refetch } = useProtocols(service?.id);
+
+  // Filtrar protocolos por atribuição
+  const filteredProtocols = useMemo(() => {
+    if (assignedFilter === 'all') return protocols;
+    if (assignedFilter === 'me') {
+      return protocols.filter(p => p.assignedUserId === user?.id);
+    }
+    if (assignedFilter === 'unassigned') {
+      return protocols.filter(p => !p.assignedUserId);
+    }
+    if (assignedFilter === 'assigned') {
+      return protocols.filter(p => p.assignedUserId);
+    }
+    return protocols;
+  }, [protocols, assignedFilter, user?.id]);
 
   // Criar novo protocolo
   const handleCreateProtocol = async (data: Record<string, any>) => {
@@ -83,10 +104,19 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
     setIsDetailModalOpen(true);
   };
 
+  // Abrir dialog de atribuição
+  const handleAssignProtocol = (protocol: any) => {
+    setSelectedProtocol(protocol);
+    setIsAssignDialogOpen(true);
+  };
+
   // Contar pendentes
-  const pendingCount = protocols.filter(
+  const pendingCount = filteredProtocols.filter(
     (p) => p.status === 'VINCULADO' || p.status === 'PENDENCIA'
   ).length;
+
+  // Contar não atribuídos
+  const unassignedCount = filteredProtocols.filter(p => !p.assignedUserId).length;
 
   // Verificar se tem recursos avançados
   const hasAdvancedFeatures = protocols.some(
@@ -158,8 +188,33 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
         </Button>
       </div>
 
+      {/* Filtro de Atribuição */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-4">
+            <Filter className="h-5 w-5 text-muted-foreground" />
+            <div className="flex-1">
+              <Select value={assignedFilter} onValueChange={setAssignedFilter}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="Filtrar por atribuição" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Protocolos</SelectItem>
+                  <SelectItem value="me">Atribuídos a Mim</SelectItem>
+                  <SelectItem value="unassigned">Não Atribuídos</SelectItem>
+                  <SelectItem value="assigned">Atribuídos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Exibindo <span className="font-semibold">{filteredProtocols.length}</span> de {protocols.length}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* KPIs Rápidos */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -206,6 +261,19 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
               {protocols.filter((p) => p.status === 'CONCLUIDO').length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Não Atribuídos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">
+              {unassignedCount}
             </div>
           </CardContent>
         </Card>
@@ -272,7 +340,7 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
               <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <ProtocolList protocols={protocols} onSelect={handleViewDetails} />
+            <ProtocolList protocols={filteredProtocols} onSelect={handleViewDetails} />
           )}
         </TabsContent>
 
@@ -441,8 +509,20 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
             setSelectedProtocol(null);
           }}
           onUpdate={refetch}
+          onAssign={handleAssignProtocol}
         />
       )}
+
+      {/* Modal para ATRIBUIR Protocolo */}
+      <AssignProtocolDialog
+        open={isAssignDialogOpen}
+        onOpenChange={setIsAssignDialogOpen}
+        protocol={selectedProtocol}
+        onSuccess={() => {
+          refetch();
+          setIsAssignDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

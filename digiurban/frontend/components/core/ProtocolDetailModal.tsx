@@ -28,7 +28,8 @@ import {
   Edit,
   X,
   Image as ImageIcon,
-  History
+  History,
+  UserPlus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -40,6 +41,7 @@ interface ProtocolDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate?: () => void;
+  onAssign?: (protocol: any) => void;
   initialTab?: string;
 }
 
@@ -49,6 +51,7 @@ export function ProtocolDetailModal({
   isOpen,
   onClose,
   onUpdate,
+  onAssign,
   initialTab = 'details'
 }: ProtocolDetailModalProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -247,10 +250,28 @@ export function ProtocolDetailModal({
                 <StatusIcon className="h-3 w-3 mr-1" />
                 {currentStatus.label}
               </Badge>
+              {protocol.assignedUser && (
+                <Badge variant="secondary">
+                  <User className="h-3 w-3 mr-1" />
+                  {protocol.assignedUser.name}
+                </Badge>
+              )}
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {onAssign && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onAssign(protocol)}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  {protocol.assignedUser ? 'Reatribuir' : 'Atribuir'}
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </DialogHeader>
 

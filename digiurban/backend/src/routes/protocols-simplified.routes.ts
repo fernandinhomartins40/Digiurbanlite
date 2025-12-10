@@ -110,6 +110,149 @@ router.post('/', requireMinRole(UserRole.USER), async (req, res) => {
 });
 
 // ========================================
+// LISTAR CHAMADOS RECEBIDOS (NOVO)
+// ========================================
+
+/**
+ * GET /api/protocols/incoming-calls
+ * Lista chamados criados por ADMIN/MANAGER para os departamentos
+ * Apenas MANAGER e ADMIN podem acessar
+ */
+router.get('/incoming-calls', requireMinRole(UserRole.MANAGER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId;
+    const user = authReq.user;
+
+    const {
+      status,
+      priority,
+      assignedFilter, // 'all' | 'assigned' | 'unassigned'
+      page = '1',
+      limit = '50'
+    } = req.query;
+
+    // Filtro base: protocolos criados por usuários (chamados)
+    const where: any = {
+      createdById: { not: null } // Marca que foi criado por admin/manager
+    };
+
+    // MANAGER vê apenas chamados do seu departamento
+    if (user.role === UserRole.MANAGER && user.departmentId) {
+      where.departmentId = user.departmentId;
+    }
+    // ADMIN vê todos os chamados
+
+    // Filtros opcionais
+    if (status && status !== 'all') {
+      where.status = status;
+    }
+
+    if (priority && priority !== 'all') {
+      where.priority = parseInt(priority as string);
+    }
+
+    // Filtro de atribuição
+    if (assignedFilter === 'assigned') {
+      where.assignedUserId = { not: null };
+    } else if (assignedFilter === 'unassigned') {
+      where.assignedUserId = null;
+    }
+
+    // Paginação
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const skip = (pageNum - 1) * limitNum;
+
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        include: {
+          citizen: {
+            select: {
+              id: true,
+              name: true,
+              cpf: true,
+              email: true
+            }
+          },
+          service: {
+            select: {
+              id: true,
+              name: true,
+              category: true
+            }
+          },
+          department: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          },
+          assignedUser: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true
+            }
+          },
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              role: true
+            }
+          },
+          _count: {
+            select: {
+              history: true
+            }
+          }
+        },
+        orderBy: [
+          { priority: 'desc' },
+          { createdAt: 'desc' }
+        ],
+        skip,
+        take: limitNum
+      }),
+      prisma.protocolSimplified.count({ where })
+    ]);
+
+    // Estatísticas adicionais
+    const stats = {
+      total,
+      unassigned: await prisma.protocolSimplified.count({
+        where: { ...where, assignedUserId: null }
+      }),
+      assigned: await prisma.protocolSimplified.count({
+        where: { ...where, assignedUserId: { not: null } }
+      })
+    };
+
+    return res.json({
+      success: true,
+      protocols,
+      stats,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error: any) {
+    console.error('Erro ao listar chamados recebidos:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao listar chamados recebidos'
+    });
+  }
+});
+
+// ========================================
 // LISTAR TODOS OS PROTOCOLOS (NOVO)
 // ========================================
 
@@ -547,12 +690,13 @@ router.post('/:id/comments', async (req: Request, res: Response) => {
 
 /**
  * PATCH /api/protocols-simplified/:id/assign
- * Atribui protocolo a um usuário
+ * Atribui protocolo a um usuário com validações completas
  */
-router.patch('/:id/assign', async (req: Request, res: Response) => {
+router.patch('/:id/assign', requireMinRole(UserRole.MANAGER), async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { id } = req.params;
-    const { assignedUserId, userId } = req.body;
+    const { assignedUserId, comment } = req.body;
 
     if (!assignedUserId) {
       return res.status(400).json({
@@ -561,16 +705,99 @@ router.patch('/:id/assign', async (req: Request, res: Response) => {
         });
     }
 
-    const protocol = await protocolServiceSimplified.assignProtocol(
-      id,
-      assignedUserId,
-      userId
-    );
+    // Buscar protocolo com departamento
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id },
+      include: {
+        department: true,
+        service: true,
+        citizen: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // ✅ VALIDAR: servidor pertence ao departamento correto
+    const assignedUser = await prisma.user.findFirst({
+      where: {
+        id: assignedUserId,
+        departmentId: protocol.departmentId,
+        isActive: true,
+        role: { in: [UserRole.USER, UserRole.COORDINATOR, UserRole.MANAGER] }
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true
+      }
+    });
+
+    if (!assignedUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Servidor não encontrado ou não pertence ao departamento responsável pelo protocolo'
+      });
+    }
+
+    // ✅ Verificar se MANAGER está atribuindo para seu próprio departamento
+    if (authReq.user.role === UserRole.MANAGER && protocol.departmentId !== authReq.user.departmentId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Você só pode atribuir protocolos do seu departamento'
+      });
+    }
+
+    // Atualizar protocolo
+    const updatedProtocol = await prisma.protocolSimplified.update({
+      where: { id },
+      data: { assignedUserId },
+      include: {
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true
+          }
+        },
+        citizen: true,
+        service: true,
+        department: true
+      }
+    });
+
+    // ✅ Registrar histórico
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId: id,
+        action: 'ATRIBUIDO',
+        comment: comment || `Protocolo atribuído para ${assignedUser.name} (${assignedUser.role})`,
+        userId: authReq.userId
+      }
+    });
+
+    // ✅ CRIAR NOTIFICAÇÃO para cidadão (informando sobre atribuição)
+    // Nota: O servidor atribuído receberá notificação por outro meio (email, sistema interno)
+    await prisma.notification.create({
+      data: {
+        citizenId: protocol.citizenId,
+        title: 'Protocolo em Andamento',
+        message: `Seu protocolo ${protocol.number} foi atribuído para o servidor ${assignedUser.name} e está sendo processado`,
+        type: 'INFO',
+        protocolId: protocol.id
+      }
+    });
 
     return res.json({
       success: true,
-      data: protocol,
-      message: 'Protocolo atribuído com sucesso'
+      data: updatedProtocol,
+      message: `Protocolo atribuído com sucesso para ${assignedUser.name}`
         });
   } catch (error: any) {
     console.error('Erro ao atribuir protocolo:', error);
