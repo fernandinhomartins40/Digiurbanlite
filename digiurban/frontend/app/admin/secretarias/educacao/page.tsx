@@ -35,7 +35,8 @@ import { useRouter } from 'next/navigation';
 import { useEducacaoStats } from '@/hooks/useEducacaoStats';
 import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
-import { buildServiceCreationUrl } from '@/utils/service-prefill';;
+import { buildServiceCreationUrl } from '@/utils/service-prefill';
+import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 
 export default function SecretariaEducacaoPage() {
   useAdminAuth();
@@ -92,6 +93,9 @@ export default function SecretariaEducacaoPage() {
           Educação
         </Badge>
       </div>
+
+      {/* Chamados Pendentes do Prefeito */}
+      <PendingTicketsSection />
 
       {/* Estatísticas Gerais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

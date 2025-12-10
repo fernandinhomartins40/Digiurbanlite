@@ -28,7 +28,8 @@ import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
 import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
-import { buildServiceCreationUrl } from '@/utils/service-prefill';;
+import { buildServiceCreationUrl } from '@/utils/service-prefill';
+import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 
 export default function SecretariaTurismoPage() {
   const { user } = useAdminAuth();
@@ -88,6 +89,9 @@ export default function SecretariaTurismoPage() {
           Destino Acolhedor
         </Badge>
       </div>
+
+      {/* Chamados Pendentes do Prefeito */}
+      <PendingTicketsSection />
 
       {/* Estatísticas Gerais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

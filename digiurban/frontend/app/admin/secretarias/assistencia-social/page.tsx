@@ -32,6 +32,7 @@ import { useAssistenciaSocialStats } from '@/hooks/useAssistenciaSocialStats';
 import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
+import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 
 export default function SecretariaAssistenciaSocialPage() {
   useAdminAuth();
@@ -91,6 +92,9 @@ export default function SecretariaAssistenciaSocialPage() {
           SUAS Municipal
         </Badge>
       </div>
+
+      {/* Chamados Pendentes do Prefeito */}
+      <PendingTicketsSection />
 
       {/* Estatísticas Gerais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
