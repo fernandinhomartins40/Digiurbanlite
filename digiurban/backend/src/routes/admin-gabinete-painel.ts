@@ -138,9 +138,13 @@ router.get('/chamados', adminAuthMiddleware, requireAdmin, async (req: Request, 
   try {
     const limit = parseInt(req.query.limit as string) || 10
 
-    // Buscar TODOS os chamados recentes (não importa se criado por admin ou cidadão)
-    // O que importa é que são protocolos ativos no sistema
+    // Buscar apenas chamados criados pela equipe administrativa (createdBy preenchido)
     const chamados = await prisma.protocolSimplified.findMany({
+      where: {
+        createdBy: {
+          isNot: null
+        }
+      },
       select: {
         id: true,
         number: true,
@@ -172,7 +176,8 @@ router.get('/chamados', adminAuthMiddleware, requireAdmin, async (req: Request, 
         },
         createdBy: {
           select: {
-            name: true
+            name: true,
+            role: true
           }
         }
       },
@@ -180,11 +185,22 @@ router.get('/chamados', adminAuthMiddleware, requireAdmin, async (req: Request, 
       take: limit
     })
 
-    // Estatísticas de todos os chamados
-    const stats = await prisma.protocolSimplified.count()
+    // Estatísticas apenas dos chamados criados pela equipe
+    const stats = await prisma.protocolSimplified.count({
+      where: {
+        createdBy: {
+          isNot: null
+        }
+      }
+    })
 
     const statusCount = await prisma.protocolSimplified.groupBy({
       by: ['status'],
+      where: {
+        createdBy: {
+          isNot: null
+        }
+      },
       _count: {
         status: true
       }
