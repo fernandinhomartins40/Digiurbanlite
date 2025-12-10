@@ -25,18 +25,44 @@ const fetcher = async (url: string) => {
 }
 
 export function DepartmentPerformanceTable() {
-  const { data } = useSWR<{ success: boolean; data: { departments: DepartmentStat[] } }>(
+  const { data, error, isLoading } = useSWR<{ success: boolean; data: { departments: DepartmentStat[] } }>(
     '/api/admin/gabinete/painel-prefeito/departments-performance',
     fetcher,
     {
-      refreshInterval: 120000, // ⚡ 2 minutos
+      refreshInterval: 120000,
       revalidateOnFocus: false,
-      dedupingInterval: 60000
+      dedupingInterval: 60000,
+      revalidateIfStale: false
     }
   )
 
+  // ⚡ Mostrar loading apenas na primeira carga
+  if (isLoading && !data) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-64" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[400px] w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-red-600">❌ Erro ao carregar performance</CardTitle>
+          <CardDescription>{error.message}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
   if (!data?.data?.departments) {
-    return null // ⚡ Suspense já mostra loading
+    return null
   }
 
   const departments = data.data.departments

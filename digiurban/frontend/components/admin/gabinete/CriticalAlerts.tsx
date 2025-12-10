@@ -32,18 +32,48 @@ const fetcher = async (url: string) => {
 }
 
 export function CriticalAlerts() {
-  const { data } = useSWR<{ success: boolean; data: { alerts: Alert[] } }>(
+  const { data, error, isLoading } = useSWR<{ success: boolean; data: { alerts: Alert[] } }>(
     '/api/admin/gabinete/painel-prefeito/critical-alerts',
     fetcher,
     {
-      refreshInterval: 120000, // ⚡ 2 minutos
+      refreshInterval: 120000,
       revalidateOnFocus: false,
-      dedupingInterval: 60000
+      dedupingInterval: 60000,
+      revalidateIfStale: false
     }
   )
 
+  // ⚡ Mostrar loading apenas na primeira carga
+  if (isLoading && !data) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-64" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-red-600">❌ Erro ao carregar alertas</CardTitle>
+          <CardDescription>{error.message}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
   if (!data?.data?.alerts) {
-    return null // ⚡ Suspense já mostra loading
+    return null
   }
 
   const alerts = data.data.alerts
