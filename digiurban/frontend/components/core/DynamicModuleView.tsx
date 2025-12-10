@@ -52,13 +52,13 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
   const filteredProtocols = useMemo(() => {
     if (assignedFilter === 'all') return protocols;
     if (assignedFilter === 'me') {
-      return protocols.filter(p => p.assignedUserId === user?.id);
+      return protocols.filter(p => (p as any).assignedUserId === user?.id);
     }
     if (assignedFilter === 'unassigned') {
-      return protocols.filter(p => !p.assignedUserId);
+      return protocols.filter(p => !(p as any).assignedUserId);
     }
     if (assignedFilter === 'assigned') {
-      return protocols.filter(p => p.assignedUserId);
+      return protocols.filter(p => (p as any).assignedUserId);
     }
     return protocols;
   }, [protocols, assignedFilter, user?.id]);
@@ -116,7 +116,7 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
   ).length;
 
   // Contar não atribuídos
-  const unassignedCount = filteredProtocols.filter(p => !p.assignedUserId).length;
+  const unassignedCount = filteredProtocols.filter(p => !(p as any).assignedUserId).length;
 
   // Verificar se tem recursos avançados
   const hasAdvancedFeatures = protocols.some(

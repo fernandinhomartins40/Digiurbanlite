@@ -610,14 +610,14 @@ export function ProtocolDocumentsTab({
                     })
                   }}
                   onLoad={() => {
-                    console.log('[ProtocolDocumentsTab] Imagem carregada com sucesso:', viewingDoc.fileName)
+                    console.log('[ProtocolDocumentsTab] Imagem carregada com sucesso:', viewingDoc?.fileName)
                   }}
                 />
               ) : isPdfDoc(viewingDoc) ? (
                 <iframe
                   src={getPreviewUrl(viewingDoc!)}
                   className="w-full h-[500px] rounded"
-                  title={viewingDoc.fileName}
+                  title={viewingDoc?.fileName || 'Documento'}
                 />
               ) : (
                 <div className="text-center text-muted-foreground">

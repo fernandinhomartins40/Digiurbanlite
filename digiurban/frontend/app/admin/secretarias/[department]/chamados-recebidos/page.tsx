@@ -339,7 +339,7 @@ export default function ChamadosRecebidosPage() {
       <AssignProtocolDialog
         open={isAssignDialogOpen}
         onOpenChange={setIsAssignDialogOpen}
-        protocol={selectedProtocol}
+        protocol={selectedProtocol as any}
         onSuccess={handleAssignSuccess}
       />
     </div>

@@ -29,7 +29,41 @@ export default function GabinetePage() {
       </div>
 
       {/* Cards de Navegação */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Painel do Prefeito */}
+        <Link href="/admin/gabinete/painel-prefeito">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full border-blue-300 bg-blue-50">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl">
+                  📊
+                </div>
+                <ArrowRight className="h-5 w-5 text-blue-600" />
+              </div>
+              <CardTitle className="text-xl mt-4 text-blue-900">Painel do Prefeito</CardTitle>
+              <CardDescription className="text-blue-700">
+                Dashboard executivo com visão 360° do município em tempo real
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <p className="text-sm text-blue-800 font-medium">
+                  • Busca rápida de cidadãos
+                </p>
+                <p className="text-sm text-blue-800 font-medium">
+                  • Métricas em tempo real
+                </p>
+                <p className="text-sm text-blue-800 font-medium">
+                  • Protocolos que requerem atenção
+                </p>
+                <p className="text-sm text-blue-800 font-medium">
+                  • Alertas críticos
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
         {/* Agenda Executiva */}
         <Link href="/admin/gabinete/agenda">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">

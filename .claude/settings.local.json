@@ -45,7 +45,9 @@
       "Bash(gh run:*)",
       "Bash(echo:*)",
       "Bash(docker-compose logs:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest add command)"
     ],
     "deny": [],
     "ask": []

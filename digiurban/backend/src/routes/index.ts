@@ -107,6 +107,7 @@ export const loadAdminRoutes = () => {
   const adminChamadosRoutes = require('./admin-chamados').default;
   const adminReportsRoutes = require('./admin-reports').default;
   const adminGabineteRoutes = require('./admin-gabinete').default;
+  const adminGabinetePainelRoutes = require('./admin-gabinete-painel').default;
   const serviceTemplatesRoutes = require('./service-templates').default;
   const customModulesRoutes = require('./custom-modules').default;
   // DIA 3: REMOVED - admin-transfer era específico para multi-tenant
@@ -120,6 +121,7 @@ export const loadAdminRoutes = () => {
   router.use('/admin/chamados', adminChamadosRoutes);
   router.use('/admin/relatorios', adminReportsRoutes);
   router.use('/admin/gabinete', adminGabineteRoutes);
+  router.use('/admin/gabinete/painel-prefeito', adminGabinetePainelRoutes);
   router.use('/admin/templates', serviceTemplatesRoutes);
   router.use('/admin/custom-modules', customModulesRoutes);
   // DIA 3: REMOVED - admin-transfer route

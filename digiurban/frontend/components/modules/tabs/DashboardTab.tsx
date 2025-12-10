@@ -120,21 +120,21 @@ export function DashboardTab({ config }: DashboardTabProps) {
         ...(department !== 'all' && { department }),
       })
 
-      const url = getFullApiUrl(`/admin/secretarias/${dept}/${module}/dashboard/export?${params}`)
-      const response = await fetch(url, {
+      const apiUrl = getFullApiUrl(`/admin/secretarias/${dept}/${module}/dashboard/export?${params}`)
+      const response = await fetch(apiUrl, {
         credentials: 'include',
       })
 
       if (!response.ok) throw new Error('Erro ao exportar PDF')
 
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const blobUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = blobUrl
       a.download = `dashboard_${module}_${Date.now()}.pdf`
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
+      window.URL.revokeObjectURL(blobUrl)
       document.body.removeChild(a)
 
       toast({
@@ -164,21 +164,21 @@ export function DashboardTab({ config }: DashboardTabProps) {
         ...(department !== 'all' && { department }),
       })
 
-      const url = getFullApiUrl(`/admin/secretarias/${dept}/${module}/dashboard/export?${params}`)
-      const response = await fetch(url, {
+      const apiUrl = getFullApiUrl(`/admin/secretarias/${dept}/${module}/dashboard/export?${params}`)
+      const response = await fetch(apiUrl, {
         credentials: 'include',
       })
 
       if (!response.ok) throw new Error('Erro ao exportar Excel')
 
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const blobUrl = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
-      a.href = url
+      a.href = blobUrl
       a.download = `dashboard_${module}_${Date.now()}.xlsx`
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
+      window.URL.revokeObjectURL(blobUrl)
       document.body.removeChild(a)
 
       toast({
@@ -310,7 +310,7 @@ export function DashboardTab({ config }: DashboardTabProps) {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={(entry) => `${entry.category}: ${entry.value} (${entry.percentage}%)`}
+                  label={(entry: any) => `${entry.category}: ${entry.value} (${entry.percent?.toFixed(0)}%)`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
