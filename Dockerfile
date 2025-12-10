@@ -112,9 +112,10 @@ RUN mkdir -p /app/data /app/backend/uploads /app/logs && \
 WORKDIR /app/frontend
 
 # Copiar build do Next.js
-COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/.next/standalone ./
-COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/.next/static ./.next/static
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/.next ./.next
 COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/public ./public
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/node_modules ./node_modules
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/package.json ./package.json
 
 # ===== Nginx =====
 COPY docker/nginx.conf /etc/nginx/nginx.conf

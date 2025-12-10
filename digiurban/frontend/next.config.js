@@ -75,7 +75,6 @@ const nextConfig = {
     // Permitir build com warnings ESLint (para deploy)
     ignoreDuringBuilds: true,
   },
-  output: 'standalone',
   // ✅ CORRIGIDO: Não forçar NEXT_PUBLIC_API_URL aqui
   // A variável deve vir do ambiente ou do build argument no Dockerfile
   // Em produção: /api (roteado pelo Nginx)
