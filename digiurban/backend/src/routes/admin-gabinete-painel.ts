@@ -133,6 +133,94 @@ router.post('/request-urgency/:protocolId', adminAuthMiddleware, requireAdmin, a
   }
 })
 
+// GET /api/admin/gabinete/painel-prefeito/chamados
+router.get('/chamados', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10
+
+    // Buscar chamados recentes (protocolos criados por usuários admin)
+    const chamados = await prisma.protocolSimplified.findMany({
+      where: {
+        createdById: { not: null } // Protocolos criados por admin
+      },
+      select: {
+        id: true,
+        number: true,
+        title: true,
+        status: true,
+        priority: true,
+        createdAt: true,
+        updatedAt: true,
+        citizen: {
+          select: {
+            name: true,
+            cpf: true
+          }
+        },
+        service: {
+          select: {
+            name: true
+          }
+        },
+        department: {
+          select: {
+            name: true
+          }
+        },
+        assignedUser: {
+          select: {
+            name: true
+          }
+        },
+        createdBy: {
+          select: {
+            name: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    })
+
+    // Estatísticas rápidas
+    const stats = await prisma.protocolSimplified.aggregate({
+      where: {
+        createdById: { not: null }
+      },
+      _count: {
+        id: true
+      }
+    })
+
+    const statusCount = await prisma.protocolSimplified.groupBy({
+      by: ['status'],
+      where: {
+        createdById: { not: null }
+      },
+      _count: {
+        status: true
+      }
+    })
+
+    res.json({
+      success: true,
+      data: {
+        chamados,
+        stats: {
+          total: stats._count.id,
+          byStatus: statusCount.reduce((acc, item) => {
+            acc[item.status] = item._count.status
+            return acc
+          }, {} as Record<string, number>)
+        }
+      }
+    })
+  } catch (error) {
+    console.error('Erro ao buscar chamados:', error)
+    res.status(500).json({ error: 'Erro ao buscar chamados' })
+  }
+})
+
 // GET /api/admin/gabinete/painel-prefeito/stats (MANTIDO PARA COMPATIBILIDADE)
 router.get('/stats', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
   try {

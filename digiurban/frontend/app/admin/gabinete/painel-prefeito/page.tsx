@@ -8,6 +8,7 @@ import { Circle, RefreshCw, AlertTriangle, Bell, Calendar, Map } from 'lucide-re
 import Link from 'next/link'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { CitizenSearchBar } from '@/components/admin/gabinete/CitizenSearchBar'
+import { ChamadosRecentesList } from '@/components/admin/gabinete/ChamadosRecentesList'
 import { useToast } from '@/hooks/use-toast'
 import { getFullApiUrl } from '@/lib/api-config'
 
@@ -283,6 +284,9 @@ export default function PainelPrefeitoPage() {
           </Card>
         </Link>
       </div>
+
+      {/* Chamados Recentes */}
+      <ChamadosRecentesList />
 
       {/* Protocolos Atrasados (SLA Vencido) */}
       <Card>
