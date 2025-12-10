@@ -17,7 +17,120 @@ const requireAdmin = (req: Request, res: Response, next: Function): void => {
 // PAINEL DO PREFEITO - Estatísticas Gerais
 // ============================================
 
-// GET /api/admin/gabinete/painel-prefeito/stats
+// ============================================
+// PAINEL SIMPLIFICADO - Estatísticas Básicas
+// ============================================
+
+// GET /api/admin/gabinete/painel-prefeito/simple-stats
+router.get('/simple-stats', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const [
+      totalActive,
+      totalCompleted,
+      completedProtocolsSample
+    ] = await Promise.all([
+      prisma.protocolSimplified.count({
+        where: { status: { not: 'CONCLUIDO' } }
+      }),
+      prisma.protocolSimplified.count({
+        where: { status: 'CONCLUIDO' }
+      }),
+      prisma.protocolSimplified.findMany({
+        where: {
+          status: 'CONCLUIDO',
+          concludedAt: { not: null }
+        },
+        select: {
+          createdAt: true,
+          concludedAt: true
+        },
+        take: 50,
+        orderBy: { concludedAt: 'desc' }
+      })
+    ])
+
+    const totalProtocols = totalActive + totalCompleted
+    const completionRate = totalProtocols > 0
+      ? Math.round((totalCompleted / totalProtocols) * 100)
+      : 0
+
+    let avgResponseTime = 0
+    if (completedProtocolsSample.length > 0) {
+      const totalDays = completedProtocolsSample.reduce((sum, protocol) => {
+        if (protocol.concludedAt) {
+          const diff = protocol.concludedAt.getTime() - protocol.createdAt.getTime()
+          return sum + (diff / (1000 * 60 * 60 * 24))
+        }
+        return sum
+      }, 0)
+      avgResponseTime = Math.round(totalDays / completedProtocolsSample.length)
+    }
+
+    res.json({
+      success: true,
+      data: {
+        totalActive,
+        totalCompleted,
+        completionRate,
+        avgResponseTime
+      }
+    })
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas simples:', error)
+    res.status(500).json({ error: 'Erro ao buscar estatísticas' })
+  }
+})
+
+// POST /api/admin/gabinete/painel-prefeito/request-urgency/:protocolId
+router.post('/request-urgency/:protocolId', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { protocolId } = req.params
+
+    // Buscar protocolo
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId },
+      include: {
+        assignedUser: { select: { id: true, name: true, email: true } },
+        department: { select: { name: true } },
+        citizen: { select: { name: true } }
+      }
+    })
+
+    if (!protocol) {
+      res.status(404).json({ error: 'Protocolo não encontrado' })
+      return
+    }
+
+    // Registrar interação de cobrança de urgência
+    await prisma.protocolInteraction.create({
+      data: {
+        protocolId: protocol.id,
+        userId: req.user!.id,
+        type: 'URGENCY_REQUEST',
+        description: `Prefeito solicitou urgência na resolução do protocolo #${protocol.number}`,
+        metadata: JSON.stringify({
+          requestedBy: 'ADMIN',
+          requestedAt: new Date().toISOString(),
+          assignedUser: protocol.assignedUser?.name || 'Não atribuído',
+          department: protocol.department?.name || 'Não definido'
+        })
+      }
+    })
+
+    // TODO: Enviar notificação ao responsável (email, push, etc)
+    // Por ora, apenas registra na timeline
+
+    res.json({
+      success: true,
+      message: 'Cobrança de urgência registrada com sucesso'
+    })
+  } catch (error) {
+    console.error('Erro ao cobrar urgência:', error)
+    res.status(500).json({ error: 'Erro ao processar cobrança de urgência' })
+  }
+})
+
+// GET /api/admin/gabinete/painel-prefeito/stats (MANTIDO PARA COMPATIBILIDADE)
 router.get('/stats', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
   try {
     // ⚡ Otimização: Usar Promise.all para executar queries em paralelo

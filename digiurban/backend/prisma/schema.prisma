@@ -453,6 +453,7 @@ enum InteractionType {
   REJECTION
   CANCELLATION
   NOTE
+  URGENCY_REQUEST
 }
 
 // ========================================

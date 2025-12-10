@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Calendar, Plus, Edit, Trash2, Check } from 'lucide-react'
 import { agendaService } from '@/lib/services/gabinete.service'
 import { useToast } from '@/hooks/use-toast'
+import { EventModal } from '@/components/admin/gabinete/EventModal'
 
 export default function AgendaPage() {
   const [events, setEvents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
   const { toast } = useToast()
 
   const loadEvents = async () => {
@@ -69,6 +72,39 @@ export default function AgendaPage() {
     }
   }
 
+  const handleSaveEvent = async (eventData: any) => {
+    try {
+      if (selectedEvent?.id) {
+        await agendaService.updateEvent(selectedEvent.id, eventData)
+        toast({
+          title: 'Sucesso',
+          description: 'Evento atualizado com sucesso'
+        })
+      } else {
+        await agendaService.createEvent(eventData)
+        toast({
+          title: 'Sucesso',
+          description: 'Evento criado com sucesso'
+        })
+      }
+      setModalOpen(false)
+      setSelectedEvent(null)
+      loadEvents()
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Erro ao salvar evento',
+        variant: 'destructive'
+      })
+      throw error
+    }
+  }
+
+  const handleOpenModal = (event?: any) => {
+    setSelectedEvent(event || null)
+    setModalOpen(true)
+  }
+
   if (loading) {
     return <div className="flex justify-center items-center min-h-screen">Carregando...</div>
   }
@@ -80,11 +116,21 @@ export default function AgendaPage() {
           <h1 className="text-3xl font-bold">Agenda Executiva</h1>
           <p className="text-gray-600 mt-1">Gerencie compromissos oficiais e eventos do gabinete</p>
         </div>
-        <Button>
+        <Button onClick={() => handleOpenModal()}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Evento
         </Button>
       </div>
+
+      <EventModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false)
+          setSelectedEvent(null)
+        }}
+        onSave={handleSaveEvent}
+        event={selectedEvent}
+      />
 
       {events.length === 0 ? (
         <Card>
@@ -115,7 +161,7 @@ export default function AgendaPage() {
                         <Check className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => handleOpenModal(event)}>
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button

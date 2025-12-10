@@ -1,10 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Map as MapIcon } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 import { mapaDemandasService } from '@/lib/services/gabinete.service'
 import { useToast } from '@/hooks/use-toast'
+
+// Lazy load do mapa para evitar SSR
+const ProtocolMap = lazy(() =>
+  import('@/components/admin/gabinete/ProtocolMap').then(module => ({
+    default: module.ProtocolMap
+  }))
+)
 
 export default function MapaDemandasPage() {
   const [protocols, setProtocols] = useState<any[]>([])
@@ -81,22 +88,22 @@ export default function MapaDemandasPage() {
         </Card>
       </div>
 
-      {/* Mapa Placeholder */}
+      {/* Mapa Interativo */}
       <Card>
         <CardHeader>
           <CardTitle>Mapa Interativo</CardTitle>
           <CardDescription>Visualize a distribuição de protocolos por região</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="bg-gray-100 h-96 rounded-lg flex items-center justify-center">
-            <div className="text-center">
-              <MapIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Mapa será implementado com Leaflet</p>
-              <p className="text-sm text-gray-500 mt-2">
-                {protocols.length} protocolos com geolocalização encontrados
-              </p>
-            </div>
-          </div>
+          <Suspense
+            fallback={
+              <div className="bg-gray-100 h-[500px] rounded-lg flex items-center justify-center">
+                <Skeleton className="h-full w-full" />
+              </div>
+            }
+          >
+            <ProtocolMap protocols={protocols} />
+          </Suspense>
         </CardContent>
       </Card>
 
