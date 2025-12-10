@@ -565,26 +565,70 @@ export default function CriarChamadoPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Título do Chamado *</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="title">Título do Chamado *</Label>
+                      <span className={`text-xs ${
+                        formData.title.length === 0 ? 'text-muted-foreground' :
+                        formData.title.length < 5 ? 'text-red-500 font-semibold' :
+                        'text-green-600 font-semibold'
+                      }`}>
+                        {formData.title.length}/5 mínimo
+                      </span>
+                    </div>
                     <Input
                       id="title"
-                      placeholder="Resumo da solicitação"
+                      placeholder="Resumo da solicitação (mínimo 5 caracteres)"
                       value={formData.title}
                       onChange={(e) => handleInputChange('title', e.target.value)}
+                      className={
+                        formData.title.length > 0 && formData.title.length < 5
+                          ? 'border-red-500 focus-visible:ring-red-500'
+                          : formData.title.length >= 5
+                          ? 'border-green-500 focus-visible:ring-green-500'
+                          : ''
+                      }
                       required
                     />
+                    {formData.title.length > 0 && formData.title.length < 5 && (
+                      <p className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Faltam {5 - formData.title.length} caracteres
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="description">Descrição Detalhada *</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="description">Descrição Detalhada *</Label>
+                      <span className={`text-xs ${
+                        formData.description.length === 0 ? 'text-muted-foreground' :
+                        formData.description.length < 10 ? 'text-red-500 font-semibold' :
+                        'text-green-600 font-semibold'
+                      }`}>
+                        {formData.description.length}/10 mínimo
+                      </span>
+                    </div>
                     <Textarea
                       id="description"
-                      placeholder="Descreva detalhadamente a solicitação ou problema..."
+                      placeholder="Descreva detalhadamente a solicitação ou problema (mínimo 10 caracteres)..."
                       rows={6}
                       value={formData.description}
                       onChange={(e) => handleInputChange('description', e.target.value)}
+                      className={
+                        formData.description.length > 0 && formData.description.length < 10
+                          ? 'border-red-500 focus-visible:ring-red-500'
+                          : formData.description.length >= 10
+                          ? 'border-green-500 focus-visible:ring-green-500'
+                          : ''
+                      }
                       required
                     />
+                    {formData.description.length > 0 && formData.description.length < 10 && (
+                      <p className="text-xs text-red-500 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Faltam {10 - formData.description.length} caracteres
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -594,8 +638,10 @@ export default function CriarChamadoPage() {
                       onValueChange={(value) => handleInputChange('priority', value)}
                       required
                     >
-                      <SelectTrigger id="priority">
-                        <SelectValue placeholder="Selecione" />
+                      <SelectTrigger id="priority" className={
+                        formData.priority ? 'border-green-500' : ''
+                      }>
+                        <SelectValue placeholder="Selecione a prioridade" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="baixa">Baixa</SelectItem>
@@ -604,6 +650,48 @@ export default function CriarChamadoPage() {
                         <SelectItem value="urgente">Urgente</SelectItem>
                       </SelectContent>
                     </Select>
+                    {!formData.priority && (
+                      <p className="text-xs text-muted-foreground">
+                        Selecione o nível de prioridade do chamado
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Validação Visual dos Campos */}
+            {selectedCitizen && selectedService && (
+              <Card className="border-blue-200 bg-blue-50/50">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className={`h-5 w-5 mt-0.5 ${
+                      formData.title.length >= 5 &&
+                      formData.description.length >= 10 &&
+                      formData.priority
+                        ? 'text-green-600'
+                        : 'text-muted-foreground'
+                    }`} />
+                    <div className="flex-1 space-y-2">
+                      <p className="text-sm font-medium">Status da Validação:</p>
+                      <div className="space-y-1 text-xs">
+                        <div className={`flex items-center gap-2 ${
+                          formData.title.length >= 5 ? 'text-green-600' : 'text-muted-foreground'
+                        }`}>
+                          {formData.title.length >= 5 ? '✓' : '○'} Título com mínimo 5 caracteres
+                        </div>
+                        <div className={`flex items-center gap-2 ${
+                          formData.description.length >= 10 ? 'text-green-600' : 'text-muted-foreground'
+                        }`}>
+                          {formData.description.length >= 10 ? '✓' : '○'} Descrição com mínimo 10 caracteres
+                        </div>
+                        <div className={`flex items-center gap-2 ${
+                          formData.priority ? 'text-green-600' : 'text-muted-foreground'
+                        }`}>
+                          {formData.priority ? '✓' : '○'} Prioridade selecionada
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -620,7 +708,15 @@ export default function CriarChamadoPage() {
                 >
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={
+                    isSubmitting ||
+                    formData.title.length < 5 ||
+                    formData.description.length < 10 ||
+                    !formData.priority
+                  }
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
