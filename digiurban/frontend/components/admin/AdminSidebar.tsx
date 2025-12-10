@@ -29,7 +29,10 @@ import {
   House,
   Calendar,
   Map,
-  GitBranch
+  GitBranch,
+  Crown,
+  TrendingUp,
+  Award
 } from 'lucide-react'
 
 interface NavItem {
@@ -77,6 +80,36 @@ export function AdminSidebar() {
       ]
     },
     {
+      title: 'Gabinete do Prefeito',
+      items: [
+        {
+          title: 'Painel do Prefeito',
+          href: '/admin/gabinete/painel-prefeito',
+          icon: Crown,
+          minRole: 'ADMIN',
+          badge: 'NOVO'
+        },
+        {
+          title: 'Criar Chamado',
+          href: '/admin/chamados',
+          icon: AlertCircle,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Agenda Executiva',
+          href: '/admin/gabinete/agenda',
+          icon: Calendar,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Mapa de Demandas',
+          href: '/admin/gabinete/mapa-demandas',
+          icon: Map,
+          minRole: 'ADMIN'
+        }
+      ]
+    },
+    {
       title: 'Gestão',
       items: [
         {
@@ -94,9 +127,20 @@ export function AdminSidebar() {
         {
           title: 'Estatísticas',
           href: '/admin/gerenciamento-servicos',
-          icon: BarChart3,
+          icon: TrendingUp,
           permissions: ['services:read']
         },
+        {
+          title: 'Relatórios',
+          href: '/admin/relatorios',
+          icon: BarChart3,
+          permissions: ['reports:department', 'reports:full']
+        }
+      ]
+    },
+    {
+      title: 'Pessoas',
+      items: [
         {
           title: 'Equipe',
           href: '/admin/equipe',
@@ -115,40 +159,6 @@ export function AdminSidebar() {
           icon: UserCheck,
           permissions: ['citizens:verify'],
           badge: stats?.pendingCitizens?.toString()
-        },
-        {
-          title: 'Criar Chamado',
-          href: '/admin/chamados',
-          icon: AlertCircle,
-          permissions: ['chamados:create']
-        }
-      ]
-    },
-    {
-      title: 'Gabinete do Prefeito',
-      items: [
-        {
-          title: 'Agenda Executiva',
-          href: '/admin/gabinete/agenda',
-          icon: Calendar,
-          minRole: 'ADMIN'
-        },
-        {
-          title: 'Mapa de Demandas',
-          href: '/admin/gabinete/mapa-demandas',
-          icon: Map,
-          minRole: 'ADMIN'
-        }
-      ]
-    },
-    {
-      title: 'Análise',
-      items: [
-        {
-          title: 'Relatórios',
-          href: '/admin/relatorios',
-          icon: BarChart3,
-          permissions: ['reports:department', 'reports:full']
         }
       ]
     }
@@ -317,9 +327,11 @@ export function AdminSidebar() {
                 <span className="flex-1">{item.title}</span>
                 {item.badge && (
                   <span className={cn(
-                    'ml-2 inline-block py-0.5 px-2 text-xs rounded-full',
+                    'ml-2 inline-block py-0.5 px-2 text-xs font-semibold rounded-full',
                     isActive
                       ? 'bg-primary-foreground text-primary'
+                      : item.badge === 'NOVO'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white animate-pulse'
                       : 'bg-red-100 text-red-800'
                   )}>
                     {item.badge}
