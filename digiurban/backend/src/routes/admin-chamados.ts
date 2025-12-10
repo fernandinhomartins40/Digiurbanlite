@@ -163,6 +163,22 @@ router.post(
   requirePermission('chamados:create'),
   auditLog('CREATE_CHAMADO'),
   handleAsyncRoute(async (req, res) => {
+    console.log('📥 Recebendo chamado:', JSON.stringify(req.body, null, 2));
+
+    try {
+      const data = createChamadoSchema.parse(req.body);
+      console.log('✅ Validação passou:', data);
+    } catch (validationError: any) {
+      console.error('❌ Erro de validação Zod:', validationError.errors);
+      res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        message: 'Dados inválidos',
+        details: validationError.errors
+      });
+      return;
+    }
+
     const data = createChamadoSchema.parse(req.body);
     const { user } = req;
 

@@ -43,7 +43,9 @@
       "Bash(node -e:*)",
       "Bash(node:*)",
       "Bash(gh run:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(docker-compose logs:*)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

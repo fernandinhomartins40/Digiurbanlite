@@ -83,7 +83,6 @@ export default function CriarChamadoPage() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
     priority: '',
     assignedUserId: ''
   })
@@ -223,7 +222,7 @@ export default function CriarChamadoPage() {
       return
     }
 
-    if (!formData.title || !formData.description || !formData.category || !formData.priority) {
+    if (!formData.title || !formData.description || !formData.priority) {
       toast.error('Preencha todos os campos obrigatórios')
       return
     }
@@ -240,16 +239,22 @@ export default function CriarChamadoPage() {
         'critica': 5
       }
 
-      const response = await api.post('/admin/chamados', {
+      const payload: any = {
         citizenId: selectedCitizen.id,
         serviceId: selectedService.id,
         title: formData.title,
         description: formData.description,
         priority: priorityMap[formData.priority] || 3,
-        assignedUserId: formData.assignedUserId || undefined,
         notifyCitizen: true,
         notifyDepartment: true
-      })
+      };
+
+      // Só adicionar assignedUserId se tiver valor
+      if (formData.assignedUserId && formData.assignedUserId.trim()) {
+        payload.assignedUserId = formData.assignedUserId;
+      }
+
+      const response = await api.post('/admin/chamados', payload)
 
       if (response.data.success) {
         const protocolNumber = response.data.data?.protocol?.number ||
@@ -265,7 +270,6 @@ export default function CriarChamadoPage() {
           setFormData({
             title: '',
             description: '',
-            category: '',
             priority: '',
             assignedUserId: ''
           })
@@ -583,50 +587,23 @@ export default function CriarChamadoPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Categoria *</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => handleInputChange('category', value)}
-                        required
-                      >
-                        <SelectTrigger id="category">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="saude">Saúde</SelectItem>
-                          <SelectItem value="educacao">Educação</SelectItem>
-                          <SelectItem value="assistencia-social">Assistência Social</SelectItem>
-                          <SelectItem value="obras">Obras e Infraestrutura</SelectItem>
-                          <SelectItem value="meio-ambiente">Meio Ambiente</SelectItem>
-                          <SelectItem value="habitacao">Habitação</SelectItem>
-                          <SelectItem value="cultura">Cultura</SelectItem>
-                          <SelectItem value="esportes">Esportes</SelectItem>
-                          <SelectItem value="turismo">Turismo</SelectItem>
-                          <SelectItem value="outros">Outros</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="priority">Prioridade *</Label>
-                      <Select
-                        value={formData.priority}
-                        onValueChange={(value) => handleInputChange('priority', value)}
-                        required
-                      >
-                        <SelectTrigger id="priority">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="baixa">Baixa</SelectItem>
-                          <SelectItem value="media">Média</SelectItem>
-                          <SelectItem value="alta">Alta</SelectItem>
-                          <SelectItem value="urgente">Urgente</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="priority">Prioridade *</Label>
+                    <Select
+                      value={formData.priority}
+                      onValueChange={(value) => handleInputChange('priority', value)}
+                      required
+                    >
+                      <SelectTrigger id="priority">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="baixa">Baixa</SelectItem>
+                        <SelectItem value="media">Média</SelectItem>
+                        <SelectItem value="alta">Alta</SelectItem>
+                        <SelectItem value="urgente">Urgente</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
