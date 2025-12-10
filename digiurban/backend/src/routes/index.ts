@@ -105,6 +105,7 @@ export const loadAdminRoutes = () => {
   const adminAuthRoutes = require('./admin-auth').default;
   const adminManagementRoutes = require('./admin-management').default;
   const adminChamadosRoutes = require('./admin-chamados').default;
+  const departmentsTicketsRoutes = require('./departments-tickets').default;
   const adminReportsRoutes = require('./admin-reports').default;
   const adminGabineteRoutes = require('./admin-gabinete').default;
   const adminGabinetePainelRoutes = require('./admin-gabinete-painel').default;
@@ -119,6 +120,7 @@ export const loadAdminRoutes = () => {
   router.use('/admin/auth', adminAuthRoutes);
   router.use('/admin/management', adminManagementRoutes);
   router.use('/admin/chamados', adminChamadosRoutes);
+  router.use('/departments', departmentsTicketsRoutes);
   router.use('/admin/relatorios', adminReportsRoutes);
   router.use('/admin/gabinete', adminGabineteRoutes);
   router.use('/admin/gabinete/painel-prefeito', adminGabinetePainelRoutes);

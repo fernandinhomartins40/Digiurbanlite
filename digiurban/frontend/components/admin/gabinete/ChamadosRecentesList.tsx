@@ -49,13 +49,17 @@ export function ChamadosRecentesList() {
   const loadChamados = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(getFullApiUrl('/api/admin/gabinete/painel-prefeito/chamados?limit=10'), {
+      const response = await fetch(getFullApiUrl('/api/admin/chamados?limit=10'), {
         credentials: 'include'
       })
 
       if (response.ok) {
         const result = await response.json()
-        setData(result.data)
+        // Transformar para o formato esperado
+        setData({
+          chamados: result.data.tickets || [],
+          stats: result.data.stats || { total: 0, byStatus: {} }
+        })
       }
     } catch (error) {
       console.error('Erro ao carregar chamados:', error)
@@ -69,6 +73,12 @@ export function ChamadosRecentesList() {
   }, [])
 
   const statusColors: Record<string, string> = {
+    PENDING: 'bg-yellow-100 text-yellow-800',
+    ACCEPTED: 'bg-blue-100 text-blue-800',
+    PROTOCOL_CREATED: 'bg-green-100 text-green-800',
+    REJECTED: 'bg-red-100 text-red-800',
+    CANCELLED: 'bg-gray-100 text-gray-800',
+    // Manter status antigos para compatibilidade
     VINCULADO: 'bg-blue-100 text-blue-800',
     PROGRESSO: 'bg-yellow-100 text-yellow-800',
     ATUALIZACAO: 'bg-orange-100 text-orange-800',
@@ -126,7 +136,7 @@ export function ChamadosRecentesList() {
             <Button variant="outline" size="sm" onClick={loadChamados} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
-            <Link href="/admin/chamados">
+            <Link href="/admin/chamados/lista">
               <Button variant="outline" size="sm">
                 Ver Todos
                 <ExternalLink className="h-4 w-4 ml-1" />

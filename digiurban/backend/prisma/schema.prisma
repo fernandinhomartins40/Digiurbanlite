@@ -61,6 +61,10 @@ model User {
   // ✅ NOVO: Múltiplos departamentos (N:N)
   userDepartments UserDepartment[]
 
+  // Chamados administrativos
+  requestedTickets AdminTicket[] @relation("TicketRequester")
+  assignedTickets  AdminTicket[] @relation("TicketAssigned")
+
   @@map("users")
 }
 
@@ -102,6 +106,9 @@ model Department {
   // ✅ NOVO: Múltiplos usuários (N:N)
   userDepartments UserDepartment[]
 
+  // Chamados administrativos
+  tickets AdminTicket[]
+
   @@map("departments")
 }
 
@@ -142,6 +149,7 @@ model Citizen {
   protocolsSimplified ProtocolSimplified[]
   documents           CitizenDocument[]        @relation("CitizenDocuments")
   linkedProtocols     ProtocolCitizenLink[]    @relation("LinkedCitizens")
+  tickets             AdminTicket[]
 
   @@unique([cpf])
   @@map("citizens")
@@ -313,6 +321,7 @@ model ServiceSimplified {
 
   department Department           @relation(fields: [departmentId], references: [id])
   protocols  ProtocolSimplified[]
+  tickets    AdminTicket[]
 
   @@map("services_simplified")
 }
@@ -366,6 +375,7 @@ model ProtocolSimplified {
   sla            ProtocolSLA?
   citizenLinks   ProtocolCitizenLink[]
   tfdSolicitacao SolicitacaoTFD?                @relation("TFDProtocol")
+  ticket         AdminTicket?
 
   @@index([status])
   @@index([createdAt])
@@ -402,6 +412,62 @@ model ProtocolEvaluationSimplified {
   protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
 
   @@map("protocol_evaluations_simplified")
+}
+
+// ========================================
+// SISTEMA DE CHAMADOS ADMINISTRATIVOS
+// ========================================
+
+model AdminTicket {
+  id          String       @id @default(cuid())
+  number      String       @unique // CH-2025-XXXXX
+
+  // Dados da solicitação
+  title       String
+  description String
+  priority    Int          @default(3)
+
+  // Solicitante (prefeito/admin)
+  requestedById   String
+  requestedBy     User     @relation("TicketRequester", fields: [requestedById], references: [id])
+
+  // Alvo da solicitação
+  citizenId       String
+  citizen         Citizen  @relation(fields: [citizenId], references: [id])
+  serviceId       String
+  service         ServiceSimplified @relation(fields: [serviceId], references: [id])
+  departmentId    String
+  department      Department @relation(fields: [departmentId], references: [id])
+
+  // Estado do chamado
+  status      TicketStatus @default(PENDING)
+
+  // Protocolo gerado (quando secretaria aceita)
+  protocolId  String?      @unique
+  protocol    ProtocolSimplified? @relation(fields: [protocolId], references: [id])
+
+  // Atribuição (quando secretaria aceita)
+  assignedUserId  String?
+  assignedUser    User?    @relation("TicketAssigned", fields: [assignedUserId], references: [id])
+
+  // Timestamps
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  acceptedAt         DateTime?
+  rejectedAt         DateTime?
+  protocolCreatedAt  DateTime?
+
+  // Observações e histórico
+  observations    String?
+  rejectionReason String?
+  acceptedBy      String? // Nome do usuário que aceitou
+  rejectedBy      String? // Nome do usuário que rejeitou
+
+  @@index([status])
+  @@index([departmentId, status])
+  @@index([createdAt])
+  @@index([requestedById])
+  @@map("admin_tickets")
 }
 
 // ========================================
@@ -1493,6 +1559,14 @@ enum ProtocolStatus {
   CONCLUIDO
   PENDENCIA
   CANCELADO
+}
+
+enum TicketStatus {
+  PENDING          // Aguardando análise da secretaria
+  ACCEPTED         // Aceito pela secretaria
+  PROTOCOL_CREATED // Protocolo criado e atribuído
+  REJECTED         // Recusado pela secretaria
+  CANCELLED        // Cancelado pelo prefeito
 }
 
 enum ServiceType {

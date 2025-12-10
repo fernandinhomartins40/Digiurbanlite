@@ -257,12 +257,10 @@ export default function CriarChamadoPage() {
       const response = await api.post('/admin/chamados', payload)
 
       if (response.data.success) {
-        const protocolNumber = response.data.data?.protocol?.number ||
-                               response.data.data?.chamado?.number ||
-                               'N/A'
+        const ticketNumber = response.data.data?.ticket?.number || 'N/A'
 
         toast.success('Chamado criado com sucesso!', {
-          description: `Protocolo ${protocolNumber} gerado para ${selectedCitizen.name}`
+          description: `Chamado ${ticketNumber} enviado para ${selectedService.department.name}. Aguardando análise da secretaria.`
         })
 
         // Resetar formulário
@@ -278,8 +276,9 @@ export default function CriarChamadoPage() {
           setCitizenSearch('')
           setServiceSearch('')
 
-          // Redirecionar para protocolos
-          router.push('/admin/protocolos')
+          // Redirecionar para a mesma página para criar novo chamado
+          router.push('/admin/chamados')
+          router.refresh()
         }, 1500)
       }
     } catch (error: any) {
@@ -311,6 +310,12 @@ export default function CriarChamadoPage() {
             Abertura de chamados/protocolos para cidadãos cadastrados
           </p>
         </div>
+        <Link href="/admin/chamados/lista">
+          <Button variant="outline">
+            <FileText className="h-4 w-4 mr-2" />
+            Ver Meus Chamados
+          </Button>
+        </Link>
       </div>
 
       {/* Badge Modo Admin */}
@@ -783,9 +788,10 @@ export default function CriarChamadoPage() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm text-blue-800">
               <p>• O cidadão deve estar cadastrado no sistema</p>
-              <p>• Um protocolo será gerado automaticamente</p>
-              <p>• O cidadão receberá o número por notificação</p>
-              <p>• O departamento será notificado imediatamente</p>
+              <p>• Um chamado será enviado para a secretaria</p>
+              <p>• A secretaria pode aceitar ou recusar o chamado</p>
+              <p>• Se aceito, um protocolo será criado para o cidadão</p>
+              <p>• O cidadão só será notificado quando o protocolo for criado</p>
               <p>• Todos os campos marcados com * são obrigatórios</p>
             </CardContent>
           </Card>

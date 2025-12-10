@@ -11,8 +11,7 @@ import {
   requirePermission,
   addDataFilter
         } from '../middleware/admin-auth';
-import { generateProtocolNumberSafe } from '../services/protocol-number.service';
-import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { generateTicketNumberSafe } from '../services/ticket-number.service';
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 
@@ -142,13 +141,8 @@ const createChamadoSchema = z.object({
   title: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
   description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
   priority: z.number().int().min(1).max(5).default(3), // 1=LOW, 2=NORMAL, 3=HIGH, 4=URGENT, 5=CRITICAL
-  assignedUserId: z.string().optional(),
-  dueDate: z.string().optional(),
-  observations: z.string().optional(),
-  tags: z.array(z.string()).optional(),
-  notifyCitizen: z.boolean().default(true),
-  notifyDepartment: z.boolean().default(true)
-      });
+  observations: z.string().optional()
+});
 
 // ====================== ROUTER SETUP ======================
 
@@ -157,13 +151,13 @@ const router = Router();
 // Middleware para verificar tenant em todas as rotas
 router.use(adminAuthMiddleware);
 
-// POST /api/admin/chamados - Criar novo chamado (FLUXO 1 - Top-Down)
+// POST /api/admin/chamados - Criar novo chamado administrativo (APENAS AdminTicket)
 router.post(
   '/',
   requirePermission('chamados:create'),
-  auditLog('CREATE_CHAMADO'),
+  auditLog('CREATE_TICKET'),
   handleAsyncRoute(async (req, res) => {
-    console.log('📥 Recebendo chamado:', JSON.stringify(req.body, null, 2));
+    console.log('📥 Recebendo chamado administrativo:', JSON.stringify(req.body, null, 2));
 
     try {
       const data = createChamadoSchema.parse(req.body);
@@ -208,66 +202,37 @@ router.post(
       },
       include: {
         department: {
-          include: {
-            users: {
-              where: {
-                isActive: true,
-                role: { in: ['COORDINATOR', 'MANAGER'] }
-      },
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true
-      }
-      }
-      }
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
         }
       }
-      });
+    });
 
     if (!service) {
       res.status(404).json(createErrorResponse('NOT_FOUND', 'Serviço não encontrado ou inativo'));
       return;
     }
 
-    // Verificar se o usuário para atribuição existe (se informado)
-    let assignedUser = null;
-    if (data.assignedUserId) {
-      assignedUser = await prisma.user.findFirst({
-        where: {
-          id: data.assignedUserId,
-          departmentId: service.departmentId,
-          isActive: true
-        }
-      });
+    // Gerar número do chamado - Formato CH-2025-00001
+    const ticketNumber = await generateTicketNumberSafe();
 
-      if (!assignedUser) {
-        res.status(404).json(createErrorResponse('NOT_FOUND', 'Funcionário não encontrado ou não pertence ao departamento responsável'));
-        return;
-      }
-    }
-
-    // Gerar número do protocolo - Sistema centralizado com lock
-    const protocolNumber = await generateProtocolNumberSafe();
-
-    // Criar protocolo automaticamente (FLUXO 1)
-    const protocolData = {
-      citizenId: data.citizenId,
-      serviceId: data.serviceId,
-      departmentId: service.departmentId,
-      number: protocolNumber,
-      title: data.title,
-      description: data.description,
-      priority: data.priority,
-      createdById: user.id,
-      status: 'VINCULADO' as const,
-      ...(data.assignedUserId && { assignedUserId: data.assignedUserId }),
-      ...(data.dueDate && { dueDate: new Date(data.dueDate) })
-        };
-
-    const protocol = await prisma.protocolSimplified.create({
-      data: protocolData,
+    // ✅ CRIAR APENAS AdminTicket (NÃO CRIAR PROTOCOLO)
+    const ticket = await prisma.adminTicket.create({
+      data: {
+        number: ticketNumber,
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        observations: data.observations,
+        citizenId: data.citizenId,
+        serviceId: data.serviceId,
+        departmentId: service.departmentId,
+        requestedById: user.id,
+        status: 'PENDING' // Aguardando secretaria
+      },
       include: {
         citizen: {
           select: {
@@ -276,92 +241,61 @@ router.post(
             cpf: true,
             email: true,
             phone: true
-      }
-      },
+          }
+        },
         service: {
           select: {
             id: true,
             name: true,
             category: true,
             estimatedDays: true
-      }
-      },
+          }
+        },
         department: {
           select: {
             id: true,
             name: true,
             code: true
-      }
-      },
-        assignedUser: {
+          }
+        },
+        requestedBy: {
           select: {
             id: true,
             name: true,
             email: true,
             role: true
+          }
+        }
       }
-      }
-      }
-      });
+    });
 
-    // Criar histórico inicial detalhado
-    await prisma.protocolHistorySimplified.create({
-      data: {
-        protocolId: protocol.id,
-        action: 'CHAMADO_CREATED',
-        comment: `Chamado criado pelo ${user.role === 'ADMIN' ? 'Prefeito' : 'Administrador'} ${user.name}. ${data.observations || ''}`,
-        userId: user.id
-      }
-      });
+    // ✅ NOTIFICAR SECRETARIA (NÃO O CIDADÃO)
+    console.log(
+      `[NOTIFICATION] Novo chamado ${ticketNumber} criado por ${user.name} para o departamento ${service.department.name}`
+    );
 
-    // Notificar o cidadão se solicitado
-    if (data.notifyCitizen) {
-      await prisma.notification.create({
-        data: {
-          citizenId: data.citizenId,
-          title: 'Protocolo Criado pela Prefeitura',
-          message: `A prefeitura criou o protocolo ${protocolNumber} para atender sua necessidade: ${data.title}`,
-          type: 'INFO',
-          protocolId: protocol.id
-      }
-      });
-    }
-
-    // Notificar o departamento responsável se solicitado
-    if (data.notifyDepartment) {
-      const departmentUsers = service.department.users;
-
-      for (const departmentUser of departmentUsers) {
-        // Aqui você poderia enviar email ou outras notificações
-        console.log(
-          `[NOTIFICATION] Novo chamado ${protocolNumber} para ${departmentUser.name} (${departmentUser.email})`
-        );
-      }
-    }
-
-    // Notificar usuário atribuído se houver
-    if (assignedUser) {
-      console.log(
-        `[NOTIFICATION] Protocolo ${protocolNumber} atribuído a ${assignedUser.name} (${assignedUser.email})`
-      );
-    }
+    // TODO: Implementar notificação real para coordenadores/gestores da secretaria
 
     res.status(201).json(createSuccessResponse({
-      message: 'Chamado criado e protocolo gerado com sucesso',
-      protocol,
-      chamado: {
-        id: protocol.id,
-        number: protocolNumber,
-        type: 'TOP_DOWN',
-        createdBy: user.name,
-        priority: data.priority,
-        tags: data.tags || []
+      message: 'Chamado administrativo criado com sucesso. Aguardando análise da secretaria.',
+      ticket: {
+        id: ticket.id,
+        number: ticket.number,
+        title: ticket.title,
+        description: ticket.description,
+        status: ticket.status,
+        priority: ticket.priority,
+        citizen: ticket.citizen,
+        service: ticket.service,
+        department: ticket.department,
+        requestedBy: ticket.requestedBy,
+        createdAt: ticket.createdAt
       }
-      }));
-      })
+    }));
+  })
 );
 
-// GET /api/admin/chamados - Listar chamados criados
+// GET /api/admin/chamados - Listar chamados administrativos (AdminTicket)
 router.get(
   '/',
   requirePermission('chamados:create'),
@@ -381,10 +315,13 @@ router.get(
 
     const skip = (page - 1) * limit;
 
-    // Construir filtros para protocolos criados como chamados
-    const where: Record<string, unknown> = {
-      createdById: { not: null }, // Protocolos criados por usuários admin
-    };
+    // Construir filtros para AdminTicket
+    const where: Record<string, unknown> = {};
+
+    // Se não for ADMIN, mostrar apenas chamados criados pelo usuário
+    if (user.role !== 'ADMIN') {
+      where.requestedById = user.id;
+    }
 
     if (status) {
       where.status = status;
@@ -398,9 +335,9 @@ router.get(
       where.departmentId = departmentId;
     }
 
-    // Buscar chamados (protocolos) com paginação
-    const [chamados, total] = await Promise.all([
-      prisma.protocolSimplified.findMany({
+    // Buscar tickets com paginação
+    const [tickets, total] = await Promise.all([
+      prisma.adminTicket.findMany({
         where,
         include: {
           citizen: {
@@ -410,84 +347,87 @@ router.get(
               cpf: true,
               email: true,
               phone: true
-      }
-      },
+            }
+          },
           service: {
             select: {
               id: true,
               name: true,
               category: true
-      }
-      },
+            }
+          },
           department: {
             select: {
               id: true,
               name: true,
               code: true
-      }
-      },
+            }
+          },
           assignedUser: {
             select: {
               id: true,
               name: true,
               email: true,
               role: true
-      }
-      },
-          createdBy: {
+            }
+          },
+          requestedBy: {
             select: {
               id: true,
               name: true,
               email: true,
               role: true
-      }
-      },
-          history: {
-            where: { action: 'CHAMADO_CREATED' },
-            take: 1,
-            orderBy: { timestamp: 'desc' }
-        },
-          _count: {
+            }
+          },
+          protocol: {
             select: {
-              history: true
-      }
-      }
+              id: true,
+              number: true,
+              status: true,
+              createdAt: true,
+              assignedUser: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          }
         },
         orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
         skip,
         take: limit
       }),
-      prisma.protocolSimplified.count({ where }),
+      prisma.adminTicket.count({ where }),
     ]);
 
+    // Estatísticas por status
+    const stats = await prisma.adminTicket.groupBy({
+      by: ['status'],
+      where: user.role !== 'ADMIN' ? { requestedById: user.id } : {},
+      _count: {
+        status: true
+      }
+    });
+
+    const statusCount = stats.reduce((acc, item) => {
+      acc[item.status] = item._count.status;
+      return acc;
+    }, {} as Record<string, number>);
+
     res.json(createSuccessResponse({
-      chamados: chamados.map(protocol => ({
-        id: protocol.id,
-        number: protocol.number,
-        title: protocol.title,
-        description: protocol.description,
-        status: protocol.status,
-        priority: protocol.priority,
-        citizen: protocol.citizen,
-        service: protocol.service,
-        department: protocol.department,
-        assignedUser: protocol.assignedUser,
-        createdBy: protocol.createdBy,
-        createdAt: protocol.createdAt,
-        updatedAt: protocol.updatedAt,
-        dueDate: protocol.dueDate,
-        concludedAt: protocol.concludedAt,
-        historyCount: protocol._count.history,
-        type: 'TOP_DOWN'
-      })),
+      tickets,
+      stats: {
+        total,
+        byStatus: statusCount
+      },
       pagination: {
         page,
         limit,
         total,
         pages: Math.ceil(total / limit)
       }
-      }));
-      })
+    }));
+  })
 );
 
 // GET /api/admin/chamados/search/citizens - Buscar cidadãos para criar chamado
