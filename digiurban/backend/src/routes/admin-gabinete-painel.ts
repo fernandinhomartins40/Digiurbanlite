@@ -105,15 +105,18 @@ router.post('/request-urgency/:protocolId', adminAuthMiddleware, requireAdmin, a
     await prisma.protocolInteraction.create({
       data: {
         protocolId: protocol.id,
-        userId: req.user!.id,
         type: 'URGENCY_REQUEST',
-        description: `Prefeito solicitou urgência na resolução do protocolo #${protocol.number}`,
-        metadata: JSON.stringify({
+        authorType: 'SERVER',
+        authorId: req.user!.id,
+        authorName: req.user!.name || 'Prefeito',
+        message: `Prefeito solicitou urgência na resolução do protocolo #${protocol.number}`,
+        isInternal: true,
+        metadata: {
           requestedBy: 'ADMIN',
           requestedAt: new Date().toISOString(),
           assignedUser: protocol.assignedUser?.name || 'Não atribuído',
           department: protocol.department?.name || 'Não definido'
-        })
+        }
       }
     })
 
