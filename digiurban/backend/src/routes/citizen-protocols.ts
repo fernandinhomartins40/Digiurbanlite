@@ -272,23 +272,6 @@ router.post('/', upload.array('documents'), async (req, res) => {
         }
         });
 
-    // Criar documentos na tabela ProtocolDocument
-    for (const doc of uploadedDocuments) {
-      await prisma.protocolDocument.create({
-        data: {
-          protocolId: protocol.id,
-          documentType: doc.documentId || 'Documento',
-          fileName: doc.filename,
-          fileUrl: doc.path,
-          fileSize: doc.size,
-          mimeType: doc.mimetype,
-          status: 'UPLOADED',
-          isRequired: false,
-          uploadedAt: new Date()
-        }
-      });
-    }
-
     // Criar histórico inicial
     await prisma.protocolHistorySimplified.create({
       data: {
