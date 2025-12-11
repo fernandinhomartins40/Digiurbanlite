@@ -3,10 +3,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Loader2, User } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
+import { Card } from '@/components/ui/card'
 
 interface Citizen {
   id: string
@@ -19,15 +18,24 @@ interface Citizen {
 
 export function CitizenSearchBar() {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Citizen[]>([])
   const [loading, setLoading] = useState(false)
+  const [showResults, setShowResults] = useState(false)
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
 
-  // ⚡ Limpar timeout ao desmontar
+  // ⚡ Fechar dropdown ao clicar fora
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowResults(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
     return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
       if (debounceTimeout.current) {
         clearTimeout(debounceTimeout.current)
       }
@@ -38,6 +46,7 @@ export function CitizenSearchBar() {
   const handleSearch = useCallback(async (searchQuery: string) => {
     if (searchQuery.length < 3) {
       setResults([])
+      setShowResults(false)
       return
     }
 
@@ -49,9 +58,11 @@ export function CitizenSearchBar() {
       )
       const data = await response.json()
       setResults(data.data || [])
+      setShowResults(true)
     } catch (error) {
       console.error('Erro ao buscar cidadão:', error)
       setResults([])
+      setShowResults(false)
     } finally {
       setLoading(false)
     }
@@ -70,16 +81,15 @@ export function CitizenSearchBar() {
     if (value.length >= 3) {
       debounceTimeout.current = setTimeout(() => {
         handleSearch(value)
-        setOpen(true)
       }, 500) // ⚡ 500ms de debounce
     } else {
       setResults([])
-      setOpen(false)
+      setShowResults(false)
     }
   }
 
   const handleSelectCitizen = (citizenId: string) => {
-    setOpen(false)
+    setShowResults(false)
     setQuery('')
     router.push(`/admin/gabinete/painel-prefeito/cidadao/${citizenId}`)
   }
@@ -98,48 +108,51 @@ export function CitizenSearchBar() {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative w-full">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <Input
-            placeholder="Buscar cidadão por nome ou CPF..."
-            className="pl-12 h-14 text-lg border-2 border-gray-300 focus:border-blue-500 transition-colors text-gray-900 placeholder:text-gray-400"
-            value={query}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onFocus={() => {
-              if (query.length >= 3 && results.length > 0) {
-                setOpen(true)
-              }
-            }}
-          />
-          {loading && (
-            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-gray-400" />
-          )}
-        </div>
-      </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
-          <CommandList>
-            <CommandEmpty>
-              {query.length < 3
-                ? 'Digite pelo menos 3 caracteres para buscar'
-                : 'Nenhum cidadão encontrado'}
-            </CommandEmpty>
-            {results.length > 0 && (
-              <CommandGroup heading={`${results.length} resultado(s) encontrado(s)`}>
+    <div ref={searchRef} className="relative w-full">
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+      <Input
+        placeholder="Buscar cidadão por nome ou CPF..."
+        className="pl-12 h-14 text-lg border-2 border-gray-300 focus:border-blue-500 transition-colors text-gray-900 placeholder:text-gray-400"
+        value={query}
+        onChange={(e) => handleInputChange(e.target.value)}
+        onFocus={() => {
+          if (query.length >= 3 && results.length > 0) {
+            setShowResults(true)
+          }
+        }}
+      />
+      {loading && (
+        <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-gray-400 z-10" />
+      )}
+
+      {/* Dropdown de Resultados */}
+      {showResults && (
+        <Card className="absolute top-full left-0 right-0 mt-2 max-h-96 overflow-y-auto z-50 shadow-lg border-2 border-gray-200">
+          {query.length < 3 ? (
+            <div className="p-4 text-center text-gray-500 text-sm">
+              Digite pelo menos 3 caracteres para buscar
+            </div>
+          ) : results.length === 0 ? (
+            <div className="p-4 text-center text-gray-500 text-sm">
+              Nenhum cidadão encontrado
+            </div>
+          ) : (
+            <div>
+              <div className="px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-600">
+                {results.length} resultado(s) encontrado(s)
+              </div>
+              <div className="divide-y divide-gray-100">
                 {results.map((citizen) => {
                   const badge = getVerificationBadge(citizen.verificationStatus)
                   return (
-                    <CommandItem
+                    <div
                       key={citizen.id}
-                      value={citizen.id}
-                      onSelect={() => handleSelectCitizen(citizen.id)}
-                      className="cursor-pointer py-3 hover:bg-gray-100"
+                      onClick={() => handleSelectCitizen(citizen.id)}
+                      className="p-4 hover:bg-blue-50 cursor-pointer transition-colors"
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                             <User className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
@@ -152,18 +165,18 @@ export function CitizenSearchBar() {
                             )}
                           </div>
                         </div>
-                        <Badge variant={badge.variant}>
+                        <Badge variant={badge.variant} className="flex-shrink-0">
                           {badge.icon} {badge.label}
                         </Badge>
                       </div>
-                    </CommandItem>
+                    </div>
                   )
                 })}
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+    </div>
   )
 }
