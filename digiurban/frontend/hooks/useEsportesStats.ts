@@ -47,7 +47,7 @@ export function useEsportesStats() {
 
         // Buscar estatísticas da rota /stats
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/esportes/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/esportes/stats`,
           { headers }
         );
 

@@ -54,7 +54,7 @@ export function useCulturaStats() {
 
         // Buscar estatísticas do backend
         const statsResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/cultura/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/cultura/stats`,
           { headers }
         );
 

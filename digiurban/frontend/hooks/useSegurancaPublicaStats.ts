@@ -47,7 +47,7 @@ export function useSegurancaPublicaStats() {
 
         // Buscar estatísticas da rota específica
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/seguranca-publica/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/seguranca-publica/stats`,
           { headers }
         );
 

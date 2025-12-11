@@ -34,7 +34,7 @@ export function useMeioAmbienteStats() {
 
         // Buscar estatísticas do meio ambiente
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/meio-ambiente/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/meio-ambiente/stats`,
           { headers }
         );
 

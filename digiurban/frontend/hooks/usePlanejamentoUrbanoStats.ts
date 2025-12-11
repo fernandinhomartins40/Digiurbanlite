@@ -38,7 +38,7 @@ export function usePlanejamentoUrbanoStats() {
 
         // Buscar estatísticas de planejamento urbano
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/planejamento-urbano/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/planejamento-urbano/stats`,
           { headers }
         );
 

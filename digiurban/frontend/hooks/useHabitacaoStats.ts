@@ -39,7 +39,7 @@ export function useHabitacaoStats() {
 
         // Buscar estatísticas da rota /stats
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/habitacao/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/habitacao/stats`,
           { headers }
         );
 

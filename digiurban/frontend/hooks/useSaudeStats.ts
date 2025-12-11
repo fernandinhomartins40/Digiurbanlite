@@ -68,9 +68,9 @@ export function useSaudeStats() {
 
         // Buscar todas as estatísticas em paralelo
         const [statsResponse, dashboardResponse, healthUnitsResponse] = await Promise.all([
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/saude/stats`, { headers }),
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/saude/dashboard`, { headers }),
-          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/saude/health-units/stats`, { headers })
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/secretarias/saude/stats`, { headers }),
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/secretarias/saude/dashboard`, { headers }),
+          axios.get(`${process.env.NEXT_PUBLIC_API_URL}/secretarias/saude/health-units/stats`, { headers })
         ]);
 
         if (statsResponse.data.success) {

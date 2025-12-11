@@ -39,7 +39,7 @@ export function useObrasPublicasStats() {
 
         // Buscar estatísticas de obras públicas
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/obras-publicas/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/obras-publicas/stats`,
           { headers }
         );
 

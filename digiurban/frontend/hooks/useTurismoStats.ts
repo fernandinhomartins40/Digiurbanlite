@@ -37,7 +37,7 @@ export function useTurismoStats() {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/turismo/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/turismo/stats`,
           { headers }
         );
 

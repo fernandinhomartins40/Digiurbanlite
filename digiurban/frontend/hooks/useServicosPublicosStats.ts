@@ -43,7 +43,7 @@ export function useServicosPublicosStats() {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
         const statsResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/secretarias/servicos-publicos/stats`,
+          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/servicos-publicos/stats`,
           { headers }
         );
 
