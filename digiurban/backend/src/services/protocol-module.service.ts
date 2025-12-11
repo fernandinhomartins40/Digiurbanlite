@@ -12,6 +12,7 @@ import { prisma } from '../lib/prisma';
 import { generateProtocolNumberSafe } from './protocol-number.service';
 import { protocolStatusEngine } from './protocol-status.engine';
 import { familyStatsService } from './family-stats.service';
+import { GeolocationService } from './geolocation.service';
 
 // ============================================================================
 // TYPES
@@ -26,7 +27,7 @@ export interface CreateProtocolWithModuleInput {
   latitude?: number;
   longitude?: number;
   address?: string;
-  attachments?: string[];
+  attachments?: any[];
 }
 
 export interface ApproveProtocolInput {
@@ -52,7 +53,7 @@ export class ProtocolModuleService {
    * ou SEM_DADOS apenas com protocolo de acompanhamento
    */
   async createProtocolWithModule(input: CreateProtocolWithModuleInput) {
-    const { citizenId, serviceId, formData, description, createdById, ...rest } = input;
+    const { citizenId, serviceId, formData, description, createdById, latitude, longitude, address, attachments } = input;
 
     // 1. Buscar serviço
     const service = await prisma.serviceSimplified.findUnique({
@@ -87,17 +88,26 @@ export class ProtocolModuleService {
       console.warn('Não foi possível pré-preencher dados familiares:', error);
     }
 
+    // 2.2 Resolver geolocalização inteligente
+    const locationData = latitude && longitude ? { latitude, longitude, address } : undefined;
+    const geoResult = await GeolocationService.resolveProtocolLocation(
+      serviceId,
+      citizenId,
+      locationData,
+      prisma
+    );
+
+    console.log(`📍 [Protocol Module] Geolocalização resolvida: source=${geoResult.source}, lat=${geoResult.latitude}, long=${geoResult.longitude}`);
+    if (geoResult.address) {
+      console.log(`   Endereço: ${geoResult.address}`);
+    }
+
     // 3. Criar protocolo em transação
     const result = await prisma.$transaction(async (tx) => {
       // Gerar número do protocolo - Sistema centralizado com lock
       const protocolNumber = await generateProtocolNumberSafe(tx);
 
-      // Parsear attachments se existirem (para criar na tabela ProtocolDocument)
-      const attachments = rest.attachments
-        ? (Array.isArray(rest.attachments) ? rest.attachments : JSON.parse(rest.attachments))
-        : [];
-
-      // Preparar customData com metadados da entidade virtual
+      // Preparar customData com metadados da entidade virtual e geolocalização
       const customDataPayload = isComDados && service.moduleType
         ? {
             // Dados do formulário (enriquecidos com dados de composição familiar)
@@ -110,11 +120,16 @@ export class ProtocolModuleService {
               createdAt: new Date().toISOString(),
               approvedAt: null,
               approvedBy: null
-            }
+            },
+            // Metadados de geolocalização
+            _geoSource: geoResult.source
           }
-        : enrichedFormData;
+        : {
+            ...enrichedFormData,
+            _geoSource: geoResult.source
+          };
 
-      // Criar protocolo
+      // Criar protocolo com geolocalização resolvida
       const protocol = await tx.protocolSimplified.create({
         data: {
           number: protocolNumber,
@@ -127,15 +142,16 @@ export class ProtocolModuleService {
           moduleType: service.moduleType || 'GENERICO',
           customData: customDataPayload as Prisma.JsonObject,
           createdById,
-          latitude: rest.latitude,
-          longitude: rest.longitude,
-          address: rest.address
+          latitude: geoResult.latitude,
+          longitude: geoResult.longitude,
+          address: geoResult.address
         }
       });
 
       // Criar documentos na tabela ProtocolDocument se houver attachments
-      if (attachments.length > 0) {
-        for (const attachment of attachments) {
+      if (attachments && attachments.length > 0) {
+        const attachmentsArray = Array.isArray(attachments) ? attachments : [];
+        for (const attachment of attachmentsArray) {
           // Usar documentId do attachment (já vem processado das rotas)
           const documentType = attachment.documentId || attachment.id || attachment.filename || attachment.originalName;
 

@@ -20,6 +20,7 @@ import { DocumentUpload } from '@/components/common/DocumentUpload'
 import { normalizeDocumentConfig } from '@/lib/document-utils';
 import { ServiceFormRenderer } from '@/components/forms/ServiceFormRenderer';
 import { extractFieldsFromSchema, extractCitizenFields } from '@/lib/schema-field-extractor';
+import { LocationPicker } from '@/components/common/LocationPicker';
 
 interface Service {
   id: string;
@@ -66,6 +67,7 @@ export default function SolicitarServicoPage() {
   const [description, setDescription] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
+  const [locationData, setLocationData] = useState<{ latitude: number; longitude: number; address?: string } | null>(null);
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
   // useMemo para evitar recriar array em cada render
@@ -74,6 +76,35 @@ export default function SolicitarServicoPage() {
     const schema = selectedProgram?.formSchema || service?.formSchema;
     return extractFieldsFromSchema(schema);
   }, [selectedProgram?.formSchema, service?.formSchema]);
+
+  // Determinar se serviço requer geolocalização específica
+  const requiresSpecificLocation = useMemo(() => {
+    const REQUIRES_LOCATION_MODULES = [
+      'SOLICITACAO_REPARO_VIA',
+      'VISTORIA_TECNICA_OBRAS',
+      'DESOBSTRUCAO_BUEIRO',
+      'SOLICITACAO_PODA',
+      'APROVACAO_PROJETO_CONSTRUCAO',
+      'SOLICITACAO_ILUMINACAO',
+      'SOLICITACAO_SINALIZACAO',
+      'SOLICITACAO_SEMAFORO',
+      'COLETA_ENTULHO',
+      'LIMPEZA_TERRENO',
+      'DENUNCIA_AMBIENTAL',
+      'SOLICITACAO_ANALISE_AMBIENTAL',
+      'FISCALIZACAO_OBRA',
+      'FISCALIZACAO_POSTURA',
+      'FISCALIZACAO_SANITARIA',
+    ];
+
+    if (service?.moduleType && REQUIRES_LOCATION_MODULES.includes(service.moduleType)) {
+      return true;
+    }
+
+    // Fallback por categoria
+    const LOCATION_CATEGORIES = ['Manutenção', 'Vistoria', 'Fiscalização', 'Limpeza', 'Poda', 'Iluminação', 'Pavimentação', 'Obras'];
+    return service?.formSchema?.properties?.categoria && LOCATION_CATEGORIES.includes(service.formSchema.properties.categoria);
+  }, [service?.moduleType, service?.formSchema]);
 
   // Hook de pré-preenchimento (será inicializado depois que o serviço carregar)
   const {
@@ -160,6 +191,12 @@ export default function SolicitarServicoPage() {
       return;
     }
 
+    // ✅ NOVO: Validar geolocalização se obrigatória
+    if (requiresSpecificLocation && !locationData) {
+      toast.error('Por favor, informe a localização do problema');
+      return;
+    }
+
     // Validar campos obrigatórios do formulário customizado (usar campos ativos)
     if (activeFormFields && activeFormFields.length > 0) {
       for (const field of activeFormFields) {
@@ -238,6 +275,12 @@ export default function SolicitarServicoPage() {
         const jsonString = JSON.stringify(finalCustomFormData);
         console.log('🔍 [FRONTEND DEBUG] JSON string que será enviado:', jsonString);
         formData.append('customFormData', jsonString);
+      }
+
+      // ✅ NOVO: Adicionar locationData se existir
+      if (locationData) {
+        formData.append('locationData', JSON.stringify(locationData));
+        console.log('📍 [FRONTEND DEBUG] locationData enviado:', locationData);
       }
 
       // ✅ FORMATO SIMPLES: Enviar array documentTypes (mais robusto)
@@ -457,6 +500,16 @@ export default function SolicitarServicoPage() {
                 <p className="text-xs text-gray-500">
                   Seja o mais específico possível para agilizar o atendimento
                 </p>
+              </div>
+
+              {/* ✅ NOVO: Seletor de Localização */}
+              <div className="pt-4 border-t">
+                <LocationPicker
+                  value={locationData}
+                  onChange={setLocationData}
+                  required={requiresSpecificLocation}
+                  serviceName={service?.name}
+                />
               </div>
 
               {/* Upload de Documentos Exigidos pelo Serviço */}
