@@ -12,6 +12,7 @@ import {
   addDataFilter
         } from '../middleware/admin-auth';
 import { generateTicketNumberSafe } from '../services/ticket-number.service';
+import { log } from '../config/logger.config';
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 
@@ -158,13 +159,21 @@ router.post(
   requirePermission('chamados:create'),
   auditLog('CREATE_TICKET'),
   handleAsyncRoute(async (req, res) => {
-    console.log('📥 Recebendo chamado administrativo:', JSON.stringify(req.body, null, 2));
+    log.info('📥 Criando chamado administrativo', {
+      userId: req.user?.id,
+      userName: req.user?.name,
+      body: req.body
+    });
 
     try {
       const data = createChamadoSchema.parse(req.body);
-      console.log('✅ Validação passou:', data);
+      log.debug('✅ Validação do chamado passou', { data });
     } catch (validationError: any) {
-      console.error('❌ Erro de validação Zod:', validationError.errors);
+      log.warn('❌ Erro de validação ao criar chamado', {
+        errors: validationError.errors,
+        body: req.body,
+        userId: req.user?.id
+      });
       res.status(400).json({
         success: false,
         error: 'Validation failed',
@@ -191,6 +200,10 @@ router.post(
     });
 
     if (!citizen) {
+      log.warn('Cidadão não encontrado ao criar chamado', {
+        citizenId: data.citizenId,
+        userId: user.id
+      });
       res.status(404).json(createErrorResponse('NOT_FOUND', 'Cidadão não encontrado ou inativo'));
       return;
     }
@@ -213,12 +226,17 @@ router.post(
     });
 
     if (!service) {
+      log.warn('Serviço não encontrado ao criar chamado', {
+        serviceId: data.serviceId,
+        userId: user.id
+      });
       res.status(404).json(createErrorResponse('NOT_FOUND', 'Serviço não encontrado ou inativo'));
       return;
     }
 
     // Gerar número do chamado - Formato CH-2025-00001
     const ticketNumber = await generateTicketNumberSafe();
+    log.debug('Número de chamado gerado', { ticketNumber });
 
     // ✅ CRIAR APENAS AdminTicket (NÃO CRIAR PROTOCOLO)
     const ticket = await prisma.adminTicket.create({
@@ -271,10 +289,22 @@ router.post(
       }
     });
 
-    // ✅ NOTIFICAR SECRETARIA (NÃO O CIDADÃO)
-    console.log(
-      `[NOTIFICATION] Novo chamado ${ticketNumber} criado por ${user.name} para o departamento ${service.department.name}`
-    );
+    // ✅ LOG DE SUCESSO + NOTIFICAÇÃO
+    log.info('✅ Chamado administrativo criado com sucesso', {
+      ticketId: ticket.id,
+      ticketNumber: ticket.number,
+      citizenId: ticket.citizenId,
+      citizenName: citizen.name,
+      serviceId: ticket.serviceId,
+      serviceName: service.name,
+      departmentId: ticket.departmentId,
+      departmentName: service.department.name,
+      requestedById: user.id,
+      requestedByName: user.name,
+      assignedUserId: ticket.assignedUserId,
+      priority: ticket.priority,
+      status: ticket.status
+    });
 
     // TODO: Implementar notificação real para coordenadores/gestores da secretaria
 

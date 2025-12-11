@@ -7,6 +7,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import http from 'http';
 import { initializeSocket } from './socket';
+import { requestLoggerMiddleware } from './middleware/request-logger.middleware';
+import { logger } from './config/logger.config';
 
 // Load environment variables
 dotenv.config();
@@ -56,6 +58,10 @@ app.use(
         })
 );
 app.use(morgan('combined'));
+
+// ✅ LOGGING PROFISSIONAL: Middleware Winston para persistir logs
+app.use(requestLoggerMiddleware);
+
 // ✅ CORREÇÃO: Aumentar limite para suportar múltiplos uploads (TFD, etc)
 // Multer permite 20 arquivos x 10MB = 200MB, mas express.json/urlencoded limitava em 10MB
 app.use(express.json({ limit: '50mb' })); // JSON requests (API calls)
@@ -448,9 +454,16 @@ try {
 }
 
 const server = httpServer.listen(PORT, () => {
-  console.log(`🚀 DigiUrban Backend server running on port ${PORT}`);
+  const startupMsg = `🚀 DigiUrban Backend server running on port ${PORT}`;
+  console.log(startupMsg);
+  logger.info('Server started successfully', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    nodeVersion: process.version
+  });
   console.log(`📱 API Documentation: http://localhost:${PORT}/health`);
   console.log(`🔌 WebSocket disponível em: ws://localhost:${PORT}/api/socket`);
+  console.log(`📝 Logs salvos em: logs/`);
   console.log(`⏰ Server is now listening and will stay alive...`);
 });
 

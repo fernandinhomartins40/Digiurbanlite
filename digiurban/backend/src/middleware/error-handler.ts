@@ -4,9 +4,11 @@
  * ============================================================================
  * Garante que TODOS os erros retornam JSON ao invés de HTML
  * Previne o erro "Unexpected token <" no frontend
+ * ✅ Integrado com Winston Logger para persistência de logs
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { logError, logger } from '../config/logger.config';
 
 /**
  * Middleware de erro global
@@ -18,22 +20,21 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  // Log do erro para debug
-  console.error('🔥 [ERROR HANDLER] Erro capturado:', {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    body: req.body
+  // Determinar status code
+  const statusCode = (err as any).statusCode || (err as any).status || 500;
+
+  // ✅ LOG ESTRUTURADO com Winston (persistido em arquivo)
+  logError(err, req, {
+    statusCode,
+    body: req.body,
+    params: req.params,
+    query: req.query
   });
 
   // Se headers já foram enviados, delegar para handler padrão do Express
   if (res.headersSent) {
     return next(err);
   }
-
-  // Determinar status code
-  const statusCode = (err as any).statusCode || (err as any).status || 500;
 
   // ✅ SEMPRE retorna JSON (nunca HTML)
   res.status(statusCode).json({

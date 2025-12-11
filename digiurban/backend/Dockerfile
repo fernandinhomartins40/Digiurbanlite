@@ -48,6 +48,10 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 RUN mkdir -p /app/data
 RUN chown backend:nodejs /app/data
 
+# ✅ Create directory for logs (Winston)
+RUN mkdir -p /app/logs
+RUN chown backend:nodejs /app/logs
+
 USER backend
 
 EXPOSE 3001
