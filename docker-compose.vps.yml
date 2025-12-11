@@ -65,6 +65,7 @@ services:
 
       # Logs
       - LOG_LEVEL=info
+      - LOGS_DIR=/app/logs
 
     volumes:
       - digiurban_uploads:/app/uploads
