@@ -7,6 +7,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useNoDataServices } from '@/hooks/useNoDataServices';
 import { useServiceProtocols } from '@/hooks/useServiceProtocols';
 import { CreateNoDataProtocolModal } from './CreateNoDataProtocolModal';
@@ -37,6 +38,7 @@ interface NoDataServicesViewProps {
 }
 
 export function NoDataServicesView({ departmentSlug, departmentName }: NoDataServicesViewProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -437,7 +439,11 @@ export function NoDataServicesView({ departmentSlug, departmentName }: NoDataSer
                               </p>
                             </div>
                           </div>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/admin/protocolos/${protocol.id}`)}
+                          >
                             Ver Detalhes
                           </Button>
                         </div>
