@@ -141,6 +141,7 @@ const createChamadoSchema = z.object({
   title: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
   description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
   priority: z.number().int().min(1).max(5).default(3), // 1=LOW, 2=NORMAL, 3=HIGH, 4=URGENT, 5=CRITICAL
+  assignedUserId: z.string().optional(),
   observations: z.string().optional()
 });
 
@@ -231,6 +232,7 @@ router.post(
         serviceId: data.serviceId,
         departmentId: service.departmentId,
         requestedById: user.id,
+        assignedUserId: data.assignedUserId || undefined,
         status: 'PENDING' // Aguardando secretaria
       },
       include: {
