@@ -232,7 +232,7 @@ router.post(
         serviceId: data.serviceId,
         departmentId: service.departmentId,
         requestedById: user.id,
-        assignedUserId: data.assignedUserId || undefined,
+        ...(data.assignedUserId && data.assignedUserId.length > 0 ? { assignedUserId: data.assignedUserId } : {}),
         status: 'PENDING' // Aguardando secretaria
       },
       include: {
