@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { User, FileText, Users, Award, Calendar, ArrowLeft, Phone, Mail, MapPin, Clock } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { getFullApiUrl } from '@/lib/api-config'
 
 interface Protocol {
   id: string
@@ -69,7 +70,7 @@ export default function CitizenHistoryPage() {
     try {
       setLoading(true)
       const response = await fetch(
-        `/api/admin/gabinete/painel-prefeito/citizens/${params.id}/complete-history`,
+        getFullApiUrl(`/api/admin/gabinete/painel-prefeito/citizens/${params.id}/complete-history`),
         { credentials: 'include' }
       )
       const data = await response.json()
