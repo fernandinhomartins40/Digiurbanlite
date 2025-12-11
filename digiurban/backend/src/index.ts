@@ -364,6 +364,7 @@ try {
 console.log('📦 Carregando rotas adicionais...');
 
 try { console.log('   → admin-chamados...'); app.use('/api/admin/chamados', require('./routes/admin-chamados').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-chamados:', e); }
+try { console.log('   → departments-tickets...'); app.use('/api/departments', require('./routes/departments-tickets').default); console.log('   ✓'); } catch (e) { console.error('❌ departments-tickets:', e); }
 try { console.log('   → admin-reports...'); app.use('/api/admin/relatorios', require('./routes/admin-reports').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-reports:', e); }
 try { console.log('   → admin-gabinete...'); app.use('/api/admin/gabinete', require('./routes/admin-gabinete').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-gabinete:', e); }
 try { console.log('   → admin-citizens...'); app.use('/api/admin/citizens', require('./routes/admin-citizens').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-citizens:', e); }
