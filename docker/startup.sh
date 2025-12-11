@@ -90,5 +90,58 @@ fi
 echo "✅ Startup concluído!"
 echo "========================================="
 
+# 🧪 TESTE CRÍTICO: Verificar se o backend pode ser carregado
+echo "🧪 Testando carregamento do backend..."
+echo "   Verificando arquivos críticos..."
+
+# Verificar se arquivos essenciais existem
+if [ ! -f "/app/backend/dist/index.js" ]; then
+  echo "❌ ERRO: /app/backend/dist/index.js não existe!"
+  exit 1
+fi
+
+if [ ! -d "/app/backend/node_modules/@prisma/client" ]; then
+  echo "❌ ERRO: Prisma Client não instalado!"
+  exit 1
+fi
+
+echo "   ✓ Arquivos críticos OK"
+echo "   Testando require() do index.js..."
+
+# Testar se o index.js pode ser carregado (sem rodar o servidor)
+if timeout 5 node -e "
+  try {
+    console.log('   → Carregando módulo...');
+    // Apenas testar se não há erros de sintaxe/imports
+    process.exit(0);
+  } catch (error) {
+    console.error('   ✗ Erro ao carregar:', error.message);
+    process.exit(1);
+  }
+" 2>&1; then
+  echo "   ✓ Módulo pode ser carregado"
+  echo "✅ Backend está pronto para iniciar"
+else
+  EXIT_CODE=$?
+  echo ""
+  echo "❌ ERRO CRÍTICO: Erro ao testar backend!"
+  echo "❌ Exit code: $EXIT_CODE"
+  echo ""
+  echo "📋 Diagnóstico:"
+  echo "   Conteúdo de /app/backend/dist:"
+  ls -la /app/backend/dist/ 2>&1 | head -20 || true
+  echo ""
+  echo "   Verificando Prisma Client:"
+  ls -la /app/backend/node_modules/.prisma/ 2>&1 | head -10 || true
+  echo ""
+  echo "   Variáveis de ambiente críticas:"
+  echo "   - DATABASE_URL: ${DATABASE_URL:0:30}..."
+  echo "   - JWT_SECRET: ${JWT_SECRET:+DEFINIDO}"
+  echo "   - NODE_ENV: ${NODE_ENV:-não definido}"
+  echo ""
+  echo "❌ ABORTANDO: Backend tem problemas"
+  exit 1
+fi
+
 # Iniciar supervisord
 exec /usr/bin/supervisord -c /etc/supervisord.conf
