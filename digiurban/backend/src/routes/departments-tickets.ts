@@ -19,16 +19,20 @@ router.get('/tickets', async (req: Request, res: Response) => {
   try {
     const { user } = req;
 
-    if (!user || !user.departmentId) {
-      res.status(403).json({ error: 'Usuário não pertence a nenhuma secretaria' });
+    if (!user) {
+      res.status(401).json({ error: 'Não autenticado' });
       return;
     }
 
     const status = req.query.status as string;
 
-    const where: Record<string, unknown> = {
-      departmentId: user.departmentId
-    };
+    const where: Record<string, unknown> = {};
+
+    // Se usuário tem departmentId, filtra apenas os chamados da secretaria
+    // Se é ADMIN (sem departmentId), mostra todos os chamados
+    if (user.departmentId) {
+      where.departmentId = user.departmentId;
+    }
 
     if (status) {
       where.status = status;
@@ -76,9 +80,14 @@ router.get('/tickets', async (req: Request, res: Response) => {
     });
 
     // Estatísticas
+    const statsWhere: Record<string, unknown> = {};
+    if (user.departmentId) {
+      statsWhere.departmentId = user.departmentId;
+    }
+
     const stats = await prisma.adminTicket.groupBy({
       by: ['status'],
-      where: { departmentId: user.departmentId },
+      where: statsWhere,
       _count: { status: true }
     });
 
