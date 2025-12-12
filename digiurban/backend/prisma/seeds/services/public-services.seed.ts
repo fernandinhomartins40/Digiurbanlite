@@ -1,607 +1,130 @@
 /**
  * SEED DE SERVIÇOS - SECRETARIA DE SERVIÇOS PÚBLICOS
- * Total: 10 serviços
+ * Total: 5 serviços (5 COM_DADOS + 0 SEM_DADOS)
  */
 
 import { ServiceDefinition } from './types';
 
-export const publicServices: ServiceDefinition[] = [
+export const publicServicesServices: ServiceDefinition[] = [
   {
-    name: 'Desobstrução de Bueiro',
-    description: 'Solicitação de desobstrução de bueiro ou boca de lobo',
+    name: 'Iluminação Pública (Poste Queimado)',
+    description: 'Solicitação de reparo de iluminação pública',
     departmentCode: 'SERVICOS_PUBLICOS',
     serviceType: 'COM_DADOS',
-    moduleType: 'DESOBSTRUCAO_BUEIRO',
+    moduleType: 'ILUMINACAO_PUBLICA',
+    requiresDocuments: false,
+    estimatedDays: 7,
+    priority: 4,
+    category: 'Iluminação',
+    icon: 'Lightbulb',
+    color: '#facc15',
+    formSchema: {
+      type: 'object',
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      properties: {
+        enderecoPoste: { type: 'string', title: 'Endereço do Poste', maxLength: 300 },
+        numeroPoste: { type: 'string', title: 'Número do Poste (se visível)', maxLength: 50 },
+        tipoProblema: { type: 'string', title: 'Tipo de Problema', enum: ['Lâmpada Queimada', 'Poste Danificado', 'Fiação Exposta', 'Acende Durante o Dia', 'Outro'] },
+        descricao: { type: 'string', title: 'Descrição', maxLength: 500, widget: 'textarea' }
+      },
+      required: ['enderecoPoste', 'tipoProblema']
+    }
+  },
+
+  {
+    name: 'Limpeza Urbana e Coleta de Lixo',
+    description: 'Solicitações relacionadas a limpeza urbana e coleta de lixo',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'LIMPEZA_URBANA',
     requiresDocuments: false,
     estimatedDays: 5,
     priority: 4,
     category: 'Limpeza',
-    icon: 'Drain',
-    color: '#16a34a',
+    icon: 'Trash2',
+    color: '#84cc16',
     formSchema: {
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'tipoObstrucao',
-          label: 'Tipo de Obstrução',
-          type: 'select',
-          options: ['Boca de Lobo Entupida', 'Bueiro Obstruído', 'Grelha Danificada', 'Acúmulo de Lixo', 'Outro'],
-          required: true
-        },
-        {
-          id: 'localObstrucao',
-          label: 'Local da Obstrução',
-          type: 'text',
-          maxLength: 300,
-          required: true
-        },
-        {
-          id: 'causandoAlagamento',
-          label: 'Está causando alagamento?',
-          type: 'checkbox',
-          required: false
-        },
-        {
-          id: 'descricaoProblema',
-          label: 'Descrição do Problema',
-          type: 'textarea',
-          minLength: 20,
-          maxLength: 1000,
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
-      ]
+      type: 'object',
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      properties: {
+        tipoSolicitacao: { type: 'string', title: 'Tipo de Solicitação', enum: ['Coleta Não Realizada', 'Coleta Especial (Entulho)', 'Coleta de Móveis', 'Limpeza de Terreno', 'Outro'] },
+        enderecoProblema: { type: 'string', title: 'Endereço', maxLength: 300 },
+        descricao: { type: 'string', title: 'Descrição', maxLength: 500, widget: 'textarea' }
+      },
+      required: ['tipoSolicitacao', 'enderecoProblema']
     }
   },
+
   {
-    name: 'Solicitação de Poda de Árvore',
-    description: 'Solicitação de poda de árvore em via pública',
+    name: 'Solicitação de Capina e Roçagem',
+    description: 'Solicitação de capina e limpeza de terrenos públicos',
     departmentCode: 'SERVICOS_PUBLICOS',
     serviceType: 'COM_DADOS',
-    moduleType: 'SOLICITACAO_PODA',
+    moduleType: 'CAPINA_ROCAGEM',
     requiresDocuments: false,
-    estimatedDays: 15,
+    estimatedDays: 10,
     priority: 3,
-    category: 'Poda',
-    icon: 'TreeDeciduous',
-    color: '#16a34a',
+    category: 'Limpeza',
+    icon: 'Shovel',
+    color: '#65a30d',
     formSchema: {
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'localArvore',
-          label: 'Local da Árvore',
-          type: 'text',
-          maxLength: 300,
-          required: true
-        },
-        {
-          id: 'motivoPoda',
-          label: 'Motivo da Poda',
-          type: 'select',
-          options: ['Galhos na Rede Elétrica', 'Risco de Queda', 'Obstrução de Visibilidade', 'Danificação de Calçada', 'Interferência em Iluminação', 'Outro'],
-          required: true
-        },
-        {
-          id: 'descricaoSituacao',
-          label: 'Descrição da Situação',
-          type: 'textarea',
-          minLength: 20,
-          maxLength: 1000,
-          required: true
-        },
-        {
-          id: 'urgente',
-          label: 'Situação Urgente (risco iminente)?',
-          type: 'checkbox',
-          required: false
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
-      ]
+      type: 'object',
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      properties: {
+        tipoArea: { type: 'string', title: 'Tipo de Área', enum: ['Terreno Baldio', 'Calçada', 'Praça', 'Via Pública', 'Outro'] },
+        enderecoArea: { type: 'string', title: 'Endereço da Área', maxLength: 300 },
+        descricao: { type: 'string', title: 'Descrição', maxLength: 500, widget: 'textarea' }
+      },
+      required: ['tipoArea', 'enderecoArea']
     }
   },
+
   {
-    name: 'Registro de Problema com Foto (Funcionalidade Transversal)',
-    description: 'Registro geolocalizado de problemas com foto',
-    departmentCode: 'SERVICOS_PUBLICOS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: false,
-    estimatedDays: null,
-    priority: 1,
-    category: 'Transversal',
-    icon: 'Camera',
-    color: '#94a3b8',
-  },
-  {
-    name: 'Gestão de Equipes de Serviços',
-    description: 'Programação de equipes e rotas de trabalho',
+    name: 'Desobstrução de Bueiro',
+    description: 'Solicitação de limpeza e desobstrução de bueiros',
     departmentCode: 'SERVICOS_PUBLICOS',
     serviceType: 'COM_DADOS',
-    moduleType: 'GESTAO_EQUIPES_SERVICOS',
+    moduleType: 'DESOBSTRUCAO_BUEIRO',
     requiresDocuments: false,
-    estimatedDays: null,
-    priority: 2,
-    category: 'Gestão Interna',
-    icon: 'Users',
-    color: '#64748b',
-    formSchema: {
-      citizenFields: [
-        'citizen_name',
-        'citizen_cpf',
-        'citizen_rg',
-        'citizen_birthdate',
-        'citizen_email',
-        'citizen_phone',
-        'citizen_phonesecondary',
-        'citizen_zipcode',
-        'citizen_address',
-        'citizen_addressnumber',
-        'citizen_addresscomplement',
-        'citizen_neighborhood',
-        'citizen_mothername',
-        'citizen_maritalstatus',
-        'citizen_occupation',
-        'citizen_familyincome'
-      ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
-        },
-        {
-          id: 'tipoEquipe',
-          label: 'Tipo de Equipe',
-          type: 'select',
-          options: ['Limpeza Urbana', 'Coleta de Lixo', 'Poda de Árvores', 'Iluminação Pública', 'Capina', 'Desobstrução', 'Equipe Mista'],
-          required: true
-        },
-        {
-          id: 'numeroEquipe',
-          label: 'Número da Equipe',
-          type: 'text',
-          maxLength: 50,
-          required: true
-        },
-        {
-          id: 'dataServico',
-          label: 'Data do Serviço',
-          type: 'date',
-          required: true
-        },
-        {
-          id: 'horarioInicio',
-          label: 'Horário de Início',
-          type: 'text',
-          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
-          required: true
-        },
-        {
-          id: 'horarioTermino',
-          label: 'Horário de Término',
-          type: 'text',
-          pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$',
-          required: true
-        },
-        {
-          id: 'rotaTrabalho',
-          label: 'Rota de Trabalho (ruas/bairros)',
-          type: 'textarea',
-          minLength: 10,
-          maxLength: 1000,
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
-      ]
-    }
-  },
-  {
-    name: 'Certidão de Execução de Serviço',
-    description: 'Emissão de certidão comprovando execução de serviço público',
-    departmentCode: 'SERVICOS_PUBLICOS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'numero_protocolo', name: 'Número do Protocolo', required: true }],
-    estimatedDays: 5,
-    priority: 3,
-    category: 'Certidões',
-    icon: 'FileText',
-    color: '#f59e0b',
-  },
-  {
-    name: 'Certidão de Limpeza Urbana',
-    description: 'Emissão de certidão de regularidade de limpeza',
-    departmentCode: 'SERVICOS_PUBLICOS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }],
-    estimatedDays: 5,
-    priority: 3,
-    category: 'Certidões',
-    icon: 'FileText',
-    color: '#f59e0b',
-  },
-  {
-    name: 'Declaração de Manutenção de Via',
-    description: 'Emissão de declaração de manutenção realizada em via pública',
-    departmentCode: 'SERVICOS_PUBLICOS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'localizacao_via', name: 'Localização da Via', required: true }],
     estimatedDays: 7,
-    priority: 3,
-    category: 'Declarações',
-    icon: 'FileCheck',
-    color: '#f59e0b',
-  },
-  {
-    name: 'Atestado de Condições de Infraestrutura',
-    description: 'Emissão de atestado das condições de infraestrutura urbana',
-    departmentCode: 'SERVICOS_PUBLICOS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }, { id: 'descricao_area', name: 'Descrição da Área', required: true }],
-    estimatedDays: 10,
-    priority: 3,
-    category: 'Atestados',
-    icon: 'CheckCircle',
-    color: '#f59e0b',
-  },
-  {
-    name: 'Laudo de Vistoria de Iluminação Pública',
-    description: 'Emissão de laudo técnico de vistoria de iluminação',
-    departmentCode: 'SERVICOS_PUBLICOS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'localizacao_pontos', name: 'Localização dos Pontos', required: true }],
-    estimatedDays: 10,
-    priority: 3,
-    category: 'Laudos',
-    icon: 'ClipboardCheck',
-    color: '#f59e0b',
-  },
-  {
-    name: 'Autorização para Intervenção em Via Pública',
-    description: 'Emissão de autorização para obras em vias públicas',
-    departmentCode: 'SERVICOS_PUBLICOS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'cnpj', name: 'CNPJ', required: true }, { id: 'projeto_intervencao', name: 'Projeto de Intervenção', required: true }, { id: 'art', name: 'ART', required: true }],
-    estimatedDays: 15,
     priority: 4,
-    category: 'Autorizações',
-    icon: 'Construction',
-    color: '#f59e0b',
-  },
-  {
-      name: 'Atendimentos - Serviços Públicos',
-      description: 'Registro geral de atendimentos em serviços públicos',
-      departmentCode: 'SERVICOS_PUBLICOS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'ATENDIMENTOS_SERVICOS_PUBLICOS',
-      requiresDocuments: false,
-      estimatedDays: 1,
-      priority: 3,
-      category: 'Atendimento',
-      icon: 'Settings',
-      color: '#64748b',
-      formSchema: {
-        type: 'object',
-          citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoAtendimento: { type: 'string', title: 'Tipo de Atendimento', enum: ['Consulta', 'Solicitação', 'Reclamação', 'Informação', 'Outro'] },
-          assunto: { type: 'string', title: 'Assunto', maxLength: 200 },
-          descricao: { type: 'string', title: 'Descrição do Atendimento', minLength: 20, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoAtendimento', 'assunto', 'descricao'],
+    category: 'Drenagem',
+    icon: 'Droplet',
+    color: '#06b6d4',
+    formSchema: {
+      type: 'object',
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      properties: {
+        enderecoBueiro: { type: 'string', title: 'Endereço do Bueiro', maxLength: 300 },
+        gravidade: { type: 'string', title: 'Gravidade', enum: ['Normal', 'Urgente (Alagamento)'] },
+        descricao: { type: 'string', title: 'Descrição', maxLength: 500, widget: 'textarea' }
       },
-    },
-  {
-      name: 'Iluminação Pública (Poste Queimado)',
-      description: 'Solicitação de reparo em iluminação pública',
-      departmentCode: 'SERVICOS_PUBLICOS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'ILUMINACAO_PUBLICA',
-      requiresDocuments: false,
-      estimatedDays: 7,
-      priority: 4,
-      category: 'Iluminação',
-      icon: 'Lightbulb',
-      color: '#facc15',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          localPoste: { type: 'string', title: 'Local do Poste', maxLength: 300 },
-          tipoProblema: { type: 'string', title: 'Tipo de Problema', enum: ['Lâmpada Queimada', 'Poste Danificado', 'Fiação Exposta', 'Luminária Quebrada', 'Lâmpada Acesa Durante o Dia', 'Outro'] },
-          descricaoProblema: { type: 'string', title: 'Descrição do Problema', minLength: 20, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'localPoste', 'tipoProblema', 'descricaoProblema'],
-      },
-    },
-  {
-      name: 'Limpeza Urbana (Coleta de Lixo)',
-      description: 'Agendamento de coleta e limpeza urbana',
-      departmentCode: 'SERVICOS_PUBLICOS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'LIMPEZA_URBANA',
-      requiresDocuments: false,
-      estimatedDays: 3,
-      priority: 4,
-      category: 'Limpeza',
-      icon: 'Trash2',
-      color: '#22c55e',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoSolicitacao: { type: 'string', title: 'Tipo de Solicitação', enum: ['Falta de Coleta', 'Limpeza de Logradouro', 'Remoção de Lixo Irregular', 'Melhoria no Serviço', 'Outro'] },
-          localLimpeza: { type: 'string', title: 'Local para Limpeza', maxLength: 300 },
-          descricaoSolicitacao: { type: 'string', title: 'Descrição da Solicitação', minLength: 20, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoSolicitacao', 'localLimpeza', 'descricaoSolicitacao'],
-      },
-    },
-  {
-      name: 'Coleta Especial (Entulho e Móveis)',
-      description: 'Agendamento de coleta de entulho e móveis velhos',
-      departmentCode: 'SERVICOS_PUBLICOS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'COLETA_ESPECIAL',
-      requiresDocuments: false,
-      estimatedDays: 10,
-      priority: 3,
-      category: 'Coleta',
-      icon: 'Truck',
-      color: '#f97316',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoMaterial: { type: 'string', title: 'Tipo de Material', enum: ['Entulho de Construção', 'Móveis Velhos', 'Eletrodomésticos', 'Galhos e Árvores', 'Outro'] },
-          volumeEstimado: { type: 'string', title: 'Volume Estimado', enum: ['Até 1m³', '1-3m³', '3-5m³', 'Mais de 5m³'] },
-          enderecoColeta: { type: 'string', title: 'Endereço para Coleta', maxLength: 300 },
-          descricaoMaterial: { type: 'string', title: 'Descrição do Material', minLength: 20, maxLength: 1000 },
-          dataPreferencial: { type: 'string', format: 'date', title: 'Data Preferencial para Coleta' },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoMaterial', 'volumeEstimado', 'enderecoColeta', 'descricaoMaterial'],
-      },
-    },
-  {
-      name: 'Solicitação de Capina',
-      description: 'Solicitação de capina de terreno ou via pública',
-      departmentCode: 'SERVICOS_PUBLICOS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'SOLICITACAO_CAPINA',
-      requiresDocuments: false,
-      estimatedDays: 15,
-      priority: 3,
-      category: 'Manutenção',
-      icon: 'Scissors',
-      color: '#84cc16',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoLocal: { type: 'string', title: 'Tipo de Local', enum: ['Terreno Baldio', 'Calçada', 'Via Pública', 'Praça', 'Outro'] },
-          localCapina: { type: 'string', title: 'Local para Capina', maxLength: 300 },
-          areaEstimada: { type: 'string', title: 'Área Estimada', enum: ['Até 50m²', '50-100m²', '100-500m²', 'Mais de 500m²'] },
-          descricaoSituacao: { type: 'string', title: 'Descrição da Situação', minLength: 20, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoLocal', 'localCapina', 'descricaoSituacao'],
-      },
-    },
-  {
-      name: 'Solicitação de Desobstrução (Bueiro Entupido)',
-      description: 'Solicitação de limpeza de boca de lobo e bueiro',
-      departmentCode: 'SERVICOS_PUBLICOS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'SOLICITACAO_DESOBSTRUCAO',
-      requiresDocuments: false,
-      estimatedDays: 5,
-      priority: 4,
-      category: 'Drenagem',
-      icon: 'Droplets',
-      color: '#06b6d4',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoObstrucao: { type: 'string', title: 'Tipo de Obstrução', enum: ['Boca de Lobo Entupida', 'Bueiro Obstruído', 'Grelha Danificada', 'Acúmulo de Lixo', 'Outro'] },
-          localObstrucao: { type: 'string', title: 'Local da Obstrução', maxLength: 300 },
-          causandoAlagamento: { type: 'boolean', title: 'Está causando alagamento?' },
-          descricaoProblema: { type: 'string', title: 'Descrição do Problema', minLength: 20, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoObstrucao', 'localObstrucao', 'descricaoProblema'],
-      },
+      required: ['enderecoBueiro', 'gravidade']
     }
+  },
+
+  {
+    name: 'Registro de Problema com Foto',
+    description: 'Registro geral de problemas em serviços públicos com anexo de foto',
+    departmentCode: 'SERVICOS_PUBLICOS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'REGISTRO_PROBLEMA_FOTO',
+    requiresDocuments: true,
+    requiredDocuments: ['Foto do Problema'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Geral',
+    icon: 'Camera',
+    color: '#8b5cf6',
+    formSchema: {
+      type: 'object',
+      citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
+      properties: {
+        categoriaProblema: { type: 'string', title: 'Categoria do Problema', enum: ['Iluminação', 'Limpeza', 'Via Pública', 'Drenagem', 'Sinalização', 'Outro'] },
+        enderecoProblema: { type: 'string', title: 'Endereço do Problema', maxLength: 300 },
+        descricaoProblema: { type: 'string', title: 'Descrição do Problema', minLength: 20, maxLength: 1000, widget: 'textarea' }
+      },
+      required: ['categoriaProblema', 'enderecoProblema', 'descricaoProblema']
+    }
+  }
 ];

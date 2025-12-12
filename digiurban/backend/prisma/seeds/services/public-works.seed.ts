@@ -1,25 +1,27 @@
 /**
  * SEED DE SERVIÇOS - SECRETARIA DE OBRAS PÚBLICAS
- * Total: 8 serviços
+ * Total: 6 serviços (3 COM_DADOS + 3 SEM_DADOS)
  */
 
 import { ServiceDefinition } from './types';
 
 export const publicWorksServices: ServiceDefinition[] = [
+  // ========== SERVIÇOS COM_DADOS (3) ==========
+
   {
-    name: 'Aprovação de Projeto de Construção',
-    description: 'Aprovação de projetos de construção',
+    name: 'Solicitação de Reparo de Via',
+    description: 'Solicitação de reparo de ruas, calçadas e vias públicas',
     departmentCode: 'OBRAS_PUBLICAS',
     serviceType: 'COM_DADOS',
-    moduleType: 'APROVACAO_PROJETO_CONSTRUCAO',
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'projeto_arquitetonico', name: 'Projeto Arquitetônico', required: true }, { id: 'art', name: 'ART', required: true }, { id: 'matricula', name: 'Matrícula', required: true }],
-    estimatedDays: 45,
-    priority: 5,
-    category: 'Aprovação',
-    icon: 'Blueprint',
-    color: '#7c3aed',
+    moduleType: 'SOLICITACAO_REPARO_VIA',
+    requiresDocuments: false,
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Reparos',
+    icon: 'Construction',
+    color: '#f97316',
     formSchema: {
+      type: 'object',
       citizenFields: [
         'citizen_name',
         'citizen_cpf',
@@ -38,115 +40,49 @@ export const publicWorksServices: ServiceDefinition[] = [
         'citizen_occupation',
         'citizen_familyincome'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
+      properties: {
+        tipoReparo: {
+          type: 'string',
+          title: 'Tipo de Reparo',
+          enum: ['Buraco na Rua', 'Calçada Quebrada', 'Pavimentação Danificada', 'Meio-fio Quebrado', 'Outro']
         },
-        {
-          id: 'areaConstruir',
-          label: 'Área a Construir (m²)',
-          type: 'number',
-          minimum: 1,
-          required: true
+        enderecoProblema: {
+          type: 'string',
+          title: 'Endereço do Problema',
+          maxLength: 300
         },
-        {
-          id: 'tipoObra',
-          label: 'Tipo de Obra',
-          type: 'select',
-          options: ['Residencial', 'Comercial', 'Industrial', 'Misto'],
-          required: true
+        descricaoProblema: {
+          type: 'string',
+          title: 'Descrição do Problema',
+          minLength: 20,
+          maxLength: 1000,
+          widget: 'textarea'
         },
-        {
-          id: 'pavimentos',
-          label: 'Número de Pavimentos',
-          type: 'number',
-          minimum: 1,
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
+        gravidade: {
+          type: 'string',
+          title: 'Gravidade',
+          enum: ['Baixa', 'Média', 'Alta', 'Urgente']
         }
-      ]
+      },
+      required: ['tipoReparo', 'enderecoProblema', 'descricaoProblema', 'gravidade']
     }
   },
-  {
-    name: 'Alvará de Construção',
-    description: 'Emissão de alvará de construção',
-    departmentCode: 'OBRAS_PUBLICAS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'projeto_aprovado', name: 'Projeto Aprovado', required: true }, { id: 'art', name: 'ART', required: true }, { id: 'taxas_pagas', name: 'Taxas Pagas', required: true }],
-    estimatedDays: 5,
-    priority: 3,
-    category: 'Alvarás',
-    icon: 'FileCheck',
-    color: '#7c3aed',
-  },
-  {
-    name: 'Habite-se',
-    description: 'Emissão de habite-se',
-    departmentCode: 'OBRAS_PUBLICAS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'vistoria', name: 'Vistoria', required: true }, { id: 'projeto', name: 'Projeto', required: true }, { id: 'certidoes', name: 'Certidões', required: true }],
-    estimatedDays: 15,
-    priority: 4,
-    category: 'Conclusão',
-    icon: 'Home',
-    color: '#7c3aed',
-  },
-  {
-    name: 'Certidão de Numeração Predial',
-    description: 'Emissão de certidão de numeração',
-    departmentCode: 'OBRAS_PUBLICAS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'endereco', name: 'Endereço', required: true }],
-    estimatedDays: 7,
-    priority: 2,
-    category: 'Certidões',
-    icon: 'FileText',
-    color: '#7c3aed',
-  },
-  {
-    name: 'Laudo de Vistoria Técnica',
-    description: 'Emissão de laudo de vistoria',
-    departmentCode: 'OBRAS_PUBLICAS',
-    serviceType: 'SEM_DADOS',
-    moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'endereco_imovel', name: 'Endereço do Imóvel', required: true }],
-    estimatedDays: 20,
-    priority: 4,
-    category: 'Laudos',
-    icon: 'ClipboardCheck',
-    color: '#7c3aed',
-  },
+
   {
     name: 'Autorização para Demolição',
-    description: 'Autorização para demolição de imóvel',
+    description: 'Solicitação de autorização para demolição de edificação',
     departmentCode: 'OBRAS_PUBLICAS',
     serviceType: 'COM_DADOS',
     moduleType: 'AUTORIZACAO_DEMOLICAO',
     requiresDocuments: true,
-    requiredDocuments: [{ id: 'projeto', name: 'Projeto', required: true }, { id: 'laudo_estrutural', name: 'Laudo Estrutural', required: true }, { id: 'anuencia_vizinhos', name: 'Anuência Vizinhos', required: true }],
-    estimatedDays: 30,
-    priority: 5,
+    requiredDocuments: ['CPF', 'RG', 'Matrícula do Imóvel', 'Projeto de Demolição', 'ART'],
+    estimatedDays: 20,
+    priority: 4,
     category: 'Autorizações',
-    icon: 'Hammer',
-    color: '#6d28d9',
+    icon: 'HardHat',
+    color: '#dc2626',
     formSchema: {
+      type: 'object',
       citizenFields: [
         'citizen_name',
         'citizen_cpf',
@@ -165,361 +101,147 @@ export const publicWorksServices: ServiceDefinition[] = [
         'citizen_occupation',
         'citizen_familyincome'
       ],
-      fields: [
-        {
-          id: 'pontoReferencia',
-          label: 'Ponto de Referência',
-          type: 'text',
-          maxLength: 200,
-          required: false
+      properties: {
+        enderecoImovel: {
+          type: 'string',
+          title: 'Endereço do Imóvel',
+          maxLength: 300
         },
-        {
-          id: 'motivoDemolicao',
-          label: 'Motivo da Demolição',
-          type: 'textarea',
-          minLength: 20,
-          maxLength: 1000,
-          required: true
+        motivoDemolicao: {
+          type: 'string',
+          title: 'Motivo da Demolição',
+          enum: ['Risco de Desabamento', 'Reforma Total', 'Obra Nova', 'Outro']
         },
-        {
-          id: 'areaDemolir',
-          label: 'Área a Demolir (m²)',
+        areaImovel: {
           type: 'number',
-          minimum: 1,
-          required: true
+          title: 'Área do Imóvel (m²)',
+          minimum: 1
         },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
+        nomeResponsavelTecnico: {
+          type: 'string',
+          title: 'Nome do Responsável Técnico',
+          maxLength: 200
+        },
+        creaResponsavel: {
+          type: 'string',
+          title: 'CREA do Responsável',
+          maxLength: 50
         }
-      ]
+      },
+      required: ['enderecoImovel', 'motivoDemolicao', 'areaImovel', 'nomeResponsavelTecnico', 'creaResponsavel']
     }
   },
+
   {
-    name: 'Plano Diretor',
-    description: 'Consulta ao plano diretor municipal',
+    name: 'Autorização para Intervenção em Via Pública',
+    description: 'Autorização para obras ou intervenções em vias públicas',
+    departmentCode: 'OBRAS_PUBLICAS',
+    serviceType: 'COM_DADOS',
+    moduleType: 'AUTORIZACAO_INTERVENCAO_VIA',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'CNPJ (se empresa)', 'Projeto de Intervenção', 'ART'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'TrafficCone',
+    color: '#f59e0b',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        tipoIntervencao: {
+          type: 'string',
+          title: 'Tipo de Intervenção',
+          enum: ['Abertura de Vala', 'Passagem de Tubulação', 'Instalação de Poste', 'Pavimentação', 'Outro']
+        },
+        enderecoIntervencao: {
+          type: 'string',
+          title: 'Endereço da Intervenção',
+          maxLength: 300
+        },
+        dataInicio: {
+          type: 'string',
+          format: 'date',
+          title: 'Data de Início Prevista'
+        },
+        prazoObra: {
+          type: 'integer',
+          title: 'Prazo da Obra (dias)',
+          minimum: 1
+        },
+        descricaoIntervencao: {
+          type: 'string',
+          title: 'Descrição da Intervenção',
+          minLength: 30,
+          maxLength: 1000,
+          widget: 'textarea'
+        }
+      },
+      required: ['tipoIntervencao', 'enderecoIntervencao', 'dataInicio', 'prazoObra', 'descricaoIntervencao']
+    }
+  },
+
+  // ========== SERVIÇOS SEM_DADOS (3) ==========
+
+  {
+    name: 'Certidão de Numeração Predial',
+    description: 'Emissão de certidão de numeração predial',
     departmentCode: 'OBRAS_PUBLICAS',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: false,
-    estimatedDays: null,
-    priority: 1,
-    category: 'Informativo',
-    icon: 'Map',
-    color: '#94a3b8',
-  },
-  {
-    name: 'Gestão de Obras Públicas',
-    description: 'Controle interno de obras em andamento',
-    departmentCode: 'OBRAS_PUBLICAS',
-    serviceType: 'COM_DADOS',
-    moduleType: 'GESTAO_OBRAS',
-    requiresDocuments: false,
-    estimatedDays: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Propriedade'],
+    estimatedDays: 10,
     priority: 3,
-    category: 'Gestão Interna',
-    icon: 'Wrench',
-    color: '#6b7280',
-    formSchema: {
-      citizenFields: [],
-      fields: [
-        {
-          id: 'nomeObra',
-          label: 'Nome da Obra',
-          type: 'text',
-          minLength: 3,
-          maxLength: 200,
-          required: true
-        },
-        {
-          id: 'localizacao',
-          label: 'Localização',
-          type: 'text',
-          maxLength: 300,
-          required: true
-        },
-        {
-          id: 'orcamento',
-          label: 'Orçamento',
-          type: 'number',
-          minimum: 0,
-          required: true
-        },
-        {
-          id: 'prazo',
-          label: 'Prazo (dias)',
-          type: 'number',
-          minimum: 1,
-          required: true
-        },
-        {
-          id: 'status',
-          label: 'Status',
-          type: 'select',
-          options: ['Planejamento', 'Em Execução', 'Paralisada', 'Concluída'],
-          required: true
-        },
-        {
-          id: 'observacoes',
-          label: 'Observações',
-          type: 'textarea',
-          maxLength: 500,
-          required: false
-        }
-      ]
-    }
+    category: 'Certidões',
+    icon: 'Hash',
+    color: '#6366f1'
   },
+
   {
-      name: 'Atendimentos - Obras Públicas',
-      description: 'Registro geral de atendimentos na área de obras',
-      departmentCode: 'OBRAS_PUBLICAS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'ATENDIMENTOS_OBRAS',
-      requiresDocuments: false,
-      estimatedDays: 1,
-      priority: 3,
-      category: 'Atendimento',
-      icon: 'HardHat',
-      color: '#f59e0b',
-      formSchema: {
-        type: 'object',
-          citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          motivoAtendimento: { type: 'string', title: 'Motivo do Atendimento', enum: ['Solicitação de Reparo', 'Vistoria Técnica', 'Informações sobre Obras', 'Reclamação', 'Outro'] },
-          descricaoAtendimento: { type: 'string', title: 'Descrição do Atendimento', minLength: 10, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'motivoAtendimento', 'descricaoAtendimento']
-      }
-    },
+    name: 'Habite-se',
+    description: 'Emissão de habite-se (certificado de conclusão de obra)',
+    departmentCode: 'OBRAS_PUBLICAS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Alvará de Construção', 'ART', 'Fotos da Obra Concluída'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Certificados',
+    icon: 'Home',
+    color: '#10b981'
+  },
+
   {
-      name: 'Solicitação de Reparo de Via',
-      description: 'Solicitação de tapa-buraco e pavimentação',
-      departmentCode: 'OBRAS_PUBLICAS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'SOLICITACAO_REPARO_VIA',
-      requiresDocuments: false,
-      estimatedDays: 15,
-      priority: 4,
-      category: 'Manutenção',
-      icon: 'Construction',
-      color: '#ea580c',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          enderecoProblema: { type: 'string', title: 'Endereço do Problema', minLength: 10, maxLength: 300 },
-          tipoProblema: { type: 'string', title: 'Tipo de Problema', enum: ['Buraco', 'Afundamento', 'Rachadura', 'Pavimentação Danificada', 'Valeta', 'Outro'] },
-          descricaoProblema: { type: 'string', title: 'Descrição do Problema', minLength: 20, maxLength: 1000 },
-          tamanhoEstimado: { type: 'string', title: 'Tamanho Estimado', enum: ['Pequeno (até 1m)', 'Médio (1-3m)', 'Grande (mais de 3m)'] },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'enderecoProblema', 'tipoProblema', 'descricaoProblema']
-      }
-    },
-  {
-      name: 'Vistoria Técnica de Obras',
-      description: 'Solicitação de inspeção técnica em obras',
-      departmentCode: 'OBRAS_PUBLICAS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'VISTORIA_TECNICA_OBRAS',
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'projeto', name: 'Projeto', required: true }, { id: 'documentacao_imovel', name: 'Documentação do Imóvel', required: true }],
-      estimatedDays: 10,
-      priority: 3,
-      category: 'Vistoria',
-      icon: 'ClipboardCheck',
-      color: '#f97316',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          enderecoObra: { type: 'string', title: 'Endereço da Obra', minLength: 10, maxLength: 300 },
-          tipoVistoria: { type: 'string', title: 'Tipo de Vistoria', enum: ['Estrutural', 'Elétrica', 'Hidráulica', 'Pavimentação', 'Geral', 'Outro'] },
-          motivoVistoria: { type: 'string', title: 'Motivo da Vistoria', minLength: 30, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'enderecoObra', 'tipoVistoria', 'motivoVistoria']
-      }
-    },
-  {
-      name: 'Cadastro de Obra Pública',
-      description: 'Registro de obras públicas no município',
-      departmentCode: 'OBRAS_PUBLICAS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'CADASTRO_OBRA_PUBLICA',
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'projeto', name: 'Projeto', required: true }, { id: 'orcamento', name: 'Orçamento', required: true }, { id: 'cronograma', name: 'Cronograma', required: true }],
-      estimatedDays: 7,
-      priority: 3,
-      category: 'Cadastro',
-      icon: 'Building2',
-      color: '#fb923c',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          nomeObra: { type: 'string', title: 'Nome da Obra', minLength: 3, maxLength: 200 },
-          tipoObra: { type: 'string', title: 'Tipo de Obra', enum: ['Pavimentação', 'Edificação', 'Saneamento', 'Drenagem', 'Ponte/Viaduto', 'Praça/Parque', 'Outro'] },
-          enderecoObra: { type: 'string', title: 'Endereço da Obra', minLength: 10, maxLength: 300 },
-          descricaoObra: { type: 'string', title: 'Descrição da Obra', minLength: 50, maxLength: 1000 },
-          dataInicio: { type: 'string', format: 'date', title: 'Data de Início Prevista' },
-          dataTermino: { type: 'string', format: 'date', title: 'Data de Término Prevista' },
-          valorOrcado: { type: 'number', title: 'Valor Orçado (R$)', minimum: 0 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeObra', 'tipoObra', 'enderecoObra', 'descricaoObra', 'dataInicio', 'dataTermino']
-      }
-    },
-  {
-      name: 'Inspeção de Obra',
-      description: 'Inspeção de andamento de obras públicas',
-      departmentCode: 'OBRAS_PUBLICAS',
-      serviceType: 'COM_DADOS',
-      moduleType: 'INSPECAO_OBRA',
-      requiresDocuments: false,
-      estimatedDays: 5,
-      priority: 3,
-      category: 'Inspeção',
-      icon: 'Eye',
-      color: '#fdba74',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          nomeObra: { type: 'string', title: 'Nome da Obra Inspecionada', maxLength: 200 },
-          dataInspecao: { type: 'string', format: 'date', title: 'Data da Inspeção' },
-          percentualConcluido: { type: 'integer', title: 'Percentual Concluído (%)', minimum: 0, maximum: 100 },
-          situacaoObra: { type: 'string', title: 'Situação da Obra', enum: ['No Prazo', 'Atrasada', 'Paralisada', 'Concluída'] },
-          relatoInspecao: { type: 'string', title: 'Relato da Inspeção', minLength: 30, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 }
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'nomeObra', 'dataInspecao', 'situacaoObra', 'relatoInspecao']
-      }
-    },
-  {
-      name: 'Acompanhamento de Obras',
-      description: 'Consulta ao progresso de obras públicas',
-      departmentCode: 'OBRAS_PUBLICAS',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: false,
-      estimatedDays: null,
-      priority: 1,
-      category: 'Informativo',
-      icon: 'Info',
-      color: '#94a3b8',
-    },
-  {
-      name: 'Mapa de Obras',
-      description: 'Visualização geoespacial de obras no município',
-      departmentCode: 'OBRAS_PUBLICAS',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: false,
-      estimatedDays: null,
-      priority: 1,
-      category: 'Informativo',
-      icon: 'Map',
-      color: '#94a3b8',
-    },
-  {name: 'Certidão de Obra Pública', description: 'Certidão oficial de obra pública realizada', departmentCode: 'OBRAS_PUBLICAS', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cnpj_cpf', name: 'CNPJ/CPF', required: true }], estimatedDays: 7, priority: 3, category: 'Certidões', icon: 'FileText', color: '#f59e0b'},
-  {name: 'Declaração de Manutenção Realizada', description: 'Declaração de manutenção em via pública', departmentCode: 'OBRAS_PUBLICAS', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }], estimatedDays: 5, priority: 3, category: 'Certidões', icon: 'FileCheck', color: '#10b981'},
-  {name: 'Atestado de Vistoria de Obras', description: 'Atestado de vistoria técnica realizada', departmentCode: 'OBRAS_PUBLICAS', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'documentos_imovel', name: 'Documentos do Imóvel', required: true }], estimatedDays: 7, priority: 4, category: 'Certidões', icon: 'ClipboardCheck', color: '#3b82f6'},
-  {name: 'Guia de Ocupação de Via', description: 'Autorização para ocupação temporária de via', departmentCode: 'OBRAS_PUBLICAS', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cnpj_cpf', name: 'CNPJ/CPF', required: true }, { id: 'projeto', name: 'Projeto', required: true }], estimatedDays: 10, priority: 4, category: 'Documentos', icon: 'Construction', color: '#ef4444'},
-  {name: 'Consulta de Status de Obra', description: 'Consulta do andamento de obras públicas', departmentCode: 'OBRAS_PUBLICAS', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }], estimatedDays: 1, priority: 2, category: 'Consultas', icon: 'Search', color: '#8b5cf6'},
-  {name: 'Segunda Via de Documentos de Obras', description: 'Reemissão de documentos relacionados a obras', departmentCode: 'OBRAS_PUBLICAS', serviceType: 'SEM_DADOS', moduleType: null, requiresDocuments: true, requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'protocolo_original', name: 'Protocolo Original', required: true }], estimatedDays: 5, priority: 2, category: 'Documentos', icon: 'Copy', color: '#6b7280'}
+    name: 'Laudo de Vistoria Técnica',
+    description: 'Emissão de laudo de vistoria técnica de edificação',
+    departmentCode: 'OBRAS_PUBLICAS',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Propriedade', 'Solicitação Formal'],
+    estimatedDays: 15,
+    priority: 3,
+    category: 'Laudos',
+    icon: 'ClipboardCheck',
+    color: '#3b82f6'
+  }
 ];
