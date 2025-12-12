@@ -1,115 +1,564 @@
 /**
  * SEED DE SERVIÇOS - SECRETARIA DE SEGURANÇA PÚBLICA
- * Total: 6 serviços
+ * Total: 13 serviços (8 COM_DADOS + 5 SEM_DADOS)
  */
 
 import { ServiceDefinition } from './types';
 
 export const publicSafetyServices: ServiceDefinition[] = [
+  // ========== SERVIÇOS COM_DADOS (8) ==========
+
   {
-    name: 'Registro de Ocorrência',
-    description: 'Registro de boletim de ocorrência',
+    name: 'Registro de Boletim de Ocorrência',
+    description: 'Registro de boletim de ocorrência para crimes, acidentes ou situações que necessitam de registro oficial',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'COM_DADOS',
     moduleType: 'REGISTRO_OCORRENCIA',
     requiresDocuments: true,
-    requiredDocuments: [{ id: 'rg', name: 'RG', required: true }, { id: 'cpf', name: 'CPF', required: true }, { id: 'comprovante_residencia', name: 'Comprovante de Residência', required: true }],
+    requiredDocuments: ['RG', 'CPF'],
     estimatedDays: 1,
     priority: 5,
     category: 'Ocorrências',
-    icon: 'Siren',
+    icon: 'FileWarning',
     color: '#dc2626',
     formSchema: {
       type: 'object',
       citizenFields: [
-          'citizen_name',
-          'citizen_cpf',
-          'citizen_rg',
-          'citizen_birthdate',
-          'citizen_email',
-          'citizen_phone',
-          'citizen_phonesecondary',
-          'citizen_zipcode',
-          'citizen_address',
-          'citizen_addressnumber',
-          'citizen_addresscomplement',
-          'citizen_neighborhood',
-          'citizen_mothername',
-          'citizen_maritalstatus',
-          'citizen_occupation',
-          'citizen_familyincome'
-        ],
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
       properties: {
-        // Campos do Cidadão
-
-        // Campos Customizados do Serviço
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-        tipoOcorrencia: { type: 'string', title: 'Tipo de Ocorrência', enum: ['Furto', 'Roubo', 'Ameaça', 'Perturbação', 'Acidente', 'Outro'] },
-        dataOcorrencia: { type: 'string', format: 'date', title: 'Data da Ocorrência' },
-        horaOcorrencia: { type: 'string', title: 'Hora da Ocorrência', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)$' },
-        localOcorrencia: { type: 'string', title: 'Local da Ocorrência', maxLength: 300 },
-        descricao: { type: 'string', title: 'Descrição dos Fatos', minLength: 50, maxLength: 2000, widget: 'textarea' },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+        tipoOcorrencia: {
+          type: 'string',
+          title: 'Tipo de Ocorrência',
+          enum: ['Furto', 'Roubo', 'Lesão Corporal', 'Ameaça', 'Dano ao Patrimônio', 'Perturbação do Sossego', 'Acidente de Trânsito', 'Desaparecimento', 'Outro']
+        },
+        dataHoraOcorrencia: {
+          type: 'string',
+          format: 'date-time',
+          title: 'Data e Hora da Ocorrência'
+        },
+        localOcorrencia: {
+          type: 'string',
+          title: 'Local da Ocorrência',
+          maxLength: 300
+        },
+        relatoDetalhado: {
+          type: 'string',
+          title: 'Relato Detalhado da Ocorrência',
+          minLength: 50,
+          maxLength: 2000,
+          widget: 'textarea'
+        },
+        testemunhas: {
+          type: 'string',
+          title: 'Testemunhas (nomes e contatos)',
+          maxLength: 500,
+          widget: 'textarea'
+        },
+        envolvidos: {
+          type: 'string',
+          title: 'Pessoas Envolvidas',
+          maxLength: 500,
+          widget: 'textarea'
+        },
+        observacoes: {
+          type: 'string',
+          title: 'Observações',
+          maxLength: 500,
+          widget: 'textarea'
+        }
       },
-      required: [
-        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
-        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
-        'tipoOcorrencia', 'dataOcorrencia', 'horaOcorrencia', 'localOcorrencia', 'descricao'
-      ]
+      required: ['tipoOcorrencia', 'dataHoraOcorrencia', 'localOcorrencia', 'relatoDetalhado']
     }
   },
+
   {
     name: 'Solicitação de Patrulhamento',
-    description: 'Solicitação de ronda policial',
+    description: 'Solicitação de patrulhamento em área específica ou período determinado',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'COM_DADOS',
-    moduleType: 'PATROLHAMENTO',
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'rg', name: 'RG', required: true }, { id: 'cpf', name: 'CPF', required: true }],
+    moduleType: 'SOLICITACAO_PATRULHAMENTO',
+    requiresDocuments: false,
     estimatedDays: 2,
     priority: 4,
     category: 'Patrulhamento',
-    icon: 'Shield',
+    icon: 'Car',
     color: '#b91c1c',
     formSchema: {
       type: 'object',
       citizenFields: [
-          'citizen_name',
-          'citizen_cpf',
-          'citizen_rg',
-          'citizen_birthdate',
-          'citizen_email',
-          'citizen_phone',
-          'citizen_phonesecondary',
-          'citizen_zipcode',
-          'citizen_address',
-          'citizen_addressnumber',
-          'citizen_addresscomplement',
-          'citizen_neighborhood',
-          'citizen_mothername',
-          'citizen_maritalstatus',
-          'citizen_occupation',
-          'citizen_familyincome'
-        ],
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
       properties: {
-        // Campos do Cidadão
-
-        // Campos Customizados do Serviço
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-        motivo: { type: 'string', title: 'Motivo do Patrulhamento', minLength: 20, maxLength: 1000, widget: 'textarea' },
-        periodo: { type: 'string', title: 'Período Solicitado', maxLength: 200 },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
+        enderecoRonda: {
+          type: 'string',
+          title: 'Endereço da Área para Ronda',
+          maxLength: 300
+        },
+        motivoSolicitacao: {
+          type: 'string',
+          title: 'Motivo da Solicitação',
+          enum: ['Aumento de Criminalidade', 'Ponto de Drogas', 'Perturbação do Sossego', 'Vandalismo', 'Outro']
+        },
+        periodoPreferencial: {
+          type: 'string',
+          title: 'Período Preferencial',
+          enum: ['Manhã', 'Tarde', 'Noite', 'Madrugada', 'Indiferente']
+        },
+        justificativa: {
+          type: 'string',
+          title: 'Justificativa Detalhada',
+          minLength: 30,
+          maxLength: 1000,
+          widget: 'textarea'
+        },
+        observacoes: {
+          type: 'string',
+          title: 'Observações',
+          maxLength: 500,
+          widget: 'textarea'
+        }
       },
-      required: [
-        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
-        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
-        'motivo', 'periodo'
-      ]
+      required: ['enderecoRonda', 'motivoSolicitacao', 'justificativa']
     }
   },
+
   {
-    name: 'Mapa de Criminalidade',
-    description: 'Consulta de estatísticas de segurança',
+    name: 'Solicitação de Câmera de Segurança',
+    description: 'Solicitação de instalação de câmera de monitoramento em via pública',
+    departmentCode: 'SEGURANCA_PUBLICA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'SOLICITACAO_CAMERA_SEGURANCA',
+    requiresDocuments: true,
+    requiredDocuments: ['Justificativa', 'Abaixo-assinado', 'Fotos do Local'],
+    estimatedDays: 30,
+    priority: 4,
+    category: 'Câmeras',
+    icon: 'Camera',
+    color: '#7f1d1d',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        localInstalacao: {
+          type: 'string',
+          title: 'Local Sugerido para Instalação',
+          maxLength: 300
+        },
+        motivoInstalacao: {
+          type: 'string',
+          title: 'Motivo da Solicitação',
+          enum: ['Furtos Frequentes', 'Vandalismo', 'Tráfico de Drogas', 'Proteção de Equipamento Público', 'Outro']
+        },
+        numeroAssinaturas: {
+          type: 'integer',
+          title: 'Número de Assinaturas Coletadas',
+          minimum: 1
+        },
+        justificativa: {
+          type: 'string',
+          title: 'Justificativa Detalhada',
+          minLength: 50,
+          maxLength: 1000,
+          widget: 'textarea'
+        },
+        observacoes: {
+          type: 'string',
+          title: 'Observações',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['localInstalacao', 'motivoInstalacao', 'numeroAssinaturas', 'justificativa']
+    }
+  },
+
+  {
+    name: 'Denúncia Anônima (Disque Denúncia)',
+    description: 'Registro de denúncias sobre atividades criminosas (pode ser anônima)',
+    departmentCode: 'SEGURANCA_PUBLICA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'DENUNCIA_ANONIMA',
+    requiresDocuments: false,
+    estimatedDays: 1,
+    priority: 5,
+    category: 'Denúncia',
+    icon: 'AlertCircle',
+    color: '#ef4444',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        tipoDenuncia: {
+          type: 'string',
+          title: 'Tipo de Denúncia',
+          enum: ['Tráfico de Drogas', 'Roubo/Furto', 'Violência Doméstica', 'Corrupção', 'Maus-tratos', 'Porte Ilegal de Arma', 'Outro']
+        },
+        localDenuncia: {
+          type: 'string',
+          title: 'Local da Denúncia',
+          maxLength: 300
+        },
+        relatoDenuncia: {
+          type: 'string',
+          title: 'Relato Detalhado da Denúncia',
+          minLength: 30,
+          maxLength: 2000,
+          widget: 'textarea'
+        },
+        denunciaAnonima: {
+          type: 'boolean',
+          title: 'Deseja fazer a denúncia de forma anônima?',
+          default: false
+        },
+        observacoes: {
+          type: 'string',
+          title: 'Observações',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['tipoDenuncia', 'localDenuncia', 'relatoDenuncia']
+    }
+  },
+
+  {
+    name: 'Cadastro de Ponto Crítico',
+    description: 'Registro de áreas de risco e vulnerabilidade para mapeamento de segurança',
+    departmentCode: 'SEGURANCA_PUBLICA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'CADASTRO_PONTO_CRITICO',
+    requiresDocuments: false,
+    estimatedDays: 5,
+    priority: 4,
+    category: 'Mapeamento',
+    icon: 'MapPin',
+    color: '#f87171',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        localPontoCritico: {
+          type: 'string',
+          title: 'Local do Ponto Crítico',
+          maxLength: 300
+        },
+        tipoPontoCritico: {
+          type: 'string',
+          title: 'Tipo de Ponto Crítico',
+          enum: ['Alta Criminalidade', 'Tráfico de Drogas', 'Ponto de Prostituição', 'Vandalismo', 'Aglomeração de Pessoas', 'Outro']
+        },
+        descricaoSituacao: {
+          type: 'string',
+          title: 'Descrição da Situação',
+          minLength: 30,
+          maxLength: 1000,
+          widget: 'textarea'
+        },
+        nivelGravidade: {
+          type: 'string',
+          title: 'Nível de Gravidade',
+          enum: ['Baixo', 'Médio', 'Alto', 'Crítico']
+        },
+        observacoes: {
+          type: 'string',
+          title: 'Observações',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['localPontoCritico', 'tipoPontoCritico', 'descricaoSituacao', 'nivelGravidade']
+    }
+  },
+
+  {
+    name: 'Alerta de Segurança',
+    description: 'Registro de avisos e alertas de segurança em tempo real',
+    departmentCode: 'SEGURANCA_PUBLICA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'ALERTA_SEGURANCA',
+    requiresDocuments: false,
+    estimatedDays: 1,
+    priority: 5,
+    category: 'Alerta',
+    icon: 'Bell',
+    color: '#fca5a5',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        tipoAlerta: {
+          type: 'string',
+          title: 'Tipo de Alerta',
+          enum: ['Suspeito Circulando', 'Veículo Suspeito', 'Situação de Risco', 'Evento de Segurança', 'Outro']
+        },
+        localAlerta: {
+          type: 'string',
+          title: 'Local do Alerta',
+          maxLength: 300
+        },
+        descricaoAlerta: {
+          type: 'string',
+          title: 'Descrição do Alerta',
+          minLength: 20,
+          maxLength: 1000,
+          widget: 'textarea'
+        },
+        urgencia: {
+          type: 'string',
+          title: 'Nível de Urgência',
+          enum: ['Baixa', 'Média', 'Alta', 'Emergencial']
+        },
+        observacoes: {
+          type: 'string',
+          title: 'Observações',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['tipoAlerta', 'localAlerta', 'descricaoAlerta', 'urgencia']
+    }
+  },
+
+  {
+    name: 'Autorização de Segurança para Eventos',
+    description: 'Autorização de segurança para eventos com aglomeração de pessoas',
+    departmentCode: 'SEGURANCA_PUBLICA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'AUTORIZACAO_EVENTO_SEGURANCA',
+    requiresDocuments: true,
+    requiredDocuments: ['Projeto do Evento', 'Plano de Segurança', 'Seguro (opcional)'],
+    estimatedDays: 15,
+    priority: 4,
+    category: 'Autorizações',
+    icon: 'Shield',
+    color: '#991b1b',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        nomeEvento: {
+          type: 'string',
+          title: 'Nome do Evento',
+          maxLength: 200
+        },
+        tipoEvento: {
+          type: 'string',
+          title: 'Tipo de Evento',
+          enum: ['Show', 'Festival', 'Evento Esportivo', 'Festa Popular', 'Manifestação', 'Outro']
+        },
+        dataEvento: {
+          type: 'string',
+          format: 'date',
+          title: 'Data do Evento'
+        },
+        localEvento: {
+          type: 'string',
+          title: 'Local do Evento',
+          maxLength: 300
+        },
+        publicoEstimado: {
+          type: 'integer',
+          title: 'Público Estimado',
+          minimum: 1
+        },
+        observacoes: {
+          type: 'string',
+          title: 'Observações',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['nomeEvento', 'tipoEvento', 'dataEvento', 'localEvento', 'publicoEstimado']
+    }
+  },
+
+  {
+    name: 'Laudo de Vistoria de Segurança',
+    description: 'Solicitação de vistoria de segurança de estabelecimento comercial',
+    departmentCode: 'SEGURANCA_PUBLICA',
+    serviceType: 'COM_DADOS',
+    moduleType: 'LAUDO_VISTORIA_SEGURANCA',
+    requiresDocuments: true,
+    requiredDocuments: ['Alvará de Funcionamento', 'CNPJ'],
+    estimatedDays: 15,
+    priority: 3,
+    category: 'Vistorias',
+    icon: 'ClipboardCheck',
+    color: '#dc2626',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        nomeEstabelecimento: {
+          type: 'string',
+          title: 'Nome do Estabelecimento',
+          maxLength: 200
+        },
+        cnpj: {
+          type: 'string',
+          title: 'CNPJ',
+          maxLength: 18,
+          pattern: '^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$'
+        },
+        tipoEstabelecimento: {
+          type: 'string',
+          title: 'Tipo de Estabelecimento',
+          enum: ['Comércio', 'Indústria', 'Serviços', 'Casa Noturna', 'Eventos', 'Outro']
+        },
+        enderecoEstabelecimento: {
+          type: 'string',
+          title: 'Endereço do Estabelecimento',
+          maxLength: 300
+        },
+        finalidadeVistoria: {
+          type: 'string',
+          title: 'Finalidade da Vistoria',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['nomeEstabelecimento', 'cnpj', 'tipoEstabelecimento', 'enderecoEstabelecimento', 'finalidadeVistoria']
+    }
+  },
+
+  // ========== SERVIÇOS SEM_DADOS (5) ==========
+
+  {
+    name: 'Consulta de Estatísticas de Segurança',
+    description: 'Consulta de estatísticas e análises regionais de segurança pública',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
@@ -117,612 +566,67 @@ export const publicSafetyServices: ServiceDefinition[] = [
     estimatedDays: null,
     priority: 1,
     category: 'Informativo',
-    icon: 'ChartBar',
-    color: '#94a3b8',
+    icon: 'BarChart',
+    color: '#94a3b8'
   },
+
   {
     name: 'Certidão de Antecedentes',
-    description: 'Emissão de certidão de antecedentes criminais',
+    description: 'Emissão de certidão de antecedentes da guarda municipal',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }],
-    estimatedDays: 3,
-    priority: 2,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    estimatedDays: 5,
+    priority: 3,
     category: 'Certidões',
     icon: 'FileText',
-    color: '#dc2626',
+    color: '#dc2626'
   },
+
   {
-    name: 'Declaração de Perda de Documentos',
-    description: 'Emissão de declaração de perda',
+    name: 'Certidão de Ocorrência Policial',
+    description: 'Emissão de certidão de registro de ocorrência policial',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
     requiresDocuments: true,
-    requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'bo', name: 'BO', required: true }],
+    requiredDocuments: ['CPF', 'RG', 'Número da Ocorrência'],
     estimatedDays: 3,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#dc2626'
+  },
+
+  {
+    name: 'Declaração de Perda de Documentos',
+    description: 'Emissão de declaração de perda de documentos',
+    departmentCode: 'SEGURANCA_PUBLICA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'BO (opcional)'],
+    estimatedDays: 1,
     priority: 2,
     category: 'Declarações',
     icon: 'FileCheck',
-    color: '#dc2626',
+    color: '#dc2626'
   },
-  {
-    name: 'Autorização para Evento com Segurança',
-    description: 'Autorização para eventos com policiamento',
-    departmentCode: 'SEGURANCA_PUBLICA',
-    serviceType: 'COM_DADOS',
-    moduleType: 'AUTORIZACAO_EVENTO_SEG',
-    requiresDocuments: true,
-    requiredDocuments: [{ id: 'projeto', name: 'Projeto', required: true }, { id: 'seguro', name: 'Seguro', required: true }, { id: 'autorizacoes', name: 'Autorizações', required: true }],
-    estimatedDays: 15,
-    priority: 4,
-    category: 'Autorizações',
-    icon: 'Users',
-    color: '#991b1b',
-    formSchema: {
-      type: 'object',
-      citizenFields: [
-          'citizen_name',
-          'citizen_cpf',
-          'citizen_rg',
-          'citizen_birthdate',
-          'citizen_email',
-          'citizen_phone',
-          'citizen_phonesecondary',
-          'citizen_zipcode',
-          'citizen_address',
-          'citizen_addressnumber',
-          'citizen_addresscomplement',
-          'citizen_neighborhood',
-          'citizen_mothername',
-          'citizen_maritalstatus',
-          'citizen_occupation',
-          'citizen_familyincome'
-        ],
-      properties: {
-        // Campos do Cidadão
 
-        // Campos Customizados do Serviço
-        pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-        nomeEvento: { type: 'string', title: 'Nome do Evento', maxLength: 200 },
-        publicoEstimado: { type: 'number', title: 'Público Estimado', minimum: 1 },
-        dataEvento: { type: 'string', format: 'date', title: 'Data do Evento' },
-        observacoes: { type: 'string', title: 'Observações', maxLength: 500, widget: 'textarea' }
-      },
-      required: [
-        'nome', 'cpf', 'rg', 'dataNascimento', 'email', 'telefone',
-        'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'estadoCivil', 'profissao', 'rendaFamiliar',
-        'nomeEvento', 'publicoEstimado', 'dataEvento'
-      ]
-    }
-  },
   {
-      name: 'Atendimentos - Segurança Pública',
-      description: 'Registro geral de atendimentos em segurança',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'ATENDIMENTOS_SEGURANCA',
-      requiresDocuments: false,
-      estimatedDays: 1,
-      priority: 3,
-      category: 'Atendimento',
-      icon: 'Shield',
-      color: '#dc2626',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoAtendimento: { type: 'string', title: 'Tipo de Atendimento', enum: ['Consulta', 'Denúncia', 'Solicitação', 'Orientação', 'Outro'] },
-          assunto: { type: 'string', title: 'Assunto', maxLength: 200 },
-          descricao: { type: 'string', title: 'Descrição do Atendimento', minLength: 20, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoAtendimento', 'assunto', 'descricao'],
-      },
-    },
-  {
-      name: 'Registro de Ocorrência (BO)',
-      description: 'Registro de boletim de ocorrência',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'REGISTRO_BO',
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'rg', name: 'RG', required: true }, { id: 'cpf', name: 'CPF', required: true }],
-      estimatedDays: 1,
-      priority: 5,
-      category: 'Ocorrência',
-      icon: 'FileWarning',
-      color: '#b91c1c',
-      formSchema: {
-        type: 'object',
-          citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoOcorrencia: { type: 'string', title: 'Tipo de Ocorrência', enum: ['Furto', 'Roubo', 'Lesão Corporal', 'Ameaça', 'Dano ao Patrimônio', 'Perturbação do Sossego', 'Acidente de Trânsito', 'Desaparecimento', 'Outro'] },
-          dataOcorrencia: { type: 'string', format: 'date-time', title: 'Data e Hora da Ocorrência' },
-          localOcorrencia: { type: 'string', title: 'Local da Ocorrência', maxLength: 300 },
-          relatoOcorrencia: { type: 'string', title: 'Relato Detalhado da Ocorrência', minLength: 50, maxLength: 2000 },
-          testemunhas: { type: 'string', title: 'Testemunhas (nomes e contatos)', maxLength: 500 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoOcorrencia', 'dataOcorrencia', 'localOcorrencia', 'relatoOcorrencia'],
-      },
-    },
-  {
-      name: 'Solicitação de Ronda Policial',
-      description: 'Solicitação de patrulhamento em área específica',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'SOLICITACAO_RONDA',
-      requiresDocuments: false,
-      estimatedDays: 2,
-      priority: 4,
-      category: 'Ronda',
-      icon: 'Car',
-      color: '#991b1b',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          enderecoRonda: { type: 'string', title: 'Endereço da Área para Ronda', maxLength: 300 },
-          motivoSolicitacao: { type: 'string', title: 'Motivo da Solicitação', enum: ['Aumento de Criminalidade', 'Ponto de Drogas', 'Perturbação do Sossego', 'Vandalismo', 'Outro'] },
-          periodoPreferencial: { type: 'string', title: 'Período Preferencial', enum: ['Manhã', 'Tarde', 'Noite', 'Madrugada', 'Indiferente'] },
-          justificativa: { type: 'string', title: 'Justificativa Detalhada', minLength: 30, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'enderecoRonda', 'motivoSolicitacao', 'justificativa'],
-      },
-    },
-  {
-      name: 'Solicitação de Câmera de Segurança',
-      description: 'Solicitação de instalação de câmera de monitoramento',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'SOLICITACAO_CAMERA_SEGURANCA',
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'justificativa', name: 'Justificativa', required: true }, { id: 'abaixo_assinado', name: 'Abaixo-assinado', required: true }, { id: 'fotos_local', name: 'Fotos do Local', required: true }],
-      estimatedDays: 30,
-      priority: 4,
-      category: 'Câmeras',
-      icon: 'Camera',
-      color: '#7f1d1d',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          localInstalacao: { type: 'string', title: 'Local Sugerido para Instalação', maxLength: 300 },
-          motivoInstalacao: { type: 'string', title: 'Motivo da Solicitação', enum: ['Furtos Frequentes', 'Vandalismo', 'Tráfico de Drogas', 'Proteção de Equipamento Público', 'Outro'] },
-          numeroAssinaturas: { type: 'integer', title: 'Número de Assinaturas Coletadas', minimum: 1 },
-          justificativa: { type: 'string', title: 'Justificativa Detalhada', minLength: 50, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'localInstalacao', 'motivoInstalacao', 'numeroAssinaturas', 'justificativa'],
-      },
-    },
-  {
-      name: 'Denúncia Anônima (Disque Denúncia)',
-      description: 'Registro de denúncias anônimas',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'DENUNCIA_ANONIMA',
-      requiresDocuments: false,
-      estimatedDays: 1,
-      priority: 5,
-      category: 'Denúncia',
-      icon: 'AlertCircle',
-      color: '#ef4444',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoDenuncia: { type: 'string', title: 'Tipo de Denúncia', enum: ['Tráfico de Drogas', 'Roubo/Furto', 'Violência Doméstica', 'Corrupção', 'Maus-tratos', 'Porte Ilegal de Arma', 'Outro'] },
-          localDenuncia: { type: 'string', title: 'Local da Denúncia', maxLength: 300 },
-          relatoDenuncia: { type: 'string', title: 'Relato Detalhado da Denúncia', minLength: 30, maxLength: 2000 },
-          denunciaAnonima: { type: 'boolean', title: 'Deseja fazer a denúncia de forma anônima?' },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoDenuncia', 'localDenuncia', 'relatoDenuncia'],
-      },
-    },
-  {
-      name: 'Cadastro de Ponto Crítico',
-      description: 'Registro de áreas de risco e vulnerabilidade',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'CADASTRO_PONTO_CRITICO',
-      requiresDocuments: false,
-      estimatedDays: 5,
-      priority: 4,
-      category: 'Mapeamento',
-      icon: 'MapPin',
-      color: '#f87171',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          localPontoCritico: { type: 'string', title: 'Local do Ponto Crítico', maxLength: 300 },
-          tipoPontoCritico: { type: 'string', title: 'Tipo de Ponto Crítico', enum: ['Alta Criminalidade', 'Tráfico de Drogas', 'Ponto de Prostituição', 'Vandalismo', 'Aglomeração de Pessoas', 'Outro'] },
-          descricaoSituacao: { type: 'string', title: 'Descrição da Situação', minLength: 30, maxLength: 1000 },
-          nivelGravidade: { type: 'string', title: 'Nível de Gravidade', enum: ['Baixo', 'Médio', 'Alto', 'Crítico'] },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'localPontoCritico', 'tipoPontoCritico', 'descricaoSituacao', 'nivelGravidade'],
-      },
-    },
-  {
-      name: 'Alerta de Segurança',
-      description: 'Registro de avisos e alertas de segurança',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'ALERTA_SEGURANCA',
-      requiresDocuments: false,
-      estimatedDays: 1,
-      priority: 5,
-      category: 'Alerta',
-      icon: 'Bell',
-      color: '#fca5a5',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoAlerta: { type: 'string', title: 'Tipo de Alerta', enum: ['Suspeito Circulando', 'Veículo Suspeito', 'Situação de Risco', 'Evento de Segurança', 'Outro'] },
-          localAlerta: { type: 'string', title: 'Local do Alerta', maxLength: 300 },
-          descricaoAlerta: { type: 'string', title: 'Descrição do Alerta', minLength: 20, maxLength: 1000 },
-          urgencia: { type: 'string', title: 'Nível de Urgência', enum: ['Baixa', 'Média', 'Alta', 'Emergencial'] },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoAlerta', 'localAlerta', 'descricaoAlerta', 'urgencia'],
-      },
-    },
-  {
-      name: 'Registro de Patrulha',
-      description: 'Registro de patrulhamento realizado',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'REGISTRO_PATRULHA',
-      requiresDocuments: false,
-      estimatedDays: 1,
-      priority: 3,
-      category: 'Patrulha',
-      icon: 'Route',
-      color: '#dc2626',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          dataPatrulha: { type: 'string', format: 'date-time', title: 'Data e Hora da Patrulha' },
-          tipoPatrulha: { type: 'string', title: 'Tipo de Patrulha', enum: ['Ronda Preventiva', 'Ronda Escolar', 'Operação Específica', 'Atendimento a Ocorrência', 'Patrulha Comunitária'] },
-          localPatrulhado: { type: 'string', title: 'Local Patrulhado', maxLength: 300 },
-          viaturaCodigo: { type: 'string', title: 'Código da Viatura', maxLength: 50 },
-          relato: { type: 'string', title: 'Relato da Patrulha', minLength: 20, maxLength: 1000 },
-          ocorrenciasRegistradas: { type: 'string', title: 'Ocorrências Registradas', maxLength: 500 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'dataPatrulha', 'tipoPatrulha', 'localPatrulhado', 'viaturaCodigo', 'relato'],
-      },
-    },
-  {
-      name: 'Gestão da Guarda Municipal',
-      description: 'Administração de escala de serviço e viaturas',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'GESTAO_GUARDA_MUNICIPAL',
-      requiresDocuments: false,
-      estimatedDays: null,
-      priority: 2,
-      category: 'Gestão Interna',
-      icon: 'Users',
-      color: '#64748b',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoGestao: { type: 'string', title: 'Tipo de Gestão', enum: ['Cadastro de Agente', 'Escala de Serviço', 'Gestão de Viatura', 'Controle de Equipamento', 'Outro'] },
-          descricao: { type: 'string', title: 'Descrição', minLength: 20, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoGestao', 'descricao'],
-      },
-    },
-  {
-      name: 'Gestão de Vigilância (Central de Operações)',
-      description: 'Administração de câmeras e central de monitoramento',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'COM_DADOS',
-      moduleType: 'GESTAO_VIGILANCIA',
-      requiresDocuments: false,
-      estimatedDays: null,
-      priority: 2,
-      category: 'Gestão Interna',
-      icon: 'Monitor',
-      color: '#64748b',
-      formSchema: {
-        type: 'object',
-        citizenFields: [
-            'citizen_name',
-            'citizen_cpf',
-            'citizen_rg',
-            'citizen_birthdate',
-            'citizen_email',
-            'citizen_phone',
-            'citizen_phonesecondary',
-            'citizen_zipcode',
-            'citizen_address',
-            'citizen_addressnumber',
-            'citizen_addresscomplement',
-            'citizen_neighborhood',
-            'citizen_mothername',
-            'citizen_maritalstatus',
-            'citizen_occupation',
-            'citizen_familyincome'
-          ],
-        properties: {
-          pontoReferencia: { type: 'string', title: 'Ponto de Referência', maxLength: 200 },
-          tipoOperacao: { type: 'string', title: 'Tipo de Operação', enum: ['Cadastro de Câmera', 'Manutenção de Câmera', 'Análise de Imagens', 'Registro de Ocorrência Visual', 'Outro'] },
-          descricaoOperacao: { type: 'string', title: 'Descrição da Operação', minLength: 20, maxLength: 1000 },
-          observacoes: { type: 'string', title: 'Observações', maxLength: 500 },
-        },
-        required: ['nome', 'cpf', 'dataNascimento', 'email', 'telefone', 'cep', 'logradouro', 'numero', 'bairro', 'nomeMae', 'tipoOperacao', 'descricaoOperacao'],
-      },
-    },
-  {
-      name: 'Estatísticas de Segurança',
-      description: 'Consulta a análises e estatísticas regionais',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: false,
-      estimatedDays: null,
-      priority: 1,
-      category: 'Informativo',
-      icon: 'BarChart',
-      color: '#94a3b8',
-    },
-  {
-      name: 'Certidão de Antecedentes Criminais',
-      description: 'Emissão de certidão de antecedentes da guarda municipal',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'comprovante_endereco', name: 'Comprovante de Endereço', required: true }],
-      estimatedDays: 5,
-      priority: 3,
-      category: 'Certidões',
-      icon: 'FileText',
-      color: '#dc2626',
-    },
-  {
-      name: 'Certidão de Ocorrência Policial',
-      description: 'Emissão de certidão de registro de ocorrência',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'numero_ocorrencia', name: 'Número da Ocorrência', required: true }],
-      estimatedDays: 3,
-      priority: 3,
-      category: 'Certidões',
-      icon: 'FileText',
-      color: '#dc2626',
-    },
-  {
-      name: 'Declaração de Comparecimento a Delegacia',
-      description: 'Emissão de declaração de comparecimento para registro',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }],
-      estimatedDays: 1,
-      priority: 2,
-      category: 'Declarações',
-      icon: 'FileCheck',
-      color: '#dc2626',
-    },
-  {
-      name: 'Atestado de Bons Antecedentes',
-      description: 'Emissão de atestado de bons antecedentes municipais',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'comprovante_de_residencia', name: 'Comprovante de Residência', required: true }],
-      estimatedDays: 7,
-      priority: 3,
-      category: 'Atestados',
-      icon: 'CheckCircle',
-      color: '#dc2626',
-    },
-  {
-      name: 'Laudo de Vistoria de Segurança',
-      description: 'Emissão de laudo de vistoria de segurança de estabelecimento',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'alvara_funcionamento', name: 'Alvará de Funcionamento', required: true }, { id: 'cnpj', name: 'CNPJ', required: true }],
-      estimatedDays: 15,
-      priority: 3,
-      category: 'Laudos',
-      icon: 'ClipboardCheck',
-      color: '#dc2626',
-    },
-  {
-      name: 'Autorização para Evento com Aglomeração',
-      description: 'Emissão de autorização de segurança para eventos',
-      departmentCode: 'SEGURANCA_PUBLICA',
-      serviceType: 'SEM_DADOS',
-      moduleType: null,
-      requiresDocuments: true,
-      requiredDocuments: [{ id: 'cpf', name: 'CPF', required: true }, { id: 'rg', name: 'RG', required: true }, { id: 'projeto_evento', name: 'Projeto do Evento', required: true }, { id: 'plano_seguranca', name: 'Plano de Segurança', required: true }],
-      estimatedDays: 20,
-      priority: 4,
-      category: 'Autorizações',
-      icon: 'Shield',
-      color: '#dc2626',
-    }
+    name: 'Atestado de Bons Antecedentes',
+    description: 'Emissão de atestado de bons antecedentes municipais',
+    departmentCode: 'SEGURANCA_PUBLICA',
+    serviceType: 'SEM_DADOS',
+    moduleType: null,
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Atestados',
+    icon: 'CheckCircle',
+    color: '#dc2626'
+  }
 ];

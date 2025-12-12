@@ -745,7 +745,364 @@
 
 ## Secretaria de Segurança Pública
 
-### 1. Registro de Ocorrência
+### 1. Registro de Boletim de Ocorrência
+**O que é:** Registro de boletim de ocorrência para crimes, acidentes ou situações que necessitam de registro oficial.
+
+**Documentos necessários:**
+- RG (obrigatório)
+- CPF (obrigatório)
+
+**Campos Dados Pessoais (Dados vindos do cadastro do cidadão auto preenchido):**
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+- Telefone secundário
+- CEP
+- Endereço
+- Número
+- Complemento
+- Bairro
+- Nome da mãe
+- Estado civil
+- Profissão
+- Renda familiar
+
+**Campos Dados do Serviço (Campos específicos do serviço):**
+- **[select]** Tipo de Ocorrência: Furto, Roubo, Lesão Corporal, Ameaça, Dano ao Patrimônio, Perturbação do Sossego, Acidente de Trânsito, Desaparecimento, Outro
+- **[datetime]** Data e Hora da Ocorrência
+- **[string]** Local da Ocorrência (máx. 300 caracteres)
+- **[textarea]** Relato Detalhado da Ocorrência (mín. 50, máx. 2000 caracteres)
+- **[textarea]** Testemunhas (nomes e contatos) (máx. 500 caracteres, opcional)
+- **[textarea]** Pessoas Envolvidas (máx. 500 caracteres, opcional)
+- **[textarea]** Observações (máx. 500 caracteres, opcional)
+
+**Prazo estimado:** 1 dia útil
+
+---
+
+### 2. Solicitação de Patrulhamento
+**O que é:** Solicitação de patrulhamento em área específica ou período determinado.
+
+**Documentos necessários:**
+- Nenhum documento obrigatório
+
+**Campos Dados Pessoais (Dados vindos do cadastro do cidadão auto preenchido):**
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+- Telefone secundário
+- CEP
+- Endereço
+- Número
+- Complemento
+- Bairro
+- Nome da mãe
+- Estado civil
+- Profissão
+- Renda familiar
+
+**Campos Dados do Serviço (Campos específicos do serviço):**
+- **[string]** Endereço da Área para Ronda (máx. 300 caracteres)
+- **[select]** Motivo da Solicitação: Aumento de Criminalidade, Ponto de Drogas, Perturbação do Sossego, Vandalismo, Outro
+- **[select]** Período Preferencial: Manhã, Tarde, Noite, Madrugada, Indiferente
+- **[textarea]** Justificativa Detalhada (mín. 30, máx. 1000 caracteres)
+- **[textarea]** Observações (máx. 500 caracteres, opcional)
+
+**Prazo estimado:** 2 dias úteis
+
+---
+
+### 3. Solicitação de Câmera de Segurança
+**O que é:** Solicitação de instalação de câmera de monitoramento em via pública.
+
+**Documentos necessários:**
+- Justificativa (obrigatório)
+- Abaixo-assinado (obrigatório)
+- Fotos do Local (obrigatório)
+
+**Campos Dados Pessoais (Dados vindos do cadastro do cidadão auto preenchido):**
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+- Telefone secundário
+- CEP
+- Endereço
+- Número
+- Complemento
+- Bairro
+- Nome da mãe
+- Estado civil
+- Profissão
+- Renda familiar
+
+**Campos Dados do Serviço (Campos específicos do serviço):**
+- **[string]** Local Sugerido para Instalação (máx. 300 caracteres)
+- **[select]** Motivo da Solicitação: Furtos Frequentes, Vandalismo, Tráfico de Drogas, Proteção de Equipamento Público, Outro
+- **[integer]** Número de Assinaturas Coletadas (mínimo 1)
+- **[textarea]** Justificativa Detalhada (mín. 50, máx. 1000 caracteres)
+- **[textarea]** Observações (máx. 500 caracteres, opcional)
+
+**Prazo estimado:** 30 dias úteis
+
+---
+
+### 4. Denúncia Anônima (Disque Denúncia)
+**O que é:** Registro de denúncias sobre atividades criminosas (pode ser anônima).
+
+**Documentos necessários:**
+- Nenhum documento obrigatório
+
+**Campos Dados Pessoais (Dados vindos do cadastro do cidadão auto preenchido):**
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+- Telefone secundário
+- CEP
+- Endereço
+- Número
+- Complemento
+- Bairro
+- Nome da mãe
+- Estado civil
+- Profissão
+- Renda familiar
+
+**Campos Dados do Serviço (Campos específicos do serviço):**
+- **[select]** Tipo de Denúncia: Tráfico de Drogas, Roubo/Furto, Violência Doméstica, Corrupção, Maus-tratos, Porte Ilegal de Arma, Outro
+- **[string]** Local da Denúncia (máx. 300 caracteres)
+- **[textarea]** Relato Detalhado da Denúncia (mín. 30, máx. 2000 caracteres)
+- **[boolean]** Deseja fazer a denúncia de forma anônima?
+- **[textarea]** Observações (máx. 500 caracteres, opcional)
+
+**Prazo estimado:** 1 dia útil
+
+---
+
+### 5. Cadastro de Ponto Crítico
+**O que é:** Registro de áreas de risco e vulnerabilidade para mapeamento de segurança.
+
+**Documentos necessários:**
+- Nenhum documento obrigatório
+
+**Campos Dados Pessoais (Dados vindos do cadastro do cidadão auto preenchido):**
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+- Telefone secundário
+- CEP
+- Endereço
+- Número
+- Complemento
+- Bairro
+- Nome da mãe
+- Estado civil
+- Profissão
+- Renda familiar
+
+**Campos Dados do Serviço (Campos específicos do serviço):**
+- **[string]** Local do Ponto Crítico (máx. 300 caracteres)
+- **[select]** Tipo de Ponto Crítico: Alta Criminalidade, Tráfico de Drogas, Ponto de Prostituição, Vandalismo, Aglomeração de Pessoas, Outro
+- **[textarea]** Descrição da Situação (mín. 30, máx. 1000 caracteres)
+- **[select]** Nível de Gravidade: Baixo, Médio, Alto, Crítico
+- **[textarea]** Observações (máx. 500 caracteres, opcional)
+
+**Prazo estimado:** 5 dias úteis
+
+---
+
+### 6. Alerta de Segurança
+**O que é:** Registro de avisos e alertas de segurança em tempo real.
+
+**Documentos necessários:**
+- Nenhum documento obrigatório
+
+**Campos Dados Pessoais (Dados vindos do cadastro do cidadão auto preenchido):**
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+- Telefone secundário
+- CEP
+- Endereço
+- Número
+- Complemento
+- Bairro
+- Nome da mãe
+- Estado civil
+- Profissão
+- Renda familiar
+
+**Campos Dados do Serviço (Campos específicos do serviço):**
+- **[select]** Tipo de Alerta: Suspeito Circulando, Veículo Suspeito, Situação de Risco, Evento de Segurança, Outro
+- **[string]** Local do Alerta (máx. 300 caracteres)
+- **[textarea]** Descrição do Alerta (mín. 20, máx. 1000 caracteres)
+- **[select]** Nível de Urgência: Baixa, Média, Alta, Emergencial
+- **[textarea]** Observações (máx. 500 caracteres, opcional)
+
+**Prazo estimado:** 1 dia útil
+
+---
+
+### 7. Autorização de Segurança para Eventos
+**O que é:** Autorização de segurança para eventos com aglomeração de pessoas.
+
+**Documentos necessários:**
+- Projeto do Evento (obrigatório)
+- Plano de Segurança (obrigatório)
+- Seguro (opcional)
+
+**Campos Dados Pessoais (Dados vindos do cadastro do cidadão auto preenchido):**
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+- Telefone secundário
+- CEP
+- Endereço
+- Número
+- Complemento
+- Bairro
+- Nome da mãe
+- Estado civil
+- Profissão
+- Renda familiar
+
+**Campos Dados do Serviço (Campos específicos do serviço):**
+- **[string]** Nome do Evento (máx. 200 caracteres)
+- **[select]** Tipo de Evento: Show, Festival, Evento Esportivo, Festa Popular, Manifestação, Outro
+- **[date]** Data do Evento
+- **[string]** Local do Evento (máx. 300 caracteres)
+- **[integer]** Público Estimado (mínimo 1)
+- **[textarea]** Observações (máx. 500 caracteres, opcional)
+
+**Prazo estimado:** 15 dias úteis
+
+---
+
+### 8. Laudo de Vistoria de Segurança
+**O que é:** Solicitação de vistoria de segurança de estabelecimento comercial.
+
+**Documentos necessários:**
+- Alvará de Funcionamento (obrigatório)
+- CNPJ (obrigatório)
+
+**Campos Dados Pessoais (Dados vindos do cadastro do cidadão auto preenchido):**
+- Nome completo
+- CPF
+- RG
+- Data de nascimento
+- E-mail
+- Telefone
+- Telefone secundário
+- CEP
+- Endereço
+- Número
+- Complemento
+- Bairro
+- Nome da mãe
+- Estado civil
+- Profissão
+- Renda familiar
+
+**Campos Dados do Serviço (Campos específicos do serviço):**
+- **[string]** Nome do Estabelecimento (máx. 200 caracteres)
+- **[string]** CNPJ (máx. 18 caracteres, padrão: ^\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}$)
+- **[select]** Tipo de Estabelecimento: Comércio, Indústria, Serviços, Casa Noturna, Eventos, Outro
+- **[string]** Endereço do Estabelecimento (máx. 300 caracteres)
+- **[textarea]** Finalidade da Vistoria (máx. 500 caracteres)
+
+**Prazo estimado:** 15 dias úteis
+
+---
+
+### 9. Consulta de Estatísticas de Segurança
+**O que é:** Consulta de estatísticas e análises regionais de segurança pública.
+
+**Tipo de serviço:** SEM_DADOS (não possui formulário, apenas consulta)
+
+**Documentos necessários:**
+- Nenhum documento necessário
+
+**Prazo estimado:** Imediato (consulta informativa)
+
+---
+
+### 10. Certidão de Antecedentes
+**O que é:** Emissão de certidão de antecedentes da guarda municipal.
+
+**Tipo de serviço:** SEM_DADOS (não possui formulário, apenas upload de documentos)
+
+**Documentos necessários:**
+- CPF (obrigatório)
+- RG (obrigatório)
+- Comprovante de Residência (obrigatório)
+
+**Prazo estimado:** 5 dias úteis
+
+---
+
+### 11. Certidão de Ocorrência Policial
+**O que é:** Emissão de certidão de registro de ocorrência policial.
+
+**Tipo de serviço:** SEM_DADOS (não possui formulário, apenas upload de documentos)
+
+**Documentos necessários:**
+- CPF (obrigatório)
+- RG (obrigatório)
+- Número da Ocorrência (obrigatório)
+
+**Prazo estimado:** 3 dias úteis
+
+---
+
+### 12. Declaração de Perda de Documentos
+**O que é:** Emissão de declaração de perda de documentos.
+
+**Tipo de serviço:** SEM_DADOS (não possui formulário, apenas upload de documentos)
+
+**Documentos necessários:**
+- CPF (obrigatório)
+- RG (obrigatório)
+- BO (opcional)
+
+**Prazo estimado:** 1 dia útil
+
+---
+
+### 13. Atestado de Bons Antecedentes
+**O que é:** Emissão de atestado de bons antecedentes municipais.
+
+**Tipo de serviço:** SEM_DADOS (não possui formulário, apenas upload de documentos)
+
+**Documentos necessários:**
+- CPF (obrigatório)
+- RG (obrigatório)
+- Comprovante de Residência (obrigatório)
+
+**Prazo estimado:** 7 dias úteis
+
+---
+
+## 1. Registro de Ocorrência
 **O que é:** Registro de boletim de ocorrência para crimes, acidentes ou situações que necessitam de registro oficial.
 
 **Tipo de Serviço:** COM_DADOS (Serviço com formulário)
