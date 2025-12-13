@@ -5,7 +5,7 @@
 
 import { ServiceDefinition } from './types';
 
-export const publicServicesServices: ServiceDefinition[] = [
+export const publicServices: ServiceDefinition[] = [
   {
     name: 'Iluminação Pública (Poste Queimado)',
     description: 'Solicitação de reparo de iluminação pública',
