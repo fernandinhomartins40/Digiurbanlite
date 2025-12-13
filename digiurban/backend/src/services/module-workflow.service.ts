@@ -226,8 +226,9 @@ export async function getWorkflowStats() {
  */
 export async function createDefaultWorkflows() {
   const defaultWorkflows: CreateWorkflowData[] = [
+
     // ========================================
-    // SECRETARIA DE AGRICULTURA (6 workflows)
+    // SECRETARIA DE AGRICULTURA (9 workflows)
     // ========================================
     {
       moduleType: 'ATENDIMENTOS_AGRICULTURA',
@@ -257,7 +258,7 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
       moduleType: 'CADASTRO_PRODUTOR',
       name: 'Cadastro de Produtor Rural',
@@ -288,7 +289,7 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
       moduleType: 'ASSISTENCIA_TECNICA',
       name: 'Assistência Técnica Rural',
@@ -317,7 +318,7 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
       moduleType: 'INSCRICAO_CURSO_RURAL',
       name: 'Inscrição em Curso Rural',
@@ -347,7 +348,7 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
       moduleType: 'INSCRICAO_PROGRAMA_RURAL',
       name: 'Inscrição em Programa Rural',
@@ -377,7 +378,7 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
       moduleType: 'CADASTRO_PROPRIEDADE_RURAL',
       name: 'Cadastro de Propriedade Rural',
@@ -407,148 +408,11 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
-
-    // ========================================
-    // SECRETARIA DE MEIO AMBIENTE (7 workflows)
-    // ========================================
+    },
     {
-      moduleType: 'ATENDIMENTOS_MEIO_AMBIENTE',
-      name: 'Atendimento Meio Ambiente',
-      description: 'Workflow para atendimentos gerais de meio ambiente',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Triagem',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['initial_triage'],
-          canSkip: false
-        },
-        {
-          name: 'Atendimento',
-          order: 2,
-          slaDays: 6,
-          requiredActions: ['complete_attendance'],
-          canSkip: false
-        },
-        {
-          name: 'Finalização',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['finalize'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'LICENCA_AMBIENTAL',
-      name: 'Licenciamento Ambiental',
-      description: 'Workflow para licenças ambientais',
-      defaultSLA: 90,
-      stages: [
-        {
-          name: 'Análise de Viabilidade',
-          order: 1,
-          slaDays: 15,
-          requiredDocuments: ['PROJETO_TECNICO'],
-          requiredActions: ['viability_analysis'],
-          canSkip: false
-        },
-        {
-          name: 'Solicitação de Estudos',
-          order: 2,
-          slaDays: 30,
-          requiredDocuments: ['ESTUDO_IMPACTO'],
-          canSkip: false
-        },
-        {
-          name: 'Análise Técnica',
-          order: 3,
-          slaDays: 30,
-          requiredActions: ['technical_review'],
-          canSkip: false
-        },
-        {
-          name: 'Decisão Final',
-          order: 4,
-          slaDays: 15,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'DENUNCIA_AMBIENTAL',
-      name: 'Denúncia Ambiental',
-      description: 'Workflow para denúncias ambientais',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise de Competência',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['verify_competence'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria Local',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Notificação/Auto de Infração',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['issue_notification'],
-          canSkip: true,
-          skipCondition: 'no_infraction_found'
-        },
-        {
-          name: 'Acompanhamento',
-          order: 4,
-          slaDays: 3,
-          requiredActions: ['verify_compliance'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'PROGRAMA_AMBIENTAL',
-      name: 'Programa Ambiental',
-      description: 'Workflow para programas ambientais',
-      defaultSLA: 30,
-      stages: [
-        {
-          name: 'Análise de Proposta',
-          order: 1,
-          slaDays: 10,
-          requiredDocuments: ['PROPOSTA_PROGRAMA', 'PLANO_ACAO'],
-          requiredActions: ['review_proposal'],
-          canSkip: false
-        },
-        {
-          name: 'Avaliação Técnica',
-          order: 2,
-          slaDays: 15,
-          requiredActions: ['technical_evaluation'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'AUTORIZACAO_PODA_CORTE',
-      name: 'Autorização de Poda/Corte',
-      description: 'Workflow para autorização de poda ou corte de árvores',
+      moduleType: 'SOLICITACAO_MAQUINAS_AGRICOLAS',
+      name: 'Solicitação de Máquinas Agrícolas',
+      description: 'Workflow para solicitação de uso de máquinas agrícolas',
       defaultSLA: 15,
       stages: [
         {
@@ -559,877 +423,143 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
         {
-          name: 'Vistoria Técnica',
+          name: 'Verificação de Disponibilidade',
           order: 2,
           slaDays: 7,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
+          requiredActions: ['check_availability'],
           canSkip: false
         },
         {
-          name: 'Decisão',
+          name: 'Agendamento de Uso',
           order: 3,
           slaDays: 5,
-          requiredActions: ['approve_or_reject'],
+          requiredActions: ['schedule_use'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'VISTORIA_AMBIENTAL',
-      name: 'Vistoria Ambiental',
-      description: 'Workflow para vistorias ambientais',
+      moduleType: 'SOLICITACAO_INSUMOS',
+      name: 'Solicitação de Insumos Agrícolas',
+      description: 'Workflow para solicitação de insumos agrícolas',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 2,
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação de Estoque',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['check_inventory'],
+          canSkip: false
+        },
+        {
+          name: 'Liberação de Insumos',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['release_supplies'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'DECLARACAO_APTIDAO_PRONAF',
+      name: 'Declaração de Aptidão ao PRONAF (DAP)',
+      description: 'Workflow para emissão de DAP',
       defaultSLA: 20,
-      stages: [
-        {
-          name: 'Agendamento',
-          order: 1,
-          slaDays: 5,
-          requiredActions: ['schedule_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Execução da Vistoria',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Emissão de Laudo',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['issue_report'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'GESTAO_AREAS_PROTEGIDAS',
-      name: 'Gestão de Áreas Protegidas',
-      description: 'Workflow para gestão de áreas protegidas',
-      defaultSLA: 30,
-      stages: [
-        {
-          name: 'Cadastro da Área',
-          order: 1,
-          slaDays: 10,
-          requiredDocuments: ['LEVANTAMENTO_AREA', 'MEMORIAL_DESCRITIVO'],
-          requiredActions: ['register_area'],
-          canSkip: false
-        },
-        {
-          name: 'Análise Técnica',
-          order: 2,
-          slaDays: 15,
-          requiredActions: ['technical_analysis'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-
-    // ========================================
-    // SECRETARIA DE EDUCAÇÃO (11 workflows)
-    // ========================================
-    {
-      moduleType: 'ATENDIMENTOS_EDUCACAO',
-      name: 'Atendimento Educação',
-      description: 'Workflow para atendimentos gerais de educação',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Triagem',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['initial_triage'],
-          canSkip: false
-        },
-        {
-          name: 'Atendimento',
-          order: 2,
-          slaDays: 6,
-          requiredActions: ['complete_attendance'],
-          canSkip: false
-        },
-        {
-          name: 'Finalização',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['finalize'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'MATRICULA_ALUNO',
-      name: 'Matrícula de Aluno',
-      description: 'Workflow para matrículas escolares',
-      defaultSLA: 7,
-      stages: [
-        {
-          name: 'Análise de Documentos',
-          order: 1,
-          slaDays: 2,
-          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'HISTORICO_ESCOLAR'],
-          requiredActions: ['validate_documents'],
-          canSkip: false
-        },
-        {
-          name: 'Verificação de Vagas',
-          order: 2,
-          slaDays: 2,
-          requiredActions: ['check_vacancy'],
-          canSkip: false
-        },
-        {
-          name: 'Confirmação de Matrícula',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['confirm_enrollment'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'TRANSPORTE_ESCOLAR',
-      name: 'Transporte Escolar',
-      description: 'Workflow para solicitação de transporte escolar',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Análise de Elegibilidade',
-          order: 1,
-          slaDays: 3,
-          requiredDocuments: ['COMPROVANTE_MATRICULA', 'COMPROVANTE_RESIDENCIA'],
-          requiredActions: ['verify_eligibility'],
-          canSkip: false
-        },
-        {
-          name: 'Planejamento de Rota',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['plan_route'],
-          canSkip: false
-        },
-        {
-          name: 'Ativação do Serviço',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['activate_service'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'REGISTRO_OCORRENCIA_ESCOLAR',
-      name: 'Registro de Ocorrência Escolar',
-      description: 'Workflow para registro de ocorrências disciplinares',
-      defaultSLA: 7,
-      stages: [
-        {
-          name: 'Registro da Ocorrência',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['register_occurrence'],
-          canSkip: false
-        },
-        {
-          name: 'Análise Pedagógica',
-          order: 2,
-          slaDays: 4,
-          requiredActions: ['pedagogical_analysis'],
-          canSkip: false
-        },
-        {
-          name: 'Resolução',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['resolve_occurrence'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'SOLICITACAO_DOCUMENTO_ESCOLAR',
-      name: 'Solicitação de Documento Escolar',
-      description: 'Workflow para solicitação de documentos escolares',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Análise de Solicitação',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['review_request'],
-          canSkip: false
-        },
-        {
-          name: 'Preparação de Documento',
-          order: 2,
-          slaDays: 6,
-          requiredActions: ['prepare_document'],
-          canSkip: false
-        },
-        {
-          name: 'Emissão',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['issue_document'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'TRANSFERENCIA_ESCOLAR',
-      name: 'Transferência Escolar',
-      description: 'Workflow para transferência entre escolas',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise de Solicitação',
-          order: 1,
-          slaDays: 3,
-          requiredDocuments: ['HISTORICO_ESCOLAR', 'DECLARACAO_TRANSFERENCIA'],
-          requiredActions: ['review_request'],
-          canSkip: false
-        },
-        {
-          name: 'Verificação de Vagas',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['check_vacancy'],
-          canSkip: false
-        },
-        {
-          name: 'Efetivação da Transferência',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['complete_transfer'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CONSULTA_FREQUENCIA',
-      name: 'Consulta de Frequência',
-      description: 'Workflow para consulta de frequência escolar',
-      defaultSLA: 3,
-      stages: [
-        {
-          name: 'Solicitação',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['request_attendance'],
-          canSkip: false
-        },
-        {
-          name: 'Emissão',
-          order: 2,
-          slaDays: 2,
-          requiredActions: ['issue_report'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CONSULTA_NOTAS',
-      name: 'Consulta de Notas',
-      description: 'Workflow para consulta de notas',
-      defaultSLA: 3,
-      stages: [
-        {
-          name: 'Solicitação',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['request_grades'],
-          canSkip: false
-        },
-        {
-          name: 'Emissão',
-          order: 2,
-          slaDays: 2,
-          requiredActions: ['issue_report'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'GESTAO_ESCOLAR',
-      name: 'Gestão Escolar',
-      description: 'Workflow para gestão de unidades escolares',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Cadastro Inicial',
-          order: 1,
-          slaDays: 7,
-          requiredDocuments: ['DOCUMENTACAO_ESCOLA'],
-          requiredActions: ['initial_registration'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'GESTAO_MERENDA',
-      name: 'Gestão de Merenda Escolar',
-      description: 'Workflow para planejamento de merenda',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Planejamento de Cardápio',
-          order: 1,
-          slaDays: 7,
-          requiredActions: ['plan_menu'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação Nutricional',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['nutritional_approval'],
-          canSkip: false
-        },
-        {
-          name: 'Implementação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['implement_menu'],
-          canSkip: false
-        },
-      ]
-        },
-
-    // ========================================
-    // SECRETARIA DE SAÚDE
-    // ========================================
-    {
-      moduleType: 'AGENDAMENTOS_MEDICOS',
-      name: 'Agendamento de Consulta Médica',
-      description: 'Workflow para agendamento de consultas médicas',
-      defaultSLA: 5,
-      stages: [
-        {
-          name: 'Triagem',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['triage'],
-          canSkip: false
-        },
-        {
-          name: 'Agendamento',
-          order: 2,
-          slaDays: 3,
-          requiredActions: ['schedule_appointment'],
-          canSkip: false
-        },
-        {
-          name: 'Confirmação',
-          order: 3,
-          slaDays: 1,
-          requiredActions: ['confirm_appointment'],
-          canSkip: false
-        },
-      ]
-        },
-
-    // ========================================
-    // RESTANTE DOS SERVIÇOS DE SAÚDE (9 workflows)
-    // ========================================
-    {
-      moduleType: 'ATENDIMENTOS_SAUDE',
-      name: 'Atendimento de Saúde',
-      description: 'Workflow para atendimentos gerais de saúde',
-      defaultSLA: 7,
-      stages: [
-        {
-          name: 'Triagem',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['initial_triage'],
-          canSkip: false
-        },
-        {
-          name: 'Atendimento',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['complete_attendance'],
-          canSkip: false
-        },
-        {
-          name: 'Finalização',
-          order: 3,
-          slaDays: 1,
-          requiredActions: ['finalize'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CONTROLE_MEDICAMENTOS',
-      name: 'Dispensação de Medicamentos',
-      description: 'Workflow para controle e dispensação de medicamentos',
-      defaultSLA: 3,
-      stages: [
-        {
-          name: 'Validação de Receita',
-          order: 1,
-          slaDays: 1,
-          requiredDocuments: ['RECEITA_MEDICA'],
-          requiredActions: ['validate_prescription'],
-          canSkip: false
-        },
-        {
-          name: 'Separação de Medicamentos',
-          order: 2,
-          slaDays: 1,
-          requiredActions: ['separate_medication'],
-          canSkip: false
-        },
-        {
-          name: 'Dispensação',
-          order: 3,
-          slaDays: 1,
-          requiredActions: ['dispense_medication'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CAMPANHAS_SAUDE',
-      name: 'Campanha de Saúde',
-      description: 'Workflow para inscrição em campanhas de saúde',
-      defaultSLA: 7,
-      stages: [
-        {
-          name: 'Inscrição',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['register_participant'],
-          canSkip: false
-        },
-        {
-          name: 'Agendamento',
-          order: 2,
-          slaDays: 3,
-          requiredActions: ['schedule_participation'],
-          canSkip: false
-        },
-        {
-          name: 'Confirmação',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['confirm_participation'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'PROGRAMAS_SAUDE',
-      name: 'Programa de Saúde',
-      description: 'Workflow para inscrição em programas de saúde',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise de Elegibilidade',
-          order: 1,
-          slaDays: 5,
-          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA'],
-          requiredActions: ['verify_eligibility'],
-          canSkip: false
-        },
-        {
-          name: 'Avaliação Médica',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['medical_evaluation'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'ENCAMINHAMENTOS_TFD',
-      name: 'Encaminhamento TFD (Tratamento Fora de Domicílio)',
-      description: 'Workflow para encaminhamentos de TFD',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise de Solicitação',
-          order: 1,
-          slaDays: 3,
-          requiredDocuments: ['SOLICITACAO_MEDICA', 'EXAMES'],
-          requiredActions: ['review_request'],
-          canSkip: false
-        },
-        {
-          name: 'Autorização Médica',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['medical_authorization'],
-          canSkip: false
-        },
-        {
-          name: 'Agendamento',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['schedule_transport'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'EXAMES',
-      name: 'Solicitação de Exame',
-      description: 'Workflow para solicitação de exames médicos',
-      defaultSLA: 30,
-      stages: [
-        {
-          name: 'Validação de Solicitação',
-          order: 1,
-          slaDays: 3,
-          requiredDocuments: ['SOLICITACAO_MEDICA'],
-          requiredActions: ['validate_request'],
-          canSkip: false
-        },
-        {
-          name: 'Agendamento',
-          order: 2,
-          slaDays: 20,
-          requiredActions: ['schedule_exam'],
-          canSkip: false
-        },
-        {
-          name: 'Confirmação',
-          order: 3,
-          slaDays: 7,
-          requiredActions: ['confirm_exam'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'TRANSPORTE_PACIENTES',
-      name: 'Transporte de Pacientes',
-      description: 'Workflow para transporte de pacientes',
-      defaultSLA: 7,
-      stages: [
-        {
-          name: 'Análise de Solicitação',
-          order: 1,
-          slaDays: 2,
-          requiredDocuments: ['JUSTIFICATIVA_MEDICA'],
-          requiredActions: ['review_request'],
-          canSkip: false
-        },
-        {
-          name: 'Agendamento de Transporte',
-          order: 2,
-          slaDays: 3,
-          requiredActions: ['schedule_transport'],
-          canSkip: false
-        },
-        {
-          name: 'Confirmação',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['confirm_transport'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'VACINACAO',
-      name: 'Vacinação',
-      description: 'Workflow para registro de vacinação',
-      defaultSLA: 3,
-      stages: [
-        {
-          name: 'Verificação de Elegibilidade',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['verify_eligibility'],
-          canSkip: false
-        },
-        {
-          name: 'Aplicação da Vacina',
-          order: 2,
-          slaDays: 1,
-          requiredActions: ['apply_vaccine'],
-          canSkip: false
-        },
-        {
-          name: 'Registro',
-          order: 3,
-          slaDays: 1,
-          requiredActions: ['register_vaccination'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CADASTRO_PACIENTE',
-      name: 'Cadastro de Paciente',
-      description: 'Workflow para cadastro de novos pacientes',
-      defaultSLA: 5,
-      stages: [
-        {
-          name: 'Análise de Documentos',
-          order: 1,
-          slaDays: 2,
-          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'CARTAO_SUS'],
-          requiredActions: ['validate_documents'],
-          canSkip: false
-        },
-        {
-          name: 'Cadastro no Sistema',
-          order: 2,
-          slaDays: 2,
-          requiredActions: ['register_patient'],
-          canSkip: false
-        },
-        {
-          name: 'Ativação',
-          order: 3,
-          slaDays: 1,
-          requiredActions: ['activate_patient'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'GESTAO_ACS',
-      name: 'Gestão de Agente Comunitário de Saúde',
-      description: 'Workflow para cadastro de ACS',
-      defaultSLA: 15,
       stages: [
         {
           name: 'Análise Documental',
           order: 1,
           slaDays: 5,
-          requiredDocuments: ['RG_CPF', 'CERTIFICADO_CURSO', 'COMPROVANTE_RESIDENCIA'],
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'COMPROVANTE_ATIVIDADE_RURAL'],
           requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
-          name: 'Avaliação Técnica',
+          name: 'Vistoria Técnica',
           order: 2,
-          slaDays: 7,
-          requiredActions: ['technical_evaluation'],
+          slaDays: 10,
+          requiredActions: ['schedule_visit', 'complete_inspection'],
           canSkip: false
         },
         {
-          name: 'Aprovação',
+          name: 'Emissão de DAP',
           order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
+          slaDays: 5,
+          requiredActions: ['issue_dap'],
           canSkip: false
         },
       ]
-        },
+    },
 
     // ========================================
-    // SECRETARIA DE ASSISTÊNCIA SOCIAL (9 workflows)
+    // SECRETARIA DE ASSISTÊNCIA SOCIAL (10 workflows)
     // ========================================
     {
       moduleType: 'ATENDIMENTOS_ASSISTENCIA_SOCIAL',
-      name: 'Atendimento de Assistência Social',
+      name: 'Atendimento Assistência Social',
       description: 'Workflow para atendimentos gerais de assistência social',
-      defaultSLA: 10,
+      defaultSLA: 5,
       stages: [
         {
-          name: 'Acolhimento',
+          name: 'Triagem',
           order: 1,
-          slaDays: 2,
-          requiredActions: ['initial_reception'],
+          slaDays: 1,
+          requiredActions: ['initial_triage'],
           canSkip: false
         },
         {
           name: 'Atendimento Social',
           order: 2,
-          slaDays: 6,
-          requiredActions: ['complete_attendance'],
+          slaDays: 3,
+          requiredActions: ['social_service'],
           canSkip: false
         },
         {
-          name: 'Encaminhamento',
+          name: 'Finalização',
           order: 3,
-          slaDays: 2,
-          requiredActions: ['referral'],
+          slaDays: 1,
+          requiredActions: ['finalize'],
           canSkip: false
         },
       ]
-        },
+    },
     {
       moduleType: 'CADASTRO_UNICO',
-      name: 'Cadastro Único (Família Vulnerável)',
-      description: 'Workflow para cadastro de famílias em situação de vulnerabilidade',
-      defaultSLA: 15,
+      name: 'Cadastro Único (CadÚnico)',
+      description: 'Workflow para inscrição no Cadastro Único',
+      defaultSLA: 10,
       stages: [
         {
-          name: 'Entrevista Social',
+          name: 'Análise Documental',
           order: 1,
+          slaDays: 2,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Entrevista Social',
+          order: 2,
           slaDays: 5,
           requiredActions: ['conduct_interview'],
           canSkip: false
         },
         {
-          name: 'Visita Domiciliar',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['schedule_visit', 'complete_visit'],
-          canSkip: false
-        },
-        {
-          name: 'Análise Técnica',
+          name: 'Cadastramento',
           order: 3,
           slaDays: 3,
-          requiredActions: ['analyze_case', 'approve_or_reject'],
+          requiredActions: ['register'],
           canSkip: false
         },
       ]
-        },
-    {
-      moduleType: 'SOLICITACAO_BENEFICIO',
-      name: 'Solicitação de Benefício Social',
-      description: 'Workflow para solicitação de benefícios sociais',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Análise de Elegibilidade',
-          order: 1,
-          slaDays: 5,
-          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'COMPROVANTE_RENDA'],
-          requiredActions: ['verify_eligibility'],
-          canSkip: false
-        },
-        {
-          name: 'Visita Social',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['schedule_visit', 'complete_visit'],
-          canSkip: false
-        },
-        {
-          name: 'Parecer Técnico',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['technical_opinion', 'approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'ENTREGA_EMERGENCIAL',
-      name: 'Entrega Emergencial',
-      description: 'Workflow para entregas emergenciais',
-      defaultSLA: 3,
-      stages: [
-        {
-          name: 'Análise de Urgência',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['evaluate_urgency'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 2,
-          slaDays: 1,
-          requiredActions: ['approve_delivery'],
-          canSkip: false
-        },
-        {
-          name: 'Entrega',
-          order: 3,
-          slaDays: 1,
-          requiredActions: ['complete_delivery'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'INSCRICAO_GRUPO_OFICINA',
-      name: 'Inscrição em Grupo/Oficina Social',
-      description: 'Workflow para inscrição em grupos e oficinas',
-      defaultSLA: 7,
-      stages: [
-        {
-          name: 'Análise de Inscrição',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['review_enrollment'],
-          canSkip: false
-        },
-        {
-          name: 'Verificação de Vagas',
-          order: 2,
-          slaDays: 3,
-          requiredActions: ['check_vacancy'],
-          canSkip: false
-        },
-        {
-          name: 'Confirmação',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['confirm_enrollment'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'VISITAS_DOMICILIARES',
-      name: 'Visita Domiciliar',
-      description: 'Workflow para visitas domiciliares',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Agendamento',
-          order: 1,
-          slaDays: 3,
-          requiredActions: ['schedule_visit'],
-          canSkip: false
-        },
-        {
-          name: 'Realização da Visita',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['complete_visit'],
-          canSkip: false
-        },
-        {
-          name: 'Relatório',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['submit_report'],
-          canSkip: false
-        },
-      ]
-        },
+    },
     {
       moduleType: 'INSCRICAO_PROGRAMA_SOCIAL',
       name: 'Inscrição em Programa Social',
@@ -1445,10 +575,10 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
         {
-          name: 'Avaliação Social',
+          name: 'Visita Domiciliar',
           order: 2,
           slaDays: 7,
-          requiredActions: ['social_evaluation'],
+          requiredActions: ['schedule_visit', 'complete_visit'],
           canSkip: false
         },
         {
@@ -1459,66 +589,207 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'AGENDAMENTO_ATENDIMENTO_SOCIAL',
-      name: 'Agendamento de Atendimento Social',
-      description: 'Workflow para agendamento de atendimentos',
+      moduleType: 'SOLICITACAO_CESTA_BASICA',
+      name: 'Solicitação de Cesta Básica',
+      description: 'Workflow para solicitação de cesta básica',
       defaultSLA: 5,
       stages: [
         {
-          name: 'Solicitação',
+          name: 'Análise de Necessidade',
           order: 1,
           slaDays: 1,
-          requiredActions: ['request_appointment'],
+          requiredActions: ['assess_need'],
           canSkip: false
         },
         {
-          name: 'Agendamento',
+          name: 'Verificação de Estoque',
+          order: 2,
+          slaDays: 2,
+          requiredActions: ['check_stock'],
+          canSkip: false
+        },
+        {
+          name: 'Liberação de Cesta',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['release_basket'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_AUXILIO_EMERGENCIAL',
+      name: 'Solicitação de Auxílio Emergencial',
+      description: 'Workflow para auxílio emergencial',
+      defaultSLA: 7,
+      stages: [
+        {
+          name: 'Análise de Situação de Emergência',
+          order: 1,
+          slaDays: 2,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_SITUACAO_EMERGENCIA'],
+          requiredActions: ['assess_emergency'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Social',
           order: 2,
           slaDays: 3,
-          requiredActions: ['schedule_appointment'],
+          requiredActions: ['social_assessment'],
+          canSkip: false
+        },
+        {
+          name: 'Liberação de Auxílio',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['release_aid'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'INSCRICAO_CURSO_PROFISSIONALIZANTE',
+      name: 'Inscrição em Curso Profissionalizante',
+      description: 'Workflow para inscrição em cursos profissionalizantes',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Inscrição',
+          order: 1,
+          slaDays: 5,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_ESCOLARIDADE'],
+          requiredActions: ['review_enrollment'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação de Vagas',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['check_vacancy'],
           canSkip: false
         },
         {
           name: 'Confirmação',
           order: 3,
-          slaDays: 1,
-          requiredActions: ['confirm_appointment'],
+          slaDays: 3,
+          requiredActions: ['confirm_enrollment'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'GESTAO_CRAS_CREAS',
-      name: 'Gestão de CRAS/CREAS',
-      description: 'Workflow para gestão de equipamentos sociais',
+      moduleType: 'SOLICITACAO_PASSE_LIVRE',
+      name: 'Solicitação de Passe Livre (PCD)',
+      description: 'Workflow para solicitação de passe livre para pessoas com deficiência',
       defaultSLA: 20,
       stages: [
         {
-          name: 'Cadastro',
+          name: 'Análise Documental',
           order: 1,
-          slaDays: 7,
-          requiredDocuments: ['DOCUMENTACAO_EQUIPAMENTO'],
-          requiredActions: ['register_equipment'],
+          slaDays: 5,
+          requiredDocuments: ['RG_CPF', 'LAUDO_MEDICO', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
-          name: 'Vistoria',
+          name: 'Avaliação Social',
           order: 2,
           slaDays: 10,
-          requiredActions: ['inspection'],
+          requiredActions: ['social_assessment'],
           canSkip: false
         },
         {
-          name: 'Ativação',
+          name: 'Emissão de Passe',
           order: 3,
-          slaDays: 3,
-          requiredActions: ['activate_equipment'],
+          slaDays: 5,
+          requiredActions: ['issue_pass'],
           canSkip: false
         },
       ]
+    },
+    {
+      moduleType: 'SOLICITACAO_ACOMPANHAMENTO_FAMILIAR',
+      name: 'Solicitação de Acompanhamento Familiar (PAIF)',
+      description: 'Workflow para PAIF',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Triagem Inicial',
+          order: 1,
+          slaDays: 2,
+          requiredActions: ['initial_screening'],
+          canSkip: false
         },
+        {
+          name: 'Visita Domiciliar',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['home_visit'],
+          canSkip: false
+        },
+        {
+          name: 'Planejamento de Acompanhamento',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['create_plan'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_ABRIGAMENTO_TEMPORARIO',
+      name: 'Solicitação de Abrigamento Temporário',
+      description: 'Workflow emergencial para abrigamento',
+      defaultSLA: 1,
+      stages: [
+        {
+          name: 'Avaliação de Emergência',
+          order: 1,
+          slaDays: 0.5,
+          requiredActions: ['emergency_assessment'],
+          canSkip: false
+        },
+        {
+          name: 'Encaminhamento para Abrigo',
+          order: 2,
+          slaDays: 0.5,
+          requiredActions: ['shelter_referral'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'INSCRICAO_BPC',
+      name: 'Inscrição em Benefício de Prestação Continuada (BPC)',
+      description: 'Workflow para inscrição no BPC',
+      defaultSLA: 30,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 10,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'LAUDO_MEDICO', 'COMPROVANTE_RENDA'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Social',
+          order: 2,
+          slaDays: 15,
+          requiredActions: ['social_assessment'],
+          canSkip: false
+        },
+        {
+          name: 'Envio ao INSS',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['send_to_inss'],
+          canSkip: false
+        },
+      ]
+    },
 
     // ========================================
     // SECRETARIA DE CULTURA (8 workflows)
@@ -1537,10 +808,10 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
         {
-          name: 'Atendimento',
+          name: 'Atendimento Cultural',
           order: 2,
           slaDays: 6,
-          requiredActions: ['complete_attendance'],
+          requiredActions: ['cultural_service'],
           canSkip: false
         },
         {
@@ -1551,36 +822,66 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'RESERVA_ESPACO_CULTURAL',
-      name: 'Reserva de Espaço Cultural',
-      description: 'Workflow para reserva de espaços culturais',
-      defaultSLA: 7,
+      moduleType: 'INSCRICAO_EVENTO_CULTURAL',
+      name: 'Inscrição em Evento Cultural',
+      description: 'Workflow para inscrição em eventos culturais',
+      defaultSLA: 10,
       stages: [
         {
-          name: 'Análise de Disponibilidade',
+          name: 'Análise de Inscrição',
           order: 1,
-          slaDays: 2,
-          requiredActions: ['check_availability'],
+          slaDays: 3,
+          requiredActions: ['review_enrollment'],
           canSkip: false
         },
         {
-          name: 'Aprovação',
+          name: 'Verificação de Vagas',
           order: 2,
-          slaDays: 3,
-          requiredActions: ['approve_reservation'],
+          slaDays: 4,
+          requiredActions: ['check_vacancy'],
           canSkip: false
         },
         {
           name: 'Confirmação',
           order: 3,
-          slaDays: 2,
-          requiredActions: ['confirm_reservation'],
+          slaDays: 3,
+          requiredActions: ['confirm_enrollment'],
           canSkip: false
         },
       ]
+    },
+    {
+      moduleType: 'RESERVA_ESPACO_CULTURAL',
+      name: 'Reserva de Espaço Cultural',
+      description: 'Workflow para reserva de espaços culturais',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['RG_CPF', 'PROJETO_EVENTO'],
+          requiredActions: ['review_request'],
+          canSkip: false
         },
+        {
+          name: 'Verificação de Disponibilidade',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['check_availability'],
+          canSkip: false
+        },
+        {
+          name: 'Aprovação de Reserva',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['approve_reservation'],
+          canSkip: false
+        },
+      ]
+    },
     {
       moduleType: 'INSCRICAO_OFICINA_CULTURAL',
       name: 'Inscrição em Oficina Cultural',
@@ -1610,160 +911,491 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'CADASTRO_GRUPO_ARTISTICO',
-      name: 'Cadastro de Grupo Artístico',
-      description: 'Workflow para cadastro de grupos artísticos',
+      moduleType: 'SOLICITACAO_APOIO_CULTURAL',
+      name: 'Solicitação de Apoio Cultural',
+      description: 'Workflow para solicitação de apoio a projetos culturais',
+      defaultSLA: 20,
+      stages: [
+        {
+          name: 'Análise de Projeto',
+          order: 1,
+          slaDays: 7,
+          requiredDocuments: ['RG_CPF', 'PROJETO_CULTURAL', 'ORCAMENTO'],
+          requiredActions: ['review_project'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Técnica',
+          order: 2,
+          slaDays: 10,
+          requiredActions: ['technical_evaluation'],
+          canSkip: false
+        },
+        {
+          name: 'Decisão Final',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['final_decision'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'CADASTRO_ARTISTA_LOCAL',
+      name: 'Cadastro de Artista Local',
+      description: 'Workflow para cadastro de artistas locais',
       defaultSLA: 15,
       stages: [
         {
           name: 'Análise Documental',
           order: 1,
           slaDays: 5,
-          requiredDocuments: ['DOCUMENTACAO_GRUPO', 'PORTFOLIO'],
+          requiredDocuments: ['RG_CPF', 'PORTFOLIO', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Cultural',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['cultural_assessment'],
+          canSkip: false
+        },
+        {
+          name: 'Cadastramento',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['register'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_BIBLIOTECA',
+      name: 'Solicitação de Serviços de Biblioteca',
+      description: 'Workflow para serviços de biblioteca',
+      defaultSLA: 5,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 1,
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Processamento',
+          order: 2,
+          slaDays: 3,
+          requiredActions: ['process_request'],
+          canSkip: false
+        },
+        {
+          name: 'Finalização',
+          order: 3,
+          slaDays: 1,
+          requiredActions: ['finalize'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'INSCRICAO_LEI_INCENTIVO',
+      name: 'Inscrição em Lei de Incentivo à Cultura',
+      description: 'Workflow para inscrição em lei de incentivo',
+      defaultSLA: 30,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 10,
+          requiredDocuments: ['RG_CPF', 'PROJETO_CULTURAL', 'ORCAMENTO', 'PLANILHA_FINANCEIRA'],
           requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
           name: 'Avaliação Técnica',
           order: 2,
-          slaDays: 7,
-          requiredActions: ['technical_evaluation'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'SUBMISSAO_PROJETO_CULTURAL',
-      name: 'Submissão de Projeto Cultural',
-      description: 'Workflow para submissão de projetos culturais',
-      defaultSLA: 30,
-      stages: [
-        {
-          name: 'Análise de Admissibilidade',
-          order: 1,
-          slaDays: 10,
-          requiredDocuments: ['PROJETO', 'ORCAMENTO', 'PORTFOLIO'],
-          requiredActions: ['verify_admissibility'],
-          canSkip: false
-        },
-        {
-          name: 'Avaliação Técnica',
-          order: 2,
           slaDays: 15,
           requiredActions: ['technical_evaluation'],
           canSkip: false
         },
         {
-          name: 'Decisão',
+          name: 'Decisão da Comissão',
           order: 3,
           slaDays: 5,
-          requiredActions: ['approve_or_reject'],
+          requiredActions: ['commission_decision'],
           canSkip: false
         },
       ]
-        },
+    },
+
+    // ========================================
+    // SECRETARIA DE EDUCAÇÃO (12 workflows)
+    // ========================================
     {
-      moduleType: 'CADASTRO_EVENTO_CULTURAL',
-      name: 'Cadastro de Evento Cultural',
-      description: 'Workflow para cadastro de eventos culturais',
+      moduleType: 'ATENDIMENTOS_EDUCACAO',
+      name: 'Atendimento Educação',
+      description: 'Workflow para atendimentos gerais de educação',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Triagem',
+          order: 1,
+          slaDays: 2,
+          requiredActions: ['initial_triage'],
+          canSkip: false
+        },
+        {
+          name: 'Atendimento Pedagógico',
+          order: 2,
+          slaDays: 6,
+          requiredActions: ['pedagogical_service'],
+          canSkip: false
+        },
+        {
+          name: 'Finalização',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['finalize'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'MATRICULA_ESCOLAR',
+      name: 'Matrícula Escolar',
+      description: 'Workflow para matrícula escolar',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 2,
+          requiredDocuments: ['RG_CPF', 'CERTIDAO_NASCIMENTO', 'COMPROVANTE_RESIDENCIA', 'HISTORICO_ESCOLAR'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação de Vagas',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['check_vacancy'],
+          canSkip: false
+        },
+        {
+          name: 'Efetivação de Matrícula',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['finalize_enrollment'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_TRANSPORTE_ESCOLAR',
+      name: 'Solicitação de Transporte Escolar',
+      description: 'Workflow para transporte escolar',
       defaultSLA: 15,
       stages: [
         {
-          name: 'Análise de Proposta',
+          name: 'Análise de Solicitação',
           order: 1,
-          slaDays: 5,
-          requiredDocuments: ['PROJETO_EVENTO', 'CRONOGRAMA'],
-          requiredActions: ['review_proposal'],
+          slaDays: 3,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_MATRICULA', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['review_request'],
           canSkip: false
         },
         {
-          name: 'Avaliação de Viabilidade',
+          name: 'Verificação de Rotas',
           order: 2,
           slaDays: 7,
-          requiredActions: ['viability_analysis'],
+          requiredActions: ['check_routes'],
+          canSkip: false
+        },
+        {
+          name: 'Aprovação de Transporte',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['approve_transport'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'INSCRICAO_MERENDA_ESPECIAL',
+      name: 'Inscrição em Merenda Especial',
+      description: 'Workflow para merenda especial',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['RG_CPF', 'LAUDO_MEDICO', 'COMPROVANTE_MATRICULA'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Nutricional',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['nutritional_assessment'],
           canSkip: false
         },
         {
           name: 'Aprovação',
           order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
+          slaDays: 2,
+          requiredActions: ['approve'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL',
-      name: 'Registro de Manifestação Cultural',
-      description: 'Workflow para registro de manifestações culturais',
+      moduleType: 'SOLICITACAO_TRANSFERENCIA',
+      name: 'Solicitação de Transferência Escolar',
+      description: 'Workflow para transferência escolar',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_MATRICULA'],
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação de Vagas na Escola Destino',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['check_vacancy'],
+          canSkip: false
+        },
+        {
+          name: 'Efetivação de Transferência',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['finalize_transfer'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'INSCRICAO_PROGRAMA_JOVEM_APRENDIZ',
+      name: 'Inscrição no Programa Jovem Aprendiz',
+      description: 'Workflow para programa jovem aprendiz',
       defaultSLA: 20,
       stages: [
         {
-          name: 'Documentação',
+          name: 'Análise Documental',
           order: 1,
-          slaDays: 7,
-          requiredDocuments: ['DESCRICAO_MANIFESTACAO', 'DOCUMENTACAO_HISTORICA'],
-          requiredActions: ['document_manifestation'],
+          slaDays: 5,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_ESCOLARIDADE', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
-          name: 'Análise Técnica',
+          name: 'Avaliação Pedagógica',
           order: 2,
           slaDays: 10,
-          requiredActions: ['technical_analysis'],
+          requiredActions: ['pedagogical_assessment'],
           canSkip: false
         },
         {
-          name: 'Registro',
+          name: 'Aprovação e Encaminhamento',
           order: 3,
-          slaDays: 3,
-          requiredActions: ['register_manifestation'],
+          slaDays: 5,
+          requiredActions: ['approve_and_refer'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'PROJETO_CULTURAL',
-      name: 'Projeto Cultural (Lei de Incentivo)',
-      description: 'Workflow para projetos culturais via lei de incentivo',
-      defaultSLA: 30,
+      moduleType: 'SOLICITACAO_UNIFORME',
+      name: 'Solicitação de Uniforme Escolar',
+      description: 'Workflow para uniforme escolar',
+      defaultSLA: 10,
       stages: [
         {
-          name: 'Análise de Admissibilidade',
+          name: 'Análise de Solicitação',
           order: 1,
-          slaDays: 7,
-          requiredDocuments: ['PROJETO', 'ORCAMENTO', 'PORTFOLIO'],
-          requiredActions: ['verify_admissibility'],
+          slaDays: 2,
+          requiredDocuments: ['COMPROVANTE_MATRICULA'],
+          requiredActions: ['review_request'],
           canSkip: false
         },
         {
-          name: 'Avaliação Técnica',
+          name: 'Verificação de Estoque',
           order: 2,
-          slaDays: 15,
-          requiredActions: ['technical_evaluation'],
+          slaDays: 5,
+          requiredActions: ['check_stock'],
           canSkip: false
         },
         {
-          name: 'Decisão',
+          name: 'Liberação de Uniforme',
           order: 3,
-          slaDays: 8,
-          requiredActions: ['approve_or_reject'],
+          slaDays: 3,
+          requiredActions: ['release_uniform'],
           canSkip: false
         },
       ]
+    },
+    {
+      moduleType: 'SOLICITACAO_MATERIAL_ESCOLAR',
+      name: 'Solicitação de Material Escolar',
+      description: 'Workflow para material escolar',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 2,
+          requiredDocuments: ['COMPROVANTE_MATRICULA'],
+          requiredActions: ['review_request'],
+          canSkip: false
         },
+        {
+          name: 'Verificação de Estoque',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['check_stock'],
+          canSkip: false
+        },
+        {
+          name: 'Liberação de Material',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['release_supplies'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'INSCRICAO_PROJETO_EDUCACIONAL',
+      name: 'Inscrição em Projeto Educacional',
+      description: 'Workflow para projetos educacionais',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Inscrição',
+          order: 1,
+          slaDays: 5,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_MATRICULA'],
+          requiredActions: ['review_enrollment'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação de Vagas',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['check_vacancy'],
+          canSkip: false
+        },
+        {
+          name: 'Confirmação',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['confirm_enrollment'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_ATENDIMENTO_ESPECIALIZADO',
+      name: 'Solicitação de Atendimento Educacional Especializado (AEE)',
+      description: 'Workflow para AEE',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['RG_CPF', 'LAUDO_MEDICO', 'COMPROVANTE_MATRICULA'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Pedagógica',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['pedagogical_assessment'],
+          canSkip: false
+        },
+        {
+          name: 'Elaboração de Plano de Atendimento',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['create_plan'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_SEGUNDA_CHAMADA',
+      name: 'Solicitação de Prova em Segunda Chamada',
+      description: 'Workflow para segunda chamada',
+      defaultSLA: 5,
+      stages: [
+        {
+          name: 'Análise de Justificativa',
+          order: 1,
+          slaDays: 1,
+          requiredDocuments: ['JUSTIFICATIVA'],
+          requiredActions: ['review_justification'],
+          canSkip: false
+        },
+        {
+          name: 'Aprovação Pedagógica',
+          order: 2,
+          slaDays: 2,
+          requiredActions: ['pedagogical_approval'],
+          canSkip: false
+        },
+        {
+          name: 'Agendamento de Prova',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['schedule_exam'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_DECLARACAO_ESCOLAR',
+      name: 'Solicitação de Declaração Escolar',
+      description: 'Workflow para declaração escolar',
+      defaultSLA: 3,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 1,
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Emissão de Declaração',
+          order: 2,
+          slaDays: 1,
+          requiredActions: ['issue_declaration'],
+          canSkip: false
+        },
+        {
+          name: 'Entrega',
+          order: 3,
+          slaDays: 1,
+          requiredActions: ['deliver'],
+          canSkip: false
+        },
+      ]
+    },
 
     // ========================================
-    // SECRETARIA DE ESPORTES (10 workflows)
+    // SECRETARIA DE ESPORTES (4 workflows)
     // ========================================
     {
       moduleType: 'ATENDIMENTOS_ESPORTES',
@@ -1779,10 +1411,10 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
         {
-          name: 'Atendimento',
+          name: 'Atendimento Esportivo',
           order: 2,
           slaDays: 6,
-          requiredActions: ['complete_attendance'],
+          requiredActions: ['sports_service'],
           canSkip: false
         },
         {
@@ -1793,41 +1425,11 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'CADASTRO_ATLETA',
-      name: 'Cadastro de Atleta',
-      description: 'Workflow para cadastro de atletas',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise Documental',
-          order: 1,
-          slaDays: 5,
-          requiredDocuments: ['RG_CPF', 'ATESTADO_MEDICO', 'FOTO'],
-          requiredActions: ['validate_documents'],
-          canSkip: false
-        },
-        {
-          name: 'Avaliação Física',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['physical_evaluation'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'INSCRICAO_ESCOLINHA',
-      name: 'Inscrição em Escolinha Esportiva',
-      description: 'Workflow para inscrição em escolinhas esportivas',
+      moduleType: 'INSCRICAO_ATIVIDADE_ESPORTIVA',
+      name: 'Inscrição em Atividade Esportiva',
+      description: 'Workflow para inscrição em atividades esportivas',
       defaultSLA: 10,
       stages: [
         {
@@ -1853,347 +1455,228 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'INSCRICAO_COMPETICAO',
-      name: 'Inscrição em Competição',
-      description: 'Workflow para inscrição em competições esportivas',
-      defaultSLA: 15,
+      moduleType: 'RESERVA_EQUIPAMENTO_ESPORTIVO',
+      name: 'Reserva de Equipamento Esportivo',
+      description: 'Workflow para reserva de equipamentos esportivos',
+      defaultSLA: 7,
       stages: [
         {
-          name: 'Análise de Elegibilidade',
+          name: 'Análise de Solicitação',
           order: 1,
-          slaDays: 5,
-          requiredDocuments: ['FICHA_INSCRICAO', 'ATESTADO_MEDICO'],
-          requiredActions: ['verify_eligibility'],
+          slaDays: 2,
+          requiredDocuments: ['RG_CPF'],
+          requiredActions: ['review_request'],
           canSkip: false
         },
         {
-          name: 'Verificação de Categorias',
+          name: 'Verificação de Disponibilidade',
           order: 2,
-          slaDays: 7,
-          requiredActions: ['check_category'],
+          slaDays: 3,
+          requiredActions: ['check_availability'],
           canSkip: false
         },
         {
-          name: 'Confirmação',
+          name: 'Aprovação de Reserva',
           order: 3,
-          slaDays: 3,
-          requiredActions: ['confirm_enrollment'],
+          slaDays: 2,
+          requiredActions: ['approve_reservation'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'CADASTRO_EQUIPE_ESPORTIVA',
-      name: 'Cadastro de Equipe Esportiva',
-      description: 'Workflow para cadastro de equipes esportivas',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise Documental',
-          order: 1,
-          slaDays: 5,
-          requiredDocuments: ['LISTA_ATLETAS', 'DOCUMENTACAO_EQUIPE'],
-          requiredActions: ['validate_documents'],
-          canSkip: false
-        },
-        {
-          name: 'Validação de Atletas',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['validate_athletes'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'INSCRICAO_TORNEIO',
-      name: 'Inscrição em Torneio',
-      description: 'Workflow para inscrição em torneios',
+      moduleType: 'INSCRICAO_CAMPEONATO',
+      name: 'Inscrição em Campeonato',
+      description: 'Workflow para inscrição em campeonatos',
       defaultSLA: 15,
       stages: [
         {
           name: 'Análise de Inscrição',
           order: 1,
           slaDays: 5,
-          requiredDocuments: ['FICHA_INSCRICAO_EQUIPE'],
+          requiredDocuments: ['RG_CPF', 'ATESTADO_MEDICO', 'FICHA_ATLETA'],
           requiredActions: ['review_enrollment'],
           canSkip: false
         },
         {
-          name: 'Verificação de Requisitos',
+          name: 'Verificação de Regulamento',
           order: 2,
           slaDays: 7,
-          requiredActions: ['verify_requirements'],
+          requiredActions: ['verify_compliance'],
           canSkip: false
         },
         {
-          name: 'Confirmação',
+          name: 'Confirmação e Sorteio',
           order: 3,
           slaDays: 3,
-          requiredActions: ['confirm_enrollment'],
+          requiredActions: ['confirm_and_draw'],
           canSkip: false
         },
       ]
-        },
-    {
-      moduleType: 'CADASTRO_MODALIDADE',
-      name: 'Cadastro de Modalidade Esportiva',
-      description: 'Workflow para cadastro de novas modalidades',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Análise de Proposta',
-          order: 1,
-          slaDays: 7,
-          requiredDocuments: ['PROPOSTA_MODALIDADE', 'REGULAMENTO'],
-          requiredActions: ['review_proposal'],
-          canSkip: false
-        },
-        {
-          name: 'Avaliação de Viabilidade',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['viability_analysis'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'RESERVA_ESPACO_ESPORTIVO',
-      name: 'Reserva de Espaço Esportivo',
-      description: 'Workflow para reserva de espaços esportivos',
-      defaultSLA: 5,
-      stages: [
-        {
-          name: 'Análise de Disponibilidade',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['check_availability'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 2,
-          slaDays: 2,
-          requiredActions: ['approve_reservation'],
-          canSkip: false
-        },
-        {
-          name: 'Confirmação',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['confirm_reservation'],
-          canSkip: false
-        },
-      ]
-        },
+    },
 
     // ========================================
-    // SECRETARIA DE HABITAÇÃO (7 workflows)
+    // SECRETARIA DE HABITAÇÃO (5 workflows)
     // ========================================
-    {
-      moduleType: 'ATENDIMENTOS_HABITACAO',
-      name: 'Atendimento Habitação',
-      description: 'Workflow para atendimentos gerais de habitação',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Triagem',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['initial_triage'],
-          canSkip: false
-        },
-        {
-          name: 'Atendimento',
-          order: 2,
-          slaDays: 6,
-          requiredActions: ['complete_attendance'],
-          canSkip: false
-        },
-        {
-          name: 'Finalização',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['finalize'],
-          canSkip: false
-        },
-      ]
-        },
     {
       moduleType: 'INSCRICAO_PROGRAMA_HABITACIONAL',
       name: 'Inscrição em Programa Habitacional',
-      description: 'Workflow para inscrição em programas habitacionais',
-      defaultSLA: 20,
+      description: 'Workflow para programas habitacionais',
+      defaultSLA: 30,
       stages: [
         {
           name: 'Análise Documental',
           order: 1,
-          slaDays: 5,
-          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'COMPROVANTE_RENDA'],
+          slaDays: 10,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'COMPROVANTE_RENDA', 'CERTIDAO_ESTADO_CIVIL'],
           requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
-          name: 'Visita Técnica',
+          name: 'Avaliação Social',
           order: 2,
-          slaDays: 10,
-          requiredActions: ['schedule_visit', 'complete_visit'],
+          slaDays: 15,
+          requiredActions: ['social_assessment'],
           canSkip: false
         },
         {
           name: 'Classificação',
           order: 3,
           slaDays: 5,
-          requiredActions: ['classify_applicant'],
+          requiredActions: ['classify'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'REGULARIZACAO_FUNDIARIA',
-      name: 'Regularização Fundiária',
-      description: 'Workflow para regularização fundiária',
-      defaultSLA: 90,
+      moduleType: 'SOLICITACAO_REFORMA',
+      name: 'Solicitação de Auxílio para Reforma',
+      description: 'Workflow para auxílio reforma',
+      defaultSLA: 30,
       stages: [
         {
           name: 'Análise Documental',
           order: 1,
-          slaDays: 30,
-          requiredDocuments: ['DOCUMENTOS_IMOVEL', 'CERTIDOES'],
+          slaDays: 7,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_PROPRIEDADE', 'ORCAMENTO_REFORMA'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Vistoria Técnica',
+          order: 2,
+          slaDays: 15,
+          requiredActions: ['technical_inspection'],
+          canSkip: false
+        },
+        {
+          name: 'Decisão Final',
+          order: 3,
+          slaDays: 8,
+          requiredActions: ['final_decision'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_REGULARIZACAO_FUNDIARIA',
+      name: 'Solicitação de Regularização Fundiária',
+      description: 'Workflow para regularização fundiária',
+      defaultSLA: 60,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 15,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'DOCUMENTOS_IMOVEL'],
           requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
           name: 'Levantamento Topográfico',
           order: 2,
-          slaDays: 40,
+          slaDays: 30,
           requiredActions: ['topographic_survey'],
           canSkip: false
         },
         {
-          name: 'Regularização',
+          name: 'Processo de Regularização',
           order: 3,
-          slaDays: 20,
-          requiredActions: ['complete_regularization'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'SOLICITACAO_AUXILIO_ALUGUEL',
-      name: 'Solicitação de Auxílio Aluguel',
-      description: 'Workflow para solicitação de auxílio aluguel',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Análise de Elegibilidade',
-          order: 1,
-          slaDays: 7,
-          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RENDA', 'CONTRATO_ALUGUEL'],
-          requiredActions: ['verify_eligibility'],
-          canSkip: false
-        },
-        {
-          name: 'Visita Social',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['schedule_visit', 'complete_visit'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CADASTRO_UNIDADE_HABITACIONAL',
-      name: 'Cadastro de Unidade Habitacional',
-      description: 'Workflow para cadastro de unidades habitacionais',
-      defaultSLA: 30,
-      stages: [
-        {
-          name: 'Análise Documental',
-          order: 1,
-          slaDays: 10,
-          requiredDocuments: ['PROJETO', 'APROVACAO_PREFEITURA', 'HABITE_SE'],
-          requiredActions: ['validate_documents'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria Técnica',
-          order: 2,
           slaDays: 15,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Cadastro',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['register_unit'],
+          requiredActions: ['regularization_process'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'INSCRICAO_FILA_HABITACAO',
-      name: 'Inscrição em Fila de Habitação',
-      description: 'Workflow para inscrição em fila de habitação',
+      moduleType: 'SOLICITACAO_ATENDIMENTO_HABITACIONAL',
+      name: 'Solicitação de Atendimento Habitacional',
+      description: 'Workflow para atendimento habitacional',
       defaultSLA: 15,
       stages: [
         {
-          name: 'Análise de Elegibilidade',
+          name: 'Triagem Social',
           order: 1,
-          slaDays: 5,
-          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'COMPROVANTE_RENDA'],
-          requiredActions: ['verify_eligibility'],
+          slaDays: 3,
+          requiredActions: ['social_screening'],
           canSkip: false
         },
         {
-          name: 'Análise Socioeconômica',
+          name: 'Avaliação de Necessidade',
           order: 2,
           slaDays: 7,
-          requiredActions: ['socioeconomic_analysis'],
+          requiredActions: ['need_assessment'],
           canSkip: false
         },
         {
-          name: 'Classificação',
+          name: 'Encaminhamento',
           order: 3,
-          slaDays: 3,
-          requiredActions: ['classify_applicant'],
+          slaDays: 5,
+          requiredActions: ['referral'],
           canSkip: false
         },
       ]
+    },
+    {
+      moduleType: 'SOLICITACAO_MATERIAIS_CONSTRUCAO',
+      name: 'Solicitação de Materiais de Construção',
+      description: 'Workflow para materiais de construção',
+      defaultSLA: 20,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 5,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA', 'ORCAMENTO'],
+          requiredActions: ['review_request'],
+          canSkip: false
         },
+        {
+          name: 'Avaliação Social',
+          order: 2,
+          slaDays: 10,
+          requiredActions: ['social_assessment'],
+          canSkip: false
+        },
+        {
+          name: 'Liberação de Materiais',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['release_materials'],
+          canSkip: false
+        },
+      ]
+    },
 
     // ========================================
-    // SECRETARIA DE OBRAS PÚBLICAS (7 workflows)
+    // SECRETARIA DE MEIO AMBIENTE (5 workflows)
     // ========================================
     {
-      moduleType: 'ATENDIMENTOS_OBRAS',
-      name: 'Atendimento Obras Públicas',
-      description: 'Workflow para atendimentos gerais de obras públicas',
+      moduleType: 'ATENDIMENTOS_MEIO_AMBIENTE',
+      name: 'Atendimento Meio Ambiente',
+      description: 'Workflow para atendimentos gerais de meio ambiente',
       defaultSLA: 10,
       stages: [
         {
@@ -2204,10 +1687,10 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
         {
-          name: 'Atendimento',
+          name: 'Atendimento Ambiental',
           order: 2,
           slaDays: 6,
-          requiredActions: ['complete_attendance'],
+          requiredActions: ['environmental_service'],
           canSkip: false
         },
         {
@@ -2218,53 +1701,77 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'SOLICITACAO_OBRA_PUBLICA',
-      name: 'Solicitação de Obra Pública',
-      description: 'Workflow para solicitações de obras públicas',
-      defaultSLA: 30,
+      moduleType: 'SOLICITACAO_LICENCIAMENTO_AMBIENTAL',
+      name: 'Solicitação de Licenciamento Ambiental',
+      description: 'Workflow para licenciamento ambiental',
+      defaultSLA: 60,
       stages: [
         {
-          name: 'Análise de Competência',
+          name: 'Análise Documental',
           order: 1,
-          slaDays: 3,
-          requiredActions: ['verify_competence'],
+          slaDays: 15,
+          requiredDocuments: ['RG_CPF', 'PROJETO_ATIVIDADE', 'ESTUDOS_AMBIENTAIS'],
+          requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
-          name: 'Vistoria Local',
+          name: 'Vistoria Técnica',
           order: 2,
-          slaDays: 7,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
+          slaDays: 30,
+          requiredActions: ['technical_inspection'],
           canSkip: false
         },
         {
-          name: 'Planejamento',
+          name: 'Emissão de Licença',
           order: 3,
           slaDays: 15,
-          requiredActions: ['create_plan', 'estimate_cost'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 4,
-          slaDays: 5,
-          requiredActions: ['approve_or_reject'],
+          requiredActions: ['issue_license'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'SOLICITACAO_REPARO_VIA',
-      name: 'Solicitação de Reparo de Via',
-      description: 'Workflow para solicitação de reparos em vias públicas',
-      defaultSLA: 20,
+      moduleType: 'DENUNCIA_AMBIENTAL',
+      name: 'Denúncia Ambiental',
+      description: 'Workflow para denúncias ambientais',
+      defaultSLA: 15,
       stages: [
         {
-          name: 'Análise da Solicitação',
+          name: 'Registro de Denúncia',
+          order: 1,
+          slaDays: 2,
+          requiredActions: ['register_complaint'],
+          canSkip: false
+        },
+        {
+          name: 'Vistoria de Fiscalização',
+          order: 2,
+          slaDays: 10,
+          requiredActions: ['inspection'],
+          canSkip: false
+        },
+        {
+          name: 'Providências',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['take_action'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_AUTORIZACAO_PODA',
+      name: 'Solicitação de Autorização para Poda/Corte de Árvore',
+      description: 'Workflow para autorização de poda',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
           order: 1,
           slaDays: 3,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_PROPRIEDADE', 'FOTOS'],
           requiredActions: ['review_request'],
           canSkip: false
         },
@@ -2272,128 +1779,161 @@ export async function createDefaultWorkflows() {
           name: 'Vistoria Técnica',
           order: 2,
           slaDays: 10,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
+          requiredActions: ['technical_inspection'],
           canSkip: false
         },
         {
-          name: 'Execução do Reparo',
+          name: 'Emissão de Autorização',
           order: 3,
-          slaDays: 7,
+          slaDays: 2,
+          requiredActions: ['issue_authorization'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_COLETA_ESPECIAL',
+      name: 'Solicitação de Coleta Especial de Resíduos',
+      description: 'Workflow para coleta especial',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 2,
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Agendamento de Coleta',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['schedule_collection'],
+          canSkip: false
+        },
+        {
+          name: 'Realização de Coleta',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['perform_collection'],
+          canSkip: false
+        },
+      ]
+    },
+
+    // ========================================
+    // SECRETARIA DE OBRAS PÚBLICAS (3 workflows)
+    // ========================================
+    {
+      moduleType: 'ATENDIMENTOS_OBRAS_PUBLICAS',
+      name: 'Atendimento Obras Públicas',
+      description: 'Workflow para atendimentos gerais de obras públicas',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Triagem',
+          order: 1,
+          slaDays: 3,
+          requiredActions: ['initial_triage'],
+          canSkip: false
+        },
+        {
+          name: 'Atendimento Técnico',
+          order: 2,
+          slaDays: 10,
+          requiredActions: ['technical_service'],
+          canSkip: false
+        },
+        {
+          name: 'Finalização',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['finalize'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_REPARO_VIA_PUBLICA',
+      name: 'Solicitação de Reparo em Via Pública',
+      description: 'Workflow para reparo em vias públicas',
+      defaultSLA: 30,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 5,
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Vistoria Técnica',
+          order: 2,
+          slaDays: 15,
+          requiredActions: ['technical_inspection'],
+          canSkip: false
+        },
+        {
+          name: 'Execução de Reparo',
+          order: 3,
+          slaDays: 10,
           requiredActions: ['execute_repair'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'VISTORIA_TECNICA_OBRAS',
-      name: 'Vistoria Técnica de Obras',
-      description: 'Workflow para vistorias técnicas de obras',
-      defaultSLA: 15,
+      moduleType: 'SOLICITACAO_OBRA_COMUNITARIA',
+      name: 'Solicitação de Obra Comunitária',
+      description: 'Workflow para obras comunitárias',
+      defaultSLA: 60,
       stages: [
         {
-          name: 'Agendamento',
+          name: 'Análise de Solicitação',
           order: 1,
-          slaDays: 5,
-          requiredActions: ['schedule_inspection'],
+          slaDays: 15,
+          requiredDocuments: ['DESCRICAO_OBRA', 'JUSTIFICATIVA_COMUNIDADE'],
+          requiredActions: ['review_request'],
           canSkip: false
         },
         {
-          name: 'Execução da Vistoria',
+          name: 'Estudo de Viabilidade',
           order: 2,
-          slaDays: 7,
-          requiredActions: ['complete_inspection'],
+          slaDays: 30,
+          requiredActions: ['feasibility_study'],
           canSkip: false
         },
         {
-          name: 'Emissão de Laudo',
+          name: 'Aprovação e Planejamento',
           order: 3,
-          slaDays: 3,
-          requiredActions: ['issue_report'],
+          slaDays: 15,
+          requiredActions: ['approve_and_plan'],
           canSkip: false
         },
       ]
-        },
-    {
-      moduleType: 'CADASTRO_OBRA_PUBLICA',
-      name: 'Cadastro de Obra Pública',
-      description: 'Workflow para cadastro de obras públicas',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Análise Documental',
-          order: 1,
-          slaDays: 7,
-          requiredDocuments: ['PROJETO', 'ORCAMENTO', 'LICENCAS'],
-          requiredActions: ['validate_documents'],
-          canSkip: false
-        },
-        {
-          name: 'Análise Técnica',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['technical_analysis'],
-          canSkip: false
-        },
-        {
-          name: 'Cadastro',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['register_work'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'INSPECAO_OBRA',
-      name: 'Inspeção de Obra',
-      description: 'Workflow para inspeções de obras em andamento',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Agendamento',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['schedule_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Inspeção',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Relatório',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['issue_report'],
-          canSkip: false
-        },
-      ]
-        },
+    },
 
     // ========================================
-    // SECRETARIA DE PLANEJAMENTO URBANO (9 workflows)
+    // SECRETARIA DE PLANEJAMENTO URBANO (5 workflows)
     // ========================================
     {
-      moduleType: 'ATENDIMENTOS_PLANEJAMENTO',
+      moduleType: 'ATENDIMENTOS_PLANEJAMENTO_URBANO',
       name: 'Atendimento Planejamento Urbano',
       description: 'Workflow para atendimentos gerais de planejamento urbano',
-      defaultSLA: 10,
+      defaultSLA: 15,
       stages: [
         {
           name: 'Triagem',
           order: 1,
-          slaDays: 2,
+          slaDays: 3,
           requiredActions: ['initial_triage'],
           canSkip: false
         },
         {
-          name: 'Atendimento',
+          name: 'Atendimento Urbanístico',
           order: 2,
-          slaDays: 6,
-          requiredActions: ['complete_attendance'],
+          slaDays: 10,
+          requiredActions: ['urban_service'],
           canSkip: false
         },
         {
@@ -2404,195 +1944,665 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'ALVARA_CONSTRUCAO',
-      name: 'Alvará de Construção',
+      moduleType: 'SOLICITACAO_ALVARA_CONSTRUCAO',
+      name: 'Solicitação de Alvará de Construção',
       description: 'Workflow para alvará de construção',
-      defaultSLA: 45,
-      stages: [
-        {
-          name: 'Análise de Projeto',
-          order: 1,
-          slaDays: 15,
-          requiredDocuments: ['PROJETO_ARQUITETONICO', 'ART', 'MATRICULA_IMOVEL'],
-          requiredActions: ['analyze_project'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria Técnica',
-          order: 2,
-          slaDays: 15,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Parecer Técnico',
-          order: 3,
-          slaDays: 10,
-          requiredActions: ['technical_opinion', 'approve_or_reject'],
-          canSkip: false
-        },
-        {
-          name: 'Emissão do Alvará',
-          order: 4,
-          slaDays: 5,
-          requiredActions: ['issue_license'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'APROVACAO_PROJETO',
-      name: 'Aprovação de Projeto',
-      description: 'Workflow para aprovação de projetos urbanísticos',
-      defaultSLA: 40,
-      stages: [
-        {
-          name: 'Análise Preliminar',
-          order: 1,
-          slaDays: 10,
-          requiredDocuments: ['PROJETO', 'MEMORIAL_DESCRITIVO'],
-          requiredActions: ['preliminary_analysis'],
-          canSkip: false
-        },
-        {
-          name: 'Análise Técnica',
-          order: 2,
-          slaDays: 20,
-          requiredActions: ['technical_review'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 10,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'ALVARA_FUNCIONAMENTO',
-      name: 'Alvará de Funcionamento',
-      description: 'Workflow para alvará de funcionamento',
       defaultSLA: 30,
       stages: [
         {
           name: 'Análise Documental',
           order: 1,
           slaDays: 10,
-          requiredDocuments: ['CNPJ', 'CONTRATO_SOCIAL', 'COMPROVANTE_ENDERECO'],
+          requiredDocuments: ['RG_CPF', 'MATRICULA_IMOVEL', 'PROJETO_ARQUITETONICO', 'ART'],
           requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
-          name: 'Vistoria do Local',
+          name: 'Análise Técnica',
           order: 2,
           slaDays: 15,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
+          requiredActions: ['technical_analysis'],
           canSkip: false
         },
         {
-          name: 'Emissão',
+          name: 'Emissão de Alvará',
           order: 3,
           slaDays: 5,
-          requiredActions: ['issue_license'],
+          requiredActions: ['issue_permit'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'SOLICITACAO_CERTIDAO',
-      name: 'Solicitação de Certidão',
-      description: 'Workflow para solicitação de certidões urbanísticas',
+      moduleType: 'SOLICITACAO_CERTIDAO_USO_SOLO',
+      name: 'Solicitação de Certidão de Uso do Solo',
+      description: 'Workflow para certidão de uso do solo',
       defaultSLA: 15,
       stages: [
         {
-          name: 'Análise da Solicitação',
+          name: 'Análise de Solicitação',
           order: 1,
           slaDays: 5,
+          requiredDocuments: ['RG_CPF', 'MATRICULA_IMOVEL'],
           requiredActions: ['review_request'],
           canSkip: false
         },
         {
-          name: 'Elaboração',
+          name: 'Análise Urbanística',
           order: 2,
           slaDays: 7,
-          requiredActions: ['prepare_certificate'],
+          requiredActions: ['urban_analysis'],
           canSkip: false
         },
         {
-          name: 'Emissão',
+          name: 'Emissão de Certidão',
           order: 3,
           slaDays: 3,
           requiredActions: ['issue_certificate'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'DENUNCIA_CONSTRUCAO_IRREGULAR',
-      name: 'Denúncia de Construção Irregular',
-      description: 'Workflow para denúncias de construções irregulares',
+      moduleType: 'SOLICITACAO_ALVARA_DEMOLICAO',
+      name: 'Solicitação de Alvará de Demolição',
+      description: 'Workflow para alvará de demolição',
       defaultSLA: 20,
-      stages: [
-        {
-          name: 'Análise da Denúncia',
-          order: 1,
-          slaDays: 3,
-          requiredActions: ['review_complaint'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Notificação/Auto de Infração',
-          order: 3,
-          slaDays: 7,
-          requiredActions: ['issue_notification'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CADASTRO_LOTEAMENTO',
-      name: 'Cadastro de Loteamento',
-      description: 'Workflow para cadastro de loteamentos',
-      defaultSLA: 60,
       stages: [
         {
           name: 'Análise Documental',
           order: 1,
-          slaDays: 20,
-          requiredDocuments: ['PROJETO_LOTEAMENTO', 'MATRICULA', 'CERTIDOES'],
+          slaDays: 5,
+          requiredDocuments: ['RG_CPF', 'MATRICULA_IMOVEL', 'PROJETO_DEMOLICAO', 'ART'],
           requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Vistoria Técnica',
+          order: 2,
+          slaDays: 10,
+          requiredActions: ['technical_inspection'],
+          canSkip: false
+        },
+        {
+          name: 'Emissão de Alvará',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['issue_permit'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_REMEMBRAMENTO',
+      name: 'Solicitação de Desmembramento/Remembramento de Lote',
+      description: 'Workflow para desmembramento/remembramento',
+      defaultSLA: 45,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 15,
+          requiredDocuments: ['RG_CPF', 'MATRICULA_IMOVEL', 'PROJETO_TOPOGRAFICO', 'ART'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Análise Urbanística',
+          order: 2,
+          slaDays: 20,
+          requiredActions: ['urban_analysis'],
+          canSkip: false
+        },
+        {
+          name: 'Aprovação e Registro',
+          order: 3,
+          slaDays: 10,
+          requiredActions: ['approve_and_register'],
+          canSkip: false
+        },
+      ]
+    },
+
+    // ========================================
+    // SECRETARIA DE SAÚDE (10 workflows)
+    // ========================================
+    {
+      moduleType: 'ATENDIMENTOS_SAUDE',
+      name: 'Atendimento Saúde',
+      description: 'Workflow para atendimentos gerais de saúde',
+      defaultSLA: 5,
+      stages: [
+        {
+          name: 'Triagem',
+          order: 1,
+          slaDays: 1,
+          requiredActions: ['initial_triage'],
+          canSkip: false
+        },
+        {
+          name: 'Atendimento Médico',
+          order: 2,
+          slaDays: 3,
+          requiredActions: ['medical_service'],
+          canSkip: false
+        },
+        {
+          name: 'Finalização',
+          order: 3,
+          slaDays: 1,
+          requiredActions: ['finalize'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'AGENDAMENTO_CONSULTA',
+      name: 'Agendamento de Consulta Médica',
+      description: 'Workflow para agendamento de consultas',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['CARTAO_SUS', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação de Agenda',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['check_schedule'],
+          canSkip: false
+        },
+        {
+          name: 'Confirmação de Agendamento',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['confirm_appointment'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'AGENDAMENTO_EXAME',
+      name: 'Agendamento de Exame',
+      description: 'Workflow para agendamento de exames',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Requisição',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['CARTAO_SUS', 'REQUISICAO_MEDICA'],
+          requiredActions: ['review_requisition'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação de Disponibilidade',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['check_availability'],
+          canSkip: false
+        },
+        {
+          name: 'Confirmação de Agendamento',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['confirm_appointment'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_MEDICAMENTO_ESPECIAL',
+      name: 'Solicitação de Medicamento Especial',
+      description: 'Workflow para medicamentos especiais',
+      defaultSLA: 20,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 5,
+          requiredDocuments: ['CARTAO_SUS', 'RECEITA_MEDICA', 'LAUDOS'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Médica',
+          order: 2,
+          slaDays: 10,
+          requiredActions: ['medical_evaluation'],
+          canSkip: false
+        },
+        {
+          name: 'Liberação de Medicamento',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['release_medication'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'CADASTRO_PROGRAMA_SAUDE',
+      name: 'Cadastro em Programa de Saúde',
+      description: 'Workflow para cadastro em programas de saúde',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['CARTAO_SUS', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação de Elegibilidade',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['verify_eligibility'],
+          canSkip: false
+        },
+        {
+          name: 'Cadastramento',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['register'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_TRANSPORTE_SAUDE',
+      name: 'Solicitação de Transporte para Tratamento de Saúde',
+      description: 'Workflow para transporte de saúde',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['CARTAO_SUS', 'COMPROVANTE_TRATAMENTO'],
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Social',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['social_assessment'],
+          canSkip: false
+        },
+        {
+          name: 'Aprovação de Transporte',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['approve_transport'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'AGENDAMENTO_VACINA',
+      name: 'Agendamento de Vacinação',
+      description: 'Workflow para agendamento de vacinas',
+      defaultSLA: 7,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 2,
+          requiredDocuments: ['CARTAO_SUS', 'CARTEIRA_VACINACAO'],
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação de Disponibilidade',
+          order: 2,
+          slaDays: 3,
+          requiredActions: ['check_availability'],
+          canSkip: false
+        },
+        {
+          name: 'Confirmação de Agendamento',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['confirm_appointment'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_ATENDIMENTO_DOMICILIAR',
+      name: 'Solicitação de Atendimento Domiciliar',
+      description: 'Workflow para atendimento domiciliar',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 2,
+          requiredDocuments: ['CARTAO_SUS', 'LAUDO_MEDICO'],
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Médica',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['medical_evaluation'],
+          canSkip: false
+        },
+        {
+          name: 'Agendamento de Visita',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['schedule_visit'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'INSCRICAO_CIRURGIA_ELETIVA',
+      name: 'Inscrição em Fila de Cirurgia Eletiva',
+      description: 'Workflow para fila de cirurgia',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise Documental',
+          order: 1,
+          slaDays: 5,
+          requiredDocuments: ['CARTAO_SUS', 'REQUISICAO_CIRURGIA', 'EXAMES_PREOPERATORIOS'],
+          requiredActions: ['validate_documents'],
+          canSkip: false
+        },
+        {
+          name: 'Avaliação Médica',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['medical_evaluation'],
+          canSkip: false
+        },
+        {
+          name: 'Inclusão em Fila',
+          order: 3,
+          slaDays: 3,
+          requiredActions: ['add_to_queue'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_SEGUNDA_VIA_CARTAO_SUS',
+      name: 'Solicitação de 2ª Via do Cartão SUS',
+      description: 'Workflow para segunda via do cartão SUS',
+      defaultSLA: 5,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 1,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Emissão de Cartão',
+          order: 2,
+          slaDays: 3,
+          requiredActions: ['issue_card'],
+          canSkip: false
+        },
+        {
+          name: 'Entrega',
+          order: 3,
+          slaDays: 1,
+          requiredActions: ['deliver'],
+          canSkip: false
+        },
+      ]
+    },
+
+    // ========================================
+    // SECRETARIA DE SEGURANÇA PÚBLICA (8 workflows)
+    // ========================================
+    {
+      moduleType: 'ATENDIMENTOS_SEGURANCA_PUBLICA',
+      name: 'Atendimento Segurança Pública',
+      description: 'Workflow para atendimentos gerais de segurança pública',
+      defaultSLA: 5,
+      stages: [
+        {
+          name: 'Triagem',
+          order: 1,
+          slaDays: 1,
+          requiredActions: ['initial_triage'],
+          canSkip: false
+        },
+        {
+          name: 'Atendimento de Segurança',
+          order: 2,
+          slaDays: 3,
+          requiredActions: ['security_service'],
+          canSkip: false
+        },
+        {
+          name: 'Finalização',
+          order: 3,
+          slaDays: 1,
+          requiredActions: ['finalize'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'REGISTRO_OCORRENCIA',
+      name: 'Registro de Ocorrência',
+      description: 'Workflow emergencial para registro de ocorrência',
+      defaultSLA: 1,
+      stages: [
+        {
+          name: 'Registro Inicial',
+          order: 1,
+          slaDays: 0.5,
+          requiredActions: ['initial_registration'],
+          canSkip: false
+        },
+        {
+          name: 'Investigação Preliminar',
+          order: 2,
+          slaDays: 0.5,
+          requiredActions: ['preliminary_investigation'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_RONDA',
+      name: 'Solicitação de Ronda Preventiva',
+      description: 'Workflow para ronda preventiva',
+      defaultSLA: 7,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 2,
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Planejamento de Ronda',
+          order: 2,
+          slaDays: 3,
+          requiredActions: ['plan_patrol'],
+          canSkip: false
+        },
+        {
+          name: 'Execução de Ronda',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['execute_patrol'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_MONITORAMENTO',
+      name: 'Solicitação de Monitoramento por Câmeras',
+      description: 'Workflow para monitoramento por câmeras',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['RG_CPF', 'JUSTIFICATIVA'],
+          requiredActions: ['review_request'],
           canSkip: false
         },
         {
           name: 'Análise Técnica',
           order: 2,
-          slaDays: 30,
-          requiredActions: ['technical_review'],
+          slaDays: 5,
+          requiredActions: ['technical_analysis'],
           canSkip: false
         },
         {
-          name: 'Aprovação',
+          name: 'Decisão Final',
           order: 3,
-          slaDays: 10,
-          requiredActions: ['approve_or_reject'],
+          slaDays: 2,
+          requiredActions: ['final_decision'],
           canSkip: false
         },
       ]
+    },
+    {
+      moduleType: 'SOLICITACAO_ILUMINACAO_PUBLICA',
+      name: 'Solicitação de Melhoria em Iluminação Pública',
+      description: 'Workflow para iluminação pública',
+      defaultSLA: 15,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 3,
+          requiredActions: ['review_request'],
+          canSkip: false
         },
+        {
+          name: 'Vistoria Técnica',
+          order: 2,
+          slaDays: 7,
+          requiredActions: ['technical_inspection'],
+          canSkip: false
+        },
+        {
+          name: 'Execução de Melhoria',
+          order: 3,
+          slaDays: 5,
+          requiredActions: ['execute_improvement'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'CADASTRO_PROGRAMA_VIZINHANCA',
+      name: 'Cadastro em Programa de Vizinhança Solidária',
+      description: 'Workflow para vizinhança solidária',
+      defaultSLA: 10,
+      stages: [
+        {
+          name: 'Análise de Inscrição',
+          order: 1,
+          slaDays: 3,
+          requiredDocuments: ['RG_CPF', 'COMPROVANTE_RESIDENCIA'],
+          requiredActions: ['review_enrollment'],
+          canSkip: false
+        },
+        {
+          name: 'Capacitação',
+          order: 2,
+          slaDays: 5,
+          requiredActions: ['training'],
+          canSkip: false
+        },
+        {
+          name: 'Ativação no Programa',
+          order: 3,
+          slaDays: 2,
+          requiredActions: ['activate'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'SOLICITACAO_BOLETIM_OCORRENCIA',
+      name: 'Solicitação de Cópia de Boletim de Ocorrência',
+      description: 'Workflow para cópia de BO',
+      defaultSLA: 3,
+      stages: [
+        {
+          name: 'Análise de Solicitação',
+          order: 1,
+          slaDays: 1,
+          requiredDocuments: ['RG_CPF'],
+          requiredActions: ['review_request'],
+          canSkip: false
+        },
+        {
+          name: 'Localização de BO',
+          order: 2,
+          slaDays: 1,
+          requiredActions: ['locate_report'],
+          canSkip: false
+        },
+        {
+          name: 'Emissão de Cópia',
+          order: 3,
+          slaDays: 1,
+          requiredActions: ['issue_copy'],
+          canSkip: false
+        },
+      ]
+    },
+    {
+      moduleType: 'DENUNCIA_ANONIMA',
+      name: 'Denúncia Anônima',
+      description: 'Workflow para denúncias anônimas',
+      defaultSLA: 5,
+      stages: [
+        {
+          name: 'Registro de Denúncia',
+          order: 1,
+          slaDays: 1,
+          requiredActions: ['register_complaint'],
+          canSkip: false
+        },
+        {
+          name: 'Verificação e Investigação',
+          order: 2,
+          slaDays: 3,
+          requiredActions: ['investigate'],
+          canSkip: false
+        },
+        {
+          name: 'Providências',
+          order: 3,
+          slaDays: 1,
+          requiredActions: ['take_action'],
+          canSkip: false
+        },
+      ]
+    },
 
     // ========================================
-    // SECRETARIA DE SERVIÇOS PÚBLICOS (9 workflows)
+    // SECRETARIA DE SERVIÇOS PÚBLICOS (4 workflows)
     // ========================================
     {
       moduleType: 'ATENDIMENTOS_SERVICOS_PUBLICOS',
@@ -2608,10 +2618,10 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
         {
-          name: 'Atendimento',
+          name: 'Atendimento ao Cidadão',
           order: 2,
           slaDays: 6,
-          requiredActions: ['complete_attendance'],
+          requiredActions: ['citizen_service'],
           canSkip: false
         },
         {
@@ -2622,44 +2632,15 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'SOLICITACAO_PODA',
-      name: 'Solicitação de Poda de Árvore',
-      description: 'Workflow para solicitação de poda de árvore',
+      moduleType: 'SOLICITACAO_SERVICO_MANUTENCAO',
+      name: 'Solicitação de Serviço de Manutenção Urbana',
+      description: 'Workflow para manutenção urbana',
       defaultSLA: 15,
       stages: [
         {
-          name: 'Análise do Pedido',
-          order: 1,
-          slaDays: 3,
-          requiredActions: ['review_request'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Execução',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['execute_service'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'ILUMINACAO_PUBLICA',
-      name: 'Solicitação de Iluminação Pública',
-      description: 'Workflow para solicitação de iluminação pública',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise da Solicitação',
+          name: 'Análise de Solicitação',
           order: 1,
           slaDays: 3,
           requiredActions: ['review_request'],
@@ -2669,167 +2650,79 @@ export async function createDefaultWorkflows() {
           name: 'Vistoria Técnica',
           order: 2,
           slaDays: 7,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
+          requiredActions: ['technical_inspection'],
           canSkip: false
         },
         {
-          name: 'Execução',
+          name: 'Execução de Manutenção',
           order: 3,
           slaDays: 5,
-          requiredActions: ['execute_service'],
+          requiredActions: ['execute_maintenance'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'LIMPEZA_URBANA',
-      name: 'Solicitação de Limpeza Urbana',
-      description: 'Workflow para solicitação de limpeza urbana',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Triagem',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['review_request'],
-          canSkip: false
-        },
-        {
-          name: 'Programação',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['schedule_service'],
-          canSkip: false
-        },
-        {
-          name: 'Execução',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['execute_service'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'COLETA_ESPECIAL',
-      name: 'Coleta Especial',
-      description: 'Workflow para coleta especial de resíduos',
+      moduleType: 'SOLICITACAO_PODA_ARVORE',
+      name: 'Solicitação de Poda de Árvore em Via Pública',
+      description: 'Workflow para poda de árvores',
       defaultSLA: 15,
       stages: [
         {
-          name: 'Análise da Solicitação',
+          name: 'Análise de Solicitação',
           order: 1,
           slaDays: 3,
           requiredActions: ['review_request'],
           canSkip: false
         },
         {
-          name: 'Agendamento',
+          name: 'Vistoria Técnica',
           order: 2,
           slaDays: 7,
-          requiredActions: ['schedule_collection'],
+          requiredActions: ['technical_inspection'],
           canSkip: false
         },
         {
-          name: 'Execução',
+          name: 'Execução de Poda',
           order: 3,
           slaDays: 5,
-          requiredActions: ['execute_collection'],
+          requiredActions: ['execute_pruning'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'SOLICITACAO_CAPINA',
-      name: 'Solicitação de Capina',
-      description: 'Workflow para solicitação de capina',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise da Solicitação',
-          order: 1,
-          slaDays: 3,
-          requiredActions: ['review_request'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Execução',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['execute_service'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'SOLICITACAO_DESOBSTRUCAO',
-      name: 'Solicitação de Desobstrução',
-      description: 'Workflow para solicitação de desobstrução',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Análise de Urgência',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['evaluate_urgency'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Execução',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['execute_service'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'GESTAO_EQUIPES_SERVICOS',
-      name: 'Gestão de Equipes de Serviços',
-      description: 'Workflow para gestão de equipes de serviços',
+      moduleType: 'SOLICITACAO_LIMPEZA_TERRENO',
+      name: 'Solicitação de Limpeza de Terreno Público',
+      description: 'Workflow para limpeza de terrenos',
       defaultSLA: 20,
       stages: [
         {
-          name: 'Cadastro',
+          name: 'Análise de Solicitação',
           order: 1,
-          slaDays: 7,
-          requiredDocuments: ['DOCUMENTACAO_EQUIPE'],
-          requiredActions: ['register_team'],
+          slaDays: 5,
+          requiredActions: ['review_request'],
           canSkip: false
         },
         {
-          name: 'Validação',
+          name: 'Vistoria e Notificação do Proprietário',
           order: 2,
           slaDays: 10,
-          requiredActions: ['validate_team'],
+          requiredActions: ['inspection_and_notice'],
           canSkip: false
         },
         {
-          name: 'Ativação',
+          name: 'Execução de Limpeza',
           order: 3,
-          slaDays: 3,
-          requiredActions: ['activate_team'],
+          slaDays: 5,
+          requiredActions: ['execute_cleaning'],
           canSkip: false
         },
       ]
-        },
+    },
 
     // ========================================
-    // SECRETARIA DE TURISMO (8 workflows)
+    // SECRETARIA DE TURISMO (3 workflows)
     // ========================================
     {
       moduleType: 'ATENDIMENTOS_TURISMO',
@@ -2845,10 +2738,10 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
         {
-          name: 'Atendimento',
+          name: 'Orientação Turística',
           order: 2,
           slaDays: 6,
-          requiredActions: ['complete_attendance'],
+          requiredActions: ['tourism_guidance'],
           canSkip: false
         },
         {
@@ -2859,86 +2752,55 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO',
-      name: 'Cadastro de Estabelecimento Turístico',
-      description: 'Workflow para cadastro de estabelecimentos turísticos',
-      defaultSLA: 15,
+      moduleType: 'CADASTRO_EMPREENDIMENTO_TURISTICO',
+      name: 'Cadastro de Empreendimento Turístico',
+      description: 'Workflow para cadastro de empreendimentos turísticos',
+      defaultSLA: 20,
       stages: [
         {
           name: 'Análise Documental',
           order: 1,
-          slaDays: 5,
-          requiredDocuments: ['CNPJ', 'ALVARA_FUNCIONAMENTO', 'CERTIDOES'],
+          slaDays: 7,
+          requiredDocuments: ['RG_CPF', 'CNPJ', 'ALVARA_FUNCIONAMENTO', 'CADASTUR'],
           requiredActions: ['validate_documents'],
           canSkip: false
         },
         {
-          name: 'Vistoria do Estabelecimento',
+          name: 'Vistoria Técnica',
           order: 2,
-          slaDays: 7,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
+          slaDays: 10,
+          requiredActions: ['technical_inspection'],
           canSkip: false
         },
         {
-          name: 'Aprovação',
+          name: 'Cadastramento',
           order: 3,
           slaDays: 3,
-          requiredActions: ['approve_or_reject'],
+          requiredActions: ['register'],
           canSkip: false
         },
       ]
-        },
+    },
     {
-      moduleType: 'CADASTRO_GUIA_TURISTICO',
-      name: 'Cadastro de Guia Turístico',
-      description: 'Workflow para cadastro de guias turísticos',
-      defaultSLA: 15,
+      moduleType: 'INSCRICAO_EVENTO_TURISTICO',
+      name: 'Inscrição em Evento Turístico',
+      description: 'Workflow para inscrição em eventos turísticos',
+      defaultSLA: 10,
       stages: [
         {
-          name: 'Análise Documental',
+          name: 'Análise de Inscrição',
           order: 1,
-          slaDays: 5,
-          requiredDocuments: ['RG_CPF', 'CERTIFICADO_CURSO', 'CADASTUR'],
-          requiredActions: ['validate_documents'],
-          canSkip: false
-        },
-        {
-          name: 'Avaliação Técnica',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['technical_evaluation'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
           slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'INSCRICAO_PROGRAMA_TURISTICO',
-      name: 'Inscrição em Programa Turístico',
-      description: 'Workflow para inscrição em programas turísticos',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise de Elegibilidade',
-          order: 1,
-          slaDays: 5,
-          requiredDocuments: ['DOCUMENTACAO_SOLICITANTE'],
-          requiredActions: ['verify_eligibility'],
+          requiredActions: ['review_enrollment'],
           canSkip: false
         },
         {
-          name: 'Avaliação',
+          name: 'Verificação de Vagas',
           order: 2,
-          slaDays: 7,
-          requiredActions: ['program_evaluation'],
+          slaDays: 4,
+          requiredActions: ['check_vacancy'],
           canSkip: false
         },
         {
@@ -2949,427 +2811,9 @@ export async function createDefaultWorkflows() {
           canSkip: false
         },
       ]
-        },
-    {
-      moduleType: 'REGISTRO_ATRATIVO_TURISTICO',
-      name: 'Registro de Atrativo Turístico',
-      description: 'Workflow para registro de atrativos turísticos',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Análise de Proposta',
-          order: 1,
-          slaDays: 7,
-          requiredDocuments: ['DESCRICAO_ATRATIVO', 'FOTOS', 'LOCALIZACAO'],
-          requiredActions: ['review_proposal'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria Técnica',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Registro',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['register_attraction'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CADASTRO_ROTEIRO_TURISTICO',
-      name: 'Cadastro de Roteiro Turístico',
-      description: 'Workflow para cadastro de roteiros turísticos',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Análise de Proposta',
-          order: 1,
-          slaDays: 7,
-          requiredDocuments: ['DESCRICAO_ROTEIRO', 'MAPA', 'CRONOGRAMA'],
-          requiredActions: ['review_proposal'],
-          canSkip: false
-        },
-        {
-          name: 'Validação Técnica',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['technical_validation'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CADASTRO_EVENTO_TURISTICO',
-      name: 'Cadastro de Evento Turístico',
-      description: 'Workflow para cadastro de eventos turísticos',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Análise de Proposta',
-          order: 1,
-          slaDays: 7,
-          requiredDocuments: ['PROJETO_EVENTO', 'CRONOGRAMA', 'ORCAMENTO'],
-          requiredActions: ['review_proposal'],
-          canSkip: false
-        },
-        {
-          name: 'Avaliação de Viabilidade',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['viability_analysis'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
+    },
 
-    // ========================================
-    // SECRETARIA DE SEGURANÇA PÚBLICA (11 workflows)
-    // ========================================
-    {
-      moduleType: 'ATENDIMENTOS_SEGURANCA',
-      name: 'Atendimento Segurança Pública',
-      description: 'Workflow para atendimentos gerais de segurança pública',
-      defaultSLA: 7,
-      stages: [
-        {
-          name: 'Triagem',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['initial_triage'],
-          canSkip: false
-        },
-        {
-          name: 'Atendimento',
-          order: 2,
-          slaDays: 4,
-          requiredActions: ['complete_attendance'],
-          canSkip: false
-        },
-        {
-          name: 'Finalização',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['finalize'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'REGISTRO_OCORRENCIA',
-      name: 'Registro de Ocorrência de Segurança',
-      description: 'Workflow para registro de ocorrências de segurança',
-      defaultSLA: 7,
-      stages: [
-        {
-          name: 'Registro da Ocorrência',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['register_occurrence'],
-          canSkip: false
-        },
-        {
-          name: 'Atendimento',
-          order: 2,
-          slaDays: 3,
-          requiredActions: ['respond_occurrence'],
-          canSkip: false
-        },
-        {
-          name: 'Encerramento',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['close_occurrence'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'SOLICITACAO_RONDA',
-      name: 'Solicitação de Ronda',
-      description: 'Workflow para solicitação de ronda preventiva',
-      defaultSLA: 5,
-      stages: [
-        {
-          name: 'Análise da Solicitação',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['review_request'],
-          canSkip: false
-        },
-        {
-          name: 'Programação',
-          order: 2,
-          slaDays: 2,
-          requiredActions: ['schedule_patrol'],
-          canSkip: false
-        },
-        {
-          name: 'Execução',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['execute_patrol'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'SOLICITACAO_CAMERA_SEGURANCA',
-      name: 'Solicitação de Câmera de Segurança',
-      description: 'Workflow para solicitação de instalação de câmeras',
-      defaultSLA: 30,
-      stages: [
-        {
-          name: 'Análise de Viabilidade',
-          order: 1,
-          slaDays: 10,
-          requiredActions: ['viability_analysis'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria Técnica',
-          order: 2,
-          slaDays: 15,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Aprovação',
-          order: 3,
-          slaDays: 5,
-          requiredActions: ['approve_or_reject'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'DENUNCIA_ANONIMA',
-      name: 'Denúncia Anônima',
-      description: 'Workflow para denúncias anônimas',
-      defaultSLA: 10,
-      stages: [
-        {
-          name: 'Triagem',
-          order: 1,
-          slaDays: 2,
-          requiredActions: ['triage_complaint'],
-          canSkip: false
-        },
-        {
-          name: 'Investigação Preliminar',
-          order: 2,
-          slaDays: 5,
-          requiredActions: ['preliminary_investigation'],
-          canSkip: false
-        },
-        {
-          name: 'Encaminhamento',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['forward_complaint'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'CADASTRO_PONTO_CRITICO',
-      name: 'Cadastro de Ponto Crítico',
-      description: 'Workflow para cadastro de pontos críticos de segurança',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise da Indicação',
-          order: 1,
-          slaDays: 5,
-          requiredActions: ['review_indication'],
-          canSkip: false
-        },
-        {
-          name: 'Vistoria Local',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['schedule_inspection', 'complete_inspection'],
-          canSkip: false
-        },
-        {
-          name: 'Cadastro',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['register_critical_point'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'ALERTA_SEGURANCA',
-      name: 'Alerta de Segurança',
-      description: 'Workflow para alertas de segurança',
-      defaultSLA: 3,
-      stages: [
-        {
-          name: 'Validação',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['validate_alert'],
-          canSkip: false
-        },
-        {
-          name: 'Divulgação',
-          order: 2,
-          slaDays: 1,
-          requiredActions: ['broadcast_alert'],
-          canSkip: false
-        },
-        {
-          name: 'Monitoramento',
-          order: 3,
-          slaDays: 1,
-          requiredActions: ['monitor_alert'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'REGISTRO_PATRULHA',
-      name: 'Registro de Patrulha',
-      description: 'Workflow para registro de patrulhas realizadas',
-      defaultSLA: 5,
-      stages: [
-        {
-          name: 'Registro',
-          order: 1,
-          slaDays: 1,
-          requiredActions: ['register_patrol'],
-          canSkip: false
-        },
-        {
-          name: 'Validação',
-          order: 2,
-          slaDays: 2,
-          requiredActions: ['validate_patrol'],
-          canSkip: false
-        },
-        {
-          name: 'Arquivamento',
-          order: 3,
-          slaDays: 2,
-          requiredActions: ['archive_patrol'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'GESTAO_GUARDA_MUNICIPAL',
-      name: 'Gestão da Guarda Municipal',
-      description: 'Workflow para gestão de guardas municipais',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Cadastro',
-          order: 1,
-          slaDays: 7,
-          requiredDocuments: ['RG_CPF', 'CERTIFICADO_FORMACAO', 'EXAMES_MEDICOS'],
-          requiredActions: ['register_guard'],
-          canSkip: false
-        },
-        {
-          name: 'Validação',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['validate_guard'],
-          canSkip: false
-        },
-        {
-          name: 'Ativação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['activate_guard'],
-          canSkip: false
-        },
-      ]
-        },
-    {
-      moduleType: 'GESTAO_VIGILANCIA',
-      name: 'Gestão de Vigilância',
-      description: 'Workflow para gestão de sistemas de vigilância',
-      defaultSLA: 20,
-      stages: [
-        {
-          name: 'Planejamento',
-          order: 1,
-          slaDays: 7,
-          requiredActions: ['plan_surveillance'],
-          canSkip: false
-        },
-        {
-          name: 'Implementação',
-          order: 2,
-          slaDays: 10,
-          requiredActions: ['implement_surveillance'],
-          canSkip: false
-        },
-        {
-          name: 'Ativação',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['activate_surveillance'],
-          canSkip: false
-        },
-      ]
-        },
-
-    // ========================================
-    // WORKFLOW GENÉRICO (FALLBACK)
-    // ========================================
-    {
-      moduleType: 'GENERICO',
-      name: 'Workflow Genérico',
-      description: 'Workflow padrão para serviços sem workflow específico',
-      defaultSLA: 15,
-      stages: [
-        {
-          name: 'Análise Inicial',
-          order: 1,
-          slaDays: 5,
-          requiredActions: ['initial_review'],
-          canSkip: false
-        },
-        {
-          name: 'Processamento',
-          order: 2,
-          slaDays: 7,
-          requiredActions: ['process_request'],
-          canSkip: false
-        },
-        {
-          name: 'Finalização',
-          order: 3,
-          slaDays: 3,
-          requiredActions: ['finalize'],
-          canSkip: false
-        },
-      ]
-        },
   ];
-
   const created = [];
   for (const workflowData of defaultWorkflows) {
     try {
