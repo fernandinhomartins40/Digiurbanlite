@@ -171,36 +171,9 @@ export async function approveDocument(
     }
   }).catch(err => console.error('Erro ao criar histórico:', err));
 
-  // Verificar se todos documentos obrigatórios foram aprovados
-  const check = await checkAllDocumentsApproved(document.protocolId);
-
-  if (check.allApproved) {
-    // Todos aprovados! Atualizar protocolo para PROGRESSO
-    await prisma.protocolSimplified.update({
-      where: { id: document.protocolId },
-      data: {
-        status: 'PROGRESSO'
-      }
-    });
-
-    // Criar notificação para cidadão
-    const protocol = await prisma.protocolSimplified.findUnique({
-      where: { id: document.protocolId },
-      select: { citizenId: true, number: true }
-    });
-
-    if (protocol) {
-      await prisma.notification.create({
-        data: {
-          citizenId: protocol.citizenId,
-          title: 'Documentos Aprovados',
-          message: `Todos os documentos do protocolo ${protocol.number} foram aprovados! Seu processo está em andamento.`,
-          type: 'SUCCESS',
-          protocolId: document.protocolId
-        }
-      }).catch(err => console.error('Erro ao criar notificação:', err));
-    }
-  }
+  // ✨ NOVO: Disparar orquestrador de workflow
+  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+  await workflowOrchestrator.onDocumentApproved(documentId, validatedBy);
 
   return updatedDocument;
 }
@@ -234,14 +207,6 @@ export async function rejectDocument(
         }
         });
 
-  // Atualizar protocolo para PENDENCIA
-  await prisma.protocolSimplified.update({
-    where: { id: document.protocolId },
-    data: {
-      status: 'PENDENCIA'
-    }
-  });
-
   // Criar histórico
   await prisma.protocolHistorySimplified.create({
     data: {
@@ -252,23 +217,9 @@ export async function rejectDocument(
     }
   }).catch(err => console.error('Erro ao criar histórico:', err));
 
-  // Criar notificação para cidadão
-  const protocol = await prisma.protocolSimplified.findUnique({
-    where: { id: document.protocolId },
-    select: { citizenId: true, number: true }
-  });
-
-  if (protocol) {
-    await prisma.notification.create({
-      data: {
-        citizenId: protocol.citizenId,
-        title: 'Documento Rejeitado',
-        message: `O documento "${document.documentType}" do protocolo ${protocol.number} foi rejeitado. Motivo: ${rejectionReason}. Por favor, envie um novo documento.`,
-        type: 'WARNING',
-        protocolId: document.protocolId
-      }
-    }).catch(err => console.error('Erro ao criar notificação:', err));
-  }
+  // ✨ NOVO: Disparar orquestrador de workflow
+  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+  await workflowOrchestrator.onDocumentRejected(documentId, validatedBy, rejectionReason);
 
   return updatedDocument;
 }

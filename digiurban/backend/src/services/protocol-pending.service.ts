@@ -23,7 +23,7 @@ export interface UpdatePendingData {
  * Cria uma nova pendência em um protocolo
  */
 export async function createPending(data: CreatePendingData) {
-  return prisma.protocolPending.create({
+  const pending = await prisma.protocolPending.create({
     data: {
       protocolId: data.protocolId,
       type: data.type,
@@ -45,6 +45,12 @@ export async function createPending(data: CreatePendingData) {
       }
         }
         });
+
+  // ✨ NOVO: Disparar orquestrador de workflow
+  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+  await workflowOrchestrator.onPendingCreated(pending.id);
+
+  return pending;
 }
 
 /**
@@ -112,7 +118,7 @@ export async function resolvePending(
   resolvedBy: string,
   resolution: string
 ) {
-  return prisma.protocolPending.update({
+  const resolved = await prisma.protocolPending.update({
     where: { id: pendingId },
     data: {
       status: PendingStatus.RESOLVED,
@@ -121,6 +127,12 @@ export async function resolvePending(
       resolution
         }
         });
+
+  // ✨ NOVO: Disparar orquestrador de workflow
+  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+  await workflowOrchestrator.onPendingResolved(pendingId, resolvedBy);
+
+  return resolved;
 }
 
 /**

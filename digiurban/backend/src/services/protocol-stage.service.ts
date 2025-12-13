@@ -140,7 +140,7 @@ export async function completeStage(
   }
 
   // Completar etapa
-  return await prisma.protocolStage.update({
+  const completedStage = await prisma.protocolStage.update({
     where: { id: stageId },
     data: {
       status: StageStatus.COMPLETED,
@@ -150,6 +150,12 @@ export async function completeStage(
       notes
         }
         });
+
+  // ✨ NOVO: Disparar orquestrador de workflow
+  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+  await workflowOrchestrator.onStageCompleted(stageId, userId);
+
+  return completedStage;
 }
 
 /**
@@ -179,7 +185,7 @@ export async function failStage(
   userId: string,
   reason: string
 ) {
-  return await prisma.protocolStage.update({
+  const failedStage = await prisma.protocolStage.update({
     where: { id: stageId },
     data: {
       status: StageStatus.FAILED,
@@ -189,6 +195,12 @@ export async function failStage(
       notes: reason
         }
         });
+
+  // ✨ NOVO: Disparar orquestrador de workflow
+  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+  await workflowOrchestrator.onStageFailed(stageId, userId, reason);
+
+  return failedStage;
 }
 
 /**
