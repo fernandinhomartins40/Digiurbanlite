@@ -81,7 +81,7 @@ export const healthServices: ServiceDefinition[] = [
         medicamento: { type: 'string', title: 'Medicamento Solicitado', maxLength: 200 },
         dosagem: { type: 'string', title: 'Dosagem', maxLength: 100 },
         unidadeSaude: { type: 'string', title: 'Unidade de Saúde para Retirada', maxLength: 200 },
-        usoConti​nuo: { type: 'boolean', title: 'Uso Contínuo' }
+        usoContinuo: { type: 'boolean', title: 'Uso Contínuo' }
       },
       required: ['cartaoSUS', 'medicamento', 'dosagem']
     }
