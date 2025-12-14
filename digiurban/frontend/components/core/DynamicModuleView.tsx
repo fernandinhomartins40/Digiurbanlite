@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, RefreshCw, List, CheckCircle, BarChart3, FileText, MapPin, PieChart, UserPlus, Filter } from 'lucide-react';
+import { Plus, RefreshCw, List, CheckCircle, BarChart3, FileText, MapPin, PieChart, UserPlus, Filter, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DynamicModuleViewProps {
