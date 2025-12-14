@@ -131,9 +131,6 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
       p.customData?.eventDate
   );
 
-  // Detectar se é módulo COM_DADOS
-  const isComDados = service?.serviceType === 'COM_DADOS';
-
   // Loading state
   if (serviceLoading) {
     return (
@@ -287,7 +284,7 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
       {/* Abas Principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className={`grid w-full ${isComDados ? 'grid-cols-9' : 'grid-cols-6'}`}>
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="list" className="flex items-center gap-2">
             <List className="h-4 w-4" />
             Solicitações
@@ -312,24 +309,6 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
             <FileText className="h-4 w-4" />
             Documentos
           </TabsTrigger>
-
-          {/* Novas tabs para módulos COM_DADOS */}
-          {isComDados && (
-            <>
-              <TabsTrigger value="workflow-docs" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                📄 Docs
-              </TabsTrigger>
-              <TabsTrigger value="workflow-stages" className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                🔄 Workflow
-              </TabsTrigger>
-              <TabsTrigger value="workflow-pendings" className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                ⚠️ Pendências
-              </TabsTrigger>
-            </>
-          )}
 
           {hasAdvancedFeatures && (
             <TabsTrigger value="advanced" className="flex items-center gap-2">
@@ -370,13 +349,37 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
         {/* ABA 2: APROVAÇÕES (Fila de Aprovação) */}
         <TabsContent value="approval" className="space-y-4">
-          <h2 className="text-xl font-semibold">Fila de Aprovação</h2>
-          <ApprovalQueue
-            protocols={protocols}
-            service={service}
-            onViewDetails={handleViewDetails}
-            onRefresh={refetch}
-          />
+          {service?.serviceType === 'COM_DADOS' && selectedProtocol ? (
+            <>
+              <h2 className="text-xl font-semibold">Gestão de Workflow - {selectedProtocol.number}</h2>
+              <Tabs defaultValue="workflow" className="space-y-4">
+                <TabsList>
+                  <TabsTrigger value="workflow">Etapas</TabsTrigger>
+                  <TabsTrigger value="documents">Documentos</TabsTrigger>
+                  <TabsTrigger value="pendings">Pendências</TabsTrigger>
+                </TabsList>
+                <TabsContent value="workflow">
+                  <ProtocolWorkflowPanel protocolId={selectedProtocol.id} />
+                </TabsContent>
+                <TabsContent value="documents">
+                  <ProtocolDocumentsPanel protocolId={selectedProtocol.id} />
+                </TabsContent>
+                <TabsContent value="pendings">
+                  <ProtocolPendingsPanel protocolId={selectedProtocol.id} />
+                </TabsContent>
+              </Tabs>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-semibold">Fila de Aprovação</h2>
+              <ApprovalQueue
+                protocols={protocols}
+                service={service}
+                onViewDetails={handleViewDetails}
+                onRefresh={refetch}
+              />
+            </>
+          )}
         </TabsContent>
 
         {/* ABA 3: DADOS COLETADOS (Tabela Genérica) */}
@@ -494,54 +497,6 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
               </CardContent>
             </Card>
           </TabsContent>
-        )}
-
-        {/* NOVAS ABAS PARA MÓDULOS COM_DADOS */}
-        {isComDados && selectedProtocol && (
-          <>
-            <TabsContent value="workflow-docs" className="space-y-4">
-              <h2 className="text-xl font-semibold">Documentos do Protocolo</h2>
-              <ProtocolDocumentsPanel protocolId={selectedProtocol.id} />
-            </TabsContent>
-
-            <TabsContent value="workflow-stages" className="space-y-4">
-              <h2 className="text-xl font-semibold">Workflow e Etapas</h2>
-              <ProtocolWorkflowPanel protocolId={selectedProtocol.id} />
-            </TabsContent>
-
-            <TabsContent value="workflow-pendings" className="space-y-4">
-              <h2 className="text-xl font-semibold">Pendências</h2>
-              <ProtocolPendingsPanel protocolId={selectedProtocol.id} />
-            </TabsContent>
-          </>
-        )}
-
-        {isComDados && !selectedProtocol && (
-          <>
-            <TabsContent value="workflow-docs" className="space-y-4">
-              <Card>
-                <CardContent className="p-6 text-center text-muted-foreground">
-                  Selecione um protocolo na lista para gerenciar documentos
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="workflow-stages" className="space-y-4">
-              <Card>
-                <CardContent className="p-6 text-center text-muted-foreground">
-                  Selecione um protocolo na lista para visualizar o workflow
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="workflow-pendings" className="space-y-4">
-              <Card>
-                <CardContent className="p-6 text-center text-muted-foreground">
-                  Selecione um protocolo na lista para gerenciar pendências
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </>
         )}
 
         {/* ABA 6: RELATÓRIOS (Dashboard + Exportação) */}
