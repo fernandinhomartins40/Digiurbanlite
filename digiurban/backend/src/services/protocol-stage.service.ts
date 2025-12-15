@@ -104,7 +104,8 @@ export async function completeStage(
     where: { id: stageId },
     select: {
       protocolId: true,
-      stageName: true
+      stageName: true,
+      stageOrder: true
     }
   });
 
@@ -112,29 +113,18 @@ export async function completeStage(
     throw new Error('Etapa não encontrada');
   }
 
-  // Se for etapa de "Análise Documental", validar documentos
-  if (stage.stageName.toLowerCase().includes('análise') &&
-      stage.stageName.toLowerCase().includes('document')) {
+  // ✅ VALIDAÇÃO ALINHADA: Verificar condições da etapa baseado no workflow
+  if (result === 'APPROVED') {
+    const workflowService = await import('./module-workflow.service');
+    const validation = await workflowService.validateStageConditions(
+      stage.protocolId,
+      stage.stageOrder
+    );
 
-    const docCheck = await checkAllDocumentsApproved(stage.protocolId);
-
-    if (!docCheck.allApproved) {
-      const pendingDocs = await prisma.protocolDocument.findMany({
-        where: {
-          protocolId: stage.protocolId,
-          isRequired: true,
-          status: { not: 'APPROVED' }
-        },
-        select: { documentType: true, status: true }
-      });
-
-      const pendingList = pendingDocs
-        .map(d => `${d.documentType} (${d.status})`)
-        .join(', ');
-
+    if (!validation.canProgress) {
       throw new Error(
-        `Não é possível completar a etapa "Análise Documental". ` +
-        `Documentos pendentes: ${pendingList}`
+        `Não é possível aprovar a etapa "${stage.stageName}". ` +
+        `Pendências: ${validation.blockers.join('; ')}`
       );
     }
   }

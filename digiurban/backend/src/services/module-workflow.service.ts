@@ -230,11 +230,19 @@ export async function validateStageConditions(
     });
 
     if (missingFields.length > 0) {
-      // Buscar labels dos campos no serviço
-      const formFieldsConfig = service.formFieldsConfig as any[];
+      // Buscar labels dos campos no formSchema do serviço
+      let formSchemaRaw = service?.formSchema as any;
+      if (typeof formSchemaRaw === 'string') {
+        try {
+          formSchemaRaw = JSON.parse(formSchemaRaw);
+        } catch (e) {
+          formSchemaRaw = null;
+        }
+      }
+
       const missingFieldLabels = missingFields.map((fieldId: string) => {
-        const field = formFieldsConfig?.find((f: any) => f.id === fieldId);
-        return field?.label || fieldId;
+        const field = formSchemaRaw?.properties?.[fieldId];
+        return field?.title || fieldId;
       });
 
       missingFormFields.push(...missingFieldLabels);
