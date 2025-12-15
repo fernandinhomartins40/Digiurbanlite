@@ -312,12 +312,31 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       let workflowCreated = false;
 
       if (serviceType === 'COM_DADOS' && moduleType) {
+        // Extrair documentos
+        const requiredDocs = Array.isArray(requiredDocuments)
+          ? (requiredDocuments as any[]).map(doc => ({
+              type: typeof doc === 'string' ? doc : doc.type,
+              name: typeof doc === 'string' ? doc : (doc.name || doc.type)
+            }))
+          : [];
+
+        // Extrair campos do formulário do formSchema
+        const formFields = formSchema?.fields
+          ? (formSchema.fields as any[]).map((field: any) => ({
+              id: field.id || field.name,
+              label: field.label || field.name,
+              required: field.required || false
+            }))
+          : [];
+
         const workflowTemplate = generateDefaultWorkflow({
           moduleType,
           serviceName: name,
           serviceDescription: description,
           estimatedDays,
-          departmentName: department.name
+          departmentName: department.name,
+          requiredDocuments: requiredDocs,
+          formFields
         });
 
         // Criar workflow (já validamos que não existe)

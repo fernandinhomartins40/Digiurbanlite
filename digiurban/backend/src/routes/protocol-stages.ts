@@ -199,6 +199,55 @@ router.put(
 );
 
 /**
+ * GET /api/protocols/:protocolId/stages/:stageId/validate
+ * Validar se uma etapa pode ser aprovada
+ */
+router.get(
+  '/:protocolId/stages/:stageId/validate',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId, stageId } = req.params;
+
+      const stage = await stageService.getStageById(stageId);
+
+      if (!stage || stage.protocolId !== protocolId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Etapa não encontrada'
+        });
+      }
+
+      // Importar dynamically para evitar circular dependency
+      const workflowService = await import('../services/module-workflow.service');
+
+      const validation = await workflowService.validateStageConditions(
+        protocolId,
+        stage.stageOrder
+      );
+
+      return res.json({
+        success: true,
+        data: {
+          stageId: stage.id,
+          stageName: stage.stageName,
+          stageOrder: stage.stageOrder,
+          validation,
+          metadata: stage.metadata
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao validar etapa:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao validar etapa',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+/**
  * PUT /api/protocols/:protocolId/stages/:stageId/complete
  * Completar uma etapa
  */

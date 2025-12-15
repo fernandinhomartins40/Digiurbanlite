@@ -9,8 +9,8 @@
 
 import { PrismaClient } from '@prisma/client';
 import {
-  CreateWorkflowDefinitionDto,
-  UpdateWorkflowDefinitionDto,
+  CreateWorkflowData,
+  UpdateWorkflowData,
   WorkflowDefinitionData,
 } from '../../types/workflow.types';
 
@@ -20,12 +20,12 @@ export class WorkflowDefinitionService {
   /**
    * Criar nova definição de workflow
    */
-  async create(data: CreateWorkflowDefinitionDto): Promise<WorkflowDefinitionData> {
+  async create(data: CreateWorkflowData): Promise<WorkflowDefinitionData> {
     const definition = await prisma.workflowDefinition.create({
       data: {
         name: data.name,
         description: data.description,
-        module: data.module,
+        moduleType: data.moduleType,
         stages: data.stages as any, // JSON
       },
     });
@@ -47,10 +47,10 @@ export class WorkflowDefinitionService {
   /**
    * Buscar por módulo
    */
-  async findByModule(module: string): Promise<WorkflowDefinitionData[]> {
+  async findByModule(moduleType: string): Promise<WorkflowDefinitionData[]> {
     const definitions = await prisma.workflowDefinition.findMany({
       where: {
-        module,
+        moduleType,
         isActive: true,
       },
       orderBy: {
@@ -70,7 +70,7 @@ export class WorkflowDefinitionService {
         isActive: true,
       },
       orderBy: {
-        module: 'asc',
+        moduleType: 'asc',
       },
     });
 
@@ -82,14 +82,13 @@ export class WorkflowDefinitionService {
    */
   async update(
     id: string,
-    data: UpdateWorkflowDefinitionDto
+    data: UpdateWorkflowData
   ): Promise<WorkflowDefinitionData> {
     const definition = await prisma.workflowDefinition.update({
       where: { id },
       data: {
         name: data.name,
         description: data.description,
-        isActive: data.isActive,
         stages: data.stages as any,
       },
     });
@@ -129,7 +128,7 @@ export class WorkflowDefinitionService {
       data: {
         name: original.name,
         description: original.description,
-        module: original.module,
+        moduleType: original.moduleType,
         version: (original.version || 1) + 1,
         stages: original.stages as any,
       },

@@ -50,7 +50,11 @@
       "Bash(npx shadcn@latest add command)",
       "Bash(xargs -I {} taskkill /F /PID {})",
       "Bash(npx kill-port:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(del temp_seguranca_publica.md)",
+      "Bash(python:*)",
+      "Bash(del temp_cultura.md)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []

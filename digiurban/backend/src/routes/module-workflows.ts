@@ -91,6 +91,37 @@ router.get('/stats', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async 
 });
 
 /**
+ * GET /api/workflows/service/:moduleType
+ * Obter informações do serviço para criar workflow
+ */
+router.get('/service/:moduleType', adminAuthMiddleware, async (req, res) => {
+  try {
+    const { moduleType } = req.params;
+
+    const serviceInfo = await workflowService.getServiceForWorkflow(moduleType);
+
+    if (!serviceInfo) {
+      return res.status(404).json({
+        success: false,
+        error: 'Serviço não encontrado para este tipo de módulo'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: serviceInfo
+    });
+  } catch (error) {
+    console.error('Erro ao obter serviço:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao obter serviço',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
  * GET /api/workflows/:moduleType
  * Obter workflow por tipo de módulo
  */

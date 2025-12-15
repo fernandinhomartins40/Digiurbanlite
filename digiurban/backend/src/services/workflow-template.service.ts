@@ -1,20 +1,31 @@
 /**
- * Serviço de Templates de Workflows
- * Gera workflows padrão para novos serviços COM_DADOS
+ * ============================================================================
+ * WORKFLOW TEMPLATE SERVICE - ATUALIZADO
+ * ============================================================================
+ *
+ * Gera workflows ALINHADOS com serviços:
+ * - Usa referências aos documentos do serviço
+ * - Usa referências aos campos do formulário
+ * - Não duplica dados
  */
 
-import type { CreateWorkflowData } from './module-workflow.service'
+import type { CreateWorkflowData, WorkflowStage } from '../types/workflow.types';
+import type { ServiceSimplified } from '@prisma/client';
 
 export interface GenerateWorkflowFromServiceInput {
-  moduleType: string
-  serviceName: string
-  serviceDescription?: string | null
-  estimatedDays?: number | null
-  departmentName?: string
+  moduleType: string;
+  serviceName: string;
+  serviceDescription?: string | null;
+  estimatedDays?: number | null;
+  departmentName?: string;
+
+  // ✅ NOVO: Documentos e campos do serviço
+  requiredDocuments: Array<{ type: string; name: string }>;
+  formFields: Array<{ id: string; label: string; required: boolean }>;
 }
 
 /**
- * Gera workflow padrão baseado nos dados do serviço
+ * Gera workflow padrão ALINHADO com o serviço
  */
 export function generateDefaultWorkflow(
   input: GenerateWorkflowFromServiceInput
@@ -24,103 +35,229 @@ export function generateDefaultWorkflow(
     serviceName,
     serviceDescription,
     estimatedDays,
-    departmentName
-  } = input
+    departmentName,
+    requiredDocuments,
+    formFields
+  } = input;
 
-  // Calcular SLA total (padrão: estimatedDays ou 10 dias)
-  const totalSLA = estimatedDays || 10
+  // Calcular SLA total
+  const totalSLA = estimatedDays || 10;
 
   // Distribuir SLA entre etapas
-  const analysisTime = Math.ceil(totalSLA * 0.4) // 40% do tempo em análise
-  const pendingTime = Math.ceil(totalSLA * 0.2) // 20% para pendências
-  const approvalTime = Math.ceil(totalSLA * 0.3) // 30% para aprovação
+  const analysisTime = Math.ceil(totalSLA * 0.4);  // 40% análise
+  const reviewTime = Math.ceil(totalSLA * 0.3);    // 30% revisão
+  const approvalTime = Math.ceil(totalSLA * 0.3);  // 30% aprovação
+
+  // Separar documentos por categoria
+  const identityDocs = requiredDocuments.filter(d =>
+    d.type.includes('RG') || d.type.includes('CPF') || d.type.includes('IDENTIDADE')
+  ).map(d => d.type);
+
+  const addressDocs = requiredDocuments.filter(d =>
+    d.type.includes('RESIDENCIA') || d.type.includes('ENDERECO')
+  ).map(d => d.type);
+
+  const otherDocs = requiredDocuments.filter(d =>
+    !identityDocs.includes(d.type) && !addressDocs.includes(d.type)
+  ).map(d => d.type);
+
+  // IDs de campos obrigatórios do formulário
+  const requiredFieldIds = formFields.filter(f => f.required).map(f => f.id);
+  const allFieldIds = formFields.map(f => f.id);
+
+  const stages: Omit<WorkflowStage, 'id'>[] = [
+    {
+      name: 'Novo',
+      description: 'Protocolo criado, aguardando análise inicial',
+      order: 1,
+      slaDays: 1,
+      requiredDocumentTypes: [],           // Nenhum doc obrigatório ainda
+      requiredFormFieldIds: [],            // Nenhum campo obrigatório ainda
+      allowedActions: ['APPROVE'],
+      canSkip: false,
+      requiresApproval: false
+    },
+    {
+      name: 'Análise Documental',
+      description: 'Verificação de documentos de identificação e comprovação',
+      order: 2,
+      slaDays: analysisTime,
+      requiredDocumentTypes: [...identityDocs, ...addressDocs], // Docs de identidade
+      requiredFormFieldIds: requiredFieldIds, // Campos obrigatórios do form
+      allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING'],
+      canSkip: false,
+      requiresApproval: true
+    }
+  ];
+
+  // Adicionar etapa intermediária se houver documentos específicos
+  if (otherDocs.length > 0) {
+    stages.push({
+      name: 'Análise Técnica',
+      description: 'Verificação de documentação específica e técnica',
+      order: 3,
+      slaDays: reviewTime,
+      requiredDocumentTypes: otherDocs,    // Documentos específicos
+      requiredFormFieldIds: allFieldIds,   // Todos os campos preenchidos
+      allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING', 'REQUEST_INFO'],
+      canSkip: false,
+      requiresApproval: true
+    });
+
+    stages.push({
+      name: 'Aprovação Final',
+      description: 'Aprovação final e conclusão do processo',
+      order: 4,
+      slaDays: approvalTime,
+      requiredDocumentTypes: requiredDocuments.map(d => d.type), // TODOS os docs
+      requiredFormFieldIds: allFieldIds,   // TODOS os campos
+      allowedActions: ['APPROVE', 'REJECT'],
+      canSkip: false,
+      requiresApproval: true
+    });
+
+    stages.push({
+      name: 'Concluído',
+      description: 'Processo concluído com sucesso',
+      order: 5,
+      slaDays: 1,
+      requiredDocumentTypes: [],
+      requiredFormFieldIds: [],
+      allowedActions: [],
+      canSkip: false,
+      requiresApproval: false
+    });
+  } else {
+    // Workflow simples (sem docs técnicos)
+    stages.push({
+      name: 'Aprovação',
+      description: 'Aprovação e conclusão do processo',
+      order: 3,
+      slaDays: approvalTime,
+      requiredDocumentTypes: requiredDocuments.map(d => d.type),
+      requiredFormFieldIds: allFieldIds,
+      allowedActions: ['APPROVE', 'REJECT'],
+      canSkip: false,
+      requiresApproval: true
+    });
+
+    stages.push({
+      name: 'Concluído',
+      description: 'Processo concluído com sucesso',
+      order: 4,
+      slaDays: 1,
+      requiredDocumentTypes: [],
+      requiredFormFieldIds: [],
+      allowedActions: [],
+      canSkip: false,
+      requiresApproval: false
+    });
+  }
 
   return {
     moduleType,
     name: serviceName,
     description: serviceDescription || `Workflow automático para ${serviceName}`,
     defaultSLA: totalSLA,
-    stages: [
-      {
-        name: 'Novo',
-        order: 1,
-        slaDays: 1,
-        requiredDocuments: [],
-        requiredActions: [],
-        canSkip: false
-      },
-      {
-        name: 'Em Análise',
-        order: 2,
-        slaDays: analysisTime,
-        requiredDocuments: [],
-        requiredActions: ['analisar_documentacao'],
-        canSkip: false
-      },
-      {
-        name: 'Pendente',
-        order: 3,
-        slaDays: pendingTime,
-        requiredDocuments: [],
-        requiredActions: [],
-        canSkip: true,
-        skipCondition: 'Documentação completa'
-      },
-      {
-        name: 'Aprovado',
-        order: 4,
-        slaDays: approvalTime,
-        requiredDocuments: [],
-        requiredActions: ['emitir_parecer'],
-        canSkip: false
-      },
-      {
-        name: 'Concluído',
-        order: 5,
-        slaDays: 1,
-        requiredDocuments: [],
-        requiredActions: [],
-        canSkip: false
-      }
-    ],
+    stages,
     rules: {
       autoGenerated: true,
       generatedAt: new Date().toISOString(),
       source: 'service_creation',
       department: departmentName,
-      canBeDeleted: true,
-      needsReview: true,
-      version: '1.0'
+      version: '2.0',  // Nova versão alinhada
+      alignment: 'SERVICE_BASED'  // Baseado no serviço
     }
-  }
+  };
+}
+
+/**
+ * Gera workflow a partir de um ServiceSimplified completo
+ */
+export function generateWorkflowFromService(service: ServiceSimplified): CreateWorkflowData {
+  // Extrair documentos
+  const requiredDocuments = Array.isArray(service.requiredDocuments)
+    ? (service.requiredDocuments as any[]).map(doc => ({
+        type: typeof doc === 'string' ? doc : doc.type,
+        name: typeof doc === 'string' ? doc : doc.name
+      }))
+    : [];
+
+  // Extrair campos do formulário
+  const formFieldsConfig = service.formFieldsConfig as any;
+  const formFields = Array.isArray(formFieldsConfig)
+    ? formFieldsConfig.map(field => ({
+        id: field.id,
+        label: field.label,
+        required: field.required || false
+      }))
+    : [];
+
+  return generateDefaultWorkflow({
+    moduleType: service.moduleType!,
+    serviceName: service.name,
+    serviceDescription: service.description,
+    estimatedDays: service.estimatedDays,
+    requiredDocuments,
+    formFields
+  });
 }
 
 /**
  * Valida se workflow gerado está correto
  */
-export function validateGeneratedWorkflow(workflow: CreateWorkflowData): boolean {
+export function validateGeneratedWorkflow(workflow: CreateWorkflowData): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
   // Verificar campos obrigatórios
-  if (!workflow.moduleType || !workflow.name || !workflow.stages) {
-    return false
+  if (!workflow.moduleType) {
+    errors.push('moduleType é obrigatório');
+  }
+
+  if (!workflow.name) {
+    errors.push('name é obrigatório');
+  }
+
+  if (!workflow.stages || workflow.stages.length === 0) {
+    errors.push('Workflow precisa ter pelo menos uma etapa');
   }
 
   // Verificar se tem pelo menos 3 etapas
-  if (workflow.stages.length < 3) {
-    return false
+  if (workflow.stages && workflow.stages.length < 3) {
+    errors.push('Workflow precisa ter pelo menos 3 etapas');
   }
 
-  // Verificar se etapas estão ordenadas
-  const orders = workflow.stages.map(s => s.order)
-  const sortedOrders = [...orders].sort((a, b) => a - b)
-  if (JSON.stringify(orders) !== JSON.stringify(sortedOrders)) {
-    return false
+  // Verificar ordenação das etapas
+  if (workflow.stages) {
+    const orders = workflow.stages.map(s => s.order);
+    const sortedOrders = [...orders].sort((a, b) => a - b);
+
+    if (JSON.stringify(orders) !== JSON.stringify(sortedOrders)) {
+      errors.push('Etapas não estão ordenadas corretamente');
+    }
+
+    // Verificar se não há ordens duplicadas
+    const uniqueOrders = new Set(orders);
+    if (uniqueOrders.size !== orders.length) {
+      errors.push('Existem etapas com order duplicado');
+    }
+
+    // Verificar se todas as etapas têm nome
+    workflow.stages.forEach((stage, index) => {
+      if (!stage.name) {
+        errors.push(`Etapa ${index + 1} não tem nome`);
+      }
+      if (!stage.allowedActions || stage.allowedActions.length === 0) {
+        errors.push(`Etapa "${stage.name}" não tem ações permitidas`);
+      }
+    });
   }
 
-  // Verificar se não há ordens duplicadas
-  const uniqueOrders = new Set(orders)
-  if (uniqueOrders.size !== orders.length) {
-    return false
-  }
-
-  return true
+  return {
+    valid: errors.length === 0,
+    errors
+  };
 }

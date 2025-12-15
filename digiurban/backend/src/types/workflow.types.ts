@@ -1,314 +1,189 @@
 /**
  * ============================================================================
- * WORKFLOW ENGINE - TIPOS
+ * WORKFLOW ENGINE - TIPOS ATUALIZADOS
  * ============================================================================
  *
- * Sistema genérico de fluxos de trabalho (workflows) reutilizável por todos
- * os microsistemas do DigiUrban.
- *
- * Permite:
- * - Rastreabilidade total de processos
- * - Filas inteligentes com priorização
- * - SLA tracking automático
- * - Histórico completo de transições
- * - Handoff estruturado entre profissionais/setores
+ * Sistema alinhado onde:
+ * - Serviços definem documentos e formulários (fonte única da verdade)
+ * - Workflows REFERENCIAM (não duplicam) requisitos dos serviços
+ * - Protocolos executam baseado nas referências
  */
 
 import { WorkflowStatus } from '@prisma/client';
 
 // ============================================================================
-// WORKFLOW DEFINITION (Definição do Fluxo)
+// WORKFLOW STAGE - ESTRUTURA ATUALIZADA
 // ============================================================================
 
 /**
- * Stage (etapa) de um workflow
+ * Ações permitidas em uma etapa do workflow
+ */
+export type WorkflowStageAction =
+  | 'APPROVE'           // Aprovar e avançar
+  | 'REJECT'            // Rejeitar etapa
+  | 'CREATE_PENDING'    // Criar pendência
+  | 'REQUEST_INFO'      // Solicitar informações adicionais
+  | 'SKIP'              // Pular etapa (se permitido)
+
+/**
+ * Etapa de workflow ALINHADA com serviços
+ *
+ * ✅ USA REFERÊNCIAS (não duplica dados)
  */
 export interface WorkflowStage {
-  id: string;                    // Identificador único da etapa
-  name: string;                  // Nome da etapa (ex: "Triagem", "Análise Documental")
-  description?: string;          // Descrição detalhada
-  role?: string;                 // Role necessária (ex: "ENFERMEIRO", "MEDICO")
-  department?: string;           // Departamento responsável
-  slaHours?: number;             // SLA em horas (tempo máximo nesta etapa)
-  isInitial?: boolean;           // É a etapa inicial?
-  isFinal?: boolean;             // É uma etapa final?
-  requiresApproval?: boolean;    // Requer aprovação para avançar?
-  allowedActions: WorkflowAction[]; // Ações disponíveis nesta etapa
-  nextStages?: string[];         // IDs das próximas etapas possíveis
-  formFields?: WorkflowFormField[]; // Campos do formulário (se aplicável)
+  id: string;                           // ID único da stage
+  name: string;                         // Nome da etapa
+  description?: string;                 // Descrição detalhada
+  order: number;                        // Ordem de execução
+  slaDays?: number;                     // SLA em dias para esta etapa
+
+  // ✅ NOVO: Referências aos requisitos do SERVIÇO
+  requiredDocumentTypes: string[];      // Tipos de documentos do serviço
+  requiredFormFieldIds: string[];       // IDs de campos do formulário do serviço
+
+  // Configurações da etapa
+  allowedActions: WorkflowStageAction[]; // Ações permitidas
+  canSkip: boolean;                      // Pode ser pulada?
+  skipCondition?: string;                // Condição para pular
+
+  // Responsabilidade
+  role?: string;                         // Role necessária (ex: "MEDICO")
+  department?: string;                   // Departamento responsável
+  requiresApproval?: boolean;            // Requer aprovação manual?
 }
 
-/**
- * Ação disponível em uma etapa
- */
-export interface WorkflowAction {
-  id: string;                    // Identificador da ação
-  name: string;                  // Nome da ação (ex: "Aprovar", "Rejeitar")
-  type: WorkflowActionType;      // Tipo da ação
-  requiresNotes?: boolean;       // Requer observações?
-  requiresAttachments?: boolean; // Requer anexos?
-  targetStage?: string;          // Stage de destino (se aplicável)
-  confirmationMessage?: string;  // Mensagem de confirmação
-}
-
-export enum WorkflowActionType {
-  ADVANCE = 'ADVANCE',           // Avançar para próxima etapa
-  RETURN = 'RETURN',             // Retornar para etapa anterior
-  APPROVE = 'APPROVE',           // Aprovar
-  REJECT = 'REJECT',             // Rejeitar
-  CANCEL = 'CANCEL',             // Cancelar fluxo
-  COMPLETE = 'COMPLETE',         // Concluir fluxo
-  REQUEST_INFO = 'REQUEST_INFO', // Solicitar informações
-  ASSIGN = 'ASSIGN',             // Atribuir a outro usuário
-}
-
-/**
- * Campo de formulário em uma etapa
- */
-export interface WorkflowFormField {
-  id: string;
-  label: string;
-  type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file';
-  required?: boolean;
-  options?: string[];            // Para tipo 'select'
-  validation?: {
-    min?: number;
-    max?: number;
-    pattern?: string;
-  };
-}
+// ============================================================================
+// WORKFLOW DEFINITION
+// ============================================================================
 
 /**
  * Definição completa de um workflow
  */
 export interface WorkflowDefinitionData {
   id?: string;
+  moduleType: string;                   // Vincula ao ServiceSimplified.moduleType
   name: string;
   description?: string;
-  module: string;                // "SAUDE", "EDUCACAO", "ASSISTENCIA_SOCIAL", etc
   version?: number;
   isActive?: boolean;
+  defaultSLA?: number;                  // SLA total em dias
   stages: WorkflowStage[];
+  rules?: any;                          // Regras customizadas
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 // ============================================================================
-// WORKFLOW INSTANCE (Instância do Fluxo)
+// WORKFLOW INSTANCE (Execução)
 // ============================================================================
 
 /**
- * Instância de um workflow (processo em andamento)
+ * Instância de workflow em execução (protocolo)
  */
 export interface WorkflowInstanceData {
   id?: string;
-  definitionId: string;
-  entityType: string;            // "ConsultaMedica", "LicencaObra", etc
-  entityId: string;              // ID da entidade relacionada
-  citizenId?: string;            // Cidadão vinculado (se aplicável)
-  currentStage: string;          // ID da etapa atual
+  definitionId: string;                 // ID do ModuleWorkflow
+  entityType: string;                   // "ProtocolSimplified"
+  entityId: string;                     // ID do protocolo
+  citizenId?: string;
+  currentStage: string;                 // ID da stage atual
   status: WorkflowStatus;
-  priority?: number;             // 0-10 (maior = mais urgente)
-  metadata?: Record<string, any>; // Dados adicionais
+  priority?: number;
+  metadata?: Record<string, any>;
   createdAt?: Date;
   updatedAt?: Date;
   completedAt?: Date;
 }
 
+// ============================================================================
+// VALIDATION RESULT
+// ============================================================================
+
 /**
- * Metadados comuns para instâncias
+ * Resultado de validação de uma etapa
  */
-export interface WorkflowMetadata {
-  assignedUserId?: string;       // Usuário responsável atual
-  assignedUserName?: string;
-  estimatedCompletionDate?: string;
-  tags?: string[];
-  customFields?: Record<string, any>;
+export interface StageValidationResult {
+  canProgress: boolean;                 // Pode avançar?
+  blockers: string[];                   // Impedimentos
+  warnings: string[];                   // Avisos
+  missingDocuments: string[];           // Documentos faltantes
+  missingFormFields: string[];          // Campos de formulário não preenchidos
 }
 
 // ============================================================================
-// WORKFLOW HISTORY (Histórico de Transições)
+// DTOs
 // ============================================================================
 
 /**
- * Registro de histórico de uma transição
+ * DTO para criar workflow
  */
-export interface WorkflowHistoryData {
-  id?: string;
-  instanceId: string;
-  fromStage?: string;            // Stage anterior (null se é criação)
-  toStage: string;               // Stage atual
-  action: string;                // "CREATED", "ADVANCED", "RETURNED", etc
-  userId: string;                // Quem executou
-  userName?: string;
-  notes?: string;
-  attachments?: WorkflowAttachment[];
-  timestamp?: Date;
-  duration?: number;             // Tempo no stage anterior (minutos)
-}
-
-/**
- * Anexo de workflow
- */
-export interface WorkflowAttachment {
-  id: string;
-  fileName: string;
-  fileUrl: string;
-  fileSize: number;
-  mimeType: string;
-  uploadedAt: Date;
-}
-
-// ============================================================================
-// DTOs (Data Transfer Objects)
-// ============================================================================
-
-/**
- * DTO para criar nova definição de workflow
- */
-export interface CreateWorkflowDefinitionDto {
+export interface CreateWorkflowData {
+  moduleType: string;
   name: string;
   description?: string;
-  module: string;
-  stages: WorkflowStage[];
+  defaultSLA?: number;
+  stages: Omit<WorkflowStage, 'id'>[];
+  rules?: any;
 }
 
 /**
- * DTO para atualizar definição de workflow
+ * DTO para atualizar workflow
  */
-export interface UpdateWorkflowDefinitionDto {
+export interface UpdateWorkflowData {
   name?: string;
   description?: string;
-  isActive?: boolean;
-  stages?: WorkflowStage[];
+  defaultSLA?: number;
+  stages?: Omit<WorkflowStage, 'id'>[];
+  rules?: any;
 }
 
 /**
- * DTO para criar nova instância de workflow
+ * DTO para completar/aprovar uma stage
  */
-export interface CreateWorkflowInstanceDto {
-  definitionId: string;
-  entityType: string;
-  entityId: string;
-  citizenId?: string;
-  priority?: number;
-  metadata?: Record<string, any>;
-}
-
-/**
- * DTO para avançar workflow
- */
-export interface AdvanceWorkflowDto {
-  action: string;
-  targetStage?: string;
-  userId: string;
-  userName?: string;
+export interface CompleteStageDto {
+  result: 'APPROVED' | 'REJECTED' | 'SKIPPED';
   notes?: string;
-  attachments?: WorkflowAttachment[];
-  formData?: Record<string, any>;
+  metadata?: any;
 }
 
 /**
- * DTO para retornar workflow
+ * DTO para criar pendência de uma stage
  */
-export interface ReturnWorkflowDto {
-  targetStage: string;
-  userId: string;
-  userName?: string;
-  reason: string;
-  attachments?: WorkflowAttachment[];
-}
-
-/**
- * DTO para cancelar workflow
- */
-export interface CancelWorkflowDto {
-  userId: string;
-  userName?: string;
-  reason: string;
+export interface CreateStagePendingDto {
+  title: string;
+  description: string;
+  blocksProgress: boolean;
+  dueDate?: Date;
 }
 
 // ============================================================================
-// QUERY FILTERS
+// SERVICE INTEGRATION
 // ============================================================================
 
 /**
- * Filtros para consulta de instâncias
+ * Informações de um serviço para criar workflow
  */
-export interface WorkflowInstanceFilters {
-  definitionId?: string;
-  entityType?: string;
-  citizenId?: string;
-  currentStage?: string;
-  status?: WorkflowStatus;
-  priorityMin?: number;
-  priorityMax?: number;
-  createdAfter?: Date;
-  createdBefore?: Date;
-  assignedUserId?: string;
-}
+export interface ServiceForWorkflow {
+  id: string;
+  moduleType: string;
+  name: string;
+  description?: string;
+  estimatedDays?: number;
 
-/**
- * Filtros para fila de trabalho
- */
-export interface WorkflowQueueFilters {
-  definitionId?: string;
-  stage: string;                 // Stage específico
-  status?: WorkflowStatus;
-  assignedUserId?: string;
-  unassignedOnly?: boolean;
-  orderBy?: 'priority' | 'createdAt' | 'sla';
-  orderDirection?: 'asc' | 'desc';
-  limit?: number;
-  offset?: number;
-}
+  // Documentos disponíveis
+  requiredDocuments: Array<{
+    type: string;
+    name: string;
+    required: boolean;
+  }>;
 
-// ============================================================================
-// RESPONSE TYPES
-// ============================================================================
-
-/**
- * Resposta com instância e contexto completo
- */
-export interface WorkflowInstanceResponse extends WorkflowInstanceData {
-  definition?: WorkflowDefinitionData;
-  currentStageData?: WorkflowStage;
-  history?: WorkflowHistoryData[];
-  availableActions?: WorkflowAction[];
-  slaDaysRemaining?: number;
-  isOverdue?: boolean;
-}
-
-/**
- * Item na fila de trabalho
- */
-export interface WorkflowQueueItem {
-  instance: WorkflowInstanceResponse;
-  waitingTime: number;           // Minutos aguardando nesta etapa
-  slaDaysRemaining?: number;
-  isUrgent?: boolean;
-  isOverdue?: boolean;
-}
-
-/**
- * Métricas de workflow
- */
-export interface WorkflowMetrics {
-  totalInstances: number;
-  activeInstances: number;
-  completedInstances: number;
-  cancelledInstances: number;
-  averageDuration: number;       // Minutos
-  byStage: {
-    [stageId: string]: {
-      count: number;
-      averageDuration: number;
-      overdueCount: number;
-    };
-  };
-  byPriority: {
-    [priority: number]: number;
-  };
+  // Campos do formulário disponíveis
+  formFields: Array<{
+    id: string;
+    label: string;
+    type: string;
+    required: boolean;
+  }>;
 }
 
 // ============================================================================

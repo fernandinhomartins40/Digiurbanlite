@@ -7,6 +7,7 @@ import { CheckCircle2, Circle, Clock, XCircle, SkipForward, AlertCircle } from '
 import { ProtocolStage, StageStatus } from '@/types/protocol-enhancements'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { ProtocolStageActions } from './ProtocolStageActions'
 
 interface ProtocolStagesTabProps {
   protocolId: string
@@ -37,12 +38,25 @@ export function ProtocolStagesTab({ protocolId, stages, onRefresh }: ProtocolSta
   }
 
   const sortedStages = [...stages].sort((a, b) => a.stageOrder - b.stageOrder)
+  const currentStage = sortedStages.find(s => s.status === StageStatus.IN_PROGRESS)
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <h3 className="text-lg font-semibold">Workflow / Etapas</h3>
       </div>
+
+      {/* Ações da Etapa Atual */}
+      {currentStage && (
+        <ProtocolStageActions
+          protocolId={protocolId}
+          stageId={currentStage.id}
+          stageName={currentStage.stageName}
+          stageStatus={currentStage.status}
+          metadata={currentStage.metadata}
+          onActionComplete={onRefresh}
+        />
+      )}
 
       {stages.length === 0 ? (
         <Card>
@@ -76,12 +90,6 @@ export function ProtocolStagesTab({ protocolId, stages, onRefresh }: ProtocolSta
                             <h4 className="font-medium">{stage.stageName}</h4>
                             {getStatusBadge(stage.status)}
                           </div>
-                          {stage.status === StageStatus.IN_PROGRESS && (
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline">Completar</Button>
-                              <Button size="sm" variant="ghost">Pular</Button>
-                            </div>
-                          )}
                         </div>
 
                         {/* Informações */}
