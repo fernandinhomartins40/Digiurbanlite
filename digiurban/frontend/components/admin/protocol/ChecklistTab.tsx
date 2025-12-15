@@ -284,76 +284,111 @@ export function ChecklistTab({
           <CardContent>
             <div className="space-y-3">
               {requiredDocs.map((docType: string, index: number) => {
-                const doc = documents.find(d => d.documentType === docType && d.status === 'VALIDATED')
-                const pendingDoc = documents.find(d => d.documentType === docType && d.status === 'PENDING')
-                const isMissing = !doc && !pendingDoc
+                // Buscar TODOS os documentos deste tipo
+                const allDocsOfType = documents.filter(d => d.documentType === docType)
+
+                // Prioridade: VALIDATED/APPROVED > PENDING > REJECTED
+                const approvedDoc = allDocsOfType.find(d => d.status === 'VALIDATED' || d.status === 'APPROVED')
+                const pendingDoc = allDocsOfType.find(d => d.status === 'PENDING')
+                const rejectedDoc = allDocsOfType.find(d => d.status === 'REJECTED')
+
+                // Documento para exibir (prioriza aprovado)
+                const displayDoc = approvedDoc || pendingDoc || rejectedDoc
+
+                // Estados
+                const isApproved = !!approvedDoc
+                const isPending = !approvedDoc && !!pendingDoc
+                const isRejected = !approvedDoc && !pendingDoc && !!rejectedDoc
+                const isMissing = !displayDoc
 
                 return (
                   <div
                     key={index}
                     className={`p-4 rounded-lg border-2 ${
-                      doc
+                      isApproved
                         ? 'bg-green-50 border-green-300'
-                        : pendingDoc
+                        : isPending
                         ? 'bg-blue-50 border-blue-300'
+                        : isRejected
+                        ? 'bg-orange-50 border-orange-300'
                         : 'bg-red-50 border-red-300'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1">
-                        {doc ? (
+                        {isApproved ? (
                           <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                        ) : pendingDoc ? (
+                        ) : isPending ? (
                           <Circle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                        ) : isRejected ? (
+                          <AlertTriangle className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
                         ) : (
                           <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                         )}
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className={`text-sm font-semibold ${
-                              doc ? 'text-green-900' : pendingDoc ? 'text-blue-900' : 'text-red-900'
+                              isApproved ? 'text-green-900' : isPending ? 'text-blue-900' : isRejected ? 'text-orange-900' : 'text-red-900'
                             }`}>
                               {docType}
                             </span>
-                            {doc && (
+                            {isApproved && (
                               <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300">
-                                Aprovado
+                                ✓ Aprovado
                               </Badge>
                             )}
-                            {pendingDoc && (
+                            {isPending && (
                               <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
-                                Aguardando Validação
+                                ⏳ Aguardando Análise
+                              </Badge>
+                            )}
+                            {isRejected && (
+                              <Badge variant="outline" className="text-xs bg-orange-100 text-orange-800 border-orange-300">
+                                ✗ Rejeitado
                               </Badge>
                             )}
                             {isMissing && (
                               <Badge variant="destructive" className="text-xs">
-                                Faltando
+                                ⚠ Faltando
                               </Badge>
                             )}
                           </div>
-                          {(doc || pendingDoc) && (
-                            <div className="text-xs text-muted-foreground space-y-1">
-                              <p>📄 {(doc || pendingDoc)?.fileName}</p>
-                              <p>📏 {((doc || pendingDoc)!.fileSize / 1024).toFixed(2)} KB</p>
+                          {displayDoc && (
+                            <div className="text-xs text-muted-foreground space-y-1 mt-2">
+                              <p className="flex items-center gap-1">
+                                <FileText className="h-3 w-3" />
+                                {displayDoc.fileName}
+                              </p>
+                              <p>📏 {(displayDoc.fileSize / 1024).toFixed(2)} KB</p>
+                              <p className="text-xs opacity-75">
+                                Enviado em {new Date(displayDoc.createdAt).toLocaleDateString('pt-BR')}
+                              </p>
+                              {isRejected && rejectedDoc?.rejectionReason && (
+                                <p className="text-orange-700 font-medium mt-1">
+                                  Motivo: {rejectedDoc.rejectionReason}
+                                </p>
+                              )}
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        {(doc || pendingDoc) && (
+                      <div className="flex flex-col gap-2 flex-shrink-0">
+                        {displayDoc && (
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleViewDocument((doc || pendingDoc)!.id)}
+                            onClick={() => handleViewDocument(displayDoc.id)}
+                            className="w-full"
                           >
                             <Eye className="h-4 w-4 mr-1" />
-                            Ver
+                            Visualizar
                           </Button>
                         )}
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant={isMissing || isRejected ? 'default' : 'outline'}
                           onClick={() => handleOpenPendingModal('document', docType)}
+                          className="w-full"
                         >
                           <AlertCircle className="h-4 w-4 mr-1" />
                           Pendência
