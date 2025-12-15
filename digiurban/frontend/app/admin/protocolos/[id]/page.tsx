@@ -7,17 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, FileText, MessageSquare, AlertCircle, GitBranch, Clock, Users } from 'lucide-react'
+import { ArrowLeft, FileText, MessageSquare, AlertCircle, CheckSquare, Clock, GitBranch, Users } from 'lucide-react'
 import { ProtocolSLAIndicator } from '@/components/admin/protocol/ProtocolSLAIndicator'
 import { ProtocolInteractionsTab } from '@/components/admin/protocol/ProtocolInteractionsTab'
-import { ProtocolDocumentsTab } from '@/components/admin/protocol/ProtocolDocumentsTab'
+import { ProtocolDocumentsTabEnhanced } from '@/components/admin/protocol/ProtocolDocumentsTabEnhanced'
 import { ProtocolPendingsTab } from '@/components/admin/protocol/ProtocolPendingsTab'
 import { ProtocolStagesTab } from '@/components/admin/protocol/ProtocolStagesTab'
+import { CurrentStageHighlight } from '@/components/admin/protocol/CurrentStageHighlight'
+import { WorkflowProgress } from '@/components/admin/protocol/WorkflowProgress'
+import { ChecklistTab } from '@/components/admin/protocol/ChecklistTab'
+import { ProtocolStageActions } from '@/components/admin/protocol/ProtocolStageActions'
 import { CitizenLinksDisplay } from '@/components/protocol/CitizenLinksDisplay'
 import { getProtocolDocuments } from '@/services/protocol-documents.service'
 import { getProtocolPendings } from '@/services/protocol-pendings.service'
 import { getProtocolStages } from '@/services/protocol-stages.service'
 import { useToast } from '@/hooks/use-toast'
+import { StageStatus } from '@/types/protocol-enhancements'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -59,6 +64,7 @@ export default function ProtocolDetailPage() {
   const [pendings, setPendings] = useState<any[]>([])
   const [stages, setStages] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('checklist')
 
   useEffect(() => {
     if (protocolId) {
@@ -208,94 +214,94 @@ export default function ProtocolDetailPage() {
         </Card>
       </div>
 
+      {/* Current Stage Highlight (se houver etapa em progresso) */}
+      {stages.find(s => s.status === StageStatus.IN_PROGRESS) && (
+        <div className="mb-6">
+          <CurrentStageHighlight
+            protocolId={protocolId}
+            currentStage={stages.find(s => s.status === StageStatus.IN_PROGRESS)!}
+            totalStages={stages.length}
+            onNavigateToDocuments={() => setActiveTab('documents')}
+            onNavigateToChecklist={() => setActiveTab('checklist')}
+          />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Conteúdo Principal (2/3) */}
         <div className="lg:col-span-2 space-y-6">
-          <Tabs defaultValue="interactions" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="interactions" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Interações
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="checklist" className="flex items-center gap-2">
+                <CheckSquare className="h-4 w-4" />
+                Checklist
               </TabsTrigger>
               <TabsTrigger value="documents" className="flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Documentos
               </TabsTrigger>
-              <TabsTrigger value="citizens" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Cidadãos
+              <TabsTrigger value="timeline" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Timeline
               </TabsTrigger>
-              <TabsTrigger value="pendings" className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Pendências
-              </TabsTrigger>
-              <TabsTrigger value="stages" className="flex items-center gap-2">
-                <GitBranch className="h-4 w-4" />
-                Workflow
+              <TabsTrigger value="interactions" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Histórico
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="interactions" className="mt-6">
-              <ProtocolInteractionsTab protocolId={protocolId} />
+            <TabsContent value="checklist" className="mt-6">
+              <ChecklistTab
+                protocolId={protocolId}
+                currentStage={stages.find(s => s.status === StageStatus.IN_PROGRESS)}
+                onNavigateToDocuments={() => setActiveTab('documents')}
+              />
             </TabsContent>
 
             <TabsContent value="documents" className="mt-6">
-              <ProtocolDocumentsTab
+              <ProtocolDocumentsTabEnhanced
                 protocolId={protocolId}
                 documents={documents}
+                currentStageMetadata={stages.find(s => s.status === StageStatus.IN_PROGRESS)?.metadata}
                 onRefresh={loadProtocolData}
               />
             </TabsContent>
 
-            <TabsContent value="citizens" className="mt-6">
-              <CitizenLinksDisplay
-                protocolId={protocolId}
-                citizenLinks={protocol.citizenLinks}
-                editable={true}
-                onUpdate={loadProtocolData}
-              />
-            </TabsContent>
-
-            <TabsContent value="pendings" className="mt-6">
-              <ProtocolPendingsTab
-                protocolId={protocolId}
-                pendings={pendings}
-                onRefresh={loadProtocolData}
-              />
-            </TabsContent>
-
-            <TabsContent value="stages" className="mt-6">
+            <TabsContent value="timeline" className="mt-6">
               <ProtocolStagesTab
                 protocolId={protocolId}
                 stages={stages}
                 onRefresh={loadProtocolData}
               />
             </TabsContent>
+
+            <TabsContent value="interactions" className="mt-6">
+              <ProtocolInteractionsTab protocolId={protocolId} />
+            </TabsContent>
           </Tabs>
         </div>
 
         {/* Sidebar (1/3) */}
         <div className="space-y-4">
+          {/* Progresso do Workflow */}
+          {stages.length > 0 && (
+            <WorkflowProgress stages={stages} />
+          )}
+
+          {/* Ações da Etapa Atual */}
+          {stages.find(s => s.status === StageStatus.IN_PROGRESS) && (
+            <ProtocolStageActions
+              protocolId={protocolId}
+              stageId={stages.find(s => s.status === StageStatus.IN_PROGRESS)!.id}
+              stageName={stages.find(s => s.status === StageStatus.IN_PROGRESS)!.stageName}
+              stageStatus={stages.find(s => s.status === StageStatus.IN_PROGRESS)!.status}
+              metadata={stages.find(s => s.status === StageStatus.IN_PROGRESS)!.metadata}
+              onActionComplete={loadProtocolData}
+            />
+          )}
+
           {/* Indicador de SLA */}
           <ProtocolSLAIndicator sla={sla} />
-
-          {/* Ações Rápidas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Ações Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
-                Alterar Status
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                Atribuir Responsável
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                Gerar Relatório
-              </Button>
-            </CardContent>
-          </Card>
 
           {/* Informações Adicionais */}
           <Card>
