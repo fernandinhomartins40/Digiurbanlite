@@ -176,12 +176,16 @@ export function generateDefaultWorkflow(
  */
 export function generateWorkflowFromService(service: ServiceSimplified): CreateWorkflowData {
   // Extrair documentos
+  console.log(`[WORKFLOW DEBUG] Service: ${service.name}, requiredDocuments:`, service.requiredDocuments);
+
   const requiredDocuments = Array.isArray(service.requiredDocuments)
     ? (service.requiredDocuments as any[]).map(doc => ({
         type: typeof doc === 'string' ? doc : doc.type,
         name: typeof doc === 'string' ? doc : doc.name
       }))
     : [];
+
+  console.log(`[WORKFLOW DEBUG] Extracted docs (${requiredDocuments.length}):`, requiredDocuments);
 
   // Extrair campos do formulário do formSchema
   const formSchema = service.formSchema as any;
