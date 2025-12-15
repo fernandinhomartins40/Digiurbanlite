@@ -175,32 +175,44 @@ export function generateDefaultWorkflow(
  * Gera workflow a partir de um ServiceSimplified completo
  */
 export function generateWorkflowFromService(service: ServiceSimplified): CreateWorkflowData {
-  // Extrair documentos
-  console.log(`[WORKFLOW DEBUG] Service: ${service.name}, requiredDocuments:`, service.requiredDocuments);
-  console.log(`[WORKFLOW DEBUG] Is Array?`, Array.isArray(service.requiredDocuments));
-  console.log(`[WORKFLOW DEBUG] Type:`, typeof service.requiredDocuments);
+  // Extrair documentos - fazer parse se for string JSON
+  let docsRaw = service.requiredDocuments;
+  if (typeof docsRaw === 'string') {
+    try {
+      docsRaw = JSON.parse(docsRaw);
+    } catch (e) {
+      console.error(`[WORKFLOW ERROR] Failed to parse requiredDocuments for ${service.name}:`, e);
+      docsRaw = [];
+    }
+  }
 
-  const requiredDocuments = Array.isArray(service.requiredDocuments)
-    ? (service.requiredDocuments as any[]).map(doc => {
-        console.log(`[WORKFLOW DEBUG] Processing doc:`, doc, 'typeof:', typeof doc);
-        return {
-          type: typeof doc === 'string' ? doc : doc.type,
-          name: typeof doc === 'string' ? doc : doc.name
-        };
-      })
+  const requiredDocuments = Array.isArray(docsRaw)
+    ? (docsRaw as any[]).map(doc => ({
+        type: typeof doc === 'string' ? doc : doc.type,
+        name: typeof doc === 'string' ? doc : doc.name
+      }))
     : [];
 
-  console.log(`[WORKFLOW DEBUG] Extracted docs (${requiredDocuments.length}):`, requiredDocuments);
+  console.log(`[WORKFLOW DEBUG] Service: ${service.name}, extracted ${requiredDocuments.length} documents`);
 
-  // Extrair campos do formulário do formSchema
-  const formSchema = service.formSchema as any;
+  // Extrair campos do formulário do formSchema - fazer parse se for string JSON
+  let formSchemaRaw = service.formSchema as any;
+  if (typeof formSchemaRaw === 'string') {
+    try {
+      formSchemaRaw = JSON.parse(formSchemaRaw);
+    } catch (e) {
+      console.error(`[WORKFLOW ERROR] Failed to parse formSchema for ${service.name}:`, e);
+      formSchemaRaw = null;
+    }
+  }
+
   const formFields: Array<{ id: string; label: string; required: boolean }> = [];
 
-  if (formSchema && formSchema.properties) {
-    const requiredFields = formSchema.required || [];
+  if (formSchemaRaw && formSchemaRaw.properties) {
+    const requiredFields = formSchemaRaw.required || [];
 
-    Object.keys(formSchema.properties).forEach(fieldId => {
-      const field = formSchema.properties[fieldId];
+    Object.keys(formSchemaRaw.properties).forEach(fieldId => {
+      const field = formSchemaRaw.properties[fieldId];
       formFields.push({
         id: fieldId,
         label: field.title || fieldId,
@@ -208,6 +220,8 @@ export function generateWorkflowFromService(service: ServiceSimplified): CreateW
       });
     });
   }
+
+  console.log(`[WORKFLOW DEBUG] Service: ${service.name}, extracted ${formFields.length} form fields (${formFields.filter(f => f.required).length} required)`);
 
   return generateDefaultWorkflow({
     moduleType: service.moduleType!,
