@@ -9,7 +9,7 @@
 import { prisma } from '../lib/prisma';
 import type { CreateWorkflowData, UpdateWorkflowData, WorkflowStage, StageValidationResult } from '../types/workflow.types';
 import { DocumentStatus } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { generateWorkflowFromService } from './workflow-template.service';
 
 /**
@@ -19,7 +19,7 @@ export async function createWorkflow(data: CreateWorkflowData) {
   // Adicionar IDs únicos às stages
   const stagesWithIds: WorkflowStage[] = data.stages.map((stage, index) => ({
     ...stage,
-    id: uuidv4(),
+    id: randomUUID(),
     order: stage.order || index + 1
   }));
 
@@ -74,7 +74,7 @@ export async function updateWorkflow(
     // Adicionar IDs se não existirem
     const stagesWithIds: WorkflowStage[] = data.stages.map((stage, index) => ({
       ...stage,
-      id: (stage as any).id || uuidv4(),
+      id: (stage as any).id || randomUUID(),
       order: stage.order || index + 1
     }));
 
