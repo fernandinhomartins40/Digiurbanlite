@@ -104,10 +104,34 @@ export async function applyWorkflowToProtocol(
   protocolId: string,
   moduleType: string
 ) {
-  const workflow = await getWorkflowByModuleType(moduleType);
+  let workflow = await getWorkflowByModuleType(moduleType);
 
+  // Se não encontrar workflow específico, tentar criar genérico
   if (!workflow) {
-    throw new Error(`Workflow não encontrado para módulo: ${moduleType}`);
+    console.warn(`⚠️  Workflow não encontrado para módulo: ${moduleType}`);
+    console.log(`   → Tentando buscar workflow GENERICO`);
+    workflow = await getWorkflowByModuleType('GENERICO');
+  }
+
+  // Se ainda não encontrar, criar workflow padrão simples
+  if (!workflow) {
+    console.warn(`⚠️  Nenhum workflow encontrado! Criando workflow básico...`);
+    // Criar etapas básicas manualmente
+    await prisma.protocolStage.create({
+      data: {
+        protocolId,
+        stageName: 'Análise',
+        stageOrder: 1,
+        status: 'PENDING',
+        metadata: {
+          description: 'Análise do protocolo',
+          requiredDocumentTypes: [],
+          requiredFormFieldIds: [],
+          allowedActions: ['APPROVE', 'REJECT']
+        }
+      }
+    });
+    return [];
   }
 
   const stages = workflow.stages as any as WorkflowStage[];

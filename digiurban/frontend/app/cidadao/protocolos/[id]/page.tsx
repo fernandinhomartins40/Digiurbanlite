@@ -30,6 +30,8 @@ import { toast } from 'sonner';
 import { CitizenProtocolInteractionsTab } from '@/components/citizen/CitizenProtocolInteractionsTab';
 import { CancelProtocolDialog } from '@/components/citizen/CancelProtocolDialog';
 import { CitizenLinksDisplay } from '@/components/protocol/CitizenLinksDisplay';
+import { CitizenWorkflowProgress } from '@/components/citizen/CitizenWorkflowProgress';
+import { CitizenPendingsTab } from '@/components/citizen/CitizenPendingsTab';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -315,9 +317,19 @@ export default function ProtocolDetailsPage() {
           </CardContent>
         </Card>
 
+        {/* Progresso do Workflow */}
+        <CitizenWorkflowProgress
+          protocolId={protocol.id}
+          apiRequest={apiRequest}
+        />
+
         {/* Tabs de Detalhes */}
-        <Tabs defaultValue="interactions" className="space-y-4">
+        <Tabs defaultValue="pendings" className="space-y-4">
           <TabsList>
+            <TabsTrigger value="pendings" className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              Pendências
+            </TabsTrigger>
             <TabsTrigger value="interactions" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Interações
@@ -331,6 +343,13 @@ export default function ProtocolDetailsPage() {
               Histórico ({protocol.history.length})
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="pendings">
+            <CitizenPendingsTab
+              protocolId={protocol.id}
+              apiRequest={apiRequest}
+            />
+          </TabsContent>
 
           <TabsContent value="interactions">
             <CitizenProtocolInteractionsTab protocolId={protocol.id} />

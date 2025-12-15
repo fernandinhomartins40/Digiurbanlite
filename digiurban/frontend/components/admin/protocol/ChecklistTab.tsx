@@ -23,13 +23,15 @@ import {
   Loader2,
   Eye,
   AlertTriangle,
-  Send
+  Send,
+  Upload
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { StageStatus } from '@/types/protocol-enhancements'
-import { getProtocolDocuments, getDocumentDownloadUrl, type ProtocolDocument } from '@/services/protocol-documents.service'
-import { createPending, createPendingsBatch } from '@/services/protocol-pendings.service'
+import { getProtocolDocuments, getDocumentDownloadUrl, uploadDocument, type ProtocolDocument } from '@/services/protocol-documents.service'
+import { createPending, createPendingsBatch, getProtocolPendings, resolvePending, type ProtocolPending } from '@/services/protocol-pendings.service'
 import { useToast } from '@/hooks/use-toast'
+import { Input } from '@/components/ui/input'
 
 interface ChecklistTabProps {
   protocolId: string
@@ -61,6 +63,7 @@ export function ChecklistTab({
   const [validation, setValidation] = useState<StageValidation | null>(null)
   const [documents, setDocuments] = useState<ProtocolDocument[]>([])
   const [formData, setFormData] = useState<any>(null)
+  const [pendings, setPendings] = useState<ProtocolPending[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   // Estado para interações
@@ -73,6 +76,15 @@ export function ChecklistTab({
   const [selectedItem, setSelectedItem] = useState<string>('')
   const [pendingDescription, setPendingDescription] = useState('')
   const [isCreatingPending, setIsCreatingPending] = useState(false)
+
+  // Estado para resolver pendência inline
+  const [resolvingPendingId, setResolvingPendingId] = useState<string | null>(null)
+  const [pendingResolutions, setPendingResolutions] = useState<Record<string, string>>({})
+  const [editingFieldValues, setEditingFieldValues] = useState<Record<string, string>>({})
+
+  // Estado para upload de documentos
+  const [uploadingDocType, setUploadingDocType] = useState<string | null>(null)
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, File | null>>({})
 
   useEffect(() => {
     if (currentStage?.id) {
@@ -103,6 +115,10 @@ export function ChecklistTab({
       if (protocolResponse.success && protocolResponse.data.customData) {
         setFormData(protocolResponse.data.customData)
       }
+
+      // Carregar pendências
+      const pendingsData = await getProtocolPendings(protocolId)
+      setPendings(pendingsData)
 
     } catch (error) {
       console.error('Erro ao carregar dados do checklist:', error)
@@ -271,6 +287,142 @@ export function ChecklistTab({
     }
   }
 
+  // Helper para obter pendências de um documento ou campo específico
+  const getPendingsFor = (type: 'document' | 'field', identifier: string) => {
+    return pendings.filter(p => {
+      if (p.status !== 'PENDING') return false
+      if (type === 'document') {
+        return p.pendingType === 'DOCUMENT' && p.metadata?.documentType === identifier
+      } else {
+        return p.pendingType === 'INFORMATION' && p.metadata?.fieldId === identifier
+      }
+    })
+  }
+
+  // Resolver pendência inline
+  const handleResolvePending = async (pendingId: string, resolution: string) => {
+    try {
+      setResolvingPendingId(pendingId)
+      await resolvePending(protocolId, pendingId, resolution)
+
+      toast({
+        title: 'Pendência resolvida',
+        description: 'A pendência foi marcada como resolvida com sucesso.'
+      })
+
+      // Limpar o campo de resolução
+      setPendingResolutions(prev => {
+        const newState = { ...prev }
+        delete newState[pendingId]
+        return newState
+      })
+
+      // Recarregar dados
+      loadChecklistData()
+    } catch (error) {
+      toast({
+        title: 'Erro ao resolver pendência',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setResolvingPendingId(null)
+    }
+  }
+
+  // Atualizar valor de campo e resolver pendência associada
+  const handleUpdateFieldValue = async (fieldId: string, value: string) => {
+    try {
+      // Atualizar customData do protocolo
+      const updatedData = {
+        ...formData,
+        [fieldId]: value
+      }
+
+      const response = await apiRequest(`/protocols/${protocolId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customData: updatedData })
+      })
+
+      if (!response.success) {
+        throw new Error(response.error || 'Erro ao atualizar campo')
+      }
+
+      // Resolver pendências associadas a este campo
+      const fieldPendings = getPendingsFor('field', fieldId)
+      for (const pending of fieldPendings) {
+        await resolvePending(protocolId, pending.id, `Campo "${fieldId}" preenchido com: ${value}`)
+      }
+
+      toast({
+        title: 'Campo atualizado',
+        description: fieldPendings.length > 0
+          ? `Campo atualizado e ${fieldPendings.length} pendência(s) resolvida(s)`
+          : 'Campo atualizado com sucesso'
+      })
+
+      // Limpar campo de edição
+      setEditingFieldValues(prev => {
+        const newState = { ...prev }
+        delete newState[fieldId]
+        return newState
+      })
+
+      // Recarregar dados
+      loadChecklistData()
+    } catch (error) {
+      toast({
+        title: 'Erro ao atualizar campo',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Upload de documento para resolver pendência
+  const handleUploadDocument = async (documentType: string, pendingId: string) => {
+    const file = selectedFiles[documentType]
+    if (!file) return
+
+    try {
+      setUploadingDocType(documentType)
+
+      // 1. Fazer upload do documento
+      const uploadedDoc = await uploadDocument(protocolId, file, documentType)
+
+      // 2. Resolver a pendência
+      await resolvePending(
+        protocolId,
+        pendingId,
+        `Documento "${file.name}" enviado presencialmente pelo servidor`
+      )
+
+      toast({
+        title: 'Documento enviado',
+        description: `Documento enviado e pendência resolvida com sucesso`
+      })
+
+      // Limpar arquivo selecionado
+      setSelectedFiles(prev => {
+        const newState = { ...prev }
+        delete newState[documentType]
+        return newState
+      })
+
+      // Recarregar dados
+      loadChecklistData()
+    } catch (error) {
+      toast({
+        title: 'Erro ao enviar documento',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setUploadingDocType(null)
+    }
+  }
+
   if (!currentStage || currentStage.status !== StageStatus.IN_PROGRESS) {
     return (
       <Card>
@@ -395,11 +547,17 @@ export function ChecklistTab({
                 const isRejected = !approvedDoc && !pendingDoc && !!rejectedDoc
                 const isMissing = !displayDoc
 
+                // Buscar pendências deste documento
+                const docPendings = getPendingsFor('document', docType)
+                const hasPending = docPendings.length > 0
+
                 return (
                   <div
                     key={index}
                     className={`p-4 rounded-lg border-2 ${
-                      isApproved
+                      hasPending
+                        ? 'bg-purple-50 border-purple-400'
+                        : isApproved
                         ? 'bg-green-50 border-green-300'
                         : isPending
                         ? 'bg-blue-50 border-blue-300'
@@ -410,7 +568,9 @@ export function ChecklistTab({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1">
-                        {isApproved ? (
+                        {hasPending ? (
+                          <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                        ) : isApproved ? (
                           <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                         ) : isPending ? (
                           <Circle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -420,12 +580,17 @@ export function ChecklistTab({
                           <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                         )}
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`text-sm font-semibold ${
-                              isApproved ? 'text-green-900' : isPending ? 'text-blue-900' : isRejected ? 'text-orange-900' : 'text-red-900'
+                              hasPending ? 'text-purple-900' : isApproved ? 'text-green-900' : isPending ? 'text-blue-900' : isRejected ? 'text-orange-900' : 'text-red-900'
                             }`}>
                               {docType}
                             </span>
+                            {hasPending && (
+                              <Badge className="text-xs bg-purple-600 text-white">
+                                🔔 {docPendings.length} Pendência{docPendings.length > 1 ? 's' : ''}
+                              </Badge>
+                            )}
                             {isApproved && (
                               <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300">
                                 ✓ Aprovado
@@ -447,6 +612,120 @@ export function ChecklistTab({
                               </Badge>
                             )}
                           </div>
+
+                          {/* Exibir pendências */}
+                          {hasPending && (
+                            <div className="mt-3 space-y-2">
+                              {docPendings.map((pending) => (
+                                <div key={pending.id} className="p-3 bg-white border border-purple-200 rounded-lg">
+                                  <p className="text-xs font-medium text-purple-900 mb-1">
+                                    📋 {pending.metadata?.title || 'Pendência'}
+                                  </p>
+                                  <p className="text-xs text-gray-700 mb-2">{pending.description}</p>
+                                  {pending.dueDate && (
+                                    <p className="text-xs text-gray-500 mb-2">
+                                      Prazo: {new Date(pending.dueDate).toLocaleDateString('pt-BR')}
+                                    </p>
+                                  )}
+
+                                  {/* Área de resolução inline com upload */}
+                                  <div className="mt-2 pt-2 border-t border-purple-100 space-y-2">
+                                    <p className="text-xs font-medium text-gray-700">Resolver presencialmente:</p>
+
+                                    {/* Upload de arquivo */}
+                                    <div className="space-y-2">
+                                      <label className="block">
+                                        <div className="flex items-center justify-center w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-purple-400 bg-gray-50 hover:bg-purple-50 transition-colors">
+                                          <div className="text-center">
+                                            <Upload className="h-4 w-4 mx-auto mb-1 text-gray-400" />
+                                            <p className="text-xs text-gray-600">
+                                              {selectedFiles[docType]?.name || 'Anexar documento/imagem'}
+                                            </p>
+                                          </div>
+                                          <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*,.pdf"
+                                            onChange={(e) => {
+                                              const file = e.target.files?.[0]
+                                              if (file) {
+                                                setSelectedFiles(prev => ({
+                                                  ...prev,
+                                                  [docType]: file
+                                                }))
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                      </label>
+
+                                      {selectedFiles[docType] && (
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleUploadDocument(docType, pending.id)}
+                                          disabled={uploadingDocType === docType}
+                                          className="w-full bg-purple-600 hover:bg-purple-700"
+                                        >
+                                          {uploadingDocType === docType ? (
+                                            <>
+                                              <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                              Enviando...
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Upload className="h-3 w-3 mr-1" />
+                                              Enviar Documento
+                                            </>
+                                          )}
+                                        </Button>
+                                      )}
+                                    </div>
+
+                                    {/* OU resolver com texto */}
+                                    <div className="relative">
+                                      <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t border-gray-200" />
+                                      </div>
+                                      <div className="relative flex justify-center text-xs">
+                                        <span className="bg-white px-2 text-gray-500">ou</span>
+                                      </div>
+                                    </div>
+
+                                    <Textarea
+                                      placeholder="Ex: Cidadão trouxe o documento presencialmente..."
+                                      value={pendingResolutions[pending.id] || ''}
+                                      onChange={(e) => setPendingResolutions(prev => ({
+                                        ...prev,
+                                        [pending.id]: e.target.value
+                                      }))}
+                                      rows={2}
+                                      className="text-xs"
+                                    />
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleResolvePending(pending.id, pendingResolutions[pending.id] || '')}
+                                      disabled={!pendingResolutions[pending.id]?.trim() || resolvingPendingId === pending.id}
+                                      className="w-full"
+                                      variant="outline"
+                                    >
+                                      {resolvingPendingId === pending.id ? (
+                                        <>
+                                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                          Resolvendo...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                                          Marcar como Resolvida (Sem Upload)
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
                           {displayDoc && (
                             <div className="text-xs text-muted-foreground space-y-1 mt-2">
                               <p className="flex items-center gap-1">
@@ -512,29 +791,42 @@ export function ChecklistTab({
                 const fieldValue = formData?.[fieldId]
                 const isFilled = fieldValue !== undefined && fieldValue !== null && fieldValue !== ''
 
+                // Buscar pendências deste campo
+                const fieldPendings = getPendingsFor('field', fieldId)
+                const hasPending = fieldPendings.length > 0
+
                 return (
                   <div
                     key={index}
                     className={`p-4 rounded-lg border-2 ${
-                      isFilled
+                      hasPending
+                        ? 'bg-purple-50 border-purple-400'
+                        : isFilled
                         ? 'bg-green-50 border-green-300'
                         : 'bg-red-50 border-red-300'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 flex-1">
-                        {isFilled ? (
+                        {hasPending ? (
+                          <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+                        ) : isFilled ? (
                           <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                         ) : (
                           <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                         )}
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`text-sm font-semibold ${
-                              isFilled ? 'text-green-900' : 'text-red-900'
+                              hasPending ? 'text-purple-900' : isFilled ? 'text-green-900' : 'text-red-900'
                             }`}>
                               {fieldId}
                             </span>
+                            {hasPending && (
+                              <Badge className="text-xs bg-purple-600 text-white">
+                                🔔 {fieldPendings.length} Pendência{fieldPendings.length > 1 ? 's' : ''}
+                              </Badge>
+                            )}
                             {isFilled ? (
                               <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300">
                                 Preenchido
@@ -545,6 +837,58 @@ export function ChecklistTab({
                               </Badge>
                             )}
                           </div>
+
+                          {/* Exibir pendências */}
+                          {hasPending && (
+                            <div className="mt-3 space-y-2">
+                              {fieldPendings.map((pending) => (
+                                <div key={pending.id} className="p-3 bg-white border border-purple-200 rounded-lg">
+                                  <p className="text-xs font-medium text-purple-900 mb-1">
+                                    📋 {pending.metadata?.title || 'Pendência'}
+                                  </p>
+                                  <p className="text-xs text-gray-700 mb-2">{pending.description}</p>
+                                  {pending.dueDate && (
+                                    <p className="text-xs text-gray-500 mb-2">
+                                      Prazo: {new Date(pending.dueDate).toLocaleDateString('pt-BR')}
+                                    </p>
+                                  )}
+
+                                  {/* Área de edição inline */}
+                                  <div className="mt-2 pt-2 border-t border-purple-100 space-y-2">
+                                    <p className="text-xs font-medium text-gray-700">Preencher campo presencialmente:</p>
+                                    <Input
+                                      placeholder="Digite o valor do campo..."
+                                      value={editingFieldValues[fieldId] || ''}
+                                      onChange={(e) => setEditingFieldValues(prev => ({
+                                        ...prev,
+                                        [fieldId]: e.target.value
+                                      }))}
+                                      className="text-sm"
+                                    />
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleUpdateFieldValue(fieldId, editingFieldValues[fieldId] || '')}
+                                      disabled={!editingFieldValues[fieldId]?.trim() || resolvingPendingId === pending.id}
+                                      className="w-full"
+                                    >
+                                      {resolvingPendingId === pending.id ? (
+                                        <>
+                                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                          Salvando...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                                          Salvar e Resolver Pendência
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
                           {isFilled && (
                             <div className="mt-2 p-2 bg-white rounded border border-green-200">
                               <p className="text-sm text-gray-700 font-mono">

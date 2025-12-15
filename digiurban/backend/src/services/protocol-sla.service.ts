@@ -58,6 +58,40 @@ export async function createSLA(data: CreateSLAData) {
 }
 
 /**
+ * Cria SLA automaticamente baseado no serviço do protocolo
+ */
+export async function createProtocolSLA(protocolId: string) {
+  // Verificar se já existe SLA
+  const existingSLA = await prisma.protocolSLA.findUnique({
+    where: { protocolId }
+  });
+
+  if (existingSLA) {
+    console.log(`   → SLA já existe para protocolo ${protocolId}`);
+    return existingSLA;
+  }
+
+  // Buscar protocolo e serviço
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    include: { service: true }
+  });
+
+  if (!protocol) {
+    throw new Error('Protocolo não encontrado');
+  }
+
+  // Usar estimatedDays do serviço, ou 30 dias como padrão
+  const workingDays = protocol.service.estimatedDays || 30;
+
+  return await createSLA({
+    protocolId,
+    workingDays,
+    startDate: new Date()
+  });
+}
+
+/**
  * Obtém o SLA de um protocolo
  */
 export async function getProtocolSLA(protocolId: string) {

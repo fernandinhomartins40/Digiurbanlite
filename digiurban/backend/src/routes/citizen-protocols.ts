@@ -12,6 +12,8 @@ import { upload, getFileUrl } from '../config/upload';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
 import { DocumentStatus } from '@prisma/client';
+import { applyWorkflowToProtocol } from '../services/module-workflow.service';
+import { createProtocolSLA } from '../services/protocol-sla.service';
 
 const router = Router();
 
@@ -248,7 +250,7 @@ router.post('/', upload.array('documents'), async (req, res) => {
         serviceId,
         departmentId: service.department.id,
         citizenId,
-        moduleType: moduleType || service.category || 'GERAL',
+        moduleType: service.moduleType || moduleType || 'GERAL',
         status: 'VINCULADO',
         priority: 3,
         customData: {
@@ -298,6 +300,45 @@ router.post('/', upload.array('documents'), async (req, res) => {
 
     // Criar documentos PENDING/UPLOADED na tabela ProtocolDocument
     await createPendingDocumentsForProtocol(protocol.id, service, uploadedDocuments);
+
+    // ✅ INICIALIZAR WORKFLOW AUTOMATICAMENTE
+    try {
+      console.log(`📋 Inicializando workflow para módulo: ${protocol.moduleType}`);
+      await applyWorkflowToProtocol(protocol.id, protocol.moduleType);
+      console.log('   ✓ Workflow inicializado com sucesso');
+
+      // Buscar primeira etapa para iniciar
+      const firstStage = await prisma.protocolStage.findFirst({
+        where: { protocolId: protocol.id },
+        orderBy: { stageOrder: 'asc' }
+      });
+
+      if (firstStage) {
+        // Iniciar primeira etapa
+        await prisma.protocolStage.update({
+          where: { id: firstStage.id },
+          data: {
+            status: 'IN_PROGRESS',
+            startedAt: new Date()
+          }
+        });
+        console.log(`   ✓ Primeira etapa iniciada: ${firstStage.stageName}`);
+      }
+    } catch (workflowError) {
+      console.warn('⚠️  Erro ao inicializar workflow:', workflowError);
+      // Não falhar a criação do protocolo se workflow falhar
+      // O protocolo pode funcionar sem workflow (modo legado)
+    }
+
+    // ✅ CRIAR SLA AUTOMATICAMENTE
+    try {
+      console.log('⏱️  Criando SLA do protocolo');
+      await createProtocolSLA(protocol.id);
+      console.log('   ✓ SLA criado com sucesso');
+    } catch (slaError) {
+      console.warn('⚠️  Erro ao criar SLA:', slaError);
+      // Não falhar a criação do protocolo se SLA falhar
+    }
 
     console.log('✅ Protocolo criado:', protocol.number);
     console.log('========== FIM POST /protocols ==========\n');
