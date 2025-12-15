@@ -25,7 +25,7 @@ export class WorkflowDefinitionService {
       data: {
         name: data.name,
         description: data.description,
-        moduleType: data.moduleType,
+        module: data.moduleType,
         stages: data.stages as any, // JSON
       },
     });
@@ -50,7 +50,7 @@ export class WorkflowDefinitionService {
   async findByModule(moduleType: string): Promise<WorkflowDefinitionData[]> {
     const definitions = await prisma.workflowDefinition.findMany({
       where: {
-        moduleType,
+        module: moduleType,
         isActive: true,
       },
       orderBy: {
@@ -70,7 +70,7 @@ export class WorkflowDefinitionService {
         isActive: true,
       },
       orderBy: {
-        moduleType: 'asc',
+        module: 'asc',
       },
     });
 
@@ -128,7 +128,7 @@ export class WorkflowDefinitionService {
       data: {
         name: original.name,
         description: original.description,
-        moduleType: original.moduleType,
+        module: original.moduleType,
         version: (original.version || 1) + 1,
         stages: original.stages as any,
       },
