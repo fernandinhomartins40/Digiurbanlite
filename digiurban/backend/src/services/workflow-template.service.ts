@@ -183,15 +183,22 @@ export function generateWorkflowFromService(service: ServiceSimplified): CreateW
       }))
     : [];
 
-  // Extrair campos do formulário
-  const formFieldsConfig = service.formFieldsConfig as any;
-  const formFields = Array.isArray(formFieldsConfig)
-    ? formFieldsConfig.map(field => ({
-        id: field.id,
-        label: field.label,
-        required: field.required || false
-      }))
-    : [];
+  // Extrair campos do formulário do formSchema
+  const formSchema = service.formSchema as any;
+  const formFields: Array<{ id: string; label: string; required: boolean }> = [];
+
+  if (formSchema && formSchema.properties) {
+    const requiredFields = formSchema.required || [];
+
+    Object.keys(formSchema.properties).forEach(fieldId => {
+      const field = formSchema.properties[fieldId];
+      formFields.push({
+        id: fieldId,
+        label: field.title || fieldId,
+        required: requiredFields.includes(fieldId)
+      });
+    });
+  }
 
   return generateDefaultWorkflow({
     moduleType: service.moduleType!,
