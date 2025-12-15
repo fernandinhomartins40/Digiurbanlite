@@ -28,7 +28,7 @@ import {
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { StageStatus } from '@/types/protocol-enhancements'
 import { getProtocolDocuments, getDocumentDownloadUrl, type ProtocolDocument } from '@/services/protocol-documents.service'
-import { createPending } from '@/services/protocol-pendings.service'
+import { createPending, createPendingsBatch } from '@/services/protocol-pendings.service'
 import { useToast } from '@/hooks/use-toast'
 
 interface ChecklistTabProps {
@@ -164,9 +164,13 @@ export function ChecklistTab({
       setIsCreatingPending(true)
 
       const pendingData = {
-        pendingType: pendingType === 'document' ? 'DOCUMENTO_FALTANTE' : 'INFORMACAO_FALTANTE',
+        type: pendingType === 'document' ? 'DOCUMENT' : 'INFORMATION',
+        title: pendingType === 'document'
+          ? `Documento pendente: ${selectedItem}`
+          : `Informação pendente: ${selectedItem}`,
         description: pendingDescription,
         priority: 2,
+        blocksProgress: true,
         metadata: {
           [pendingType === 'document' ? 'documentType' : 'fieldId']: selectedItem,
           stageId: currentStage?.id,
@@ -198,6 +202,73 @@ export function ChecklistTab({
   const handleViewDocument = (documentId: string) => {
     const url = getDocumentDownloadUrl(protocolId, documentId)
     window.open(url, '_blank')
+  }
+
+  const handleCreateBatchPendings = async () => {
+    if (!currentStage || !validation) return
+
+    const pendingsToCreate: any[] = []
+
+    // Adicionar pendências de documentos faltantes
+    validation.missingDocuments.forEach((docType) => {
+      pendingsToCreate.push({
+        type: 'DOCUMENT',
+        title: `Documento obrigatório faltando: ${docType}`,
+        description: `É necessário enviar o documento "${docType}" para prosseguir com a etapa "${currentStage.stageName}".`,
+        priority: 2,
+        blocksProgress: true,
+        metadata: {
+          documentType: docType,
+          stageId: currentStage.id,
+          stageName: currentStage.stageName
+        }
+      })
+    })
+
+    // Adicionar pendências de campos faltantes
+    validation.missingFormFields.forEach((field) => {
+      pendingsToCreate.push({
+        type: 'INFORMATION',
+        title: `Informação obrigatória faltando: ${field}`,
+        description: `É necessário preencher o campo "${field}" para prosseguir com a etapa "${currentStage.stageName}".`,
+        priority: 2,
+        blocksProgress: true,
+        metadata: {
+          fieldId: field,
+          stageId: currentStage.id,
+          stageName: currentStage.stageName
+        }
+      })
+    })
+
+    if (pendingsToCreate.length === 0) {
+      toast({
+        title: 'Nenhuma pendência para criar',
+        description: 'Não há itens faltantes no momento.'
+      })
+      return
+    }
+
+    try {
+      setIsCreatingPending(true)
+
+      await createPendingsBatch(protocolId, pendingsToCreate)
+
+      toast({
+        title: `${pendingsToCreate.length} pendências criadas`,
+        description: 'Todas as pendências foram registradas com sucesso.'
+      })
+
+      loadChecklistData()
+    } catch (error) {
+      toast({
+        title: 'Erro ao criar pendências',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsCreatingPending(false)
+    }
   }
 
   if (!currentStage || currentStage.status !== StageStatus.IN_PROGRESS) {
@@ -259,15 +330,38 @@ export function ChecklistTab({
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           {validation.canProgress ? (
             <p className="text-sm text-muted-foreground">
               Todos os requisitos foram atendidos. A etapa está pronta para ser aprovada.
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              Complete os itens abaixo para poder aprovar esta etapa.
-            </p>
+            <>
+              <p className="text-sm text-muted-foreground">
+                Complete os itens abaixo para poder aprovar esta etapa.
+              </p>
+              {(validation.missingDocuments.length > 0 || validation.missingFormFields.length > 0) && (
+                <Button
+                  onClick={handleCreateBatchPendings}
+                  disabled={isCreatingPending}
+                  variant="outline"
+                  className="w-full"
+                  size="sm"
+                >
+                  {isCreatingPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Criando pendências...
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Criar {validation.missingDocuments.length + validation.missingFormFields.length} Pendência(s) em Lote
+                    </>
+                  )}
+                </Button>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

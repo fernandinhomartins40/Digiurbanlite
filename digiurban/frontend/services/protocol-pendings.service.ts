@@ -34,10 +34,12 @@ export interface ProtocolPending {
 }
 
 export interface CreatePendingData {
-  pendingType: string
+  type: string
+  title: string
   description: string
   priority?: number
   dueDate?: string
+  blocksProgress?: boolean
   metadata?: any
 }
 
@@ -198,6 +200,28 @@ export async function updatePending(
     return result.data
   } catch (error) {
     console.error('Error updating pending:', error)
+    throw error
+  }
+}
+
+/**
+ * Criar múltiplas pendências em lote
+ */
+export async function createPendingsBatch(
+  protocolId: string,
+  pendings: Omit<CreatePendingData, 'metadata'>[]
+): Promise<ProtocolPending[]> {
+  try {
+    const createdPendings: ProtocolPending[] = []
+
+    for (const pending of pendings) {
+      const created = await createPending(protocolId, pending)
+      createdPendings.push(created)
+    }
+
+    return createdPendings
+  } catch (error) {
+    console.error('Error creating pendings batch:', error)
     throw error
   }
 }

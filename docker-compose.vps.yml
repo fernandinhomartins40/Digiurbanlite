@@ -67,6 +67,9 @@ services:
       - LOG_LEVEL=info
       - LOGS_DIR=/app/logs
 
+      # Uploads
+      - UPLOAD_BASE_PATH=/app/uploads
+
     volumes:
       - digiurban_uploads:/app/uploads
       - digiurban_logs:/app/logs
