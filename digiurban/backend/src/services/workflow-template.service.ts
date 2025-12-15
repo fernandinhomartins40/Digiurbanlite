@@ -193,8 +193,6 @@ export function generateWorkflowFromService(service: ServiceSimplified): CreateW
       }))
     : [];
 
-  console.log(`[WORKFLOW DEBUG] Service: ${service.name}, extracted ${requiredDocuments.length} documents`);
-
   // Extrair campos do formulário do formSchema - fazer parse se for string JSON
   let formSchemaRaw = service.formSchema as any;
   if (typeof formSchemaRaw === 'string') {
@@ -220,8 +218,6 @@ export function generateWorkflowFromService(service: ServiceSimplified): CreateW
       });
     });
   }
-
-  console.log(`[WORKFLOW DEBUG] Service: ${service.name}, extracted ${formFields.length} form fields (${formFields.filter(f => f.required).length} required)`);
 
   return generateDefaultWorkflow({
     moduleType: service.moduleType!,
