@@ -36,6 +36,11 @@ export const resolveLocalFilePath = (rawPath: string) => {
   let cleaned = rawPath;
   const cwd = process.cwd();
 
+  // CORREÇÃO: Substituir /app/backend/uploads por /app/uploads (migração de path antigo)
+  if (cleaned.includes('/app/backend/uploads')) {
+    cleaned = cleaned.replace('/app/backend/uploads', '/app/uploads');
+  }
+
   // Se o caminho contém process.cwd() duplicado (ex: /app/backend/app/backend/uploads...)
   if (cleaned.includes(cwd)) {
     // Remover primeira ocorrência de cwd
