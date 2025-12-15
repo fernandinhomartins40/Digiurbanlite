@@ -4,6 +4,16 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   CheckCircle2,
   Circle,
@@ -11,10 +21,15 @@ import {
   FormInput,
   AlertCircle,
   Loader2,
-  ArrowRight
+  Eye,
+  AlertTriangle,
+  Send
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { StageStatus } from '@/types/protocol-enhancements'
+import { getProtocolDocuments, getDocumentDownloadUrl, type ProtocolDocument } from '@/services/protocol-documents.service'
+import { createPending } from '@/services/protocol-pendings.service'
+import { useToast } from '@/hooks/use-toast'
 
 interface ChecklistTabProps {
   protocolId: string
@@ -41,32 +56,148 @@ export function ChecklistTab({
   onNavigateToDocuments
 }: ChecklistTabProps) {
   const { apiRequest } = useAdminAuth()
+  const { toast } = useToast()
+
   const [validation, setValidation] = useState<StageValidation | null>(null)
+  const [documents, setDocuments] = useState<ProtocolDocument[]>([])
+  const [formData, setFormData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Estado para interações
+  const [interactionText, setInteractionText] = useState('')
+  const [isSendingInteraction, setIsSendingInteraction] = useState(false)
+
+  // Estado para modal de pendência
+  const [showPendingModal, setShowPendingModal] = useState(false)
+  const [pendingType, setPendingType] = useState<'document' | 'field' | null>(null)
+  const [selectedItem, setSelectedItem] = useState<string>('')
+  const [pendingDescription, setPendingDescription] = useState('')
+  const [isCreatingPending, setIsCreatingPending] = useState(false)
 
   useEffect(() => {
     if (currentStage?.id) {
-      loadValidation()
+      loadChecklistData()
     }
   }, [currentStage?.id])
 
-  const loadValidation = async () => {
+  const loadChecklistData = async () => {
     if (!currentStage) return
 
     try {
       setIsLoading(true)
-      const response = await apiRequest(
+
+      // Carregar validação
+      const validationResponse = await apiRequest(
         `/protocols/${protocolId}/stages/${currentStage.id}/validate`
       )
-
-      if (response.success) {
-        setValidation(response.data.validation)
+      if (validationResponse.success) {
+        setValidation(validationResponse.data.validation)
       }
+
+      // Carregar documentos
+      const docs = await getProtocolDocuments(protocolId)
+      setDocuments(docs)
+
+      // Carregar dados do formulário do protocolo
+      const protocolResponse = await apiRequest(`/protocols/${protocolId}`)
+      if (protocolResponse.success && protocolResponse.data.formData) {
+        setFormData(protocolResponse.data.formData)
+      }
+
     } catch (error) {
-      console.error('Erro ao carregar validação:', error)
+      console.error('Erro ao carregar dados do checklist:', error)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSendInteraction = async () => {
+    if (!interactionText.trim()) return
+
+    try {
+      setIsSendingInteraction(true)
+
+      const response = await apiRequest(`/protocols/${protocolId}/interactions`, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: interactionText,
+          type: 'COMMENT'
+        })
+      })
+
+      if (response.success) {
+        toast({
+          title: 'Interação adicionada',
+          description: 'Seu comentário foi registrado com sucesso.'
+        })
+        setInteractionText('')
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro ao enviar interação',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsSendingInteraction(false)
+    }
+  }
+
+  const handleOpenPendingModal = (type: 'document' | 'field', item: string) => {
+    setPendingType(type)
+    setSelectedItem(item)
+    setPendingDescription('')
+    setShowPendingModal(true)
+  }
+
+  const handleCreatePending = async () => {
+    if (!pendingDescription.trim()) {
+      toast({
+        title: 'Descrição obrigatória',
+        description: 'Por favor, descreva a pendência',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      setIsCreatingPending(true)
+
+      const pendingData = {
+        pendingType: pendingType === 'document' ? 'DOCUMENTO_FALTANTE' : 'INFORMACAO_FALTANTE',
+        description: pendingDescription,
+        priority: 2,
+        metadata: {
+          [pendingType === 'document' ? 'documentType' : 'fieldId']: selectedItem,
+          stageId: currentStage?.id,
+          stageName: currentStage?.stageName
+        }
+      }
+
+      await createPending(protocolId, pendingData)
+
+      toast({
+        title: 'Pendência criada',
+        description: 'A pendência foi registrada com sucesso.'
+      })
+
+      setShowPendingModal(false)
+      loadChecklistData() // Recarregar dados
+
+    } catch (error) {
+      toast({
+        title: 'Erro ao criar pendência',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsCreatingPending(false)
+    }
+  }
+
+  const handleViewDocument = (documentId: string) => {
+    const url = getDocumentDownloadUrl(protocolId, documentId)
+    window.open(url, '_blank')
   }
 
   if (!currentStage || currentStage.status !== StageStatus.IN_PROGRESS) {
@@ -151,49 +282,88 @@ export function ChecklistTab({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {requiredDocs.map((docType: string, index: number) => {
-                const isMissing = validation.missingDocuments.includes(docType)
+                const doc = documents.find(d => d.documentType === docType && d.status === 'VALIDATED')
+                const pendingDoc = documents.find(d => d.documentType === docType && d.status === 'PENDING')
+                const isMissing = !doc && !pendingDoc
+
                 return (
                   <div
                     key={index}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${
-                      isMissing
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-green-50 border-green-200'
+                    className={`p-4 rounded-lg border-2 ${
+                      doc
+                        ? 'bg-green-50 border-green-300'
+                        : pendingDoc
+                        ? 'bg-blue-50 border-blue-300'
+                        : 'bg-red-50 border-red-300'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      {isMissing ? (
-                        <Circle className="h-5 w-5 text-red-500" />
-                      ) : (
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      )}
-                      <span className={`text-sm font-medium ${
-                        isMissing ? 'text-red-900' : 'text-green-900'
-                      }`}>
-                        {docType}
-                      </span>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1">
+                        {doc ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        ) : pendingDoc ? (
+                          <Circle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-sm font-semibold ${
+                              doc ? 'text-green-900' : pendingDoc ? 'text-blue-900' : 'text-red-900'
+                            }`}>
+                              {docType}
+                            </span>
+                            {doc && (
+                              <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300">
+                                Aprovado
+                              </Badge>
+                            )}
+                            {pendingDoc && (
+                              <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
+                                Aguardando Validação
+                              </Badge>
+                            )}
+                            {isMissing && (
+                              <Badge variant="destructive" className="text-xs">
+                                Faltando
+                              </Badge>
+                            )}
+                          </div>
+                          {(doc || pendingDoc) && (
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <p>📄 {(doc || pendingDoc)?.fileName}</p>
+                              <p>📏 {((doc || pendingDoc)!.fileSize / 1024).toFixed(2)} KB</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        {(doc || pendingDoc) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewDocument((doc || pendingDoc)!.id)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenPendingModal('document', docType)}
+                        >
+                          <AlertCircle className="h-4 w-4 mr-1" />
+                          Pendência
+                        </Button>
+                      </div>
                     </div>
-                    {isMissing && (
-                      <Badge variant="destructive" className="text-xs">
-                        Faltando
-                      </Badge>
-                    )}
                   </div>
                 )
               })}
             </div>
-
-            {validation.missingDocuments.length > 0 && (
-              <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={onNavigateToDocuments}
-              >
-                Ir para Documentos <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            )}
           </CardContent>
         </Card>
       )}
@@ -204,45 +374,66 @@ export function ChecklistTab({
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <FormInput className="h-4 w-4" />
-              Campos Obrigatórios ({requiredFields.length - validation.missingFormFields.length}/{requiredFields.length})
+              Campos do Formulário ({requiredFields.length - validation.missingFormFields.length}/{requiredFields.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {requiredFields.map((fieldId: string, index: number) => {
-                const isMissing = validation.missingFormFields.some(f =>
-                  f.toLowerCase().includes(fieldId.toLowerCase())
-                )
-                const fieldLabel = validation.missingFormFields.find(f =>
-                  f.toLowerCase().includes(fieldId.toLowerCase())
-                ) || fieldId
+                const fieldValue = formData?.[fieldId]
+                const isFilled = fieldValue !== undefined && fieldValue !== null && fieldValue !== ''
 
                 return (
                   <div
                     key={index}
-                    className={`flex items-center justify-between p-3 rounded-lg border ${
-                      isMissing
-                        ? 'bg-red-50 border-red-200'
-                        : 'bg-green-50 border-green-200'
+                    className={`p-4 rounded-lg border-2 ${
+                      isFilled
+                        ? 'bg-green-50 border-green-300'
+                        : 'bg-red-50 border-red-300'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      {isMissing ? (
-                        <Circle className="h-5 w-5 text-red-500" />
-                      ) : (
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      )}
-                      <span className={`text-sm font-medium ${
-                        isMissing ? 'text-red-900' : 'text-green-900'
-                      }`}>
-                        {isMissing ? fieldLabel : fieldId}
-                      </span>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1">
+                        {isFilled ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`text-sm font-semibold ${
+                              isFilled ? 'text-green-900' : 'text-red-900'
+                            }`}>
+                              {fieldId}
+                            </span>
+                            {isFilled ? (
+                              <Badge variant="outline" className="text-xs bg-green-100 text-green-800 border-green-300">
+                                Preenchido
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive" className="text-xs">
+                                Vazio
+                              </Badge>
+                            )}
+                          </div>
+                          {isFilled && (
+                            <div className="mt-2 p-2 bg-white rounded border border-green-200">
+                              <p className="text-sm text-gray-700 font-mono">
+                                {typeof fieldValue === 'object' ? JSON.stringify(fieldValue, null, 2) : String(fieldValue)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenPendingModal('field', fieldId)}
+                      >
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        Pendência
+                      </Button>
                     </div>
-                    {isMissing && (
-                      <Badge variant="destructive" className="text-xs">
-                        Não preenchido
-                      </Badge>
-                    )}
                   </div>
                 )
               })}
@@ -260,30 +451,102 @@ export function ChecklistTab({
         </Card>
       )}
 
-      {/* Outros Bloqueios */}
-      {validation.blockers.filter(b =>
-        !b.includes('Documentos') && !b.includes('Campos')
-      ).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-red-700">
-              <AlertCircle className="h-4 w-4" />
-              Outros Impedimentos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {validation.blockers
-                .filter(b => !b.includes('Documentos') && !b.includes('Campos'))
-                .map((blocker, i) => (
-                  <div key={i} className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-900">{blocker}</p>
-                  </div>
-                ))}
+      {/* Área de Interações */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Send className="h-4 w-4" />
+            Adicionar Comentário ou Interação
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <Label htmlFor="interaction">Mensagem</Label>
+            <Textarea
+              id="interaction"
+              value={interactionText}
+              onChange={(e) => setInteractionText(e.target.value)}
+              placeholder="Digite seu comentário, observação ou instrução sobre esta etapa..."
+              rows={4}
+            />
+          </div>
+          <Button
+            onClick={handleSendInteraction}
+            disabled={!interactionText.trim() || isSendingInteraction}
+            className="w-full"
+          >
+            {isSendingInteraction ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                Enviar Interação
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Modal de Criar Pendência */}
+      <Dialog open={showPendingModal} onOpenChange={setShowPendingModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Pendência</DialogTitle>
+            <DialogDescription>
+              Registre uma pendência relacionada a {pendingType === 'document' ? 'este documento' : 'este campo'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Item Relacionado</Label>
+              <div className="p-3 bg-muted rounded-lg mt-1">
+                <p className="text-sm font-medium">{selectedItem}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {pendingType === 'document' ? 'Documento' : 'Campo do Formulário'}
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+
+            <div>
+              <Label htmlFor="pending-description">Descrição da Pendência *</Label>
+              <Textarea
+                id="pending-description"
+                value={pendingDescription}
+                onChange={(e) => setPendingDescription(e.target.value)}
+                placeholder="Descreva o problema ou o que está faltando..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPendingModal(false)}
+              disabled={isCreatingPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreatePending}
+              disabled={!pendingDescription.trim() || isCreatingPending}
+            >
+              {isCreatingPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Criando...
+                </>
+              ) : (
+                'Criar Pendência'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
