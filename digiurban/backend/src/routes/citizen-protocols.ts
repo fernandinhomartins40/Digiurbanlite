@@ -303,8 +303,9 @@ router.post('/', upload.array('documents'), async (req, res) => {
 
     // ✅ INICIALIZAR WORKFLOW AUTOMATICAMENTE
     try {
-      console.log(`📋 Inicializando workflow para módulo: ${protocol.moduleType}`);
-      await applyWorkflowToProtocol(protocol.id, protocol.moduleType);
+      const moduleTypeToUse = protocol.moduleType || 'GERAL';
+      console.log(`📋 Inicializando workflow para módulo: ${moduleTypeToUse}`);
+      await applyWorkflowToProtocol(protocol.id, moduleTypeToUse);
       console.log('   ✓ Workflow inicializado com sucesso');
 
       // Buscar primeira etapa para iniciar
