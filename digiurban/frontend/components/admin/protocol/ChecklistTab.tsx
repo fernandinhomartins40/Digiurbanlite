@@ -100,8 +100,8 @@ export function ChecklistTab({
 
       // Carregar dados do formulário do protocolo
       const protocolResponse = await apiRequest(`/protocols/${protocolId}`)
-      if (protocolResponse.success && protocolResponse.data.formData) {
-        setFormData(protocolResponse.data.formData)
+      if (protocolResponse.success && protocolResponse.data.customData) {
+        setFormData(protocolResponse.data.customData)
       }
 
     } catch (error) {

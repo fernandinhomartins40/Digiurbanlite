@@ -16,10 +16,10 @@ export function calculateSLAProgress(sla: ProtocolSLA): number {
 
   const now = new Date()
   const start = typeof sla.startDate === 'string' ? parseISO(sla.startDate) : sla.startDate
-  const end = typeof sla.dueDate === 'string' ? parseISO(sla.dueDate) : sla.dueDate
+  const end = typeof sla.expectedEndDate === 'string' ? parseISO(sla.expectedEndDate) : sla.expectedEndDate
 
   // Se já foi completado, retorna 100%
-  if (sla.completedAt) return 100
+  if (sla.actualEndDate || sla.completedAt) return 100
 
   // Se está pausado, retorna o progresso atual
   if (sla.isPaused) {
@@ -48,24 +48,24 @@ export function calculateSLAProgress(sla: ProtocolSLA): number {
 export function formatSLADaysRemaining(sla: ProtocolSLA): string {
   if (!sla) return 'N/A'
 
-  if (sla.completedAt) return 'Concluído'
+  if (sla.actualEndDate || sla.completedAt) return 'Concluído'
   if (sla.isPaused) return 'Pausado'
 
   const now = new Date()
-  const end = typeof sla.dueDate === 'string' ? parseISO(sla.dueDate) : sla.dueDate
+  const end = typeof sla.expectedEndDate === 'string' ? parseISO(sla.expectedEndDate) : sla.expectedEndDate
 
   const daysRemaining = differenceInDays(end, now)
   const hoursRemaining = differenceInHours(end, now)
 
   if (daysRemaining < 0) {
-    return `${Math.abs(daysRemaining)} dias atrasado`
+    return `${Math.abs(daysRemaining)} dia${Math.abs(daysRemaining) > 1 ? 's' : ''} em atraso`
   }
 
   if (daysRemaining === 0) {
     if (hoursRemaining <= 0) {
       return 'Venceu hoje'
     }
-    return `${hoursRemaining}h restantes`
+    return `${hoursRemaining}h restantes (vence hoje)`
   }
 
   if (daysRemaining === 1) {
@@ -76,11 +76,11 @@ export function formatSLADaysRemaining(sla: ProtocolSLA): string {
 }
 
 /**
- * Verificar se SLA está próximo do vencimento (< 20% do tempo)
+ * Verificar se SLA está próximo do vencimento (> 80% do tempo)
  */
 export function isSLANearDue(sla: ProtocolSLA): boolean {
   if (!sla) return false
-  if (sla.completedAt || sla.isPaused) return false
+  if (sla.actualEndDate || sla.completedAt || sla.isPaused) return false
 
   const progress = calculateSLAProgress(sla)
   return progress >= 80 && progress < 100
@@ -91,7 +91,7 @@ export function isSLANearDue(sla: ProtocolSLA): boolean {
  */
 export function isSLAOverdue(sla: ProtocolSLA): boolean {
   if (!sla) return false
-  if (sla.completedAt) return false
+  if (sla.actualEndDate || sla.completedAt) return false
 
   return sla.isOverdue || calculateSLAProgress(sla) >= 100
 }
@@ -101,7 +101,7 @@ export function isSLAOverdue(sla: ProtocolSLA): boolean {
  */
 export function getSLAColor(sla: ProtocolSLA): string {
   if (!sla) return 'gray'
-  if (sla.completedAt) return 'green'
+  if (sla.actualEndDate || sla.completedAt) return 'green'
   if (sla.isPaused) return 'yellow'
   if (isSLAOverdue(sla)) return 'red'
   if (isSLANearDue(sla)) return 'orange'
@@ -113,7 +113,7 @@ export function getSLAColor(sla: ProtocolSLA): string {
  */
 export function getSLAStatus(sla: ProtocolSLA): SLAStatus {
   if (!sla) return SLAStatus.WITHIN_SLA
-  if (sla.completedAt) return SLAStatus.COMPLETED
+  if (sla.actualEndDate || sla.completedAt) return SLAStatus.COMPLETED
   if (sla.isPaused) return SLAStatus.PAUSED
   if (isSLAOverdue(sla)) return SLAStatus.OVERDUE
   if (isSLANearDue(sla)) return SLAStatus.NEAR_DUE

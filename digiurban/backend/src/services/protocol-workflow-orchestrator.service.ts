@@ -96,12 +96,13 @@ export class ProtocolWorkflowOrchestrator {
       }
 
       // 5. Criar interação de sucesso
+      const approver = await prisma.user.findUnique({ where: { id: approvedBy }, select: { name: true } });
       await interactionService.createInteraction({
         protocolId: doc.protocolId,
         type: 'STATUS_CHANGED',
-        authorType: 'SYSTEM',
+        authorType: 'SERVER',
         authorId: approvedBy,
-        authorName: 'Sistema',
+        authorName: approver?.name || 'Servidor',
         message: '✅ Documentação aprovada! Seu protocolo avançou no fluxo.',
         isInternal: false
       });
@@ -202,11 +203,13 @@ export class ProtocolWorkflowOrchestrator {
       await slaService.completeSLA(stage.protocolId);
 
       // Interação de conclusão
+      const completer = await prisma.user.findUnique({ where: { id: completedBy }, select: { name: true } });
       await interactionService.createInteraction({
         protocolId: stage.protocolId,
         type: 'STATUS_CHANGED', // Usar tipo existente
-        authorType: 'SYSTEM',
-        authorName: 'Sistema',
+        authorType: 'SERVER',
+        authorId: completedBy,
+        authorName: completer?.name || 'Servidor',
         message: '🎉 Parabéns! Seu protocolo foi concluído com sucesso!',
         isInternal: false
       });
@@ -228,11 +231,13 @@ export class ProtocolWorkflowOrchestrator {
           await stageService.startStage(nextStage.id, completedBy);
 
           // Interação informativa
+          const stageCompleter = await prisma.user.findUnique({ where: { id: completedBy }, select: { name: true } });
           await interactionService.createInteraction({
             protocolId: stage.protocolId,
             type: 'STATUS_CHANGED',
-            authorType: 'SYSTEM',
-            authorName: 'Sistema',
+            authorType: 'SERVER',
+            authorId: completedBy,
+            authorName: stageCompleter?.name || 'Servidor',
             message: `Etapa "${stage.stageName}" concluída. Iniciando: "${nextStage.stageName}"`,
             isInternal: false
           });
@@ -246,7 +251,7 @@ export class ProtocolWorkflowOrchestrator {
             title: `Pré-requisitos pendentes para: ${nextStage.stageName}`,
             description: validation.blockers.join('\n'),
             blocksProgress: true,
-            createdBy: 'SYSTEM'
+            createdBy: completedBy
           });
         }
       }
@@ -385,11 +390,13 @@ export class ProtocolWorkflowOrchestrator {
       }
 
       // 5. Notificar
+      const resolver = await prisma.user.findUnique({ where: { id: resolvedBy }, select: { name: true } });
       await interactionService.createInteraction({
         protocolId: pending.protocolId,
         type: 'STATUS_CHANGED',
-        authorType: 'SYSTEM',
-        authorName: 'Sistema',
+        authorType: 'SERVER',
+        authorId: resolvedBy,
+        authorName: resolver?.name || 'Servidor',
         message: '✅ Pendências resolvidas! Seu protocolo voltou ao andamento normal.',
         isInternal: false
       });

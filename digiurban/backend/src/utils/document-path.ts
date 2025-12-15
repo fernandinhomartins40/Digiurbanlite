@@ -27,8 +27,23 @@ export const resolveLocalFilePath = (rawPath: string) => {
     if (p && !candidates.includes(p)) candidates.push(p);
   };
 
-  // Limpar caminho (remover barra inicial se existir)
-  const cleaned = rawPath.startsWith('/') ? rawPath.slice(1) : rawPath;
+  // Se já é caminho absoluto E existe, usar direto
+  if (path.isAbsolute(rawPath) && fs.existsSync(rawPath)) {
+    return { found: true, filePath: rawPath, tried: [rawPath] };
+  }
+
+  // Limpar caminho - remover process.cwd() se estiver duplicado
+  let cleaned = rawPath;
+  const cwd = process.cwd();
+
+  // Se o caminho contém process.cwd() duplicado (ex: /app/backend/app/backend/uploads...)
+  if (cleaned.includes(cwd)) {
+    // Remover primeira ocorrência de cwd
+    cleaned = cleaned.replace(cwd, '');
+  }
+
+  // Remover barra inicial se existir
+  cleaned = cleaned.startsWith('/') ? cleaned.slice(1) : cleaned;
 
   // Estratégia 1: Caminho relativo ao diretório de trabalho atual
   add(path.join(process.cwd(), cleaned));
@@ -36,7 +51,7 @@ export const resolveLocalFilePath = (rawPath: string) => {
   // Estratégia 2: Caminho relativo ao UPLOAD_BASE_PATH configurado
   add(path.join(UPLOAD_BASE_PATH, cleaned));
 
-  // Estratégia 3: Se for caminho absoluto, usar direto
+  // Estratégia 3: Se original era absoluto, tentar direto
   if (path.isAbsolute(rawPath)) {
     add(rawPath);
   }
