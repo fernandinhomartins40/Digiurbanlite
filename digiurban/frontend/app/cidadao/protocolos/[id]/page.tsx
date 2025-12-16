@@ -96,7 +96,11 @@ export default function ProtocolDetailsPage() {
       setLoading(true);
       setError(null);
 
+      console.log('[ProtocolDetails] Buscando protocolo:', params.id);
+
       const data = await apiRequest(`/citizen/protocols/${params.id}`);
+
+      console.log('[ProtocolDetails] Resposta da API:', data);
 
       // A API retorna { protocol, history }
       if (data.protocol) {
@@ -114,9 +118,15 @@ export default function ProtocolDetailsPage() {
         throw new Error('Protocolo não encontrado');
       }
     } catch (err: any) {
+      console.error('[ProtocolDetails] Erro ao buscar protocolo:', err);
       const errorMessage = err.message || 'Erro ao carregar detalhes do protocolo';
       setError(errorMessage);
       toast.error(errorMessage);
+
+      // Se for erro de autenticação, não mostrar toast (já redireciona)
+      if (err.message?.includes('401') || err.message?.includes('autenticação')) {
+        return;
+      }
     } finally {
       setLoading(false);
     }
