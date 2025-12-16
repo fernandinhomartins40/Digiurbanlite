@@ -102,29 +102,29 @@ export async function uploadDocument(
 }
 
 /**
- * Validar documento
+ * Aprovar documento
  */
-export async function validateDocument(
+export async function approveDocument(
   protocolId: string,
   documentId: string
 ): Promise<ProtocolDocument> {
   try {
     const apiUrl = getFullApiUrl(
-      `/api/protocols/${protocolId}/documents/${documentId}/validate`
+      `/api/protocols/${protocolId}/documents/${documentId}/approve`
     )
     const response = await fetch(apiUrl, {
-      method: 'PATCH',
+      method: 'PUT',
       credentials: 'include',
     })
 
     if (!response.ok) {
-      throw new Error('Erro ao validar documento')
+      throw new Error('Erro ao aprovar documento')
     }
 
     const result = await response.json()
     return result.data
   } catch (error) {
-    console.error('Error validating document:', error)
+    console.error('Error approving document:', error)
     throw error
   }
 }
@@ -135,19 +135,19 @@ export async function validateDocument(
 export async function rejectDocument(
   protocolId: string,
   documentId: string,
-  reason: string
+  rejectionReason: string
 ): Promise<ProtocolDocument> {
   try {
     const apiUrl = getFullApiUrl(
       `/api/protocols/${protocolId}/documents/${documentId}/reject`
     )
     const response = await fetch(apiUrl, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ rejectionReason }),
     })
 
     if (!response.ok) {

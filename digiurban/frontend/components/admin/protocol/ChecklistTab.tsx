@@ -28,7 +28,7 @@ import {
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { StageStatus } from '@/types/protocol-enhancements'
-import { getProtocolDocuments, getDocumentDownloadUrl, uploadDocument, type ProtocolDocument } from '@/services/protocol-documents.service'
+import { getProtocolDocuments, getDocumentDownloadUrl, uploadDocument, approveDocument, rejectDocument, type ProtocolDocument } from '@/services/protocol-documents.service'
 import { createPending, createPendingsBatch, getProtocolPendings, resolvePending, type ProtocolPending } from '@/services/protocol-pendings.service'
 import { useToast } from '@/hooks/use-toast'
 import { Input } from '@/components/ui/input'
@@ -85,6 +85,13 @@ export function ChecklistTab({
   // Estado para upload de documentos
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<Record<string, File | null>>({})
+
+  // Estado para aprovar/rejeitar documentos
+  const [approvingDocId, setApprovingDocId] = useState<string | null>(null)
+  const [rejectingDocId, setRejectingDocId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [showRejectDialog, setShowRejectDialog] = useState(false)
+  const [docToReject, setDocToReject] = useState<{ id: string; type: string } | null>(null)
 
   useEffect(() => {
     if (currentStage?.id) {
@@ -423,6 +430,71 @@ export function ChecklistTab({
     }
   }
 
+  // Aprovar documento
+  const handleApproveDocument = async (documentId: string) => {
+    try {
+      setApprovingDocId(documentId)
+      await approveDocument(protocolId, documentId)
+
+      toast({
+        title: 'Documento aprovado',
+        description: 'O documento foi aprovado com sucesso.'
+      })
+
+      loadChecklistData()
+    } catch (error) {
+      toast({
+        title: 'Erro ao aprovar documento',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setApprovingDocId(null)
+    }
+  }
+
+  // Abrir modal para rejeitar documento
+  const handleOpenRejectDialog = (documentId: string, documentType: string) => {
+    setDocToReject({ id: documentId, type: documentType })
+    setRejectReason('')
+    setShowRejectDialog(true)
+  }
+
+  // Rejeitar documento
+  const handleRejectDocument = async () => {
+    if (!docToReject || !rejectReason.trim()) {
+      toast({
+        title: 'Motivo obrigatório',
+        description: 'Por favor, informe o motivo da rejeição',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      setRejectingDocId(docToReject.id)
+      await rejectDocument(protocolId, docToReject.id, rejectReason.trim())
+
+      toast({
+        title: 'Documento rejeitado',
+        description: 'O documento foi rejeitado com sucesso.'
+      })
+
+      setShowRejectDialog(false)
+      setDocToReject(null)
+      setRejectReason('')
+      loadChecklistData()
+    } catch (error) {
+      toast({
+        title: 'Erro ao rejeitar documento',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setRejectingDocId(null)
+    }
+  }
+
   if (!currentStage || currentStage.status !== StageStatus.IN_PROGRESS) {
     return (
       <Card>
@@ -533,18 +605,20 @@ export function ChecklistTab({
                 // Buscar TODOS os documentos deste tipo
                 const allDocsOfType = documents.filter(d => d.documentType === docType)
 
-                // Prioridade: VALIDATED/APPROVED > PENDING > REJECTED
-                const approvedDoc = allDocsOfType.find(d => d.status === 'VALIDATED' || d.status === 'APPROVED')
+                // Prioridade: APPROVED > UPLOADED/UNDER_REVIEW > PENDING > REJECTED
+                const approvedDoc = allDocsOfType.find(d => d.status === 'APPROVED')
+                const uploadedDoc = allDocsOfType.find(d => d.status === 'UPLOADED' || d.status === 'UNDER_REVIEW')
                 const pendingDoc = allDocsOfType.find(d => d.status === 'PENDING')
                 const rejectedDoc = allDocsOfType.find(d => d.status === 'REJECTED')
 
-                // Documento para exibir (prioriza aprovado)
-                const displayDoc = approvedDoc || pendingDoc || rejectedDoc
+                // Documento para exibir (prioriza aprovado, depois uploaded)
+                const displayDoc = approvedDoc || uploadedDoc || pendingDoc || rejectedDoc
 
                 // Estados
                 const isApproved = !!approvedDoc
-                const isPending = !approvedDoc && !!pendingDoc
-                const isRejected = !approvedDoc && !pendingDoc && !!rejectedDoc
+                const isUploaded = !approvedDoc && !!uploadedDoc
+                const isPending = !approvedDoc && !uploadedDoc && !!pendingDoc
+                const isRejected = !approvedDoc && !uploadedDoc && !pendingDoc && !!rejectedDoc
                 const isMissing = !displayDoc
 
                 // Buscar pendências deste documento
@@ -559,6 +633,8 @@ export function ChecklistTab({
                         ? 'bg-purple-50 border-purple-400'
                         : isApproved
                         ? 'bg-green-50 border-green-300'
+                        : isUploaded
+                        ? 'bg-cyan-50 border-cyan-300'
                         : isPending
                         ? 'bg-blue-50 border-blue-300'
                         : isRejected
@@ -572,6 +648,8 @@ export function ChecklistTab({
                           <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                         ) : isApproved ? (
                           <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        ) : isUploaded ? (
+                          <Eye className="h-5 w-5 text-cyan-600 mt-0.5 flex-shrink-0" />
                         ) : isPending ? (
                           <Circle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
                         ) : isRejected ? (
@@ -582,7 +660,7 @@ export function ChecklistTab({
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className={`text-sm font-semibold ${
-                              hasPending ? 'text-purple-900' : isApproved ? 'text-green-900' : isPending ? 'text-blue-900' : isRejected ? 'text-orange-900' : 'text-red-900'
+                              hasPending ? 'text-purple-900' : isApproved ? 'text-green-900' : isUploaded ? 'text-cyan-900' : isPending ? 'text-blue-900' : isRejected ? 'text-orange-900' : 'text-red-900'
                             }`}>
                               {docType}
                             </span>
@@ -596,9 +674,14 @@ export function ChecklistTab({
                                 ✓ Aprovado
                               </Badge>
                             )}
+                            {isUploaded && (
+                              <Badge variant="outline" className="text-xs bg-cyan-100 text-cyan-800 border-cyan-300">
+                                👁️ Enviado - Aguardando Aprovação
+                              </Badge>
+                            )}
                             {isPending && (
                               <Badge variant="outline" className="text-xs bg-blue-100 text-blue-800 border-blue-300">
-                                ⏳ Aguardando Análise
+                                ⏳ Aguardando Envio
                               </Badge>
                             )}
                             {isRejected && (
@@ -747,15 +830,51 @@ export function ChecklistTab({
                       </div>
                       <div className="flex flex-col gap-2 flex-shrink-0">
                         {displayDoc && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewDocument(displayDoc.id)}
-                            className="w-full"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Visualizar
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewDocument(displayDoc.id)}
+                              className="w-full"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Visualizar
+                            </Button>
+
+                            {/* Botões de Aprovar/Rejeitar para documentos UPLOADED ou UNDER_REVIEW */}
+                            {(isUploaded || (displayDoc.status === 'UNDER_REVIEW')) && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApproveDocument(displayDoc.id)}
+                                  disabled={approvingDocId === displayDoc.id}
+                                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                >
+                                  {approvingDocId === displayDoc.id ? (
+                                    <>
+                                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                      Aprovando...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                                      Aprovar
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleOpenRejectDialog(displayDoc.id, docType)}
+                                  disabled={rejectingDocId === displayDoc.id}
+                                  className="w-full"
+                                >
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  Rejeitar
+                                </Button>
+                              </>
+                            )}
+                          </>
                         )}
                         <Button
                           size="sm"
@@ -1015,6 +1134,62 @@ export function ChecklistTab({
                 </>
               ) : (
                 'Criar Pendência'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Rejeitar Documento */}
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rejeitar Documento</DialogTitle>
+            <DialogDescription>
+              Informe o motivo da rejeição para o documento "{docToReject?.type}"
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="reject-reason">Motivo da Rejeição *</Label>
+              <Textarea
+                id="reject-reason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Ex: Documento ilegível, informações incorretas, documento vencido..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRejectDialog(false)
+                setDocToReject(null)
+                setRejectReason('')
+              }}
+              disabled={rejectingDocId !== null}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRejectDocument}
+              disabled={!rejectReason.trim() || rejectingDocId !== null}
+            >
+              {rejectingDocId ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Rejeitando...
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Rejeitar Documento
+                </>
               )}
             </Button>
           </DialogFooter>
