@@ -58,6 +58,34 @@ export class ProtocolWorkflowOrchestrator {
 
     console.log(`📄 [Orchestrator] Documento aprovado: ${doc.documentType}`);
 
+    // 0. Resolver automaticamente pendências relacionadas a este documento
+    const documentPendings = await prisma.protocolPending.findMany({
+      where: {
+        protocolId: doc.protocolId,
+        type: 'DOCUMENT',
+        status: PendingStatus.OPEN,
+        metadata: {
+          path: ['documentType'],
+          equals: doc.documentType
+        }
+      }
+    });
+
+    if (documentPendings.length > 0) {
+      console.log(`🔄 [Orchestrator] Resolvendo ${documentPendings.length} pendência(s) do documento ${doc.documentType}`);
+
+      for (const pending of documentPendings) {
+        await pendingService.resolvePending(
+          pending.id,
+          approvedBy,
+          `Documento aprovado automaticamente pelo sistema`
+        );
+
+        // Disparar evento de pendência resolvida
+        await this.onPendingResolved(pending.id, approvedBy);
+      }
+    }
+
     // 1. Verificar se TODOS documentos obrigatórios estão aprovados
     const allDocsApproved = await documentService.checkAllDocumentsApproved(doc.protocolId);
 

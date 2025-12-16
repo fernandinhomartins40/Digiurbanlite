@@ -338,7 +338,8 @@ export function ChecklistTab({
   // Helper para obter pendências de um documento ou campo específico
   const getPendingsFor = (type: 'document' | 'field', identifier: string) => {
     return pendings.filter(p => {
-      if (p.status !== 'PENDING') return false
+      // Filtrar apenas pendências ABERTAS (não resolvidas/canceladas)
+      if (p.status !== 'OPEN') return false
       if (type === 'document') {
         return p.pendingType === 'DOCUMENT' && p.metadata?.documentType === identifier
       } else {
