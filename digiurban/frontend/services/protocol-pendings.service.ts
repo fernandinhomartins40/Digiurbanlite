@@ -12,7 +12,7 @@ export interface ProtocolPending {
   protocolId: string
   pendingType: string
   description: string
-  status: 'PENDING' | 'RESOLVED' | 'CANCELLED'
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'EXPIRED' | 'CANCELLED'
   priority: number
   dueDate?: string
   createdById: string

@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { StageStatus } from '@/types/protocol-enhancements'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import { completeStage } from '@/services/protocol-stages.service'
+import { useToast } from '@/hooks/use-toast'
 
 interface CurrentStageHighlightProps {
   protocolId: string
@@ -46,8 +48,10 @@ export function CurrentStageHighlight({
   onNavigateToChecklist
 }: CurrentStageHighlightProps) {
   const { apiRequest } = useAdminAuth()
+  const { toast } = useToast()
   const [validation, setValidation] = useState<StageValidation | null>(null)
   const [isValidating, setIsValidating] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
 
   const progressPercentage = ((currentStage.stageOrder - 1) / (totalStages - 1)) * 100
 
@@ -67,6 +71,33 @@ export function CurrentStageHighlight({
       console.error('Erro ao carregar validação:', error)
     } finally {
       setIsValidating(false)
+    }
+  }
+
+  const handleApproveAndAdvance = async () => {
+    try {
+      setIsCompleting(true)
+
+      await completeStage(protocolId, currentStage.id, {
+        notes: 'Etapa aprovada e avançada automaticamente'
+      })
+
+      toast({
+        title: 'Etapa aprovada!',
+        description: `A etapa "${currentStage.stageName}" foi aprovada com sucesso.`
+      })
+
+      // Recarregar a página para mostrar a próxima etapa
+      window.location.reload()
+    } catch (error) {
+      console.error('Erro ao aprovar etapa:', error)
+      toast({
+        title: 'Erro ao aprovar etapa',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsCompleting(false)
     }
   }
 
@@ -208,9 +239,20 @@ export function CurrentStageHighlight({
                 <Button
                   className="flex-1 bg-green-600 hover:bg-green-700"
                   size="lg"
+                  onClick={handleApproveAndAdvance}
+                  disabled={isCompleting}
                 >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Aprovar e Avançar
+                  {isCompleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Aprovando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Aprovar e Avançar
+                    </>
+                  )}
                 </Button>
               </div>
             )}
