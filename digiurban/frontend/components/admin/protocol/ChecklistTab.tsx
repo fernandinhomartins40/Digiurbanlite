@@ -24,7 +24,8 @@ import {
   Eye,
   AlertTriangle,
   Send,
-  Upload
+  Upload,
+  Download
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { StageStatus } from '@/types/protocol-enhancements'
@@ -92,6 +93,9 @@ export function ChecklistTab({
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectDialog, setShowRejectDialog] = useState(false)
   const [docToReject, setDocToReject] = useState<{ id: string; type: string } | null>(null)
+
+  // Estado para visualizar documento
+  const [viewingDoc, setViewingDoc] = useState<ProtocolDocument | null>(null)
 
   useEffect(() => {
     if (currentStage?.id) {
@@ -223,12 +227,37 @@ export function ChecklistTab({
     }
   }
 
+  // Funções auxiliares para visualização de documentos
+  const isImageDoc = (doc: ProtocolDocument | null) => {
+    if (!doc?.mimeType) return false
+    return doc.mimeType.startsWith('image/')
+  }
+
+  const isPdfDoc = (doc: ProtocolDocument | null) => {
+    if (!doc?.mimeType) return false
+    return doc.mimeType === 'application/pdf'
+  }
+
+  const getDocumentPreviewUrl = (doc: ProtocolDocument) => {
+    // Adiciona ?inline=true para visualização em vez de download
+    const baseUrl = getDocumentDownloadUrl(protocolId, doc.id)
+    return `${baseUrl}?inline=true`
+  }
+
   const handleViewDocument = (documentId: string) => {
     try {
       console.log('[ChecklistTab] Visualizando documento:', { protocolId, documentId })
-      const url = getDocumentDownloadUrl(protocolId, documentId)
-      console.log('[ChecklistTab] URL gerada:', url)
-      window.open(url, '_blank')
+      // Buscar o documento na lista de documentos carregados
+      const doc = documents.find(d => d.id === documentId)
+      if (doc) {
+        setViewingDoc(doc)
+      } else {
+        console.error('[ChecklistTab] Documento não encontrado:', documentId)
+        toast({
+          title: 'Documento não encontrado',
+          variant: 'destructive'
+        })
+      }
     } catch (error) {
       console.error('[ChecklistTab] Erro ao visualizar documento:', error)
       toast({
@@ -1218,6 +1247,103 @@ export function ChecklistTab({
                   Rejeitar Documento
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Visualização de Documento */}
+      <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{viewingDoc?.documentType || 'Documento'}</DialogTitle>
+            <DialogDescription>
+              {viewingDoc?.fileName} • {viewingDoc ? (viewingDoc.fileSize / 1024).toFixed(2) : 0} KB
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Preview do documento */}
+            <div className="border rounded-lg p-4 bg-muted/30 min-h-[400px] flex items-center justify-center">
+              {isImageDoc(viewingDoc) ? (
+                <img
+                  src={viewingDoc ? getDocumentPreviewUrl(viewingDoc) : ''}
+                  alt={viewingDoc?.fileName || 'Documento'}
+                  className="max-w-full max-h-[500px] object-contain"
+                  onError={(e) => {
+                    console.error('[ChecklistTab] Erro ao carregar imagem:', viewingDoc)
+                  }}
+                />
+              ) : isPdfDoc(viewingDoc) ? (
+                <iframe
+                  src={viewingDoc ? getDocumentPreviewUrl(viewingDoc) : ''}
+                  className="w-full h-[500px] rounded"
+                  title={viewingDoc?.fileName || 'Documento'}
+                />
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p>Pré-visualização não disponível para este tipo de arquivo</p>
+                  <p className="text-sm mt-2">{viewingDoc?.mimeType}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Informações do documento */}
+            {viewingDoc && (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Tamanho</p>
+                  <p className="font-medium">
+                    {viewingDoc.fileSize ? `${(viewingDoc.fileSize / 1024).toFixed(2)} KB` : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Tipo</p>
+                  <p className="font-medium">{viewingDoc.mimeType || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Enviado em</p>
+                  <p className="font-medium">
+                    {new Date(viewingDoc.createdAt).toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Status</p>
+                  <p className="font-medium">{viewingDoc.status}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            {viewingDoc && (
+              <Button
+                variant="outline"
+                asChild
+              >
+                <a
+                  href={getDocumentDownloadUrl(protocolId, viewingDoc.id)}
+                  download={viewingDoc.fileName}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Baixar
+                </a>
+              </Button>
+            )}
+            <Button
+              variant="default"
+              onClick={() => setViewingDoc(null)}
+            >
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>

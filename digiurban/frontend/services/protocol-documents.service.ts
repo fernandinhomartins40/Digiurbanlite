@@ -16,7 +16,7 @@ export interface ProtocolDocument {
   filePath: string
   fileSize: number
   mimeType: string
-  status: 'PENDING' | 'VALIDATED' | 'REJECTED'
+  status: 'PENDING' | 'UPLOADED' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED'
   uploadedById: string
   uploadedBy?: {
     id: string
