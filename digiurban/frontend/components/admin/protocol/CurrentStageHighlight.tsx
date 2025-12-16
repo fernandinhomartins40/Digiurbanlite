@@ -234,7 +234,7 @@ export function CurrentStageHighlight({
             </div>
 
             {/* Ações Rápidas */}
-            {validation.canProgress && (
+            {validation.canProgress && currentStage.status === StageStatus.IN_PROGRESS && (
               <div className="flex gap-2">
                 <Button
                   className="flex-1 bg-green-600 hover:bg-green-700"
@@ -254,6 +254,18 @@ export function CurrentStageHighlight({
                     </>
                   )}
                 </Button>
+              </div>
+            )}
+
+            {/* Mensagem quando stage está concluída */}
+            {currentStage.status === StageStatus.COMPLETED && (
+              <div className="p-4 bg-green-50 border-2 border-green-300 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <span className="font-semibold text-green-900">
+                    Esta etapa já foi concluída!
+                  </span>
+                </div>
               </div>
             )}
           </>

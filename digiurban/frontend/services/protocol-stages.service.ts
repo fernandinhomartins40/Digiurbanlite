@@ -103,7 +103,7 @@ export async function completeStage(
       `/api/protocols/${protocolId}/stages/${stageId}/complete`
     )
     const response = await fetch(apiUrl, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
