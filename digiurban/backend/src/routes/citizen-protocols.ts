@@ -306,25 +306,7 @@ router.post('/', upload.array('documents'), async (req, res) => {
       const moduleTypeToUse = protocol.moduleType || 'GERAL';
       console.log(`📋 Inicializando workflow para módulo: ${moduleTypeToUse}`);
       await applyWorkflowToProtocol(protocol.id, moduleTypeToUse);
-      console.log('   ✓ Workflow inicializado com sucesso');
-
-      // Buscar primeira etapa para iniciar
-      const firstStage = await prisma.protocolStage.findFirst({
-        where: { protocolId: protocol.id },
-        orderBy: { stageOrder: 'asc' }
-      });
-
-      if (firstStage) {
-        // Iniciar primeira etapa
-        await prisma.protocolStage.update({
-          where: { id: firstStage.id },
-          data: {
-            status: 'IN_PROGRESS',
-            startedAt: new Date()
-          }
-        });
-        console.log(`   ✓ Primeira etapa iniciada: ${firstStage.stageName}`);
-      }
+      console.log('   ✓ Workflow inicializado com primeira etapa IN_PROGRESS');
     } catch (workflowError) {
       console.warn('⚠️  Erro ao inicializar workflow:', workflowError);
       // Não falhar a criação do protocolo se workflow falhar

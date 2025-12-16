@@ -148,12 +148,17 @@ export async function applyWorkflowToProtocol(
 
   // Criar todas as etapas do workflow
   const createdStages = await Promise.all(
-    stages.map((stage) =>
-      prisma.protocolStage.create({
+    stages.map((stage) => {
+      // ✅ PRIMEIRA ETAPA SEMPRE INICIA COMO IN_PROGRESS
+      const isFirstStage = stage.order === 1;
+
+      return prisma.protocolStage.create({
         data: {
           protocolId,
           stageName: stage.name,
           stageOrder: stage.order,
+          status: isFirstStage ? 'IN_PROGRESS' : 'PENDING',
+          startedAt: isFirstStage ? new Date() : undefined,
           dueDate: stage.slaDays
             ? new Date(Date.now() + stage.slaDays * 24 * 60 * 60 * 1000)
             : undefined,
@@ -170,8 +175,8 @@ export async function applyWorkflowToProtocol(
             requiresApproval: stage.requiresApproval
           }
         }
-      })
-    )
+      });
+    })
   );
 
   return createdStages;
