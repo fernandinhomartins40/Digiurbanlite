@@ -9,45 +9,41 @@ const prisma = new PrismaClient();
 
 /**
  * Workflow padrão genérico
+ * ✅ Removida etapa "Novo" - protocolo já nasce novo!
  */
 const defaultStages = [
-  {
-    id: 'novo',
-    name: 'Novo',
-    description: 'Protocolo recém criado',
-    order: 1,
-    color: '#3b82f6',
-    allowedNextStages: ['em_analise', 'cancelado'],
-  },
   {
     id: 'em_analise',
     name: 'Em Análise',
     description: 'Em análise pela equipe',
-    order: 2,
+    order: 1,
     color: '#f59e0b',
+    slaDays: 3,
     allowedNextStages: ['aprovado', 'reprovado', 'pendente', 'cancelado'],
   },
   {
     id: 'pendente',
     name: 'Pendente',
     description: 'Aguardando documentação ou informação',
-    order: 3,
+    order: 2,
     color: '#eab308',
+    slaDays: 7,
     allowedNextStages: ['em_analise', 'cancelado'],
   },
   {
     id: 'aprovado',
     name: 'Aprovado',
     description: 'Solicitação aprovada',
-    order: 4,
+    order: 3,
     color: '#22c55e',
+    slaDays: 1,
     allowedNextStages: ['concluido'],
   },
   {
     id: 'reprovado',
     name: 'Reprovado',
     description: 'Solicitação reprovada',
-    order: 5,
+    order: 4,
     color: '#ef4444',
     allowedNextStages: [],
   },
@@ -55,7 +51,7 @@ const defaultStages = [
     id: 'concluido',
     name: 'Concluído',
     description: 'Processo finalizado',
-    order: 6,
+    order: 5,
     color: '#10b981',
     allowedNextStages: [],
   },
@@ -63,7 +59,7 @@ const defaultStages = [
     id: 'cancelado',
     name: 'Cancelado',
     description: 'Protocolo cancelado',
-    order: 7,
+    order: 6,
     color: '#6b7280',
     allowedNextStages: [],
   },
