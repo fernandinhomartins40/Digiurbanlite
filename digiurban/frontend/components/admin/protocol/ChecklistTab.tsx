@@ -115,6 +115,7 @@ export function ChecklistTab({
 
       // Carregar documentos
       const docs = await getProtocolDocuments(protocolId)
+      console.log('[ChecklistTab] Documentos carregados:', docs)
       setDocuments(docs)
 
       // Carregar dados do formulário do protocolo
@@ -223,8 +224,19 @@ export function ChecklistTab({
   }
 
   const handleViewDocument = (documentId: string) => {
-    const url = getDocumentDownloadUrl(protocolId, documentId)
-    window.open(url, '_blank')
+    try {
+      console.log('[ChecklistTab] Visualizando documento:', { protocolId, documentId })
+      const url = getDocumentDownloadUrl(protocolId, documentId)
+      console.log('[ChecklistTab] URL gerada:', url)
+      window.open(url, '_blank')
+    } catch (error) {
+      console.error('[ChecklistTab] Erro ao visualizar documento:', error)
+      toast({
+        title: 'Erro ao visualizar documento',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    }
   }
 
   const handleCreateBatchPendings = async () => {
@@ -433,8 +445,10 @@ export function ChecklistTab({
   // Aprovar documento
   const handleApproveDocument = async (documentId: string) => {
     try {
+      console.log('[ChecklistTab] Aprovando documento:', { protocolId, documentId })
       setApprovingDocId(documentId)
-      await approveDocument(protocolId, documentId)
+      const result = await approveDocument(protocolId, documentId)
+      console.log('[ChecklistTab] Documento aprovado:', result)
 
       toast({
         title: 'Documento aprovado',
@@ -443,6 +457,7 @@ export function ChecklistTab({
 
       loadChecklistData()
     } catch (error) {
+      console.error('[ChecklistTab] Erro ao aprovar documento:', error)
       toast({
         title: 'Erro ao aprovar documento',
         description: error instanceof Error ? error.message : 'Erro desconhecido',
@@ -624,6 +639,18 @@ export function ChecklistTab({
                 // Buscar pendências deste documento
                 const docPendings = getPendingsFor('document', docType)
                 const hasPending = docPendings.length > 0
+
+                // Log de debug
+                if (displayDoc) {
+                  console.log(`[ChecklistTab] Documento ${docType}:`, {
+                    status: displayDoc.status,
+                    isApproved,
+                    isUploaded,
+                    isPending,
+                    isRejected,
+                    displayDoc
+                  })
+                }
 
                 return (
                   <div
