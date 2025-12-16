@@ -31,7 +31,7 @@ export function CitizenWorkflowProgress({ protocolId, apiRequest }: CitizenWorkf
   const loadWorkflow = async () => {
     try {
       setIsLoading(true)
-      const response = await apiRequest(`/protocols/${protocolId}/stages`)
+      const response = await apiRequest(`/citizen/protocols/${protocolId}/stages`)
 
       if (response.success) {
         setStages(response.data || [])

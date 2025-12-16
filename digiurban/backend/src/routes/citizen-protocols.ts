@@ -753,6 +753,202 @@ router.get('/:id/can-cancel', async (req, res) => {
 });
 
 // ========================================
+// GET WORKFLOW STAGES (READ-ONLY)
+// ========================================
+
+/**
+ * GET /api/citizen/protocols/:id/stages
+ * Listar etapas do workflow do protocolo (somente leitura)
+ */
+router.get('/:id/stages', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId } = req.params;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Buscar stages do protocolo
+    const stages = await prisma.protocolStage.findMany({
+      where: { protocolId },
+      orderBy: { stageOrder: 'asc' }
+    });
+
+    return res.json({
+      success: true,
+      data: stages
+    });
+  } catch (error: any) {
+    console.error('Error fetching protocol stages:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao buscar etapas do protocolo'
+    });
+  }
+});
+
+// ========================================
+// GET PROTOCOL PENDINGS (READ-ONLY)
+// ========================================
+
+/**
+ * GET /api/citizen/protocols/:id/pendings
+ * Listar pendências do protocolo (somente leitura)
+ */
+router.get('/:id/pendings', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId } = req.params;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Buscar pendências do protocolo
+    const pendings = await prisma.protocolPending.findMany({
+      where: { protocolId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return res.json({
+      success: true,
+      data: pendings
+    });
+  } catch (error: any) {
+    console.error('Error fetching protocol pendings:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao buscar pendências do protocolo'
+    });
+  }
+});
+
+/**
+ * PATCH /api/citizen/protocols/:id/pendings/:pendingId/resolve
+ * Resolver uma pendência (cidadão pode responder)
+ */
+router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const citizenName = (req as any).citizen?.name;
+    const { id: protocolId, pendingId } = req.params;
+    const { resolution } = req.body;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    if (!resolution || !resolution.trim()) {
+      return res.status(400).json({ error: 'Resolução é obrigatória' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Verificar se a pendência existe e pertence ao protocolo
+    const pending = await prisma.protocolPending.findFirst({
+      where: {
+        id: pendingId,
+        protocolId
+      }
+    });
+
+    if (!pending) {
+      return res.status(404).json({
+        success: false,
+        error: 'Pendência não encontrada'
+      });
+    }
+
+    if (pending.status !== 'PENDING') {
+      return res.status(400).json({
+        success: false,
+        error: 'Pendência já foi resolvida ou cancelada'
+      });
+    }
+
+    // Atualizar pendência
+    const updatedPending = await prisma.protocolPending.update({
+      where: { id: pendingId },
+      data: {
+        status: 'RESOLVED',
+        resolution: resolution.trim(),
+        resolvedAt: new Date(),
+        resolvedById: citizenId
+      }
+    });
+
+    // Criar interação informando a resolução
+    await prisma.protocolInteraction.create({
+      data: {
+        protocolId,
+        type: 'MESSAGE',
+        authorType: 'CITIZEN',
+        authorId: citizenId,
+        authorName: citizenName || 'Cidadão',
+        message: `Pendência resolvida: ${pending.description}\n\nResolução: ${resolution.trim()}`,
+        isInternal: false,
+        isRead: false
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: updatedPending
+    });
+  } catch (error: any) {
+    console.error('Error resolving pending:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao resolver pendência'
+    });
+  }
+});
+
+// ========================================
 // GET CITIZEN LINKS (READ-ONLY)
 // ========================================
 
@@ -760,7 +956,7 @@ router.get('/:id/can-cancel', async (req, res) => {
  * GET /api/citizen/protocols/:id/citizen-links
  * Listar vínculos de cidadãos do protocolo (somente leitura)
  */
-router.get('/:id/citizen-links', citizenAuthMiddleware, async (req, res) => {
+router.get('/:id/citizen-links', async (req, res) => {
   try {
     const { id: protocolId } = req.params;
     const citizenId = (req as any).citizenId;

@@ -24,7 +24,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
   const loadPendings = async () => {
     try {
       setIsLoading(true)
-      const response = await apiRequest(`/protocols/${protocolId}/pendings`)
+      const response = await apiRequest(`/citizen/protocols/${protocolId}/pendings`)
 
       if (response.success) {
         setPendings(response.data || [])
@@ -40,7 +40,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
   const handleResolvePending = async (pendingId: string, resolution: string) => {
     try {
       const response = await apiRequest(
-        `/protocols/${protocolId}/pendings/${pendingId}/resolve`,
+        `/citizen/protocols/${protocolId}/pendings/${pendingId}/resolve`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
