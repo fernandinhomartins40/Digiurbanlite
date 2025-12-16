@@ -903,7 +903,7 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
       });
     }
 
-    if (pending.status !== 'PENDING') {
+    if (pending.status !== 'OPEN') {
       return res.status(400).json({
         success: false,
         error: 'Pendência já foi resolvida ou cancelada'
@@ -917,7 +917,7 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
         status: 'RESOLVED',
         resolution: resolution.trim(),
         resolvedAt: new Date(),
-        resolvedById: citizenId
+        resolvedBy: citizenId
       }
     });
 
