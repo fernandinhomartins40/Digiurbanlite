@@ -21,6 +21,12 @@ import { AssignProtocolDialog } from '@/components/admin/AssignProtocolDialog';
 import { ProtocolDocumentsPanel } from './ProtocolDocumentsPanel';
 import { ProtocolWorkflowPanel } from './ProtocolWorkflowPanel';
 import { ProtocolPendingsPanel } from './ProtocolPendingsPanel';
+import { CurrentStageHighlight } from '@/components/admin/protocol/CurrentStageHighlight';
+import { WorkflowProgress } from '@/components/admin/protocol/WorkflowProgress';
+import { ChecklistTab } from '@/components/admin/protocol/ChecklistTab';
+import { ProtocolDocumentsTabEnhanced } from '@/components/admin/protocol/ProtocolDocumentsTabEnhanced';
+import { ProtocolPendingsTab } from '@/components/admin/protocol/ProtocolPendingsTab';
+import { ProtocolStagesTab } from '@/components/admin/protocol/ProtocolStagesTab';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -525,19 +531,150 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
         </DialogContent>
       </Dialog>
 
-      {/* Modal para VISUALIZAR/EDITAR Protocolo */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* Modal COMPLETO para VISUALIZAR/EDITAR Protocolo                 */}
+      {/* Com CurrentStageHighlight, WorkflowProgress, ChecklistTab, etc  */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
       {selectedProtocol && (
-        <ProtocolDetailModal
-          protocol={selectedProtocol}
-          service={service}
-          isOpen={isDetailModalOpen}
-          onClose={() => {
+        <Dialog open={isDetailModalOpen} onOpenChange={(open) => {
+          if (!open) {
             setIsDetailModalOpen(false);
             setSelectedProtocol(null);
-          }}
-          onUpdate={refetch}
-          onAssign={handleAssignProtocol}
-        />
+          }
+        }}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-2xl">
+                  Protocolo #{selectedProtocol.number}
+                </DialogTitle>
+                <Badge variant={
+                  selectedProtocol.status === 'CONCLUIDO' ? 'default' :
+                  selectedProtocol.status === 'PROGRESSO' ? 'secondary' :
+                  selectedProtocol.status === 'VINCULADO' ? 'outline' : 'destructive'
+                }>
+                  {selectedProtocol.status}
+                </Badge>
+              </div>
+            </DialogHeader>
+
+            {/* Highlight da Etapa Atual */}
+            {selectedProtocol.stages && selectedProtocol.stages.length > 0 && selectedProtocol.stages.find((s: any) => s.status === 'IN_PROGRESS') && (
+              <CurrentStageHighlight
+                protocolId={selectedProtocol.id}
+                currentStage={selectedProtocol.stages.find((s: any) => s.status === 'IN_PROGRESS')!}
+                totalStages={selectedProtocol.stages.length}
+                onNavigateToDocuments={() => {
+                  // Scroll to documents tab
+                  const tabsElement = document.querySelector('[value="documents"]');
+                  if (tabsElement) {
+                    (tabsElement as HTMLElement).click();
+                  }
+                }}
+                onNavigateToChecklist={() => {
+                  // Scroll to checklist tab
+                  const tabsElement = document.querySelector('[value="checklist"]');
+                  if (tabsElement) {
+                    (tabsElement as HTMLElement).click();
+                  }
+                }}
+              />
+            )}
+
+            {/* Barra de Progresso do Workflow */}
+            {selectedProtocol.stages && selectedProtocol.stages.length > 0 && (
+              <WorkflowProgress stages={selectedProtocol.stages || []} />
+            )}
+
+            {/* Tabs Completas */}
+            <Tabs defaultValue="checklist" className="mt-4">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="checklist">Checklist</TabsTrigger>
+                <TabsTrigger value="documents">Documentos</TabsTrigger>
+                <TabsTrigger value="pendings">Pendências</TabsTrigger>
+                <TabsTrigger value="stages">Etapas</TabsTrigger>
+                <TabsTrigger value="data">Dados</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="checklist" className="space-y-4">
+                <ChecklistTab
+                  protocolId={selectedProtocol.id}
+                  currentStage={selectedProtocol.stages?.find((s: any) => s.status === 'IN_PROGRESS') || null}
+                  onNavigateToDocuments={() => {
+                    const tabsElement = document.querySelector('[value="documents"]');
+                    if (tabsElement) {
+                      (tabsElement as HTMLElement).click();
+                    }
+                  }}
+                />
+              </TabsContent>
+
+              <TabsContent value="documents" className="space-y-4">
+                <ProtocolDocumentsTabEnhanced
+                  protocolId={selectedProtocol.id}
+                  documents={selectedProtocol.documentFiles || []}
+                  onRefresh={refetch}
+                />
+              </TabsContent>
+
+              <TabsContent value="pendings" className="space-y-4">
+                <ProtocolPendingsTab
+                  protocolId={selectedProtocol.id}
+                  pendings={selectedProtocol.pendings || []}
+                  onRefresh={refetch}
+                />
+              </TabsContent>
+
+              <TabsContent value="stages" className="space-y-4">
+                <ProtocolStagesTab
+                  protocolId={selectedProtocol.id}
+                  stages={selectedProtocol.stages || []}
+                  onRefresh={refetch}
+                />
+              </TabsContent>
+
+              <TabsContent value="data" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Dados Coletados</CardTitle>
+                    <CardDescription>
+                      Informações capturadas no formulário de solicitação
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {selectedProtocol.customData ? (
+                      <pre className="p-4 bg-muted rounded-lg overflow-auto max-h-96 text-sm">
+                        {JSON.stringify(selectedProtocol.customData, null, 2)}
+                      </pre>
+                    ) : (
+                      <p className="text-muted-foreground">Nenhum dado disponível</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+
+            {/* Botões de Ação */}
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setSelectedProtocol(null);
+                }}
+              >
+                Fechar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleAssignProtocol(selectedProtocol)}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Atribuir
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Modal para ATRIBUIR Protocolo */}

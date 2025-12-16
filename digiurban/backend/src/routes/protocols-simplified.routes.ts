@@ -274,6 +274,7 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
       serviceId,
       serviceIds,  // ✅ NOVO: suporte para múltiplos serviceIds
       assignedUserId,
+      include,     // ✅ NOVO: incluir dados adicionais (stages,documents,pendings)
       page = '1',
       limit = '50'
     } = req.query;
@@ -337,6 +338,12 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
 
+    // ✅ NOVO: Montar includes dinamicamente baseado no parâmetro 'include'
+    const includeArray = include ? (include as string).split(',').map(i => i.trim()) : [];
+    const includeStages = includeArray.includes('stages');
+    const includeDocuments = includeArray.includes('documents');
+    const includePendings = includeArray.includes('pendings');
+
     // Buscar protocolos
     const [protocols, total] = await Promise.all([
       prisma.protocolSimplified.findMany({
@@ -379,6 +386,30 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
               role: true
         }
       },
+          // ✅ INCLUIR STAGES SE SOLICITADO
+          ...(includeStages && {
+            stages: {
+              orderBy: {
+                stageOrder: 'asc'
+              }
+            }
+          }),
+          // ✅ INCLUIR DOCUMENTS SE SOLICITADO
+          ...(includeDocuments && {
+            documentFiles: {
+              orderBy: {
+                createdAt: 'desc'
+              }
+            }
+          }),
+          // ✅ INCLUIR PENDINGS SE SOLICITADO
+          ...(includePendings && {
+            pendings: {
+              orderBy: {
+                createdAt: 'desc'
+              }
+            }
+          }),
           _count: {
             select: {
               history: true

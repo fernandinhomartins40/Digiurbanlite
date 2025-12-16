@@ -17,6 +17,7 @@ export interface ServiceDefinition {
   id: string;
   name: string;
   description: string | null;
+  serviceType?: 'COM_DADOS' | 'SEM_DADOS'; // ✅ ADICIONADO: Tipo de serviço
   moduleType: string;
   icon: string | null;
   formSchema: any;

@@ -38,6 +38,7 @@ export interface ProtocolStage {
   skippedAt?: Date
   failedAt?: Date
   notes?: string
+  metadata?: any // ✅ ADICIONADO: Metadados adicionais da etapa
   createdAt: Date
   updatedAt: Date
 }

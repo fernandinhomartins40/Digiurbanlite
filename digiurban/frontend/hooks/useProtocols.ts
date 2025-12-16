@@ -22,6 +22,9 @@ export interface Protocol {
   address?: string;
   department?: string;
   documents?: any[];
+  documentFiles?: any[]; // ✅ ADICIONADO: Documentos completos
+  stages?: any[];        // ✅ ADICIONADO: Etapas do workflow
+  pendings?: any[];      // ✅ ADICIONADO: Pendências bloqueantes
   citizen?: {
     id: string;
     name: string;
@@ -58,6 +61,8 @@ export function useProtocols(serviceId?: string): UseProtocolsResult {
       // Build query params
       const params = new URLSearchParams({
         serviceId,
+        // ✅ INCLUIR DADOS COMPLETOS DO WORKFLOW
+        include: 'stages,documents,pendings',
         ...filters
       });
 
