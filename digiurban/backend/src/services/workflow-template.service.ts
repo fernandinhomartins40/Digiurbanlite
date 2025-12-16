@@ -65,22 +65,12 @@ export function generateDefaultWorkflow(
   const requiredFieldIds = formFields.filter(f => f.required).map(f => f.id);
   const allFieldIds = formFields.map(f => f.id);
 
+  // ✅ REMOVIDA ETAPA "NOVO" - Protocolo já nasce novo!
   const stages: Omit<WorkflowStage, 'id'>[] = [
-    {
-      name: 'Novo',
-      description: 'Protocolo criado, aguardando análise inicial',
-      order: 1,
-      slaDays: 1,
-      requiredDocumentTypes: [],           // Nenhum doc obrigatório ainda
-      requiredFormFieldIds: [],            // Nenhum campo obrigatório ainda
-      allowedActions: ['APPROVE'],
-      canSkip: false,
-      requiresApproval: false
-    },
     {
       name: 'Análise Documental',
       description: 'Verificação de documentos de identificação e comprovação',
-      order: 2,
+      order: 1,
       slaDays: analysisTime,
       requiredDocumentTypes: [...identityDocs, ...addressDocs], // Docs de identidade
       requiredFormFieldIds: requiredFieldIds, // Campos obrigatórios do form
@@ -95,7 +85,7 @@ export function generateDefaultWorkflow(
     stages.push({
       name: 'Análise Técnica',
       description: 'Verificação de documentação específica e técnica',
-      order: 3,
+      order: 2,
       slaDays: reviewTime,
       requiredDocumentTypes: otherDocs,    // Documentos específicos
       requiredFormFieldIds: allFieldIds,   // Todos os campos preenchidos
@@ -107,7 +97,7 @@ export function generateDefaultWorkflow(
     stages.push({
       name: 'Aprovação Final',
       description: 'Aprovação final e conclusão do processo',
-      order: 4,
+      order: 3,
       slaDays: approvalTime,
       requiredDocumentTypes: requiredDocuments.map(d => d.type), // TODOS os docs
       requiredFormFieldIds: allFieldIds,   // TODOS os campos
@@ -119,7 +109,7 @@ export function generateDefaultWorkflow(
     stages.push({
       name: 'Concluído',
       description: 'Processo concluído com sucesso',
-      order: 5,
+      order: 4,
       slaDays: 1,
       requiredDocumentTypes: [],
       requiredFormFieldIds: [],
@@ -132,7 +122,7 @@ export function generateDefaultWorkflow(
     stages.push({
       name: 'Aprovação',
       description: 'Aprovação e conclusão do processo',
-      order: 3,
+      order: 2,
       slaDays: approvalTime,
       requiredDocumentTypes: requiredDocuments.map(d => d.type),
       requiredFormFieldIds: allFieldIds,
@@ -144,7 +134,7 @@ export function generateDefaultWorkflow(
     stages.push({
       name: 'Concluído',
       description: 'Processo concluído com sucesso',
-      order: 4,
+      order: 3,
       slaDays: 1,
       requiredDocumentTypes: [],
       requiredFormFieldIds: [],
