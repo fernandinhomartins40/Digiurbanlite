@@ -37,34 +37,56 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
     }
   }
 
-  const handleResolvePending = async (pendingId: string, resolution: string) => {
+  const handleResolvePending = async (pendingId: string, resolution: string, file?: File) => {
     try {
-      const response = await apiRequest(
-        `/citizen/protocols/${protocolId}/pendings/${pendingId}/resolve`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resolution }),
-        }
-      )
+      if (file) {
+        // Resolver com documento (upload)
+        const formData = new FormData()
+        formData.append('document', file)
 
-      if (response.success) {
-        toast.success('Resolução enviada com sucesso!')
-        // Recarregar pendências
-        await loadPendings()
+        const response = await apiRequest(
+          `/citizen/protocols/${protocolId}/pendings/${pendingId}/resolve-with-document`,
+          {
+            method: 'PATCH',
+            body: formData,
+            // Não adicionar Content-Type - o browser define automaticamente com boundary
+          }
+        )
+
+        if (response.success) {
+          toast.success('Documento enviado com sucesso!')
+          await loadPendings()
+        } else {
+          throw new Error(response.error || 'Erro ao enviar documento')
+        }
       } else {
-        throw new Error(response.error || 'Erro ao enviar resolução')
+        // Resolver com texto ou campos dinâmicos
+        const response = await apiRequest(
+          `/citizen/protocols/${protocolId}/pendings/${pendingId}/resolve`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolution }),
+          }
+        )
+
+        if (response.success) {
+          toast.success('Resolução enviada com sucesso!')
+          await loadPendings()
+        } else {
+          throw new Error(response.error || 'Erro ao enviar resolução')
+        }
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao enviar resolução'
+      const message = error instanceof Error ? error.message : 'Erro ao resolver pendência'
       toast.error(message)
       throw error
     }
   }
 
-  const pendingPendings = pendings.filter(p => p.status === 'PENDING')
+  const pendingPendings = pendings.filter(p => p.status === 'PENDING' || p.status === 'OPEN' || p.status === 'IN_PROGRESS')
   const resolvedPendings = pendings.filter(p => p.status === 'RESOLVED')
-  const cancelledPendings = pendings.filter(p => p.status === 'CANCELLED')
+  const cancelledPendings = pendings.filter(p => p.status === 'CANCELLED' || p.status === 'EXPIRED')
 
   if (isLoading) {
     return (
@@ -125,7 +147,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
               <CitizenPendingCard
                 key={pending.id}
                 pending={pending}
-                onResolve={(resolution) => handleResolvePending(pending.id, resolution)}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
               />
             ))
           )}
@@ -144,7 +166,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
               <CitizenPendingCard
                 key={pending.id}
                 pending={pending}
-                onResolve={(resolution) => handleResolvePending(pending.id, resolution)}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
               />
             ))
           )}
@@ -162,7 +184,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
               <CitizenPendingCard
                 key={pending.id}
                 pending={pending}
-                onResolve={(resolution) => handleResolvePending(pending.id, resolution)}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
               />
             ))
           )}
@@ -180,7 +202,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
               <CitizenPendingCard
                 key={pending.id}
                 pending={pending}
-                onResolve={(resolution) => handleResolvePending(pending.id, resolution)}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
               />
             ))
           )}

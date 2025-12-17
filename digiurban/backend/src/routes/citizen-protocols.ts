@@ -929,7 +929,7 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
         authorType: 'CITIZEN',
         authorId: citizenId,
         authorName: citizenName || 'Cidadão',
-        message: `Pendência resolvida: ${pending.description}\n\nResolução: ${resolution.trim()}`,
+        message: `Pendência resolvida: ${pending.title || pending.description}\n\nResolução: ${resolution.trim()}`,
         isInternal: false,
         isRead: false
       }
@@ -944,6 +944,135 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Erro ao resolver pendência'
+    });
+  }
+});
+
+/**
+ * PATCH /api/citizen/protocols/:id/pendings/:pendingId/resolve-with-document
+ * Resolver uma pendência enviando um documento
+ */
+router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('document'), async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const citizenName = (req as any).citizen?.name;
+    const { id: protocolId, pendingId } = req.params;
+    const file = req.file;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    if (!file) {
+      return res.status(400).json({ error: 'Documento é obrigatório' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Verificar se a pendência existe e pertence ao protocolo
+    const pending = await prisma.protocolPending.findFirst({
+      where: {
+        id: pendingId,
+        protocolId
+      }
+    });
+
+    if (!pending) {
+      return res.status(404).json({
+        success: false,
+        error: 'Pendência não encontrada'
+      });
+    }
+
+    if (pending.status !== 'OPEN') {
+      return res.status(400).json({
+        success: false,
+        error: 'Pendência já foi resolvida ou cancelada'
+      });
+    }
+
+    // Verificar se a pendência é do tipo DOCUMENT
+    if (pending.type !== 'DOCUMENT') {
+      return res.status(400).json({
+        success: false,
+        error: 'Esta pendência não é do tipo documento'
+      });
+    }
+
+    // Criar documento no protocolo
+    const metadata = pending.metadata as any;
+    const documentType = metadata?.documentType || pending.title || 'DOCUMENTO_PENDENCIA';
+
+    const uploadedDoc = await prisma.protocolDocument.create({
+      data: {
+        protocolId,
+        documentType,
+        isRequired: true,
+        status: DocumentStatus.UPLOADED,
+        fileName: file.originalname,
+        fileUrl: getFileUrl(file.filename),
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        uploadedAt: new Date(),
+        uploadedBy: citizenId
+      }
+    });
+
+    // Atualizar pendência como resolvida
+    const newMetadata = typeof pending.metadata === 'object' && pending.metadata !== null
+      ? { ...(pending.metadata as object), uploadedDocumentId: uploadedDoc.id }
+      : { uploadedDocumentId: uploadedDoc.id };
+
+    const updatedPending = await prisma.protocolPending.update({
+      where: { id: pendingId },
+      data: {
+        status: 'RESOLVED',
+        resolution: `Documento enviado: ${file.originalname}`,
+        resolvedAt: new Date(),
+        resolvedBy: citizenId,
+        metadata: newMetadata
+      }
+    });
+
+    // Criar interação informando o envio do documento
+    await prisma.protocolInteraction.create({
+      data: {
+        protocolId,
+        type: 'DOCUMENT_UPLOAD',
+        authorType: 'CITIZEN',
+        authorId: citizenId,
+        authorName: citizenName || 'Cidadão',
+        message: `Documento enviado para resolver pendência: ${pending.title}\n\nArquivo: ${file.originalname}`,
+        isInternal: false,
+        isRead: false
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        pending: updatedPending,
+        document: uploadedDoc
+      }
+    });
+  } catch (error: any) {
+    console.error('Error resolving pending with document:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao enviar documento'
     });
   }
 });

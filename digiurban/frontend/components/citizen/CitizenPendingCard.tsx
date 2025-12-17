@@ -5,46 +5,84 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { AlertCircle, FileText, Info, Calendar, Send, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { DocumentUploadField } from '@/components/ui/document-upload-field'
+import { DocumentType } from '@/components/ui/camera-capture'
 
 export interface ProtocolPending {
   id: string
   protocolId: string
   pendingType: string
+  type: string // tipo do enum PendingType do backend
+  title: string
   description: string
-  status: 'PENDING' | 'RESOLVED' | 'CANCELLED'
+  status: 'PENDING' | 'RESOLVED' | 'CANCELLED' | 'OPEN' | 'IN_PROGRESS' | 'EXPIRED'
   priority: number
   dueDate?: string
   createdAt: string
   resolvedAt?: string
   resolution?: string
   metadata?: any
+  blocksProgress?: boolean
 }
 
 interface CitizenPendingCardProps {
   pending: ProtocolPending
-  onResolve: (resolution: string) => Promise<void>
+  onResolve: (resolution: string, file?: File) => Promise<void>
+  onResolveWithDocument?: (file: File) => Promise<void>
   isResolving?: boolean
 }
 
-export function CitizenPendingCard({ pending, onResolve, isResolving = false }: CitizenPendingCardProps) {
+export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, isResolving = false }: CitizenPendingCardProps) {
   const [resolution, setResolution] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, any>>({})
+
+  // Detectar tipo de pendência
+  const pendingType = pending.type || pending.pendingType || 'OTHER'
+  const isDocumentType = pendingType === 'DOCUMENT'
+  const isInformationType = ['INFORMATION', 'CORRECTION', 'VALIDATION'].includes(pendingType)
 
   const handleSubmit = async () => {
-    if (!resolution.trim()) return
-
     try {
       setIsSubmitting(true)
-      await onResolve(resolution)
-      setResolution('')
+
+      if (isDocumentType && uploadedFile) {
+        // Resolver com documento
+        if (onResolveWithDocument) {
+          await onResolveWithDocument(uploadedFile)
+        } else {
+          await onResolve(`Documento enviado: ${uploadedFile.name}`, uploadedFile)
+        }
+        setUploadedFile(null)
+      } else if (isInformationType && Object.keys(dynamicFieldValues).length > 0) {
+        // Resolver com campos dinâmicos
+        const fieldsResolution = JSON.stringify(dynamicFieldValues, null, 2)
+        await onResolve(fieldsResolution)
+        setDynamicFieldValues({})
+      } else {
+        // Resolver com texto
+        if (!resolution.trim()) return
+        await onResolve(resolution)
+        setResolution('')
+      }
     } catch (error) {
       console.error('Erro ao resolver pendência:', error)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleDynamicFieldChange = (fieldId: string, value: any) => {
+    setDynamicFieldValues(prev => ({
+      ...prev,
+      [fieldId]: value
+    }))
   }
 
   const getPriorityBadge = (priority: number) => {
@@ -99,7 +137,7 @@ export function CitizenPendingCard({ pending, onResolve, isResolving = false }: 
     }
   }
 
-  const isPending = pending.status === 'PENDING'
+  const isPending = pending.status === 'PENDING' || pending.status === 'OPEN' || pending.status === 'IN_PROGRESS'
   const isOverdue = pending.dueDate && new Date(pending.dueDate) < new Date()
 
   return (
@@ -170,35 +208,130 @@ export function CitizenPendingCard({ pending, onResolve, isResolving = false }: 
         {/* Formulário de Resolução (apenas se pendente) */}
         {isPending && (
           <div className="space-y-3 pt-2 border-t">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Enviar resposta ou documento para resolver esta pendência:
-              </label>
-              <Textarea
-                placeholder="Descreva como você resolveu esta pendência ou forneça as informações solicitadas..."
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
-                rows={4}
-                className="resize-none"
-              />
-            </div>
-            <Button
-              onClick={handleSubmit}
-              disabled={!resolution.trim() || isSubmitting || isResolving}
-              className="w-full"
-            >
-              {isSubmitting || isResolving ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" />
-                  Enviar Resolução
-                </>
-              )}
-            </Button>
+            {/* TIPO 1: Upload de Documento */}
+            {isDocumentType ? (
+              <>
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  Enviar documento para resolver esta pendência:
+                </div>
+                <DocumentUploadField
+                  id={`doc-${pending.id}`}
+                  label="Documento Solicitado"
+                  description={pending.description}
+                  required
+                  documentType={(pending.metadata?.documentType as DocumentType) || 'documento_generico'}
+                  value={uploadedFile}
+                  onChange={setUploadedFile}
+                  maxSizeMB={10}
+                />
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!uploadedFile || isSubmitting || isResolving}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isSubmitting || isResolving ? (
+                    <>
+                      <Clock className="h-5 w-5 mr-2 animate-spin" />
+                      Enviando documento...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5 mr-2" />
+                      Enviar Documento
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : isInformationType && pending.metadata?.fields ? (
+              /* TIPO 2: Campos Dinâmicos */
+              <>
+                <div className="text-sm font-medium text-gray-700 mb-3">
+                  Preencha as informações solicitadas:
+                </div>
+                <div className="space-y-4">
+                  {pending.metadata.fields.map((field: any) => (
+                    <div key={field.id} className="space-y-2">
+                      <Label htmlFor={field.id}>
+                        {field.label}
+                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                      </Label>
+                      {field.type === 'textarea' ? (
+                        <Textarea
+                          id={field.id}
+                          placeholder={field.placeholder || ''}
+                          value={dynamicFieldValues[field.id] || ''}
+                          onChange={(e) => handleDynamicFieldChange(field.id, e.target.value)}
+                          rows={3}
+                        />
+                      ) : (
+                        <Input
+                          id={field.id}
+                          type={field.type || 'text'}
+                          placeholder={field.placeholder || ''}
+                          value={dynamicFieldValues[field.id] || ''}
+                          onChange={(e) => handleDynamicFieldChange(field.id, e.target.value)}
+                        />
+                      )}
+                      {field.description && (
+                        <p className="text-xs text-gray-500">{field.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={Object.keys(dynamicFieldValues).length === 0 || isSubmitting || isResolving}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isSubmitting || isResolving ? (
+                    <>
+                      <Clock className="h-5 w-5 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5 mr-2" />
+                      Enviar Informações
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              /* TIPO 3: Texto Livre (padrão) */
+              <>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Enviar resposta para resolver esta pendência:
+                  </label>
+                  <Textarea
+                    placeholder="Descreva como você resolveu esta pendência ou forneça as informações solicitadas..."
+                    value={resolution}
+                    onChange={(e) => setResolution(e.target.value)}
+                    rows={4}
+                    className="resize-none"
+                  />
+                </div>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!resolution.trim() || isSubmitting || isResolving}
+                  className="w-full"
+                >
+                  {isSubmitting || isResolving ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Enviar Resolução
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
             <p className="text-xs text-gray-500 text-center">
               Após enviar, a equipe responsável irá analisar sua resposta
             </p>
