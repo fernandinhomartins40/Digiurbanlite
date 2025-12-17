@@ -18,6 +18,17 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { completeStage } from '@/services/protocol-stages.service'
 import { useToast } from '@/hooks/use-toast'
 
+interface ProtocolPending {
+  id: string
+  title: string
+  description: string
+  status: string
+  blocksProgress: boolean
+  dueDate?: string
+  pendingType: string
+  metadata?: any
+}
+
 interface CurrentStageHighlightProps {
   protocolId: string
   currentStage: {
@@ -28,6 +39,7 @@ interface CurrentStageHighlightProps {
     metadata?: any
   }
   totalStages: number
+  pendings?: ProtocolPending[]
   onNavigateToDocuments: () => void
   onNavigateToChecklist: () => void
 }
@@ -44,6 +56,7 @@ export function CurrentStageHighlight({
   protocolId,
   currentStage,
   totalStages,
+  pendings = [],
   onNavigateToDocuments,
   onNavigateToChecklist
 }: CurrentStageHighlightProps) {
@@ -101,10 +114,17 @@ export function CurrentStageHighlight({
     }
   }
 
+  // Filtrar pendências bloqueantes ativas
+  const blockingPendings = pendings.filter(p =>
+    p.status === 'OPEN' &&
+    p.blocksProgress === true
+  )
+
   const hasPendings = validation && (
     validation.missingDocuments.length > 0 ||
     validation.missingFormFields.length > 0 ||
-    validation.blockers.length > 0
+    validation.blockers.length > 0 ||
+    blockingPendings.length > 0
   )
 
   return (
@@ -215,6 +235,54 @@ export function CurrentStageHighlight({
                             onClick={onNavigateToChecklist}
                           >
                             Ver Checklist <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pendências Bloqueantes Ativas */}
+                  {blockingPendings.length > 0 && (
+                    <div className="p-3 bg-white rounded border-2 border-red-300">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-5 w-5 text-red-700 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-semibold text-sm text-red-900 mb-2">
+                            🚨 {blockingPendings.length} pendência(s) bloqueante(s) ativa(s):
+                          </p>
+                          <div className="space-y-2">
+                            {blockingPendings.map((pending) => (
+                              <div key={pending.id} className="p-2 bg-red-50 rounded border border-red-200">
+                                <p className="text-sm font-semibold text-red-900">
+                                  {pending.title}
+                                </p>
+                                {pending.description && (
+                                  <p className="text-xs text-red-800 mt-1">
+                                    {pending.description}
+                                  </p>
+                                )}
+                                {pending.dueDate && (
+                                  <p className="text-xs text-red-700 mt-1 font-medium">
+                                    ⏰ Prazo: {new Date(pending.dueDate).toLocaleDateString('pt-BR')}
+                                  </p>
+                                )}
+                                <div className="mt-1">
+                                  <Badge variant="outline" className="text-xs bg-purple-100 text-purple-800 border-purple-300">
+                                    {pending.pendingType === 'DOCUMENT' ? '📄 Documento' :
+                                     pending.pendingType === 'INFORMATION' ? '📝 Informação' :
+                                     pending.pendingType === 'CORRECTION' ? '✏️ Correção' : '✓ Validação'}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto mt-3 text-blue-600 font-semibold"
+                            onClick={onNavigateToChecklist}
+                          >
+                            → Ir para Checklist e Resolver Pendências
                           </Button>
                         </div>
                       </div>

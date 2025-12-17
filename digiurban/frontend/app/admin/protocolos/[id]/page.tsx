@@ -221,6 +221,7 @@ export default function ProtocolDetailPage() {
             protocolId={protocolId}
             currentStage={stages.find(s => s.status === StageStatus.IN_PROGRESS)!}
             totalStages={stages.length}
+            pendings={pendings}
             onNavigateToDocuments={() => setActiveTab('documents')}
             onNavigateToChecklist={() => setActiveTab('checklist')}
           />
