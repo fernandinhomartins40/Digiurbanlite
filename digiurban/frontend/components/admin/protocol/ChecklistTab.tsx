@@ -937,10 +937,11 @@ export function ChecklistTab({
                           size="sm"
                           variant={isMissing || isRejected ? 'default' : 'outline'}
                           onClick={() => handleOpenPendingModal('document', docType)}
+                          disabled={isApproved}
                           className="w-full"
                         >
                           <AlertCircle className="h-4 w-4 mr-1" />
-                          Pendência
+                          {isApproved ? 'Aprovado ✓' : 'Criar Pendência'}
                         </Button>
                       </div>
                     </div>
@@ -1078,9 +1079,10 @@ export function ChecklistTab({
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenPendingModal('field', fieldId)}
+                        disabled={isFilled}
                       >
                         <AlertCircle className="h-4 w-4 mr-1" />
-                        Pendência
+                        {isFilled ? 'Preenchido ✓' : 'Criar Pendência'}
                       </Button>
                     </div>
                   </div>
