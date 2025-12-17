@@ -218,16 +218,18 @@ export default function SecretariaObrasPublicasPage() {
         </CardContent>
       </Card>
 
-      {/* SEÇÃO 1: MÓDULOS DE GESTÃO DE DADOS (COM_DADOS) */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* SEÇÃO 1: MÓDULOS DE GESTÃO DE DADOS (COM_DADOS)                */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
       <div>
-        <div className="mb-6 flex items-center gap-3">
-          <FileBarChart className="h-7 w-7 text-blue-600" />
-          <div>
-            <h2 className="text-2xl font-semibold">Módulos de Gestão de Dados</h2>
-            <p className="text-sm text-muted-foreground">
-              Serviços COM_DADOS com formulários dinâmicos e gestão completa de protocolos
-            </p>
-          </div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
+            <FileBarChart className="h-6 w-6 text-blue-600" />
+            Módulos de Gestão de Dados
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Painéis completos com checklist, timeline e dados estruturados. Cada módulo é criado automaticamente quando você configura um serviço COM_DADOS.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -293,12 +295,12 @@ export default function SecretariaObrasPublicasPage() {
               );
             })
           ) : (
-            <Card className="col-span-full border-dashed border-2 border-blue-200 bg-blue-50/30">
+            <Card className="col-span-full border-blue-200 bg-blue-50">
               <CardContent className="flex flex-col items-center justify-center p-12 text-center">
                 <FileText className="h-16 w-16 text-blue-400 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Nenhum módulo COM_DADOS cadastrado</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Crie serviços COM_DADOS com moduleType para que apareçam automaticamente aqui
+                  Módulos são criados automaticamente quando você configura serviços COM_DADOS com moduleType único.
                 </p>
                 <Button
                   onClick={() => router.push('/admin/servicos/novo?departmentCode=obras-publicas&serviceType=COM_DADOS')}
@@ -313,29 +315,31 @@ export default function SecretariaObrasPublicasPage() {
         </div>
       </div>
 
-      {/* SEÇÃO 2: SERVIÇOS GERAIS (SEM_DADOS) - PAINEL ÚNICO */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* SEÇÃO 2: SERVIÇOS GERAIS (SEM_DADOS) - PAINEL ÚNICO            */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
       <div>
-        <div className="mb-6 flex items-center gap-3">
-          <FileBarChart className="h-7 w-7 text-green-600" />
-          <div>
-            <h2 className="text-2xl font-semibold">Serviços Gerais - Painel Consolidado</h2>
-            <p className="text-sm text-muted-foreground">
-              Todos os serviços SEM_DADOS gerenciados em um único painel agregado
-            </p>
-          </div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
+            <FileText className="h-6 w-6 text-green-600" />
+            Serviços Gerais (Certidões e Documentos)
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Painel consolidado para gerenciar todos os serviços SEM_DADOS (certidões, declarações e documentos oficiais)
+          </p>
         </div>
 
         {servicesLoading ? (
-          <Card>
+          <Card className="col-span-full">
             <CardHeader>
-              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-6 w-64" />
               <Skeleton className="h-4 w-full mt-2" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-20 w-full" />
             </CardContent>
           </Card>
-        ) : (
+        ) : services.filter((s: any) => s.serviceType === 'SEM_DADOS').length > 0 ? (
           <Card
             className="hover:shadow-xl transition-all cursor-pointer border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 group"
             onClick={() => router.push('/admin/secretarias/obras-publicas/servicos-gerais')}
@@ -392,6 +396,7 @@ export default function SecretariaObrasPublicasPage() {
                     <div className="text-xs text-muted-foreground">Pendentes</div>
                   </div>
                 </div>
+
                 <Button className="w-full bg-green-600 hover:bg-green-700 text-white group-hover:shadow-lg transition-all" size="lg">
                   <FileBarChart className="h-5 w-5 mr-2" />
                   Abrir Painel Consolidado →
@@ -399,42 +404,31 @@ export default function SecretariaObrasPublicasPage() {
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {!servicesLoading && services.filter((s: any) => s.serviceType === 'SEM_DADOS').length === 0 && (
+        ) : (
           <Card className="border-green-200 bg-green-50">
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
               <FileText className="h-16 w-16 text-green-400 mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhum serviço SEM_DADOS cadastrado</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Execute o seed do banco de dados para carregar os serviços gerais
+                Serviços SEM_DADOS são ideais para certidões, declarações e documentos que não requerem formulários complexos.
               </p>
               <Button
                 onClick={() => router.push('/admin/servicos/novo?departmentCode=obras-publicas&serviceType=SEM_DADOS')}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-green-600 hover:bg-green-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Criar Novo Serviço Personalizado
+                Criar Primeiro Serviço SEM_DADOS
               </Button>
             </CardContent>
           </Card>
         )}
       </div>
 
-      {/*
-        ============================================================
-        SEÇÕES REMOVIDAS (Consolidadas acima):
-        ============================================================
-        - "Serviços de Certidões, Declarações e Documentos"
-          → Agora: SEÇÃO 2 - Painel Agregado SEM_DADOS
-
-        - "Serviços COM_DADOS - Com formulários e dados estruturados"
-          → Agora: Incluído na SEÇÃO 1 - Módulos de Gestão de Dados
-
-        - "Serviços Disponíveis" (listagem geral)
-          → Agora: Distribuído entre SEÇÃO 1 (COM_DADOS) e SEÇÃO 2 (SEM_DADOS)
-        ============================================================
-      */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* SEÇÕES DUPLICADAS REMOVIDAS - Agora temos apenas 2 seções:     */}
+      {/* 1. Módulos COM_DADOS (acima) - painéis individuais             */}
+      {/* 2. Serviços Gerais SEM_DADOS (acima) - painel agregado         */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>
