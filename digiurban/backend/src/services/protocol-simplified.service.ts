@@ -125,10 +125,28 @@ export class ProtocolServiceSimplified {
         addressToGeocode = data.address
         geocodingData.locationType = 'CITIZEN_ADDRESS'
       } else if (citizen?.address) {
-        // citizen.address é Json, então precisamos fazer cast para string
-        const citizenAddress = typeof citizen.address === 'string'
-          ? citizen.address
-          : JSON.stringify(citizen.address)
+        // citizen.address é Json, então precisamos formatar corretamente
+        let citizenAddress: string
+
+        if (typeof citizen.address === 'string') {
+          citizenAddress = citizen.address
+        } else if (typeof citizen.address === 'object' && citizen.address !== null) {
+          // Formatar objeto de endereço em string legível
+          const addr = citizen.address as any
+          const parts = [
+            addr.logradouro,
+            addr.numero,
+            addr.complemento,
+            addr.bairro,
+            addr.cidade,
+            addr.uf,
+            addr.cep
+          ].filter(Boolean)
+          citizenAddress = parts.join(', ')
+        } else {
+          citizenAddress = JSON.stringify(citizen.address)
+        }
+
         addressToGeocode = citizenAddress
         geocodingData.locationType = 'CITIZEN_ADDRESS'
         geocodingData.address = citizenAddress
