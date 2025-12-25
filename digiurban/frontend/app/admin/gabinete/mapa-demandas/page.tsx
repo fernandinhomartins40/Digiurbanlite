@@ -7,9 +7,9 @@ import { mapaDemandasService } from '@/lib/services/gabinete.service'
 import { useToast } from '@/hooks/use-toast'
 
 // Lazy load do mapa para evitar SSR
-const ProtocolMap = lazy(() =>
-  import('@/components/admin/gabinete/ProtocolMap').then(module => ({
-    default: module.ProtocolMap
+const ProtocolMapEnhanced = lazy(() =>
+  import('@/components/admin/gabinete/ProtocolMapEnhanced').then(module => ({
+    default: module.ProtocolMapEnhanced
   }))
 )
 
@@ -102,7 +102,12 @@ export default function MapaDemandasPage() {
               </div>
             }
           >
-            <ProtocolMap protocols={protocols} />
+            <ProtocolMapEnhanced
+              protocols={protocols}
+              showClustering={true}
+              showHeatmap={false}
+              height="500px"
+            />
           </Suspense>
         </CardContent>
       </Card>

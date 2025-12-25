@@ -10,6 +10,7 @@ import { prisma } from '../lib/prisma'
 import { generateProtocolNumberSafe } from './protocol-number.service'
 import { protocolStatusEngine } from './protocol-status.engine'
 import { ActorRole } from '../types/protocol-status.types'
+import { GeocodingService } from './geocoding.service'
 
 // ========================================
 // TYPES & INTERFACES
@@ -30,6 +31,8 @@ export interface CreateProtocolInput {
   latitude?: number
   longitude?: number
   address?: string
+  specificLocation?: string // Endereço específico (diferente do endereço do cidadão)
+  locationType?: 'CITIZEN_ADDRESS' | 'SPECIFIC_LOCATION' | 'MANUAL_PIN' | 'GPS'
 
   // Documentos
   documents?: any
@@ -71,12 +74,13 @@ export class ProtocolServiceSimplified {
    * Fluxo:
    * 1. Busca informações do serviço
    * 2. Determina se é INFORMATIVO ou COM_DADOS
-   * 3. Cria o protocolo com dados apropriados
-   * 4. Se COM_DADOS, vincula ao módulo via moduleType
-   * 5. Cria entrada no histórico
+   * 3. Geocodifica endereço automaticamente (se disponível)
+   * 4. Cria o protocolo com dados apropriados
+   * 5. Se COM_DADOS, vincula ao módulo via moduleType
+   * 6. Cria entrada no histórico
    */
   async createProtocol(data: CreateProtocolInput) {
-    const { citizenId, serviceId, formData, ...rest } = data
+    const { citizenId, serviceId, formData, specificLocation, locationType, ...rest } = data
 
     // 1. Buscar serviço para determinar tipo
     const service = await prisma.serviceSimplified.findUnique({
@@ -88,10 +92,74 @@ export class ProtocolServiceSimplified {
       throw new Error('Serviço não encontrado')
     }
 
-    // 2. Gerar número do protocolo
+    // 2. Buscar cidadão para obter endereço (se necessário)
+    const citizen = await prisma.citizen.findUnique({
+      where: { id: citizenId },
+      select: { address: true }
+    })
+
+    // 3. Geocodificação automática
+    let geocodingData: any = {
+      latitude: data.latitude,
+      longitude: data.longitude,
+      address: data.address,
+      specificLocation,
+      locationType: locationType || 'CITIZEN_ADDRESS',
+      geocodingProvider: null
+    }
+
+    // Se já tem coordenadas manuais, marcar como MANUAL_PIN
+    if (data.latitude && data.longitude && !locationType) {
+      geocodingData.locationType = 'MANUAL_PIN'
+      geocodingData.geocodingProvider = 'manual'
+    }
+    // Se não tem coordenadas, tentar geocodificar
+    else if (!data.latitude || !data.longitude) {
+      // Determinar endereço a geocodificar (prioridade)
+      let addressToGeocode: string | null = null
+
+      if (specificLocation) {
+        addressToGeocode = specificLocation
+        geocodingData.locationType = 'SPECIFIC_LOCATION'
+      } else if (data.address) {
+        addressToGeocode = data.address
+        geocodingData.locationType = 'CITIZEN_ADDRESS'
+      } else if (citizen?.address) {
+        // citizen.address é Json, então precisamos fazer cast para string
+        const citizenAddress = typeof citizen.address === 'string'
+          ? citizen.address
+          : JSON.stringify(citizen.address)
+        addressToGeocode = citizenAddress
+        geocodingData.locationType = 'CITIZEN_ADDRESS'
+        geocodingData.address = citizenAddress
+      }
+
+      // Geocodificar se temos endereço
+      if (addressToGeocode) {
+        try {
+          console.log(`🌍 Geocodificando protocolo: ${addressToGeocode}`)
+          const geoResult = await GeocodingService.geocodeAddress(addressToGeocode)
+
+          if (geoResult && GeocodingService.isValidBrazilCoordinates(geoResult.latitude, geoResult.longitude)) {
+            geocodingData.latitude = geoResult.latitude
+            geocodingData.longitude = geoResult.longitude
+            geocodingData.geocodingProvider = geoResult.provider
+            geocodingData.address = geoResult.formattedAddress || addressToGeocode
+            console.log(`✅ Protocolo geocodificado: ${geoResult.latitude}, ${geoResult.longitude}`)
+          } else {
+            console.log(`⚠️ Não foi possível geocodificar o endereço`)
+          }
+        } catch (error) {
+          console.error('❌ Erro ao geocodificar protocolo:', error)
+          // Continuar criação mesmo se geocodificação falhar
+        }
+      }
+    }
+
+    // 4. Gerar número do protocolo
     const protocolNumber = await generateProtocolNumberSafe()
 
-    // 3. Criar protocolo
+    // 5. Criar protocolo
     const protocol = await prisma.protocolSimplified.create({
       data: {
         ...rest,
@@ -100,6 +168,14 @@ export class ProtocolServiceSimplified {
         serviceId,
         departmentId: service.departmentId,
         status: 'VINCULADO',
+
+        // Geolocalização
+        latitude: geocodingData.latitude,
+        longitude: geocodingData.longitude,
+        address: geocodingData.address,
+        specificLocation: geocodingData.specificLocation,
+        locationType: geocodingData.locationType,
+        geocodingProvider: geocodingData.geocodingProvider,
 
         // Se serviço COM_DADOS, adicionar dados e moduleType
         ...(service.serviceType === 'COM_DADOS' && {
@@ -114,12 +190,12 @@ export class ProtocolServiceSimplified {
       }
       })
 
-    // 4. Se COM_DADOS, módulo já está vinculado via moduleType
+    // 6. Se COM_DADOS, módulo já está vinculado via moduleType
     if (service.serviceType === 'COM_DADOS' && service.moduleType) {
       console.log(`✓ Protocolo ${protocol.number} vinculado ao módulo: ${service.moduleType}`)
     }
 
-    // 5. Criar histórico
+    // 7. Criar histórico
     await prisma.protocolHistorySimplified.create({
       data: {
         protocolId: protocol.id,

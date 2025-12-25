@@ -316,6 +316,11 @@ model ServiceSimplified {
   icon              String?
   color             String?
 
+  // Configuração de geolocalização
+  requiresSpecificLocation Boolean @default(false) // Se true, requer localização específica (não usa endereço do cidadão)
+  locationLabel            String? // Label personalizado para o campo (ex: "Local do buraco", "Endereço da ocorrência")
+  enableMapSelection       Boolean @default(false) // Permite marcar localização no mapa
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -344,9 +349,12 @@ model ProtocolSimplified {
   moduleType String? // Para roteamento
 
   // Geolocalização
-  latitude  Float?
-  longitude Float?
-  address   String?
+  latitude         Float?
+  longitude        Float?
+  address          String?
+  locationType     String? // 'CITIZEN_ADDRESS', 'SPECIFIC_LOCATION', 'MANUAL_PIN', 'GPS'
+  geocodingProvider String? // 'nominatim', 'geoapify', 'manual'
+  specificLocation String? // Endereço específico informado (diferente do endereço do cidadão)
 
   // Gestão
   assignedUserId String?
