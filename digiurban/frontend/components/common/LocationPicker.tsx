@@ -27,6 +27,57 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
     setHasLocation(!!value);
   }, [value]);
 
+  /**
+   * Geocodificação reversa automática usando BigDataCloud (gratuito, sem API key)
+   * Fallback para Nominatim se BigDataCloud falhar
+   */
+  const reverseGeocode = async (lat: number, lng: number): Promise<string | undefined> => {
+    try {
+      // Opção 1: BigDataCloud - Gratuito, sem API key, ilimitado
+      const bdcResponse = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=pt`
+      );
+
+      if (bdcResponse.ok) {
+        const data = await bdcResponse.json();
+
+        // Montar endereço formatado
+        const parts = [
+          data.locality || data.city,
+          data.principalSubdivision,
+          data.countryName
+        ].filter(Boolean);
+
+        if (parts.length > 0) {
+          return parts.join(', ');
+        }
+      }
+    } catch (error) {
+      console.warn('BigDataCloud falhou, tentando Nominatim:', error);
+    }
+
+    try {
+      // Fallback: Nominatim (OpenStreetMap)
+      const nominatimResponse = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        {
+          headers: {
+            'User-Agent': 'DigiUrban/1.0'
+          }
+        }
+      );
+
+      if (nominatimResponse.ok) {
+        const data = await nominatimResponse.json();
+        return data.display_name;
+      }
+    } catch (error) {
+      console.warn('Nominatim falhou:', error);
+    }
+
+    return undefined;
+  };
+
   const handleGetLocation = async () => {
     if (!navigator.geolocation) {
       toast.error('Seu navegador não suporta geolocalização');
@@ -39,17 +90,27 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        // Geocodificação reversa automática
+        const address = await reverseGeocode(lat, lng);
+
         const location: LocationData = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude: lat,
+          longitude: lng,
+          address
         };
 
-        // TODO: Futuramente integrar com API de geocodificação reversa
-        // para obter endereço a partir das coordenadas
         onChange(location);
         setHasLocation(true);
         setLoading(false);
-        toast.success('Localização capturada com sucesso!');
+
+        if (address) {
+          toast.success(`Localização capturada: ${address}`);
+        } else {
+          toast.success('Localização capturada com sucesso!');
+        }
       },
       (error) => {
         setLoading(false);
@@ -138,15 +199,20 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
       ) : (
         <div className="space-y-2">
           <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Check className="h-5 w-5 text-green-600" />
-              <div>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-green-900">
                   Localização definida
                 </p>
+                {value?.address && (
+                  <p className="text-xs text-green-700 mt-1 line-clamp-2">
+                    📍 {value.address}
+                  </p>
+                )}
                 {value && (
-                  <p className="text-xs text-green-700 mt-0.5">
-                    Lat: {value.latitude.toFixed(6)}, Long: {value.longitude.toFixed(6)}
+                  <p className="text-xs text-green-600 mt-0.5 font-mono">
+                    {value.latitude.toFixed(6)}, {value.longitude.toFixed(6)}
                   </p>
                 )}
               </div>
@@ -156,7 +222,7 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
               variant="ghost"
               size="sm"
               onClick={handleRemoveLocation}
-              className="text-red-600 hover:text-red-800 hover:bg-red-100"
+              className="text-red-600 hover:text-red-800 hover:bg-red-100 flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </Button>
