@@ -92,21 +92,30 @@ export function LocationPicker({
     }
   }, [position, address, onLocationChange])
 
-  // Buscar localização atual do usuário
+  // Buscar localização atual do usuário com geocodificação reversa
   const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
       setIsSearching(true)
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        async (pos) => {
           const newPos: [number, number] = [pos.coords.latitude, pos.coords.longitude]
           setPosition(newPos)
           setCenter(newPos)
+
+          // Geocodificar automaticamente a localização GPS
+          await reverseGeocode(newPos[0], newPos[1])
+
           setIsSearching(false)
         },
         (error) => {
           console.error('Erro ao obter localização:', error)
           setIsSearching(false)
           alert('Não foi possível obter sua localização. Verifique as permissões do navegador.')
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       )
     } else {
@@ -151,9 +160,35 @@ export function LocationPicker({
     }
   }
 
-  // Geocodificação reversa ao clicar no mapa
+  // Geocodificação reversa ao clicar no mapa (BigDataCloud + Nominatim fallback)
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
+      // Opção 1: BigDataCloud - Gratuito, sem API key, ilimitado
+      const bdcResponse = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=pt`
+      )
+
+      if (bdcResponse.ok) {
+        const data = await bdcResponse.json()
+
+        // Montar endereço formatado
+        const parts = [
+          data.locality || data.city,
+          data.principalSubdivision,
+          data.countryName
+        ].filter(Boolean)
+
+        if (parts.length > 0) {
+          setAddress(parts.join(', '))
+          return
+        }
+      }
+    } catch (error) {
+      console.warn('BigDataCloud falhou, tentando Nominatim:', error)
+    }
+
+    try {
+      // Fallback: Nominatim (OpenStreetMap)
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
         {
