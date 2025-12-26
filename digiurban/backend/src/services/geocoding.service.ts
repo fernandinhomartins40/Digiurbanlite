@@ -39,11 +39,100 @@ export class GeocodingService {
   private static readonly NOMINATIM_DELAY = 1000
 
   /**
+   * Tenta parsear endereço estruturado (JSON)
+   */
+  private static parseStructuredAddress(address: string): any | null {
+    try {
+      // Tentar detectar se é JSON
+      if (address.trim().startsWith('{')) {
+        const parsed = JSON.parse(address)
+        if (parsed.logradouro || parsed.cidade) {
+          return parsed
+        }
+      }
+    } catch {
+      // Não é JSON, retornar null
+    }
+    return null
+  }
+
+  /**
+   * Geocodifica usando busca estruturada (mais preciso para cidades pequenas)
+   */
+  private static async geocodeStructured(addressObj: any): Promise<GeocodingResult | null> {
+    try {
+      // Rate limiting
+      const now = Date.now()
+      const timeSinceLastRequest = now - this.lastNominatimRequest
+      if (timeSinceLastRequest < this.NOMINATIM_DELAY) {
+        await new Promise(resolve => setTimeout(resolve, this.NOMINATIM_DELAY - timeSinceLastRequest))
+      }
+      this.lastNominatimRequest = Date.now()
+
+      // Montar query estruturada
+      const params: any = {
+        format: 'json',
+        limit: 1,
+        addressdetails: 1,
+        countrycodes: 'br'
+      }
+
+      // Adicionar campos estruturados
+      if (addressObj.logradouro && addressObj.numero) {
+        params.street = `${addressObj.logradouro} ${addressObj.numero}`
+      } else if (addressObj.logradouro) {
+        params.street = addressObj.logradouro
+      }
+
+      if (addressObj.cidade) params.city = addressObj.cidade
+      if (addressObj.uf) params.state = addressObj.uf
+      if (addressObj.cep) params.postalcode = addressObj.cep
+      params.country = 'Brasil'
+
+      console.log(`  🔍 Busca estruturada: ${JSON.stringify(params)}`)
+
+      const response = await axios.get<NominatimResponse[]>(this.NOMINATIM_URL, {
+        params,
+        headers: {
+          'User-Agent': 'DigiUrban/1.0 (contato@digiurban.com.br)'
+        },
+        timeout: 10000
+      })
+
+      if (response.data && response.data.length > 0) {
+        const result = response.data[0]
+        return {
+          latitude: parseFloat(result.lat),
+          longitude: parseFloat(result.lon),
+          formattedAddress: result.display_name,
+          provider: 'nominatim'
+        }
+      }
+
+      return null
+    } catch (error) {
+      console.error('Erro ao geocodificar estruturado:', error)
+      return null
+    }
+  }
+
+  /**
    * Geocodifica um endereço usando Nominatim (OpenStreetMap)
    */
   private static async geocodeWithNominatim(address: string): Promise<GeocodingResult | null> {
     try {
-      // Rate limiting: aguardar pelo menos 1 segundo entre requisições
+      // Tentar busca estruturada primeiro se for JSON
+      const structuredAddress = this.parseStructuredAddress(address)
+      if (structuredAddress) {
+        console.log('  📋 Detectado endereço estruturado, usando busca avançada')
+        const structuredResult = await this.geocodeStructured(structuredAddress)
+        if (structuredResult) {
+          return structuredResult
+        }
+        console.log('  ⚠️ Busca estruturada falhou, tentando busca por texto')
+      }
+
+      // Busca por texto livre (fallback)
       const now = Date.now()
       const timeSinceLastRequest = now - this.lastNominatimRequest
       if (timeSinceLastRequest < this.NOMINATIM_DELAY) {

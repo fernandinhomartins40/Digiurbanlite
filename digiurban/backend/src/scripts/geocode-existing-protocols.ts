@@ -86,31 +86,23 @@ async function geocodeExistingProtocols() {
         locationType = 'CITIZEN_ADDRESS'
         console.log(`  📍 Usando endereço do protocolo: ${addressToGeocode}`)
       } else if (protocol.citizen?.address) {
-        // citizen.address é Json, então precisamos formatar corretamente
+        // citizen.address é Json - passar como JSON string para busca estruturada
         let citizenAddress: string
 
         if (typeof protocol.citizen.address === 'string') {
           citizenAddress = protocol.citizen.address
         } else if (typeof protocol.citizen.address === 'object' && protocol.citizen.address !== null) {
-          // Formatar objeto de endereço em string legível
-          const addr = protocol.citizen.address as any
-          const parts = [
-            addr.logradouro,
-            addr.numero,
-            addr.complemento,
-            addr.bairro,
-            addr.cidade,
-            addr.uf,
-            addr.cep
-          ].filter(Boolean)
-          citizenAddress = parts.join(', ')
+          // Manter como JSON para busca estruturada
+          citizenAddress = JSON.stringify(protocol.citizen.address)
         } else {
           citizenAddress = JSON.stringify(protocol.citizen.address)
         }
 
         addressToGeocode = citizenAddress
         locationType = 'CITIZEN_ADDRESS'
-        console.log(`  📍 Usando endereço do cidadão: ${addressToGeocode}`)
+        const addr = protocol.citizen.address as any
+        const displayAddr = addr.logradouro ? `${addr.logradouro}, ${addr.numero} - ${addr.cidade}/${addr.uf}` : citizenAddress
+        console.log(`  📍 Usando endereço do cidadão: ${displayAddr}`)
       }
 
       if (!addressToGeocode) {
