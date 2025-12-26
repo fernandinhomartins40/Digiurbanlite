@@ -88,6 +88,7 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
     setLoading(true);
     setError(null);
 
+    // Tentar primeiro com alta precisão
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const lat = position.coords.latitude;
@@ -113,29 +114,79 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
         }
       },
       (error) => {
-        setLoading(false);
-        let errorMessage = 'Não foi possível obter sua localização';
+        console.warn('Erro com alta precisão, tentando modo rápido:', error);
 
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Permissão negada. Por favor, habilite a localização no navegador.';
-            break;
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Localização indisponível. Tente novamente.';
-            break;
-          case error.TIMEOUT:
-            errorMessage = 'Tempo esgotado ao obter localização. Tente novamente.';
-            break;
+        // Se falhar com alta precisão, tentar com baixa precisão (mais rápido)
+        if (error.code === error.TIMEOUT) {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              const lat = position.coords.latitude;
+              const lng = position.coords.longitude;
+
+              const address = await reverseGeocode(lat, lng);
+
+              const location: LocationData = {
+                latitude: lat,
+                longitude: lng,
+                address
+              };
+
+              onChange(location);
+              setHasLocation(true);
+              setLoading(false);
+
+              toast.success(`Localização capturada (modo rápido)${address ? `: ${address}` : '!'}`);
+            },
+            (error2) => {
+              setLoading(false);
+              let errorMessage = 'Não foi possível obter sua localização';
+
+              switch (error2.code) {
+                case error2.PERMISSION_DENIED:
+                  errorMessage = 'Permissão negada. Por favor, habilite a localização no navegador.';
+                  break;
+                case error2.POSITION_UNAVAILABLE:
+                  errorMessage = 'Localização indisponível. Verifique se o GPS está ativado.';
+                  break;
+                case error2.TIMEOUT:
+                  errorMessage = 'Não foi possível obter localização. Tente novamente ou digite o endereço manualmente.';
+                  break;
+              }
+
+              console.error('Erro ao obter localização (segunda tentativa):', error2);
+              setError(errorMessage);
+              toast.error(errorMessage);
+            },
+            {
+              enableHighAccuracy: false, // Modo rápido
+              timeout: 15000,
+              maximumAge: 60000 // Aceitar cache de até 1 minuto
+            }
+          );
+        } else {
+          setLoading(false);
+          let errorMessage = 'Não foi possível obter sua localização';
+
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Permissão negada. Por favor, habilite a localização no navegador.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Localização indisponível. Verifique se o GPS está ativado.';
+              break;
+            default:
+              errorMessage = 'Erro ao obter localização. Tente novamente.';
+          }
+
+          console.error('Erro ao obter localização:', error);
+          setError(errorMessage);
+          toast.error(errorMessage);
         }
-
-        console.error('Erro ao obter localização:', error);
-        setError(errorMessage);
-        toast.error(errorMessage);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+        enableHighAccuracy: true, // Tentar primeiro com alta precisão
+        timeout: 20000, // Aumentado para 20 segundos
+        maximumAge: 0 // Não aceitar cache na primeira tentativa
       }
     );
   };
