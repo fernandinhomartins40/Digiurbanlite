@@ -6,11 +6,12 @@
  *
  * Estratégias:
  * 1. user_location: Usuário forneceu localização específica (sempre prioritária)
- * 2. citizen_address: Usa endereço cadastrado do cidadão
+ * 2. citizen_address: Usa endereço cadastrado do cidadão (com geocodificação automática)
  * 3. none: Sem geolocalização (serviços que não necessitam)
  */
 
 import { PrismaClient } from '@prisma/client';
+import { GeocodingService } from './geocoding.service';
 
 interface LocationData {
   latitude?: number;
@@ -199,11 +200,33 @@ export class GeolocationService {
 
       console.log(`✅ [Geolocation] Usando endereço do cidadão "${citizen.name}": ${fullAddress}`);
 
-      // TODO: Futuramente integrar com API de geocodificação
-      // Por ora, retornar apenas o endereço textual
+      // Geocodificar endereço automaticamente usando JSON estruturado
+      try {
+        console.log(`🌍 [Geolocation] Geocodificando endereço do cidadão...`);
+
+        // Passar endereço como JSON para busca estruturada
+        const addressJson = JSON.stringify(citizen.address);
+        const geoResult = await GeocodingService.geocodeAddress(addressJson);
+
+        if (geoResult && GeocodingService.isValidBrazilCoordinates(geoResult.latitude, geoResult.longitude)) {
+          console.log(`✅ [Geolocation] Endereço geocodificado com sucesso: ${geoResult.latitude}, ${geoResult.longitude} (${geoResult.provider})`);
+          return {
+            latitude: geoResult.latitude,
+            longitude: geoResult.longitude,
+            address: geoResult.formattedAddress || fullAddress,
+            source: 'citizen_address'
+          };
+        } else {
+          console.log(`⚠️ [Geolocation] Não foi possível geocodificar o endereço, retornando apenas texto`);
+        }
+      } catch (error) {
+        console.error(`❌ [Geolocation] Erro ao geocodificar endereço:`, error);
+      }
+
+      // Fallback: retornar apenas endereço textual sem coordenadas
       return {
-        latitude: null, // Será geocodificado no futuro com API externa
-        longitude: null, // Será geocodificado no futuro com API externa
+        latitude: null,
+        longitude: null,
         address: fullAddress,
         source: 'citizen_address'
       };

@@ -125,13 +125,22 @@ export class ProtocolServiceSimplified {
         addressToGeocode = data.address
         geocodingData.locationType = 'CITIZEN_ADDRESS'
       } else if (citizen?.address) {
-        // citizen.address é Json, então precisamos formatar corretamente
+        // citizen.address é Json - manter como JSON para busca estruturada
         let citizenAddress: string
 
         if (typeof citizen.address === 'string') {
           citizenAddress = citizen.address
         } else if (typeof citizen.address === 'object' && citizen.address !== null) {
-          // Formatar objeto de endereço em string legível
+          // Manter como JSON para que GeocodingService use busca estruturada
+          citizenAddress = JSON.stringify(citizen.address)
+        } else {
+          citizenAddress = JSON.stringify(citizen.address)
+        }
+
+        addressToGeocode = citizenAddress
+        geocodingData.locationType = 'CITIZEN_ADDRESS'
+        // Guardar endereço formatado para exibição
+        if (typeof citizen.address === 'object' && citizen.address !== null) {
           const addr = citizen.address as any
           const parts = [
             addr.logradouro,
@@ -142,14 +151,10 @@ export class ProtocolServiceSimplified {
             addr.uf,
             addr.cep
           ].filter(Boolean)
-          citizenAddress = parts.join(', ')
+          geocodingData.address = parts.join(', ')
         } else {
-          citizenAddress = JSON.stringify(citizen.address)
+          geocodingData.address = citizenAddress
         }
-
-        addressToGeocode = citizenAddress
-        geocodingData.locationType = 'CITIZEN_ADDRESS'
-        geocodingData.address = citizenAddress
       }
 
       // Geocodificar se temos endereço
