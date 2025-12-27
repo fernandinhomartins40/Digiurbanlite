@@ -178,7 +178,9 @@ const SERVICE_CATEGORIES: Record<string, ServiceCategoryConfig> = {
 }
 
 function getCategoryConfig(category?: string): ServiceCategoryConfig {
-  if (!category) return SERVICE_CATEGORIES['default']
+  if (!category) {
+    return SERVICE_CATEGORIES['default']
+  }
 
   // Buscar correspondência exata
   if (SERVICE_CATEGORIES[category]) {
@@ -284,7 +286,8 @@ export function ProtocolMapEnhanced({
     return protocols.filter(p => {
       if (selectedStatus && p.status !== selectedStatus) return false
       if (selectedDepartment && p.department?.name !== selectedDepartment) return false
-      if (selectedCategory && p.service?.category !== selectedCategory) return false
+      // CORREÇÃO: selectedCategory agora filtra por department.name (secretaria)
+      if (selectedCategory && p.department?.name !== selectedCategory) return false
       return true
     })
   }, [protocols, selectedStatus, selectedDepartment, selectedCategory])
@@ -309,7 +312,8 @@ export function ProtocolMapEnhanced({
     }, {} as Record<string, number>)
 
     const byCategory = filteredProtocols.reduce((acc, p) => {
-      const category = p.service?.category || 'Outros'
+      // CORREÇÃO: Usar department.name ao invés de service.category para categorizar por secretaria
+      const category = p.department?.name || 'Outros'
       acc[category] = (acc[category] || 0) + 1
       return acc
     }, {} as Record<string, number>)
@@ -319,7 +323,8 @@ export function ProtocolMapEnhanced({
     ).length
 
     const alertCount = filteredProtocols.filter(p =>
-      p.service?.category === 'Segurança Pública'
+      // CORREÇÃO: Usar department.name para identificar segurança pública
+      p.department?.name === 'Segurança Pública'
     ).length
 
     return {
@@ -534,7 +539,8 @@ export function ProtocolMapEnhanced({
 
           {/* Círculos de Abrangência de Serviço */}
           {showServiceCircles && filteredProtocols.map((protocol) => {
-            const config = getCategoryConfig(protocol.service?.category)
+            // CORREÇÃO: Usar department.name para categorização por secretaria
+            const config = getCategoryConfig(protocol.department?.name)
             return (
               <Circle
                 key={`circle-${protocol.id}`}
@@ -576,13 +582,14 @@ export function ProtocolMapEnhanced({
             >
               {filteredProtocols.map((protocol) => {
                 const isGPS = protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN'
-                const config = getCategoryConfig(protocol.service?.category)
+                // CORREÇÃO: Usar department.name para categorização por secretaria
+                const config = getCategoryConfig(protocol.department?.name)
 
                 return (
                   <Marker
                     key={protocol.id}
                     position={[protocol.latitude, protocol.longitude]}
-                    icon={createServiceIcon(protocol.service?.category, isGPS)}
+                    icon={createServiceIcon(protocol.department?.name, isGPS)}
                   >
                     <Popup>
                       <div className="p-2 min-w-[280px]">
@@ -666,13 +673,14 @@ export function ProtocolMapEnhanced({
             <>
               {filteredProtocols.map((protocol) => {
                 const isGPS = protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN'
-                const config = getCategoryConfig(protocol.service?.category)
+                // CORREÇÃO: Usar department.name para categorização por secretaria
+                const config = getCategoryConfig(protocol.department?.name)
 
                 return (
                   <Marker
                     key={protocol.id}
                     position={[protocol.latitude, protocol.longitude]}
-                    icon={createServiceIcon(protocol.service?.category, isGPS)}
+                    icon={createServiceIcon(protocol.department?.name, isGPS)}
                   >
                     <Popup>
                       <div className="p-2 min-w-[280px]">
