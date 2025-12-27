@@ -9,6 +9,7 @@ interface LocationData {
   latitude: number;
   longitude: number;
   address?: string;
+  isGPS?: boolean; // Indica se foi obtido via GPS (mais preciso)
 }
 
 interface LocationPickerProps {
@@ -100,7 +101,8 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
         const location: LocationData = {
           latitude: lat,
           longitude: lng,
-          address
+          address,
+          isGPS: true // Marcar como GPS para indicar alta precisão
         };
 
         onChange(location);
@@ -108,9 +110,9 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
         setLoading(false);
 
         if (address) {
-          toast.success(`Localização capturada: ${address}`);
+          toast.success(`📍 Localização GPS capturada: ${address}`);
         } else {
-          toast.success('Localização capturada com sucesso!');
+          toast.success('📍 Localização GPS capturada com sucesso!');
         }
       },
       (error) => {
@@ -128,14 +130,15 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
               const location: LocationData = {
                 latitude: lat,
                 longitude: lng,
-                address
+                address,
+                isGPS: true // Marcar como GPS mesmo em modo rápido
               };
 
               onChange(location);
               setHasLocation(true);
               setLoading(false);
 
-              toast.success(`Localização capturada (modo rápido)${address ? `: ${address}` : '!'}`);
+              toast.success(`📍 Localização GPS capturada (modo rápido)${address ? `: ${address}` : '!'}`);
             },
             (error2) => {
               setLoading(false);
@@ -239,9 +242,9 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
             <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
               <div className="text-xs text-blue-800">
-                <p className="font-medium mb-1">Este serviço requer localização específica</p>
+                <p className="font-medium mb-1">Este serviço requer localização GPS específica</p>
                 <p>
-                  Informe onde o problema está ocorrendo para que possamos atendê-lo com precisão.
+                  Use o botão acima para capturar sua localização exata via GPS. Isso garante que a equipe chegue no local correto, incluindo o número da casa.
                 </p>
               </div>
             </div>
@@ -253,9 +256,16 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-green-900">
-                  Localização definida
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-green-900">
+                    Localização definida
+                  </p>
+                  {value?.isGPS && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                      GPS
+                    </span>
+                  )}
+                </div>
                 {value?.address && (
                   <p className="text-xs text-green-700 mt-1 line-clamp-2">
                     📍 {value.address}
@@ -280,7 +290,7 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
           </div>
 
           <p className="text-xs text-gray-600">
-            💡 Sua localização será usada para identificar o local exato do problema
+            💡 Localização GPS garante precisão exata no endereço e número
           </p>
         </div>
       )}

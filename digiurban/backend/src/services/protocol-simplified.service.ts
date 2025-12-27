@@ -168,7 +168,20 @@ export class ProtocolServiceSimplified {
             geocodingData.longitude = geoResult.longitude
             geocodingData.geocodingProvider = geoResult.provider
             geocodingData.address = geoResult.formattedAddress || addressToGeocode
-            console.log(`✅ Protocolo geocodificado: ${geoResult.latitude}, ${geoResult.longitude}`)
+
+            // Adicionar precisão ao customData se disponível
+            if (geoResult.precision && geoResult.confidence) {
+              console.log(`✅ Protocolo geocodificado: ${geoResult.latitude}, ${geoResult.longitude} (precisão: ${geoResult.precision}, confiança: ${geoResult.confidence}/10)`)
+
+              // Aviso se precisão for baixa
+              if (geoResult.precision === 'street') {
+                console.log(`⚠️ Precisão de RUA - coordenadas podem não corresponder ao número exato`)
+              } else if (geoResult.precision === 'neighborhood' || geoResult.precision === 'city') {
+                console.log(`⚠️ Precisão baixa (${geoResult.precision}) - considere usar GPS para localização exata`)
+              }
+            } else {
+              console.log(`✅ Protocolo geocodificado: ${geoResult.latitude}, ${geoResult.longitude}`)
+            }
           } else {
             console.log(`⚠️ Não foi possível geocodificar o endereço`)
           }

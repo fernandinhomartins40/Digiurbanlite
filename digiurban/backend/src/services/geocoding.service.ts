@@ -5,12 +5,25 @@ interface GeocodingResult {
   longitude: number
   formattedAddress?: string
   provider: 'nominatim' | 'geoapify' | 'manual'
+  precision?: 'house' | 'street' | 'neighborhood' | 'city' | 'unknown'
+  confidence?: number // 0-10 scale
 }
 
 interface NominatimResponse {
   lat: string
   lon: string
   display_name: string
+  address?: {
+    house_number?: string
+    road?: string
+    neighbourhood?: string
+    suburb?: string
+    city?: string
+    state?: string
+    postcode?: string
+  }
+  type?: string // Result type: house, street, neighbourhood, city, etc
+  place_rank?: number // Lower = more precise (1-30 scale)
 }
 
 interface GeoapifyResponse {
@@ -37,6 +50,44 @@ export class GeocodingService {
   // Rate limiting para Nominatim (1 req/sec)
   private static lastNominatimRequest = 0
   private static readonly NOMINATIM_DELAY = 1000
+
+  /**
+   * Determina a precisão do resultado de geocodificação
+   */
+  private static determinePrecision(result: NominatimResponse): {
+    precision: 'house' | 'street' | 'neighborhood' | 'city' | 'unknown'
+    confidence: number
+  } {
+    // Verificar se tem número de casa no resultado
+    const hasHouseNumber = result.address?.house_number !== undefined
+    const type = result.type?.toLowerCase() || ''
+    const placeRank = result.place_rank || 30
+
+    // Precisão baseada no tipo de resultado
+    if (type === 'house' || hasHouseNumber) {
+      return { precision: 'house', confidence: 10 }
+    }
+
+    if (type === 'street' || type === 'road' || type === 'residential') {
+      return { precision: 'street', confidence: 7 }
+    }
+
+    if (type.includes('neighbourhood') || type.includes('suburb') || type === 'quarter') {
+      return { precision: 'neighborhood', confidence: 5 }
+    }
+
+    if (type.includes('city') || type.includes('town') || type.includes('village')) {
+      return { precision: 'city', confidence: 3 }
+    }
+
+    // Fallback: usar place_rank (1-15 = house, 16-20 = street, 21-25 = neighbourhood, 26+ = city)
+    if (placeRank <= 15) return { precision: 'house', confidence: 9 }
+    if (placeRank <= 20) return { precision: 'street', confidence: 7 }
+    if (placeRank <= 25) return { precision: 'neighborhood', confidence: 5 }
+    if (placeRank <= 28) return { precision: 'city', confidence: 3 }
+
+    return { precision: 'unknown', confidence: 2 }
+  }
 
   /**
    * Tenta parsear endereço estruturado (JSON)
@@ -101,11 +152,17 @@ export class GeocodingService {
 
       if (response.data && response.data.length > 0) {
         const result = response.data[0]
+        const { precision, confidence } = this.determinePrecision(result)
+
+        console.log(`  ✅ Geocodificado com precisão: ${precision} (confiança: ${confidence}/10)`)
+
         return {
           latitude: parseFloat(result.lat),
           longitude: parseFloat(result.lon),
           formattedAddress: result.display_name,
-          provider: 'nominatim'
+          provider: 'nominatim',
+          precision,
+          confidence
         }
       }
 
@@ -156,11 +213,17 @@ export class GeocodingService {
 
       if (response.data && response.data.length > 0) {
         const result = response.data[0]
+        const { precision, confidence } = this.determinePrecision(result)
+
+        console.log(`  ✅ Geocodificado com precisão: ${precision} (confiança: ${confidence}/10)`)
+
         return {
           latitude: parseFloat(result.lat),
           longitude: parseFloat(result.lon),
           formattedAddress: result.display_name,
-          provider: 'nominatim'
+          provider: 'nominatim',
+          precision,
+          confidence
         }
       }
 
