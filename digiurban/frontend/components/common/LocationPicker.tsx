@@ -69,9 +69,9 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
     }
 
     try {
-      // Fallback: Nominatim (OpenStreetMap)
+      // Fallback: Nominatim (OpenStreetMap) - Solicitar addressdetails
       const nominatimResponse = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
         {
           headers: {
             'User-Agent': 'DigiUrban/1.0'
@@ -81,6 +81,22 @@ export function LocationPicker({ value, onChange, required, serviceName }: Locat
 
       if (nominatimResponse.ok) {
         const data = await nominatimResponse.json();
+
+        // Extrair componentes do endereço para montar manualmente
+        const address = data.address || {};
+        const parts = [
+          address.road || address.street,
+          address.house_number,
+          address.suburb || address.neighbourhood,
+          address.city || address.town || address.village,
+          address.state
+        ].filter(Boolean);
+
+        if (parts.length > 0) {
+          return parts.join(', ');
+        }
+
+        // Fallback: usar display_name se não conseguir extrair componentes
         return data.display_name;
       }
     } catch (error) {
