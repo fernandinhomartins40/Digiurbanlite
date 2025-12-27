@@ -20,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTriangle, Calendar, Clock } from 'lucide-react'
 
 interface AgendaEvent {
   id?: string
@@ -73,6 +75,8 @@ export function EventModal({ open, onClose, onSave, event }: EventModalProps) {
     observacoes: ''
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [warnings, setWarnings] = useState<string[]>([])
 
   useEffect(() => {
     if (event) {
@@ -94,7 +98,48 @@ export function EventModal({ open, onClose, onSave, event }: EventModalProps) {
         observacoes: ''
       })
     }
+    setValidationErrors([])
+    setWarnings([])
   }, [event, open])
+
+  // Validação em tempo real
+  useEffect(() => {
+    const errors: string[] = []
+    const warns: string[] = []
+
+    if (formData.dataHoraInicio && formData.dataHoraFim) {
+      const start = new Date(formData.dataHoraInicio)
+      const end = new Date(formData.dataHoraFim)
+      const now = new Date()
+
+      // Validar ordem das datas
+      if (end <= start) {
+        errors.push('A data/hora de término deve ser posterior à de início')
+      }
+
+      // Validar evento no passado
+      if (start < now && !event?.id) {
+        warns.push('Você está criando um evento no passado')
+      }
+
+      // Validar duração muito longa
+      const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+      if (durationHours > 8) {
+        warns.push(`Evento com duração muito longa (${durationHours.toFixed(1)}h)`)
+      }
+
+      // Validar horário comercial para reuniões internas
+      if (formData.tipo === 'REUNIAO_INTERNA') {
+        const hour = start.getHours()
+        if (hour < 8 || hour >= 18) {
+          warns.push('Reunião interna fora do horário comercial (8h-18h)')
+        }
+      }
+    }
+
+    setValidationErrors(errors)
+    setWarnings(warns)
+  }, [formData.dataHoraInicio, formData.dataHoraFim, formData.tipo, event])
 
   const formatDateTimeLocal = (dateString: string) => {
     const date = new Date(dateString)
@@ -110,7 +155,10 @@ export function EventModal({ open, onClose, onSave, event }: EventModalProps) {
     e.preventDefault()
 
     if (!formData.titulo || !formData.dataHoraInicio || !formData.dataHoraFim) {
-      alert('Preencha os campos obrigatórios: Título, Data/Hora Início e Data/Hora Fim')
+      return
+    }
+
+    if (validationErrors.length > 0) {
       return
     }
 
@@ -120,10 +168,26 @@ export function EventModal({ open, onClose, onSave, event }: EventModalProps) {
       onClose()
     } catch (error) {
       console.error('Erro ao salvar evento:', error)
-      alert('Erro ao salvar evento')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const calculateDuration = () => {
+    if (!formData.dataHoraInicio || !formData.dataHoraFim) return null
+
+    const start = new Date(formData.dataHoraInicio)
+    const end = new Date(formData.dataHoraFim)
+    const diffMs = end.getTime() - start.getTime()
+
+    if (diffMs <= 0) return null
+
+    const hours = Math.floor(diffMs / (1000 * 60 * 60))
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+
+    if (hours === 0) return `${minutes}min`
+    if (minutes === 0) return `${hours}h`
+    return `${hours}h ${minutes}min`
   }
 
   return (
@@ -137,6 +201,33 @@ export function EventModal({ open, onClose, onSave, event }: EventModalProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Alertas de Validação */}
+          {validationErrors.length > 0 && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <ul className="list-disc list-inside">
+                  {validationErrors.map((error, idx) => (
+                    <li key={idx}>{error}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {warnings.length > 0 && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <ul className="list-disc list-inside">
+                  {warnings.map((warning, idx) => (
+                    <li key={idx}>{warning}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="tipo">Tipo *</Label>
@@ -182,27 +273,41 @@ export function EventModal({ open, onClose, onSave, event }: EventModalProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="dataHoraInicio">Data/Hora Início *</Label>
+              <Label htmlFor="dataHoraInicio" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Data/Hora Início *
+              </Label>
               <Input
                 id="dataHoraInicio"
                 type="datetime-local"
                 value={formData.dataHoraInicio}
                 onChange={(e) => setFormData({ ...formData, dataHoraInicio: e.target.value })}
                 required
+                className={validationErrors.length > 0 ? 'border-red-500' : ''}
               />
             </div>
 
             <div>
-              <Label htmlFor="dataHoraFim">Data/Hora Fim *</Label>
+              <Label htmlFor="dataHoraFim" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Data/Hora Fim *
+              </Label>
               <Input
                 id="dataHoraFim"
                 type="datetime-local"
                 value={formData.dataHoraFim}
                 onChange={(e) => setFormData({ ...formData, dataHoraFim: e.target.value })}
                 required
+                className={validationErrors.length > 0 ? 'border-red-500' : ''}
               />
             </div>
           </div>
+
+          {calculateDuration() && (
+            <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
+              Duração: <strong>{calculateDuration()}</strong>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="local">Local</Label>
@@ -239,7 +344,10 @@ export function EventModal({ open, onClose, onSave, event }: EventModalProps) {
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button
+              type="submit"
+              disabled={isLoading || validationErrors.length > 0 || !formData.titulo || !formData.dataHoraInicio || !formData.dataHoraFim}
+            >
               {isLoading ? 'Salvando...' : event?.id ? 'Salvar Alterações' : 'Criar Evento'}
             </Button>
           </DialogFooter>

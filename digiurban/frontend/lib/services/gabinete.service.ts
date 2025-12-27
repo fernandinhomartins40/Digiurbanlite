@@ -102,6 +102,22 @@ export const agendaService = {
       getAuthConfig()
     )
     return response.data
+  },
+
+  async getUpcomingEvents(hours: number = 24) {
+    const response = await axios.get(
+      `${API_URL}/admin/gabinete/agenda/upcoming?hours=${hours}`,
+      getAuthConfig()
+    )
+    return response.data
+  },
+
+  async getConflicts() {
+    const response = await axios.get(
+      `${API_URL}/admin/gabinete/agenda/conflicts`,
+      getAuthConfig()
+    )
+    return response.data
   }
 }
 

@@ -246,6 +246,82 @@ router.patch('/agenda/:id/realize', adminAuthMiddleware, requireAdmin, async (re
   }
 })
 
+// Buscar eventos próximos (para notificações)
+router.get('/agenda/upcoming', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { hours = 24 } = req.query
+    const now = new Date()
+    const future = new Date(now.getTime() + Number(hours) * 60 * 60 * 1000)
+
+    const upcomingEvents = await prisma.agendaEvent.findMany({
+      where: {
+        dataHoraInicio: {
+          gte: now,
+          lte: future
+        },
+        status: {
+          in: ['AGENDADO', 'CONFIRMADO']
+        }
+      },
+      orderBy: { dataHoraInicio: 'asc' },
+      include: {
+        createdBy: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    })
+
+    res.json({ success: true, data: upcomingEvents })
+  } catch (error) {
+    console.error('Erro ao buscar eventos próximos:', error)
+    res.status(500).json({ error: 'Erro ao buscar eventos próximos' })
+  }
+})
+
+// Buscar conflitos de horários
+router.get('/agenda/conflicts', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const events = await prisma.agendaEvent.findMany({
+      where: {
+        status: {
+          not: 'CANCELADO'
+        }
+      },
+      orderBy: { dataHoraInicio: 'asc' }
+    })
+
+    const conflicts: Array<{
+      event1: any
+      event2: any
+      overlap: { start: Date; end: Date }
+    }> = []
+
+    for (let i = 0; i < events.length; i++) {
+      for (let j = i + 1; j < events.length; j++) {
+        const e1 = events[i]
+        const e2 = events[j]
+
+        // Verificar sobreposição
+        if (e1.dataHoraInicio < e2.dataHoraFim && e2.dataHoraInicio < e1.dataHoraFim) {
+          conflicts.push({
+            event1: e1,
+            event2: e2,
+            overlap: {
+              start: new Date(Math.max(e1.dataHoraInicio.getTime(), e2.dataHoraInicio.getTime())),
+              end: new Date(Math.min(e1.dataHoraFim.getTime(), e2.dataHoraFim.getTime()))
+            }
+          })
+        }
+      }
+    }
+
+    res.json({ success: true, data: conflicts })
+  } catch (error) {
+    console.error('Erro ao buscar conflitos:', error)
+    res.status(500).json({ error: 'Erro ao buscar conflitos' })
+  }
+})
+
 // ============================================
 // MAPA DE DEMANDAS - Apenas Leitura (SELECT)
 // ============================================
