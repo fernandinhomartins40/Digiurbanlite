@@ -502,13 +502,14 @@ export default function SolicitarServicoPage() {
                 </p>
               </div>
 
-              {/* ✅ NOVO: Seletor de Localização */}
+              {/* ✅ NOVO: Seletor de Localização com Auto-Captura GPS */}
               <div className="pt-4 border-t">
                 <LocationPicker
                   value={locationData}
                   onChange={setLocationData}
                   required={requiresSpecificLocation}
                   serviceName={service?.name}
+                  autoCapture={true}
                 />
               </div>
 

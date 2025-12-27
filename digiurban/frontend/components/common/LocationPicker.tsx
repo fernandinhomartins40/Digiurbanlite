@@ -17,16 +17,26 @@ interface LocationPickerProps {
   onChange: (location: LocationData | null) => void;
   required?: boolean;
   serviceName?: string;
+  autoCapture?: boolean; // Captura GPS automaticamente ao montar
 }
 
-export function LocationPicker({ value, onChange, required, serviceName }: LocationPickerProps) {
+export function LocationPicker({ value, onChange, required, serviceName, autoCapture = false }: LocationPickerProps) {
   const [loading, setLoading] = useState(false);
   const [hasLocation, setHasLocation] = useState(!!value);
   const [error, setError] = useState<string | null>(null);
+  const [autoCaptureDone, setAutoCaptureDone] = useState(false);
 
   useEffect(() => {
     setHasLocation(!!value);
   }, [value]);
+
+  // Captura automática ao montar componente (se habilitado e necessário)
+  useEffect(() => {
+    if (autoCapture && !value && !autoCaptureDone && !loading) {
+      setAutoCaptureDone(true);
+      handleGetLocation();
+    }
+  }, [autoCapture, value, autoCaptureDone, loading]);
 
   /**
    * Geocodificação reversa automática usando BigDataCloud (gratuito, sem API key)
