@@ -171,11 +171,22 @@ export function LocationPicker({
       if (bdcResponse.ok) {
         const data = await bdcResponse.json()
 
-        // Montar endereço formatado
+        // Usar localityLanguage para obter nome da rua em português
+        // BigDataCloud retorna informações hierárquicas em 'localityInfo'
+        const streetName = data.localityInfo?.administrative?.find((item: any) =>
+          item.adminLevel === 8 || item.description?.includes('road') || item.description?.includes('street')
+        )?.name
+
+        const neighborhood = data.localityInfo?.administrative?.find((item: any) =>
+          item.adminLevel === 7 || item.description?.includes('suburb') || item.description?.includes('neighbourhood')
+        )?.name
+
+        // Montar endereço COMPLETO com rua, bairro, cidade e estado
         const parts = [
+          streetName,
+          neighborhood,
           data.locality || data.city,
-          data.principalSubdivision,
-          data.countryName
+          data.principalSubdivision
         ].filter(Boolean)
 
         if (parts.length > 0) {
