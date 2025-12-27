@@ -287,6 +287,7 @@ router.get('/mapa-demandas/protocols', adminAuthMiddleware, requireAdmin, async 
         latitude: true,
         longitude: true,
         address: true,
+        locationType: true, // GPS, CITIZEN_ADDRESS, SPECIFIC_LOCATION, MANUAL_PIN
         createdAt: true,
         service: {
           select: {
