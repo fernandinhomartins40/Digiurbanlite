@@ -103,7 +103,8 @@ export default function EmailDomainsPage() {
 
   const generateDNSRecords = (domain: EmailDomain, hostname: string) => {
     const records: DNSRecord[] = [];
-    const mailHost = hostname || `mail.${domain.domainName}`;
+    // Sempre usar mail.{domainName} para cada domínio específico
+    const mailHost = `mail.${domain.domainName}`;
 
     // MX Record
     records.push({
@@ -113,15 +114,6 @@ export default function EmailDomainsPage() {
       priority: 10,
       status: domain.isVerified ? 'verified' : 'pending'
     });
-
-    if (hostname && hostname !== `mail.${domain.domainName}`) {
-      records.push({
-        type: 'CNAME',
-        name: `mail.${domain.domainName}`,
-        value: hostname,
-        status: domain.isVerified ? 'verified' : 'pending'
-      });
-    }
 
     // SPF Record
     if (domain.spfEnabled) {
