@@ -60,6 +60,10 @@ export default function EmailDomainsPage() {
     try {
       const response = await apiRequest('/super-admin/email-server/domains', { method: 'GET' });
       if (response?.domains) {
+        console.log('[DEBUG] Domains fetched from API:', response.domains);
+        response.domains.forEach((d: EmailDomain) => {
+          console.log('[DEBUG] Domain:', d.id, 'Name:', d.domainName);
+        });
         setDomains(response.domains);
         if (response.domains.length > 0 && !selectedDomain) {
           setSelectedDomain(response.domains[0]);
@@ -105,6 +109,9 @@ export default function EmailDomainsPage() {
     const records: DNSRecord[] = [];
     const mailHost = hostname || `mail.${domain.domainName}`;
 
+    console.log('[DEBUG] generateDNSRecords - domainName:', domain.domainName);
+    console.log('[DEBUG] generateDNSRecords - mailHost:', mailHost);
+
     // MX Record
     records.push({
       type: 'MX',
@@ -135,9 +142,11 @@ export default function EmailDomainsPage() {
 
     // DKIM Record
     if (domain.dkimEnabled && domain.dkimPublicKey) {
+      const dkimRecordName = `${domain.dkimSelector}._domainkey.${domain.domainName}`;
+      console.log('[DEBUG] DKIM record name:', dkimRecordName);
       records.push({
         type: 'TXT',
-        name: `${domain.dkimSelector}._domainkey.${domain.domainName}`,
+        name: dkimRecordName,
         value: `v=DKIM1; k=rsa; p=${domain.dkimPublicKey}`,
         status: domain.isVerified ? 'verified' : 'pending'
       });
@@ -145,14 +154,17 @@ export default function EmailDomainsPage() {
 
     // DMARC Record
     if (domain.dmarcEnabled && domain.dmarcPolicy) {
+      const dmarcRecordName = `_dmarc.${domain.domainName}`;
+      console.log('[DEBUG] DMARC record name:', dmarcRecordName);
       records.push({
         type: 'TXT',
-        name: `_dmarc.${domain.domainName}`,
+        name: dmarcRecordName,
         value: domain.dmarcPolicy,
         status: 'pending'
       });
     }
 
+    console.log('[DEBUG] All DNS records generated:', records);
     setDnsRecords(records);
   };
 
@@ -743,7 +755,7 @@ export default function EmailDomainsPage() {
                             </label>
                             <input
                               type="text"
-                              value={selectedDomain.dmarcPolicy || 'v=DMARC1; p=none; rua=mailto:dmarc@' + selectedDomain.domainName}
+                              value={selectedDomain.dmarcPolicy || `v=DMARC1; p=none; rua=mailto:dmarc@${selectedDomain.domainName}`}
                               onChange={(e) => {
                                 const updatedDomain = { ...selectedDomain, dmarcPolicy: e.target.value };
                                 setSelectedDomain(updatedDomain);
