@@ -294,16 +294,28 @@ router.put('/config', async (req: Request, res: Response) => {
  */
 router.post('/start', async (req: Request, res: Response) => {
   try {
-    const emailServer = await prisma.emailServer.findFirst();
+    let emailServer = await prisma.emailServer.findFirst();
 
+    // Se não existir, criar com valores padrão
     if (!emailServer) {
-      return res.status(404).json({ error: 'Email server not configured' });
+      emailServer = await prisma.emailServer.create({
+        data: {
+          hostname: 'mail.digiurban.com',
+          mxPort: 25,
+          submissionPort: 587,
+          tlsEnabled: true,
+          isPremiumService: true,
+          monthlyPrice: 99.00,
+          maxEmailsPerMonth: 10000,
+          isActive: true
+        }
+      });
+    } else {
+      await prisma.emailServer.update({
+        where: { id: emailServer.id },
+        data: { isActive: true }
+      });
     }
-
-    await prisma.emailServer.update({
-      where: { id: emailServer.id },
-      data: { isActive: true }
-    });
 
     try {
       const status = await startEmailServer();
@@ -353,16 +365,28 @@ router.post('/stop', async (req: Request, res: Response) => {
  */
 router.post('/restart', async (req: Request, res: Response) => {
   try {
-    const emailServer = await prisma.emailServer.findFirst();
+    let emailServer = await prisma.emailServer.findFirst();
 
+    // Se não existir, criar com valores padrão
     if (!emailServer) {
-      return res.status(404).json({ error: 'Email server not configured' });
+      emailServer = await prisma.emailServer.create({
+        data: {
+          hostname: 'mail.digiurban.com',
+          mxPort: 25,
+          submissionPort: 587,
+          tlsEnabled: true,
+          isPremiumService: true,
+          monthlyPrice: 99.00,
+          maxEmailsPerMonth: 10000,
+          isActive: true
+        }
+      });
+    } else {
+      await prisma.emailServer.update({
+        where: { id: emailServer.id },
+        data: { isActive: true }
+      });
     }
-
-    await prisma.emailServer.update({
-      where: { id: emailServer.id },
-      data: { isActive: true }
-    });
 
     await stopEmailServer();
     try {

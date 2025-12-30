@@ -1,0 +1,186 @@
+// UltraZend SMTP Server - Prisma Schema
+// PostgreSQL Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// AUTHENTICATION & USERS
+// ========================================
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  isVerified   Boolean   @default(false) @map("is_verified")
+  isActive     Boolean   @default(true) @map("is_active")
+  isAdmin      Boolean   @default(false) @map("is_admin")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  domains       Domain[]
+  authAttempts  AuthAttempt[]
+
+  @@index([email])
+  @@index([isActive])
+  @@map("users")
+}
+
+// ========================================
+// DOMAINS & DKIM
+// ========================================
+
+model Domain {
+  id                 Int       @id @default(autoincrement())
+  userId             Int       @map("user_id")
+  domainName         String    @unique @map("domain_name")
+  isVerified         Boolean   @default(false) @map("is_verified")
+  verificationToken  String?   @map("verification_token")
+  verifiedAt         DateTime? @map("verified_at")
+  verificationMethod String    @default("dns") @map("verification_method")
+  dkimEnabled        Boolean   @default(true) @map("dkim_enabled")
+  spfEnabled         Boolean   @default(true) @map("spf_enabled")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dkimKeys DkimKey[]
+  emails   Email[]
+
+  @@index([domainName])
+  @@index([isVerified])
+  @@index([userId])
+  @@map("domains")
+}
+
+model DkimKey {
+  id               Int      @id @default(autoincrement())
+  domainId         Int      @map("domain_id")
+  selector         String
+  privateKey       String   @map("private_key") @db.Text
+  publicKey        String   @map("public_key") @db.Text
+  algorithm        String   @default("rsa-sha256")
+  canonicalization String   @default("relaxed/relaxed")
+  keySize          Int      @default(2048) @map("key_size")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@unique([domainId, selector])
+  @@index([isActive])
+  @@map("dkim_keys")
+}
+
+// ========================================
+// EMAILS & DELIVERY
+// ========================================
+
+enum EmailStatus {
+  PENDING
+  SENT
+  DELIVERED
+  BOUNCED
+  FAILED
+
+  @@map("email_status")
+}
+
+enum EmailDirection {
+  INBOUND
+  OUTBOUND
+
+  @@map("email_direction")
+}
+
+model Email {
+  id           Int            @id @default(autoincrement())
+  messageId    String         @unique @map("message_id")
+  domainId     Int?           @map("domain_id")
+  fromEmail    String         @map("from_email")
+  toEmail      String         @map("to_email")
+  subject      String
+  htmlContent  String?        @map("html_content") @db.Text
+  textContent  String?        @map("text_content") @db.Text
+  status       EmailStatus    @default(PENDING)
+  direction    EmailDirection
+  sentAt       DateTime?      @map("sent_at")
+  deliveredAt  DateTime?      @map("delivered_at")
+  mxServer     String?        @map("mx_server")
+  errorMessage String?        @map("error_message") @db.Text
+  attempts     Int            @default(0)
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  domain Domain? @relation(fields: [domainId], references: [id], onDelete: SetNull)
+
+  @@index([messageId])
+  @@index([fromEmail])
+  @@index([toEmail])
+  @@index([status])
+  @@index([direction])
+  @@index([sentAt])
+  @@map("emails")
+}
+
+// ========================================
+// SMTP CONNECTIONS & LOGS
+// ========================================
+
+enum ServerType {
+  MX
+  SUBMISSION
+
+  @@map("server_type")
+}
+
+enum ConnectionStatus {
+  ACCEPTED
+  REJECTED
+  FAILED
+
+  @@map("connection_status")
+}
+
+model SmtpConnection {
+  id            Int              @id @default(autoincrement())
+  remoteAddress String           @map("remote_address")
+  hostname      String?
+  serverType    ServerType       @map("server_type")
+  status        ConnectionStatus
+  rejectReason  String?          @map("reject_reason")
+  createdAt     DateTime         @default(now()) @map("created_at")
+
+  @@index([remoteAddress])
+  @@index([serverType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("smtp_connections")
+}
+
+model AuthAttempt {
+  id            Int      @id @default(autoincrement())
+  userId        Int?     @map("user_id")
+  username      String
+  remoteAddress String   @map("remote_address")
+  success       Boolean
+  failureReason String?  @map("failure_reason")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([username])
+  @@index([remoteAddress])
+  @@index([success])
+  @@index([createdAt])
+  @@map("auth_attempts")
+}

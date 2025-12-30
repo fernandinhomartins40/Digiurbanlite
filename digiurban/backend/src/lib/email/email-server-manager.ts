@@ -1,8 +1,8 @@
-import { DigiUrbanSMTPServer } from './DigiUrbanSMTPServer';
+import { UltraZendSMTPServer } from './UltraZendAdapter';
 import { prisma } from '../prisma';
 
 type EmailServerRuntime = {
-  instance: DigiUrbanSMTPServer;
+  instance: UltraZendSMTPServer;
   emailServerId: string;
 };
 
@@ -27,12 +27,15 @@ export async function startEmailServer() {
 
     runtime = {
       emailServerId: emailServer.id,
-      instance: new DigiUrbanSMTPServer({
+      instance: new UltraZendSMTPServer({
         emailServerId: emailServer.id,
         hostname: emailServer.hostname,
         mxPort: emailServer.mxPort,
         submissionPort: emailServer.submissionPort,
-        maxConnections: 100
+        maxConnections: 100,
+        tlsEnabled: emailServer.tlsEnabled,
+        certPath: emailServer.certPath || undefined,
+        keyPath: emailServer.keyPath || undefined
       })
     };
   }
