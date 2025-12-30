@@ -41,17 +41,19 @@ export default function EmailDomainsPage() {
   const [verifying, setVerifying] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'dns' | 'dkim' | 'stats' | 'test'>('dns');
+  const [serverHostname, setServerHostname] = useState('');
 
   useEffect(() => {
     fetchDomains();
+    fetchServerStatus();
   }, []);
 
   useEffect(() => {
     if (selectedDomain) {
-      generateDNSRecords(selectedDomain);
+      generateDNSRecords(selectedDomain, serverHostname);
       fetchDomainStats(selectedDomain.id);
     }
-  }, [selectedDomain]);
+  }, [selectedDomain, serverHostname]);
 
   const fetchDomains = async () => {
     setLoading(true);
@@ -88,25 +90,38 @@ export default function EmailDomainsPage() {
     }
   };
 
-  const generateDNSRecords = (domain: EmailDomain) => {
+  const fetchServerStatus = async () => {
+    try {
+      const response = await apiRequest('/super-admin/email-server/status', { method: 'GET' });
+      if (response?.status?.hostname) {
+        setServerHostname(response.status.hostname);
+      }
+    } catch (error) {
+      console.error('Error fetching server status:', error);
+    }
+  };
+
+  const generateDNSRecords = (domain: EmailDomain, hostname: string) => {
     const records: DNSRecord[] = [];
+    const mailHost = hostname || `mail.${domain.domainName}`;
 
     // MX Record
     records.push({
       type: 'MX',
       name: domain.domainName,
-      value: 'mail.digiurban.com', // TODO: Obter do servidor config
+      value: mailHost,
       priority: 10,
       status: domain.isVerified ? 'verified' : 'pending'
     });
 
-    // A Record para o servidor mail
-    records.push({
-      type: 'A',
-      name: 'mail.digiurban.com',
-      value: '0.0.0.0', // TODO: Obter IP real do servidor
-      status: 'pending'
-    });
+    if (hostname && hostname !== `mail.${domain.domainName}`) {
+      records.push({
+        type: 'CNAME',
+        name: `mail.${domain.domainName}`,
+        value: hostname,
+        status: domain.isVerified ? 'verified' : 'pending'
+      });
+    }
 
     // SPF Record
     if (domain.spfEnabled) {
@@ -229,7 +244,7 @@ export default function EmailDomainsPage() {
         };
         setSelectedDomain(updatedDomain);
         setDomains(domains.map(d => d.id === selectedDomain.id ? updatedDomain : d));
-        generateDNSRecords(updatedDomain);
+        generateDNSRecords(updatedDomain, serverHostname);
 
         toast({
           title: 'Chave DKIM gerada',

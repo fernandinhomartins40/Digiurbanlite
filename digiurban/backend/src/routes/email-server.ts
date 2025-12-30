@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth';
-import dns from 'dns/promises';
 import emailDomainsRouter from './email-domains';
+import { getEmailServerRuntimeStatus, startEmailServer, stopEmailServer } from '../lib/email/email-server-manager';
 
 const router = Router();
 
@@ -20,7 +20,7 @@ router.use('/domains', emailDomainsRouter);
 router.get('/status', async (req: Request, res: Response) => {
   try {
     const emailServer = await prisma.emailServer.findFirst({
-      where: { isActive: true }
+      orderBy: { createdAt: 'desc' }
     });
 
     if (!emailServer) {
@@ -57,10 +57,12 @@ router.get('/status', async (req: Request, res: Response) => {
       ? ((deliveredEmails / totalEmails) * 100).toFixed(1) + '%'
       : '0%';
 
+    const runtimeStatus = getEmailServerRuntimeStatus();
+
     res.json({
       status: {
-        isRunning: emailServer.isActive,
-        uptime: 0, // TODO: Implementar tracking de uptime
+        isRunning: runtimeStatus?.isRunning ?? false,
+        uptime: runtimeStatus?.uptime ?? 0,
         hostname: emailServer.hostname,
         ports: {
           mx: emailServer.mxPort,
@@ -74,7 +76,7 @@ router.get('/status', async (req: Request, res: Response) => {
           deliveryRate
         },
         connections: {
-          active: 0, // TODO: Implementar tracking de conexões
+          active: runtimeStatus?.connections.active ?? 0,
           total: 100
         }
       }
@@ -92,7 +94,7 @@ router.get('/status', async (req: Request, res: Response) => {
 router.get('/dashboard-stats', async (req: Request, res: Response) => {
   try {
     const emailServer = await prisma.emailServer.findFirst({
-      where: { isActive: true }
+      orderBy: { createdAt: 'desc' }
     });
 
     if (!emailServer) {
@@ -141,11 +143,13 @@ router.get('/dashboard-stats', async (req: Request, res: Response) => {
               log.level === 'INFO' ? 'success' as const : 'info' as const
     }));
 
+    const runtimeStatus = getEmailServerRuntimeStatus();
+
     res.json({
       stats: {
         server: {
-          isRunning: emailServer.isActive,
-          uptime: 0, // TODO: Implementar tracking
+          isRunning: runtimeStatus?.isRunning ?? false,
+          uptime: runtimeStatus?.uptime ?? 0,
           hostname: emailServer.hostname
         },
         domains: {
@@ -177,7 +181,7 @@ router.get('/dashboard-stats', async (req: Request, res: Response) => {
 router.get('/config', async (req: Request, res: Response) => {
   try {
     const emailServer = await prisma.emailServer.findFirst({
-      where: { isActive: true }
+      orderBy: { createdAt: 'desc' }
     });
 
     if (!emailServer) {
@@ -240,7 +244,7 @@ router.put('/config', async (req: Request, res: Response) => {
     } = req.body;
 
     let emailServer = await prisma.emailServer.findFirst({
-      where: { isActive: true }
+      orderBy: { createdAt: 'desc' }
     });
 
     if (!emailServer) {
@@ -301,10 +305,16 @@ router.post('/start', async (req: Request, res: Response) => {
       data: { isActive: true }
     });
 
-    // TODO: Implementar start do servidor SMTP real
-    // await smtpServerInstance.start();
-
-    res.json({ success: true, message: 'Server started' });
+    try {
+      const status = await startEmailServer();
+      res.json({ success: true, message: 'Server started', status });
+    } catch (error) {
+      await prisma.emailServer.update({
+        where: { id: emailServer.id },
+        data: { isActive: false }
+      });
+      throw error;
+    }
   } catch (error) {
     console.error('Error starting server:', error);
     res.status(500).json({ error: 'Failed to start server' });
@@ -328,8 +338,7 @@ router.post('/stop', async (req: Request, res: Response) => {
       data: { isActive: false }
     });
 
-    // TODO: Implementar stop do servidor SMTP real
-    // await smtpServerInstance.stop();
+    await stopEmailServer();
 
     res.json({ success: true, message: 'Server stopped' });
   } catch (error) {
@@ -344,11 +353,28 @@ router.post('/stop', async (req: Request, res: Response) => {
  */
 router.post('/restart', async (req: Request, res: Response) => {
   try {
-    // TODO: Implementar restart do servidor SMTP real
-    // await smtpServerInstance.stop();
-    // await smtpServerInstance.start();
+    const emailServer = await prisma.emailServer.findFirst();
 
-    res.json({ success: true, message: 'Server restarted' });
+    if (!emailServer) {
+      return res.status(404).json({ error: 'Email server not configured' });
+    }
+
+    await prisma.emailServer.update({
+      where: { id: emailServer.id },
+      data: { isActive: true }
+    });
+
+    await stopEmailServer();
+    try {
+      const status = await startEmailServer();
+      res.json({ success: true, message: 'Server restarted', status });
+    } catch (error) {
+      await prisma.emailServer.update({
+        where: { id: emailServer.id },
+        data: { isActive: false }
+      });
+      throw error;
+    }
   } catch (error) {
     console.error('Error restarting server:', error);
     res.status(500).json({ error: 'Failed to restart server' });
@@ -364,7 +390,7 @@ router.get('/logs', async (req: Request, res: Response) => {
     const { level, limit = 100, offset = 0 } = req.query;
 
     const emailServer = await prisma.emailServer.findFirst({
-      where: { isActive: true }
+      orderBy: { createdAt: 'desc' }
     });
 
     if (!emailServer) {

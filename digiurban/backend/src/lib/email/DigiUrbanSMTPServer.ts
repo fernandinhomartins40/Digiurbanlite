@@ -35,8 +35,15 @@ interface EmailForDelivery {
   to: string[];
   subject: string;
   rawData: string;
+  text?: string;
+  html?: string;
   headers: Record<string, string>;
   dkimSignature?: string;
+  dkim?: {
+    domainName: string;
+    keySelector: string;
+    privateKey: string;
+  };
   priority?: 'high' | 'normal' | 'low';
 }
 
@@ -90,6 +97,9 @@ export class DigiUrbanSMTPServer {
   private smtpServer?: SMTPServer;
   private config: DigiUrbanSMTPConfig;
   private isRunning = false;
+  private startedAt: number | null = null;
+  private activeConnections = 0;
+  private totalConnections = 0;
 
   constructor(config: DigiUrbanSMTPConfig) {
     this.config = config;
@@ -97,6 +107,10 @@ export class DigiUrbanSMTPServer {
 
   async start(): Promise<void> {
     try {
+      if (this.isRunning) {
+        return;
+      }
+
       // DIA 3: Removed tenant check, using emailServerId directly
       const emailServer = await prisma.emailServer.findUnique({
         where: { id: this.config.emailServerId }
@@ -129,6 +143,7 @@ export class DigiUrbanSMTPServer {
           `📧 DigiUrban SMTP Server running on port ${this.config.submissionPort || 587}`
         );
         this.isRunning = true;
+        this.startedAt = Date.now();
       });
 
       // Log de inicialização
@@ -245,11 +260,7 @@ export class DigiUrbanSMTPServer {
         return callback(new Error(`Unauthorized domain: ${domain}`));
       }
 
-      // Aplicar assinatura DKIM se habilitada
-      let signedEmail = emailData;
-      if (emailDomain.dkimEnabled) {
-        signedEmail = await this.applyDKIM(emailData, emailDomain);
-      }
+      const signedEmail = emailData;
 
       // Salvar email no banco
       const email = await prisma.email.create({
@@ -271,7 +282,7 @@ export class DigiUrbanSMTPServer {
           textContent: signedEmail.text,
           headers: signedEmail.headers,
           status: 'QUEUED',
-          dkimSigned: emailDomain.dkimEnabled,
+          dkimSigned: emailDomain.dkimEnabled && !!emailDomain.dkimPrivateKey,
           dkimSignature: signedEmail.dkimSignature
         }
         });
@@ -375,7 +386,9 @@ export class DigiUrbanSMTPServer {
     try {
       const email = await prisma.email.findUnique({
         where: { id: emailId },
-        include: {}
+        include: {
+          domain: true
+        }
       });
 
       if (!email) return;
@@ -393,8 +406,17 @@ export class DigiUrbanSMTPServer {
         to: [email.toEmail],
         subject: email.subject,
         rawData: email.htmlContent || email.textContent || '',
+        text: email.textContent || undefined,
+        html: email.htmlContent || undefined,
         headers: email.headers ? (typeof email.headers === 'string' ? JSON.parse(email.headers) : email.headers as Record<string, string>) : {},
         dkimSignature: email.dkimSignature || undefined,
+        dkim: email.domain?.dkimEnabled && email.domain.dkimPrivateKey
+          ? {
+              domainName: email.domain.domainName,
+              keySelector: email.domain.dkimSelector,
+              privateKey: email.domain.dkimPrivateKey
+            }
+          : undefined,
         priority: 'normal'
       };
 
@@ -482,13 +504,31 @@ export class DigiUrbanSMTPServer {
         }
         });
 
-          const result = await transporter.sendMail({
+          const sendOptions: nodemailer.SendMailOptions = {
             from: email.from,
             to: email.to,
             subject: email.subject,
-            raw: email.rawData,
-            headers: email.headers
-        });
+            headers: email.headers,
+            messageId: `<${email.messageId}>`
+          };
+
+          if (email.html) {
+            sendOptions.html = email.html;
+          } else if (email.text) {
+            sendOptions.text = email.text;
+          } else {
+            sendOptions.text = email.rawData;
+          }
+
+          if (email.dkim) {
+            sendOptions.dkim = {
+              domainName: email.dkim.domainName,
+              keySelector: email.dkim.keySelector,
+              privateKey: email.dkim.privateKey
+            };
+          }
+
+          const result = await transporter.sendMail(sendOptions);
 
           await this.logEvent('INFO', 'Email delivered successfully', {
             messageId: email.messageId,
@@ -595,6 +635,8 @@ export class DigiUrbanSMTPServer {
     session: SMTPServerSession,
     callback: (err?: Error | null | undefined) => void
   ) {
+    this.activeConnections += 1;
+    this.totalConnections += 1;
     await this.logEvent('DEBUG', 'SMTP connection established', {
       remoteAddress: session.remoteAddress,
       id: session.id
@@ -606,6 +648,7 @@ export class DigiUrbanSMTPServer {
     session: SMTPServerSession,
     callback: (err?: Error | null | undefined) => void
   ) {
+    this.activeConnections = Math.max(0, this.activeConnections - 1);
     await this.logEvent('DEBUG', 'SMTP connection closed', {
       remoteAddress: session.remoteAddress,
       id: session.id
@@ -660,10 +703,22 @@ export class DigiUrbanSMTPServer {
       this.smtpServer.close(() => {
         console.log('📧 DigiUrban SMTP Server stopped');
         this.isRunning = false;
+        this.startedAt = null;
       });
 
       await this.logEvent('INFO', 'SMTP Server stopped');
     }
+  }
+
+  getRuntimeStatus() {
+    return {
+      isRunning: this.isRunning,
+      uptime: this.startedAt ? Math.floor((Date.now() - this.startedAt) / 1000) : 0,
+      connections: {
+        active: this.activeConnections,
+        total: this.totalConnections
+      }
+    };
   }
 
   async getStats() {

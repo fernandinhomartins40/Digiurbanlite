@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import dns from 'dns/promises';
 import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 const router = Router();
 
@@ -14,7 +15,7 @@ const router = Router();
 router.get('/', async (req: Request, res: Response) => {
   try {
     const emailServer = await prisma.emailServer.findFirst({
-      where: { isActive: true }
+      orderBy: { createdAt: 'desc' }
     });
 
     if (!emailServer) {
@@ -46,7 +47,7 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const emailServer = await prisma.emailServer.findFirst({
-      where: { isActive: true }
+      orderBy: { createdAt: 'desc' }
     });
 
     if (!emailServer) {
@@ -650,27 +651,116 @@ router.post('/:id/send-test-email', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Domain not found' });
     }
 
-    // TODO: Implementar envio real de email de teste
-    // Por agora, apenas criar registro no banco
+    const messageId = `test-${Date.now()}@${domain.domainName}`;
     const email = await prisma.email.create({
       data: {
         emailServerId: domain.emailServerId,
         domainId: domain.id,
-        messageId: `test-${Date.now()}@${domain.domainName}`,
+        messageId,
         fromEmail: `noreply@${domain.domainName}`,
         toEmail: to,
         subject,
         textContent: body,
-        status: 'QUEUED',
+        status: 'PROCESSING',
         priority: 1
       }
     });
 
-    res.json({ success: true, email });
+    try {
+      const delivery = await deliverTestEmail(domain.domainName, to, subject, body, messageId);
+
+      await prisma.email.update({
+        where: { id: email.id },
+        data: {
+          status: 'DELIVERED',
+          sentAt: new Date(),
+          deliveredAt: new Date()
+        }
+      });
+
+      await prisma.emailEvent.create({
+        data: {
+          emailId: email.id,
+          type: 'DELIVERED',
+          data: { response: delivery.response },
+          timestamp: new Date()
+        }
+      });
+
+      res.json({ success: true, email: { ...email, status: 'DELIVERED' } });
+    } catch (sendError) {
+      const errorMessage = sendError instanceof Error ? sendError.message : 'Delivery failed';
+
+      await prisma.email.update({
+        where: { id: email.id },
+        data: {
+          status: 'FAILED',
+          failedAt: new Date(),
+          errorMessage
+        }
+      });
+
+      await prisma.emailEvent.create({
+        data: {
+          emailId: email.id,
+          type: 'FAILED',
+          data: { error: errorMessage },
+          timestamp: new Date()
+        }
+      });
+
+      res.status(500).json({ success: false, error: errorMessage });
+    }
   } catch (error) {
     console.error('Error sending test email:', error);
     res.status(500).json({ error: 'Failed to send test email' });
   }
 });
+
+async function deliverTestEmail(
+  fromDomain: string,
+  to: string,
+  subject: string,
+  body: string,
+  messageId: string
+) {
+  const toDomain = to.split('@')[1];
+  if (!toDomain) {
+    throw new Error('Invalid recipient');
+  }
+
+  const mxRecords = await dns.resolveMx(toDomain);
+  if (!mxRecords || mxRecords.length === 0) {
+    throw new Error(`No MX records found for domain: ${toDomain}`);
+  }
+
+  mxRecords.sort((a, b) => a.priority - b.priority);
+
+  let lastError: Error | null = null;
+  for (const mx of mxRecords) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: mx.exchange,
+        port: 25,
+        secure: false,
+        tls: { rejectUnauthorized: false }
+      });
+
+      const result = await transporter.sendMail({
+        from: `noreply@${fromDomain}`,
+        to,
+        subject,
+        text: body,
+        messageId: `<${messageId}>`
+      });
+
+      return { response: result.response };
+    } catch (error) {
+      lastError = error as Error;
+    }
+  }
+
+  throw lastError || new Error('All MX servers failed');
+}
 
 export default router;
