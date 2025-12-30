@@ -187,7 +187,7 @@ router.get('/config', async (req: Request, res: Response) => {
     if (!emailServer) {
       return res.json({
         config: {
-          hostname: 'mail.digiurban.com',
+          hostname: 'mail.digiurban.com.br',
           mxPort: 25,
           submissionPort: 587,
           maxConnections: 100,
@@ -300,7 +300,7 @@ router.post('/start', async (req: Request, res: Response) => {
     if (!emailServer) {
       emailServer = await prisma.emailServer.create({
         data: {
-          hostname: 'mail.digiurban.com',
+          hostname: 'mail.digiurban.com.br',
           mxPort: 25,
           submissionPort: 587,
           tlsEnabled: true,
@@ -371,7 +371,7 @@ router.post('/restart', async (req: Request, res: Response) => {
     if (!emailServer) {
       emailServer = await prisma.emailServer.create({
         data: {
-          hostname: 'mail.digiurban.com',
+          hostname: 'mail.digiurban.com.br',
           mxPort: 25,
           submissionPort: 587,
           tlsEnabled: true,
