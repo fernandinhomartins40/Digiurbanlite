@@ -79,6 +79,7 @@ export interface DNSRecord {
   priority?: number;
   status: 'pending' | 'verified' | 'error';
   errorMessage?: string;
+  description?: string;
 }
 
 export interface DKIMKeyPair {

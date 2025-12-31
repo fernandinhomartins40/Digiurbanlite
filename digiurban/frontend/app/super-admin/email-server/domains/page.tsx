@@ -105,45 +105,58 @@ export default function EmailDomainsPage() {
 
   const generateDNSRecords = (domain: EmailDomain, hostname: string) => {
     const records: DNSRecord[] = [];
-    // Sempre usar mail.{domainName} para cada domínio específico
     const mailHost = `mail.${domain.domainName}`;
 
-    // MX Record
+    // Registro A para mail.{domainName} - OBRIGATÓRIO para envio de email
+    records.push({
+      type: 'A',
+      name: mailHost,
+      value: hostname, // IP do servidor de email
+      priority: undefined,
+      status: domain.isVerified ? 'verified' : 'pending',
+      description: 'Aponta mail.{domínio} para o IP do servidor de email. OBRIGATÓRIO para enviar emails.'
+    });
+
+    // MX Record - Define qual servidor recebe emails
     records.push({
       type: 'MX',
       name: domain.domainName,
       value: mailHost,
       priority: 10,
-      status: domain.isVerified ? 'verified' : 'pending'
+      status: domain.isVerified ? 'verified' : 'pending',
+      description: 'Define que emails enviados para @{domínio} devem ser recebidos por mail.{domínio}. Se seu site está em outro servidor, este registro NÃO afeta o site.'
     });
 
-    // SPF Record
+    // SPF Record - Autoriza o servidor a enviar emails
     if (domain.spfEnabled) {
       records.push({
         type: 'TXT',
         name: domain.domainName,
         value: domain.spfRecord || 'v=spf1 mx ~all',
-        status: domain.isVerified ? 'verified' : 'pending'
+        status: domain.isVerified ? 'verified' : 'pending',
+        description: 'Autoriza o servidor MX a enviar emails em nome do seu domínio. Previne spam e melhora entrega no Gmail/Outlook.'
       });
     }
 
-    // DKIM Record
+    // DKIM Record - Assinatura digital dos emails
     if (domain.dkimEnabled && domain.dkimPublicKey) {
       records.push({
         type: 'TXT',
         name: `${domain.dkimSelector}._domainkey.${domain.domainName}`,
         value: `v=DKIM1; k=rsa; p=${domain.dkimPublicKey}`,
-        status: domain.isVerified ? 'verified' : 'pending'
+        status: domain.isVerified ? 'verified' : 'pending',
+        description: 'Chave pública para assinar emails digitalmente. Emails assinados têm 90% mais chance de chegar na caixa de entrada.'
       });
     }
 
-    // DMARC Record
+    // DMARC Record - Política de autenticação
     if (domain.dmarcEnabled && domain.dmarcPolicy) {
       records.push({
         type: 'TXT',
         name: `_dmarc.${domain.domainName}`,
         value: domain.dmarcPolicy,
-        status: 'pending'
+        status: 'pending',
+        description: 'Define o que fazer com emails que falham SPF/DKIM. Protege seu domínio contra falsificação (phishing).'
       });
     }
 
@@ -582,14 +595,41 @@ export default function EmailDomainsPage() {
                         </p>
                       </div>
 
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="font-semibold text-sm text-blue-900 mb-1 flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4" />
+                          Servidor de Email Independente
+                        </h4>
+                        <p className="text-xs text-blue-800">
+                          O servidor de email DigiUrban pode estar em uma VPS diferente do seu site.
+                          Os registros MX e A (mail.{selectedDomain.domainName}) apontam para o servidor de email,
+                          mas <strong>não afetam</strong> onde seu site está hospedado. Seu site pode continuar em outro servidor normalmente.
+                        </p>
+                      </div>
+
                       {dnsRecords.map((record, index) => (
                         <div key={index} className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
                           <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-wrap">
                               <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded font-mono text-sm font-bold">
                                 {record.type}
                               </span>
                               {getStatusBadge(record.status)}
+                              {(record.type === 'A' || record.type === 'MX') && (
+                                <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold">
+                                  OBRIGATÓRIO
+                                </span>
+                              )}
+                              {record.type === 'TXT' && record.description?.includes('SPF') && (
+                                <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-semibold">
+                                  RECOMENDADO
+                                </span>
+                              )}
+                              {record.type === 'TXT' && record.description?.includes('DKIM') && (
+                                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-semibold">
+                                  ALTAMENTE RECOMENDADO
+                                </span>
+                              )}
                             </div>
                             <button
                               onClick={() => copyToClipboard(record.value, `Registro ${record.type}`)}
@@ -598,6 +638,16 @@ export default function EmailDomainsPage() {
                               <Copy className="w-4 h-4" />
                             </button>
                           </div>
+
+                          {/* Descrição educativa */}
+                          {record.description && (
+                            <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                              <p className="text-sm text-blue-900 leading-relaxed">
+                                <FileText className="w-4 h-4 inline mr-1 mb-0.5" />
+                                {record.description}
+                              </p>
+                            </div>
+                          )}
 
                           <div className="space-y-2 text-sm">
                             <div>
