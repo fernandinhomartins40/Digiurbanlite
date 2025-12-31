@@ -15,7 +15,8 @@ COPY package*.json ./
 COPY tsconfig.json ./
 
 # Instalar todas as dependências (incluindo devDependencies para build)
-RUN npm ci
+# Nota: Usando npm install porque package-lock.json não está versionado
+RUN npm install --legacy-peer-deps
 
 # Copiar código fonte
 COPY prisma ./prisma
@@ -25,8 +26,8 @@ COPY start-server-production.js ./
 # Gerar Prisma Client
 RUN npx prisma generate
 
-# Compilar TypeScript
-RUN npm run build
+# Compilar TypeScript (apenas arquivos Prisma)
+RUN npm run build:prisma
 
 # Remover devDependencies após build
 RUN npm prune --omit=dev

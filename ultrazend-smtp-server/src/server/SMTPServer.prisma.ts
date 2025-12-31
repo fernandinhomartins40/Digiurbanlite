@@ -4,7 +4,7 @@
  */
 
 import { SMTPServer as NodeSMTPServer } from 'smtp-server';
-import { simpleParser, ParsedMail } from 'mailparser';
+import { simpleParser, ParsedMail, AddressObject } from 'mailparser';
 import bcrypt from 'bcrypt';
 import { logger } from '../utils/logger';
 import { generateMessageId } from '../utils/crypto';
@@ -13,6 +13,17 @@ import { DKIMManager } from '../security/DKIMManager.prisma';
 import { SMTPServerConfig, SMTPSession, EmailData } from '../types';
 import { prisma } from '../lib/prisma';
 import { User, EmailStatus, EmailDirection, ServerType, ConnectionStatus } from '@prisma/client';
+
+/**
+ * Helper para extrair texto de endereço de email
+ */
+function getAddressText(address: AddressObject | AddressObject[] | undefined): string {
+  if (!address) return '';
+  if (Array.isArray(address)) {
+    return address[0]?.text || '';
+  }
+  return address.text || '';
+}
 
 export class UltraZendSMTPServer {
   private mxServer: NodeSMTPServer;
@@ -266,8 +277,8 @@ export class UltraZendSMTPServer {
 
       const emailData: EmailData = {
         messageId,
-        from: parsedEmail.from?.text || '',
-        to: parsedEmail.to?.text || '',
+        from: getAddressText(parsedEmail.from),
+        to: getAddressText(parsedEmail.to),
         subject: parsedEmail.subject || '',
         html: parsedEmail.html?.toString(),
         text: parsedEmail.text,
@@ -313,8 +324,8 @@ export class UltraZendSMTPServer {
         update: {},
         create: {
           messageId,
-          fromEmail: parsedEmail.from?.text || '',
-          toEmail: parsedEmail.to?.text || '',
+          fromEmail: getAddressText(parsedEmail.from),
+          toEmail: getAddressText(parsedEmail.to),
           subject: parsedEmail.subject || '',
           htmlContent: parsedEmail.html?.toString(),
           textContent: parsedEmail.text,
@@ -326,8 +337,8 @@ export class UltraZendSMTPServer {
 
       logger.info('Incoming email received', {
         messageId,
-        from: parsedEmail.from?.text,
-        to: parsedEmail.to?.text,
+        from: getAddressText(parsedEmail.from),
+        to: getAddressText(parsedEmail.to),
         subject: parsedEmail.subject
       });
 

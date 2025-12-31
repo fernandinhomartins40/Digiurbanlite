@@ -6,6 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "prisma generate && tsc",
+    "build:prisma": "prisma generate && tsc --project tsconfig.prisma.json",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "start:server": "node dist/start-server.js",
@@ -13,8 +14,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "test": "jest",
-    "prepare": "prisma generate && npm run build"
+    "test": "jest"
   },
   "keywords": [
     "smtp",
