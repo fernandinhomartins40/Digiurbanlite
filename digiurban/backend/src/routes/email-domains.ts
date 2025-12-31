@@ -722,6 +722,45 @@ router.post('/:id/send-test-email', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Detecta o PTR (reverse DNS) do servidor para usar no HELO
+ */
+async function getServerPTR(): Promise<string | null> {
+  try {
+    // Obter IP público do servidor
+    const os = await import('os');
+    const networkInterfaces = os.networkInterfaces();
+
+    // Tentar obter IP de uma interface pública
+    let publicIP: string | null = null;
+    for (const [name, addresses] of Object.entries(networkInterfaces)) {
+      if (!addresses) continue;
+      for (const addr of addresses) {
+        if (addr.family === 'IPv4' && !addr.internal) {
+          publicIP = addr.address;
+          break;
+        }
+      }
+      if (publicIP) break;
+    }
+
+    if (!publicIP) {
+      return null;
+    }
+
+    // Fazer reverse DNS lookup
+    const ptrRecords = await dnsResolver.reverse(publicIP);
+    if (ptrRecords && ptrRecords.length > 0) {
+      return ptrRecords[0].replace(/\.$/, ''); // Remove trailing dot
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Failed to get PTR record:', error);
+    return null;
+  }
+}
+
 async function deliverTestEmail(
   fromDomain: string,
   to: string,
@@ -734,7 +773,20 @@ async function deliverTestEmail(
     throw new Error('Invalid recipient');
   }
 
-  const mxRecords = await dns.resolveMx(toDomain);
+  // Buscar domínio com DKIM
+  const emailDomain = await prisma.emailDomain.findFirst({
+    where: { domainName: fromDomain }
+  });
+
+  if (!emailDomain) {
+    throw new Error(`Domain ${fromDomain} not configured`);
+  }
+
+  // Detectar PTR dinâmico ou usar mail.{fromDomain}
+  const ptrRecord = await getServerPTR();
+  const heloName = ptrRecord || `mail.${fromDomain}`;
+
+  const mxRecords = await dnsResolver.resolveMx(toDomain);
   if (!mxRecords || mxRecords.length === 0) {
     throw new Error(`No MX records found for domain: ${toDomain}`);
   }
@@ -744,19 +796,35 @@ async function deliverTestEmail(
   let lastError: Error | null = null;
   for (const mx of mxRecords) {
     try {
-      const transporter = nodemailer.createTransport({
+      const transportOptions: any = {
         host: mx.exchange,
         port: 25,
         secure: false,
-        tls: { rejectUnauthorized: false }
-      });
+        tls: { rejectUnauthorized: false },
+        name: heloName // HELO/EHLO name dinâmico
+      };
+
+      // Configurar DKIM se habilitado
+      if (emailDomain.dkimEnabled && emailDomain.dkimPrivateKey) {
+        transportOptions.dkim = {
+          domainName: fromDomain,
+          keySelector: emailDomain.dkimSelector || 'default',
+          privateKey: emailDomain.dkimPrivateKey
+        };
+      }
+
+      const transporter = nodemailer.createTransport(transportOptions);
 
       const result = await transporter.sendMail({
         from: `noreply@${fromDomain}`,
         to,
         subject,
         text: body,
-        messageId: `<${messageId}>`
+        messageId: `<${messageId}>`,
+        headers: {
+          'X-Mailer': 'DigiUrban Mail Server',
+          'X-Originating-IP': await getServerPTR() || 'unknown'
+        }
       });
 
       return { response: result.response };
