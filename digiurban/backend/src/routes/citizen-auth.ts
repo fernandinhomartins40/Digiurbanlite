@@ -722,7 +722,7 @@ router.post('/forgot-password', loginRateLimiter, asyncHandler(async (req: Reque
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        message: error.errors[0]?.message || 'Dados inválidos'
+        message: error.issues[0]?.message || 'Dados inválidos'
       });
       return;
     }
@@ -756,7 +756,7 @@ router.post('/validate-reset-token', asyncHandler(async (req: Request, res: Resp
     if (error instanceof z.ZodError) {
       res.status(400).json({
         valid: false,
-        message: error.errors[0]?.message || 'Dados inválidos'
+        message: error.issues[0]?.message || 'Dados inválidos'
       });
       return;
     }
@@ -795,14 +795,14 @@ router.post('/reset-password', asyncHandler(async (req: Request, res: Response) 
 
     // Log de auditoria
     await logAuditEvent({
-      eventType: AUDIT_EVENTS.PASSWORD_CHANGED,
-      userId: null,
-      ipAddress: req.ip || 'unknown',
+      action: AUDIT_EVENTS.PASSWORD_CHANGE,
+      citizenId: undefined,
+      ip: req.ip || 'unknown',
       userAgent: req.get('User-Agent') || 'unknown',
-      metadata: {
+      success: true,
+      details: {
         method: 'password_reset',
-        userType: 'citizen',
-        success: true
+        userType: 'citizen'
       }
     });
 
@@ -812,7 +812,7 @@ router.post('/reset-password', asyncHandler(async (req: Request, res: Response) 
     if (error instanceof z.ZodError) {
       res.status(400).json({
         success: false,
-        message: error.errors[0]?.message || 'Dados inválidos'
+        message: error.issues[0]?.message || 'Dados inválidos'
       });
       return;
     }

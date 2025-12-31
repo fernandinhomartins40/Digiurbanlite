@@ -707,7 +707,7 @@ router.post(
       if (isZodError(error)) {
         res.status(400).json({
           success: false,
-          message: error.errors[0]?.message || 'Dados inválidos'
+          message: error.issues[0]?.message || 'Dados inválidos'
         });
         return;
       }
@@ -744,7 +744,7 @@ router.post(
       if (isZodError(error)) {
         res.status(400).json({
           valid: false,
-          message: error.errors[0]?.message || 'Dados inválidos'
+          message: error.issues[0]?.message || 'Dados inválidos'
         });
         return;
       }
@@ -781,13 +781,13 @@ router.post(
 
       // Log de auditoria
       await logAuditEvent({
-        eventType: AUDIT_EVENTS.PASSWORD_CHANGED,
-        userId: null,
-        ipAddress: req.ip || 'unknown',
+        action: AUDIT_EVENTS.PASSWORD_CHANGE,
+        userId: undefined,
+        ip: req.ip || 'unknown',
         userAgent: req.get('User-Agent') || 'unknown',
-        metadata: {
-          method: 'password_reset',
-          success: true
+        success: true,
+        details: {
+          method: 'password_reset'
         }
       });
 
@@ -797,7 +797,7 @@ router.post(
       if (isZodError(error)) {
         res.status(400).json({
           success: false,
-          message: error.errors[0]?.message || 'Dados inválidos'
+          message: error.issues[0]?.message || 'Dados inválidos'
         });
         return;
       }
