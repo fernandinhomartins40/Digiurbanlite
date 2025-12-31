@@ -13,6 +13,7 @@ WORKDIR /app
 # Copiar package files
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY tsconfig.prisma.json ./
 
 # Instalar todas as dependências (incluindo devDependencies para build)
 # Nota: Usando npm install porque package-lock.json não está versionado
