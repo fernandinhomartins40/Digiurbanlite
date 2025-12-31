@@ -245,7 +245,8 @@ export class PasswordResetService {
       });
 
       if (!emailServer) {
-        throw new Error('Nenhum servidor de email ativo');
+        console.warn('[Password Reset] Nenhum servidor de email ativo - email não será enviado');
+        return;
       }
 
       // Buscar domínio configurado
@@ -258,7 +259,8 @@ export class PasswordResetService {
       });
 
       if (!emailDomain) {
-        throw new Error('Nenhum domínio de email configurado');
+        console.warn('[Password Reset] Nenhum domínio de email configurado - email não será enviado');
+        return;
       }
 
       // URL base do frontend
