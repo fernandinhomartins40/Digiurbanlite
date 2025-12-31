@@ -443,6 +443,27 @@ app.use(errorHandler);
 console.log('⚠️  Module handlers DESABILITADOS temporariamente');
 
 // ============================================================
+// 📧 INICIALIZAÇÃO AUTOMÁTICA DO SERVIDOR DE EMAIL
+// ============================================================
+import { startEmailServer } from './lib/email/email-server-manager';
+
+async function initializeEmailServer() {
+  try {
+    console.log('📧 Tentando inicializar servidor de email...');
+    await startEmailServer();
+    console.log('✅ Servidor de email iniciado com sucesso!');
+  } catch (error: any) {
+    if (error.message.includes('not configured')) {
+      console.warn('⚠️  Servidor de email não configurado - será necessário configurar via painel Super Admin');
+      console.warn('   Acesse: /super-admin/email-server');
+    } else {
+      console.error('❌ Erro ao inicializar servidor de email:', error.message);
+      console.warn('⚠️  Sistema continuará funcionando sem servidor de email');
+    }
+  }
+}
+
+// ============================================================
 // 🔥 INICIALIZAR SERVIDOR COM WEBSOCKET
 // ============================================================
 const httpServer = http.createServer(app);
@@ -455,7 +476,7 @@ try {
   console.warn('⚠️  Erro ao inicializar WebSocket (não crítico):', error);
 }
 
-const server = httpServer.listen(PORT, () => {
+const server = httpServer.listen(PORT, async () => {
   const startupMsg = `🚀 DigiUrban Backend server running on port ${PORT}`;
   console.log(startupMsg);
   logger.info('Server started successfully', {
@@ -467,6 +488,9 @@ const server = httpServer.listen(PORT, () => {
   console.log(`🔌 WebSocket disponível em: ws://localhost:${PORT}/api/socket`);
   console.log(`📝 Logs salvos em: logs/`);
   console.log(`⏰ Server is now listening and will stay alive...`);
+
+  // Inicializar servidor de email após HTTP server estar pronto
+  await initializeEmailServer();
 });
 
 server.on('error', (error: NodeJS.ErrnoException) => {

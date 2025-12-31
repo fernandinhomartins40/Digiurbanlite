@@ -22,6 +22,36 @@ services:
       timeout: 5s
       retries: 5
 
+  ultrazend-smtp:
+    build:
+      context: ./ultrazend-smtp-server
+      dockerfile: Dockerfile
+    container_name: ultrazend-smtp
+    ports:
+      - "25:25"    # MX Server (receber emails)
+      - "587:587"  # Submission Server (enviar emails)
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SMTP_HOSTNAME=mail.digiurban.com.br
+      - MX_PORT=25
+      - SUBMISSION_PORT=587
+    volumes:
+      - smtp_data:/app/data
+      - smtp_logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(587, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   digiurban:
     build:
       context: .
@@ -77,6 +107,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      ultrazend-smtp:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
       interval: 30s
@@ -92,6 +124,10 @@ volumes:
   digiurban_uploads:
     driver: local
   digiurban_logs:
+    driver: local
+  smtp_data:
+    driver: local
+  smtp_logs:
     driver: local
 
 networks:

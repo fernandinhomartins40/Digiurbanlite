@@ -17,6 +17,7 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { migrateDocumentsToTable } from './migrations-data/migrate-documents-to-table';
+import { seedEmailServer } from './seeds/email-server.seed';
 
 const prisma = new PrismaClient();
 
@@ -381,7 +382,15 @@ async function main() {
       // Não falhar o seed se migração der erro
     }
 
-    console.log('╔════════════════════════════════════════════════════════╗');
+    // ========================================================================
+    // 6. SERVIDOR DE EMAIL
+    // ========================================================================
+    console.log('\n6️⃣  Servidor de Email');
+    console.log('   ─────────────────────────────\n');
+
+    await seedEmailServer();
+
+    console.log('\n╔════════════════════════════════════════════════════════╗');
     console.log('║  🚀 Sistema pronto para uso!                          ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
 

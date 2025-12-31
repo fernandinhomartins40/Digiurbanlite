@@ -850,6 +850,15 @@ Este é um email automático, não responda.
     domainId: string;
   }): Promise<void> {
     try {
+      // Buscar EmailServer para obter configurações
+      const emailServer = await prisma.emailServer.findUnique({
+        where: { id: emailServerId }
+      });
+
+      if (!emailServer) {
+        throw new Error(`Email server ${emailServerId} not found`);
+      }
+
       // Buscar domínio com DKIM
       const emailDomain = await prisma.emailDomain.findUnique({
         where: { id: domainId }
@@ -862,10 +871,10 @@ Este é um email automático, não responda.
       // Gerar messageId
       const messageId = crypto.randomBytes(16).toString('hex') + '@' + emailDomain.domainName;
 
-      // Criar transporter com DKIM
+      // Criar transporter com configurações dinâmicas do EmailServer
       const transportOptions: any = {
-        host: 'localhost',
-        port: 587,
+        host: emailServer.hostname,
+        port: emailServer.submissionPort,
         secure: false,
         tls: { rejectUnauthorized: false }
       };
