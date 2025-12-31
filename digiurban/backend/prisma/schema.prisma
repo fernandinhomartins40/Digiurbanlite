@@ -65,6 +65,9 @@ model User {
   requestedTickets AdminTicket[] @relation("TicketRequester")
   assignedTickets  AdminTicket[] @relation("TicketAssigned")
 
+  // Recuperação de senha
+  passwordResetTokens PasswordResetToken[]
+
   @@map("users")
 }
 
@@ -151,8 +154,43 @@ model Citizen {
   linkedProtocols     ProtocolCitizenLink[]    @relation("LinkedCitizens")
   tickets             AdminTicket[]
 
+  // Recuperação de senha
+  passwordResetTokens PasswordResetToken[]
+
   @@unique([cpf])
   @@map("citizens")
+}
+
+// ========================================
+// RECUPERAÇÃO DE SENHA
+// ========================================
+
+model PasswordResetToken {
+  id           String   @id @default(cuid())
+  token        String   @unique
+
+  // Suporte para ambos tipos de usuário
+  userId       String?
+  citizenId    String?
+
+  userType     String   // "admin" ou "citizen"
+  email        String
+
+  expiresAt    DateTime
+  used         Boolean  @default(false)
+  usedAt       DateTime?
+
+  createdAt    DateTime @default(now())
+
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  citizen      Citizen? @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([email])
+  @@index([userId])
+  @@index([citizenId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
 }
 
 // ========================================

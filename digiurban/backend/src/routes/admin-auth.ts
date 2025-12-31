@@ -676,4 +676,139 @@ async function getUserStats(
   }
 }
 
+// ======================================================================
+// RECUPERAÇÃO DE SENHA
+// ======================================================================
+
+import { PasswordResetService } from '../services/password-reset.service';
+const passwordResetService = new PasswordResetService();
+
+/**
+ * POST /api/auth/admin/forgot-password
+ * Solicita recuperação de senha
+ */
+router.post(
+  '/forgot-password',
+  loginRateLimiter, // Limita tentativas
+  handleAsyncRoute(async (req, res) => {
+    try {
+      const { email } = z.object({
+        email: z.string().email('Email inválido')
+      }).parse(req.body);
+
+      const result = await passwordResetService.createResetToken({
+        email,
+        userType: 'admin'
+      });
+
+      res.json(result);
+
+    } catch (error) {
+      if (isZodError(error)) {
+        res.status(400).json({
+          success: false,
+          message: error.errors[0]?.message || 'Dados inválidos'
+        });
+        return;
+      }
+
+      console.error('Error in forgot-password:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao processar solicitação'
+      });
+    }
+  })
+);
+
+/**
+ * POST /api/auth/admin/validate-reset-token
+ * Valida token de recuperação
+ */
+router.post(
+  '/validate-reset-token',
+  handleAsyncRoute(async (req, res) => {
+    try {
+      const { token } = z.object({
+        token: z.string().min(1, 'Token é obrigatório')
+      }).parse(req.body);
+
+      const result = await passwordResetService.validateToken({
+        token,
+        userType: 'admin'
+      });
+
+      res.json(result);
+
+    } catch (error) {
+      if (isZodError(error)) {
+        res.status(400).json({
+          valid: false,
+          message: error.errors[0]?.message || 'Dados inválidos'
+        });
+        return;
+      }
+
+      console.error('Error in validate-reset-token:', error);
+      res.json({ valid: false });
+    }
+  })
+);
+
+/**
+ * POST /api/auth/admin/reset-password
+ * Redefine senha usando token
+ */
+router.post(
+  '/reset-password',
+  handleAsyncRoute(async (req, res) => {
+    try {
+      const data = z.object({
+        token: z.string().min(1, 'Token é obrigatório'),
+        newPassword: strongPasswordSchema
+      }).parse(req.body);
+
+      const result = await passwordResetService.resetPassword({
+        token: data.token,
+        newPassword: data.newPassword,
+        userType: 'admin'
+      });
+
+      if (!result.success) {
+        res.status(400).json(result);
+        return;
+      }
+
+      // Log de auditoria
+      await logAuditEvent({
+        eventType: AUDIT_EVENTS.PASSWORD_CHANGED,
+        userId: null,
+        ipAddress: req.ip || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown',
+        metadata: {
+          method: 'password_reset',
+          success: true
+        }
+      });
+
+      res.json(result);
+
+    } catch (error) {
+      if (isZodError(error)) {
+        res.status(400).json({
+          success: false,
+          message: error.errors[0]?.message || 'Dados inválidos'
+        });
+        return;
+      }
+
+      console.error('Error in reset-password:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro ao redefinir senha'
+      });
+    }
+  })
+);
+
 export default router;

@@ -387,19 +387,28 @@ export default function CitizenLoginPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="remember-me"
-                    checked={rememberMe}
-                    onCheckedChange={(checked) => setRememberMe(checked === true)}
-                    className="border-[#0f6fbe] data-[state=checked]:bg-[#0f6fbe]"
-                  />
-                  <label
-                    htmlFor="remember-me"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-gray-700"
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="remember-me"
+                      checked={rememberMe}
+                      onCheckedChange={(checked) => setRememberMe(checked === true)}
+                      className="border-[#0f6fbe] data-[state=checked]:bg-[#0f6fbe]"
+                    />
+                    <label
+                      htmlFor="remember-me"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-gray-700"
+                    >
+                      Lembrar meu CPF
+                    </label>
+                  </div>
+
+                  <Link
+                    href="/cidadao/forgot-password"
+                    className="text-sm text-[#0f6fbe] hover:text-[#0d5fa0] font-medium"
                   >
-                    Lembrar meu CPF
-                  </label>
+                    Esqueci minha senha
+                  </Link>
                 </div>
 
                 <Button

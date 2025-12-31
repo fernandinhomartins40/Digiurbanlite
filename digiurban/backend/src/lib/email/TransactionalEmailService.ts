@@ -827,6 +827,96 @@ Este é um email automático, não responda.
       category: template.category || undefined
         };
   }
+
+  /**
+   * Envia email raw (sem template)
+   * Usado para recuperação de senha e outros emails transacionais diretos
+   */
+  async sendRawEmail({
+    from,
+    to,
+    subject,
+    html,
+    text,
+    emailServerId,
+    domainId
+  }: {
+    from: string;
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+    emailServerId: string;
+    domainId: string;
+  }): Promise<void> {
+    try {
+      // Buscar domínio com DKIM
+      const emailDomain = await prisma.emailDomain.findUnique({
+        where: { id: domainId }
+      });
+
+      if (!emailDomain) {
+        throw new Error(`Email domain ${domainId} not found`);
+      }
+
+      // Gerar messageId
+      const messageId = crypto.randomBytes(16).toString('hex') + '@' + emailDomain.domainName;
+
+      // Criar transporter com DKIM
+      const transportOptions: any = {
+        host: 'localhost',
+        port: 587,
+        secure: false,
+        tls: { rejectUnauthorized: false }
+      };
+
+      // Configurar DKIM se habilitado
+      if (emailDomain.dkimEnabled && emailDomain.dkimPrivateKey) {
+        transportOptions.dkim = {
+          domainName: emailDomain.domainName,
+          keySelector: emailDomain.dkimSelector || 'default',
+          privateKey: emailDomain.dkimPrivateKey
+        };
+      }
+
+      const transporter = nodemailer.createTransport(transportOptions);
+
+      // Enviar email
+      await transporter.sendMail({
+        from,
+        to,
+        subject,
+        html,
+        text,
+        messageId: `<${messageId}>`,
+        headers: {
+          'X-Mailer': 'DigiUrban Mail Server',
+          'X-Email-Type': 'Transactional'
+        }
+      });
+
+      // Salvar no banco
+      await prisma.email.create({
+        data: {
+          emailServerId,
+          domainId,
+          messageId,
+          fromEmail: from,
+          toEmail: to,
+          subject,
+          htmlContent: html,
+          textContent: text,
+          status: 'SENT',
+          dkimSigned: !!emailDomain.dkimPrivateKey,
+          sentAt: new Date()
+        }
+      });
+
+    } catch (error) {
+      console.error('Error sending raw email:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

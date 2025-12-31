@@ -694,4 +694,135 @@ router.post('/logout', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
+// ======================================================================
+// RECUPERAÇÃO DE SENHA
+// ======================================================================
+
+import { PasswordResetService } from '../services/password-reset.service';
+const passwordResetService = new PasswordResetService();
+
+/**
+ * POST /api/auth/citizen/forgot-password
+ * Solicita recuperação de senha
+ */
+router.post('/forgot-password', loginRateLimiter, asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const { email } = z.object({
+      email: z.string().email('Email inválido')
+    }).parse(req.body);
+
+    const result = await passwordResetService.createResetToken({
+      email,
+      userType: 'citizen'
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({
+        success: false,
+        message: error.errors[0]?.message || 'Dados inválidos'
+      });
+      return;
+    }
+
+    console.error('Error in forgot-password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao processar solicitação'
+    });
+  }
+}));
+
+/**
+ * POST /api/auth/citizen/validate-reset-token
+ * Valida token de recuperação
+ */
+router.post('/validate-reset-token', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const { token } = z.object({
+      token: z.string().min(1, 'Token é obrigatório')
+    }).parse(req.body);
+
+    const result = await passwordResetService.validateToken({
+      token,
+      userType: 'citizen'
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({
+        valid: false,
+        message: error.errors[0]?.message || 'Dados inválidos'
+      });
+      return;
+    }
+
+    console.error('Error in validate-reset-token:', error);
+    res.json({ valid: false });
+  }
+}));
+
+/**
+ * POST /api/auth/citizen/reset-password
+ * Redefine senha usando token
+ */
+router.post('/reset-password', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const data = z.object({
+      token: z.string().min(1, 'Token é obrigatório'),
+      newPassword: z.string()
+        .min(8, 'Nova senha deve ter pelo menos 8 caracteres')
+        .regex(/[A-Z]/, 'Nova senha deve conter pelo menos uma letra maiúscula')
+        .regex(/[a-z]/, 'Nova senha deve conter pelo menos uma letra minúscula')
+        .regex(/\d/, 'Nova senha deve conter pelo menos um número')
+        .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Nova senha deve conter pelo menos um caractere especial')
+    }).parse(req.body);
+
+    const result = await passwordResetService.resetPassword({
+      token: data.token,
+      newPassword: data.newPassword,
+      userType: 'citizen'
+    });
+
+    if (!result.success) {
+      res.status(400).json(result);
+      return;
+    }
+
+    // Log de auditoria
+    await logAuditEvent({
+      eventType: AUDIT_EVENTS.PASSWORD_CHANGED,
+      userId: null,
+      ipAddress: req.ip || 'unknown',
+      userAgent: req.get('User-Agent') || 'unknown',
+      metadata: {
+        method: 'password_reset',
+        userType: 'citizen',
+        success: true
+      }
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({
+        success: false,
+        message: error.errors[0]?.message || 'Dados inválidos'
+      });
+      return;
+    }
+
+    console.error('Error in reset-password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao redefinir senha'
+    });
+  }
+}));
+
 export default router;

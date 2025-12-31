@@ -142,20 +142,29 @@ export default function SuperAdminLoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember-superadmin"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked === true)}
-                disabled={loading}
-                className="border-[#193642] data-[state=checked]:bg-[#193642]"
-              />
-              <label
-                htmlFor="remember-superadmin"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-gray-700"
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember-superadmin"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                  disabled={loading}
+                  className="border-[#193642] data-[state=checked]:bg-[#193642]"
+                />
+                <label
+                  htmlFor="remember-superadmin"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-gray-700"
+                >
+                  Lembrar meu email
+                </label>
+              </div>
+
+              <Link
+                href="/admin/forgot-password"
+                className="text-sm text-[#0f6fbe] hover:text-[#0d5fa0] font-medium"
               >
-                Lembrar meu email
-              </label>
+                Esqueci minha senha
+              </Link>
             </div>
 
             <Button
