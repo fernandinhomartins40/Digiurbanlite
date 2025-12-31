@@ -6,6 +6,10 @@ import nodemailer from 'nodemailer';
 
 const router = Router();
 
+// Criar resolver DNS confiável usando Google DNS
+const dnsResolver = new dns.Resolver();
+dnsResolver.setServers(['8.8.8.8', '8.8.4.4']);
+
 // Middleware já aplicado no email-server parent router
 
 /**
@@ -262,7 +266,7 @@ router.post('/:id/verify-mx', async (req: Request, res: Response) => {
     }
 
     try {
-      const mxRecords = await dns.resolveMx(domain.domainName);
+      const mxRecords = await dnsResolver.resolveMx(domain.domainName);
       // Cada domínio usa mail.{domainName}
       const expectedMx = `mail.${domain.domainName}`;
 
@@ -309,7 +313,7 @@ router.post('/:id/verify-spf', async (req: Request, res: Response) => {
     }
 
     try {
-      const txtRecords = await dns.resolveTxt(domain.domainName);
+      const txtRecords = await dnsResolver.resolveTxt(domain.domainName);
       const spfRecord = txtRecords
         .flat()
         .find(record => record.startsWith('v=spf1'));
@@ -367,7 +371,7 @@ router.post('/:id/verify-dkim', async (req: Request, res: Response) => {
 
     try {
       const dkimDomain = `${domain.dkimSelector}._domainkey.${domain.domainName}`;
-      const txtRecords = await dns.resolveTxt(dkimDomain);
+      const txtRecords = await dnsResolver.resolveTxt(dkimDomain);
       const dkimRecord = txtRecords
         .flat()
         .find(record => record.startsWith('v=DKIM1'));
@@ -466,7 +470,7 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
 
     // Verificar MX
     try {
-      const mxRecords = await dns.resolveMx(domain.domainName);
+      const mxRecords = await dnsResolver.resolveMx(domain.domainName);
       const expectedMx = `mail.${domain.domainName}`;
       const found = mxRecords.some(record =>
         record.exchange.toLowerCase() === expectedMx.toLowerCase()
@@ -491,7 +495,7 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
 
     // Verificar SPF
     try {
-      const txtRecords = await dns.resolveTxt(domain.domainName);
+      const txtRecords = await dnsResolver.resolveTxt(domain.domainName);
       const spfRecord = txtRecords.flat().find(record => record.startsWith('v=spf1'));
       const verified = !!spfRecord && spfRecord.includes('mx');
 
@@ -516,7 +520,7 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
     if (domain.dkimPublicKey) {
       try {
         const dkimDomain = `${domain.dkimSelector}._domainkey.${domain.domainName}`;
-        const txtRecords = await dns.resolveTxt(dkimDomain);
+        const txtRecords = await dnsResolver.resolveTxt(dkimDomain);
         const dkimRecord = txtRecords.flat().find(record => record.startsWith('v=DKIM1'));
         const verified = !!dkimRecord && dkimRecord.includes(domain.dkimPublicKey.substring(0, 50));
 
