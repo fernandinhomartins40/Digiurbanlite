@@ -45,12 +45,13 @@ export async function seedEmailServer() {
     }
 
     // Criar EmailServer padrão
+    // IMPORTANTE: hostname usa nome do container Docker para comunicação interna
     const emailServer = await prisma.emailServer.create({
       data: {
-        hostname: 'mail.digiurban.com.br',
-        submissionPort: 587,
-        mxPort: 25,
-        tlsEnabled: true,
+        hostname: 'ultrazend-smtp',  // Nome do container Docker
+        submissionPort: 587,          // Porta INTERNA do container
+        mxPort: 25,                   // Porta INTERNA do container
+        tlsEnabled: false,            // TLS desabilitado (conexão interna segura via Docker network)
         certPath: null,
         keyPath: null,
         isPremiumService: false,

@@ -57,7 +57,8 @@
       "Bash(wc:*)",
       "Bash(del nul)",
       "Bash(npm run type-check:*)",
-      "Bash(del nul ultrazend-smtp-servernul)"
+      "Bash(del nul ultrazend-smtp-servernul)",
+      "Bash(npm run build:prisma:*)"
     ],
     "deny": [],
     "ask": []

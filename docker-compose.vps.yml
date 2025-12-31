@@ -28,8 +28,8 @@ services:
       dockerfile: Dockerfile
     container_name: ultrazend-smtp
     ports:
-      - "25:25"    # MX Server (receber emails)
-      - "587:587"  # Submission Server (enviar emails)
+      - "2525:25"    # MX Server (receber emails) - Porta externa 2525
+      - "2587:587"   # Submission Server (enviar emails) - Porta externa 2587
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
