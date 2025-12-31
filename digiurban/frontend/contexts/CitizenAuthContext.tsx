@@ -140,8 +140,11 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
         setTenant(null);
         setCitizen(null);
 
-        // Redirecionar para login
-        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        // Redirecionar para login (exceto se já estiver em páginas públicas)
+        const publicPaths = ['/login', '/forgot-password', '/reset-password'];
+        const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path));
+
+        if (typeof window !== 'undefined' && !isPublicPath) {
           setTimeout(() => {
             window.location.href = '/cidadao/login';
           }, 100);

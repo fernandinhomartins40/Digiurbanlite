@@ -115,15 +115,23 @@ function SuperAdminLayoutContent({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Páginas públicas que não precisam de autenticação
+  const publicPaths = [
+    '/super-admin/login',
+    '/super-admin/forgot-password',
+    '/super-admin/reset-password'
+  ];
+  const isPublicPath = publicPaths.some(path => pathname?.startsWith(path));
+
   useEffect(() => {
-    if (pathname === '/super-admin/login') {
+    if (isPublicPath) {
       return;
     }
 
     if (!authLoading && !user) {
       router.push('/super-admin/login');
     }
-  }, [pathname, router, user, authLoading]);
+  }, [pathname, router, user, authLoading, isPublicPath]);
 
   const toggleMenu = (href: string) => {
     setExpandedMenus(prev =>
@@ -144,8 +152,8 @@ function SuperAdminLayoutContent({
     return pathname.startsWith(href) && href !== '#';
   };
 
-  if (pathname === '/super-admin/login') {
-    return children;
+  if (isPublicPath) {
+    return <>{children}</>;
   }
 
   if (authLoading) {

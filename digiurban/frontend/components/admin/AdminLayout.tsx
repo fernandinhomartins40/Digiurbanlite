@@ -17,13 +17,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter()
   const hasRedirected = useRef(false)
 
+  // Páginas públicas que não precisam de autenticação
+  const publicPaths = [
+    '/admin/login',
+    '/admin/forgot-password',
+    '/admin/reset-password'
+  ]
+  const isPublicPath = publicPaths.some(path => pathname?.startsWith(path))
+
   // Verificar se o usuário está autenticado
   useEffect(() => {
-    if (!loading && !user && pathname !== '/admin/login' && !hasRedirected.current) {
+    if (!loading && !user && !isPublicPath && !hasRedirected.current) {
       hasRedirected.current = true
       router.replace('/admin/login')
     }
-  }, [user, loading, pathname, router])
+  }, [user, loading, pathname, router, isPublicPath])
 
   // Mostrar loading enquanto carrega
   if (loading) {
@@ -37,14 +45,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     )
   }
 
-  // Se não há usuário e não está na página de login, não renderizar nada
+  // Se não há usuário e não está em página pública, não renderizar nada
   // (o redirect irá acontecer)
-  if (!user && pathname !== '/admin/login') {
+  if (!user && !isPublicPath) {
     return null
   }
 
-  // Se estiver na página de login, renderizar apenas o conteúdo
-  if (pathname === '/admin/login') {
+  // Se estiver em página pública, renderizar apenas o conteúdo
+  if (isPublicPath) {
     return <>{children}</>
   }
 
