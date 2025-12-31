@@ -14,19 +14,22 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Instalar dependências
-RUN npm ci --only=production
+# Instalar todas as dependências (incluindo devDependencies para build)
+RUN npm ci
 
 # Copiar código fonte
 COPY prisma ./prisma
 COPY src ./src
-COPY start-server.js ./
+COPY start-server-production.js ./
+
+# Gerar Prisma Client
+RUN npx prisma generate
 
 # Compilar TypeScript
 RUN npm run build
 
-# Gerar Prisma Client
-RUN npx prisma generate
+# Remover devDependencies após build
+RUN npm prune --omit=dev
 
 # Criar diretórios necessários
 RUN mkdir -p /app/data /app/logs && \
@@ -44,4 +47,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 
 # Iniciar servidor
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/index.js"]
+CMD ["node", "start-server-production.js"]
