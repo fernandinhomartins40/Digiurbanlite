@@ -263,10 +263,11 @@ router.post('/:id/verify-mx', async (req: Request, res: Response) => {
 
     try {
       const mxRecords = await dns.resolveMx(domain.domainName);
-      const expectedMx = domain.emailServer.hostname;
+      // Cada domínio usa mail.{domainName}
+      const expectedMx = `mail.${domain.domainName}`;
 
       const found = mxRecords.some(record =>
-        record.exchange.toLowerCase().includes(expectedMx.toLowerCase())
+        record.exchange.toLowerCase() === expectedMx.toLowerCase()
       );
 
       res.json({
@@ -281,7 +282,7 @@ router.post('/:id/verify-mx', async (req: Request, res: Response) => {
         recordType: 'MX',
         verified: false,
         found: false,
-        expected: domain.emailServer.hostname,
+        expected: `mail.${domain.domainName}`,
         errorMessage: error.code === 'ENOTFOUND' ? 'No MX records found' : error.message
       });
     }
@@ -466,9 +467,9 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
     // Verificar MX
     try {
       const mxRecords = await dns.resolveMx(domain.domainName);
-      const expectedMx = domain.emailServer.hostname;
+      const expectedMx = `mail.${domain.domainName}`;
       const found = mxRecords.some(record =>
-        record.exchange.toLowerCase().includes(expectedMx.toLowerCase())
+        record.exchange.toLowerCase() === expectedMx.toLowerCase()
       );
 
       results.push({
@@ -483,7 +484,7 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
         recordType: 'MX',
         verified: false,
         found: false,
-        expected: domain.emailServer.hostname,
+        expected: `mail.${domain.domainName}`,
         errorMessage: error.code === 'ENOTFOUND' ? 'No MX records found' : error.message
       });
     }
