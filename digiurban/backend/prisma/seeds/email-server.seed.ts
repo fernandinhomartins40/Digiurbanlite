@@ -50,16 +50,13 @@ export async function seedEmailServer() {
         hostname: 'mail.digiurban.com.br',
         submissionPort: 587,
         mxPort: 25,
-        maxConnections: 100,
-        maxMessageSize: 52428800, // 50MB
         tlsEnabled: true,
         certPath: null,
         keyPath: null,
-        authRequired: false, // Permitir envio sem auth internamente
-        isPremium: false,
+        isPremiumService: false,
         isActive: true,
         monthlyPrice: 0,
-        monthlyEmailLimit: 0
+        maxEmailsPerMonth: 0
       }
     });
 
