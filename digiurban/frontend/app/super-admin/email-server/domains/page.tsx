@@ -42,6 +42,8 @@ export default function EmailDomainsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'dns' | 'dkim' | 'stats' | 'test'>('dns');
   const [serverHostname, setServerHostname] = useState('');
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
 
   useEffect(() => {
     fetchDomains();
@@ -324,8 +326,21 @@ export default function EmailDomainsPage() {
   const handleSendTestEmail = async (to: string) => {
     if (!selectedDomain) return;
 
+    // Validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to)) {
+      toast({
+        title: 'Email inválido',
+        description: 'Por favor, insira um endereço de email válido.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSendingTestEmail(true);
+
     try {
-      await apiRequest(`/super-admin/email-server/domains/${selectedDomain.id}/send-test-email`, {
+      const response = await apiRequest(`/super-admin/email-server/domains/${selectedDomain.id}/send-test-email`, {
         method: 'POST',
         body: JSON.stringify({
           to,
@@ -334,17 +349,25 @@ export default function EmailDomainsPage() {
         })
       });
 
-      toast({
-        title: 'Email enviado',
-        description: `Email de teste enviado para ${to}`,
-      });
-    } catch (error) {
+      if (response?.success) {
+        toast({
+          title: '✅ Email enviado com sucesso!',
+          description: `Email de teste enviado para ${to}. Verifique sua caixa de entrada (e spam).`,
+        });
+        setTestEmailAddress(''); // Limpar campo
+      } else {
+        throw new Error(response?.error || 'Falha ao enviar email');
+      }
+    } catch (error: any) {
       console.error('Error sending test email:', error);
+      const errorMessage = error?.message || error?.error || 'Não foi possível enviar o email de teste.';
       toast({
-        title: 'Erro ao enviar email',
-        description: 'Não foi possível enviar o email de teste.',
+        title: '❌ Erro ao enviar email',
+        description: errorMessage,
         variant: 'destructive',
       });
+    } finally {
+      setSendingTestEmail(false);
     }
   };
 
@@ -816,28 +839,60 @@ export default function EmailDomainsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          <strong>Importante:</strong> Certifique-se de que os registros DNS (MX, SPF, DKIM) estão configurados corretamente antes de enviar emails de teste.
+                          Emails podem cair na caixa de spam se os registros não estiverem verificados.
+                        </p>
+                      </div>
+
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Email de Destino
                         </label>
                         <input
                           type="email"
-                          id="test-email"
+                          value={testEmailAddress}
+                          onChange={(e) => setTestEmailAddress(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && testEmailAddress && !sendingTestEmail) {
+                              handleSendTestEmail(testEmailAddress);
+                            }
+                          }}
                           placeholder="exemplo@gmail.com"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          disabled={sendingTestEmail}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                         />
+                        <p className="text-xs text-gray-500 mt-1">Pressione Enter para enviar</p>
                       </div>
+
                       <button
-                        onClick={() => {
-                          const input = document.getElementById('test-email') as HTMLInputElement;
-                          if (input?.value) {
-                            handleSendTestEmail(input.value);
-                          }
-                        }}
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        onClick={() => handleSendTestEmail(testEmailAddress)}
+                        disabled={!testEmailAddress || sendingTestEmail}
+                        className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                       >
-                        Enviar Email de Teste
+                        {sendingTestEmail ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-5 h-5" />
+                            Enviar Email de Teste
+                          </>
+                        )}
                       </button>
+
+                      <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <h4 className="font-medium text-sm text-gray-900 mb-2">Informações do Email de Teste:</h4>
+                        <ul className="text-xs text-gray-600 space-y-1">
+                          <li>• <strong>De:</strong> noreply@{selectedDomain.domainName}</li>
+                          <li>• <strong>Assunto:</strong> Email de teste - DigiUrban</li>
+                          <li>• <strong>Servidor:</strong> mail.{selectedDomain.domainName}</li>
+                          <li>• <strong>DKIM:</strong> {selectedDomain.dkimEnabled ? '✅ Habilitado' : '❌ Desabilitado'}</li>
+                        </ul>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
