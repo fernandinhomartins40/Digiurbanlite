@@ -104,7 +104,7 @@ console.log('   Carregando citizen-auth...');
 const citizenAuthRoutes = require('./routes/citizen-auth').default;
 console.log('   ✅ citizen-auth importado');
 
-app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/auth/admin', adminAuthRoutes);
 app.use('/api/auth/citizen', citizenAuthRoutes);
 
 // Rota Super Admin (gerenciamento do município single tenant)
