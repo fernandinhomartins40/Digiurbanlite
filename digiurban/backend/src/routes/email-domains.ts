@@ -374,17 +374,26 @@ router.post('/:id/verify-dkim', async (req: Request, res: Response) => {
       const txtRecords = await dnsResolver.resolveTxt(dkimDomain);
       const dkimRecord = txtRecords
         .flat()
-        .find(record => record.startsWith('v=DKIM1'));
+        .join('') // TXT records podem vir em múltiplas strings, juntar todas
+        .replace(/["'\s]/g, ''); // Remover aspas e espaços
 
-      const verified = !!dkimRecord && dkimRecord.includes(domain.dkimPublicKey.substring(0, 50));
+      // Extrair apenas a chave pública do registro (parte após p=)
+      const dkimKeyMatch = dkimRecord.match(/p=([A-Za-z0-9+/=]+)/);
+      const dkimKeyFromDNS = dkimKeyMatch ? dkimKeyMatch[1] : '';
+
+      // Limpar a chave do banco também
+      const dkimKeyFromDB = domain.dkimPublicKey.replace(/\s/g, '');
+
+      // Verificar se as chaves são iguais (comparação exata da parte p=)
+      const verified = dkimKeyFromDNS === dkimKeyFromDB;
 
       res.json({
         recordType: 'DKIM',
         verified,
-        found: !!dkimRecord,
+        found: !!dkimRecord && dkimRecord.startsWith('v=DKIM1'),
         expected: `v=DKIM1; k=rsa; p=${domain.dkimPublicKey}`,
-        actual: dkimRecord || undefined,
-        errorMessage: !dkimRecord ? 'No DKIM record found' : undefined
+        actual: txtRecords.flat().join('') || undefined,
+        errorMessage: !dkimRecord ? 'No DKIM record found' : (!verified ? 'DKIM key mismatch' : undefined)
       });
     } catch (error: any) {
       res.json({
@@ -419,19 +428,20 @@ router.post('/:id/verify-dmarc', async (req: Request, res: Response) => {
 
     try {
       const dmarcDomain = `_dmarc.${domain.domainName}`;
-      const txtRecords = await dns.resolveTxt(dmarcDomain);
+      const txtRecords = await dnsResolver.resolveTxt(dmarcDomain);
       const dmarcRecord = txtRecords
         .flat()
-        .find(record => record.startsWith('v=DMARC1'));
+        .join('') // TXT records podem vir em múltiplas strings
+        .replace(/["'\s]/g, ''); // Remover aspas e espaços
 
-      const verified = !!dmarcRecord;
+      const verified = dmarcRecord.startsWith('v=DMARC1');
 
       res.json({
         recordType: 'DMARC',
         verified,
         found: !!dmarcRecord,
         expected: domain.dmarcPolicy || 'v=DMARC1; p=none',
-        actual: dmarcRecord || undefined,
+        actual: txtRecords.flat().join('') || undefined,
         errorMessage: !dmarcRecord ? 'No DMARC record found' : undefined
       });
     } catch (error: any) {
@@ -521,15 +531,24 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
       try {
         const dkimDomain = `${domain.dkimSelector}._domainkey.${domain.domainName}`;
         const txtRecords = await dnsResolver.resolveTxt(dkimDomain);
-        const dkimRecord = txtRecords.flat().find(record => record.startsWith('v=DKIM1'));
-        const verified = !!dkimRecord && dkimRecord.includes(domain.dkimPublicKey.substring(0, 50));
+        const dkimRecord = txtRecords
+          .flat()
+          .join('') // TXT records podem vir em múltiplas strings
+          .replace(/["'\s]/g, ''); // Remover aspas e espaços
+
+        // Extrair apenas a chave pública do registro (parte após p=)
+        const dkimKeyMatch = dkimRecord.match(/p=([A-Za-z0-9+/=]+)/);
+        const dkimKeyFromDNS = dkimKeyMatch ? dkimKeyMatch[1] : '';
+        const dkimKeyFromDB = domain.dkimPublicKey.replace(/\s/g, '');
+
+        const verified = dkimKeyFromDNS === dkimKeyFromDB;
 
         results.push({
           recordType: 'DKIM',
           verified,
-          found: !!dkimRecord,
+          found: !!dkimRecord && dkimRecord.startsWith('v=DKIM1'),
           expected: `v=DKIM1; k=rsa; p=${domain.dkimPublicKey}`,
-          actual: dkimRecord || undefined
+          actual: txtRecords.flat().join('') || undefined
         });
       } catch (error: any) {
         results.push({
@@ -546,15 +565,20 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
     if (domain.dmarcEnabled) {
       try {
         const dmarcDomain = `_dmarc.${domain.domainName}`;
-        const txtRecords = await dns.resolveTxt(dmarcDomain);
-        const dmarcRecord = txtRecords.flat().find(record => record.startsWith('v=DMARC1'));
+        const txtRecords = await dnsResolver.resolveTxt(dmarcDomain);
+        const dmarcRecord = txtRecords
+          .flat()
+          .join('') // TXT records podem vir em múltiplas strings
+          .replace(/["'\s]/g, ''); // Remover aspas e espaços
+
+        const verified = dmarcRecord.startsWith('v=DMARC1');
 
         results.push({
           recordType: 'DMARC',
-          verified: !!dmarcRecord,
+          verified,
           found: !!dmarcRecord,
           expected: domain.dmarcPolicy || 'v=DMARC1; p=none',
-          actual: dmarcRecord || undefined
+          actual: txtRecords.flat().join('') || undefined
         });
       } catch (error: any) {
         results.push({

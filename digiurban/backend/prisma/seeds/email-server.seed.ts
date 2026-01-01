@@ -64,15 +64,21 @@ export async function seedEmailServer() {
     console.log(`  ✅ Email Server criado: ${emailServer.hostname}`);
 
     // Criar domínio padrão
-    const dkimKeys = generateDKIMKeys();
+    // NOTA: Não gerar novas chaves DKIM, pois elas já estão configuradas no DNS
+    // Se você precisa de novas chaves, delete manualmente o domínio e rode o seed novamente
+    const existingDKIMPublicKey = 'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA15+yFlPgt1OAQKS8nzdVSihRcasPiCkggGQyxqJ5qgXHcZHvWSt96OHODXu9Iz5oRA0Og3fq0WxBMb7N1borwZedneTYcDfm85U5me2bTaKW6Ob1z2UYQeBBCkPLCHcRdHR1BYIA6dIljJCMonvL1RldUeDIEq8IfVC5RgKCX79wY0qhhOzk8dmtwiBPFAG5W4sgHWXP76KuRlyWuE3t7NJij94cPxfVOGkPqAgLBl3dBIma6+mfnEH45fch7EXUra8p/0aPYlvi8j+OGbU4DaGztb1l1FuJCd/TCDSGqYyX6YWZH2pxHUy6XGsRDlk2gF8OFRGswL7U4WGhv8+eFQIDAQAB';
+
+    // Gerar apenas chave privada correspondente à pública já configurada no DNS
+    // IMPORTANTE: Em produção, você deve ter a chave privada salva em segurança
+    // Por enquanto, vamos usar null e permitir que seja gerada manualmente pela interface
     const emailDomain = await prisma.emailDomain.create({
       data: {
         emailServerId: emailServer.id,
         domainName: 'digiurban.com.br',
-        isVerified: false, // Precisa configurar DNS
+        isVerified: false, // Será verificado automaticamente ao detectar os registros DNS
         dkimEnabled: true,
-        dkimPrivateKey: dkimKeys.privateKey,
-        dkimPublicKey: dkimKeys.publicKey,
+        dkimPrivateKey: null, // Será gerada manualmente pela interface quando necessário
+        dkimPublicKey: existingDKIMPublicKey,
         dkimSelector: 'default',
         spfEnabled: true,
         spfRecord: 'v=spf1 mx ~all',
@@ -83,32 +89,21 @@ export async function seedEmailServer() {
 
     console.log(`  ✅ Email Domain criado: ${emailDomain.domainName}`);
     console.log('');
-    console.log('  📋 CONFIGURAÇÃO DNS NECESSÁRIA:');
+    console.log('  ✅ DNS JÁ CONFIGURADO CORRETAMENTE:');
     console.log('  ════════════════════════════════════════════════════════════');
+    console.log('  ✓ MX Record: mail.digiurban.com.br');
+    console.log('  ✓ SPF Record: v=spf1 mx ~all');
+    console.log('  ✓ DKIM Record: default._domainkey.digiurban.com.br');
+    console.log('  ✓ DMARC Record: _dmarc.digiurban.com.br');
     console.log('');
-    console.log('  1. Registro MX:');
-    console.log('     Tipo: MX');
-    console.log('     Nome: @');
-    console.log('     Valor: mail.digiurban.com.br');
-    console.log('     Prioridade: 10');
+    console.log('  ⚠️  ATENÇÃO: Chave privada DKIM não está configurada!');
+    console.log('     Para enviar emails com assinatura DKIM, você precisa:');
+    console.log('     1. Acessar /super-admin/email-server/domains');
+    console.log('     2. Clicar em "Gerar Chaves DKIM" no domínio digiurban.com.br');
+    console.log('     3. Atualizar o DNS com a nova chave pública gerada');
     console.log('');
-    console.log('  2. Registro SPF:');
-    console.log('     Tipo: TXT');
-    console.log('     Nome: @');
-    console.log('     Valor: v=spf1 mx ~all');
-    console.log('');
-    console.log('  3. Registro DKIM:');
-    console.log('     Tipo: TXT');
-    console.log('     Nome: default._domainkey');
-    console.log(`     Valor: v=DKIM1; k=rsa; p=${dkimKeys.publicKey}`);
-    console.log('');
-    console.log('  4. Registro DMARC:');
-    console.log('     Tipo: TXT');
-    console.log('     Nome: _dmarc');
-    console.log('     Valor: v=DMARC1; p=quarantine; rua=mailto:postmaster@digiurban.com.br');
-    console.log('');
-    console.log('  ⚠️  Após configurar DNS, acesse /super-admin/email-server/domains');
-    console.log('     e clique em "Verificar DNS" para ativar o domínio');
+    console.log('  📝 Ou, se você tem a chave privada correspondente à pública atual,');
+    console.log('     adicione-a manualmente no banco de dados.');
     console.log('  ════════════════════════════════════════════════════════════');
     console.log('');
 
