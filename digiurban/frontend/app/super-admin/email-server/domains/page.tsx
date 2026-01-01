@@ -107,16 +107,6 @@ export default function EmailDomainsPage() {
     const records: DNSRecord[] = [];
     const mailHost = `mail.${domain.domainName}`;
 
-    // Registro A para mail.{domainName} - OBRIGATÓRIO para envio de email
-    records.push({
-      type: 'A',
-      name: mailHost,
-      value: hostname, // IP do servidor de email
-      priority: undefined,
-      status: domain.isVerified ? 'verified' : 'pending',
-      description: 'Aponta mail.{domínio} para o IP do servidor de email. OBRIGATÓRIO para enviar emails.'
-    });
-
     // MX Record - Define qual servidor recebe emails
     records.push({
       type: 'MX',
