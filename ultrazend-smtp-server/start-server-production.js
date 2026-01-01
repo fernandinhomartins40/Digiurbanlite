@@ -24,6 +24,7 @@ async function startProductionServer() {
     mxPort,
     submissionPort,
     maxConnections: 100,
+    authRequired: false, // Autenticação desabilitada para comunicação interna Docker
     tlsEnabled: false, // TLS será gerenciado via reverse proxy
     logLevel: 'info'
   });
