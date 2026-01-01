@@ -881,6 +881,10 @@ Este é um email automático, não responda.
       const messageId = crypto.randomBytes(16).toString('hex') + '@' + emailDomain.domainName;
 
       // Criar transporter com configurações dinâmicas do EmailServer
+      // UltraZend SMTP Server: Comunicação interna Docker não requer autenticação
+      const isInternalServer = emailServer.hostname === 'ultrazend-smtp' ||
+                               emailServer.hostname.includes('ultrazend');
+
       const transportOptions: any = {
         host: emailServer.hostname,
         port: emailServer.submissionPort,
@@ -896,6 +900,12 @@ Este é um email automático, não responda.
           privateKey: emailDomain.dkimPrivateKey
         };
       }
+
+      // IMPORTANTE: Não adicionar autenticação para servidores internos Docker
+      // Apenas servidores externos (Gmail, Outlook, etc) requerem auth
+      // if (!isInternalServer) {
+      //   transportOptions.auth = { user, pass };
+      // }
 
       const transporter = nodemailer.createTransport(transportOptions);
 
