@@ -1,8 +1,10 @@
 // UltraZend SMTP Server - Prisma Schema
-// PostgreSQL Database Schema
+// ALIGNED WITH DigiUrban Backend Schema
+// Uses the same database and tables as DigiUrban
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/@prisma/client"
 }
 
 datasource db {
@@ -11,176 +13,210 @@ datasource db {
 }
 
 // ========================================
-// AUTHENTICATION & USERS
+// EMAIL SERVER MODELS (from DigiUrban)
 // ========================================
 
-model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
-  name         String
-  isVerified   Boolean   @default(false) @map("is_verified")
-  isActive     Boolean   @default(true) @map("is_active")
-  isAdmin      Boolean   @default(false) @map("is_admin")
-  lastLogin    DateTime? @map("last_login")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+model EmailServer {
+  id                String        @id @default(cuid())
+  hostname          String
+  mxPort            Int           @default(25)
+  submissionPort    Int           @default(587)
+  isActive          Boolean       @default(false)
+  isPremiumService  Boolean       @default(true)
+  monthlyPrice      Decimal       @default(99.00)
+  maxEmailsPerMonth Int           @default(10000)
+  tlsEnabled        Boolean       @default(true)
+  certPath          String?
+  keyPath           String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  domains           EmailDomain[]
+  logs              EmailLog[]
+  statistics        EmailStats[]
+  users             EmailUser[]
+  emails            Email[]
 
-  domains       Domain[]
-  authAttempts  AuthAttempt[]
-
-  @@index([email])
-  @@index([isActive])
-  @@map("users")
+  @@map("email_servers")
 }
 
-// ========================================
-// DOMAINS & DKIM
-// ========================================
+model EmailDomain {
+  id                String      @id @default(cuid())
+  emailServerId     String
+  domainName        String
+  isVerified        Boolean     @default(false)
+  verificationToken String?
+  dkimEnabled       Boolean     @default(true)
+  dkimSelector      String      @default("default")
+  dkimPrivateKey    String?
+  dkimPublicKey     String?
+  spfEnabled        Boolean     @default(true)
+  spfRecord         String?
+  dmarcEnabled      Boolean     @default(false)
+  dmarcPolicy       String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  emailServer       EmailServer @relation(fields: [emailServerId], references: [id])
+  sentEmails        Email[]
 
-model Domain {
-  id                 Int       @id @default(autoincrement())
-  userId             Int       @map("user_id")
-  domainName         String    @unique @map("domain_name")
-  isVerified         Boolean   @default(false) @map("is_verified")
-  verificationToken  String?   @map("verification_token")
-  verifiedAt         DateTime? @map("verified_at")
-  verificationMethod String    @default("dns") @map("verification_method")
-  dkimEnabled        Boolean   @default(true) @map("dkim_enabled")
-  spfEnabled         Boolean   @default(true) @map("spf_enabled")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  dkimKeys DkimKey[]
-  emails   Email[]
-
-  @@index([domainName])
-  @@index([isVerified])
-  @@index([userId])
-  @@map("domains")
+  @@unique([emailServerId, domainName])
+  @@map("email_domains")
 }
 
-model DkimKey {
-  id               Int      @id @default(autoincrement())
-  domainId         Int      @map("domain_id")
-  selector         String
-  privateKey       String   @map("private_key") @db.Text
-  publicKey        String   @map("public_key") @db.Text
-  algorithm        String   @default("rsa-sha256")
-  canonicalization String   @default("relaxed/relaxed")
-  keySize          Int      @default(2048) @map("key_size")
-  isActive         Boolean  @default(true) @map("is_active")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+model EmailUser {
+  id            String             @id @default(cuid())
+  emailServerId String
+  email         String
+  passwordHash  String
+  name          String
+  isActive      Boolean            @default(true)
+  isAdmin       Boolean            @default(false)
+  dailyLimit    Int                @default(1000)
+  monthlyLimit  Int                @default(10000)
+  sentToday     Int                @default(0)
+  sentThisMonth Int                @default(0)
+  lastLoginAt   DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  authAttempts  EmailAuthAttempt[]
+  emailServer   EmailServer        @relation(fields: [emailServerId], references: [id])
+  sentEmails    Email[]
 
-  domain Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
-
-  @@unique([domainId, selector])
-  @@index([isActive])
-  @@map("dkim_keys")
+  @@unique([emailServerId, email])
+  @@map("email_users")
 }
-
-// ========================================
-// EMAILS & DELIVERY
-// ========================================
 
 enum EmailStatus {
-  PENDING
+  QUEUED
+  PROCESSING
   SENT
   DELIVERED
-  BOUNCED
   FAILED
-
-  @@map("email_status")
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
 }
 
-enum EmailDirection {
-  INBOUND
-  OUTBOUND
-
-  @@map("email_direction")
+enum EmailEventType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
 }
 
 model Email {
-  id           Int            @id @default(autoincrement())
-  messageId    String         @unique @map("message_id")
-  domainId     Int?           @map("domain_id")
-  fromEmail    String         @map("from_email")
-  toEmail      String         @map("to_email")
-  subject      String
-  htmlContent  String?        @map("html_content") @db.Text
-  textContent  String?        @map("text_content") @db.Text
-  status       EmailStatus    @default(PENDING)
-  direction    EmailDirection
-  sentAt       DateTime?      @map("sent_at")
-  deliveredAt  DateTime?      @map("delivered_at")
-  mxServer     String?        @map("mx_server")
-  errorMessage String?        @map("error_message") @db.Text
-  attempts     Int            @default(0)
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
+  id            String       @id @default(cuid())
+  emailServerId String?
+  domainId      String?
+  userId        String?
+  messageId     String       @unique
+  fromEmail     String
+  toEmail       String
+  ccEmails      Json?
+  bccEmails     Json?
+  subject       String
+  textContent   String?
+  htmlContent   String?
+  headers       Json?
+  attachments   Json?
+  status        EmailStatus  @default(QUEUED)
+  priority      Int          @default(3)
+  retryCount    Int          @default(0)
+  maxRetries    Int          @default(3)
+  scheduledFor  DateTime?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  failedAt      DateTime?
+  errorMessage  String?
+  opens         Int          @default(0)
+  clicks        Int          @default(0)
+  unsubscribed  Boolean      @default(false)
+  complained    Boolean      @default(false)
+  bounced       Boolean      @default(false)
+  dkimSigned    Boolean      @default(false)
+  dkimSignature String?
+  campaignId    String?
+  tags          Json?
+  metadata      Json?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  events        EmailEvent[]
+  user          EmailUser?   @relation(fields: [userId], references: [id])
+  domain        EmailDomain? @relation(fields: [domainId], references: [id])
+  emailServer   EmailServer? @relation(fields: [emailServerId], references: [id])
 
-  domain Domain? @relation(fields: [domainId], references: [id], onDelete: SetNull)
-
-  @@index([messageId])
-  @@index([fromEmail])
-  @@index([toEmail])
-  @@index([status])
-  @@index([direction])
-  @@index([sentAt])
   @@map("emails")
 }
 
-// ========================================
-// SMTP CONNECTIONS & LOGS
-// ========================================
+model EmailEvent {
+  id        String         @id @default(cuid())
+  emailId   String
+  type      EmailEventType
+  data      Json?
+  userAgent String?
+  ipAddress String?
+  timestamp DateTime       @default(now())
+  email     Email          @relation(fields: [emailId], references: [id])
 
-enum ServerType {
-  MX
-  SUBMISSION
-
-  @@map("server_type")
+  @@map("email_events")
 }
 
-enum ConnectionStatus {
-  ACCEPTED
-  REJECTED
-  FAILED
-
-  @@map("connection_status")
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
 }
 
-model SmtpConnection {
-  id            Int              @id @default(autoincrement())
-  remoteAddress String           @map("remote_address")
-  hostname      String?
-  serverType    ServerType       @map("server_type")
-  status        ConnectionStatus
-  rejectReason  String?          @map("reject_reason")
-  createdAt     DateTime         @default(now()) @map("created_at")
+model EmailLog {
+  id            String       @id @default(cuid())
+  emailServerId String?
+  from          String?
+  to            String?
+  subject       String?
+  status        String?
+  type          String?
+  level         LogLevel     @default(INFO)
+  message       String
+  metadata      Json?
+  data          Json?
+  timestamp     DateTime     @default(now())
+  emailServer   EmailServer? @relation(fields: [emailServerId], references: [id])
 
-  @@index([remoteAddress])
-  @@index([serverType])
-  @@index([status])
-  @@index([createdAt])
-  @@map("smtp_connections")
+  @@map("email_logs")
 }
 
-model AuthAttempt {
-  id            Int      @id @default(autoincrement())
-  userId        Int?     @map("user_id")
-  username      String
-  remoteAddress String   @map("remote_address")
-  success       Boolean
-  failureReason String?  @map("failure_reason")
-  createdAt     DateTime @default(now()) @map("created_at")
+model EmailStats {
+  id              String      @id @default(cuid())
+  emailServerId   String
+  date            DateTime
+  totalSent       Int         @default(0)
+  totalDelivered  Int         @default(0)
+  totalFailed     Int         @default(0)
+  totalBounced    Int         @default(0)
+  totalComplained Int         @default(0)
+  totalOpens      Int         @default(0)
+  totalClicks     Int         @default(0)
+  uniqueOpens     Int         @default(0)
+  uniqueClicks    Int         @default(0)
+  emailServer     EmailServer @relation(fields: [emailServerId], references: [id])
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@unique([emailServerId, date])
+  @@map("email_stats")
+}
 
-  @@index([username])
-  @@index([remoteAddress])
-  @@index([success])
-  @@index([createdAt])
-  @@map("auth_attempts")
+model EmailAuthAttempt {
+  id        String     @id @default(cuid())
+  userId    String?
+  email     String
+  ipAddress String
+  userAgent String?
+  success   Boolean    @default(false)
+  reason    String?
+  timestamp DateTime   @default(now())
+  user      EmailUser? @relation(fields: [userId], references: [id])
+
+  @@map("email_auth_attempts")
 }

@@ -12,7 +12,7 @@ import { MXDeliveryService } from '../delivery/MXDeliveryService.prisma';
 import { DKIMManager } from '../security/DKIMManager.prisma';
 import { SMTPServerConfig, SMTPSession, EmailData } from '../types';
 import { prisma } from '../lib/prisma';
-import { User, EmailStatus, EmailDirection, ServerType, ConnectionStatus } from '@prisma/client';
+import { EmailUser as User, EmailStatus } from '@prisma/client';
 
 /**
  * Helper para extrair texto de endereço de email
@@ -318,7 +318,7 @@ export class UltraZendSMTPServer {
     try {
       const messageId = parsedEmail.messageId || generateMessageId(this.config.hostname);
 
-      // Registrar email recebido
+      // Registrar email recebido (usando schema do DigiUrban)
       await prisma.email.upsert({
         where: { messageId },
         update: {},
@@ -329,9 +329,13 @@ export class UltraZendSMTPServer {
           subject: parsedEmail.subject || '',
           htmlContent: parsedEmail.html?.toString(),
           textContent: parsedEmail.text,
-          status: EmailStatus.DELIVERED,
-          direction: EmailDirection.INBOUND,
-          deliveredAt: new Date()
+          status: 'DELIVERED' as any, // DigiUrban EmailStatus enum
+          deliveredAt: new Date(),
+          // Metadata para marcar como email de entrada
+          metadata: {
+            direction: 'INBOUND',
+            serverType: 'MX'
+          }
         }
       });
 
@@ -353,7 +357,8 @@ export class UltraZendSMTPServer {
    */
   private async validateUserCredentials(username: string, password: string): Promise<User | null> {
     try {
-      const user = await prisma.user.findFirst({
+      // Usar EmailUser do DigiUrban
+      const user = await prisma.emailUser.findFirst({
         where: {
           email: username,
           isActive: true
@@ -385,11 +390,17 @@ export class UltraZendSMTPServer {
     status: string
   ): Promise<void> {
     try {
-      await prisma.smtpConnection.create({
+      // Log usando EmailLog do DigiUrban
+      await prisma.emailLog.create({
         data: {
-          remoteAddress,
-          serverType: serverType.toUpperCase() as ServerType,
-          status: status.toUpperCase() as ConnectionStatus
+          level: 'INFO',
+          type: 'SMTP_CONNECTION',
+          message: `${serverType} connection from ${remoteAddress}: ${status}`,
+          metadata: {
+            remoteAddress,
+            serverType,
+            status
+          }
         }
       });
     } catch (error) {
@@ -404,16 +415,17 @@ export class UltraZendSMTPServer {
     username: string,
     remoteAddress: string,
     success: boolean,
-    userId: number | null
+    userId: string | null
   ): Promise<void> {
     try {
-      await prisma.authAttempt.create({
+      // Log usando EmailAuthAttempt do DigiUrban
+      await prisma.emailAuthAttempt.create({
         data: {
           userId,
-          username,
-          remoteAddress,
+          email: username,
+          ipAddress: remoteAddress,
           success,
-          failureReason: success ? null : 'Invalid credentials'
+          reason: success ? null : 'Invalid credentials'
         }
       });
     } catch (error) {
