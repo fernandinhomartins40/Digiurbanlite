@@ -424,20 +424,29 @@ export class TransactionalEmailService {
     adminUser: EmailUserWithAdmin,
     domain: EmailDomainWithVerification
   ) {
-    // Em produção, descriptografar a senha do adminUser
-    // Por agora, usar configuração básica
-    return nodemailer.createTransport({
+    // UltraZend SMTP Server: Comunicação interna Docker não requer autenticação
+    // Servidores externos (Gmail, Outlook, etc) requerem autenticação
+    const isInternalServer = emailServer.hostname === 'ultrazend-smtp' ||
+                             emailServer.hostname.includes('ultrazend');
+
+    const transportConfig: any = {
       host: emailServer.hostname,
       port: emailServer.submissionPort,
       secure: false,
-      auth: {
-        user: adminUser.email,
-        pass: 'temp-password', // Em produção, descriptografar passwordHash
-      },
       tls: {
         rejectUnauthorized: false
-        }
-        });
+      }
+    };
+
+    // Apenas adicionar autenticação se for servidor externo
+    if (!isInternalServer) {
+      transportConfig.auth = {
+        user: adminUser.email,
+        pass: 'temp-password', // Em produção, descriptografar passwordHash
+      };
+    }
+
+    return nodemailer.createTransport(transportConfig);
   }
 
   /**
