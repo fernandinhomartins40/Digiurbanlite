@@ -66,14 +66,10 @@ COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./
 # Instalar dependências (usar npm install ao invés de npm ci para evitar problemas)
 RUN npm install --legacy-peer-deps
 
-# Copiar código do frontend INCLUINDO arquivo .env.production
+# Copiar código do frontend
 COPY digiurban/frontend ./
 
-# ✅ GARANTIR que .env.production existe e tem NEXT_PUBLIC_API_URL correto
-RUN echo "NEXT_PUBLIC_API_URL=/api" > .env.production && \
-    echo "NODE_ENV=production" >> .env.production
-
-# Build Next.js com variáveis corretas
+# Build Next.js com variáveis corretas (ENV já definida na linha 61)
 RUN npm run build
 
 # ========== STAGE 3: Production Image ==========
