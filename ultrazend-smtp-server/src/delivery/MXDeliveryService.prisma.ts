@@ -123,7 +123,7 @@ export class MXDeliveryService {
    * Tenta entrega em um servidor MX específico
    */
   private async attemptDeliveryViaMX(emailData: EmailData, mxServer: string): Promise<boolean> {
-    const transporter = await this.getTransporter(mxServer);
+    const transporter = await this.getTransporter(mxServer, emailData);
 
     try {
       const mailOptions = {
@@ -132,19 +132,20 @@ export class MXDeliveryService {
         subject: emailData.subject,
         html: emailData.html,
         text: emailData.text,
+        messageId: emailData.messageId,
         headers: {
           ...emailData.headers,
-          ...(emailData.dkimSignature && { 'DKIM-Signature': emailData.dkimSignature })
+          'X-Mailer': 'UltraZend SMTP Server'
         }
       };
 
       const result = await transporter.sendMail(mailOptions);
 
-      logger.info('📨 Email sent via MX', {
+      logger.info('📨 Email sent via MX with DKIM', {
         to: emailData.to,
         mxServer,
         messageId: result.messageId,
-        hasDKIM: !!emailData.dkimSignature
+        from: emailData.from
       });
 
       return true;
@@ -159,14 +160,18 @@ export class MXDeliveryService {
   }
 
   /**
-   * Obtém ou cria transporter para servidor MX
+   * Obtém ou cria transporter para servidor MX com DKIM
    */
-  private async getTransporter(mxServer: string): Promise<Transporter> {
-    if (this.connectionPool.has(mxServer)) {
-      return this.connectionPool.get(mxServer)!;
-    }
+  private async getTransporter(mxServer: string, emailData: EmailData): Promise<Transporter> {
+    // Não usar pool para permitir DKIM dinâmico por domínio
+    const domain = this.extractDomain(emailData.from);
 
-    const transporter = createTransport({
+    // Buscar configuração DKIM do domínio
+    const emailDomain = await prisma.emailDomain.findFirst({
+      where: { domainName: domain }
+    });
+
+    const transportOptions: any = {
       host: mxServer,
       port: 25, // Porta padrão MX
       secure: false,
@@ -176,14 +181,27 @@ export class MXDeliveryService {
       connectionTimeout: 60000,
       greetingTimeout: 30000,
       socketTimeout: 60000,
-      name: this.hostname, // Identificação do nosso servidor
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 100
-    });
+      name: this.hostname // Identificação do nosso servidor
+    };
 
-    this.connectionPool.set(mxServer, transporter);
-    return transporter;
+    // Configurar DKIM se disponível (igual ao email de teste)
+    if (emailDomain?.dkimEnabled && emailDomain.dkimPrivateKey) {
+      transportOptions.dkim = {
+        domainName: domain,
+        keySelector: emailDomain.dkimSelector || 'default',
+        privateKey: emailDomain.dkimPrivateKey
+      };
+
+      logger.info('DKIM enabled for delivery', {
+        domain,
+        selector: emailDomain.dkimSelector,
+        mxServer
+      });
+    } else {
+      logger.warn('DKIM not configured for domain', { domain });
+    }
+
+    return createTransport(transportOptions);
   }
 
   /**
