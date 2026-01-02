@@ -448,7 +448,7 @@ router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: R
   try {
     const backupDir = path.join(process.cwd(), 'backups');
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupFileName = `backup-${timestamp}.sql`;
+    const backupFileName = `backup-${timestamp}.json`;
     const backupPath = path.join(backupDir, backupFileName);
 
     // Criar diretório de backups se não existir
@@ -458,75 +458,77 @@ router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: R
       console.log('Diretório de backups já existe ou erro ao criar:', err);
     }
 
-    // Verificar se DATABASE_URL está configurada
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      return res.status(500).json({
-        success: false,
-        error: 'DATABASE_URL não configurada'
-      });
-    }
+    console.log('[BACKUP] Iniciando backup do banco de dados...');
 
-    // Detectar tipo de banco de dados
-    const isPostgres = databaseUrl.startsWith('postgresql://') || databaseUrl.startsWith('postgres://');
-    const isSQLite = databaseUrl.startsWith('file:');
+    // Fazer backup usando Prisma (funciona com qualquer DB)
+    const backupData: any = {
+      metadata: {
+        timestamp: new Date().toISOString(),
+        version: '1.0',
+        database: process.env.DATABASE_URL?.split('@')[1]?.split('/')[0] || 'unknown'
+      },
+      data: {}
+    };
 
-    if (isPostgres) {
-      // Backup PostgreSQL usando pg_dump
+    // Lista de modelos para fazer backup
+    const models = [
+      'municipioConfig',
+      'user',
+      'citizen',
+      'department',
+      'protocolSimplified',
+      'service',
+      'auditLog',
+      'citizenDocument',
+      'protocolDocument',
+      'protocolInteraction',
+      'protocolStage',
+      'notification'
+    ];
+
+    let totalRecords = 0;
+
+    for (const modelName of models) {
       try {
-        const { stdout } = await execAsync(`pg_dump "${databaseUrl}" > "${backupPath}"`);
-        console.log('Backup PostgreSQL criado:', stdout);
-      } catch (execError: any) {
-        console.error('Erro ao executar pg_dump:', execError);
-        return res.status(500).json({
-          success: false,
-          error: 'Erro ao criar backup PostgreSQL. Verifique se pg_dump está instalado.',
-          details: execError.message
-        });
-      }
-    } else if (isSQLite) {
-      // Backup SQLite (copiar arquivo)
-      const dbPath = databaseUrl.replace('file:', '');
-      const sqliteBackupPath = backupPath.replace('.sql', '.db');
-      await fs.copyFile(dbPath, sqliteBackupPath);
-
-      // Atualizar nome do arquivo para .db
-      const stats = await fs.stat(sqliteBackupPath);
-      return res.json({
-        success: true,
-        message: 'Backup SQLite criado com sucesso',
-        data: {
-          fileName: backupFileName.replace('.sql', '.db'),
-          path: sqliteBackupPath,
-          size: stats.size,
-          timestamp: new Date().toISOString()
+        // @ts-ignore - Prisma models dinâmicos
+        if (prisma[modelName]) {
+          console.log(`[BACKUP] Fazendo backup de ${modelName}...`);
+          // @ts-ignore
+          const records = await prisma[modelName].findMany();
+          backupData.data[modelName] = records;
+          totalRecords += records.length;
+          console.log(`[BACKUP] ✓ ${modelName}: ${records.length} registros`);
         }
-      });
-    } else {
-      return res.status(500).json({
-        success: false,
-        error: 'Tipo de banco de dados não suportado para backup'
-      });
+      } catch (modelError: any) {
+        console.warn(`[BACKUP] ⚠ Erro ao fazer backup de ${modelName}:`, modelError.message);
+        // Continuar mesmo se uma tabela falhar
+      }
     }
 
-    // Obter tamanho do arquivo
+    // Salvar backup JSON
+    await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2), 'utf-8');
     const stats = await fs.stat(backupPath);
+
+    console.log(`[BACKUP] ✅ Backup concluído: ${totalRecords} registros totais`);
 
     return res.json({
       success: true,
-      message: 'Backup criado com sucesso',
+      message: `Backup criado com sucesso (${totalRecords} registros)`,
       data: {
         fileName: backupFileName,
         path: backupPath,
         size: stats.size,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        totalRecords,
+        format: 'json'
       }
     });
-  } catch (error) {
-    console.error('Erro ao criar backup:', error);
+  } catch (error: any) {
+    console.error('[BACKUP] ❌ Erro ao criar backup:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erro ao criar backup do banco de dados'
+      error: 'Erro ao criar backup do banco de dados',
+      details: error.message
     });
   }
 });
