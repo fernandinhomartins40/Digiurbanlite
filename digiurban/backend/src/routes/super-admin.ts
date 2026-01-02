@@ -539,7 +539,7 @@ router.get('/system/backups', adminAuthMiddleware, superAdminOnly, async (req: R
       const files = await fs.readdir(backupDir);
       const backups = await Promise.all(
         files
-          .filter(file => file.endsWith('.db') || file.endsWith('.sql'))
+          .filter(file => file.endsWith('.json') || file.endsWith('.db') || file.endsWith('.sql'))
           .map(async (file) => {
             const filePath = path.join(backupDir, file);
             const stats = await fs.stat(filePath);
