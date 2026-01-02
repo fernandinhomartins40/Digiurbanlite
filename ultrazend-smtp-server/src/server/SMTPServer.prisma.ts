@@ -252,8 +252,12 @@ export class UltraZendSMTPServer {
       // Parse do email
       const parsedEmail = await simpleParser(stream);
 
-      if (serverType === 'submission' && session.authenticated) {
-        // Email enviado por cliente autenticado - fazer entrega
+      // Determinar se é email de saída (outgoing) ou entrada (incoming)
+      // Emails na porta submission (587) devem ser ENVIADOS
+      // Emails na porta MX (25) devem ser RECEBIDOS
+      if (serverType === 'submission') {
+        // Email enviado via porta submission - fazer entrega externa
+        // Pode ser autenticado ou não (interno Docker sem auth)
         await this.processOutgoingEmail(parsedEmail, session);
       } else {
         // Email recebido via MX - processar entrada
