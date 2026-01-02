@@ -306,10 +306,16 @@ export class MXDeliveryService {
         return false;
       }
 
-      // Testa conexão com o primeiro MX
-      const transporter = await this.getTransporter(mxRecords[0].exchange);
-      await transporter.verify();
+      // Criar transporter simples para teste (sem DKIM)
+      const transporter = createTransport({
+        host: mxRecords[0].exchange,
+        port: 25,
+        secure: false,
+        tls: { rejectUnauthorized: false },
+        name: this.hostname
+      });
 
+      await transporter.verify();
       return true;
     } catch (error) {
       logger.error('MX connectivity test failed', { domain, error });

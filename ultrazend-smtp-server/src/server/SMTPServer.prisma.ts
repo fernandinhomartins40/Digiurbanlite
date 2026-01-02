@@ -26,8 +26,8 @@ function getAddressText(address: AddressObject | AddressObject[] | undefined): s
 }
 
 export class UltraZendSMTPServer {
-  private mxServer: NodeSMTPServer;
-  private submissionServer: NodeSMTPServer;
+  private mxServer!: NodeSMTPServer;
+  private submissionServer!: NodeSMTPServer;
   private config: Required<SMTPServerConfig>;
   private deliveryService: MXDeliveryService;
   private dkimManager: DKIMManager;

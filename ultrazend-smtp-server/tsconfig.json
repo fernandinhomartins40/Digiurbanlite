@@ -13,10 +13,11 @@
     "declarationMap": true,
     "sourceMap": true,
     "removeComments": false,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "downlevelIteration": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*.prisma.ts"
   ],
   "exclude": [
     "node_modules",
