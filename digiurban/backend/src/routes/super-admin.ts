@@ -446,17 +446,14 @@ router.get('/system/metrics', adminAuthMiddleware, superAdminOnly, async (req: R
 // POST /api/super-admin/system/backup - Criar backup do banco de dados
 router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
-    const backupDir = path.join(process.cwd(), 'backups');
+    // Usar /tmp que sempre tem permissão de escrita
+    const backupDir = '/tmp/digiurban-backups';
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupFileName = `backup-${timestamp}.json`;
     const backupPath = path.join(backupDir, backupFileName);
 
     // Criar diretório de backups se não existir
-    try {
-      await fs.mkdir(backupDir, { recursive: true });
-    } catch (err) {
-      console.log('Diretório de backups já existe ou erro ao criar:', err);
-    }
+    await fs.mkdir(backupDir, { recursive: true });
 
     console.log('[BACKUP] Iniciando backup do banco de dados...');
 
@@ -536,7 +533,7 @@ router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: R
 // GET /api/super-admin/system/backups - Listar backups disponíveis
 router.get('/system/backups', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
-    const backupDir = path.join(process.cwd(), 'backups');
+    const backupDir = '/tmp/digiurban-backups';
 
     try {
       const files = await fs.readdir(backupDir);
