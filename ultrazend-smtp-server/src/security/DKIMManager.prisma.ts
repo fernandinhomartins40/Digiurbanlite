@@ -37,27 +37,28 @@ export class DKIMManager {
    */
   private async loadDKIMConfigs(): Promise<void> {
     try {
-      const dkimKeys = await prisma.dkimKey.findMany({
-        where: { isActive: true },
-        include: {
-          domain: {
-            select: { domainName: true }
-          }
+      // Buscar domínios com DKIM habilitado
+      const domains = await prisma.emailDomain.findMany({
+        where: {
+          dkimEnabled: true,
+          dkimPrivateKey: { not: null }
         }
       });
 
-      dkimKeys.forEach(key => {
-        const dkimConfig: DKIMConfig = {
-          domain: key.domain.domainName,
-          selector: key.selector,
-          privateKey: key.privateKey,
-          publicKey: key.publicKey,
-          algorithm: key.algorithm as any,
-          canonicalization: key.canonicalization as any,
-          keySize: key.keySize as any
-        };
+      domains.forEach(domain => {
+        if (domain.dkimPrivateKey && domain.dkimPublicKey) {
+          const dkimConfig: DKIMConfig = {
+            domain: domain.domainName,
+            selector: domain.dkimSelector,
+            privateKey: domain.dkimPrivateKey,
+            publicKey: domain.dkimPublicKey,
+            algorithm: 'rsa-sha256',
+            canonicalization: 'relaxed/relaxed',
+            keySize: 2048
+          };
 
-        this.dkimConfigs.set(key.domain.domainName, dkimConfig);
+          this.dkimConfigs.set(domain.domainName, dkimConfig);
+        }
       });
 
       logger.info('DKIM configurations loaded', {
@@ -219,57 +220,24 @@ export class DKIMManager {
       const publicKeyData = this.extractPublicKeyData(publicKey);
       const dnsRecord = `v=DKIM1; k=rsa; p=${publicKeyData}`;
 
-      // Buscar ou criar domínio
-      let domainRecord = await prisma.domain.findUnique({
+      // Buscar domínio existente
+      const domainRecord = await prisma.emailDomain.findFirst({
         where: { domainName: domain }
       });
 
       if (!domainRecord) {
-        // Criar usuário padrão se não existir
-        let user = await prisma.user.findFirst();
-        if (!user) {
-          user = await prisma.user.create({
-            data: {
-              email: 'admin@localhost',
-              passwordHash: crypto.createHash('sha256').update('admin123').digest('hex'),
-              name: 'Admin',
-              isVerified: true,
-              isActive: true,
-              isAdmin: true
-            }
-          });
-        }
-
-        // Criar domínio
-        domainRecord = await prisma.domain.create({
-          data: {
-            userId: user.id,
-            domainName: domain,
-            isVerified: false,
-            verificationToken: crypto.randomBytes(32).toString('hex'),
-            dkimEnabled: true,
-            spfEnabled: true
-          }
-        });
+        logger.warn('Domain not found in database', { domain });
+        throw new Error(`Domain ${domain} not found. Please add it to EmailDomain first.`);
       }
 
-      // Desativar chaves existentes
-      await prisma.dkimKey.updateMany({
-        where: { domainId: domainRecord.id },
-        data: { isActive: false }
-      });
-
-      // Salvar nova chave
-      await prisma.dkimKey.create({
+      // Atualizar domínio com chaves DKIM
+      await prisma.emailDomain.update({
+        where: { id: domainRecord.id },
         data: {
-          domainId: domainRecord.id,
-          selector,
-          privateKey,
-          publicKey: publicKeyData,
-          algorithm: 'rsa-sha256',
-          canonicalization: 'relaxed/relaxed',
-          keySize,
-          isActive: true
+          dkimEnabled: true,
+          dkimSelector: selector,
+          dkimPrivateKey: privateKey,
+          dkimPublicKey: publicKeyData
         }
       });
 

@@ -52,16 +52,25 @@ export class SMTPServer extends UltraZendSMTPServer {
   /**
    * Método helper para criar usuário SMTP
    */
-  async createUser(email: string, password: string, name: string = 'User'): Promise<number> {
+  async createUser(email: string, password: string, name: string = 'User'): Promise<string> {
     const bcrypt = require('bcrypt');
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const user = await prisma.user.create({
+    // Buscar primeiro servidor de email ativo
+    const emailServer = await prisma.emailServer.findFirst({
+      where: { isActive: true }
+    });
+
+    if (!emailServer) {
+      throw new Error('No active email server found. Please create an EmailServer first.');
+    }
+
+    const user = await prisma.emailUser.create({
       data: {
+        emailServerId: emailServer.id,
         email,
         passwordHash,
         name,
-        isVerified: true,
         isActive: true,
         isAdmin: false
       }
@@ -73,19 +82,21 @@ export class SMTPServer extends UltraZendSMTPServer {
   /**
    * Método helper para adicionar domínio
    */
-  async addDomain(domain: string, userId?: number): Promise<number> {
-    // Se não especificou userId, usar o primeiro usuário disponível
-    if (!userId) {
-      const user = await prisma.user.findFirst();
-      if (!user) {
-        throw new Error('No users found. Create a user first.');
+  async addDomain(domain: string, emailServerId?: string): Promise<string> {
+    // Se não especificou emailServerId, usar o primeiro servidor ativo
+    if (!emailServerId) {
+      const server = await prisma.emailServer.findFirst({
+        where: { isActive: true }
+      });
+      if (!server) {
+        throw new Error('No active email server found. Create an EmailServer first.');
       }
-      userId = user.id;
+      emailServerId = server.id;
     }
 
-    const domainRecord = await prisma.domain.create({
+    const domainRecord = await prisma.emailDomain.create({
       data: {
-        userId,
+        emailServerId,
         domainName: domain,
         isVerified: false,
         dkimEnabled: true,
@@ -120,19 +131,19 @@ export class SMTPServer extends UltraZendSMTPServer {
 
     const [
       totalEmails,
-      recentConnections,
+      recentLogs,
       authAttempts,
       activeDomains
     ] = await Promise.all([
       prisma.email.count(),
-      prisma.smtpConnection.count({ where: { createdAt: { gte: hour } } }),
-      prisma.authAttempt.count({ where: { createdAt: { gte: hour } } }),
-      prisma.domain.count({ where: { isVerified: true } })
+      prisma.emailLog.count({ where: { timestamp: { gte: hour } } }),
+      prisma.emailAuthAttempt.count({ where: { timestamp: { gte: hour } } }),
+      prisma.emailDomain.count({ where: { isVerified: true } })
     ]);
 
     return {
       totalEmails,
-      recentConnections,
+      recentConnections: recentLogs,
       authAttempts,
       activeDomains,
       uptime: process.uptime(),

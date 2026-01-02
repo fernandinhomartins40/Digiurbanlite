@@ -8,7 +8,7 @@ import * as dns from 'dns';
 import { logger } from '../utils/logger';
 import { EmailData, MXRecord, DeliveryResult } from '../types';
 import { prisma } from '../lib/prisma';
-import { EmailStatus, EmailDirection } from '@prisma/client';
+import { EmailStatus } from '@prisma/client';
 
 export class MXDeliveryService {
   private connectionPool: Map<string, Transporter> = new Map();
@@ -193,7 +193,7 @@ export class MXDeliveryService {
     try {
       // Buscar domínio do email (se existir)
       const domain = this.extractDomain(emailData.from);
-      const domainRecord = await prisma.domain.findUnique({
+      const domainRecord = await prisma.emailDomain.findFirst({
         where: { domainName: domain }
       });
 
@@ -202,8 +202,10 @@ export class MXDeliveryService {
         update: {
           status: EmailStatus.DELIVERED,
           deliveredAt: new Date(),
-          mxServer,
-          attempts: { increment: 1 }
+          metadata: {
+            mxServer,
+            direction: 'OUTBOUND'
+          }
         },
         create: {
           messageId: emailData.messageId || `msg-${Date.now()}`,
@@ -214,11 +216,13 @@ export class MXDeliveryService {
           htmlContent: emailData.html,
           textContent: emailData.text,
           status: EmailStatus.DELIVERED,
-          direction: EmailDirection.OUTBOUND,
           sentAt: new Date(),
           deliveredAt: new Date(),
-          mxServer,
-          attempts: 1
+          metadata: {
+            mxServer,
+            direction: 'OUTBOUND',
+            serverType: 'MX'
+          }
         }
       });
     } catch (error) {
@@ -233,7 +237,7 @@ export class MXDeliveryService {
     try {
       // Buscar domínio do email (se existir)
       const domain = this.extractDomain(emailData.from);
-      const domainRecord = await prisma.domain.findUnique({
+      const domainRecord = await prisma.emailDomain.findFirst({
         where: { domainName: domain }
       });
 
@@ -242,7 +246,7 @@ export class MXDeliveryService {
         update: {
           status: EmailStatus.FAILED,
           errorMessage,
-          attempts: { increment: 1 }
+          retryCount: { increment: 1 }
         },
         create: {
           messageId: emailData.messageId || `msg-${Date.now()}`,
@@ -253,10 +257,12 @@ export class MXDeliveryService {
           htmlContent: emailData.html,
           textContent: emailData.text,
           status: EmailStatus.FAILED,
-          direction: EmailDirection.OUTBOUND,
           sentAt: new Date(),
           errorMessage,
-          attempts: 1
+          metadata: {
+            direction: 'OUTBOUND',
+            serverType: 'MX'
+          }
         }
       });
     } catch (error) {
