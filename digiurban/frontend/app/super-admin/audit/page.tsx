@@ -73,140 +73,9 @@ export default function AuditLogPage() {
   const [filterResource, setFilterResource] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
   const [autoRefresh, setAutoRefresh] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
-  // Mock data - TODO: integrar com backend /api/super-admin/audit/*
-  const mockLogs: AuditLog[] = [
-    {
-      id: '1',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-      userId: 'superadmin-1',
-      userName: 'João Silva',
-      userEmail: 'joao@digiurban.com',
-      action: 'tenant.suspend',
-      resource: 'tenant',
-      resourceId: 'tenant-123',
-      status: 'success',
-      ipAddress: '192.168.1.100',
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      tenantId: 'tenant-123',
-      tenantName: 'Prefeitura de São Paulo',
-      changes: [
-        { field: 'status', oldValue: 'active', newValue: 'suspended' },
-        { field: 'suspendedReason', oldValue: '', newValue: 'Pagamento em atraso' }
-      ]
-    },
-    {
-      id: '2',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      userId: 'superadmin-1',
-      userName: 'João Silva',
-      userEmail: 'joao@digiurban.com',
-      action: 'user.delete',
-      resource: 'user',
-      resourceId: 'user-456',
-      status: 'success',
-      ipAddress: '192.168.1.100',
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      tenantId: 'tenant-789',
-      tenantName: 'Prefeitura do Rio',
-      metadata: { reason: 'Usuário solicitou remoção de dados (LGPD)' }
-    },
-    {
-      id: '3',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      userId: 'superadmin-2',
-      userName: 'Maria Santos',
-      userEmail: 'maria@digiurban.com',
-      action: 'settings.update',
-      resource: 'global_settings',
-      resourceId: 'settings-global',
-      status: 'success',
-      ipAddress: '192.168.1.105',
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-      changes: [
-        { field: 'maxTenantsPerServer', oldValue: '100', newValue: '150' },
-        { field: 'emailNotifications', oldValue: 'false', newValue: 'true' }
-      ]
-    },
-    {
-      id: '4',
-      timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-      userId: 'superadmin-1',
-      userName: 'João Silva',
-      userEmail: 'joao@digiurban.com',
-      action: 'backup.restore',
-      resource: 'database',
-      resourceId: 'backup-20250103',
-      status: 'failed',
-      ipAddress: '192.168.1.100',
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      metadata: { error: 'Insufficient permissions', errorCode: 'PERM_DENIED' }
-    },
-    {
-      id: '5',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      userId: 'superadmin-3',
-      userName: 'Carlos Oliveira',
-      userEmail: 'carlos@digiurban.com',
-      action: 'tenant.create',
-      resource: 'tenant',
-      resourceId: 'tenant-999',
-      status: 'success',
-      ipAddress: '192.168.1.110',
-      userAgent: 'Mozilla/5.0 (X11; Linux x86_64)',
-      tenantId: 'tenant-999',
-      tenantName: 'Prefeitura de Belo Horizonte',
-      metadata: { plan: 'professional', autoSetup: true }
-    },
-    {
-      id: '6',
-      timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-      userId: 'superadmin-2',
-      userName: 'Maria Santos',
-      userEmail: 'maria@digiurban.com',
-      action: 'email.test',
-      resource: 'email_config',
-      resourceId: 'smtp-ultrazend',
-      status: 'warning',
-      ipAddress: '192.168.1.105',
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-      metadata: { warning: 'High latency detected (2.5s)', expectedLatency: '1s' }
-    },
-    {
-      id: '7',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      userId: 'superadmin-1',
-      userName: 'João Silva',
-      userEmail: 'joao@digiurban.com',
-      action: 'featureFlag.update',
-      resource: 'feature_flag',
-      resourceId: 'flag-portal-cidadao-v2',
-      status: 'success',
-      ipAddress: '192.168.1.100',
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      changes: [
-        { field: 'enabled', oldValue: 'false', newValue: 'true' },
-        { field: 'rolloutPercentage', oldValue: '0', newValue: '50' }
-      ]
-    },
-    {
-      id: '8',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      userId: 'superadmin-3',
-      userName: 'Carlos Oliveira',
-      userEmail: 'carlos@digiurban.com',
-      action: 'plan.update',
-      resource: 'billing_plan',
-      resourceId: 'plan-professional',
-      status: 'success',
-      ipAddress: '192.168.1.110',
-      userAgent: 'Mozilla/5.0 (X11; Linux x86_64)',
-      changes: [
-        { field: 'price', oldValue: '499.00', newValue: '599.00' },
-        { field: 'maxUsers', oldValue: '50', newValue: '100' }
-      ]
-    }
-  ];
+  // Dados reais da API
 
   useEffect(() => {
     loadAuditData();
@@ -225,36 +94,80 @@ export default function AuditLogPage() {
   const loadAuditData = async () => {
     setLoading(true);
     try {
-      // TODO: Substituir por chamada real à API
-      // const response = await fetch(`http://localhost:3001/api/super-admin/audit?dateRange=${dateRange}&status=${filterStatus}&action=${filterAction}&resource=${filterResource}`, {
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('digiurban_super_admin_token')}`
-      //   }
-      // });
-      // const data = await response.json();
-      // setLogs(data.logs);
-      // setStats(data.stats);
-
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setLogs(mockLogs);
-      setStats({
-        totalActions: 156,
-        successRate: 94.2,
-        failedActions: 9,
-        criticalActions: 23,
-        uniqueUsers: 5,
-        uniqueTenants: 12
+      // Construir query params
+      const params = new URLSearchParams({
+        dateRange,
+        ...(filterStatus !== 'all' && { status: filterStatus }),
+        ...(filterAction !== 'all' && { action: filterAction }),
+        ...(filterResource !== 'all' && { resource: filterResource })
       });
+
+      // Buscar logs e estatísticas em paralelo
+      const [logsResponse, statsResponse] = await Promise.all([
+        fetch(`/api/super-admin/audit?${params.toString()}`),
+        fetch(`/api/super-admin/audit/stats?dateRange=${dateRange}`)
+      ]);
+
+      if (logsResponse.ok) {
+        const logsData = await logsResponse.json();
+        setLogs(logsData.data?.logs || []);
+      } else {
+        console.error('Erro ao buscar logs:', await logsResponse.text());
+        setLogs([]);
+      }
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setStats(statsData.data || null);
+      } else {
+        console.error('Erro ao buscar estatísticas:', await statsResponse.text());
+        setStats(null);
+      }
     } catch (error) {
       console.error('Erro ao carregar logs de auditoria:', error);
+      setLogs([]);
+      setStats(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExport = () => {
-    console.log('Exportar logs de auditoria');
-    // TODO: Implementar exportação para CSV/JSON
+  const handleExport = async (format: 'json' | 'csv' = 'json') => {
+    try {
+      const response = await fetch('/api/super-admin/audit/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          format,
+          dateRange,
+          filters: {
+            status: filterStatus !== 'all' ? filterStatus : undefined,
+            action: filterAction !== 'all' ? filterAction : undefined,
+            resource: filterResource !== 'all' ? filterResource : undefined
+          }
+        })
+      });
+
+      if (!response.ok) {
+        console.error('Erro ao exportar logs');
+        return;
+      }
+
+      // Criar blob e fazer download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-logs-${Date.now()}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Erro ao exportar logs de auditoria:', error);
+    }
   };
 
   const handleViewDetails = (log: AuditLog) => {
@@ -373,13 +286,39 @@ export default function AuditLogPage() {
                 <RefreshCw className="w-4 h-4" />
                 Atualizar
               </button>
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                Exportar
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Exportar
+                </button>
+                {showExportMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                    <button
+                      onClick={() => {
+                        handleExport('json');
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors flex items-center gap-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Exportar JSON
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleExport('csv');
+                        setShowExportMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors flex items-center gap-2 border-t border-gray-100"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Exportar CSV
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

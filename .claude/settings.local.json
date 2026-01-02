@@ -60,7 +60,8 @@
       "Bash(del nul ultrazend-smtp-servernul)",
       "Bash(npm run build:prisma:*)",
       "Bash(nslookup:*)",
-      "Bash(dig:*)"
+      "Bash(dig:*)",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []

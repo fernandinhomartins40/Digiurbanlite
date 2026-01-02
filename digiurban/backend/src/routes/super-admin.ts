@@ -689,6 +689,328 @@ router.delete('/users/admins/:id', adminAuthMiddleware, superAdminOnly, async (r
   }
 });
 
+// GET /api/super-admin/audit - Listar logs de auditoria
+router.get('/audit', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const {
+      dateRange = '24h',
+      status,
+      action,
+      resource,
+      userId,
+      page = '1',
+      limit = '50'
+    } = req.query;
+
+    // Construir filtros de data
+    const now = new Date();
+    let dateFilter: any = {};
+
+    switch (dateRange) {
+      case '1h':
+        dateFilter = { gte: new Date(now.getTime() - 60 * 60 * 1000) };
+        break;
+      case '24h':
+        dateFilter = { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) };
+        break;
+      case '7d':
+        dateFilter = { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+        break;
+      case '30d':
+        dateFilter = { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) };
+        break;
+      case 'all':
+      default:
+        dateFilter = undefined;
+        break;
+    }
+
+    // Construir filtros
+    const where: any = {};
+    if (dateFilter) {
+      where.createdAt = dateFilter;
+    }
+    if (status) {
+      where.success = status === 'success' ? true : status === 'failed' ? false : undefined;
+    }
+    if (action && action !== 'all') {
+      where.action = { startsWith: action as string };
+    }
+    if (resource && resource !== 'all') {
+      where.resource = { contains: resource as string };
+    }
+    if (userId) {
+      where.userId = userId as string;
+    }
+
+    // Paginação
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Buscar logs
+    const [logs, totalCount] = await Promise.all([
+      prisma.auditLog.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          citizen: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        skip,
+        take: limitNum
+      }),
+      prisma.auditLog.count({ where })
+    ]);
+
+    // Formatar resposta
+    const formattedLogs = logs.map(log => {
+      const actor = log.user || log.citizen;
+      return {
+        id: log.id,
+        timestamp: log.createdAt.toISOString(),
+        userId: log.userId || log.citizenId || 'system',
+        userName: actor?.name || 'Sistema',
+        userEmail: actor?.email || 'system@digiurban.com',
+        action: log.action,
+        resource: log.resource || 'unknown',
+        resourceId: (log.details as any)?.resourceId || 'N/A',
+        status: log.success ? 'success' : 'failed',
+        ipAddress: log.ip || 'unknown',
+        userAgent: log.userAgent || 'unknown',
+        changes: (log.details as any)?.changes || [],
+        metadata: log.details || {},
+        errorMessage: log.errorMessage
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        logs: formattedLogs,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: totalCount,
+          totalPages: Math.ceil(totalCount / limitNum)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar logs de auditoria:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// GET /api/super-admin/audit/stats - Estatísticas de auditoria
+router.get('/audit/stats', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { dateRange = '24h' } = req.query;
+
+    // Construir filtros de data
+    const now = new Date();
+    let dateFilter: any = {};
+
+    switch (dateRange) {
+      case '1h':
+        dateFilter = { gte: new Date(now.getTime() - 60 * 60 * 1000) };
+        break;
+      case '24h':
+        dateFilter = { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) };
+        break;
+      case '7d':
+        dateFilter = { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+        break;
+      case '30d':
+        dateFilter = { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) };
+        break;
+      case 'all':
+      default:
+        dateFilter = undefined;
+        break;
+    }
+
+    const where: any = dateFilter ? { createdAt: dateFilter } : {};
+
+    // Buscar estatísticas
+    const [
+      totalActions,
+      successfulActions,
+      failedActions,
+      criticalActions,
+      uniqueUsers,
+      uniqueCitizens
+    ] = await Promise.all([
+      prisma.auditLog.count({ where }),
+      prisma.auditLog.count({ where: { ...where, success: true } }),
+      prisma.auditLog.count({ where: { ...where, success: false } }),
+      prisma.auditLog.count({
+        where: {
+          ...where,
+          action: {
+            in: ['user_deleted', 'citizen_deleted', 'account_locked', 'tenant_suspended', 'data_export']
+          }
+        }
+      }),
+      prisma.auditLog.findMany({
+        where: { ...where, userId: { not: null } },
+        distinct: ['userId'],
+        select: { userId: true }
+      }),
+      prisma.auditLog.findMany({
+        where: { ...where, citizenId: { not: null } },
+        distinct: ['citizenId'],
+        select: { citizenId: true }
+      })
+    ]);
+
+    const successRate = totalActions > 0 ? (successfulActions / totalActions) * 100 : 0;
+
+    return res.json({
+      success: true,
+      data: {
+        totalActions,
+        successRate: parseFloat(successRate.toFixed(1)),
+        failedActions,
+        criticalActions,
+        uniqueUsers: uniqueUsers.length,
+        uniqueTenants: uniqueCitizens.length
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas de auditoria:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// POST /api/super-admin/audit/export - Exportar logs de auditoria
+router.post('/audit/export', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { format = 'json', dateRange = '24h', filters = {} } = req.body;
+
+    // Construir filtros de data
+    const now = new Date();
+    let dateFilter: any = {};
+
+    switch (dateRange) {
+      case '1h':
+        dateFilter = { gte: new Date(now.getTime() - 60 * 60 * 1000) };
+        break;
+      case '24h':
+        dateFilter = { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) };
+        break;
+      case '7d':
+        dateFilter = { gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+        break;
+      case '30d':
+        dateFilter = { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) };
+        break;
+      case 'all':
+      default:
+        dateFilter = undefined;
+        break;
+    }
+
+    const where: any = dateFilter ? { createdAt: dateFilter } : {};
+
+    // Aplicar filtros adicionais
+    if (filters.status) {
+      where.success = filters.status === 'success';
+    }
+    if (filters.action) {
+      where.action = { startsWith: filters.action };
+    }
+
+    // Buscar todos os logs
+    const logs = await prisma.auditLog.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        citizen: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    if (format === 'csv') {
+      // Gerar CSV
+      const csvHeader = 'ID,Timestamp,User,Email,Action,Resource,Status,IP,User Agent\n';
+      const csvRows = logs.map(log => {
+        const actor = log.user || log.citizen;
+        return [
+          log.id,
+          log.createdAt.toISOString(),
+          actor?.name || 'Sistema',
+          actor?.email || 'system@digiurban.com',
+          log.action,
+          log.resource || 'unknown',
+          log.success ? 'success' : 'failed',
+          log.ip || 'unknown',
+          `"${log.userAgent || 'unknown'}"`
+        ].join(',');
+      }).join('\n');
+
+      const csv = csvHeader + csvRows;
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=audit-logs-${Date.now()}.csv`);
+      return res.send(csv);
+    } else {
+      // Gerar JSON
+      const jsonData = logs.map(log => {
+        const actor = log.user || log.citizen;
+        return {
+          id: log.id,
+          timestamp: log.createdAt.toISOString(),
+          userName: actor?.name || 'Sistema',
+          userEmail: actor?.email || 'system@digiurban.com',
+          action: log.action,
+          resource: log.resource || 'unknown',
+          status: log.success ? 'success' : 'failed',
+          ipAddress: log.ip || 'unknown',
+          userAgent: log.userAgent || 'unknown',
+          details: log.details,
+          errorMessage: log.errorMessage
+        };
+      });
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename=audit-logs-${Date.now()}.json`);
+      return res.json(jsonData);
+    }
+  } catch (error) {
+    console.error('Erro ao exportar logs de auditoria:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Mount email server management routes
 router.use('/email-server', emailServerRouter);
 
