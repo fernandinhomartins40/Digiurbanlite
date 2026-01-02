@@ -93,10 +93,13 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
         setUser(null)
         setStats(null)
 
-        // Redirecionar apenas se não estiver na página de login e não estiver já redirecionando
+        // Redirecionar apenas se não estiver em páginas públicas e não estiver já redirecionando
+        const publicPaths = ['/login', '/forgot-password', '/reset-password']
+        const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path))
+
         if (
           typeof window !== 'undefined' &&
-          !window.location.pathname.includes('/login') &&
+          !isPublicPath &&
           !isRedirecting
         ) {
           console.log('[SuperAdminAuth] 🔄 Redirecionando para login...')

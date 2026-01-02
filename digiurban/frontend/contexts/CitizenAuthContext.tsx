@@ -184,8 +184,11 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
       return true;
     } catch (error) {
       console.error('❌ [CitizenAuth] Erro ao buscar dados do cidadão:', error);
-      // ✅ CORRIGIDO: Não fazer logout se estiver na página de login
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+      // ✅ CORRIGIDO: Não fazer logout se estiver em páginas públicas
+      const publicPaths = ['/login', '/forgot-password', '/reset-password'];
+      const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path));
+
+      if (typeof window !== 'undefined' && !isPublicPath) {
         await logout();
       }
       return false;
