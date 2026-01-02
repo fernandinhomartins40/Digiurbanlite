@@ -56,125 +56,10 @@ export default function SchemaManagementPage() {
   const [requireAuth, setRequireAuth] = useState(false);
   const [authPassword, setAuthPassword] = useState('');
 
-  // Mock data - TODO: integrar com backend /api/super-admin/schema/*
-  const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo>({
-    type: 'PostgreSQL',
-    version: '15.3',
-    totalTables: 42,
-    totalRecords: 1283456,
-    databaseSize: '2.4 GB',
-    lastBackup: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-  });
-
-  const [tables, setTables] = useState<TableInfo[]>([
-    {
-      name: 'tenants',
-      recordCount: 156,
-      size: '12.3 MB',
-      lastModified: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-      indexes: 4,
-      relations: ['users', 'departments', 'protocols']
-    },
-    {
-      name: 'users',
-      recordCount: 3421,
-      size: '45.2 MB',
-      lastModified: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      indexes: 6,
-      relations: ['tenants', 'protocols', 'notifications']
-    },
-    {
-      name: 'protocols',
-      recordCount: 28934,
-      size: '156.7 MB',
-      lastModified: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-      indexes: 8,
-      relations: ['tenants', 'users', 'departments', 'services']
-    },
-    {
-      name: 'citizens',
-      recordCount: 45678,
-      size: '234.5 MB',
-      lastModified: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-      indexes: 7,
-      relations: ['protocols', 'notifications', 'documents']
-    },
-    {
-      name: 'departments',
-      recordCount: 523,
-      size: '8.9 MB',
-      lastModified: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      indexes: 3,
-      relations: ['tenants', 'users', 'protocols']
-    },
-    {
-      name: 'services',
-      recordCount: 892,
-      size: '15.4 MB',
-      lastModified: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      indexes: 5,
-      relations: ['departments', 'protocols']
-    },
-    {
-      name: 'notifications',
-      recordCount: 156234,
-      size: '89.3 MB',
-      lastModified: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-      indexes: 4,
-      relations: ['users', 'citizens', 'protocols']
-    },
-    {
-      name: 'documents',
-      recordCount: 12453,
-      size: '567.8 MB',
-      lastModified: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-      indexes: 5,
-      relations: ['citizens', 'protocols']
-    }
-  ]);
-
-  const [migrations, setMigrations] = useState<Migration[]>([
-    {
-      id: '20250103_001',
-      name: 'add_citizen_family_relations',
-      timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'applied',
-      executionTime: 234,
-      changes: ['CREATE TABLE citizen_family_members', 'ADD INDEX idx_family_citizen_id', 'ADD FOREIGN KEY fk_family_citizen']
-    },
-    {
-      id: '20241228_003',
-      name: 'add_document_verification',
-      timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'applied',
-      executionTime: 156,
-      changes: ['ADD COLUMN verified_at TO documents', 'ADD COLUMN verification_status', 'CREATE INDEX idx_verification_status']
-    },
-    {
-      id: '20241220_002',
-      name: 'optimize_protocol_queries',
-      timestamp: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'applied',
-      executionTime: 4567,
-      changes: ['CREATE INDEX idx_protocol_status_created', 'CREATE INDEX idx_protocol_tenant_department', 'ANALYZE TABLE protocols']
-    },
-    {
-      id: '20241215_001',
-      name: 'add_tenant_settings',
-      timestamp: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'applied',
-      executionTime: 89,
-      changes: ['ADD COLUMN settings JSONB TO tenants', 'ADD COLUMN features_enabled', 'UPDATE tenants SET settings = \'{}\'']
-    },
-    {
-      id: '20241210_004',
-      name: 'add_notification_preferences',
-      timestamp: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-      status: 'applied',
-      executionTime: 123,
-      changes: ['CREATE TABLE notification_preferences', 'ADD INDEX idx_notif_user_id', 'INSERT DEFAULT preferences']
-    }
-  ]);
+  // Estados para dados reais da API
+  const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null);
+  const [tables, setTables] = useState<TableInfo[]>([]);
+  const [migrations, setMigrations] = useState<Migration[]>([]);
 
   useEffect(() => {
     loadSchemaData();
@@ -183,18 +68,18 @@ export default function SchemaManagementPage() {
   const loadSchemaData = async () => {
     setLoading(true);
     try {
-      // TODO: Substituir por chamada real à API
-      // const response = await fetch('http://localhost:3001/api/super-admin/schema', {
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('digiurban_super_admin_token')}`
-      //   }
-      // });
-      // const data = await response.json();
-      // setDatabaseInfo(data.info);
-      // setTables(data.tables);
-      // setMigrations(data.migrations);
+      const response = await fetch('/api/super-admin/schema');
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setDatabaseInfo(result.data.info);
+          setTables(result.data.tables);
+          setMigrations(result.data.migrations);
+        }
+      } else {
+        console.error('Erro ao carregar schema:', response.status);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados do schema:', error);
     } finally {
@@ -335,7 +220,7 @@ export default function SchemaManagementPage() {
         </div>
 
         {/* Overview Tab */}
-        {selectedTab === 'overview' && (
+        {selectedTab === 'overview' && databaseInfo && (
           <div className="space-y-6">
             {/* Database Info */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
