@@ -448,7 +448,7 @@ router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: R
   try {
     const backupDir = path.join(process.cwd(), 'backups');
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupFileName = `backup-${timestamp}.db`;
+    const backupFileName = `backup-${timestamp}.sql`;
     const backupPath = path.join(backupDir, backupFileName);
 
     // Criar diretório de backups se não existir
@@ -458,11 +458,56 @@ router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: R
       console.log('Diretório de backups já existe ou erro ao criar:', err);
     }
 
-    // Obter caminho do banco de dados
-    const dbPath = process.env.DATABASE_URL?.replace('file:', '') || './prisma/dev.db';
+    // Verificar se DATABASE_URL está configurada
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      return res.status(500).json({
+        success: false,
+        error: 'DATABASE_URL não configurada'
+      });
+    }
 
-    // Copiar arquivo do banco de dados
-    await fs.copyFile(dbPath, backupPath);
+    // Detectar tipo de banco de dados
+    const isPostgres = databaseUrl.startsWith('postgresql://') || databaseUrl.startsWith('postgres://');
+    const isSQLite = databaseUrl.startsWith('file:');
+
+    if (isPostgres) {
+      // Backup PostgreSQL usando pg_dump
+      try {
+        const { stdout } = await execAsync(`pg_dump "${databaseUrl}" > "${backupPath}"`);
+        console.log('Backup PostgreSQL criado:', stdout);
+      } catch (execError: any) {
+        console.error('Erro ao executar pg_dump:', execError);
+        return res.status(500).json({
+          success: false,
+          error: 'Erro ao criar backup PostgreSQL. Verifique se pg_dump está instalado.',
+          details: execError.message
+        });
+      }
+    } else if (isSQLite) {
+      // Backup SQLite (copiar arquivo)
+      const dbPath = databaseUrl.replace('file:', '');
+      const sqliteBackupPath = backupPath.replace('.sql', '.db');
+      await fs.copyFile(dbPath, sqliteBackupPath);
+
+      // Atualizar nome do arquivo para .db
+      const stats = await fs.stat(sqliteBackupPath);
+      return res.json({
+        success: true,
+        message: 'Backup SQLite criado com sucesso',
+        data: {
+          fileName: backupFileName.replace('.sql', '.db'),
+          path: sqliteBackupPath,
+          size: stats.size,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        error: 'Tipo de banco de dados não suportado para backup'
+      });
+    }
 
     // Obter tamanho do arquivo
     const stats = await fs.stat(backupPath);
@@ -495,7 +540,7 @@ router.get('/system/backups', adminAuthMiddleware, superAdminOnly, async (req: R
       const files = await fs.readdir(backupDir);
       const backups = await Promise.all(
         files
-          .filter(file => file.endsWith('.db'))
+          .filter(file => file.endsWith('.db') || file.endsWith('.sql'))
           .map(async (file) => {
             const filePath = path.join(backupDir, file);
             const stats = await fs.stat(filePath);

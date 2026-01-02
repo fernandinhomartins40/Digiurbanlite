@@ -102,7 +102,7 @@ export default function OperationsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 mb-4">
-              Crie um backup completo do banco de dados SQLite. O arquivo será salvo no diretório de backups do servidor.
+              Crie um backup completo do banco de dados PostgreSQL. O arquivo será salvo no diretório de backups do servidor.
             </p>
             <Button
               onClick={handleCreateBackup}
