@@ -11,7 +11,9 @@ import {
   HardDrive,
   Loader2,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Trash2,
+  RotateCcw
 } from 'lucide-react';
 
 interface Backup {
@@ -81,6 +83,96 @@ export default function OperationsPage() {
     }
     const gb = mb / 1024;
     return gb.toFixed(2) + ' GB';
+  };
+
+  const handleDownloadBackup = async (fileName: string) => {
+    try {
+      const response = await fetch(`/api/super-admin/system/backup/${fileName}`);
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast({
+          title: 'Download Iniciado',
+          description: `Fazendo download de ${fileName}`
+        });
+      } else {
+        throw new Error('Erro ao fazer download');
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível fazer o download do backup',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeleteBackup = async (fileName: string) => {
+    if (!confirm(`Tem certeza que deseja deletar o backup "${fileName}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/super-admin/system/backup/${fileName}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Backup Deletado',
+          description: `O backup ${fileName} foi removido com sucesso`
+        });
+        fetchBackups();
+      } else {
+        throw new Error('Erro ao deletar backup');
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível deletar o backup',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleRestoreBackup = async (fileName: string) => {
+    if (!confirm(`⚠️ ATENÇÃO: Restaurar o backup "${fileName}" irá SUBSTITUIR TODOS OS DADOS ATUAIS do banco de dados. Esta ação NÃO pode ser desfeita. Deseja continuar?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/super-admin/system/backup/${fileName}/restore`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast({
+          title: 'Backup Restaurado',
+          description: data.message || 'Banco de dados restaurado com sucesso'
+        });
+        // Recarregar a página após restauração
+        setTimeout(() => window.location.reload(), 2000);
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao restaurar backup');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message || 'Não foi possível restaurar o backup',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
@@ -178,6 +270,7 @@ export default function OperationsPage() {
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Tamanho</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Criado em</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -208,6 +301,36 @@ export default function OperationsPage() {
                           <CheckCircle size={12} />
                           Disponível
                         </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadBackup(backup.fileName)}
+                            title="Baixar backup"
+                          >
+                            <Download size={14} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRestoreBackup(backup.fileName)}
+                            title="Restaurar backup"
+                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                          >
+                            <RotateCcw size={14} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteBackup(backup.fileName)}
+                            title="Deletar backup"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}

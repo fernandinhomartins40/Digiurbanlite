@@ -571,6 +571,148 @@ router.get('/system/backups', adminAuthMiddleware, superAdminOnly, async (req: R
   }
 });
 
+// GET /api/super-admin/system/backup/:fileName - Download de backup
+router.get('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { fileName } = req.params;
+    const backupDir = '/tmp/digiurban-backups';
+    const filePath = path.join(backupDir, fileName);
+
+    // Validar nome do arquivo para evitar path traversal
+    if (fileName.includes('..') || fileName.includes('/')) {
+      return res.status(400).json({ error: 'Nome de arquivo inválido' });
+    }
+
+    // Verificar se arquivo existe
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({ error: 'Backup não encontrado' });
+    }
+
+    // Enviar arquivo para download
+    return res.download(filePath, fileName);
+  } catch (error: any) {
+    console.error('[BACKUP] Erro ao fazer download:', error);
+    return res.status(500).json({ error: 'Erro ao fazer download do backup' });
+  }
+});
+
+// DELETE /api/super-admin/system/backup/:fileName - Deletar backup
+router.delete('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { fileName } = req.params;
+    const backupDir = '/tmp/digiurban-backups';
+    const filePath = path.join(backupDir, fileName);
+
+    // Validar nome do arquivo para evitar path traversal
+    if (fileName.includes('..') || fileName.includes('/')) {
+      return res.status(400).json({ error: 'Nome de arquivo inválido' });
+    }
+
+    // Verificar se arquivo existe
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({ error: 'Backup não encontrado' });
+    }
+
+    // Deletar arquivo
+    await fs.unlink(filePath);
+
+    console.log(`[BACKUP] ✅ Backup deletado: ${fileName}`);
+
+    return res.json({
+      success: true,
+      message: 'Backup deletado com sucesso'
+    });
+  } catch (error: any) {
+    console.error('[BACKUP] Erro ao deletar backup:', error);
+    return res.status(500).json({ error: 'Erro ao deletar backup' });
+  }
+});
+
+// POST /api/super-admin/system/backup/:fileName/restore - Restaurar backup
+router.post('/system/backup/:fileName/restore', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { fileName } = req.params;
+    const backupDir = '/tmp/digiurban-backups';
+    const filePath = path.join(backupDir, fileName);
+
+    // Validar nome do arquivo
+    if (fileName.includes('..') || fileName.includes('/')) {
+      return res.status(400).json({ error: 'Nome de arquivo inválido' });
+    }
+
+    // Verificar se é arquivo JSON
+    if (!fileName.endsWith('.json')) {
+      return res.status(400).json({ error: 'Apenas backups em formato JSON podem ser restaurados' });
+    }
+
+    // Ler arquivo de backup
+    const backupContent = await fs.readFile(filePath, 'utf-8');
+    const backupData = JSON.parse(backupContent);
+
+    console.log('[RESTORE] Iniciando restauração do backup...');
+
+    // Validar estrutura do backup
+    if (!backupData.metadata || !backupData.data) {
+      return res.status(400).json({ error: 'Formato de backup inválido' });
+    }
+
+    let restoredRecords = 0;
+    const errors: string[] = [];
+
+    // Restaurar cada modelo
+    for (const [modelName, records] of Object.entries(backupData.data)) {
+      try {
+        if (Array.isArray(records) && records.length > 0) {
+          // @ts-ignore
+          if (prisma[modelName]) {
+            console.log(`[RESTORE] Restaurando ${modelName}...`);
+
+            // Deletar registros existentes (cuidado!)
+            // @ts-ignore
+            await prisma[modelName].deleteMany({});
+
+            // Inserir registros do backup
+            // @ts-ignore
+            await prisma[modelName].createMany({
+              data: records,
+              skipDuplicates: true
+            });
+
+            restoredRecords += records.length;
+            console.log(`[RESTORE] ✓ ${modelName}: ${records.length} registros restaurados`);
+          }
+        }
+      } catch (modelError: any) {
+        const errorMsg = `Erro ao restaurar ${modelName}: ${modelError.message}`;
+        console.error(`[RESTORE] ⚠ ${errorMsg}`);
+        errors.push(errorMsg);
+      }
+    }
+
+    console.log(`[RESTORE] ✅ Restauração concluída: ${restoredRecords} registros`);
+
+    return res.json({
+      success: true,
+      message: `Backup restaurado com sucesso (${restoredRecords} registros)`,
+      data: {
+        restoredRecords,
+        backupMetadata: backupData.metadata,
+        errors: errors.length > 0 ? errors : undefined
+      }
+    });
+  } catch (error: any) {
+    console.error('[RESTORE] ❌ Erro ao restaurar backup:', error);
+    return res.status(500).json({
+      error: 'Erro ao restaurar backup',
+      details: error.message
+    });
+  }
+});
+
 // GET /api/super-admin/users/admins - Listar apenas super admins
 router.get('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
