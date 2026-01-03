@@ -161,7 +161,7 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
   const fetchCitizenData = async () => {
     try {
       console.log('🔍 [CitizenAuth] Buscando dados do cidadão...');
-      const data = await apiRequest('/auth/citizen/me');
+      const data = await apiRequest('/citizen/auth/me');
 
       console.log('✅ [CitizenAuth] Dados do cidadão recebidos:', {
         name: data.citizen?.name,
@@ -202,7 +202,7 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
       const { getFullApiUrl } = await import('@/lib/api-config');
 
       // ✅ LOGIN INTELIGENTE: backend identifica automaticamente o tenant do cidadão
-      const response = await fetch(getFullApiUrl('/auth/citizen/login'), {
+      const response = await fetch(getFullApiUrl('/citizen/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -246,7 +246,7 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
 
       const { getFullApiUrl } = await import('@/lib/api-config');
 
-      const response = await fetch(getFullApiUrl('/auth/citizen/register'), {
+      const response = await fetch(getFullApiUrl('/citizen/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -286,7 +286,7 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
       const { getFullApiUrl } = await import('@/lib/api-config');
 
       // ✅ SEGURANÇA: Chamar endpoint de logout para limpar cookie httpOnly
-      await fetch(getFullApiUrl('/auth/citizen/logout'), {
+      await fetch(getFullApiUrl('/citizen/auth/logout'), {
         method: 'POST',
         credentials: 'include',
       }).catch(() => {
@@ -310,7 +310,7 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
     try {
       setIsLoading(true);
 
-      const response = await apiRequest('/auth/citizen/profile', {
+      const response = await apiRequest('/citizen/auth/profile', {
         method: 'PUT',
         body: JSON.stringify(data),
       });
