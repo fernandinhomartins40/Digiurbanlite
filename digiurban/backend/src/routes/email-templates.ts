@@ -279,7 +279,7 @@ router.post('/:id/duplicate', asyncHandler(async (req: Request, res: Response) =
       subject: original.subject,
       htmlContent: original.htmlContent,
       textContent: original.textContent,
-      variables: original.variables,
+      variables: original.variables as any,
       category: 'custom',
       isActive: false // Começa desativado
     }
