@@ -1,272 +1,264 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import {
   Settings,
-  Flag,
+  Layers,
   Gauge,
-  Plug,
-  Bell,
   Save,
   RefreshCw,
-  CheckCircle,
-  XCircle,
-  AlertTriangle
+  Building2,
+  Users,
+  UserCheck,
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 
-interface GlobalSettings {
-  platformName: string;
-  logoUrl: string;
-  primaryColor: string;
-  defaultLanguage: string;
-  timezone: string;
+// Interfaces
+interface MunicipalConfig {
+  nome: string;
+  cnpj: string;
+  codigoIbge: string;
+  nomeMunicipio: string;
+  ufMunicipio: string;
+  brasao: string | null;
+  corPrimaria: string;
+  subscriptionPlan: string;
+  subscriptionEnds: string | null;
+  paymentStatus: string;
 }
 
-interface FeatureFlag {
-  id: string;
-  name: string;
-  key: string;
-  enabled: boolean;
-  rolloutPercentage: number;
-  targetTenants: string[];
-  description: string;
+interface UsageStats {
+  usuariosAtivos: number;
+  usuariosMax: number;
+  cidadaosRegistrados: number;
+  cidadaosMax: number;
+  protocolosEsteMes: number;
+  percentualUsuarios: number;
+  percentualCidadaos: number;
 }
 
-interface Limit {
-  key: string;
-  name: string;
-  value: number;
-  description: string;
+interface Features {
+  [key: string]: boolean;
 }
 
-interface Integration {
-  id: string;
-  name: string;
-  type: string;
-  status: 'connected' | 'disconnected' | 'error';
-  lastSync?: string;
-  config: Record<string, string>;
+interface Limits {
+  maxUsers: {
+    atual: number;
+    limite: number;
+    percentual: number;
+  };
+  maxCitizens: {
+    atual: number;
+    limite: number;
+    percentual: number;
+  };
+  subscription: {
+    plan: string;
+    ends: string | null;
+    paymentStatus: string;
+  };
 }
 
-interface NotificationSettings {
-  criticalAlertsEmail: string;
-  slackWebhook: string;
-  enableSlack: boolean;
-  enableEmail: boolean;
-  escalationMinutes: number;
-}
-
-export default function SettingsManagementPage() {
+export default function SettingsPage() {
   const { toast } = useToast();
-  const { confirm, ConfirmDialog } = useConfirmDialog();
-  const { apiRequest } = useSuperAdminAuth();
-  const [globalSettings, setGlobalSettings] = useState<GlobalSettings>({
-    platformName: 'DigiUrban',
-    logoUrl: '/logo.png',
-    primaryColor: '#3B82F6',
-    defaultLanguage: 'pt-BR',
-    timezone: 'America/Sao_Paulo'
-  });
-  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([]);
-  const [limits, setLimits] = useState<Limit[]>([]);
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [notifications, setNotifications] = useState<NotificationSettings>({
-    criticalAlertsEmail: 'admin@digiurban.com',
-    slackWebhook: '',
-    enableSlack: false,
-    enableEmail: true,
-    escalationMinutes: 30
-  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'global' | 'features' | 'limits' | 'integrations' | 'notifications'>('global');
+  const [selectedTab, setSelectedTab] = useState<'municipal' | 'features' | 'limits'>('municipal');
+
+  // Estados
+  const [municipalConfig, setMunicipalConfig] = useState<MunicipalConfig | null>(null);
+  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
+  const [features, setFeatures] = useState<Features>({});
+  const [limits, setLimits] = useState<Limits | null>(null);
+  const [subscriptionPlan, setSubscriptionPlan] = useState('');
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    loadData();
+  }, [selectedTab]);
 
-  const fetchSettings = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const [globalData, flagsData, limitsData, integrationsData, notificationsData] = await Promise.all([
-        apiRequest('/super-admin/settings/global', { method: 'GET' }).catch(() => null),
-        apiRequest('/super-admin/settings/feature-flags', { method: 'GET' }).catch(() => null),
-        apiRequest('/super-admin/settings/limits', { method: 'GET' }).catch(() => null),
-        apiRequest('/super-admin/settings/integrations', { method: 'GET' }).catch(() => null),
-        apiRequest('/super-admin/settings/notifications', { method: 'GET' }).catch(() => null)
-      ]);
-
-      if (globalData) {
-        setGlobalSettings(globalData.settings || globalSettings);
-      }
-      if (flagsData) {
-        setFeatureFlags(flagsData.flags || mockFeatureFlags);
-      } else {
-        setFeatureFlags(mockFeatureFlags);
-      }
-      if (limitsData) {
-        setLimits(limitsData.limits || mockLimits);
-      } else {
-        setLimits(mockLimits);
-      }
-      if (integrationsData) {
-        setIntegrations(integrationsData.integrations || mockIntegrations);
-      } else {
-        setIntegrations(mockIntegrations);
-      }
-      if (notificationsData) {
-        setNotifications(notificationsData.settings || notifications);
+      if (selectedTab === 'municipal') {
+        const response = await fetch('/api/super-admin/settings/municipal');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setMunicipalConfig(result.data.config);
+            setUsageStats(result.data.usageStats);
+          }
+        }
+      } else if (selectedTab === 'features') {
+        const response = await fetch('/api/super-admin/settings/features');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setFeatures(result.data.features);
+            setSubscriptionPlan(result.data.subscriptionPlan);
+          }
+        }
+      } else if (selectedTab === 'limits') {
+        const response = await fetch('/api/super-admin/settings/limits');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setLimits(result.data);
+          }
+        }
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
-      setFeatureFlags(mockFeatureFlags);
-      setLimits(mockLimits);
-      setIntegrations(mockIntegrations);
+      console.error('Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveGlobalSettings = async () => {
+  const handleSaveMunicipal = async () => {
+    if (!municipalConfig) return;
+
     setSaving(true);
     try {
-      await apiRequest('/super-admin/settings/global', {
+      const response = await fetch('/api/super-admin/settings/municipal', {
         method: 'PUT',
-        body: JSON.stringify(globalSettings)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(municipalConfig)
       });
 
-      toast({
-        title: 'Configurações salvas',
-        description: 'As configurações globais foram salvas com sucesso.',
-      });
+      if (response.ok) {
+        toast({
+          title: 'Configurações salvas',
+          description: 'As configurações municipais foram atualizadas com sucesso.'
+        });
+      } else {
+        throw new Error('Erro ao salvar');
+      }
     } catch (error) {
-      console.error('Error saving settings:', error);
       toast({
-        title: 'Erro ao salvar configurações',
-        description: 'Ocorreu um erro ao salvar as configurações.',
-        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível salvar as configurações.',
+        variant: 'destructive'
       });
     } finally {
       setSaving(false);
     }
   };
 
-  const handleToggleFeatureFlag = async (flagId: string) => {
-    const flag = featureFlags.find(f => f.id === flagId);
-    if (!flag) return;
-
+  const handleSaveFeatures = async () => {
+    setSaving(true);
     try {
-      await apiRequest(`/super-admin/settings/feature-flags/${flagId}`, {
+      const response = await fetch('/api/super-admin/settings/features', {
         method: 'PUT',
-        body: JSON.stringify({ enabled: !flag.enabled })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features })
       });
 
-      setFeatureFlags(flags =>
-        flags.map(f => f.id === flagId ? { ...f, enabled: !f.enabled } : f)
-      );
+      if (response.ok) {
+        toast({
+          title: 'Módulos atualizados',
+          description: 'As funcionalidades foram atualizadas com sucesso.'
+        });
+      } else {
+        throw new Error('Erro ao salvar');
+      }
     } catch (error) {
-      console.error('Error toggling feature flag:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível atualizar os módulos.',
+        variant: 'destructive'
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleUpdateLimit = async (key: string, value: number) => {
+  const handleSaveLimits = async () => {
+    if (!limits) return;
+
+    setSaving(true);
     try {
-      await apiRequest(`/super-admin/settings/limits/${key}`, {
+      const response = await fetch('/api/super-admin/settings/limits', {
         method: 'PUT',
-        body: JSON.stringify({ value })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          maxUsers: limits.maxUsers.limite,
+          maxCitizens: limits.maxCitizens.limite
+        })
       });
 
-      setLimits(lims =>
-        lims.map(l => l.key === key ? { ...l, value } : l)
-      );
-      toast({
-        title: 'Limite atualizado',
-        description: 'O limite foi atualizado com sucesso.',
-      });
+      if (response.ok) {
+        toast({
+          title: 'Limites atualizados',
+          description: 'Os limites foram atualizados com sucesso.'
+        });
+        loadData(); // Recarregar para ver percentuais atualizados
+      } else {
+        throw new Error('Erro ao salvar');
+      }
     } catch (error) {
-      console.error('Error updating limit:', error);
       toast({
-        title: 'Erro ao atualizar limite',
-        description: 'Ocorreu um erro ao atualizar o limite.',
-        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível atualizar os limites.',
+        variant: 'destructive'
       });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleTestIntegration = async (integrationId: string) => {
-    try {
-      await apiRequest(`/super-admin/settings/integrations/${integrationId}/test`, {
-        method: 'POST'
-      });
-
-      toast({
-        title: 'Integração testada',
-        description: 'A integração foi testada com sucesso!',
-      });
-    } catch (error) {
-      console.error('Error testing integration:', error);
-      toast({
-        title: 'Erro ao testar integração',
-        description: 'Ocorreu um erro ao testar a integração.',
-        variant: 'destructive',
-      });
-    }
+  const getProgressColor = (percentual: number) => {
+    if (percentual >= 90) return 'bg-red-600';
+    if (percentual >= 70) return 'bg-orange-500';
+    return 'bg-green-600';
   };
 
-  const getIntegrationStatusBadge = (status: string) => {
-    const styles = {
-      connected: 'bg-green-100 text-green-800',
-      disconnected: 'bg-gray-100 text-gray-800',
-      error: 'bg-red-100 text-red-800'
+  const getPlanBadge = (plan: string) => {
+    const plans: Record<string, { label: string; color: string }> = {
+      basic: { label: 'Básico', color: 'bg-gray-100 text-gray-800' },
+      professional: { label: 'Profissional', color: 'bg-blue-100 text-blue-800' },
+      enterprise: { label: 'Enterprise', color: 'bg-purple-100 text-purple-800' }
     };
-    const icons = {
-      connected: <CheckCircle className="w-4 h-4" />,
-      disconnected: <XCircle className="w-4 h-4" />,
-      error: <AlertTriangle className="w-4 h-4" />
-    };
+    const p = plans[plan] || plans.basic;
+    return <span className={`px-3 py-1 rounded-full text-sm font-medium ${p.color}`}>{p.label}</span>;
+  };
+
+  if (loading) {
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${styles[status as keyof typeof styles]}`}>
-        {icons[status as keyof typeof icons]}
-        {status}
-      </span>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Carregando configurações...</p>
+        </div>
+      </div>
     );
-  };
+  }
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <main className="min-h-screen bg-background p-8">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-primary mb-2">
-              Configurações do Sistema
-            </h1>
-            <p className="text-muted-foreground">
-              Configurações globais, feature flags, limites e integrações
-            </p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Configurações do Sistema</h1>
+          <p className="text-gray-600">Gerencie as configurações do município e funcionalidades</p>
         </div>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
           <nav className="flex space-x-8">
             {[
-              { id: 'global', label: 'Global', icon: <Settings className="w-4 h-4" /> },
-              { id: 'features', label: 'Feature Flags', icon: <Flag className="w-4 h-4" /> },
-              { id: 'limits', label: 'Limites & Quotas', icon: <Gauge className="w-4 h-4" /> },
-              { id: 'integrations', label: 'Integrações', icon: <Plug className="w-4 h-4" /> },
-              { id: 'notifications', label: 'Notificações', icon: <Bell className="w-4 h-4" /> }
+              { id: 'municipal', label: 'Configuração Municipal', icon: <Building2 className="w-4 h-4" /> },
+              { id: 'features', label: 'Módulos e Funcionalidades', icon: <Layers className="w-4 h-4" /> },
+              { id: 'limits', label: 'Limites e Uso', icon: <Gauge className="w-4 h-4" /> }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id as typeof selectedTab)}
-                className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm ${
+                className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   selectedTab === tab.id
-                    ? 'border-primary text-primary'
+                    ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -277,440 +269,410 @@ export default function SettingsManagementPage() {
           </nav>
         </div>
 
-        {/* Tab Content */}
-        {selectedTab === 'global' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações Globais</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome da Plataforma
-                  </label>
-                  <input
-                    type="text"
-                    value={globalSettings.platformName}
-                    onChange={(e) => setGlobalSettings({ ...globalSettings, platformName: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL do Logo
-                  </label>
-                  <input
-                    type="text"
-                    value={globalSettings.logoUrl}
-                    onChange={(e) => setGlobalSettings({ ...globalSettings, logoUrl: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Cor Primária
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={globalSettings.primaryColor}
-                      onChange={(e) => setGlobalSettings({ ...globalSettings, primaryColor: e.target.value })}
-                      className="h-10 w-20 border border-gray-300 rounded cursor-pointer"
-                    />
+        {/* Tab: Configuração Municipal */}
+        {selectedTab === 'municipal' && municipalConfig && (
+          <div className="space-y-6">
+            {/* Estatísticas de Uso */}
+            {usageStats && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-blue-100 rounded-lg">
+                        <Users className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">Usuários Ativos</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {usageStats.usuariosAtivos} / {usageStats.usuariosMax}
+                        </p>
+                        <p className="text-xs text-gray-500">{usageStats.percentualUsuarios}% do limite</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-green-100 rounded-lg">
+                        <UserCheck className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">Cidadãos Registrados</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {usageStats.cidadaosRegistrados.toLocaleString('pt-BR')}
+                        </p>
+                        <p className="text-xs text-gray-500">{usageStats.percentualCidadaos}% do limite</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-orange-100 rounded-lg">
+                        <TrendingUp className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-600">Protocolos Este Mês</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {usageStats.protocolosEsteMes.toLocaleString('pt-BR')}
+                        </p>
+                        <p className="text-xs text-gray-500">Crescimento mensal</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Formulário de Configuração */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Dados do Município</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome da Instituição
+                    </label>
                     <input
                       type="text"
-                      value={globalSettings.primaryColor}
-                      onChange={(e) => setGlobalSettings({ ...globalSettings, primaryColor: e.target.value })}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      value={municipalConfig.nome}
+                      onChange={(e) => setMunicipalConfig({ ...municipalConfig, nome: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      CNPJ
+                    </label>
+                    <input
+                      type="text"
+                      value={municipalConfig.cnpj}
+                      onChange={(e) => setMunicipalConfig({ ...municipalConfig, cnpj: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome do Município
+                    </label>
+                    <input
+                      type="text"
+                      value={municipalConfig.nomeMunicipio}
+                      onChange={(e) => setMunicipalConfig({ ...municipalConfig, nomeMunicipio: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      UF
+                    </label>
+                    <select
+                      value={municipalConfig.ufMunicipio}
+                      onChange={(e) => setMunicipalConfig({ ...municipalConfig, ufMunicipio: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="AC">Acre</option>
+                      <option value="AL">Alagoas</option>
+                      <option value="AP">Amapá</option>
+                      <option value="AM">Amazonas</option>
+                      <option value="BA">Bahia</option>
+                      <option value="CE">Ceará</option>
+                      <option value="DF">Distrito Federal</option>
+                      <option value="ES">Espírito Santo</option>
+                      <option value="GO">Goiás</option>
+                      <option value="MA">Maranhão</option>
+                      <option value="MT">Mato Grosso</option>
+                      <option value="MS">Mato Grosso do Sul</option>
+                      <option value="MG">Minas Gerais</option>
+                      <option value="PA">Pará</option>
+                      <option value="PB">Paraíba</option>
+                      <option value="PR">Paraná</option>
+                      <option value="PE">Pernambuco</option>
+                      <option value="PI">Piauí</option>
+                      <option value="RJ">Rio de Janeiro</option>
+                      <option value="RN">Rio Grande do Norte</option>
+                      <option value="RS">Rio Grande do Sul</option>
+                      <option value="RO">Rondônia</option>
+                      <option value="RR">Roraima</option>
+                      <option value="SC">Santa Catarina</option>
+                      <option value="SP">São Paulo</option>
+                      <option value="SE">Sergipe</option>
+                      <option value="TO">Tocantins</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Código IBGE
+                    </label>
+                    <input
+                      type="text"
+                      value={municipalConfig.codigoIbge}
+                      onChange={(e) => setMunicipalConfig({ ...municipalConfig, codigoIbge: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Cor Primária
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="color"
+                        value={municipalConfig.corPrimaria || '#0066CC'}
+                        onChange={(e) => setMunicipalConfig({ ...municipalConfig, corPrimaria: e.target.value })}
+                        className="h-10 w-20 border border-gray-300 rounded cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={municipalConfig.corPrimaria || '#0066CC'}
+                        onChange={(e) => setMunicipalConfig({ ...municipalConfig, corPrimaria: e.target.value })}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Idioma Padrão
-                  </label>
-                  <select
-                    value={globalSettings.defaultLanguage}
-                    onChange={(e) => setGlobalSettings({ ...globalSettings, defaultLanguage: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+
+                <div className="mt-6 pt-6 border-t border-gray-200 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Plano:</span>
+                    {getPlanBadge(municipalConfig.subscriptionPlan)}
+                  </div>
+                  <Button
+                    onClick={handleSaveMunicipal}
+                    disabled={saving}
                   >
-                    <option value="pt-BR">Português (BR)</option>
-                    <option value="en-US">English (US)</option>
-                    <option value="es-ES">Español</option>
-                  </select>
+                    {saving ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar Configurações
+                      </>
+                    )}
+                  </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Tab: Módulos e Funcionalidades */}
+        {selectedTab === 'features' && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Timezone
-                  </label>
-                  <select
-                    value={globalSettings.timezone}
-                    onChange={(e) => setGlobalSettings({ ...globalSettings, timezone: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  >
-                    <option value="America/Sao_Paulo">América/São Paulo (GMT-3)</option>
-                    <option value="America/New_York">América/Nova York (GMT-5)</option>
-                    <option value="Europe/London">Europa/Londres (GMT+0)</option>
-                  </select>
+                  <CardTitle>Módulos e Funcionalidades</CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Ative ou desative os módulos disponíveis para o município
+                  </p>
                 </div>
+                {getPlanBadge(subscriptionPlan)}
               </div>
-              <div className="pt-4 border-t border-gray-200 flex justify-end">
-                <button
-                  onClick={handleSaveGlobalSettings}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {Object.entries(features).map(([key, enabled]) => {
+                  const labels: Record<string, string> = {
+                    moduloEncaminhamentosTFD: 'Módulo de Encaminhamentos TFD',
+                    moduloControlePragas: 'Módulo de Controle de Pragas',
+                    moduloPodaPreventivaArvores: 'Módulo de Poda Preventiva de Árvores',
+                    moduloColeta: 'Módulo de Coleta',
+                    moduloAgendamentos: 'Sistema de Agendamentos Online',
+                    notificacoesPush: 'Notificações Push',
+                    notificacoesEmail: 'Notificações por Email',
+                    notificacoesSMS: 'Notificações por SMS',
+                    assinaturaDigital: 'Assinatura Digital',
+                    relatoriosAvancados: 'Relatórios Avançados',
+                    apiExterna: 'API Externa',
+                    integracaoMaps: 'Integração Google Maps',
+                    integracaoSMTP: 'Integração SMTP (Email)'
+                  };
+
+                  return (
+                    <div key={key} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">{labels[key] || key}</h3>
+                      </div>
+                      <button
+                        onClick={() => setFeatures({ ...features, [key]: !enabled })}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          enabled ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            enabled ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200 flex justify-end">
+                <Button
+                  onClick={handleSaveFeatures}
                   disabled={saving}
-                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                 >
                   {saving ? (
                     <>
-                      <RefreshCw className="inline w-4 h-4 mr-2 animate-spin" />
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                       Salvando...
                     </>
                   ) : (
                     <>
-                      <Save className="inline w-4 h-4 mr-2" />
-                      Salvar Configurações
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar Módulos
                     </>
                   )}
-                </button>
+                </Button>
               </div>
-            </div>
             </CardContent>
           </Card>
         )}
 
-        {selectedTab === 'features' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Feature Flags</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <div className="space-y-4">
-              {featureFlags.map((flag) => (
-                <div key={flag.id} className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{flag.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{flag.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">Key: {flag.key}</p>
-                    </div>
-                    <button
-                      onClick={() => handleToggleFeatureFlag(flag.id)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        flag.enabled ? 'bg-green-600' : 'bg-gray-300'
-                      }`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          flag.enabled ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                  {flag.enabled && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <div className="text-sm text-gray-600 mb-2">
-                        Rollout: {flag.rolloutPercentage}%
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: `${flag.rolloutPercentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {selectedTab === 'limits' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Limites e Quotas</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <div className="space-y-4">
-              {limits.map((limit) => (
-                <div key={limit.key} className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{limit.name}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{limit.description}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        value={limit.value}
-                        onChange={(e) => {
-                          const newValue = parseInt(e.target.value);
-                          setLimits(lims =>
-                            lims.map(l => l.key === limit.key ? { ...l, value: newValue } : l)
-                          );
-                        }}
-                        className="w-32 px-3 py-2 border border-gray-300 rounded-lg text-right"
-                      />
-                      <button
-                        onClick={() => handleUpdateLimit(limit.key, limit.value)}
-                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-                      >
-                        Atualizar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {selectedTab === 'integrations' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Integrações Externas</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {integrations.map((integration) => (
-                <div key={integration.id} className="p-4 border border-gray-200 rounded-lg">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{integration.name}</h3>
-                      <p className="text-xs text-gray-500">{integration.type}</p>
-                    </div>
-                    {getIntegrationStatusBadge(integration.status)}
-                  </div>
-                  {integration.lastSync && (
-                    <p className="text-xs text-gray-500 mb-3">
-                      Última sinc: {new Date(integration.lastSync).toLocaleString('pt-BR')}
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleTestIntegration(integration.id)}
-                      className="flex-1 px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                    >
-                      Testar
-                    </button>
-                    <button
-                      onClick={() => toast({
-                        title: 'Funcionalidade em desenvolvimento',
-                        description: 'A configuração de integrações estará disponível em breve.',
-                      })}
-                      className="flex-1 px-3 py-1.5 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
-                    >
-                      Configurar
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {selectedTab === 'notifications' && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações de Notificações</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <div className="space-y-6">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-gray-700">
-                  Configure como o sistema enviará alertas críticos para os super admins.
+        {/* Tab: Limites e Uso */}
+        {selectedTab === 'limits' && limits && (
+          <div className="space-y-6">
+            {/* Alerta de Plano */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-1">Plano: {limits.subscription.plan}</h3>
+                <p className="text-sm text-blue-800">
+                  {limits.subscription.ends
+                    ? `Válido até ${new Date(limits.subscription.ends).toLocaleDateString('pt-BR')}`
+                    : 'Sem data de expiração'
+                  }
                 </p>
               </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="flex items-center gap-2 mb-3">
-                    <input
-                      type="checkbox"
-                      checked={notifications.enableEmail}
-                      onChange={(e) => setNotifications({ ...notifications, enableEmail: e.target.checked })}
-                      className="rounded border-gray-300"
-                    />
-                    <span className="font-medium text-gray-900">Ativar notificações por Email</span>
-                  </label>
-                  {notifications.enableEmail && (
-                    <input
-                      type="email"
-                      value={notifications.criticalAlertsEmail}
-                      onChange={(e) => setNotifications({ ...notifications, criticalAlertsEmail: e.target.value })}
-                      placeholder="admin@digiurban.com"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-2 mb-3">
-                    <input
-                      type="checkbox"
-                      checked={notifications.enableSlack}
-                      onChange={(e) => setNotifications({ ...notifications, enableSlack: e.target.checked })}
-                      className="rounded border-gray-300"
-                    />
-                    <span className="font-medium text-gray-900">Ativar notificações no Slack</span>
-                  </label>
-                  {notifications.enableSlack && (
-                    <input
-                      type="text"
-                      value={notifications.slackWebhook}
-                      onChange={(e) => setNotifications({ ...notifications, slackWebhook: e.target.value })}
-                      placeholder="https://hooks.slack.com/services/..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tempo de Escalação (minutos)
-                  </label>
-                  <p className="text-xs text-gray-500 mb-2">
-                    Tempo para escalar alerta se não for resolvido
-                  </p>
-                  <input
-                    type="number"
-                    value={notifications.escalationMinutes}
-                    onChange={(e) => setNotifications({ ...notifications, escalationMinutes: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200 flex justify-end">
-                <button
-                  onClick={() => toast({
-                    title: 'Funcionalidade em desenvolvimento',
-                    description: 'O salvamento de notificações estará disponível em breve.',
-                  })}
-                  className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
-                >
-                  <Save className="inline w-4 h-4 mr-2" />
-                  Salvar Notificações
-                </button>
-              </div>
             </div>
-            </CardContent>
-          </Card>
+
+            {/* Limite de Usuários */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Limite de Usuários Administradores</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {limits.maxUsers.atual} / {limits.maxUsers.limite}
+                      </p>
+                      <p className="text-sm text-gray-600">usuários ativos</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-gray-900">{limits.maxUsers.percentual}%</p>
+                      <p className="text-sm text-gray-600">utilizado</p>
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all ${getProgressColor(limits.maxUsers.percentual)}`}
+                      style={{ width: `${Math.min(limits.maxUsers.percentual, 100)}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-gray-700">Novo limite:</label>
+                    <input
+                      type="number"
+                      value={limits.maxUsers.limite}
+                      onChange={(e) => setLimits({
+                        ...limits,
+                        maxUsers: { ...limits.maxUsers, limite: parseInt(e.target.value) || 0 }
+                      })}
+                      min={limits.maxUsers.atual}
+                      className="w-32 px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Limite de Cidadãos */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Limite de Cidadãos Cadastrados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {limits.maxCitizens.atual.toLocaleString('pt-BR')} / {limits.maxCitizens.limite.toLocaleString('pt-BR')}
+                      </p>
+                      <p className="text-sm text-gray-600">cidadãos registrados</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-gray-900">{limits.maxCitizens.percentual}%</p>
+                      <p className="text-sm text-gray-600">utilizado</p>
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all ${getProgressColor(limits.maxCitizens.percentual)}`}
+                      style={{ width: `${Math.min(limits.maxCitizens.percentual, 100)}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-gray-700">Novo limite:</label>
+                    <input
+                      type="number"
+                      value={limits.maxCitizens.limite}
+                      onChange={(e) => setLimits({
+                        ...limits,
+                        maxCitizens: { ...limits.maxCitizens, limite: parseInt(e.target.value) || 0 }
+                      })}
+                      min={limits.maxCitizens.atual}
+                      className="w-40 px-3 py-2 border border-gray-300 rounded-lg"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveLimits}
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar Limites
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         )}
       </div>
-      <ConfirmDialog />
     </main>
   );
 }
-
-// Mock Data
-const mockFeatureFlags: FeatureFlag[] = [
-  {
-    id: '1',
-    name: 'Portal do Cidadão v2',
-    key: 'citizen_portal_v2',
-    enabled: true,
-    rolloutPercentage: 50,
-    targetTenants: ['demo', 'sp'],
-    description: 'Nova versão do portal com interface redesenhada'
-  },
-  {
-    id: '2',
-    name: 'Notificações Push',
-    key: 'push_notifications',
-    enabled: true,
-    rolloutPercentage: 100,
-    targetTenants: [],
-    description: 'Notificações push para aplicativo mobile'
-  },
-  {
-    id: '3',
-    name: 'Assinatura Digital',
-    key: 'digital_signature',
-    enabled: false,
-    rolloutPercentage: 0,
-    targetTenants: [],
-    description: 'Assinatura digital de documentos com certificado ICP-Brasil'
-  },
-  {
-    id: '4',
-    name: 'Analytics Avançado',
-    key: 'advanced_analytics',
-    enabled: true,
-    rolloutPercentage: 75,
-    targetTenants: ['sp', 'rj', 'mg'],
-    description: 'Dashboard de analytics com métricas detalhadas'
-  }
-];
-
-const mockLimits: Limit[] = [
-  {
-    key: 'max_tenants',
-    name: 'Máximo de Tenants',
-    value: 100,
-    description: 'Número máximo de tenants ativos na plataforma'
-  },
-  {
-    key: 'max_users_per_tenant',
-    name: 'Usuários por Tenant',
-    value: 1000,
-    description: 'Número máximo de usuários por tenant'
-  },
-  {
-    key: 'max_protocols_per_month',
-    name: 'Protocolos por Mês',
-    value: 10000,
-    description: 'Número máximo de protocolos por tenant por mês'
-  },
-  {
-    key: 'storage_quota_gb',
-    name: 'Quota de Storage (GB)',
-    value: 100,
-    description: 'Storage padrão por tenant em GB'
-  },
-  {
-    key: 'api_rate_limit',
-    name: 'Rate Limit API',
-    value: 1000,
-    description: 'Requisições por minuto por tenant'
-  }
-];
-
-const mockIntegrations: Integration[] = [
-  {
-    id: '1',
-    name: 'Stripe',
-    type: 'Payment Gateway',
-    status: 'connected',
-    lastSync: new Date(Date.now() - 3600000).toISOString(),
-    config: {}
-  },
-  {
-    id: '2',
-    name: 'Twilio',
-    type: 'SMS Provider',
-    status: 'connected',
-    lastSync: new Date(Date.now() - 7200000).toISOString(),
-    config: {}
-  },
-  {
-    id: '3',
-    name: 'SendGrid',
-    type: 'Email Service',
-    status: 'disconnected',
-    config: {}
-  },
-  {
-    id: '4',
-    name: 'Google Analytics',
-    type: 'Analytics',
-    status: 'error',
-    lastSync: new Date(Date.now() - 86400000).toISOString(),
-    config: {}
-  }
-];

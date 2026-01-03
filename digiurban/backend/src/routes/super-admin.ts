@@ -892,6 +892,288 @@ router.get('/schema', adminAuthMiddleware, superAdminOnly, async (req: Request, 
   }
 });
 
+// ============================================
+// CONFIGURAÇÕES DO MUNICÍPIO (SINGLE-TENANT)
+// ============================================
+
+// GET /api/super-admin/settings/municipal - Obter configurações do município
+router.get('/settings/municipal', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    console.log('[SETTINGS] Buscando configurações municipais...');
+
+    // Buscar configuração do município (singleton)
+    const municipioConfig = await prisma.municipioConfig.findUnique({
+      where: { id: 'singleton' }
+    });
+
+    if (!municipioConfig) {
+      return res.status(404).json({
+        success: false,
+        error: 'Configuração municipal não encontrada'
+      });
+    }
+
+    // Estatísticas de uso
+    const [totalUsers, totalCitizens, protocolsThisMonth] = await Promise.all([
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.citizen.count({ where: { isActive: true } }),
+      prisma.protocolSimplified.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+          }
+        }
+      })
+    ]);
+
+    const usageStats = {
+      usuariosAtivos: totalUsers,
+      usuariosMax: municipioConfig.maxUsers,
+      cidadaosRegistrados: totalCitizens,
+      cidadaosMax: municipioConfig.maxCitizens,
+      protocolosEsteMes: protocolsThisMonth,
+      percentualUsuarios: Math.round((totalUsers / municipioConfig.maxUsers) * 100),
+      percentualCidadaos: Math.round((totalCitizens / municipioConfig.maxCitizens) * 100)
+    };
+
+    console.log('[SETTINGS] ✅ Configurações obtidas com sucesso');
+
+    return res.json({
+      success: true,
+      data: {
+        config: municipioConfig,
+        usageStats
+      }
+    });
+  } catch (error: any) {
+    console.error('[SETTINGS] ❌ Erro ao obter configurações:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao obter configurações municipais',
+      details: error.message
+    });
+  }
+});
+
+// PUT /api/super-admin/settings/municipal - Atualizar configurações do município
+router.put('/settings/municipal', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { nome, cnpj, codigoIbge, nomeMunicipio, ufMunicipio, brasao, corPrimaria } = req.body;
+
+    console.log('[SETTINGS] Atualizando configurações municipais...');
+
+    const updatedConfig = await prisma.municipioConfig.update({
+      where: { id: 'singleton' },
+      data: {
+        ...(nome && { nome }),
+        ...(cnpj && { cnpj }),
+        ...(codigoIbge && { codigoIbge }),
+        ...(nomeMunicipio && { nomeMunicipio }),
+        ...(ufMunicipio && { ufMunicipio }),
+        ...(brasao !== undefined && { brasao }),
+        ...(corPrimaria && { corPrimaria })
+      }
+    });
+
+    console.log('[SETTINGS] ✅ Configurações atualizadas com sucesso');
+
+    return res.json({
+      success: true,
+      message: 'Configurações municipais atualizadas com sucesso',
+      data: updatedConfig
+    });
+  } catch (error: any) {
+    console.error('[SETTINGS] ❌ Erro ao atualizar configurações:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao atualizar configurações municipais',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/super-admin/settings/features - Obter módulos e funcionalidades habilitadas
+router.get('/settings/features', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    console.log('[SETTINGS] Buscando features habilitadas...');
+
+    const municipioConfig = await prisma.municipioConfig.findUnique({
+      where: { id: 'singleton' },
+      select: { features: true, subscriptionPlan: true }
+    });
+
+    if (!municipioConfig) {
+      return res.status(404).json({
+        success: false,
+        error: 'Configuração não encontrada'
+      });
+    }
+
+    // Features padrão se não existir no JSON
+    const defaultFeatures = {
+      moduloEncaminhamentosTFD: true,
+      moduloControlePragas: true,
+      moduloPodaPreventivaArvores: true,
+      moduloColeta: true,
+      moduloAgendamentos: false,
+      notificacoesPush: false,
+      notificacoesEmail: true,
+      notificacoesSMS: false,
+      assinaturaDigital: false,
+      relatoriosAvancados: municipioConfig.subscriptionPlan !== 'basic',
+      apiExterna: municipioConfig.subscriptionPlan === 'enterprise',
+      integracaoMaps: true,
+      integracaoSMTP: true
+    };
+
+    const features = (municipioConfig.features as any) || defaultFeatures;
+
+    console.log('[SETTINGS] ✅ Features obtidas com sucesso');
+
+    return res.json({
+      success: true,
+      data: {
+        features,
+        subscriptionPlan: municipioConfig.subscriptionPlan
+      }
+    });
+  } catch (error: any) {
+    console.error('[SETTINGS] ❌ Erro ao obter features:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao obter features',
+      details: error.message
+    });
+  }
+});
+
+// PUT /api/super-admin/settings/features - Atualizar features habilitadas
+router.put('/settings/features', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { features } = req.body;
+
+    console.log('[SETTINGS] Atualizando features...');
+
+    const updatedConfig = await prisma.municipioConfig.update({
+      where: { id: 'singleton' },
+      data: { features }
+    });
+
+    console.log('[SETTINGS] ✅ Features atualizadas com sucesso');
+
+    return res.json({
+      success: true,
+      message: 'Features atualizadas com sucesso',
+      data: updatedConfig.features
+    });
+  } catch (error: any) {
+    console.error('[SETTINGS] ❌ Erro ao atualizar features:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao atualizar features',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/super-admin/settings/limits - Obter limites e quotas
+router.get('/settings/limits', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    console.log('[SETTINGS] Buscando limites e quotas...');
+
+    const municipioConfig = await prisma.municipioConfig.findUnique({
+      where: { id: 'singleton' },
+      select: {
+        maxUsers: true,
+        maxCitizens: true,
+        subscriptionPlan: true,
+        subscriptionEnds: true,
+        paymentStatus: true
+      }
+    });
+
+    if (!municipioConfig) {
+      return res.status(404).json({
+        success: false,
+        error: 'Configuração não encontrada'
+      });
+    }
+
+    // Contagens atuais
+    const [currentUsers, currentCitizens] = await Promise.all([
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.citizen.count({ where: { isActive: true } })
+    ]);
+
+    const limits = {
+      maxUsers: {
+        atual: currentUsers,
+        limite: municipioConfig.maxUsers,
+        percentual: Math.round((currentUsers / municipioConfig.maxUsers) * 100)
+      },
+      maxCitizens: {
+        atual: currentCitizens,
+        limite: municipioConfig.maxCitizens,
+        percentual: Math.round((currentCitizens / municipioConfig.maxCitizens) * 100)
+      },
+      subscription: {
+        plan: municipioConfig.subscriptionPlan,
+        ends: municipioConfig.subscriptionEnds,
+        paymentStatus: municipioConfig.paymentStatus
+      }
+    };
+
+    console.log('[SETTINGS] ✅ Limites obtidos com sucesso');
+
+    return res.json({
+      success: true,
+      data: limits
+    });
+  } catch (error: any) {
+    console.error('[SETTINGS] ❌ Erro ao obter limites:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao obter limites',
+      details: error.message
+    });
+  }
+});
+
+// PUT /api/super-admin/settings/limits - Atualizar limites
+router.put('/settings/limits', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { maxUsers, maxCitizens } = req.body;
+
+    console.log('[SETTINGS] Atualizando limites...');
+
+    const updatedConfig = await prisma.municipioConfig.update({
+      where: { id: 'singleton' },
+      data: {
+        ...(maxUsers && { maxUsers: parseInt(maxUsers) }),
+        ...(maxCitizens && { maxCitizens: parseInt(maxCitizens) })
+      }
+    });
+
+    console.log('[SETTINGS] ✅ Limites atualizados com sucesso');
+
+    return res.json({
+      success: true,
+      message: 'Limites atualizados com sucesso',
+      data: {
+        maxUsers: updatedConfig.maxUsers,
+        maxCitizens: updatedConfig.maxCitizens
+      }
+    });
+  } catch (error: any) {
+    console.error('[SETTINGS] ❌ Erro ao atualizar limites:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao atualizar limites',
+      details: error.message
+    });
+  }
+});
+
 // GET /api/super-admin/users/admins - Listar apenas super admins
 router.get('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
