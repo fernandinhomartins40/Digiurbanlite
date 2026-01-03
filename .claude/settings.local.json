@@ -61,7 +61,8 @@
       "Bash(npm run build:prisma:*)",
       "Bash(nslookup:*)",
       "Bash(dig:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(psql:*)"
     ],
     "deny": [],
     "ask": []

@@ -15,7 +15,8 @@ import {
   ChevronDown,
   ChevronRight,
   Lock,
-  Shield
+  Shield,
+  PlayCircle
 } from 'lucide-react';
 import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
 
@@ -55,6 +56,7 @@ export default function SchemaManagementPage() {
   const [expandedTable, setExpandedTable] = useState<string | null>(null);
   const [requireAuth, setRequireAuth] = useState(false);
   const [authPassword, setAuthPassword] = useState('');
+  const [runningMigrations, setRunningMigrations] = useState(false);
 
   // Estados para dados reais da API
   const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null);
@@ -102,6 +104,33 @@ export default function SchemaManagementPage() {
   const handleViewMigration = (migrationId: string) => {
     console.log('Visualizar detalhes da migration:', migrationId);
     // TODO: Abrir modal com detalhes completos da migration
+  };
+
+  const handleRunMigrations = async () => {
+    if (!confirm('⚠️ ATENÇÃO: Esta ação irá executar todas as migrations pendentes no banco de dados. Deseja continuar?')) {
+      return;
+    }
+
+    setRunningMigrations(true);
+    try {
+      const response = await fetch('/api/super-admin/schema/run-migrations', {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert('✅ Migrations executadas com sucesso!\n\n' + (data.output || data.message));
+        // Recarregar dados
+        loadSchemaData();
+      } else {
+        const error = await response.json();
+        alert('❌ Erro ao executar migrations:\n\n' + (error.details || error.error));
+      }
+    } catch (error: any) {
+      alert('❌ Erro ao executar migrations:\n\n' + error.message);
+    } finally {
+      setRunningMigrations(false);
+    }
   };
 
   const filteredTables = tables.filter(table =>
@@ -398,8 +427,47 @@ export default function SchemaManagementPage() {
         {/* Migrations Tab */}
         {selectedTab === 'migrations' && (
           <div className="space-y-4">
+            {/* Run Migrations Button */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-900">Executar Migrations Pendentes</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Execute o comando <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">prisma migrate deploy</code> para aplicar migrations pendentes
+                  </p>
+                </div>
+                <button
+                  onClick={handleRunMigrations}
+                  disabled={runningMigrations}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {runningMigrations ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Executando...
+                    </>
+                  ) : (
+                    <>
+                      <PlayCircle className="w-4 h-4" />
+                      Executar Migrations
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Migrations List */}
             {migrations.map((migration) => (
-              <div key={migration.id} className="bg-white rounded-lg border border-gray-200 p-4">
+              <div
+                key={migration.id}
+                className={`bg-white rounded-lg border p-4 ${
+                  migration.status === 'failed'
+                    ? 'border-red-300 bg-red-50'
+                    : migration.status === 'pending'
+                    ? 'border-yellow-300 bg-yellow-50'
+                    : 'border-gray-200'
+                }`}
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-start gap-3">
                     {migration.status === 'applied' && (

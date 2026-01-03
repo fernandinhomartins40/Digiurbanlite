@@ -892,6 +892,56 @@ router.get('/schema', adminAuthMiddleware, superAdminOnly, async (req: Request, 
   }
 });
 
+// POST /api/super-admin/schema/run-migrations - Executar migrations pendentes
+router.post('/schema/run-migrations', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    console.log('[SCHEMA] Executando migrations pendentes...');
+
+    // Executar npx prisma migrate deploy no backend
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execPromise = util.promisify(exec);
+
+    const backendPath = path.join(__dirname, '..', '..');
+
+    const { stdout, stderr } = await execPromise('npx prisma migrate deploy', {
+      cwd: backendPath,
+      env: { ...process.env }
+    });
+
+    console.log('[SCHEMA] stdout:', stdout);
+    if (stderr) {
+      console.log('[SCHEMA] stderr:', stderr);
+    }
+
+    // Verificar se houve sucesso
+    const success = !stderr.includes('Error') && !stderr.includes('failed');
+
+    if (success) {
+      console.log('[SCHEMA] ✅ Migrations executadas com sucesso');
+      return res.json({
+        success: true,
+        message: 'Migrations executadas com sucesso',
+        output: stdout
+      });
+    } else {
+      console.error('[SCHEMA] ❌ Erro ao executar migrations:', stderr);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao executar migrations',
+        details: stderr
+      });
+    }
+  } catch (error: any) {
+    console.error('[SCHEMA] ❌ Erro ao executar migrations:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao executar migrations',
+      details: error.message
+    });
+  }
+});
+
 // ============================================
 // CONFIGURAÇÕES DO MUNICÍPIO (SINGLE-TENANT)
 // ============================================
