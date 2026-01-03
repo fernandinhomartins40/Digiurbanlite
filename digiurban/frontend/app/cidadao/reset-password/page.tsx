@@ -32,7 +32,7 @@ function ResetPasswordForm() {
 
   const validateToken = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/citizen/validate-reset-token`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/citizen/auth/validate-reset-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token })
@@ -69,7 +69,7 @@ function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/citizen/reset-password`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/citizen/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword: password })
