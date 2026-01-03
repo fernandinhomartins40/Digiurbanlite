@@ -28,8 +28,8 @@ CREATE TYPE "ReportStatus" AS ENUM ('PENDING', 'REVIEWING', 'RESOLVED', 'DISMISS
 -- CreateEnum
 CREATE TYPE "ModerationAction" AS ENUM ('NONE', 'WARNING', 'MESSAGE_DELETED', 'USER_WARNED', 'USER_SUSPENDED', 'USER_BANNED', 'REPORTED_POLICE');
 
--- CreateEnum
-CREATE TYPE "LogLevel" AS ENUM ('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL');
+-- LogLevel já existe no banco (criado por outro sistema)
+-- CREATE TYPE "LogLevel" AS ENUM ('DEBUG', 'INFO', 'WARN', 'ERROR', 'CRITICAL');
 
 -- CreateEnum
 CREATE TYPE "TemplateCategory" AS ENUM ('WELCOME', 'PROTOCOL', 'NOTIFICATION', 'REMINDER', 'CONFIRMATION', 'ALERT', 'SYSTEM');
