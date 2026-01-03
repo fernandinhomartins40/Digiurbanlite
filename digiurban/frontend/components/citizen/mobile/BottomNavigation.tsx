@@ -8,6 +8,7 @@ import {
   FileText,
   User,
   Menu,
+  MessageCircle,
 } from 'lucide-react';
 
 interface NavItem {
@@ -26,10 +27,10 @@ const navItems: NavItem[] = [
     href: '/cidadao',
   },
   {
-    id: 'protocols',
-    label: 'Protocolos',
-    icon: Folder,
-    href: '/cidadao/protocolos',
+    id: 'messages',
+    label: 'Mensagens',
+    icon: MessageCircle,
+    href: '/cidadao/mensagens',
   },
   {
     id: 'services',
@@ -39,10 +40,10 @@ const navItems: NavItem[] = [
     isFAB: true,
   },
   {
-    id: 'profile',
-    label: 'Perfil',
-    icon: User,
-    href: '/cidadao/perfil',
+    id: 'protocols',
+    label: 'Protocolos',
+    icon: Folder,
+    href: '/cidadao/protocolos',
   },
   {
     id: 'more',
