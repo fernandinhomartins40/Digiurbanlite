@@ -77,9 +77,13 @@ const menuItems: MenuItem[] = [
     icon: Wrench
   },
   {
-    title: 'Email Server',
-    href: '/super-admin/email-server',
-    icon: Mail
+    title: 'Email',
+    href: '#email',
+    icon: Mail,
+    children: [
+      { title: 'Email Server', href: '/super-admin/email-server', icon: Mail },
+      { title: 'Templates', href: '/super-admin/email-templates', icon: FileText },
+    ]
   },
   {
     title: 'Configurações',
@@ -101,7 +105,7 @@ function SuperAdminLayoutContent({
   const pathname = usePathname();
   const { user, loading: authLoading, logout } = useSuperAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['#settings']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['#settings', '#email']);
   const [notifications, setNotifications] = useState(0);
 
   // Auto-open sidebar on desktop

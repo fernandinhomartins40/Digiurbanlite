@@ -113,6 +113,12 @@ const superAdminRoutes = require('./routes/super-admin').default;
 app.use('/api/super-admin', superAdminRoutes);
 console.log('   ✅ super-admin importado');
 
+// Email Templates (Super Admin)
+console.log('   Carregando email-templates...');
+const emailTemplatesRoutes = require('./routes/email-templates').default;
+app.use('/api/email-templates', emailTemplatesRoutes);
+console.log('   ✅ email-templates importado');
+
 console.log('✅ Rotas de autenticação carregadas!');
 
 // Rotas públicas

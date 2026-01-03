@@ -318,6 +318,31 @@ export class TransactionalEmailService {
   }
 
   /**
+   * Envia email de boas-vindas para novo cidadão
+   */
+  async sendWelcomeEmail(
+    emailServerId: string,
+    citizenEmail: string,
+    citizenName: string,
+    tenantName: string = 'DigiUrban',
+    siteUrl: string = 'https://digiurban.com.br',
+    supportEmail: string = 'suporte@digiurban.com.br'
+  ) {
+    return this.sendEmail({
+      emailServerId,
+      templateName: 'citizen-welcome',
+      to: citizenEmail,
+      variables: {
+        citizenName,
+        tenantName,
+        siteName: 'Portal do Cidadão',
+        siteUrl,
+        supportEmail,
+      }
+    });
+  }
+
+  /**
    * Envia confirmação de protocolo
    * DIA 3: Changed parameter from tenantId to emailServerId
    */
@@ -776,6 +801,80 @@ Este é um email automático, não responda.
           'trackingUrl',
           'tenantName',
         ],
+        category: 'transactional'
+        },
+      {
+        name: 'citizen-welcome',
+        subject: 'Bem-vindo ao {{tenantName}}!',
+        htmlContent: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Bem-vindo</title>
+          </head>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h1 style="color: #007bff;">Bem-vindo ao {{tenantName}}!</h1>
+              </div>
+
+              <p>Olá <strong>{{citizenName}}</strong>,</p>
+
+              <p>É um prazer recebê-lo em nossa plataforma! Seu cadastro foi realizado com sucesso.</p>
+
+              <div style="background: #f8f9fa; border-left: 4px solid #28a745; padding: 20px; margin: 30px 0; border-radius: 0 5px 5px 0;">
+                <h3 style="margin: 0 0 15px 0; color: #28a745;">O que você pode fazer agora?</h3>
+                <ul style="margin: 0; padding-left: 20px;">
+                  <li>Acessar serviços públicos digitais</li>
+                  <li>Abrir protocolos e acompanhar solicitações</li>
+                  <li>Consultar informações municipais</li>
+                  <li>Receber notificações importantes</li>
+                </ul>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="{{siteUrl}}"
+                   style="background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                  Acessar Portal
+                </a>
+              </div>
+
+              <p>Se precisar de ajuda, nossa equipe está à disposição em <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+
+              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+              <p style="font-size: 12px; color: #666; text-align: center;">
+                Este é um email automático, não responda.<br>
+                {{tenantName}} - Gestão Municipal Digital
+              </p>
+            </div>
+          </body>
+          </html>
+        `,
+        textContent: `
+Bem-vindo ao {{tenantName}}!
+
+Olá {{citizenName}},
+
+É um prazer recebê-lo em nossa plataforma! Seu cadastro foi realizado com sucesso.
+
+O QUE VOCÊ PODE FAZER AGORA?
+- Acessar serviços públicos digitais
+- Abrir protocolos e acompanhar solicitações
+- Consultar informações municipais
+- Receber notificações importantes
+
+Acesse: {{siteUrl}}
+
+Se precisar de ajuda: {{supportEmail}}
+
+---
+Este é um email automático, não responda.
+{{tenantName}} - Gestão Municipal Digital
+        `,
+        variables: ['citizenName', 'tenantName', 'siteName', 'siteUrl', 'supportEmail'],
         category: 'transactional'
         },
     ];

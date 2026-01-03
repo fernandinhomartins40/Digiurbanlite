@@ -11,6 +11,7 @@ import { loginRateLimiter, registerRateLimiter } from '../middleware/rate-limit'
 import { accountLockoutMiddleware, recordFailedLogin, resetFailedAttempts } from '../middleware/account-lockout';
 import { logLoginSuccess, logLoginFailed, AUDIT_EVENTS, logAuditEvent } from '../utils/audit-logger';
 import { sanitizeForLog } from '../utils/logger';
+import { transactionalEmailService } from '../lib/email/TransactionalEmailService';
 
 const router = Router();
 
@@ -170,6 +171,41 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
       userAgent: req.headers['user-agent'],
       success: true
         });
+
+    // 📧 Enviar email de boas-vindas
+    try {
+      // Buscar EmailServer ativo
+      const emailServer = await prisma.emailServer.findFirst({
+        where: { isActive: true }
+      });
+
+      if (emailServer) {
+        // Buscar configuração do município
+        const municipioConfig = await prisma.municipioConfig.findUnique({
+          where: { id: 'singleton' }
+        });
+
+        // Enviar email de boas-vindas de forma assíncrona (não bloqueia resposta)
+        transactionalEmailService.sendWelcomeEmail(
+          emailServer.id,
+          citizen.email,
+          citizen.name,
+          municipioConfig?.nome || 'DigiUrban',
+          process.env.FRONTEND_URL || 'https://digiurban.com.br',
+          process.env.SUPPORT_EMAIL || 'suporte@digiurban.com.br'
+        ).catch(error => {
+          console.error('Erro ao enviar email de boas-vindas:', error);
+          // Não falhamos o cadastro por erro de email
+        });
+
+        console.log('✅ Email de boas-vindas agendado para:', citizen.email);
+      } else {
+        console.warn('⚠️ EmailServer não configurado. Email de boas-vindas não enviado.');
+      }
+    } catch (error) {
+      console.error('Erro ao processar email de boas-vindas:', error);
+      // Não falhamos o cadastro por erro de email
+    }
 
     // ✅ Mensagem diferenciada para cidadãos não atribuídos
     const isUnassigned = (req as any).isUnassignedCitizen;
