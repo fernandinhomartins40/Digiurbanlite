@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Building2,
   UserCog,
+  Users,
   Activity,
   FileText,
   Settings,
@@ -54,6 +55,11 @@ const menuItems: MenuItem[] = [
     title: 'Usuários Admin',
     href: '/super-admin/users',
     icon: UserCog
+  },
+  {
+    title: 'Usuários',
+    href: '/super-admin/usuarios',
+    icon: Users
   },
   {
     title: 'Monitoramento',

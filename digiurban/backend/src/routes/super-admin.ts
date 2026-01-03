@@ -1224,6 +1224,347 @@ router.put('/settings/limits', adminAuthMiddleware, superAdminOnly, async (req: 
   }
 });
 
+// ============================================
+// GERENCIAMENTO DE USUÁRIOS DO MUNICÍPIO
+// ============================================
+
+// GET /api/super-admin/users - Listar TODOS os usuários do município
+router.get('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    console.log('[USERS] Listando todos os usuários do município...');
+
+    const { role, active, search, page = '1', limit = '50' } = req.query;
+    const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+
+    // Construir filtros
+    const where: any = {};
+
+    if (role && typeof role === 'string') {
+      where.role = role;
+    }
+
+    if (active !== undefined) {
+      where.isActive = active === 'true';
+    }
+
+    if (search && typeof search === 'string') {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
+          lastLogin: true,
+          departmentId: true,
+          department: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          },
+          userDepartments: {
+            where: { isActive: true },
+            include: {
+              department: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true
+                }
+              }
+            },
+            orderBy: [
+              { isPrimary: 'desc' },
+              { createdAt: 'asc' }
+            ]
+          },
+          _count: {
+            select: {
+              assignedProtocolsSimplified: true
+            }
+          }
+        },
+        orderBy: [{ createdAt: 'desc' }],
+        skip,
+        take: parseInt(limit as string)
+      }),
+      prisma.user.count({ where })
+    ]);
+
+    // Processar departamentos
+    const usersWithDepartments = users.map(user => {
+      const departments = user.userDepartments.map(ud => ({
+        id: ud.department.id,
+        name: ud.department.name,
+        code: ud.department.code,
+        isPrimary: ud.isPrimary
+      }));
+
+      const primaryDepartment = user.userDepartments.find(ud => ud.isPrimary)?.department || user.department;
+
+      return {
+        ...user,
+        departments,
+        primaryDepartment,
+        protocolsCount: user._count.assignedProtocolsSimplified
+      };
+    });
+
+    const totalPages = Math.ceil(total / parseInt(limit as string));
+
+    console.log(`[USERS] ✅ ${users.length} usuários obtidos (${total} total)`);
+
+    return res.json({
+      success: true,
+      data: {
+        users: usersWithDepartments,
+        pagination: {
+          page: parseInt(page as string),
+          limit: parseInt(limit as string),
+          total,
+          totalPages
+        }
+      }
+    });
+  } catch (error: any) {
+    console.error('[USERS] ❌ Erro ao listar usuários:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao listar usuários',
+      details: error.message
+    });
+  }
+});
+
+// POST /api/super-admin/users - Criar novo usuário
+router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { name, email, password, role, departmentIds, primaryDepartmentId, isActive } = req.body;
+
+    console.log('[USERS] Criando novo usuário:', email);
+
+    // Verificar se email já existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email já cadastrado'
+      });
+    }
+
+    // Hash da senha
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Criar usuário
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: role || 'USER',
+        departmentId: primaryDepartmentId || departmentIds?.[0],
+        isActive: isActive !== false
+      }
+    });
+
+    // Se houver múltiplos departamentos, criar userDepartments
+    if (departmentIds && departmentIds.length > 0) {
+      await Promise.all(
+        departmentIds.map((deptId: string) =>
+          prisma.userDepartment.create({
+            data: {
+              userId: user.id,
+              departmentId: deptId,
+              isPrimary: deptId === primaryDepartmentId,
+              isActive: true
+            }
+          })
+        )
+      );
+    }
+
+    console.log('[USERS] ✅ Usuário criado com sucesso:', user.id);
+
+    return res.json({
+      success: true,
+      message: 'Usuário criado com sucesso',
+      data: { user }
+    });
+  } catch (error: any) {
+    console.error('[USERS] ❌ Erro ao criar usuário:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao criar usuário',
+      details: error.message
+    });
+  }
+});
+
+// PUT /api/super-admin/users/:id - Atualizar usuário
+router.put('/users/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role, departmentIds, primaryDepartmentId, isActive, password } = req.body;
+
+    console.log('[USERS] Atualizando usuário:', id);
+
+    // Verificar se usuário existe
+    const existingUser = await prisma.user.findUnique({
+      where: { id }
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'Usuário não encontrado'
+      });
+    }
+
+    // Preparar dados para atualização
+    const updateData: any = {
+      name,
+      email,
+      role,
+      departmentId: primaryDepartmentId || departmentIds?.[0],
+      isActive
+    };
+
+    // Se senha foi fornecida, fazer hash
+    if (password) {
+      const bcrypt = require('bcryptjs');
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    // Atualizar usuário
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: updateData
+    });
+
+    // Atualizar departamentos se fornecidos
+    if (departmentIds && departmentIds.length > 0) {
+      // Desativar todos os departamentos atuais
+      await prisma.userDepartment.updateMany({
+        where: { userId: id },
+        data: { isActive: false }
+      });
+
+      // Criar/reativar departamentos
+      await Promise.all(
+        departmentIds.map(async (deptId: string) => {
+          const existing = await prisma.userDepartment.findFirst({
+            where: { userId: id, departmentId: deptId }
+          });
+
+          if (existing) {
+            // Reativar
+            await prisma.userDepartment.update({
+              where: { id: existing.id },
+              data: {
+                isPrimary: deptId === primaryDepartmentId,
+                isActive: true
+              }
+            });
+          } else {
+            // Criar novo
+            await prisma.userDepartment.create({
+              data: {
+                userId: id,
+                departmentId: deptId,
+                isPrimary: deptId === primaryDepartmentId,
+                isActive: true
+              }
+            });
+          }
+        })
+      );
+    }
+
+    console.log('[USERS] ✅ Usuário atualizado com sucesso:', id);
+
+    return res.json({
+      success: true,
+      message: 'Usuário atualizado com sucesso',
+      data: { user: updatedUser }
+    });
+  } catch (error: any) {
+    console.error('[USERS] ❌ Erro ao atualizar usuário:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao atualizar usuário',
+      details: error.message
+    });
+  }
+});
+
+// DELETE /api/super-admin/users/:id - Excluir usuário
+router.delete('/users/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    console.log('[USERS] Excluindo usuário:', id);
+
+    // Verificar se usuário existe
+    const user = await prisma.user.findUnique({
+      where: { id }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Usuário não encontrado'
+      });
+    }
+
+    // Não permitir excluir super admins
+    if (user.role === 'SUPER_ADMIN') {
+      return res.status(403).json({
+        success: false,
+        error: 'Não é permitido excluir Super Admins'
+      });
+    }
+
+    // Excluir departamentos do usuário
+    await prisma.userDepartment.deleteMany({
+      where: { userId: id }
+    });
+
+    // Excluir usuário
+    await prisma.user.delete({
+      where: { id }
+    });
+
+    console.log('[USERS] ✅ Usuário excluído com sucesso:', id);
+
+    return res.json({
+      success: true,
+      message: 'Usuário excluído com sucesso'
+    });
+  } catch (error: any) {
+    console.error('[USERS] ❌ Erro ao excluir usuário:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao excluir usuário',
+      details: error.message
+    });
+  }
+});
+
 // GET /api/super-admin/users/admins - Listar apenas super admins
 router.get('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
