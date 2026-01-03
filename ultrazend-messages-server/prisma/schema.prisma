@@ -1,0 +1,616 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ULTRAZEND MESSAGES - CORE
+// ============================================
+
+model MessageServer {
+  id                String   @id @default(cuid())
+  name              String   // "DigiUrban Messages"
+  hostname          String   // messages.digiurban.com.br
+  wsPort            Int      @default(9001)
+  isActive          Boolean  @default(false)
+  maxDailyMessages  Int      @default(100000)
+  enableEncryption  Boolean  @default(false) // E2E encryption
+  enableP2P         Boolean  @default(false) // Cidadão-Cidadão
+  enableBroadcast   Boolean  @default(true)  // Canais oficiais
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relacionamentos
+  conversations Conversation[]
+  channels      OfficialChannel[]
+  logs          MessageLog[]
+  stats         MessageStats[]
+
+  @@map("message_servers")
+}
+
+// ============================================
+// CONVERSAS 1:1 E P2P
+// ============================================
+
+model Conversation {
+  id              String             @id @default(cuid())
+  messageServerId String
+
+  // Participantes
+  participant1Id   String
+  participant1Type ParticipantType  // CITIZEN ou SERVER
+  participant2Id   String
+  participant2Type ParticipantType  // CITIZEN ou SERVER
+
+  // Contexto (opcional - para vincular a protocolos)
+  protocolId       String?
+  departmentId     String?
+
+  // Tipo de conversa
+  type             ConversationType @default(SUPPORT) // SUPPORT, P2P, GROUP
+
+  // Status
+  status           ConversationStatus @default(ACTIVE)
+  lastMessageAt    DateTime?
+  lastMessagePreview String?         // Preview da última mensagem
+
+  // Contadores
+  totalMessages    Int      @default(0)
+  unreadCount1     Int      @default(0) // Não lidas por participant1
+  unreadCount2     Int      @default(0) // Não lidas por participant2
+
+  // Metadados
+  metadata         Json?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  closedAt         DateTime?
+
+  // Relacionamentos
+  messageServer MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
+  messages      Message[]
+
+  @@unique([participant1Id, participant1Type, participant2Id, participant2Type, protocolId])
+  @@index([participant1Id, participant1Type, status])
+  @@index([participant2Id, participant2Type, status])
+  @@index([protocolId])
+  @@index([status, lastMessageAt])
+  @@map("conversations")
+}
+
+enum ParticipantType {
+  CITIZEN  // Cidadão
+  SERVER   // Servidor público (User)
+  SYSTEM   // Sistema automático
+}
+
+enum ConversationType {
+  SUPPORT  // Suporte (cidadão <-> servidor)
+  P2P      // Peer-to-peer (cidadão <-> cidadão)
+  GROUP    // Grupo (futuro)
+}
+
+enum ConversationStatus {
+  ACTIVE      // Conversa ativa
+  ARCHIVED    // Arquivada pelo usuário
+  CLOSED      // Encerrada oficialmente
+  BLOCKED     // Bloqueada por violação
+}
+
+// ============================================
+// MENSAGENS
+// ============================================
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+
+  // Autor
+  senderId       String
+  senderType     ParticipantType
+
+  // Conteúdo
+  content        String   @db.Text
+  contentType    MessageContentType @default(TEXT)
+
+  // Anexos
+  attachments    Json?    // Array de {url, type, name, size}
+
+  // Mensagem citada/respondida
+  replyToId      String?
+
+  // Status de entrega
+  status         MessageStatus @default(SENT)
+  sentAt         DateTime @default(now())
+  deliveredAt    DateTime?
+  readAt         DateTime?
+
+  // Edição/Exclusão
+  isEdited       Boolean  @default(false)
+  editedAt       DateTime?
+  isDeleted      Boolean  @default(false)
+  deletedAt      DateTime?
+  deletedBy      String?  // ID de quem deletou
+
+  // Metadados
+  metadata       Json?    // IP, user-agent, location, etc
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relacionamentos
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replyTo        Message?     @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies        Message[]    @relation("MessageReplies")
+  reports        MessageReport[]
+
+  @@index([conversationId, sentAt])
+  @@index([senderId, senderType])
+  @@index([status, sentAt])
+  @@index([isDeleted])
+  @@map("messages")
+}
+
+enum MessageContentType {
+  TEXT       // Texto simples
+  IMAGE      // Imagem
+  VIDEO      // Vídeo
+  AUDIO      // Áudio
+  DOCUMENT   // Documento (PDF, DOC, etc)
+  LOCATION   // Localização geográfica
+  STICKER    // Figurinha/Emoji
+  SYSTEM     // Mensagem do sistema
+}
+
+enum MessageStatus {
+  QUEUED     // Na fila para envio
+  SENT       // Enviada
+  DELIVERED  // Entregue
+  READ       // Lida
+  FAILED     // Falha no envio
+}
+
+// ============================================
+// CANAIS OFICIAIS (BROADCAST)
+// ============================================
+
+model OfficialChannel {
+  id              String   @id @default(cuid())
+  messageServerId String
+
+  // Informações
+  name            String   // "Canal Oficial da Saúde"
+  slug            String   @unique  // "saude-oficial"
+  description     String?  @db.Text
+  iconUrl         String?
+  bannerUrl       String?
+  color           String?  // Cor do canal (hex)
+
+  // Vinculação
+  departmentId    String?
+  managedBy       Json     // Array de User IDs com permissão
+
+  // Configurações
+  isPublic        Boolean  @default(true)  // Qualquer um pode se inscrever?
+  requiresApproval Boolean @default(false) // Inscrição precisa aprovação?
+  isActive        Boolean  @default(true)
+  allowComments   Boolean  @default(false) // Cidadãos podem comentar?
+
+  // Estatísticas
+  subscriberCount Int      @default(0)
+  messageCount    Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relacionamentos
+  messageServer   MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
+  subscriptions   ChannelSubscription[]
+  messages        ChannelMessage[]
+
+  @@index([isActive, isPublic])
+  @@index([slug])
+  @@map("official_channels")
+}
+
+model ChannelSubscription {
+  id         String   @id @default(cuid())
+  channelId  String
+  citizenId  String
+
+  // Status
+  status     SubscriptionStatus @default(PENDING)
+  subscribedAt DateTime @default(now())
+  approvedAt   DateTime?
+  approvedBy   String?  // User ID que aprovou
+
+  // Preferências de Notificação
+  notifyInApp   Boolean @default(true)
+  notifyEmail   Boolean @default(false)
+  notifySMS     Boolean @default(false)
+  notifyPush    Boolean @default(true)
+
+  // Metadados
+  metadata      Json?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relacionamentos
+  channel       OfficialChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  deliveries    ChannelDelivery[]
+
+  @@unique([channelId, citizenId])
+  @@index([citizenId, status])
+  @@index([channelId, status])
+  @@map("channel_subscriptions")
+}
+
+enum SubscriptionStatus {
+  PENDING    // Aguardando aprovação
+  ACTIVE     // Inscrito e recebendo
+  MUTED      // Inscrito mas sem notificações
+  BLOCKED    // Bloqueado de se inscrever
+}
+
+model ChannelMessage {
+  id         String   @id @default(cuid())
+  channelId  String
+  authorId   String   // User ID (servidor público)
+
+  // Conteúdo
+  title      String?
+  content    String   @db.Text
+  contentType MessageContentType @default(TEXT)
+
+  // Mídia
+  attachments Json?   // Array de {url, type, name, size}
+
+  // Agendamento
+  scheduledFor DateTime?
+  publishedAt  DateTime?
+
+  // Status
+  status       BroadcastStatus @default(DRAFT)
+
+  // Estatísticas
+  deliveredCount Int @default(0)
+  readCount      Int @default(0)
+  failedCount    Int @default(0)
+
+  // Prioridade
+  priority       Int @default(3) // 1=urgent, 3=normal, 5=low
+
+  // Metadados
+  metadata       Json?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  sentAt         DateTime?
+
+  // Relacionamentos
+  channel        OfficialChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  deliveries     ChannelDelivery[]
+
+  @@index([channelId, publishedAt])
+  @@index([status, scheduledFor])
+  @@index([authorId])
+  @@map("channel_messages")
+}
+
+enum BroadcastStatus {
+  DRAFT      // Rascunho
+  SCHEDULED  // Agendada
+  SENDING    // Enviando
+  SENT       // Enviada
+  FAILED     // Falhou
+  CANCELLED  // Cancelada
+}
+
+model ChannelDelivery {
+  id        String   @id @default(cuid())
+  messageId String
+  subscriptionId String
+  citizenId String
+
+  // Status
+  status    MessageStatus @default(QUEUED)
+  queuedAt  DateTime @default(now())
+  sentAt    DateTime?
+  deliveredAt DateTime?
+  readAt      DateTime?
+  failedAt    DateTime?
+
+  // Erro
+  errorMessage String?
+  retryCount   Int @default(0)
+
+  // Metadados
+  metadata     Json?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relacionamentos
+  message      ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  subscription ChannelSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, citizenId])
+  @@index([messageId, status])
+  @@index([citizenId, status])
+  @@index([status, queuedAt])
+  @@map("channel_deliveries")
+}
+
+// ============================================
+// PRIVACIDADE & MODERAÇÃO
+// ============================================
+
+model CitizenPrivacySettings {
+  citizenId            String   @id
+
+  // Quem pode enviar mensagens diretas?
+  allowMessagesFromAll Boolean  @default(false)  // Qualquer cidadão
+  allowMessagesFromServers Boolean @default(true) // Servidores públicos
+
+  // Bloqueios
+  blockedCitizens      Json     @default("[]")   // Array de citizen IDs
+  blockedServers       Json     @default("[]")   // Array de user IDs
+
+  // Notificações
+  notifyNewMessage     Boolean  @default(true)
+  notifySound          Boolean  @default(true)
+  notifyVibrate        Boolean  @default(true)
+
+  // Online Status
+  showOnlineStatus     Boolean  @default(true)
+  showLastSeen         Boolean  @default(true)
+  showReadReceipts     Boolean  @default(true)
+
+  // Backup
+  autoBackup           Boolean  @default(false)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("citizen_privacy_settings")
+}
+
+model MessageReport {
+  id          String   @id @default(cuid())
+  messageId   String
+  reportedBy  String   // Citizen ID ou User ID
+  reporterType ParticipantType
+
+  // Motivo
+  reason      ReportReason
+  description String?  @db.Text
+
+  // Status
+  status      ReportStatus @default(PENDING)
+
+  // Evidências
+  screenshots Json?    // Array de URLs de screenshots
+
+  // Revisão
+  reviewedAt  DateTime?
+  reviewedBy  String?  // User ID (moderador)
+  reviewNotes String?  @db.Text
+  action      ModerationAction?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  message     Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([reportedBy, reporterType])
+  @@index([status, createdAt])
+  @@map("message_reports")
+}
+
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  HATE_SPEECH
+  INAPPROPRIATE_CONTENT
+  SCAM
+  IMPERSONATION
+  VIOLENCE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING     // Aguardando revisão
+  REVIEWING   // Em análise
+  RESOLVED    // Resolvida
+  DISMISSED   // Descartada
+  ESCALATED   // Escalada para autoridades
+}
+
+enum ModerationAction {
+  NONE            // Nenhuma ação
+  WARNING         // Aviso ao usuário
+  MESSAGE_DELETED // Mensagem deletada
+  USER_WARNED     // Usuário advertido
+  USER_SUSPENDED  // Usuário suspenso temporariamente
+  USER_BANNED     // Usuário banido permanentemente
+  REPORTED_POLICE // Reportado às autoridades
+}
+
+// ============================================
+// LOGS & AUDITORIA
+// ============================================
+
+model MessageLog {
+  id              String   @id @default(cuid())
+  messageServerId String?
+
+  // Tipo de evento
+  level           LogLevel @default(INFO)
+  event           String   // message-sent, conversation-started, user-blocked, etc
+
+  // Contexto
+  userId          String?
+  citizenId       String?
+  conversationId  String?
+  messageId       String?
+  channelId       String?
+
+  // Dados
+  message         String   @db.Text
+  data            Json?
+
+  // Request info
+  ipAddress       String?
+  userAgent       String?
+
+  timestamp       DateTime @default(now())
+
+  // Relacionamentos
+  messageServer   MessageServer? @relation(fields: [messageServerId], references: [id], onDelete: SetNull)
+
+  @@index([messageServerId, timestamp])
+  @@index([event, timestamp])
+  @@index([level, timestamp])
+  @@index([userId])
+  @@index([citizenId])
+  @@map("message_logs")
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  CRITICAL
+}
+
+model MessageStats {
+  id              String   @id @default(cuid())
+  messageServerId String
+
+  // Data de referência
+  date            DateTime @db.Date
+  hour            Int?     // 0-23 (null = agregado do dia)
+
+  // Métricas de mensagens
+  totalMessages        Int @default(0)
+  textMessages         Int @default(0)
+  mediaMessages        Int @default(0)
+  deletedMessages      Int @default(0)
+
+  // Métricas de conversas
+  totalConversations   Int @default(0)
+  newConversations     Int @default(0)
+  closedConversations  Int @default(0)
+
+  // Métricas de usuários
+  activeUsers          Int @default(0)  // Servidores ativos
+  activeCitizens       Int @default(0)  // Cidadãos ativos
+  onlineUsers          Int @default(0)  // Online agora
+
+  // Métricas de canais
+  channelMessages      Int @default(0)
+  channelSubscriptions Int @default(0)
+  channelDeliveries    Int @default(0)
+
+  // Performance
+  avgResponseTime      Float?  // Tempo médio de resposta (segundos)
+  avgMessageLength     Float?  // Tamanho médio da mensagem
+
+  // Moderação
+  reportsCreated       Int @default(0)
+  reportsResolved      Int @default(0)
+  usersBlocked         Int @default(0)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relacionamentos
+  messageServer        MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
+
+  @@unique([messageServerId, date, hour])
+  @@index([messageServerId, date])
+  @@map("message_stats")
+}
+
+// ============================================
+// SESSÕES WEBSOCKET (TRACKING)
+// ============================================
+
+model WebSocketSession {
+  id          String   @id @default(cuid())
+  socketId    String   @unique  // Socket.io socket.id
+
+  // Usuário
+  userId      String?
+  userType    ParticipantType
+
+  // Conexão
+  ipAddress   String
+  userAgent   String?
+  connectedAt DateTime @default(now())
+  lastPingAt  DateTime @default(now())
+
+  // Status
+  isOnline    Boolean  @default(true)
+
+  // Metadados
+  metadata    Json?
+
+  disconnectedAt DateTime?
+
+  @@index([userId, userType, isOnline])
+  @@index([connectedAt])
+  @@map("websocket_sessions")
+}
+
+// ============================================
+// TEMPLATES DE MENSAGENS AUTOMÁTICAS
+// ============================================
+
+model MessageTemplate {
+  id          String   @id @default(cuid())
+
+  // Identificação
+  name        String   @unique  // protocol-created, welcome-message, etc
+  category    TemplateCategory
+
+  // Conteúdo
+  title       String?
+  content     String   @db.Text
+  contentType MessageContentType @default(TEXT)
+
+  // Variáveis
+  variables   Json     @default("[]")  // ["citizenName", "protocolNumber", etc]
+
+  // Configuração
+  isActive    Boolean  @default(true)
+  isSystem    Boolean  @default(false) // Template do sistema (não editável)
+
+  // Metadados
+  description String?
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("message_templates")
+}
+
+enum TemplateCategory {
+  WELCOME          // Boas-vindas
+  PROTOCOL         // Relacionado a protocolos
+  NOTIFICATION     // Notificações gerais
+  REMINDER         // Lembretes
+  CONFIRMATION     // Confirmações
+  ALERT            // Alertas
+  SYSTEM           // Sistema
+}

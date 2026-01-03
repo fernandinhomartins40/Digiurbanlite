@@ -1,0 +1,66 @@
+{
+  "name": "@digiurban/ultrazend-messages-server",
+  "version": "1.0.0",
+  "description": "UltraZend Messages - Real-time messaging server for DigiUrban",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "build:prisma": "tsc --project tsconfig.prisma.json",
+    "start": "node dist/index.js",
+    "start:production": "node start-server-production.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
+  },
+  "keywords": [
+    "websocket",
+    "messaging",
+    "real-time",
+    "socket.io",
+    "digiurban"
+  ],
+  "author": "DigiUrban Team",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "@socket.io/redis-adapter": "^8.3.0",
+    "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.0.1",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "redis": "^4.7.0",
+    "sharp": "^0.33.5",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.0.4",
+    "winston": "^3.17.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.10.5",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^9.18.0",
+    "jest": "^29.7.0",
+    "prisma": "^6.19.0",
+    "ts-jest": "^29.2.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

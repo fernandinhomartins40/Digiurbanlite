@@ -22,6 +22,22 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: digiurban-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - digiurban_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   ultrazend-smtp:
     build:
       context: ./ultrazend-smtp-server
@@ -47,6 +63,49 @@ services:
       - digiurban_network
     healthcheck:
       test: ["CMD", "node", "-e", "require('net').connect(587, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ultrazend-messages:
+    build:
+      context: ./ultrazend-messages-server
+      dockerfile: Dockerfile
+    container_name: ultrazend-messages
+    ports:
+      - "9001:9001"  # WebSocket + HTTP API
+    environment:
+      - NODE_ENV=production
+      - PORT=9001
+      - HOST=0.0.0.0
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-digiurban-super-secret-change-in-production}
+      - JWT_EXPIRES_IN=7d
+      - MESSAGE_SERVER_ID=${MESSAGE_SERVER_ID:-default-message-server}
+      - MESSAGES_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - BASE_URL=https://digiurban.com.br
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE=10485760
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - MESSAGE_RATE_LIMIT_PER_MINUTE=30
+      - LOG_LEVEL=info
+    volumes:
+      - messages_uploads:/app/uploads
+      - messages_logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9001/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -107,7 +166,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       ultrazend-smtp:
+        condition: service_healthy
+      ultrazend-messages:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
@@ -121,6 +184,8 @@ services:
 volumes:
   postgres_data:
     driver: local
+  redis_data:
+    driver: local
   digiurban_uploads:
     driver: local
   digiurban_logs:
@@ -128,6 +193,10 @@ volumes:
   smtp_data:
     driver: local
   smtp_logs:
+    driver: local
+  messages_uploads:
+    driver: local
+  messages_logs:
     driver: local
 
 networks:

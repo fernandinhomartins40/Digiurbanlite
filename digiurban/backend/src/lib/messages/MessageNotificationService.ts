@@ -1,0 +1,348 @@
+import ultraZendMessages from './UltraZendMessagesAdapter';
+import prisma from '../../config/database';
+import logger from '../logger';
+import { generateToken } from '../auth';
+
+/**
+ * Serviço para enviar notificações via UltraZend Messages
+ * Integrado com o sistema de protocolos do DigiUrban
+ */
+export class MessageNotificationService {
+  /**
+   * Notificar cidadão sobre criação de protocolo
+   */
+  async notifyProtocolCreated(protocolId: string) {
+    try {
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        include: {
+          citizen: true,
+          service: true,
+          assignedUser: true,
+        },
+      });
+
+      if (!protocol || !protocol.citizen) {
+        logger.warn('Protocol or citizen not found', { protocolId });
+        return;
+      }
+
+      // Gerar token para o servidor
+      const serverToken = generateToken({
+        userId: protocol.assignedUserId || 'system',
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(serverToken);
+
+      // Enviar mensagem para o cidadão
+      await ultraZendMessages.sendMessage(
+        protocol.assignedUserId || 'system',
+        'SERVER',
+        {
+          participant2Id: protocol.citizenId,
+          participant2Type: 'CITIZEN',
+          content: `Olá ${protocol.citizen.name}! Seu protocolo #${protocol.protocolNumber} foi criado com sucesso para o serviço "${protocol.service?.name}". Acompanhe o andamento pelo painel ou por aqui.`,
+          protocolId: protocol.id,
+          departmentId: protocol.departmentId || undefined,
+        }
+      );
+
+      logger.info('Protocol creation notification sent', { protocolId });
+    } catch (error) {
+      logger.error('Error notifying protocol created', { error, protocolId });
+    }
+  }
+
+  /**
+   * Notificar cidadão sobre atualização de status do protocolo
+   */
+  async notifyProtocolStatusChanged(protocolId: string, oldStatus: string, newStatus: string) {
+    try {
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        include: {
+          citizen: true,
+          service: true,
+          assignedUser: true,
+        },
+      });
+
+      if (!protocol || !protocol.citizen) return;
+
+      const serverToken = generateToken({
+        userId: protocol.assignedUserId || 'system',
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(serverToken);
+
+      const statusMessages: Record<string, string> = {
+        PROGRESSO: 'está em andamento',
+        CONCLUIDO: 'foi concluído',
+        PENDENCIA: 'possui pendências que precisam de sua atenção',
+        CANCELADO: 'foi cancelado',
+        ATUALIZACAO: 'precisa de atualização',
+      };
+
+      const statusMessage = statusMessages[newStatus] || `mudou de ${oldStatus} para ${newStatus}`;
+
+      await ultraZendMessages.sendMessage(
+        protocol.assignedUserId || 'system',
+        'SERVER',
+        {
+          participant2Id: protocol.citizenId,
+          participant2Type: 'CITIZEN',
+          content: `Seu protocolo #${protocol.protocolNumber} ${statusMessage}. ${protocol.assignedUser ? `Responsável: ${protocol.assignedUser.name}` : ''}`,
+          protocolId: protocol.id,
+        }
+      );
+
+      logger.info('Protocol status change notification sent', { protocolId, newStatus });
+    } catch (error) {
+      logger.error('Error notifying protocol status change', { error, protocolId });
+    }
+  }
+
+  /**
+   * Notificar cidadão sobre novo comentário no protocolo
+   */
+  async notifyNewComment(protocolId: string, commentText: string, authorName: string) {
+    try {
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        include: {
+          citizen: true,
+        },
+      });
+
+      if (!protocol || !protocol.citizen) return;
+
+      const serverToken = generateToken({
+        userId: protocol.assignedUserId || 'system',
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(serverToken);
+
+      await ultraZendMessages.sendMessage(
+        protocol.assignedUserId || 'system',
+        'SERVER',
+        {
+          participant2Id: protocol.citizenId,
+          participant2Type: 'CITIZEN',
+          content: `${authorName} comentou no protocolo #${protocol.protocolNumber}:\n\n"${commentText}"`,
+          protocolId: protocol.id,
+        }
+      );
+
+      logger.info('New comment notification sent', { protocolId });
+    } catch (error) {
+      logger.error('Error notifying new comment', { error, protocolId });
+    }
+  }
+
+  /**
+   * Notificar cidadão sobre documento enviado
+   */
+  async notifyDocumentUploaded(protocolId: string, documentName: string) {
+    try {
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        include: {
+          citizen: true,
+        },
+      });
+
+      if (!protocol || !protocol.citizen) return;
+
+      const serverToken = generateToken({
+        userId: protocol.assignedUserId || 'system',
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(serverToken);
+
+      await ultraZendMessages.sendMessage(
+        protocol.assignedUserId || 'system',
+        'SERVER',
+        {
+          participant2Id: protocol.citizenId,
+          participant2Type: 'CITIZEN',
+          content: `Um novo documento foi enviado para o protocolo #${protocol.protocolNumber}: ${documentName}`,
+          protocolId: protocol.id,
+        }
+      );
+
+      logger.info('Document upload notification sent', { protocolId });
+    } catch (error) {
+      logger.error('Error notifying document upload', { error, protocolId });
+    }
+  }
+
+  /**
+   * Criar canal oficial para departamento
+   */
+  async createDepartmentChannel(departmentId: string, adminUserIds: string[]) {
+    try {
+      const department = await prisma.department.findUnique({
+        where: { id: departmentId },
+      });
+
+      if (!department) {
+        throw new Error('Department not found');
+      }
+
+      const adminToken = generateToken({
+        userId: adminUserIds[0],
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(adminToken);
+
+      const channel = await ultraZendMessages.createChannel({
+        name: `Canal Oficial - ${department.name}`,
+        slug: `${department.code || department.name.toLowerCase().replace(/\s+/g, '-')}-oficial`,
+        description: `Canal oficial de comunicação do ${department.name}. Receba atualizações e informações importantes.`,
+        departmentId,
+        managedBy: adminUserIds,
+        isPublic: true,
+      });
+
+      logger.info('Department channel created', {
+        departmentId,
+        channelId: channel.id,
+      });
+
+      return channel;
+    } catch (error) {
+      logger.error('Error creating department channel', { error, departmentId });
+      throw error;
+    }
+  }
+
+  /**
+   * Broadcast para todos os cidadãos (canal geral)
+   */
+  async broadcastToAllCitizens(title: string, content: string, authorId: string) {
+    try {
+      const adminToken = generateToken({
+        userId: authorId,
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(adminToken);
+
+      // Buscar canal "geral" ou criar se não existir
+      let channels = await ultraZendMessages.getChannels();
+      let generalChannel = channels.find((c: any) => c.slug === 'geral');
+
+      if (!generalChannel) {
+        generalChannel = await ultraZendMessages.createChannel({
+          name: 'Canal Geral do Município',
+          slug: 'geral',
+          description: 'Canal oficial para comunicados gerais da prefeitura',
+          managedBy: [authorId],
+          isPublic: true,
+        });
+      }
+
+      await ultraZendMessages.broadcastToChannel({
+        channelId: generalChannel.id,
+        title,
+        content,
+      });
+
+      logger.info('Broadcast sent to all citizens', { channelId: generalChannel.id });
+    } catch (error) {
+      logger.error('Error broadcasting to all citizens', { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Enviar lembrete de protocolo pendente
+   */
+  async sendProtocolReminder(protocolId: string) {
+    try {
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        include: {
+          citizen: true,
+        },
+      });
+
+      if (!protocol || !protocol.citizen) return;
+
+      const serverToken = generateToken({
+        userId: 'system',
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(serverToken);
+
+      await ultraZendMessages.sendMessage(
+        'system',
+        'SERVER',
+        {
+          participant2Id: protocol.citizenId,
+          participant2Type: 'CITIZEN',
+          content: `⏰ Lembrete: Seu protocolo #${protocol.protocolNumber} possui pendências. Por favor, verifique e tome as ações necessárias.`,
+          protocolId: protocol.id,
+        }
+      );
+
+      logger.info('Protocol reminder sent', { protocolId });
+    } catch (error) {
+      logger.error('Error sending protocol reminder', { error, protocolId });
+    }
+  }
+
+  /**
+   * Notificar boas-vindas para novo cidadão
+   */
+  async sendWelcomeMessage(citizenId: string) {
+    try {
+      const citizen = await prisma.citizen.findUnique({
+        where: { id: citizenId },
+      });
+
+      if (!citizen) return;
+
+      const municipio = await prisma.municipioConfig.findUnique({
+        where: { id: 'singleton' },
+      });
+
+      const serverToken = generateToken({
+        userId: 'system',
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(serverToken);
+
+      await ultraZendMessages.sendMessage(
+        'system',
+        'SERVER',
+        {
+          participant2Id: citizenId,
+          participant2Type: 'CITIZEN',
+          content: `Bem-vindo(a) ao DigiUrban ${municipio?.nomeMunicipio || ''}! 🎉\n\nEstamos felizes em tê-lo(a) conosco. Aqui você pode abrir protocolos, acompanhar solicitações e receber atualizações importantes.\n\nSe precisar de ajuda, é só chamar!`,
+        }
+      );
+
+      logger.info('Welcome message sent', { citizenId });
+    } catch (error) {
+      logger.error('Error sending welcome message', { error, citizenId });
+    }
+  }
+}
+
+export default new MessageNotificationService();
