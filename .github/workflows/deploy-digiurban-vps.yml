@@ -164,6 +164,14 @@ jobs:
             docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed" || echo "⚠️ Seed falhou mas continuando deploy"
             echo "✅ Seeds executados"
 
+            # ===== VERIFICAR MIGRATIONS DO ULTRAZEND MESSAGES =====
+            echo "=== Verificando migrations do UltraZend Messages ==="
+            docker logs ultrazend-messages 2>&1 | grep -i "prisma" || echo "Logs do Prisma migrations"
+
+            # Verificar se as tabelas foram criadas
+            echo "=== Verificando tabelas do UltraZend Messages no banco ==="
+            docker exec digiurban-postgres psql -U digiurban -d digiurban -c "\dt message_*" || echo "⚠️ Tabelas ainda não criadas"
+
             # ===== DIAGNÓSTICO: Verificar se backend está crashando =====
             echo "=== Verificando status do backend no supervisord ==="
             docker exec digiurban-vps supervisorctl status || true
