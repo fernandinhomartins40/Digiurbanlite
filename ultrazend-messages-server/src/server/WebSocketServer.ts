@@ -18,7 +18,7 @@ export class WebSocketServer {
   private pubClient!: RedisClientType;
   private subClient!: RedisClientType;
 
-  constructor(private readonly httpServer: HTTPServer) {
+  constructor(httpServer: HTTPServer) {
     this.io = new SocketIOServer(httpServer, {
       cors: {
         origin: process.env.CORS_ORIGIN || '*',
@@ -417,7 +417,7 @@ export class WebSocketServer {
   }
 
   // Métodos públicos para enviar mensagens externamente
-  public async sendMessageToUser(userId: string, userType: ParticipantType, event: string, data: any) {
+  public async sendMessageToUser(userId: string, _userType: ParticipantType, event: string, data: any) {
     this.io.to(`user:${userId}`).emit(event, data);
   }
 

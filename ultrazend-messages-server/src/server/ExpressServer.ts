@@ -271,7 +271,7 @@ export class ExpressServer {
     });
 
     // Deletar mensagem
-    router.delete('/:messageId', async (req: AuthRequest, res: Response) => {
+    router.delete('/:messageId', async (req: AuthRequest, res: Response): Promise<void> => {
       try {
         const { messageId } = req.params;
 
@@ -280,11 +280,13 @@ export class ExpressServer {
         });
 
         if (!message) {
-          return res.status(404).json({ error: 'Message not found' });
+          res.status(404).json({ error: 'Message not found' });
+          return;
         }
 
         if (message.senderId !== req.user!.userId) {
-          return res.status(403).json({ error: 'Unauthorized' });
+          res.status(403).json({ error: 'Unauthorized' });
+          return;
         }
 
         await prisma.message.update({
@@ -310,7 +312,7 @@ export class ExpressServer {
     const router = express.Router();
 
     // Listar canais públicos
-    router.get('/', async (req: AuthRequest, res: Response) => {
+    router.get('/', async (_req: AuthRequest, res: Response) => {
       try {
         const channels = await channelService.getChannels({ isActive: true, isPublic: true });
         res.json(channels);
@@ -321,12 +323,13 @@ export class ExpressServer {
     });
 
     // Inscrever-se em canal
-    router.post('/:channelId/subscribe', async (req: AuthRequest, res: Response) => {
+    router.post('/:channelId/subscribe', async (req: AuthRequest, res: Response): Promise<void> => {
       try {
         const { channelId } = req.params;
 
         if (req.user!.userType !== 'CITIZEN') {
-          return res.status(403).json({ error: 'Only citizens can subscribe to channels' });
+          res.status(403).json({ error: 'Only citizens can subscribe to channels' });
+          return;
         }
 
         const result = await channelService.subscribeToChannel(channelId, req.user!.userId);
@@ -338,12 +341,13 @@ export class ExpressServer {
     });
 
     // Cancelar inscrição
-    router.post('/:channelId/unsubscribe', async (req: AuthRequest, res: Response) => {
+    router.post('/:channelId/unsubscribe', async (req: AuthRequest, res: Response): Promise<void> => {
       try {
         const { channelId } = req.params;
 
         if (req.user!.userType !== 'CITIZEN') {
-          return res.status(403).json({ error: 'Unauthorized' });
+          res.status(403).json({ error: 'Unauthorized' });
+          return;
         }
 
         await channelService.unsubscribeFromChannel(channelId, req.user!.userId);
@@ -370,10 +374,11 @@ export class ExpressServer {
     });
 
     // Minhas inscrições
-    router.get('/my-subscriptions', async (req: AuthRequest, res: Response) => {
+    router.get('/my-subscriptions', async (req: AuthRequest, res: Response): Promise<void> => {
       try {
         if (req.user!.userType !== 'CITIZEN') {
-          return res.status(403).json({ error: 'Unauthorized' });
+          res.status(403).json({ error: 'Unauthorized' });
+          return;
         }
 
         const subscriptions = await channelService.getUserSubscriptions(req.user!.userId);
@@ -420,10 +425,11 @@ export class ExpressServer {
       },
     });
 
-    router.post('/', upload.single('file'), async (req: AuthRequest, res: Response) => {
+    router.post('/', upload.single('file'), async (req: AuthRequest, res: Response): Promise<void> => {
       try {
         if (!req.file) {
-          return res.status(400).json({ error: 'No file uploaded' });
+          res.status(400).json({ error: 'No file uploaded' });
+          return;
         }
 
         const uploadedFile = await fileStorage.uploadFile(req.file);
@@ -471,7 +477,7 @@ export class ExpressServer {
     const router = express.Router();
 
     // Estatísticas
-    router.get('/stats', async (req: AuthRequest, res: Response) => {
+    router.get('/stats', async (_req: AuthRequest, res: Response) => {
       try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -505,8 +511,8 @@ export class ExpressServer {
   }
 
   private setupErrorHandlers() {
-    this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-      logger.error('Unhandled error', { error: err, path: req.path });
+    this.app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+      logger.error('Unhandled error', { error: err, path: _req.path });
       res.status(500).json({ error: 'Internal server error' });
     });
   }
