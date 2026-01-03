@@ -62,7 +62,8 @@
       "Bash(nslookup:*)",
       "Bash(dig:*)",
       "Bash(cd:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
