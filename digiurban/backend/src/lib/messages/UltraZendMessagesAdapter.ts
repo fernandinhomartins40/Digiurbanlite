@@ -1,6 +1,12 @@
 import axios, { AxiosInstance } from 'axios';
 import { io, Socket } from 'socket.io-client';
-import logger from '../logger';
+
+// Logger simples para adapter
+const logger = {
+  info: (msg: string, data?: any) => console.log(`[INFO] ${msg}`, data || ''),
+  warn: (msg: string, data?: any) => console.warn(`[WARN] ${msg}`, data || ''),
+  error: (msg: string, data?: any) => console.error(`[ERROR] ${msg}`, data || ''),
+};
 
 export interface MessageOptions {
   conversationId?: string;
@@ -79,11 +85,11 @@ export class UltraZendMessagesAdapter {
       logger.info('Connected to UltraZend Messages WebSocket');
     });
 
-    this.wsClient.on('disconnect', (reason) => {
+    this.wsClient.on('disconnect', (reason: string) => {
       logger.warn('Disconnected from UltraZend Messages WebSocket', { reason });
     });
 
-    this.wsClient.on('error', (error) => {
+    this.wsClient.on('error', (error: Error) => {
       logger.error('UltraZend Messages WebSocket error', { error });
     });
 

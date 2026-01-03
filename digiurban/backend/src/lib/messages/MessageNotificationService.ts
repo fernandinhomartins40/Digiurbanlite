@@ -1,7 +1,13 @@
 import ultraZendMessages from './UltraZendMessagesAdapter';
-import prisma from '../../config/database';
-import logger from '../logger';
-import { generateToken } from '../auth';
+import { prisma } from '../prisma';
+import { generateToken } from '../../utils/jwt';
+
+// Logger simples para notification service
+const logger = {
+  info: (msg: string, data?: any) => console.log(`[INFO] ${msg}`, data || ''),
+  warn: (msg: string, data?: any) => console.warn(`[WARN] ${msg}`, data || ''),
+  error: (msg: string, data?: any) => console.error(`[ERROR] ${msg}`, data || ''),
+};
 
 /**
  * Serviço para enviar notificações via UltraZend Messages
@@ -43,7 +49,7 @@ export class MessageNotificationService {
         {
           participant2Id: protocol.citizenId,
           participant2Type: 'CITIZEN',
-          content: `Olá ${protocol.citizen.name}! Seu protocolo #${protocol.protocolNumber} foi criado com sucesso para o serviço "${protocol.service?.name}". Acompanhe o andamento pelo painel ou por aqui.`,
+          content: `Olá ${protocol.citizen.name}! Seu protocolo #${protocol.number} foi criado com sucesso para o serviço "${protocol.service?.name}". Acompanhe o andamento pelo painel ou por aqui.`,
           protocolId: protocol.id,
           departmentId: protocol.departmentId || undefined,
         }
@@ -95,7 +101,7 @@ export class MessageNotificationService {
         {
           participant2Id: protocol.citizenId,
           participant2Type: 'CITIZEN',
-          content: `Seu protocolo #${protocol.protocolNumber} ${statusMessage}. ${protocol.assignedUser ? `Responsável: ${protocol.assignedUser.name}` : ''}`,
+          content: `Seu protocolo #${protocol.number} ${statusMessage}. ${protocol.assignedUser ? `Responsável: ${protocol.assignedUser.name}` : ''}`,
           protocolId: protocol.id,
         }
       );
@@ -134,7 +140,7 @@ export class MessageNotificationService {
         {
           participant2Id: protocol.citizenId,
           participant2Type: 'CITIZEN',
-          content: `${authorName} comentou no protocolo #${protocol.protocolNumber}:\n\n"${commentText}"`,
+          content: `${authorName} comentou no protocolo #${protocol.number}:\n\n"${commentText}"`,
           protocolId: protocol.id,
         }
       );
@@ -173,7 +179,7 @@ export class MessageNotificationService {
         {
           participant2Id: protocol.citizenId,
           participant2Type: 'CITIZEN',
-          content: `Um novo documento foi enviado para o protocolo #${protocol.protocolNumber}: ${documentName}`,
+          content: `Um novo documento foi enviado para o protocolo #${protocol.number}: ${documentName}`,
           protocolId: protocol.id,
         }
       );
@@ -294,7 +300,7 @@ export class MessageNotificationService {
         {
           participant2Id: protocol.citizenId,
           participant2Type: 'CITIZEN',
-          content: `⏰ Lembrete: Seu protocolo #${protocol.protocolNumber} possui pendências. Por favor, verifique e tome as ações necessárias.`,
+          content: `⏰ Lembrete: Seu protocolo #${protocol.number} possui pendências. Por favor, verifique e tome as ações necessárias.`,
           protocolId: protocol.id,
         }
       );
