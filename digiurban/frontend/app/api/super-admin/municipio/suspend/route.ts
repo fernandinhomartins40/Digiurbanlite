@@ -7,7 +7,6 @@ export const dynamic = 'force-dynamic';
 // POST /api/super-admin/municipio/suspend - Suspender município
 export async function POST(request: NextRequest) {
   try {
-    // Obter token dos cookies
     const token = request.cookies.get('digiurban_admin_token')?.value;
 
     if (!token) {
@@ -17,10 +16,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Obter dados do corpo da requisição
     const body = await request.json();
 
-    // Fazer requisição ao backend
     const response = await fetch(`${BACKEND_URL}/super-admin/municipio/suspend`, {
       method: 'POST',
       headers: {

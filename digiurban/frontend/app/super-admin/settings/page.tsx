@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
-  Settings,
   Layers,
   Gauge,
   Save,
@@ -14,11 +13,26 @@ import {
   Users,
   UserCheck,
   TrendingUp,
-  AlertCircle
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Shield
 } from 'lucide-react';
 
 // Interfaces
+interface Estado {
+  id: number;
+  sigla: string;
+  nome: string;
+}
+
+interface Municipio {
+  id: number;
+  nome: string;
+}
+
 interface MunicipalConfig {
+  id: string;
   nome: string;
   cnpj: string;
   codigoIbge: string;
@@ -29,6 +43,9 @@ interface MunicipalConfig {
   subscriptionPlan: string;
   subscriptionEnds: string | null;
   paymentStatus: string;
+  isActive: boolean;
+  isSuspended: boolean;
+  suspensionReason: string | null;
 }
 
 interface UsageStats {
@@ -67,7 +84,7 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'municipal' | 'features' | 'limits'>('municipal');
+  const [selectedTab, setSelectedTab] = useState<'municipal' | 'features' | 'limits' | 'status'>('municipal');
 
   // Estados
   const [municipalConfig, setMunicipalConfig] = useState<MunicipalConfig | null>(null);
@@ -76,9 +93,76 @@ export default function SettingsPage() {
   const [limits, setLimits] = useState<Limits | null>(null);
   const [subscriptionPlan, setSubscriptionPlan] = useState('');
 
+  // Estados IBGE
+  const [estados, setEstados] = useState<Estado[]>([]);
+  const [municipios, setMunicipios] = useState<Municipio[]>([]);
+  const [loadingEstados, setLoadingEstados] = useState(false);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
+
   useEffect(() => {
     loadData();
   }, [selectedTab]);
+
+  useEffect(() => {
+    fetchEstados();
+  }, []);
+
+  // Carrega estados da API do IBGE
+  const fetchEstados = async () => {
+    setLoadingEstados(true);
+    try {
+      const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+      if (response.ok) {
+        const data = await response.json();
+        setEstados(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar estados:', error);
+    } finally {
+      setLoadingEstados(false);
+    }
+  };
+
+  // Carrega municípios quando UF é selecionada
+  const fetchMunicipiosPorEstado = async (uf: string) => {
+    if (!uf) {
+      setMunicipios([]);
+      return;
+    }
+
+    setLoadingMunicipios(true);
+    try {
+      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
+      if (response.ok) {
+        const data = await response.json();
+        setMunicipios(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar municípios:', error);
+    } finally {
+      setLoadingMunicipios(false);
+    }
+  };
+
+  // Quando UF é alterada, carrega municípios
+  const handleUfChange = (uf: string) => {
+    if (!municipalConfig) return;
+    setMunicipalConfig({ ...municipalConfig, ufMunicipio: uf, nomeMunicipio: '', codigoIbge: '' });
+    fetchMunicipiosPorEstado(uf);
+  };
+
+  // Quando município é selecionado, atualiza código IBGE
+  const handleMunicipioChange = (municipioId: string) => {
+    if (!municipalConfig) return;
+    const municipioSelecionado = municipios.find(m => m.id.toString() === municipioId);
+    if (municipioSelecionado) {
+      setMunicipalConfig({
+        ...municipalConfig,
+        nomeMunicipio: municipioSelecionado.nome,
+        codigoIbge: municipioSelecionado.id.toString()
+      });
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -90,6 +174,10 @@ export default function SettingsPage() {
           if (result.success) {
             setMunicipalConfig(result.data.config);
             setUsageStats(result.data.usageStats);
+            // Se já existe UF, carregar municípios desse estado
+            if (result.data.config?.ufMunicipio) {
+              fetchMunicipiosPorEstado(result.data.config.ufMunicipio);
+            }
           }
         }
       } else if (selectedTab === 'features') {
@@ -107,6 +195,14 @@ export default function SettingsPage() {
           const result = await response.json();
           if (result.success) {
             setLimits(result.data);
+          }
+        }
+      } else if (selectedTab === 'status') {
+        const response = await fetch('/api/super-admin/settings/municipal');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setMunicipalConfig(result.data.config);
           }
         }
       }
@@ -185,7 +281,10 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           maxUsers: limits.maxUsers.limite,
-          maxCitizens: limits.maxCitizens.limite
+          maxCitizens: limits.maxCitizens.limite,
+          subscriptionPlan: limits.subscription.plan,
+          subscriptionEnds: limits.subscription.ends,
+          paymentStatus: limits.subscription.paymentStatus
         })
       });
 
@@ -194,7 +293,7 @@ export default function SettingsPage() {
           title: 'Limites atualizados',
           description: 'Os limites foram atualizados com sucesso.'
         });
-        loadData(); // Recarregar para ver percentuais atualizados
+        loadData();
       } else {
         throw new Error('Erro ao salvar');
       }
@@ -206,6 +305,55 @@ export default function SettingsPage() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSuspend = async () => {
+    const reason = prompt('Motivo da suspensão:');
+    if (!reason) return;
+
+    try {
+      const response = await fetch('/api/super-admin/municipio/suspend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason })
+      });
+
+      if (response.ok) {
+        loadData();
+        toast({
+          title: 'Município Suspenso',
+          description: 'O município foi suspenso com sucesso'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível suspender o município',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleActivate = async () => {
+    try {
+      const response = await fetch('/api/super-admin/municipio/activate', {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        loadData();
+        toast({
+          title: 'Município Ativado',
+          description: 'O município foi ativado com sucesso'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível ativar o município',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -251,7 +399,8 @@ export default function SettingsPage() {
             {[
               { id: 'municipal', label: 'Configuração Municipal', icon: <Building2 className="w-4 h-4" /> },
               { id: 'features', label: 'Módulos e Funcionalidades', icon: <Layers className="w-4 h-4" /> },
-              { id: 'limits', label: 'Limites e Uso', icon: <Gauge className="w-4 h-4" /> }
+              { id: 'limits', label: 'Limites e Assinatura', icon: <Gauge className="w-4 h-4" /> },
+              { id: 'status', label: 'Status e Ações Críticas', icon: <Shield className="w-4 h-4" /> }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -361,53 +510,50 @@ export default function SettingsPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome do Município
+                      UF (Estado)
                     </label>
-                    <input
-                      type="text"
-                      value={municipalConfig.nomeMunicipio}
-                      onChange={(e) => setMunicipalConfig({ ...municipalConfig, nomeMunicipio: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                    <select
+                      value={municipalConfig.ufMunicipio}
+                      onChange={(e) => handleUfChange(e.target.value)}
+                      disabled={loadingEstados}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    >
+                      <option value="">Selecione o estado...</option>
+                      {estados.map((estado) => (
+                        <option key={estado.id} value={estado.sigla}>
+                          {estado.sigla} - {estado.nome}
+                        </option>
+                      ))}
+                    </select>
+                    {loadingEstados && (
+                      <p className="text-xs text-gray-500 mt-1">Carregando estados...</p>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      UF
+                      Município
                     </label>
                     <select
-                      value={municipalConfig.ufMunicipio}
-                      onChange={(e) => setMunicipalConfig({ ...municipalConfig, ufMunicipio: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={municipalConfig.codigoIbge}
+                      onChange={(e) => handleMunicipioChange(e.target.value)}
+                      disabled={!municipalConfig.ufMunicipio || loadingMunicipios}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                     >
-                      <option value="AC">Acre</option>
-                      <option value="AL">Alagoas</option>
-                      <option value="AP">Amapá</option>
-                      <option value="AM">Amazonas</option>
-                      <option value="BA">Bahia</option>
-                      <option value="CE">Ceará</option>
-                      <option value="DF">Distrito Federal</option>
-                      <option value="ES">Espírito Santo</option>
-                      <option value="GO">Goiás</option>
-                      <option value="MA">Maranhão</option>
-                      <option value="MT">Mato Grosso</option>
-                      <option value="MS">Mato Grosso do Sul</option>
-                      <option value="MG">Minas Gerais</option>
-                      <option value="PA">Pará</option>
-                      <option value="PB">Paraíba</option>
-                      <option value="PR">Paraná</option>
-                      <option value="PE">Pernambuco</option>
-                      <option value="PI">Piauí</option>
-                      <option value="RJ">Rio de Janeiro</option>
-                      <option value="RN">Rio Grande do Norte</option>
-                      <option value="RS">Rio Grande do Sul</option>
-                      <option value="RO">Rondônia</option>
-                      <option value="RR">Roraima</option>
-                      <option value="SC">Santa Catarina</option>
-                      <option value="SP">São Paulo</option>
-                      <option value="SE">Sergipe</option>
-                      <option value="TO">Tocantins</option>
+                      <option value="">
+                        {!municipalConfig.ufMunicipio
+                          ? 'Selecione o estado primeiro...'
+                          : 'Selecione o município...'}
+                      </option>
+                      {municipios.map((municipio) => (
+                        <option key={municipio.id} value={municipio.id}>
+                          {municipio.nome}
+                        </option>
+                      ))}
                     </select>
+                    {loadingMunicipios && (
+                      <p className="text-xs text-gray-500 mt-1">Carregando municípios...</p>
+                    )}
                   </div>
 
                   <div>
@@ -417,9 +563,10 @@ export default function SettingsPage() {
                     <input
                       type="text"
                       value={municipalConfig.codigoIbge}
-                      onChange={(e) => setMunicipalConfig({ ...municipalConfig, codigoIbge: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Preenchido automaticamente ao selecionar o município</p>
                   </div>
 
                   <div>
@@ -547,22 +694,70 @@ export default function SettingsPage() {
           </Card>
         )}
 
-        {/* Tab: Limites e Uso */}
+        {/* Tab: Limites e Assinatura */}
         {selectedTab === 'limits' && limits && (
           <div className="space-y-6">
-            {/* Alerta de Plano */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold text-blue-900 mb-1">Plano: {limits.subscription.plan}</h3>
-                <p className="text-sm text-blue-800">
-                  {limits.subscription.ends
-                    ? `Válido até ${new Date(limits.subscription.ends).toLocaleDateString('pt-BR')}`
-                    : 'Sem data de expiração'
-                  }
-                </p>
-              </div>
-            </div>
+            {/* Card de Assinatura */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações de Assinatura</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Plano de Assinatura
+                    </label>
+                    <select
+                      value={limits.subscription.plan}
+                      onChange={(e) => setLimits({
+                        ...limits,
+                        subscription: { ...limits.subscription, plan: e.target.value }
+                      })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="basic">Básico</option>
+                      <option value="professional">Profissional</option>
+                      <option value="enterprise">Enterprise</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Data de Renovação
+                    </label>
+                    <input
+                      type="date"
+                      value={limits.subscription.ends ? new Date(limits.subscription.ends).toISOString().split('T')[0] : ''}
+                      onChange={(e) => setLimits({
+                        ...limits,
+                        subscription: { ...limits.subscription, ends: e.target.value }
+                      })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status de Pagamento
+                    </label>
+                    <select
+                      value={limits.subscription.paymentStatus}
+                      onChange={(e) => setLimits({
+                        ...limits,
+                        subscription: { ...limits.subscription, paymentStatus: e.target.value }
+                      })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="active">Ativo</option>
+                      <option value="pending">Pendente</option>
+                      <option value="overdue">Vencido</option>
+                      <option value="suspended">Suspenso</option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Limite de Usuários */}
             <Card>
@@ -665,11 +860,99 @@ export default function SettingsPage() {
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    Salvar Limites
+                    Salvar Limites e Assinatura
                   </>
                 )}
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Tab: Status e Ações Críticas */}
+        {selectedTab === 'status' && municipalConfig && (
+          <div className="space-y-6">
+            {/* Status Card */}
+            <Card className={`border-l-4 ${municipalConfig.isSuspended ? 'border-l-red-600' : municipalConfig.isActive ? 'border-l-green-600' : 'border-l-gray-600'}`}>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <CardTitle className="text-2xl">{municipalConfig.nomeMunicipio} - {municipalConfig.ufMunicipio}</CardTitle>
+                      <p className="text-sm text-gray-500">{municipalConfig.nome}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {municipalConfig.isSuspended && (
+                      <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <XCircle className="h-3 w-3" />
+                        Suspenso
+                      </span>
+                    )}
+                    {municipalConfig.isActive && !municipalConfig.isSuspended && (
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        Ativo
+                      </span>
+                    )}
+                    {!municipalConfig.isActive && !municipalConfig.isSuspended && (
+                      <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-semibold">
+                        Inativo
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-gray-500">CNPJ</label>
+                    <p className="text-lg font-semibold">{municipalConfig.cnpj}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Código IBGE</label>
+                    <p className="text-lg font-semibold">{municipalConfig.codigoIbge || '-'}</p>
+                  </div>
+                </div>
+                {municipalConfig.isSuspended && municipalConfig.suspensionReason && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-red-900">Motivo da Suspensão:</p>
+                        <p className="text-sm text-red-700">{municipalConfig.suspensionReason}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Ações Críticas */}
+            <Card className="border-red-200">
+              <CardHeader>
+                <CardTitle className="text-red-700">Ações Críticas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {municipalConfig.isSuspended ? (
+                    <Button onClick={handleActivate} variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Ativar Município
+                    </Button>
+                  ) : (
+                    <Button onClick={handleSuspend} variant="outline" className="border-red-600 text-red-600 hover:bg-red-50">
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Suspender Município
+                    </Button>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">
+                  <AlertTriangle className="h-4 w-4 inline mr-1" />
+                  Suspender o município bloqueará o acesso ao sistema para todos os usuários e cidadãos.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

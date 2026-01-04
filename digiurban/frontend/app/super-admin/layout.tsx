@@ -47,11 +47,6 @@ const menuItems: MenuItem[] = [
     icon: LayoutDashboard
   },
   {
-    title: 'Município',
-    href: '/super-admin/municipio',
-    icon: Building2
-  },
-  {
     title: 'Usuários Admin',
     href: '/super-admin/users',
     icon: UserCog
