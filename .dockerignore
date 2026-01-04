@@ -16,7 +16,13 @@
 **/coverage
 **/test-results
 **/*.log
-**/logs
+# Ignora apenas logs de sistema, não pastas de código
+logs/
+digiurban/backend/logs/
+digiurban/frontend/logs/
+ultrazend-smtp-server/logs/
+# Permite pastas de código com nome logs
+!digiurban/frontend/app/**/logs/
 
 # Temporários
 **/.env.local
