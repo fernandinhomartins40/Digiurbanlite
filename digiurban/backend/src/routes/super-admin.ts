@@ -16,9 +16,10 @@ import emailServerRouter from './email-server';
 const execAsync = promisify(exec);
 const router = Router();
 
-// Função auxiliar para obter diretório de backups com fallback
+// Função auxiliar para obter diretório de backups com fallback e migração automática
 async function getBackupDir(): Promise<string> {
   const preferredDir = process.env.BACKUPS_DIR || '/app/backups';
+  const legacyDir = '/tmp/digiurban-backups';
 
   try {
     // Tentar criar e testar o diretório preferido
@@ -26,13 +27,44 @@ async function getBackupDir(): Promise<string> {
     const testPath = path.join(preferredDir, '.test');
     await fs.writeFile(testPath, 'test');
     await fs.unlink(testPath);
+
+    // ✅ Diretório persistente disponível - migrar backups antigos de /tmp se existirem
+    try {
+      const legacyFiles = await fs.readdir(legacyDir);
+      const backupFiles = legacyFiles.filter(f =>
+        f.endsWith('.json') || f.endsWith('.db') || f.endsWith('.sql')
+      );
+
+      if (backupFiles.length > 0) {
+        console.log(`[BACKUP] 📦 Migrando ${backupFiles.length} backup(s) de ${legacyDir} para ${preferredDir}...`);
+
+        for (const file of backupFiles) {
+          const sourcePath = path.join(legacyDir, file);
+          const destPath = path.join(preferredDir, file);
+
+          // Verificar se arquivo já existe no destino
+          try {
+            await fs.access(destPath);
+            console.log(`[BACKUP] ⏭️  ${file} já existe no destino, pulando...`);
+          } catch {
+            // Arquivo não existe, copiar
+            await fs.copyFile(sourcePath, destPath);
+            console.log(`[BACKUP] ✅ ${file} migrado com sucesso`);
+          }
+        }
+
+        console.log(`[BACKUP] 🎉 Migração concluída! Backups agora em volume persistente.`);
+      }
+    } catch (legacyError) {
+      // /tmp/digiurban-backups não existe ou está vazio, tudo bem
+    }
+
     return preferredDir;
   } catch (error) {
     // Fallback para /tmp se não tiver permissão
     console.warn(`[BACKUP] Usando /tmp como fallback (sem permissão em ${preferredDir})`);
-    const fallbackDir = '/tmp/digiurban-backups';
-    await fs.mkdir(fallbackDir, { recursive: true });
-    return fallbackDir;
+    await fs.mkdir(legacyDir, { recursive: true });
+    return legacyDir;
   }
 }
 
