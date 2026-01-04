@@ -439,7 +439,7 @@ router.get('/logs', async (req: Request, res: Response) => {
         level: log.level,
         message: log.message,
         timestamp: log.timestamp.toISOString(),
-        data: log.data ? JSON.parse(log.data as string) : {}
+        data: log.data || {}
       }))
     });
   } catch (error) {
