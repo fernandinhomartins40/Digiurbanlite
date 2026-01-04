@@ -2069,4 +2069,476 @@ router.post('/audit/export', adminAuthMiddleware, superAdminOnly, async (req: Re
 // Mount email server management routes
 router.use('/email-server', emailServerRouter);
 
+// ============================================
+// SYSTEM LOGS - Visualização de Logs Winston
+// ============================================
+
+interface LogLine {
+  timestamp: string;
+  level: string;
+  message: string;
+  meta?: any;
+  stack?: string;
+}
+
+// GET /api/super-admin/system-logs - Listar arquivos de log disponíveis
+router.get('/system-logs', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
+
+    // Verificar se o diretório existe
+    try {
+      await fs.access(logsDir);
+    } catch {
+      return res.json({
+        success: true,
+        data: {
+          logs: [],
+          logsDir,
+          message: 'Diretório de logs não encontrado ou vazio'
+        }
+      });
+    }
+
+    const files = await fs.readdir(logsDir);
+
+    const logFiles = await Promise.all(
+      files
+        .filter(file => file.endsWith('.log'))
+        .map(async (file) => {
+          const filePath = path.join(logsDir, file);
+          const stats = await fs.stat(filePath);
+
+          // Extrair tipo e data do nome do arquivo
+          // Formato: combined-2026-01-02.log, error-2026-01-02.log, etc.
+          const match = file.match(/^([\w-]+)-(\d{4}-\d{2}-\d{2})\.log$/);
+
+          return {
+            fileName: file,
+            type: match ? match[1] : 'unknown',
+            date: match ? match[2] : null,
+            size: stats.size,
+            sizeFormatted: `${(stats.size / 1024 / 1024).toFixed(2)} MB`,
+            createdAt: stats.birthtime,
+            modifiedAt: stats.mtime,
+            path: file
+          };
+        })
+    );
+
+    // Ordenar por data (mais recente primeiro) e depois por tipo
+    logFiles.sort((a, b) => {
+      const dateCompare = (b.date || '').localeCompare(a.date || '');
+      if (dateCompare !== 0) return dateCompare;
+      return (a.type || '').localeCompare(b.type || '');
+    });
+
+    // Agrupar por tipo
+    const logsByType: Record<string, typeof logFiles> = {};
+    logFiles.forEach(log => {
+      if (!logsByType[log.type]) {
+        logsByType[log.type] = [];
+      }
+      logsByType[log.type].push(log);
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        logs: logFiles,
+        logsByType,
+        logsDir,
+        totalFiles: logFiles.length,
+        totalSize: logFiles.reduce((sum, log) => sum + log.size, 0)
+      }
+    });
+  } catch (error: any) {
+    console.error('[SYSTEM-LOGS] Erro ao listar logs:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao listar arquivos de log',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/super-admin/system-logs/:fileName - Ler conteúdo de um arquivo de log
+router.get('/system-logs/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { fileName } = req.params;
+    const {
+      offset = '0',
+      limit = '100',
+      level,
+      search,
+      reverse = 'true' // Por padrão, mostrar logs mais recentes primeiro
+    } = req.query;
+
+    // Validar nome do arquivo para evitar path traversal
+    if (fileName.includes('..') || fileName.includes('/') || !fileName.endsWith('.log')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nome de arquivo inválido'
+      });
+    }
+
+    const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
+    const filePath = path.join(logsDir, fileName);
+
+    // Verificar se o arquivo existe
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({
+        success: false,
+        error: 'Arquivo de log não encontrado'
+      });
+    }
+
+    // Ler o arquivo
+    const content = await fs.readFile(filePath, 'utf-8');
+    const lines = content.split('\n').filter(line => line.trim());
+
+    // Parse das linhas JSON
+    let parsedLines: LogLine[] = lines
+      .map((line, index) => {
+        try {
+          // Tentar parse como JSON (formato Winston)
+          const parsed = JSON.parse(line);
+          return {
+            timestamp: parsed.timestamp || new Date().toISOString(),
+            level: parsed.level || 'info',
+            message: parsed.message || line,
+            meta: parsed,
+            stack: parsed.stack,
+            _lineNumber: index + 1
+          };
+        } catch {
+          // Se não for JSON, tratar como texto simples
+          return {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: line,
+            meta: {},
+            _lineNumber: index + 1
+          };
+        }
+      });
+
+    // Filtrar por nível se especificado
+    if (level) {
+      parsedLines = parsedLines.filter(line =>
+        line.level.toLowerCase() === (level as string).toLowerCase()
+      );
+    }
+
+    // Filtrar por busca se especificado
+    if (search) {
+      const searchLower = (search as string).toLowerCase();
+      parsedLines = parsedLines.filter(line => {
+        const messageMatch = line.message.toLowerCase().includes(searchLower);
+        const metaMatch = JSON.stringify(line.meta).toLowerCase().includes(searchLower);
+        return messageMatch || metaMatch;
+      });
+    }
+
+    // Reverter ordem se solicitado (logs mais recentes primeiro)
+    if (reverse === 'true') {
+      parsedLines.reverse();
+    }
+
+    // Paginação
+    const offsetNum = parseInt(offset as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const total = parsedLines.length;
+    const paginatedLines = parsedLines.slice(offsetNum, offsetNum + limitNum);
+
+    return res.json({
+      success: true,
+      data: {
+        lines: paginatedLines,
+        total,
+        offset: offsetNum,
+        limit: limitNum,
+        hasMore: offsetNum + limitNum < total,
+        fileName
+      }
+    });
+  } catch (error: any) {
+    console.error('[SYSTEM-LOGS] Erro ao ler log:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao ler arquivo de log',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/super-admin/system-logs/:fileName/download - Download do arquivo completo
+router.get('/system-logs/:fileName/download', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { fileName } = req.params;
+
+    // Validar nome do arquivo
+    if (fileName.includes('..') || fileName.includes('/') || !fileName.endsWith('.log')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nome de arquivo inválido'
+      });
+    }
+
+    const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
+    const filePath = path.join(logsDir, fileName);
+
+    // Verificar se o arquivo existe
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({
+        success: false,
+        error: 'Arquivo de log não encontrado'
+      });
+    }
+
+    // Enviar o arquivo
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    const fileStream = require('fs').createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error: any) {
+    console.error('[SYSTEM-LOGS] Erro ao fazer download:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao fazer download do arquivo',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/super-admin/system-logs/stats - Estatísticas agregadas
+router.get('/system-logs/stats', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { dateRange = '24h' } = req.query;
+
+    const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
+
+    // Calcular período
+    const now = new Date();
+    let startDate: Date;
+
+    switch (dateRange) {
+      case '1h':
+        startDate = new Date(now.getTime() - 60 * 60 * 1000);
+        break;
+      case '24h':
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }
+
+    // Ler arquivo combined do dia atual
+    const today = now.toISOString().split('T')[0];
+    const combinedFile = `combined-${today}.log`;
+    const errorFile = `error-${today}.log`;
+    const httpFile = `http-${today}.log`;
+
+    const stats = {
+      errors: 0,
+      warnings: 0,
+      info: 0,
+      debug: 0,
+      httpRequests: 0,
+      totalLogs: 0,
+      avgResponseTime: 0,
+      timeRange: {
+        start: startDate.toISOString(),
+        end: now.toISOString()
+      }
+    };
+
+    // Ler arquivo combined para estatísticas gerais
+    try {
+      const combinedPath = path.join(logsDir, combinedFile);
+      const content = await fs.readFile(combinedPath, 'utf-8');
+      const lines = content.split('\n').filter(line => line.trim());
+
+      let responseTimes: number[] = [];
+
+      lines.forEach(line => {
+        try {
+          const log = JSON.parse(line);
+          const logDate = new Date(log.timestamp);
+
+          if (logDate >= startDate && logDate <= now) {
+            stats.totalLogs++;
+
+            switch (log.level) {
+              case 'error':
+                stats.errors++;
+                break;
+              case 'warn':
+                stats.warnings++;
+                break;
+              case 'info':
+                stats.info++;
+                break;
+              case 'debug':
+                stats.debug++;
+                break;
+            }
+
+            // Extrair tempo de resposta se disponível
+            if (log.responseTime) {
+              const time = parseInt(log.responseTime.replace('ms', ''), 10);
+              if (!isNaN(time)) {
+                responseTimes.push(time);
+              }
+            }
+          }
+        } catch {
+          // Ignorar linhas inválidas
+        }
+      });
+
+      // Calcular média de tempo de resposta
+      if (responseTimes.length > 0) {
+        stats.avgResponseTime = Math.round(
+          responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length
+        );
+      }
+    } catch {
+      // Arquivo não existe ou erro ao ler
+    }
+
+    // Ler arquivo HTTP para contagem de requisições
+    try {
+      const httpPath = path.join(logsDir, httpFile);
+      const content = await fs.readFile(httpPath, 'utf-8');
+      const lines = content.split('\n').filter(line => line.trim());
+
+      lines.forEach(line => {
+        try {
+          const log = JSON.parse(line);
+          const logDate = new Date(log.timestamp);
+
+          if (logDate >= startDate && logDate <= now) {
+            stats.httpRequests++;
+          }
+        } catch {
+          // Ignorar linhas inválidas
+        }
+      });
+    } catch {
+      // Arquivo não existe ou erro ao ler
+    }
+
+    return res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error: any) {
+    console.error('[SYSTEM-LOGS] Erro ao calcular estatísticas:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao calcular estatísticas',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/super-admin/system-logs/:fileName/stream - Stream em tempo real (SSE)
+router.get('/system-logs/:fileName/stream', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { fileName } = req.params;
+
+    // Validar nome do arquivo
+    if (fileName.includes('..') || fileName.includes('/') || !fileName.endsWith('.log')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nome de arquivo inválido'
+      });
+    }
+
+    const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
+    const filePath = path.join(logsDir, fileName);
+
+    // Verificar se o arquivo existe
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({
+        success: false,
+        error: 'Arquivo de log não encontrado'
+      });
+    }
+
+    // Configurar SSE
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    // Ler posição atual do arquivo
+    let lastSize = (await fs.stat(filePath)).size;
+
+    // Função para enviar novos logs
+    const sendNewLogs = async () => {
+      try {
+        const currentSize = (await fs.stat(filePath)).size;
+
+        if (currentSize > lastSize) {
+          // Ler apenas a parte nova do arquivo
+          const readStream = require('fs').createReadStream(filePath, {
+            start: lastSize,
+            end: currentSize
+          });
+
+          let newContent = '';
+          for await (const chunk of readStream) {
+            newContent += chunk.toString();
+          }
+
+          // Enviar novas linhas via SSE
+          const newLines = newContent.split('\n').filter(line => line.trim());
+          newLines.forEach(line => {
+            try {
+              const parsed = JSON.parse(line);
+              res.write(`data: ${JSON.stringify(parsed)}\n\n`);
+            } catch {
+              res.write(`data: ${JSON.stringify({ message: line })}\n\n`);
+            }
+          });
+
+          lastSize = currentSize;
+        }
+      } catch (error) {
+        console.error('[SYSTEM-LOGS] Erro no streaming:', error);
+      }
+    };
+
+    // Enviar heartbeat e verificar novos logs a cada 2 segundos
+    const interval = setInterval(sendNewLogs, 2000);
+
+    // Limpar ao desconectar
+    req.on('close', () => {
+      clearInterval(interval);
+      res.end();
+    });
+
+    // Enviar mensagem inicial
+    res.write(`data: ${JSON.stringify({ type: 'connected', fileName })}\n\n`);
+  } catch (error: any) {
+    console.error('[SYSTEM-LOGS] Erro ao iniciar stream:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao iniciar streaming',
+      details: error.message
+    });
+  }
+});
+
 export default router;
