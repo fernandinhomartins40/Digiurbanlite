@@ -598,6 +598,7 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
       });
     }
 
+    console.log(`📊 Verificação de ${domain.domainName}:`, results.map(r => `${r.recordType}=${r.verified?'✅':'❌'}`).join(' '));
     res.json({ results });
   } catch (error) {
     console.error('Error verifying domain:', error);
