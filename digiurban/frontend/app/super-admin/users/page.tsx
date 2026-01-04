@@ -22,7 +22,6 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface SuperAdmin {
@@ -38,12 +37,6 @@ interface SuperAdmin {
   } | null;
 }
 
-interface Department {
-  id: string;
-  name: string;
-  code: string | null;
-}
-
 export default function SuperAdminUsersPage() {
   const { toast } = useToast();
   const [admins, setAdmins] = useState<SuperAdmin[]>([]);
@@ -55,27 +48,17 @@ export default function SuperAdminUsersPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: '',
-    departmentId: ''
+    password: ''
   });
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchAdmins();
   }, []);
-
-  // Carregar departamentos quando abrir modal de criação/edição
-  useEffect(() => {
-    if (showCreateModal || showEditModal) {
-      loadDepartments();
-    }
-  }, [showCreateModal, showEditModal]);
 
   const fetchAdmins = async () => {
     setLoading(true);
@@ -94,23 +77,6 @@ export default function SuperAdminUsersPage() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadDepartments = async () => {
-    setLoadingDepartments(true);
-    try {
-      const response = await fetch('/api/super-admin/departments');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data?.departments) {
-          setDepartments(data.data.departments);
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao carregar departamentos:', error);
-    } finally {
-      setLoadingDepartments(false);
     }
   };
 
@@ -173,7 +139,7 @@ export default function SuperAdminUsersPage() {
           description: 'O super admin foi criado com sucesso'
         });
         setShowCreateModal(false);
-        setFormData({ name: '', email: '', password: '', departmentId: '' });
+        setFormData({ name: '', email: '', password: '' });
         setConfirmPassword('');
         setShowPassword(false);
         setShowConfirmPassword(false);
@@ -208,8 +174,7 @@ export default function SuperAdminUsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
-          email: formData.email,
-          departmentId: formData.departmentId || null
+          email: formData.email
         })
       });
 
@@ -220,7 +185,7 @@ export default function SuperAdminUsersPage() {
         });
         setShowEditModal(false);
         setSelectedAdmin(null);
-        setFormData({ name: '', email: '', password: '', departmentId: '' });
+        setFormData({ name: '', email: '', password: '' });
         setFormError('');
         fetchAdmins();
       } else {
@@ -290,15 +255,14 @@ export default function SuperAdminUsersPage() {
     setFormData({
       name: admin.name,
       email: admin.email,
-      password: '',
-      departmentId: admin.department?.id || ''
+      password: ''
     });
     setFormError('');
     setShowEditModal(true);
   };
 
   const handleOpenCreateModal = () => {
-    setFormData({ name: '', email: '', password: '', departmentId: '' });
+    setFormData({ name: '', email: '', password: '' });
     setConfirmPassword('');
     setShowPassword(false);
     setShowConfirmPassword(false);
@@ -612,35 +576,11 @@ export default function SuperAdminUsersPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="create-department">Departamento (Opcional)</Label>
-                <Select
-                  value={formData.departmentId}
-                  onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
-                  disabled={saving || loadingDepartments}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um departamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Nenhum departamento</SelectItem>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {loadingDepartments && (
-                  <p className="text-xs text-gray-500">Carregando departamentos...</p>
-                )}
-              </div>
-
               <div className="flex gap-2 pt-4">
                 <Button
                   onClick={() => {
                     setShowCreateModal(false);
-                    setFormData({ name: '', email: '', password: '', departmentId: '' });
+                    setFormData({ name: '', email: '', password: '' });
                     setConfirmPassword('');
                     setFormError('');
                   }}
@@ -703,30 +643,6 @@ export default function SuperAdminUsersPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-department">Departamento (Opcional)</Label>
-                <Select
-                  value={formData.departmentId}
-                  onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
-                  disabled={saving || loadingDepartments}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um departamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Nenhum departamento</SelectItem>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {loadingDepartments && (
-                  <p className="text-xs text-gray-500">Carregando departamentos...</p>
-                )}
-              </div>
-
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-xs text-blue-800 flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
@@ -739,7 +655,7 @@ export default function SuperAdminUsersPage() {
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedAdmin(null);
-                    setFormData({ name: '', email: '', password: '', departmentId: '' });
+                    setFormData({ name: '', email: '', password: '' });
                     setFormError('');
                   }}
                   variant="outline"
