@@ -342,16 +342,19 @@ export default function OperationsPage() {
       </Card>
 
       {/* Warning */}
-      <Card className="border-yellow-200 bg-yellow-50">
+      <Card className="border-blue-200 bg-blue-50">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-yellow-900 mb-1">Importante sobre Backups</h3>
-              <p className="text-sm text-yellow-800">
-                Os backups são armazenados no servidor local. Recomendamos fazer download regular dos backups
-                e armazená-los em local seguro externo. Em caso de falha do servidor, os backups locais podem
-                ser perdidos.
+              <h3 className="font-semibold text-blue-900 mb-1">Armazenamento de Backups</h3>
+              <p className="text-sm text-blue-800 mb-2">
+                Os backups são armazenados em volume Docker persistente e <strong>são mantidos mesmo após novos deploys</strong>.
+                O volume está montado em <code className="px-1.5 py-0.5 bg-blue-100 rounded text-xs">/app/backups</code> no container backend.
+              </p>
+              <p className="text-sm text-blue-800">
+                <strong>Recomendação:</strong> Faça download regular dos backups críticos e armazene-os em local seguro externo
+                (cloud storage, servidor de arquivos, etc) para proteção adicional contra falhas de hardware.
               </p>
             </div>
           </div>

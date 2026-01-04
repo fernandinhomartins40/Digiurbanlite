@@ -52,6 +52,10 @@ RUN chown backend:nodejs /app/data
 RUN mkdir -p /app/logs
 RUN chown backend:nodejs /app/logs
 
+# ✅ Create directory for backups (persistente)
+RUN mkdir -p /app/backups
+RUN chown backend:nodejs /app/backups
+
 USER backend
 
 EXPOSE 3001

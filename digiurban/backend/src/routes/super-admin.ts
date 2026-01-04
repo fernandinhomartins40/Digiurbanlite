@@ -446,8 +446,8 @@ router.get('/system/metrics', adminAuthMiddleware, superAdminOnly, async (req: R
 // POST /api/super-admin/system/backup - Criar backup do banco de dados
 router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
-    // Usar /tmp que sempre tem permissão de escrita
-    const backupDir = '/tmp/digiurban-backups';
+    // Usar diretório persistente configurado via variável de ambiente
+    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupFileName = `backup-${timestamp}.json`;
     const backupPath = path.join(backupDir, backupFileName);
@@ -533,7 +533,7 @@ router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: R
 // GET /api/super-admin/system/backups - Listar backups disponíveis
 router.get('/system/backups', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
-    const backupDir = '/tmp/digiurban-backups';
+    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
 
     try {
       const files = await fs.readdir(backupDir);
@@ -575,7 +575,7 @@ router.get('/system/backups', adminAuthMiddleware, superAdminOnly, async (req: R
 router.get('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
-    const backupDir = '/tmp/digiurban-backups';
+    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
     const filePath = path.join(backupDir, fileName);
 
     // Validar nome do arquivo para evitar path traversal
@@ -602,7 +602,7 @@ router.get('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, asyn
 router.delete('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
-    const backupDir = '/tmp/digiurban-backups';
+    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
     const filePath = path.join(backupDir, fileName);
 
     // Validar nome do arquivo para evitar path traversal
@@ -636,7 +636,7 @@ router.delete('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, a
 router.post('/system/backup/:fileName/restore', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
-    const backupDir = '/tmp/digiurban-backups';
+    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
     const filePath = path.join(backupDir, fileName);
 
     // Validar nome do arquivo
