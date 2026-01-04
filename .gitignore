@@ -29,9 +29,12 @@ out/
 .DS_Store
 Thumbs.db
 
-# Logs
-logs/
+# Logs (ignora apenas logs de sistema, não pastas de código)
 *.log
+/logs/
+digiurban/backend/logs/
+digiurban/frontend/logs/
+ultrazend-smtp-server/logs/
 
 # Database
 *.db
