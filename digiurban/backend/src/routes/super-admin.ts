@@ -1245,6 +1245,41 @@ router.put('/settings/limits', adminAuthMiddleware, superAdminOnly, async (req: 
 // GERENCIAMENTO DE USUÁRIOS DO MUNICÍPIO
 // ============================================
 
+// GET /api/super-admin/departments - Listar todos os departamentos
+router.get('/departments', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    console.log('[DEPARTMENTS] Listando departamentos...');
+
+    const departments = await prisma.department.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        description: true,
+        isActive: true
+      },
+      orderBy: { name: 'asc' }
+    });
+
+    console.log(`[DEPARTMENTS] ✅ ${departments.length} departamentos obtidos`);
+
+    return res.json({
+      success: true,
+      data: {
+        departments
+      }
+    });
+  } catch (error: any) {
+    console.error('[DEPARTMENTS] ❌ Erro ao listar departamentos:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao listar departamentos',
+      details: error.message
+    });
+  }
+});
+
 // GET /api/super-admin/users - Listar TODOS os usuários do município
 router.get('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
