@@ -561,34 +561,32 @@ router.post('/:id/verify', async (req: Request, res: Response) => {
       }
     }
 
-    // Verificar DMARC (se habilitado)
-    if (domain.dmarcEnabled) {
-      try {
-        const dmarcDomain = `_dmarc.${domain.domainName}`;
-        const txtRecords = await dnsResolver.resolveTxt(dmarcDomain);
-        const dmarcRecord = txtRecords
-          .flat()
-          .join('') // TXT records podem vir em múltiplas strings
-          .replace(/["'\s]/g, ''); // Remover aspas e espaços
+    // Verificar DMARC (sempre verificar, independente de dmarcEnabled)
+    try {
+      const dmarcDomain = `_dmarc.${domain.domainName}`;
+      const txtRecords = await dnsResolver.resolveTxt(dmarcDomain);
+      const dmarcRecord = txtRecords
+        .flat()
+        .join('') // TXT records podem vir em múltiplas strings
+        .replace(/["'\s]/g, ''); // Remover aspas e espaços
 
-        const verified = dmarcRecord.startsWith('v=DMARC1');
+      const verified = dmarcRecord.startsWith('v=DMARC1');
 
-        results.push({
-          recordType: 'DMARC',
-          verified,
-          found: !!dmarcRecord,
-          expected: domain.dmarcPolicy || 'v=DMARC1; p=none',
-          actual: txtRecords.flat().join('') || undefined
-        });
-      } catch (error: any) {
-        results.push({
-          recordType: 'DMARC',
-          verified: false,
-          found: false,
-          expected: domain.dmarcPolicy || 'v=DMARC1; p=none',
-          errorMessage: error.code === 'ENOTFOUND' ? 'No DMARC record found' : error.message
-        });
-      }
+      results.push({
+        recordType: 'DMARC',
+        verified,
+        found: !!dmarcRecord,
+        expected: domain.dmarcPolicy || 'v=DMARC1; p=none',
+        actual: txtRecords.flat().join('') || undefined
+      });
+    } catch (error: any) {
+      results.push({
+        recordType: 'DMARC',
+        verified: false,
+        found: false,
+        expected: domain.dmarcPolicy || 'v=DMARC1; p=none',
+        errorMessage: error.code === 'ENOTFOUND' ? 'No DMARC record found' : error.message
+      });
     }
 
     // Atualizar status do domínio se todos estão verificados
