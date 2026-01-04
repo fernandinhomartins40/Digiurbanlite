@@ -139,25 +139,15 @@ export default function EmailDomainsPage() {
       });
     }
 
-    // DMARC Record - Política de autenticação (sempre mostrar se houver política configurada)
-    if (domain.dmarcPolicy) {
-      records.push({
-        type: 'TXT',
-        name: '_dmarc',  // Apenas o prefixo, sem o domínio
-        value: domain.dmarcPolicy,
-        status: 'pending',  // Será atualizado pela verificação DNS
-        description: 'Define o que fazer com emails que falham SPF/DKIM. Protege seu domínio contra falsificação (phishing).'
-      });
-    } else if (domain.dmarcEnabled) {
-      // Se DMARC está habilitado mas não há política, usar padrão
-      records.push({
-        type: 'TXT',
-        name: '_dmarc',
-        value: `v=DMARC1; p=none; rua=mailto:dmarc@${domain.domainName}`,
-        status: 'pending',
-        description: 'Define o que fazer com emails que falham SPF/DKIM. Protege seu domínio contra falsificação (phishing).'
-      });
-    }
+    // DMARC Record - Sempre mostrar (alinhado com backend que sempre verifica)
+    const dmarcValue = domain.dmarcPolicy || `v=DMARC1; p=none; rua=mailto:dmarc@${domain.domainName}`;
+    records.push({
+      type: 'TXT',
+      name: '_dmarc',  // Apenas o prefixo, sem o domínio
+      value: dmarcValue,
+      status: 'pending',  // Será atualizado pela verificação DNS
+      description: 'Define o que fazer com emails que falham SPF/DKIM. Protege seu domínio contra falsificação (phishing).'
+    });
 
     setDnsRecords(records);
   };
