@@ -15,7 +15,12 @@ import {
   CheckCheck,
   Paperclip,
   Smile,
-  Mic
+  Mic,
+  Plus,
+  X,
+  Hash,
+  Users,
+  User
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,6 +55,25 @@ interface Conversation {
   avatar?: string;
 }
 
+interface Contact {
+  id: string;
+  name: string;
+  email: string;
+  type: 'CITIZEN' | 'SERVER' | 'ADMIN';
+  avatar?: string;
+  department?: string;
+  role?: string;
+}
+
+interface OfficialChannel {
+  id: string;
+  name: string;
+  description: string;
+  department: string;
+  avatar?: string;
+  membersCount: number;
+}
+
 export default function CitizenMessagesPage() {
   const { citizen, isLoading: authLoading } = useCitizenAuth();
   const router = useRouter();
@@ -63,6 +87,14 @@ export default function CitizenMessagesPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isMobileView, setIsMobileView] = useState(false);
   const [showConversationsList, setShowConversationsList] = useState(true);
+
+  // Modal de Nova Conversa
+  const [showNewConversationModal, setShowNewConversationModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'channels' | 'servers' | 'citizens'>('channels');
+  const [contactSearchQuery, setContactSearchQuery] = useState('');
+  const [officialChannels, setOfficialChannels] = useState<OfficialChannel[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -250,6 +282,106 @@ export default function CitizenMessagesPage() {
     setMessages([]);
   };
 
+  // Buscar canais oficiais
+  const fetchOfficialChannels = async () => {
+    setIsLoadingContacts(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/messages/channels/official`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setOfficialChannels(data.channels || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar canais oficiais:', error);
+    } finally {
+      setIsLoadingContacts(false);
+    }
+  };
+
+  // Buscar contatos (servidores ou cidadãos)
+  const fetchContacts = async (type: 'SERVER' | 'CITIZEN') => {
+    setIsLoadingContacts(true);
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/messages/contacts?type=${type}`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setContacts(data.contacts || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar contatos:', error);
+    } finally {
+      setIsLoadingContacts(false);
+    }
+  };
+
+  // Criar nova conversa
+  const createConversation = async (
+    type: 'DIRECT' | 'OFFICIAL',
+    targetId: string,
+    title: string
+  ) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/messages/conversations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ type, targetId, title }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newConversation = data.conversation;
+
+        setConversations(prev => [newConversation, ...prev]);
+        setShowNewConversationModal(false);
+        handleSelectConversation(newConversation);
+
+        toast({
+          title: 'Conversa iniciada',
+          description: `Conversa com ${title} criada com sucesso`,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao criar conversa:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível criar a conversa',
+      });
+    }
+  };
+
+  // Abrir modal de nova conversa
+  const handleOpenNewConversation = () => {
+    setShowNewConversationModal(true);
+    setActiveTab('channels');
+    setContactSearchQuery('');
+    fetchOfficialChannels();
+  };
+
+  // Trocar aba do modal
+  const handleTabChange = (tab: 'channels' | 'servers' | 'citizens') => {
+    setActiveTab(tab);
+    setContactSearchQuery('');
+
+    if (tab === 'channels') {
+      fetchOfficialChannels();
+    } else if (tab === 'servers') {
+      fetchContacts('SERVER');
+    } else {
+      fetchContacts('CITIZEN');
+    }
+  };
+
   // Formatar hora
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -304,10 +436,20 @@ export default function CitizenMessagesPage() {
       >
         {/* Header da Lista */}
         <div className="p-4 border-b">
-          <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-            <MessageCircle className="w-6 h-6 text-blue-600" />
-            Mensagens
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <MessageCircle className="w-6 h-6 text-blue-600" />
+              Mensagens
+            </h2>
+
+            <Button
+              onClick={handleOpenNewConversation}
+              size="icon"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+          </div>
 
           {/* Busca */}
           <div className="relative">
@@ -534,6 +676,195 @@ export default function CitizenMessagesPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de Nova Conversa */}
+      {showNewConversationModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] flex flex-col">
+            {/* Header do Modal */}
+            <div className="p-4 border-b flex items-center justify-between">
+              <h3 className="text-lg font-bold">Nova Conversa</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowNewConversationModal(false)}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Abas */}
+            <div className="border-b">
+              <div className="flex">
+                <button
+                  onClick={() => handleTabChange('channels')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'channels'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Hash className="w-4 h-4" />
+                    Canais Oficiais
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('servers')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'servers'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Servidores
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('citizens')}
+                  className={`flex-1 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === 'citizens'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <User className="w-4 h-4" />
+                    Cidadãos
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Busca */}
+            <div className="p-4 border-b">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder={`Buscar ${
+                    activeTab === 'channels'
+                      ? 'canais'
+                      : activeTab === 'servers'
+                      ? 'servidores'
+                      : 'cidadãos'
+                  }...`}
+                  value={contactSearchQuery}
+                  onChange={(e) => setContactSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Lista de Contatos/Canais */}
+            <ScrollArea className="flex-1 p-4">
+              {isLoadingContacts ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : activeTab === 'channels' ? (
+                // Canais Oficiais
+                <div className="space-y-2">
+                  {officialChannels
+                    .filter(channel =>
+                      channel.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+                      channel.description.toLowerCase().includes(contactSearchQuery.toLowerCase())
+                    )
+                    .map((channel) => (
+                      <div
+                        key={channel.id}
+                        onClick={() => createConversation('OFFICIAL', channel.id, channel.name)}
+                        className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Hash className="w-6 h-6 text-blue-600" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-gray-900">{channel.name}</h4>
+                            <p className="text-sm text-gray-600 line-clamp-2 mt-1">
+                              {channel.description}
+                            </p>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Users className="w-3 h-3" />
+                                {channel.membersCount} membros
+                              </span>
+                              <span>•</span>
+                              <span>{channel.department}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                  {officialChannels.filter(channel =>
+                    channel.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+                    channel.description.toLowerCase().includes(contactSearchQuery.toLowerCase())
+                  ).length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <Hash className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>Nenhum canal encontrado</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Servidores ou Cidadãos
+                <div className="space-y-2">
+                  {contacts
+                    .filter(contact =>
+                      contact.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+                      contact.email.toLowerCase().includes(contactSearchQuery.toLowerCase())
+                    )
+                    .map((contact) => (
+                      <div
+                        key={contact.id}
+                        onClick={() => createConversation('DIRECT', contact.id, contact.name)}
+                        className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={contact.avatar} />
+                            <AvatarFallback className="bg-blue-100 text-blue-600">
+                              {contact.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-gray-900">{contact.name}</h4>
+                            <p className="text-sm text-gray-600">{contact.email}</p>
+                            {(contact.department || contact.role) && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {contact.department && contact.role
+                                  ? `${contact.role} - ${contact.department}`
+                                  : contact.department || contact.role}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                  {contacts.filter(contact =>
+                    contact.name.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+                    contact.email.toLowerCase().includes(contactSearchQuery.toLowerCase())
+                  ).length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p>Nenhum contato encontrado</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
