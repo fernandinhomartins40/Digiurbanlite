@@ -38,6 +38,17 @@ interface MunicipioConfig {
   updatedAt: string;
 }
 
+interface Estado {
+  id: number;
+  sigla: string;
+  nome: string;
+}
+
+interface Municipio {
+  id: number;
+  nome: string;
+}
+
 export default function MunicipioPage() {
   const { toast } = useToast();
   const [municipio, setMunicipio] = useState<MunicipioConfig | null>(null);
@@ -46,9 +57,81 @@ export default function MunicipioPage() {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<MunicipioConfig>>({});
 
+  // Estados e Municípios da API do IBGE
+  const [estados, setEstados] = useState<Estado[]>([]);
+  const [municipios, setMunicipios] = useState<Municipio[]>([]);
+  const [loadingEstados, setLoadingEstados] = useState(false);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
+
   useEffect(() => {
     fetchMunicipio();
+    fetchEstados();
   }, []);
+
+  // Carrega estados da API do IBGE
+  const fetchEstados = async () => {
+    setLoadingEstados(true);
+    try {
+      const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+      if (response.ok) {
+        const data = await response.json();
+        setEstados(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar estados:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar a lista de estados',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingEstados(false);
+    }
+  };
+
+  // Carrega municípios quando UF é selecionada
+  const fetchMunicipiosPorEstado = async (uf: string) => {
+    if (!uf) {
+      setMunicipios([]);
+      return;
+    }
+
+    setLoadingMunicipios(true);
+    try {
+      const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
+      if (response.ok) {
+        const data = await response.json();
+        setMunicipios(data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar municípios:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar a lista de municípios',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingMunicipios(false);
+    }
+  };
+
+  // Quando UF é alterada, carrega municípios
+  const handleUfChange = (uf: string) => {
+    setFormData({ ...formData, ufMunicipio: uf, nomeMunicipio: '', codigoIbge: null });
+    fetchMunicipiosPorEstado(uf);
+  };
+
+  // Quando município é selecionado, atualiza código IBGE
+  const handleMunicipioChange = (municipioId: string) => {
+    const municipioSelecionado = municipios.find(m => m.id.toString() === municipioId);
+    if (municipioSelecionado) {
+      setFormData({
+        ...formData,
+        nomeMunicipio: municipioSelecionado.nome,
+        codigoIbge: municipioSelecionado.id.toString()
+      });
+    }
+  };
 
   const fetchMunicipio = async () => {
     try {
@@ -57,6 +140,10 @@ export default function MunicipioPage() {
         const data = await response.json();
         setMunicipio(data.data);
         setFormData(data.data);
+        // Se já existe UF, carregar municípios desse estado
+        if (data.data?.ufMunicipio) {
+          fetchMunicipiosPorEstado(data.data.ufMunicipio);
+        }
       }
     } catch (error) {
       console.error('Erro ao buscar município:', error);
@@ -269,23 +356,48 @@ export default function MunicipioPage() {
               />
             </div>
             <div>
-              <Label htmlFor="nomeMunicipio">Nome do Município</Label>
-              <Input
-                id="nomeMunicipio"
-                value={formData.nomeMunicipio || ''}
-                onChange={(e) => setFormData({ ...formData, nomeMunicipio: e.target.value })}
-                disabled={!editing}
-              />
-            </div>
-            <div>
-              <Label htmlFor="ufMunicipio">UF</Label>
-              <Input
+              <Label htmlFor="ufMunicipio">UF (Estado)</Label>
+              <select
                 id="ufMunicipio"
                 value={formData.ufMunicipio || ''}
-                onChange={(e) => setFormData({ ...formData, ufMunicipio: e.target.value })}
-                disabled={!editing}
-                maxLength={2}
-              />
+                onChange={(e) => handleUfChange(e.target.value)}
+                disabled={!editing || loadingEstados}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100"
+              >
+                <option value="">Selecione o estado...</option>
+                {estados.map((estado) => (
+                  <option key={estado.id} value={estado.sigla}>
+                    {estado.sigla} - {estado.nome}
+                  </option>
+                ))}
+              </select>
+              {loadingEstados && (
+                <p className="text-xs text-gray-500 mt-1">Carregando estados...</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="nomeMunicipio">Município</Label>
+              <select
+                id="nomeMunicipio"
+                value={formData.codigoIbge || ''}
+                onChange={(e) => handleMunicipioChange(e.target.value)}
+                disabled={!editing || !formData.ufMunicipio || loadingMunicipios}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100"
+              >
+                <option value="">
+                  {!formData.ufMunicipio
+                    ? 'Selecione o estado primeiro...'
+                    : 'Selecione o município...'}
+                </option>
+                {municipios.map((municipio) => (
+                  <option key={municipio.id} value={municipio.id}>
+                    {municipio.nome}
+                  </option>
+                ))}
+              </select>
+              {loadingMunicipios && (
+                <p className="text-xs text-gray-500 mt-1">Carregando municípios...</p>
+              )}
             </div>
             <div>
               <Label htmlFor="cnpj">CNPJ</Label>
