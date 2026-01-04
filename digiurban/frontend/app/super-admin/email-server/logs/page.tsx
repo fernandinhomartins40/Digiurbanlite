@@ -65,7 +65,7 @@ export default function EmailServerLogsPage() {
       params.set('limit', limit.toString());
       params.set('offset', offset.toString());
 
-      const response = await apiRequest(`/super-admin/email-server/logs?${params}`, {
+      const response = await apiRequest(`/api/super-admin/email-server/logs?${params}`, {
         method: 'GET'
       });
 
