@@ -773,52 +773,33 @@ router.get('/schema', adminAuthMiddleware, superAdminOnly, async (req: Request, 
     const versionMatch = versionString.match(/PostgreSQL ([\d.]+)/);
     const dbVersion = versionMatch ? versionMatch[1] : 'Unknown';
 
-    // Lista de todos os modelos do Prisma
-    const modelNames = [
-      'municipioConfig',
-      'user',
-      'citizen',
-      'department',
-      'protocolSimplified',
-      'service',
-      'auditLog',
-      'citizenDocument',
-      'protocolDocument',
-      'protocolInteraction',
-      'protocolStage',
-      'notification'
-    ];
+    // Buscar TODAS as tabelas do schema public do PostgreSQL
+    const allTablesResult = await prisma.$queryRaw<Array<{ tablename: string }>>`
+      SELECT tablename
+      FROM pg_tables
+      WHERE schemaname = 'public'
+      AND tablename != '_prisma_migrations'
+      ORDER BY tablename
+    `;
 
-    // Obter contagem de registros para cada tabela
+    const allTableNames = allTablesResult.map(t => t.tablename);
+
+    console.log(`[SCHEMA] Encontradas ${allTableNames.length} tabelas no banco de dados`);
+
+    // Obter informações detalhadas para cada tabela
     const tables = await Promise.all(
-      modelNames.map(async (modelName) => {
+      allTableNames.map(async (tableName) => {
         try {
-          // @ts-ignore
-          const count = await prisma[modelName].count();
-
-          // Mapear nome do modelo para nome da tabela no PostgreSQL
-          const tableNameMap: Record<string, string> = {
-            'municipioConfig': 'municipio_config',
-            'user': 'users',
-            'citizen': 'citizens',
-            'department': 'departments',
-            'protocolSimplified': 'protocols_simplified',
-            'service': 'services_simplified',
-            'auditLog': 'audit_logs',
-            'citizenDocument': 'citizen_documents',
-            'protocolDocument': 'protocol_documents',
-            'protocolInteraction': 'protocol_interactions',
-            'protocolStage': 'protocol_stages',
-            'notification': 'notifications'
-          };
-
-          const tableName = tableNameMap[modelName] || modelName;
+          // Obter contagem de registros
+          const countResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+            `SELECT COUNT(*) as count FROM "${tableName}"`
+          );
+          const count = Number(countResult[0]?.count || 0);
 
           // Obter tamanho da tabela
           const sizeResult = await prisma.$queryRawUnsafe<Array<{ size: bigint }>>(
             `SELECT pg_total_relation_size('"${tableName}"') as size`
           );
-
           const sizeBytes = Number(sizeResult[0]?.size || 0);
           const sizeMB = (sizeBytes / (1024 * 1024)).toFixed(2);
 
@@ -826,11 +807,29 @@ router.get('/schema', adminAuthMiddleware, superAdminOnly, async (req: Request, 
           const indexResult = await prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
             `SELECT COUNT(*) as count FROM pg_indexes WHERE tablename = '${tableName}'`
           );
-
           const indexCount = Number(indexResult[0]?.count || 0);
 
-          // Última modificação - usar data atual como aproximação
-          const lastModified = new Date();
+          // Obter última modificação (última atualização de estatísticas)
+          const statsResult = await prisma.$queryRawUnsafe<Array<{ last_modified: Date | null }>>(
+            `SELECT last_analyze as last_modified FROM pg_stat_user_tables WHERE relname = '${tableName}'`
+          );
+          const lastModified = statsResult[0]?.last_modified || new Date();
+
+          // Obter relações (foreign keys)
+          const relationsResult = await prisma.$queryRawUnsafe<Array<{ referenced_table: string }>>(
+            `SELECT DISTINCT
+              ccu.table_name AS referenced_table
+            FROM information_schema.table_constraints AS tc
+            JOIN information_schema.key_column_usage AS kcu
+              ON tc.constraint_name = kcu.constraint_name
+              AND tc.table_schema = kcu.table_schema
+            JOIN information_schema.constraint_column_usage AS ccu
+              ON ccu.constraint_name = tc.constraint_name
+              AND ccu.table_schema = tc.table_schema
+            WHERE tc.constraint_type = 'FOREIGN KEY'
+              AND tc.table_name = '${tableName}'`
+          );
+          const relations = relationsResult.map(r => r.referenced_table);
 
           return {
             name: tableName,
@@ -838,16 +837,23 @@ router.get('/schema', adminAuthMiddleware, superAdminOnly, async (req: Request, 
             size: `${sizeMB} MB`,
             lastModified: lastModified.toISOString(),
             indexes: indexCount,
-            relations: [] // Simplificado - pode ser expandido consultando pg_constraint
+            relations
           };
         } catch (error: any) {
-          console.warn(`[SCHEMA] Erro ao processar tabela ${modelName}:`, error.message);
-          return null;
+          console.warn(`[SCHEMA] Erro ao processar tabela ${tableName}:`, error.message);
+          return {
+            name: tableName,
+            recordCount: 0,
+            size: '0.00 MB',
+            lastModified: new Date().toISOString(),
+            indexes: 0,
+            relations: []
+          };
         }
       })
     );
 
-    // Filtrar tabelas que falharam
+    // Filtrar tabelas que falharam (caso queira, mas agora retornamos com valores padrão)
     const validTables = tables.filter(t => t !== null);
 
     // Calcular totais
