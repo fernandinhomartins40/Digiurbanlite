@@ -185,10 +185,12 @@ export const loadImplementationRoutes = () => {
 
   const integrationsRoutes = require('./integrations').default;
   const adminEmailRoutes = require('./admin-email').default;
+  const adminEmailAccountsRoutes = require('./admin-email-accounts').default;
   const municipalityConfigRoutes = require('./municipality-config').default;
 
   router.use('/integrations', integrationsRoutes);
-  router.use('/admin/email', adminEmailRoutes);
+  router.use('/admin/email-service', adminEmailRoutes);
+  router.use('/admin/email-accounts', adminEmailAccountsRoutes);
   router.use('/municipality', municipalityConfigRoutes);
 
   return router;

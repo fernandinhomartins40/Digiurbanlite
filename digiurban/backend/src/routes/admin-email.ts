@@ -21,21 +21,60 @@ router.use(adminAuthMiddleware);
  */
 router.get('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // Single tenant: tenantId removido
+    // Buscar servidor de email e subscription
+    const emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: true,
+        domains: true,
+        users: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            isActive: true,
+            sentThisMonth: true,
+            monthlyLimit: true
+          }
+        }
+      }
+    });
 
-    // DIA 3: DISABLED - tenant model removed - returning empty data
-    res.status(501).json({
-      success: false,
-      error: 'Not Implemented',
-      message: 'Funcionalidade de email service desabilitada temporariamente'
-        });
+    if (!emailServer || !emailServer.subscription) {
+      return res.json({
+        hasEmailService: false,
+        plan: { id: 'none', name: 'Nenhum', price: 0, emailsPerMonth: 0 },
+        domains: [],
+        statistics: [],
+        usage: { currentMonth: 0 }
+      });
+    }
+
+    const subscription = emailServer.subscription;
+
+    res.json({
+      hasEmailService: true,
+      plan: {
+        id: subscription.plan.toLowerCase(),
+        name: getEmailPlanName(subscription.plan),
+        price: Number(subscription.monthlyPrice),
+        emailsPerMonth: subscription.maxEmailsPerMonth
+      },
+      server: {
+        hostname: emailServer.hostname,
+        isActive: emailServer.isActive,
+        maxEmailsPerMonth: subscription.maxEmailsPerMonth
+      },
+      domains: emailServer.domains,
+      accounts: emailServer.users,
+      usage: await getEmailUsage()
+    });
   } catch (error) {
     console.error('Error getting email config:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Erro interno do servidor'
-        });
+    });
   }
 }));
 
@@ -46,7 +85,6 @@ router.get('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authent
 router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { planId } = req.body;
-    // Single tenant: tenantId removido
     const userId = req.user.id;
 
     // Validar plano
@@ -59,110 +97,157 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
     }
 
     // Mapear plano para enum
-    const planMapping = {
+    const planMapping: Record<string, EmailPlan> = {
       basic: EmailPlan.BASIC,
       standard: EmailPlan.STANDARD,
       premium: EmailPlan.PREMIUM,
       enterprise: EmailPlan.ENTERPRISE
-        };
+    };
 
-    // DIA 3: DISABLED - tenant model removed
-    res
-      .status(501)
-      .json({ success: false, error: 'Not Implemented', message: 'Funcionalidade desabilitada temporariamente' });
-    return;
+    const plan = planMapping[planId];
+    const planDetails = getEmailPlanDetails(planId);
 
-    // DIA 3: DISABLED - código comentado abaixo (tenant removido)
-    // const emailServer = await prisma.emailServer.upsert({
-    //       //   update: {
-    //     monthlyPrice: getEmailPlanPrice(planId),
-    //     maxEmailsPerMonth: getEmailPlanLimit(planId),
-    //     isActive: true,
-    //   },
-    //   create: {
-    //         //     hostname: `mail.${tenant.name.toLowerCase().replace(/\s+/g, '-')}.digiurban.com.br`,
-    //     monthlyPrice: getEmailPlanPrice(planId),
-    //     maxEmailsPerMonth: getEmailPlanLimit(planId),
-    //     isActive: true,
-    //   },
-    // });
-    //
-    // const defaultPassword = generateSecurePassword();
-    // const passwordHash = await bcrypt.hash(defaultPassword, 12);
-    //
-    // await prisma.emailUser.upsert({
-    //   where: {
-    //     emailServerId_email: {
-    //       emailServerId: emailServer.id,
-    //       email: `admin@${tenant.name.toLowerCase().replace(/\s+/g, '-')}.digiurban.com.br`,
-    //     },
-    //   },
-    //   update: {
-    //     isActive: true,
-    //   },
-    //   create: {
-    //     emailServerId: emailServer.id,
-    //     email: `admin@${tenant.name.toLowerCase().replace(/\s+/g, '-')}.digiurban.com.br`,
-    //     passwordHash,
-    //     name: 'Administrador',
-    //     isActive: true,
-    //     isAdmin: true,
-    //     dailyLimit: Math.floor(getEmailPlanLimit(planId) / 30),
-    //     monthlyLimit: getEmailPlanLimit(planId),
-    //   },
-    // });
-    //
-    // await prisma.emailDomain.upsert({
-    //   where: {
-    //     emailServerId_domainName: {
-    //       emailServerId: emailServer.id,
-    //       domainName: `${tenant.name.toLowerCase().replace(/\s+/g, '-')}.digiurban.com.br`,
-    //     },
-    //   },
-    //   update: {
-    //     isVerified: true,
-    //   },
-    //   create: {
-    //     emailServerId: emailServer.id,
-    //     domainName: `${tenant.name.toLowerCase().replace(/\s+/g, '-')}.digiurban.com.br`,
-    //     isVerified: true,
-    //     dkimEnabled: true,
-    //     spfEnabled: true,
-    //   },
-    // });
-    //
-    // await transactionalEmail.createDefaultTemplates(tenantId);
-    //
-    // await prisma.auditLog.create({
-    //   data: {
-    //         //     userId,
-    //     action: 'EMAIL_SERVICE_SUBSCRIBED',
-    //     resource: 'email_service',
-    //     details: { planId, message: `Contratou plano de email: ${planId}` },
-    //     ip: req.ip || 'unknown',
-    //     success: true,
-    //   },
-    // });
-    //
-    // res.json({
-    //   success: true,
-    //   message: 'Serviço de email contratado com sucesso!',
-    //   credentials: {
-    //     email: `admin@${tenant.name.toLowerCase().replace(/\s+/g, '-')}.digiurban.com.br`,
-    //     password: defaultPassword,
-    //     server: emailServer.hostname,
-    //     port: 587,
-    //   },
-    // });
+    // Verificar se já existe servidor de email
+    let emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: true
+      }
+    });
+
+    if (emailServer?.subscription) {
+      // Já existe assinatura - fazer upgrade/downgrade
+      await prisma.emailSubscription.update({
+        where: { id: emailServer.subscription.id },
+        data: {
+          plan,
+          monthlyPrice: planDetails.price,
+          maxEmailsPerMonth: planDetails.emailsPerMonth,
+          maxAccounts: planDetails.accounts,
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // +30 dias
+        }
+      });
+
+      await prisma.emailServer.update({
+        where: { id: emailServer.id },
+        data: {
+          maxEmailsPerMonth: planDetails.emailsPerMonth
+        }
+      });
+
+      return res.json({
+        success: true,
+        message: `Plano atualizado para ${planDetails.name} com sucesso!`,
+        server: emailServer
+      });
+    }
+
+    // Criar novo servidor de email com subscription
+    const hostname = `mail.digiurban.com.br`; // Domínio único gerenciado pelo SuperAdmin
+
+    emailServer = await prisma.emailServer.create({
+      data: {
+        hostname,
+        mxPort: 25,
+        submissionPort: 587,
+        tlsEnabled: true,
+        isPremiumService: true,
+        monthlyPrice: planDetails.price,
+        maxEmailsPerMonth: planDetails.emailsPerMonth,
+        isActive: true,
+        subscription: {
+          create: {
+            plan,
+            monthlyPrice: planDetails.price,
+            maxEmailsPerMonth: planDetails.emailsPerMonth,
+            maxAccounts: planDetails.accounts,
+            status: 'TRIAL', // 30 dias de trial
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 dias
+            trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          }
+        }
+      },
+      include: {
+        subscription: true
+      }
+    });
+
+    // Criar conta admin padrão
+    const defaultPassword = generateSecurePassword();
+    const passwordHash = await bcrypt.hash(defaultPassword, 12);
+    const adminEmail = `admin@digiurban.com.br`;
+
+    await prisma.emailUser.create({
+      data: {
+        emailServerId: emailServer.id,
+        email: adminEmail,
+        passwordHash,
+        name: 'Administrador',
+        isActive: true,
+        isAdmin: true,
+        dailyLimit: Math.floor(planDetails.emailsPerMonth / 30),
+        monthlyLimit: planDetails.emailsPerMonth
+      }
+    });
+
+    // Criar domínio padrão verificado
+    await prisma.emailDomain.create({
+      data: {
+        emailServerId: emailServer.id,
+        domainName: 'digiurban.com.br',
+        isVerified: true, // Domínio do sistema já verificado
+        dkimEnabled: true,
+        spfEnabled: true
+      }
+    });
+
+    // Criar templates padrão
+    await transactionalEmail.createDefaultTemplates(emailServer.id);
+
+    // Log de auditoria
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: 'EMAIL_SERVICE_SUBSCRIBED',
+        resource: 'email_service',
+        details: { planId, message: `Contratou plano de email: ${planDetails.name}` },
+        ip: req.ip || 'unknown',
+        success: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Serviço de email contratado com sucesso! Trial de 30 dias iniciado.`,
+      credentials: {
+        email: adminEmail,
+        password: defaultPassword,
+        server: emailServer.hostname,
+        port: 587
+      }
+    });
   } catch (error) {
     console.error('Error subscribing to email service:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
       message: 'Erro interno do servidor'
-        });
+    });
   }
 }));
+
+/**
+ * Helper: Obter detalhes do plano
+ */
+function getEmailPlanDetails(planId: string) {
+  const plans: Record<string, { name: string; price: number; emailsPerMonth: number; accounts: number }> = {
+    basic: { name: 'Básico', price: 49, emailsPerMonth: 5000, accounts: 5 },
+    standard: { name: 'Padrão', price: 99, emailsPerMonth: 15000, accounts: 15 },
+    premium: { name: 'Premium', price: 199, emailsPerMonth: 50000, accounts: 50 },
+    enterprise: { name: 'Enterprise', price: 399, emailsPerMonth: 999999999, accounts: 999 }
+  };
+  return plans[planId];
+}
 
 /**
  * POST /api/admin/email-service/domain

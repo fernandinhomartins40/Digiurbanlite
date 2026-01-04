@@ -63,7 +63,11 @@
       "Bash(dig:*)",
       "Bash(cd:*)",
       "Bash(psql:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(DATABASE_URL=\"postgresql://user:pass@localhost:5432/db\" npx prisma migrate:*)",
+      "Bash(rmdir:*)",
+      "Bash(git reset:*)",
+      "Bash(del nul \"digiurban\\frontend\\nul\")"
     ],
     "deny": [],
     "ask": []

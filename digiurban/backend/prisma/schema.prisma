@@ -1231,6 +1231,7 @@ model EmailServer {
   statistics        EmailStats[]
   users             EmailUser[]
   emails            Email[]
+  subscription      EmailSubscription?
 
   @@map("email_servers")
 }
@@ -1403,6 +1404,65 @@ model EmailTemplate {
 
   @@unique([name])
   @@map("email_templates")
+}
+
+model EmailSubscription {
+  id                 String             @id @default(cuid())
+  emailServerId      String             @unique
+  plan               EmailPlan
+  status             SubscriptionStatus @default(ACTIVE)
+  monthlyPrice       Decimal
+  maxEmailsPerMonth  Int
+  maxAccounts        Int                // Número de contas de email incluídas
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  trialEndsAt        DateTime?          // Se estiver em trial
+  canceledAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  emailServer        EmailServer        @relation(fields: [emailServerId], references: [id], onDelete: Cascade)
+  invoices           EmailInvoice[]
+  addons             EmailAddon[]
+
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@map("email_subscriptions")
+}
+
+model EmailInvoice {
+  id             String             @id @default(cuid())
+  subscriptionId String
+  invoiceNumber  String             @unique
+  amount         Decimal
+  description    String
+  status         InvoiceStatus      @default(PENDING)
+  dueDate        DateTime
+  paidAt         DateTime?
+  paymentMethod  String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  subscription   EmailSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([subscriptionId])
+  @@map("email_invoices")
+}
+
+model EmailAddon {
+  id             String            @id @default(cuid())
+  subscriptionId String
+  addonType      EmailAddonType
+  quantity       Int               @default(1)
+  price          Decimal
+  description    String
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  subscription   EmailSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@map("email_addons")
 }
 
 model Integration {
@@ -1745,6 +1805,23 @@ enum EmailPlan {
   STANDARD
   PREMIUM
   ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIAL
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+}
+
+enum EmailAddonType {
+  EXTRA_ACCOUNTS    // Contas extras além do plano
+  EXTRA_EMAILS      // Pacote extra de emails
+  DEDICATED_IP      // IP dedicado
+  PRIORITY_SUPPORT  // Suporte prioritário
+  API_ACCESS        // Acesso à API avançada
+  CUSTOM_REPORTS    // Relatórios customizados
 }
 
 enum VerificationStatus {

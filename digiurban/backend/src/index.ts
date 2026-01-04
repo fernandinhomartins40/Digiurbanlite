@@ -113,6 +113,12 @@ const superAdminRoutes = require('./routes/super-admin').default;
 app.use('/api/super-admin', superAdminRoutes);
 console.log('   ✅ super-admin importado');
 
+// Super Admin Email Management
+console.log('   Carregando super-admin-email...');
+const superAdminEmailRoutes = require('./routes/super-admin-email').default;
+app.use('/api/super-admin', superAdminEmailRoutes);
+console.log('   ✅ super-admin-email importado');
+
 // Email Templates (Super Admin)
 console.log('   Carregando email-templates...');
 const emailTemplatesRoutes = require('./routes/email-templates').default;
@@ -353,6 +359,14 @@ const server = httpServer.listen(PORT, async () => {
 
   // Inicializar servidor de email após HTTP server estar pronto
   await initializeEmailServer();
+
+  // Inicializar cron jobs de email
+  try {
+    const { startEmailCronJobs } = require('./jobs/email-counters-reset');
+    startEmailCronJobs();
+  } catch (error) {
+    console.error('⚠️  Erro ao inicializar cron jobs de email:', error);
+  }
 });
 
 server.on('error', (error: NodeJS.ErrnoException) => {
