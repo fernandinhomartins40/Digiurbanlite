@@ -17,8 +17,13 @@ import {
   Edit,
   Trash2,
   UserPlus,
-  Loader2
+  Loader2,
+  AlertCircle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface SuperAdmin {
   id: string;
@@ -31,6 +36,12 @@ interface SuperAdmin {
     id: string;
     name: string;
   } | null;
+}
+
+interface Department {
+  id: string;
+  name: string;
+  code: string | null;
 }
 
 export default function SuperAdminUsersPage() {
@@ -47,11 +58,24 @@ export default function SuperAdminUsersPage() {
     password: '',
     departmentId: ''
   });
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchAdmins();
   }, []);
+
+  // Carregar departamentos quando abrir modal de criação/edição
+  useEffect(() => {
+    if (showCreateModal || showEditModal) {
+      loadDepartments();
+    }
+  }, [showCreateModal, showEditModal]);
 
   const fetchAdmins = async () => {
     setLoading(true);
@@ -73,13 +97,65 @@ export default function SuperAdminUsersPage() {
     }
   };
 
+  const loadDepartments = async () => {
+    setLoadingDepartments(true);
+    try {
+      const response = await fetch('/api/super-admin/departments');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.departments) {
+          setDepartments(data.data.departments);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar departamentos:', error);
+    } finally {
+      setLoadingDepartments(false);
+    }
+  };
+
+  // Função para calcular força da senha
+  const getPasswordStrength = (pwd: string): { score: number; label: string; color: string } => {
+    if (!pwd) return { score: 0, label: '', color: '' };
+
+    let score = 0;
+
+    if (pwd.length >= 8) score++;
+    if (pwd.length >= 12) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) score++;
+
+    if (score <= 2) return { score, label: 'Fraca', color: 'bg-red-500' };
+    if (score <= 4) return { score, label: 'Média', color: 'bg-yellow-500' };
+    return { score, label: 'Forte', color: 'bg-green-500' };
+  };
+
+  const validateForm = (isEdit: boolean): string | null => {
+    if (!formData.name.trim()) return 'Nome é obrigatório';
+    if (!formData.email.trim()) return 'Email é obrigatório';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Email inválido';
+
+    if (!isEdit) {
+      if (!formData.password) return 'Senha é obrigatória';
+      if (formData.password.length < 8) return 'Senha deve ter no mínimo 8 caracteres';
+      if (!/[A-Z]/.test(formData.password)) return 'Senha deve conter ao menos uma letra maiúscula';
+      if (!/[a-z]/.test(formData.password)) return 'Senha deve conter ao menos uma letra minúscula';
+      if (!/\d/.test(formData.password)) return 'Senha deve conter ao menos um número';
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) return 'Senha deve conter ao menos um caractere especial';
+      if (formData.password !== confirmPassword) return 'As senhas não coincidem';
+    }
+
+    return null;
+  };
+
   const handleCreate = async () => {
-    if (!formData.name || !formData.email || !formData.password) {
-      toast({
-        title: 'Erro',
-        description: 'Preencha todos os campos obrigatórios',
-        variant: 'destructive'
-      });
+    setFormError('');
+
+    const validationError = validateForm(false);
+    if (validationError) {
+      setFormError(validationError);
       return;
     }
 
@@ -98,17 +174,17 @@ export default function SuperAdminUsersPage() {
         });
         setShowCreateModal(false);
         setFormData({ name: '', email: '', password: '', departmentId: '' });
+        setConfirmPassword('');
+        setShowPassword(false);
+        setShowConfirmPassword(false);
+        setFormError('');
         fetchAdmins();
       } else {
         const error = await response.json();
         throw new Error(error.error);
       }
     } catch (error: any) {
-      toast({
-        title: 'Erro',
-        description: error.message || 'Não foi possível criar o super admin',
-        variant: 'destructive'
-      });
+      setFormError(error.message || 'Não foi possível criar o super admin');
     } finally {
       setSaving(false);
     }
@@ -116,6 +192,14 @@ export default function SuperAdminUsersPage() {
 
   const handleUpdate = async () => {
     if (!selectedAdmin) return;
+
+    setFormError('');
+
+    const validationError = validateForm(true);
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -137,16 +221,14 @@ export default function SuperAdminUsersPage() {
         setShowEditModal(false);
         setSelectedAdmin(null);
         setFormData({ name: '', email: '', password: '', departmentId: '' });
+        setFormError('');
         fetchAdmins();
       } else {
-        throw new Error('Erro ao atualizar');
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao atualizar');
       }
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível atualizar o super admin',
-        variant: 'destructive'
-      });
+    } catch (error: any) {
+      setFormError(error.message || 'Não foi possível atualizar o super admin');
     } finally {
       setSaving(false);
     }
@@ -211,7 +293,17 @@ export default function SuperAdminUsersPage() {
       password: '',
       departmentId: admin.department?.id || ''
     });
+    setFormError('');
     setShowEditModal(true);
+  };
+
+  const handleOpenCreateModal = () => {
+    setFormData({ name: '', email: '', password: '', departmentId: '' });
+    setConfirmPassword('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setFormError('');
+    setShowCreateModal(true);
   };
 
   const filteredAdmins = admins.filter(admin =>
@@ -233,7 +325,7 @@ export default function SuperAdminUsersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Gestão de Super Admins</h1>
           <p className="text-gray-600">Gerencie os super administradores do sistema</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
+        <Button onClick={handleOpenCreateModal}>
           <UserPlus className="h-4 w-4 mr-2" />
           Novo Super Admin
         </Button>
@@ -398,21 +490,31 @@ export default function SuperAdminUsersPage() {
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle>Criar Novo Super Admin</CardTitle>
+              <p className="text-sm text-gray-500">Preencha os dados do novo super administrador</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
+              {formError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{formError}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2">
                 <Label htmlFor="create-name">Nome *</Label>
                 <Input
                   id="create-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Nome completo"
+                  disabled={saving}
                 />
               </div>
-              <div>
+
+              <div className="space-y-2">
                 <Label htmlFor="create-email">Email *</Label>
                 <Input
                   id="create-email"
@@ -420,23 +522,127 @@ export default function SuperAdminUsersPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="email@exemplo.com"
+                  disabled={saving}
                 />
               </div>
-              <div>
+
+              <div className="space-y-2">
                 <Label htmlFor="create-password">Senha *</Label>
-                <Input
-                  id="create-password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Senha segura"
-                />
+                <div className="relative">
+                  <Input
+                    id="create-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Mínimo 8 caracteres"
+                    disabled={saving}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    tabIndex={-1}
+                    disabled={saving}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+
+                {/* Indicador de força da senha */}
+                {formData.password && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Força da senha:</span>
+                      <span className={`text-xs font-medium ${
+                        getPasswordStrength(formData.password).label === 'Forte' ? 'text-green-600' :
+                        getPasswordStrength(formData.password).label === 'Média' ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {getPasswordStrength(formData.password).label}
+                      </span>
+                    </div>
+                    <div className="flex gap-1 h-1">
+                      {[...Array(6)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`flex-1 rounded-full ${
+                            i < getPasswordStrength(formData.password).score
+                              ? getPasswordStrength(formData.password).color
+                              : 'bg-gray-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  Deve conter: maiúscula, minúscula, número e caractere especial
+                </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="create-confirm-password">Confirmar Senha *</Label>
+                <div className="relative">
+                  <Input
+                    id="create-confirm-password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Digite a senha novamente"
+                    disabled={saving}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    tabIndex={-1}
+                    disabled={saving}
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {confirmPassword && formData.password !== confirmPassword && (
+                  <p className="text-xs text-red-600">As senhas não coincidem</p>
+                )}
+                {confirmPassword && formData.password === confirmPassword && (
+                  <p className="text-xs text-green-600">✓ As senhas coincidem</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="create-department">Departamento (Opcional)</Label>
+                <Select
+                  value={formData.departmentId}
+                  onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
+                  disabled={saving || loadingDepartments}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum departamento</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {loadingDepartments && (
+                  <p className="text-xs text-gray-500">Carregando departamentos...</p>
+                )}
+              </div>
+
               <div className="flex gap-2 pt-4">
                 <Button
                   onClick={() => {
                     setShowCreateModal(false);
                     setFormData({ name: '', email: '', password: '', departmentId: '' });
+                    setConfirmPassword('');
+                    setFormError('');
                   }}
                   variant="outline"
                   className="flex-1"
@@ -461,34 +667,80 @@ export default function SuperAdminUsersPage() {
       {/* Edit Modal */}
       {showEditModal && selectedAdmin && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <CardTitle>Editar Super Admin</CardTitle>
+              <p className="text-sm text-gray-500">Edite as informações do super administrador</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="edit-name">Nome</Label>
+              {formError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{formError}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome *</Label>
                 <Input
                   id="edit-name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Nome completo"
+                  disabled={saving}
                 />
               </div>
-              <div>
-                <Label htmlFor="edit-email">Email</Label>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email *</Label>
                 <Input
                   id="edit-email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="email@exemplo.com"
+                  disabled={saving}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-department">Departamento (Opcional)</Label>
+                <Select
+                  value={formData.departmentId}
+                  onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
+                  disabled={saving || loadingDepartments}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um departamento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhum departamento</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {loadingDepartments && (
+                  <p className="text-xs text-gray-500">Carregando departamentos...</p>
+                )}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-blue-800 flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>Para alterar a senha, use a função "Redefinir Senha" na lista de usuários.</span>
+                </p>
+              </div>
+
               <div className="flex gap-2 pt-4">
                 <Button
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedAdmin(null);
                     setFormData({ name: '', email: '', password: '', departmentId: '' });
+                    setFormError('');
                   }}
                   variant="outline"
                   className="flex-1"
@@ -502,7 +754,7 @@ export default function SuperAdminUsersPage() {
                   disabled={saving}
                 >
                   {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Salvar
+                  Salvar Alterações
                 </Button>
               </div>
             </CardContent>

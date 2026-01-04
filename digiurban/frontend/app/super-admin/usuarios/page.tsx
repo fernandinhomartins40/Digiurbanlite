@@ -12,7 +12,6 @@ import {
   Shield,
   Building2,
   Search,
-  MoreVertical,
   Edit,
   Trash2,
   CheckCircle,
@@ -29,14 +28,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -399,33 +390,22 @@ export default function UsuariosPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleEditUser(member)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="h-4 w-4 mr-2" />
-                            Enviar Email
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-red-600"
-                            onClick={() => handleDeleteUser(member)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Remover
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEditUser(member)}
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                          title="Editar"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(member)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                          title="Remover"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
