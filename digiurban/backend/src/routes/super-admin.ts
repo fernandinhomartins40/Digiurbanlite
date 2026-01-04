@@ -16,6 +16,26 @@ import emailServerRouter from './email-server';
 const execAsync = promisify(exec);
 const router = Router();
 
+// Função auxiliar para obter diretório de backups com fallback
+async function getBackupDir(): Promise<string> {
+  const preferredDir = process.env.BACKUPS_DIR || '/app/backups';
+
+  try {
+    // Tentar criar e testar o diretório preferido
+    await fs.mkdir(preferredDir, { recursive: true });
+    const testPath = path.join(preferredDir, '.test');
+    await fs.writeFile(testPath, 'test');
+    await fs.unlink(testPath);
+    return preferredDir;
+  } catch (error) {
+    // Fallback para /tmp se não tiver permissão
+    console.warn(`[BACKUP] Usando /tmp como fallback (sem permissão em ${preferredDir})`);
+    const fallbackDir = '/tmp/digiurban-backups';
+    await fs.mkdir(fallbackDir, { recursive: true });
+    return fallbackDir;
+  }
+}
+
 // Middleware para verificar se é SUPER_ADMIN
 const superAdminOnly = (req: Request, res: Response, next: any) => {
   const user = (req as any).user;
@@ -446,16 +466,13 @@ router.get('/system/metrics', adminAuthMiddleware, superAdminOnly, async (req: R
 // POST /api/super-admin/system/backup - Criar backup do banco de dados
 router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
-    // Usar diretório persistente configurado via variável de ambiente
-    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
+    const backupDir = await getBackupDir();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupFileName = `backup-${timestamp}.json`;
     const backupPath = path.join(backupDir, backupFileName);
 
-    // Criar diretório de backups se não existir
-    await fs.mkdir(backupDir, { recursive: true });
-
-    console.log('[BACKUP] Iniciando backup do banco de dados...');
+    console.log(`[BACKUP] Iniciando backup do banco de dados...`);
+    console.log(`[BACKUP] Diretório: ${backupDir}`);
 
     // Fazer backup usando Prisma (funciona com qualquer DB)
     const backupData: any = {
@@ -533,7 +550,7 @@ router.post('/system/backup', adminAuthMiddleware, superAdminOnly, async (req: R
 // GET /api/super-admin/system/backups - Listar backups disponíveis
 router.get('/system/backups', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
-    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
+    const backupDir = await getBackupDir();
 
     try {
       const files = await fs.readdir(backupDir);
@@ -575,7 +592,7 @@ router.get('/system/backups', adminAuthMiddleware, superAdminOnly, async (req: R
 router.get('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
-    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
+    const backupDir = await getBackupDir();
     const filePath = path.join(backupDir, fileName);
 
     // Validar nome do arquivo para evitar path traversal
@@ -602,7 +619,7 @@ router.get('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, asyn
 router.delete('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
-    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
+    const backupDir = await getBackupDir();
     const filePath = path.join(backupDir, fileName);
 
     // Validar nome do arquivo para evitar path traversal
@@ -636,7 +653,7 @@ router.delete('/system/backup/:fileName', adminAuthMiddleware, superAdminOnly, a
 router.post('/system/backup/:fileName/restore', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
-    const backupDir = process.env.BACKUPS_DIR || '/app/backups';
+    const backupDir = await getBackupDir();
     const filePath = path.join(backupDir, fileName);
 
     // Validar nome do arquivo
