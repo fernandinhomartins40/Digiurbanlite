@@ -341,7 +341,7 @@ export default function EmailServerDashboard() {
           </Card>
         </Link>
 
-        <Link href="/super-admin/email-server/config">
+        <Link href="/super-admin/email-server/logs">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-purple-500">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">

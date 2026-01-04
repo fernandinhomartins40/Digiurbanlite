@@ -81,7 +81,10 @@ const menuItems: MenuItem[] = [
     href: '#email',
     icon: Mail,
     children: [
-      { title: 'Email Server', href: '/super-admin/email-server', icon: Mail },
+      { title: 'Dashboard', href: '/super-admin/email-server', icon: Mail },
+      { title: 'Configurações', href: '/super-admin/email-server/config', icon: Settings },
+      { title: 'Domínios', href: '/super-admin/email-server/domains', icon: Building2 },
+      { title: 'Logs', href: '/super-admin/email-server/logs', icon: FileText },
       { title: 'Templates', href: '/super-admin/email-templates', icon: FileText },
     ]
   },
