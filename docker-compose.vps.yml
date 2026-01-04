@@ -159,9 +159,13 @@ services:
       # Uploads
       - UPLOAD_BASE_PATH=/app/uploads
 
+      # Backups
+      - BACKUPS_DIR=/app/backups
+
     volumes:
       - digiurban_uploads:/app/uploads
       - digiurban_logs:/app/logs
+      - digiurban_backups:/app/backups
     restart: unless-stopped
     depends_on:
       postgres:
@@ -189,6 +193,8 @@ volumes:
   digiurban_uploads:
     driver: local
   digiurban_logs:
+    driver: local
+  digiurban_backups:
     driver: local
   smtp_data:
     driver: local
