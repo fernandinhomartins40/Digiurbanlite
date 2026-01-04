@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { getFullApiUrl } from '@/lib/api-config'
-import { ROLE_HIERARCHY, ROLE_DISPLAY_NAMES, TEAM_ROLES, isTeamRole, type TeamRoleType } from '@/types/roles'
+import { ROLE_HIERARCHY, ROLE_DISPLAY_NAMES, TEAM_ROLES } from '@/types/roles'
 
 interface Department {
   id: string
@@ -135,7 +135,11 @@ export function UserManagementModal({
   const loadDepartments = async () => {
     setLoadingDepartments(true)
     try {
-      const url = getFullApiUrl('/admin/departments')
+      // ✅ Usar rota super-admin quando for SUPER_ADMIN, senão usar admin
+      const endpoint = currentUserRole === 'SUPER_ADMIN'
+        ? '/super-admin/departments'
+        : '/admin/departments'
+      const url = getFullApiUrl(endpoint)
       const response = await fetch(url, {
         credentials: 'include'
       })
