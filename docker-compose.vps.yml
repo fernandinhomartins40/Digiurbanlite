@@ -38,36 +38,35 @@ services:
       timeout: 5s
       retries: 5
 
-  # DESABILITADO: UltraZend SMTP agora está integrado no container digiurban-vps
-  # ultrazend-smtp:
-  #   build:
-  #     context: ./ultrazend-smtp-server
-  #     dockerfile: Dockerfile
-  #   container_name: ultrazend-smtp
-  #   ports:
-  #     - "2525:25"    # MX Server (receber emails) - Porta externa 2525
-  #     - "2587:587"   # Submission Server (enviar emails) - Porta externa 2587
-  #   environment:
-  #     - NODE_ENV=production
-  #     - DATABASE_URL=${DATABASE_URL}
-  #     - SMTP_HOSTNAME=mail.digiurban.com.br
-  #     - MX_PORT=25
-  #     - SUBMISSION_PORT=587
-  #   volumes:
-  #     - smtp_data:/app/data
-  #     - smtp_logs:/app/logs
-  #   restart: unless-stopped
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   networks:
-  #     - digiurban_network
-  #   healthcheck:
-  #     test: ["CMD", "node", "-e", "require('net').connect(587, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 60s
+  ultrazend-smtp:
+    build:
+      context: ./ultrazend-smtp-server
+      dockerfile: Dockerfile
+    container_name: ultrazend-smtp
+    ports:
+      - "25:25"     # MX Server (receber emails externos)
+      - "587:587"   # Submission Server (enviar emails autenticados)
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - SMTP_HOSTNAME=mail.digiurban.com.br
+      - MX_PORT=25
+      - SUBMISSION_PORT=587
+    volumes:
+      - smtp_data:/app/data
+      - smtp_logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('net').connect(587, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   ultrazend-messages:
     build:
@@ -124,8 +123,6 @@ services:
     container_name: digiurban-vps
     ports:
       - "3060:80"   # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)
-      - "25:25"     # MX Server (receber emails externos)
-      - "587:587"   # Submission Server (enviar emails autenticados)
     environment:
       # Node.js
       - NODE_ENV=production
@@ -174,6 +171,8 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      ultrazend-smtp:
         condition: service_healthy
       ultrazend-messages:
         condition: service_healthy

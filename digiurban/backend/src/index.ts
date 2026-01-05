@@ -319,25 +319,10 @@ app.use(errorHandler);
 console.log('⚠️  Module handlers DESABILITADOS temporariamente');
 
 // ============================================================
-// 📧 INICIALIZAÇÃO AUTOMÁTICA DO SERVIDOR DE EMAIL
+// 📧 SERVIDOR DE EMAIL
 // ============================================================
-import { startEmailServer } from './lib/email/email-server-manager';
-
-async function initializeEmailServer() {
-  try {
-    console.log('📧 Tentando inicializar servidor de email...');
-    await startEmailServer();
-    console.log('✅ Servidor de email iniciado com sucesso!');
-  } catch (error: any) {
-    if (error.message.includes('not configured')) {
-      console.warn('⚠️  Servidor de email não configurado - será necessário configurar via painel Super Admin');
-      console.warn('   Acesse: /super-admin/email-server');
-    } else {
-      console.error('❌ Erro ao inicializar servidor de email:', error.message);
-      console.warn('⚠️  Sistema continuará funcionando sem servidor de email');
-    }
-  }
-}
+// O servidor SMTP roda em container separado (ultrazend-smtp)
+// Backend apenas gerencia configurações via API
 
 // ============================================================
 // 🔥 INICIALIZAR SERVIDOR COM WEBSOCKET
@@ -364,9 +349,6 @@ const server = httpServer.listen(PORT, async () => {
   console.log(`🔌 WebSocket disponível em: ws://localhost:${PORT}/api/socket`);
   console.log(`📝 Logs salvos em: logs/`);
   console.log(`⏰ Server is now listening and will stay alive...`);
-
-  // Inicializar servidor de email após HTTP server estar pronto
-  await initializeEmailServer();
 
   // Inicializar cron jobs de email
   try {

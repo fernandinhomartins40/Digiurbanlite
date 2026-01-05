@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth';
 import emailDomainsRouter from './email-domains';
-import { getEmailServerRuntimeStatus, startEmailServer, stopEmailServer } from '../lib/email/email-server-manager';
+// SMTP Server agora roda em container separado (ultrazend-smtp)
+// import { getEmailServerRuntimeStatus, startEmailServer, stopEmailServer } from '../lib/email/email-server-manager';
 
 const router = Router();
 
@@ -57,12 +58,13 @@ router.get('/status', async (req: Request, res: Response) => {
       ? ((deliveredEmails / totalEmails) * 100).toFixed(1) + '%'
       : '0%';
 
-    const runtimeStatus = getEmailServerRuntimeStatus();
+    // SMTP Server agora roda em container separado - status fixo
+    // const runtimeStatus = getEmailServerRuntimeStatus();
 
     res.json({
       status: {
-        isRunning: runtimeStatus?.isRunning ?? false,
-        uptime: runtimeStatus?.uptime ?? 0,
+        isRunning: emailServer.isActive,  // Baseado no DB, não runtime
+        uptime: 0,  // Container separado não reporta uptime aqui
         hostname: emailServer.hostname,
         ports: {
           mx: emailServer.mxPort,
@@ -76,7 +78,7 @@ router.get('/status', async (req: Request, res: Response) => {
           deliveryRate
         },
         connections: {
-          active: runtimeStatus?.connections.active ?? 0,
+          active: 0,  // Container separado não reporta conexões
           total: 100
         }
       }
@@ -143,13 +145,14 @@ router.get('/dashboard-stats', async (req: Request, res: Response) => {
               log.level === 'INFO' ? 'success' as const : 'info' as const
     }));
 
-    const runtimeStatus = getEmailServerRuntimeStatus();
+    // SMTP Server agora roda em container separado
+    // const runtimeStatus = getEmailServerRuntimeStatus();
 
     res.json({
       stats: {
         server: {
-          isRunning: runtimeStatus?.isRunning ?? false,
-          uptime: runtimeStatus?.uptime ?? 0,
+          isRunning: emailServer.isActive,
+          uptime: 0,
           hostname: emailServer.hostname
         },
         domains: {
@@ -317,16 +320,14 @@ router.post('/start', async (req: Request, res: Response) => {
       });
     }
 
-    try {
-      const status = await startEmailServer();
-      res.json({ success: true, message: 'Server started', status });
-    } catch (error) {
-      await prisma.emailServer.update({
-        where: { id: emailServer.id },
-        data: { isActive: false }
-      });
-      throw error;
-    }
+    // SMTP Server agora roda em container separado
+    // Apenas atualiza o status no DB
+    // const status = await startEmailServer();
+    res.json({
+      success: true,
+      message: 'Server configuration updated (restart ultrazend-smtp container to apply)',
+      status: { isRunning: true, hostname: emailServer.hostname }
+    });
   } catch (error) {
     console.error('Error starting server:', error);
     res.status(500).json({ error: 'Failed to start server' });
@@ -350,9 +351,13 @@ router.post('/stop', async (req: Request, res: Response) => {
       data: { isActive: false }
     });
 
-    await stopEmailServer();
+    // SMTP Server agora roda em container separado
+    // await stopEmailServer();
 
-    res.json({ success: true, message: 'Server stopped' });
+    res.json({
+      success: true,
+      message: 'Server configuration updated (restart ultrazend-smtp container to apply)'
+    });
   } catch (error) {
     console.error('Error stopping server:', error);
     res.status(500).json({ error: 'Failed to stop server' });
@@ -388,17 +393,14 @@ router.post('/restart', async (req: Request, res: Response) => {
       });
     }
 
-    await stopEmailServer();
-    try {
-      const status = await startEmailServer();
-      res.json({ success: true, message: 'Server restarted', status });
-    } catch (error) {
-      await prisma.emailServer.update({
-        where: { id: emailServer.id },
-        data: { isActive: false }
-      });
-      throw error;
-    }
+    // SMTP Server agora roda em container separado
+    // await stopEmailServer();
+    // const status = await startEmailServer();
+    res.json({
+      success: true,
+      message: 'Server configuration updated (restart ultrazend-smtp container to apply)',
+      status: { isRunning: true, hostname: emailServer.hostname }
+    });
   } catch (error) {
     console.error('Error restarting server:', error);
     res.status(500).json({ error: 'Failed to restart server' });
