@@ -891,4 +891,47 @@ router.post('/trash/empty', requireMinRole(UserRole.ADMIN), asyncHandler(async (
   }
 }));
 
+/**
+ * GET /api/admin/email-service/available-plans
+ * Listar planos de email disponíveis para contratação
+ */
+router.get('/available-plans', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const plans = await prisma.emailPlanConfig.findMany({
+      where: {
+        isActive: true
+      },
+      include: {
+        allowedDomains: {
+          include: {
+            domain: true
+          }
+        }
+      },
+      orderBy: { monthlyPrice: 'asc' }
+    });
+
+    res.json({
+      success: true,
+      plans: plans.map(plan => ({
+        id: plan.id,
+        name: plan.name,
+        code: plan.code,
+        monthlyPrice: Number(plan.monthlyPrice),
+        maxEmailsPerMonth: plan.maxEmailsPerMonth,
+        maxAccounts: plan.maxAccounts,
+        features: plan.features,
+        isActive: plan.isActive
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching available plans:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao buscar planos disponíveis'
+    });
+  }
+}));
+
 export default router;

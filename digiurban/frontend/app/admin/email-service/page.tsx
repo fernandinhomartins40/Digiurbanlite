@@ -55,9 +55,12 @@ import { toast } from '@/hooks/use-toast'
 interface EmailPlan {
   id: string
   name: string
+  code: string
   monthlyPrice: number
-  emailsPerMonth: number
+  maxEmailsPerMonth: number
+  maxAccounts: number
   features: string[]
+  isActive: boolean
   recommended?: boolean
 }
 
@@ -108,43 +111,12 @@ interface EmailTemplate {
   isActive: boolean
 }
 
-const EMAIL_PLANS: EmailPlan[] = [
-  {
-    id: 'basic',
-    name: 'Básico',
-    monthlyPrice: 49,
-    emailsPerMonth: 5000,
-    features: ['5.000 emails/mês', 'Domínio personalizado', 'DKIM/SPF automático', 'Suporte básico']
-  },
-  {
-    id: 'standard',
-    name: 'Padrão',
-    monthlyPrice: 99,
-    emailsPerMonth: 15000,
-    features: ['15.000 emails/mês', 'Múltiplos domínios', 'Templates personalizados', 'Estatísticas avançadas'],
-    recommended: true
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    monthlyPrice: 199,
-    emailsPerMonth: 50000,
-    features: ['50.000 emails/mês', 'API completa', 'Automações avançadas', 'Suporte prioritário']
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    monthlyPrice: 399,
-    emailsPerMonth: -1,
-    features: ['Emails ilimitados', 'Servidor dedicado', 'SLA garantido', 'Suporte 24/7']
-  }
-]
-
 export default function EmailServiceManagement() {
   const [activeTab, setActiveTab] = useState<'plans' | 'domains' | 'stats' | 'templates' | 'settings'>('plans')
   const [emailConfig, setEmailConfig] = useState<EmailConfig | null>(null)
   const [emailStats, setEmailStats] = useState<EmailStats | null>(null)
   const [templates, setTemplates] = useState<EmailTemplate[]>([])
+  const [availablePlans, setAvailablePlans] = useState<EmailPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [subscribing, setSubscribing] = useState(false)
   const [subscribeDialog, setSubscribeDialog] = useState<{ open: boolean; plan?: EmailPlan }>({ open: false })
@@ -155,6 +127,7 @@ export default function EmailServiceManagement() {
 
   useEffect(() => {
     loadEmailConfig()
+    loadAvailablePlans()
   }, [])
 
   useEffect(() => {
@@ -179,6 +152,30 @@ export default function EmailServiceManagement() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAvailablePlans = async () => {
+    try {
+      const response = await fetch('/api/admin/email-service/available-plans', {
+        credentials: 'include'
+      })
+      const data = await response.json()
+      if (data.success && data.plans) {
+        // Marcar o plano "STANDARD" como recomendado
+        const plansWithRecommendation = data.plans.map((plan: EmailPlan) => ({
+          ...plan,
+          recommended: plan.code === 'STANDARD'
+        }))
+        setAvailablePlans(plansWithRecommendation)
+      }
+    } catch (error) {
+      console.error('Error loading available plans:', error)
+      toast({
+        title: 'Erro',
+        description: 'Falha ao carregar planos disponíveis',
+        variant: 'destructive'
+      })
     }
   }
 
@@ -290,12 +287,12 @@ Senha: ${credentials.password}`
     })
   }
 
-  const getPlanIcon = (planId: string) => {
-    switch (planId) {
-      case 'basic': return <Mail className="h-5 w-5" />
-      case 'standard': return <Zap className="h-5 w-5" />
-      case 'premium': return <Rocket className="h-5 w-5" />
-      case 'enterprise': return <Crown className="h-5 w-5" />
+  const getPlanIcon = (planCode: string) => {
+    switch (planCode.toUpperCase()) {
+      case 'BASIC': return <Mail className="h-5 w-5" />
+      case 'STANDARD': return <Zap className="h-5 w-5" />
+      case 'PREMIUM': return <Rocket className="h-5 w-5" />
+      case 'ENTERPRISE': return <Crown className="h-5 w-5" />
       default: return <Mail className="h-5 w-5" />
     }
   }
@@ -397,90 +394,97 @@ Senha: ${credentials.password}`
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {EMAIL_PLANS.map((plan) => (
-              <Card
-                key={plan.id}
-                className={`relative p-6 transition-all hover:shadow-lg ${
-                  plan.recommended
-                    ? 'border-blue-500 shadow-lg bg-blue-50/30'
-                    : 'border-gray-200'
-                } ${
-                  emailConfig?.plan.id === plan.id
-                    ? 'bg-green-50 border-green-500'
-                    : ''
-                }`}
-              >
-                {plan.recommended && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-blue-500 text-white">
-                      <Star className="h-3 w-3 mr-1" />
-                      Recomendado
-                    </Badge>
-                  </div>
-                )}
-
-                <div className="text-center mb-4">
-                  <div className="flex items-center justify-center mb-2">
-                    {getPlanIcon(plan.id)}
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
-                  <div className="mt-2">
-                    <span className="text-3xl font-bold text-gray-900">R$ {plan.monthlyPrice}</span>
-                    <span className="text-gray-600">/mês</span>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {plan.emailsPerMonth === -1
-                      ? 'Emails ilimitados'
-                      : `${plan.emailsPerMonth.toLocaleString()} emails/mês`
-                    }
-                  </p>
-                </div>
-
-                <ul className="space-y-2 mb-6">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center text-sm">
-                      <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  onClick={() => setSubscribeDialog({ open: true, plan })}
-                  disabled={subscribing || emailConfig?.plan.id === plan.id}
-                  className={`w-full ${
+            {availablePlans.length === 0 ? (
+              <div className="col-span-4 text-center py-8">
+                <RefreshCw className="h-12 w-12 text-gray-400 mx-auto mb-3 animate-spin" />
+                <p className="text-gray-500">Carregando planos disponíveis...</p>
+              </div>
+            ) : (
+              availablePlans.map((plan) => (
+                <Card
+                  key={plan.id}
+                  className={`relative p-6 transition-all hover:shadow-lg ${
+                    plan.recommended
+                      ? 'border-blue-500 shadow-lg bg-blue-50/30'
+                      : 'border-gray-200'
+                  } ${
                     emailConfig?.plan.id === plan.id
-                      ? 'bg-green-100 text-green-800 cursor-not-allowed'
-                      : plan.recommended
-                      ? 'bg-blue-600 hover:bg-blue-700'
+                      ? 'bg-green-50 border-green-500'
                       : ''
                   }`}
-                  variant={
-                    emailConfig?.plan.id === plan.id
-                      ? 'secondary'
-                      : plan.recommended
-                      ? 'default'
-                      : 'outline'
-                  }
                 >
-                  {emailConfig?.plan.id === plan.id ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Plano Atual
-                    </>
-                  ) : subscribing ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Processando...
-                    </>
-                  ) : emailConfig?.hasEmailService ? (
-                    'Alterar Plano'
-                  ) : (
-                    'Contratar'
+                  {plan.recommended && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-blue-500 text-white">
+                        <Star className="h-3 w-3 mr-1" />
+                        Recomendado
+                      </Badge>
+                    </div>
                   )}
-                </Button>
-              </Card>
-            ))}
+
+                  <div className="text-center mb-4">
+                    <div className="flex items-center justify-center mb-2">
+                      {getPlanIcon(plan.code)}
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
+                    <div className="mt-2">
+                      <span className="text-3xl font-bold text-gray-900">R$ {plan.monthlyPrice}</span>
+                      <span className="text-gray-600">/mês</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {plan.maxEmailsPerMonth === -1 || plan.maxEmailsPerMonth >= 999999
+                        ? 'Emails ilimitados'
+                        : `${plan.maxEmailsPerMonth.toLocaleString()} emails/mês`
+                      }
+                    </p>
+                  </div>
+
+                  <ul className="space-y-2 mb-6">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-center text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    onClick={() => setSubscribeDialog({ open: true, plan })}
+                    disabled={subscribing || emailConfig?.plan.id === plan.id}
+                    className={`w-full ${
+                      emailConfig?.plan.id === plan.id
+                        ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                        : plan.recommended
+                        ? 'bg-blue-600 hover:bg-blue-700'
+                        : ''
+                    }`}
+                    variant={
+                      emailConfig?.plan.id === plan.id
+                        ? 'secondary'
+                        : plan.recommended
+                        ? 'default'
+                        : 'outline'
+                    }
+                  >
+                    {emailConfig?.plan.id === plan.id ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                        Plano Atual
+                      </>
+                    ) : subscribing ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : emailConfig?.hasEmailService ? (
+                      'Alterar Plano'
+                    ) : (
+                      'Contratar'
+                    )}
+                  </Button>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
 
@@ -773,9 +777,9 @@ Senha: ${credentials.password}`
             <AlertDialogTitle>Contratar Plano {subscribeDialog.plan?.name}</AlertDialogTitle>
             <AlertDialogDescription>
               Você está prestes a contratar o plano {subscribeDialog.plan?.name} por R$ {subscribeDialog.plan?.monthlyPrice}/mês.
-              {subscribeDialog.plan?.emailsPerMonth === -1
+              {subscribeDialog.plan?.maxEmailsPerMonth === -1 || (subscribeDialog.plan?.maxEmailsPerMonth ?? 0) >= 999999
                 ? ' Este plano inclui emails ilimitados.'
-                : ` Este plano inclui ${subscribeDialog.plan?.emailsPerMonth.toLocaleString()} emails por mês.`
+                : ` Este plano inclui ${subscribeDialog.plan?.maxEmailsPerMonth.toLocaleString()} emails por mês.`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>

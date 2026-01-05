@@ -1237,23 +1237,24 @@ model EmailServer {
 }
 
 model EmailDomain {
-  id                String      @id @default(cuid())
-  emailServerId     String
-  domainName        String
-  isVerified        Boolean     @default(false)
-  verificationToken String?
-  dkimEnabled       Boolean     @default(true)
-  dkimSelector      String      @default("default")
-  dkimPrivateKey    String?
-  dkimPublicKey     String?
-  spfEnabled        Boolean     @default(true)
-  spfRecord         String?
-  dmarcEnabled      Boolean     @default(false)
-  dmarcPolicy       String?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  emailServer       EmailServer @relation(fields: [emailServerId], references: [id])
-  sentEmails        Email[]
+  id                   String                    @id @default(cuid())
+  emailServerId        String
+  domainName           String
+  isVerified           Boolean                   @default(false)
+  verificationToken    String?
+  dkimEnabled          Boolean                   @default(true)
+  dkimSelector         String                    @default("default")
+  dkimPrivateKey       String?
+  dkimPublicKey        String?
+  spfEnabled           Boolean                   @default(true)
+  spfRecord            String?
+  dmarcEnabled         Boolean                   @default(false)
+  dmarcPolicy          String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  emailServer          EmailServer               @relation(fields: [emailServerId], references: [id])
+  sentEmails           Email[]
+  allowedInPlans       EmailPlanAllowedDomain[]  // ✅ NOVO: Planos que permitem este domínio
 
   @@unique([emailServerId, domainName])
   @@map("email_domains")
@@ -1410,6 +1411,7 @@ model EmailSubscription {
   id                 String             @id @default(cuid())
   emailServerId      String             @unique
   plan               EmailPlan
+  planConfigId       String?            // ✅ NOVO: Referência ao plano configurável
   status             SubscriptionStatus @default(ACTIVE)
   monthlyPrice       Decimal
   maxEmailsPerMonth  Int
@@ -1421,12 +1423,47 @@ model EmailSubscription {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   emailServer        EmailServer        @relation(fields: [emailServerId], references: [id], onDelete: Cascade)
+  planConfig         EmailPlanConfig?   @relation(fields: [planConfigId], references: [id], onDelete: SetNull)
   invoices           EmailInvoice[]
   addons             EmailAddon[]
 
   @@index([status])
   @@index([currentPeriodEnd])
+  @@index([planConfigId])
   @@map("email_subscriptions")
+}
+
+// ✅ NOVA TABELA: Configuração dinâmica de planos de email
+model EmailPlanConfig {
+  id                String                    @id @default(cuid())
+  name              String                    // Ex: "Básico Municipal"
+  code              String                    @unique // Ex: "BASIC", "STANDARD"
+  monthlyPrice      Decimal                   // Ex: 49.00
+  maxEmailsPerMonth Int                       // Ex: 5000, -1 = ilimitado
+  maxAccounts       Int                       // Ex: 5
+  features          Json                      // ["DKIM/SPF", "Templates", "Suporte básico"]
+  isActive          Boolean                   @default(true)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  subscriptions     EmailSubscription[]       // Assinaturas usando este plano
+  allowedDomains    EmailPlanAllowedDomain[]  // Domínios permitidos para este plano
+
+  @@map("email_plan_configs")
+}
+
+// ✅ NOVA TABELA: Domínios permitidos por plano
+model EmailPlanAllowedDomain {
+  id        String          @id @default(cuid())
+  planId    String
+  domainId  String
+  createdAt DateTime        @default(now())
+  plan      EmailPlanConfig @relation(fields: [planId], references: [id], onDelete: Cascade)
+  domain    EmailDomain     @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, domainId])
+  @@index([planId])
+  @@index([domainId])
+  @@map("email_plan_allowed_domains")
 }
 
 model EmailInvoice {

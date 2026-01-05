@@ -119,6 +119,12 @@ const superAdminEmailRoutes = require('./routes/super-admin-email').default;
 app.use('/api/super-admin', superAdminEmailRoutes);
 console.log('   ✅ super-admin-email importado');
 
+// Super Admin Email Plans Management
+console.log('   Carregando super-admin-email-plans...');
+const superAdminEmailPlansRoutes = require('./routes/super-admin-email-plans').default;
+app.use('/api/super-admin/email/plans', superAdminEmailPlansRoutes);
+console.log('   ✅ super-admin-email-plans importado');
+
 // Email Templates (Super Admin)
 console.log('   Carregando email-templates...');
 const emailTemplatesRoutes = require('./routes/email-templates').default;
