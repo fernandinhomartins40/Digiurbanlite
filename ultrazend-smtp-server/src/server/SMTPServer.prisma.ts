@@ -316,44 +316,133 @@ export class UltraZendSMTPServer {
   }
 
   /**
-   * Processa email de entrada (MX)
+   * Processa email de entrada (MX) - SALVA EM ReceivedEmail
    */
   private async processIncomingEmail(parsedEmail: ParsedMail, session: SMTPSession): Promise<void> {
     try {
       const messageId = parsedEmail.messageId || generateMessageId(this.config.hostname);
 
-      // Registrar email recebido (usando schema do DigiUrban)
-      await prisma.email.upsert({
-        where: { messageId },
-        update: {},
-        create: {
-          messageId,
-          fromEmail: getAddressText(parsedEmail.from),
-          toEmail: getAddressText(parsedEmail.to),
-          subject: parsedEmail.subject || '',
-          htmlContent: parsedEmail.html?.toString(),
-          textContent: parsedEmail.text,
-          status: 'DELIVERED' as any, // DigiUrban EmailStatus enum
-          deliveredAt: new Date(),
-          // Metadata para marcar como email de entrada
-          metadata: {
-            direction: 'INBOUND',
-            serverType: 'MX'
-          }
+      // Extrair endereços
+      const fromEmail = this.extractEmail(parsedEmail.from);
+      const toEmail = this.extractEmail(parsedEmail.to);
+      const fromName = this.extractName(parsedEmail.from);
+
+      // Buscar servidor de email
+      const emailServer = await prisma.emailServer.findFirst({
+        where: {
+          hostname: this.config.hostname,
+          isActive: true
         }
       });
 
-      logger.info('Incoming email received', {
+      if (!emailServer) {
+        logger.warn('Email server not found or inactive', { hostname: this.config.hostname });
+        // Continuar mesmo assim para não rejeitar o email
+      }
+
+      // Tentar encontrar usuário destinatário
+      const emailUser = emailServer ? await prisma.emailUser.findFirst({
+        where: {
+          emailServerId: emailServer.id,
+          email: toEmail,
+          isActive: true
+        }
+      }) : null;
+
+      // Processar anexos
+      const attachments = parsedEmail.attachments?.map(att => ({
+        filename: att.filename,
+        contentType: att.contentType,
+        size: att.size,
+        cid: att.cid,
+        contentDisposition: att.contentDisposition
+      })) || [];
+
+      // Processar CC e BCC
+      const ccEmails = parsedEmail.cc ?
+        (Array.isArray(parsedEmail.cc) ? parsedEmail.cc : [parsedEmail.cc])
+          .map(addr => this.extractEmail(addr))
+          .filter(Boolean)
+        : null;
+
+      const bccEmails = parsedEmail.bcc ?
+        (Array.isArray(parsedEmail.bcc) ? parsedEmail.bcc : [parsedEmail.bcc])
+          .map(addr => this.extractEmail(addr))
+          .filter(Boolean)
+        : null;
+
+      // ✅ SALVAR em ReceivedEmail (tabela correta!)
+      await prisma.receivedEmail.upsert({
+        where: { messageId },
+        update: {}, // Não atualizar se já existe (evitar duplicatas)
+        create: {
+          messageId,
+          fromEmail,
+          fromName,
+          toEmail,
+          ccEmails: ccEmails && ccEmails.length > 0 ? ccEmails : null,
+          bccEmails: bccEmails && bccEmails.length > 0 ? bccEmails : null,
+          replyTo: parsedEmail.replyTo ? this.extractEmail(parsedEmail.replyTo) : null,
+          subject: parsedEmail.subject || '(Sem assunto)',
+          textContent: parsedEmail.text || null,
+          htmlContent: parsedEmail.html ? parsedEmail.html.toString() : null,
+          headers: parsedEmail.headers ? Object.fromEntries(parsedEmail.headers.entries()) : null,
+          attachments: attachments.length > 0 ? attachments : null,
+          size: this.calculateEmailSize(parsedEmail),
+          receivedAt: parsedEmail.date || new Date(),
+          emailServerId: emailServer?.id || '',
+          emailUserId: emailUser?.id || null,
+          isRead: false,
+          isStarred: false,
+          isArchived: false,
+          isTrash: false,
+          isSpam: false,
+          folder: 'inbox'
+        }
+      });
+
+      logger.info('✅ Incoming email received and saved to ReceivedEmail', {
         messageId,
-        from: getAddressText(parsedEmail.from),
-        to: getAddressText(parsedEmail.to),
+        from: fromEmail,
+        to: toEmail,
         subject: parsedEmail.subject
       });
 
     } catch (error) {
-      logger.error('Failed to process incoming email', { error });
+      logger.error('❌ Failed to process incoming email', { error });
       throw error;
     }
+  }
+
+  /**
+   * Helpers para extração de dados
+   */
+  private extractEmail(address: AddressObject | AddressObject[] | undefined): string {
+    if (!address) return '';
+    if (Array.isArray(address)) {
+      return address[0]?.value?.[0]?.address || '';
+    }
+    return address.value?.[0]?.address || '';
+  }
+
+  private extractName(address: AddressObject | AddressObject[] | undefined): string | undefined {
+    if (!address) return undefined;
+    if (Array.isArray(address)) {
+      return address[0]?.value?.[0]?.name || undefined;
+    }
+    return address.value?.[0]?.name || undefined;
+  }
+
+  private calculateEmailSize(parsed: ParsedMail): number {
+    let size = 0;
+    if (parsed.text) size += Buffer.byteLength(parsed.text, 'utf8');
+    if (parsed.html) size += Buffer.byteLength(parsed.html.toString(), 'utf8');
+    if (parsed.attachments) {
+      parsed.attachments.forEach(att => {
+        size += att.size || 0;
+      });
+    }
+    return size;
   }
 
   /**

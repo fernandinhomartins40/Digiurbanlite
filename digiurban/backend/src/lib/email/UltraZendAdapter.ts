@@ -443,11 +443,14 @@ export class UltraZendSMTPServer {
     try {
       console.log('📥 Processando email recebido via MX...');
 
-      // Usar serviço de emails recebidos
-      const emailId = await receivedEmailService.processIncomingEmail(
-        parsedEmail,
-        this.config.hostname
-      );
+      // NOTA: Este adapter não é mais usado (SMTP em container separado)
+      // O processamento de emails recebidos agora acontece em ultrazend-smtp-server
+      // Mantido apenas para referência histórica
+      // const emailId = await receivedEmailService.processIncomingEmail(
+      //   parsedEmail,
+      //   this.config.hostname
+      // );
+      const emailId = 'legacy-code-not-used';
 
       console.log(`✅ Email recebido salvo com ID: ${emailId}`);
 

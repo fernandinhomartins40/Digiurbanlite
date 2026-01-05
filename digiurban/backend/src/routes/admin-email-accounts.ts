@@ -6,6 +6,7 @@ import { asyncHandler } from '../utils/express-helpers';
 import { prisma } from '../lib/prisma';
 import { UserRole } from '@prisma/client';
 import * as crypto from 'crypto';
+import { emailSenderService } from '../services/EmailSenderService';
 
 const router = Router();
 
@@ -20,7 +21,11 @@ router.get('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authent
   try {
     const emailServer = await prisma.emailServer.findFirst({
       include: {
-        subscription: true
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
       }
     });
 
@@ -58,7 +63,7 @@ router.get('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authent
       accounts,
       server: {
         hostname: emailServer.hostname,
-        maxAccounts: emailServer.subscription?.maxAccounts || 0
+        maxAccounts: emailServer.subscription?.planConfig?.maxAccounts || 0
       }
     });
   } catch (error) {
@@ -92,7 +97,11 @@ router.post('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authen
     // Buscar servidor de email
     const emailServer = await prisma.emailServer.findFirst({
       include: {
-        subscription: true,
+        subscription: {
+          include: {
+            planConfig: true // ✅ Buscar planConfig para obter limites reais
+          }
+        },
         users: true,
         domains: {
           where: { isVerified: true },
@@ -101,7 +110,7 @@ router.post('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authen
       }
     });
 
-    if (!emailServer || !emailServer.subscription) {
+    if (!emailServer || !emailServer.subscription || !emailServer.subscription.planConfig) {
       return res.status(404).json({
         success: false,
         error: 'Serviço não configurado',
@@ -109,15 +118,16 @@ router.post('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authen
       });
     }
 
-    // Verificar limite de contas do plano
+    // ✅ Usar planConfig como fonte única de verdade
+    const planConfig = emailServer.subscription.planConfig;
     const currentAccountsCount = emailServer.users.length;
-    const maxAccounts = emailServer.subscription.maxAccounts;
+    const maxAccounts = planConfig.maxAccounts;
 
     if (currentAccountsCount >= maxAccounts) {
       return res.status(403).json({
         success: false,
         error: 'Limite de contas atingido',
-        message: `Você atingiu o limite de ${maxAccounts} contas do seu plano. Faça upgrade para criar mais contas.`
+        message: `Você atingiu o limite de ${maxAccounts} contas do plano ${planConfig.name}. Faça upgrade para criar mais contas.`
       });
     }
 
@@ -163,9 +173,26 @@ router.post('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authen
     const password = generateSecurePassword();
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Definir limites padrão se não fornecidos
-    const accountDailyLimit = dailyLimit || Math.floor(emailServer.subscription.maxEmailsPerMonth / 30 / maxAccounts);
-    const accountMonthlyLimit = monthlyLimit || Math.floor(emailServer.subscription.maxEmailsPerMonth / maxAccounts);
+    // ✅ Definir limites padrão se não fornecidos (usar planConfig)
+    const accountDailyLimit = dailyLimit || Math.floor(planConfig.maxEmailsPerMonth / 30 / maxAccounts);
+    const accountMonthlyLimit = monthlyLimit || Math.floor(planConfig.maxEmailsPerMonth / maxAccounts);
+
+    // ✅ VALIDAR: limites fornecidos não podem exceder o plano
+    if (dailyLimit && dailyLimit > Math.floor(planConfig.maxEmailsPerMonth / 30)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Limite diário excede o plano',
+        message: `Limite diário máximo: ${Math.floor(planConfig.maxEmailsPerMonth / 30)} emails`
+      });
+    }
+
+    if (monthlyLimit && monthlyLimit > planConfig.maxEmailsPerMonth) {
+      return res.status(400).json({
+        success: false,
+        error: 'Limite mensal excede o plano',
+        message: `Limite mensal máximo: ${planConfig.maxEmailsPerMonth} emails (plano ${planConfig.name})`
+      });
+    }
 
     // Criar conta
     const account = await prisma.emailUser.create({
@@ -567,7 +594,11 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
       include: {
         emailServer: {
           include: {
-            subscription: true,
+            subscription: {
+              include: {
+                planConfig: true
+              }
+            },
             domains: {
               where: { isVerified: true },
               select: { domainName: true }
@@ -590,6 +621,34 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
         success: false,
         error: 'Conta inativa',
         message: 'Esta conta de email está inativa'
+      });
+    }
+
+    // Verificar se servidor está ativo
+    if (!account.emailServer.isActive) {
+      return res.status(503).json({
+        success: false,
+        error: 'Servidor inativo',
+        message: 'O servidor de email está temporariamente indisponível'
+      });
+    }
+
+    // Verificar se subscription está ativa
+    const subscription = account.emailServer.subscription;
+    if (!subscription || subscription.status !== 'ACTIVE') {
+      return res.status(403).json({
+        success: false,
+        error: 'Assinatura inativa',
+        message: 'A assinatura de email está inativa ou expirada. Entre em contato com o administrador.'
+      });
+    }
+
+    // Verificar se subscription não expirou
+    if (subscription.currentPeriodEnd < new Date()) {
+      return res.status(402).json({
+        success: false,
+        error: 'Assinatura expirada',
+        message: 'A assinatura de email expirou. Renove para continuar enviando emails.'
       });
     }
 
@@ -623,19 +682,28 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
       }
     });
 
-    if (serverEmailsSent >= account.emailServer.maxEmailsPerMonth) {
+    // Verificar limite do plano
+    const planConfig = account.emailServer.subscription?.planConfig;
+    if (!planConfig) {
+      return res.status(500).json({
+        success: false,
+        error: 'Plano não encontrado',
+        message: 'Não foi possível encontrar o plano de email do servidor'
+      });
+    }
+
+    if (planConfig.maxEmailsPerMonth > 0 && serverEmailsSent >= planConfig.maxEmailsPerMonth) {
       return res.status(429).json({
         success: false,
         error: 'Limite do servidor atingido',
-        message: `O limite mensal do servidor foi atingido (${account.emailServer.maxEmailsPerMonth} emails). Entre em contato com o administrador.`
+        message: `O limite mensal do servidor foi atingido (${planConfig.maxEmailsPerMonth} emails). Entre em contato com o administrador.`
       });
     }
 
     // Gerar ID de mensagem único
     const messageId = `<${crypto.randomBytes(16).toString('hex')}@${account.emailServer.hostname}>`;
 
-    // TODO: Integrar com nodemailer para enviar o email real
-    // Por enquanto, apenas criar o registro no banco
+    // ✅ CRIAR registro no banco com status QUEUED
     const email = await prisma.email.create({
       data: {
         emailServerId: account.emailServer.id,
@@ -646,11 +714,21 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
         ccEmails: cc ? cc.split(',').map((e: string) => e.trim()) : null,
         bccEmails: bcc ? bcc.split(',').map((e: string) => e.trim()) : null,
         subject,
+        textContent: body, // Guardar também como text
         htmlContent: body,
-        status: 'SENT',
-        sentAt: new Date()
+        status: 'QUEUED', // ← QUEUED ao invés de SENT
+        priority: 3
       }
     });
+
+    // ✅ ENVIAR email REAL via ultrazend-smtp
+    try {
+      await emailSenderService.sendEmailWithRetry(email.id);
+    } catch (sendError: any) {
+      console.error('Erro ao enviar email:', sendError);
+      // Email fica como FAILED no banco, mas não falha a request
+      // O usuário será notificado que o email foi enfileirado
+    }
 
     // Atualizar contadores da conta
     await prisma.emailUser.update({

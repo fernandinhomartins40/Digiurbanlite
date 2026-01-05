@@ -24,7 +24,11 @@ router.get('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authent
     // Buscar servidor de email e subscription
     const emailServer = await prisma.emailServer.findFirst({
       include: {
-        subscription: true,
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        },
         domains: true,
         users: {
           select: {
@@ -57,12 +61,12 @@ router.get('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authent
         id: subscription.plan.toLowerCase(),
         name: getEmailPlanName(subscription.plan),
         price: Number(subscription.monthlyPrice),
-        emailsPerMonth: subscription.maxEmailsPerMonth
+        emailsPerMonth: subscription.planConfig?.maxEmailsPerMonth || 0
       },
       server: {
         hostname: emailServer.hostname,
         isActive: emailServer.isActive,
-        maxEmailsPerMonth: subscription.maxEmailsPerMonth
+        maxEmailsPerMonth: subscription.planConfig?.maxEmailsPerMonth || 0
       },
       domains: emailServer.domains,
       accounts: emailServer.users,
@@ -119,7 +123,11 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
     // Verificar se já existe servidor de email
     let emailServer = await prisma.emailServer.findFirst({
       include: {
-        subscription: true
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
       }
     });
 
@@ -131,16 +139,7 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
           plan,
           planConfigId: planConfig.id,
           monthlyPrice: planConfig.monthlyPrice,
-          maxEmailsPerMonth: planConfig.maxEmailsPerMonth,
-          maxAccounts: planConfig.maxAccounts,
           currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // +30 dias
-        }
-      });
-
-      await prisma.emailServer.update({
-        where: { id: emailServer.id },
-        data: {
-          maxEmailsPerMonth: planConfig.maxEmailsPerMonth
         }
       });
 
@@ -162,15 +161,12 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         tlsEnabled: true,
         isPremiumService: true,
         monthlyPrice: planConfig.monthlyPrice,
-        maxEmailsPerMonth: planConfig.maxEmailsPerMonth,
         isActive: true,
         subscription: {
           create: {
             plan,
             planConfigId: planConfig.id,
             monthlyPrice: planConfig.monthlyPrice,
-            maxEmailsPerMonth: planConfig.maxEmailsPerMonth,
-            maxAccounts: planConfig.maxAccounts,
             status: 'TRIAL', // 30 dias de trial
             currentPeriodStart: new Date(),
             currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 dias
@@ -179,7 +175,11 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         }
       },
       include: {
-        subscription: true
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
       }
     });
 
@@ -276,7 +276,15 @@ router.post('/domain', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: 
       return;
     }
 
-    const emailServer = await prisma.emailServer.findFirst({});
+    const emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
+    });
 
     if (!emailServer) {
       res
@@ -409,7 +417,15 @@ router.get('/stats', requireRole(UserRole.ADMIN), async (req, res, next) => {
   try {
     // Single tenant: tenantId removido
 
-    const emailServer = await prisma.emailServer.findFirst({});
+    const emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
+    });
 
     if (!emailServer) {
       res
@@ -479,10 +495,10 @@ router.get('/stats', requireRole(UserRole.ADMIN), async (req, res, next) => {
       dailyStats: monthlyStats,
       usage: {
         current: totalSent,
-        limit: emailServer.maxEmailsPerMonth,
+        limit: emailServer.subscription?.planConfig?.maxEmailsPerMonth || 0,
         percentage:
-          emailServer.maxEmailsPerMonth > 0
-            ? ((totalSent / emailServer.maxEmailsPerMonth) * 100).toFixed(1)
+          emailServer.subscription?.planConfig?.maxEmailsPerMonth && emailServer.subscription.planConfig.maxEmailsPerMonth > 0
+            ? ((totalSent / emailServer.subscription.planConfig.maxEmailsPerMonth) * 100).toFixed(1)
             : '0'
         }
         });
@@ -503,7 +519,15 @@ router.get('/stats', requireRole(UserRole.ADMIN), async (req, res, next) => {
 router.get('/templates', requireRole(UserRole.ADMIN), async (req, res, next) => {
   try {
     // Buscar o emailServer ativo
-    const emailServer = await prisma.emailServer.findFirst({});
+    const emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
+    });
     if (!emailServer) {
       return res.status(404).json({ success: false, error: 'Email server not configured' });
     }
@@ -531,7 +555,15 @@ router.put('/templates/:name', requireRole(UserRole.ADMIN), async (req, res, nex
     const updates = req.body;
 
     // Buscar o emailServer ativo
-    const emailServer = await prisma.emailServer.findFirst({});
+    const emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
+    });
     if (!emailServer) {
       return res.status(404).json({ success: false, error: 'Email server not configured' });
     }
@@ -662,7 +694,15 @@ async function getEmailUsage() {
  */
 router.get('/sent', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const emailServer = await prisma.emailServer.findFirst({});
+    const emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
+    });
 
     if (!emailServer) {
       return res.status(404).json({
@@ -730,7 +770,14 @@ router.get('/inbox', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (r
 
     // Buscar servidor de email ativo
     const emailServer = await prisma.emailServer.findFirst({
-      where: { isActive: true }
+      where: { isActive: true },
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
     });
 
     if (!emailServer) {
@@ -777,11 +824,25 @@ router.get('/inbox', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (r
  */
 router.get('/drafts', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // TODO: Implementar tabela de rascunhos no Prisma
-    // Por enquanto retorna array vazio
+    const userId = req.user.id;
+    const { limit = 50, offset = 0 } = req.query;
+
+    const [drafts, total] = await Promise.all([
+      prisma.emailDraft.findMany({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' },
+        take: Number(limit),
+        skip: Number(offset)
+      }),
+      prisma.emailDraft.count({ where: { userId } })
+    ]);
+
     res.json({
       success: true,
-      drafts: []
+      drafts,
+      total,
+      limit: Number(limit),
+      offset: Number(offset)
     });
   } catch (error) {
     console.error('Error fetching drafts:', error);
@@ -799,24 +860,49 @@ router.get('/drafts', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (
  */
 router.post('/drafts', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { to, cc, bcc, subject, message, accountId, priority } = req.body;
+    const userId = req.user.id;
+    const { id, to, cc, bcc, subject, body, accountId } = req.body;
 
-    // TODO: Salvar no banco
+    // Se tem ID, atualizar rascunho existente
+    if (id) {
+      const draft = await prisma.emailDraft.update({
+        where: { id, userId }, // Garantir que só atualiza se pertence ao usuário
+        data: {
+          to: to || null,
+          cc: cc || null,
+          bcc: bcc || null,
+          subject: subject || null,
+          htmlContent: body || null,
+          textContent: body || null, // Guardar também como texto
+          accountId: accountId || null
+        }
+      });
+
+      return res.json({
+        success: true,
+        message: 'Rascunho atualizado',
+        draft
+      });
+    }
+
+    // Senão, criar novo rascunho
+    const draft = await prisma.emailDraft.create({
+      data: {
+        userId,
+        to: to || null,
+        cc: cc || null,
+        bcc: bcc || null,
+        subject: subject || null,
+        htmlContent: body || null,
+        textContent: body || null,
+        accountId: accountId || null
+      }
+    });
+
     res.json({
       success: true,
       message: 'Rascunho salvo com sucesso',
-      draft: {
-        id: 'draft-' + Date.now(),
-        to,
-        cc,
-        bcc,
-        subject,
-        message,
-        accountId,
-        priority,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
+      draft
     });
   } catch (error) {
     console.error('Error saving draft:', error);
@@ -835,8 +921,13 @@ router.post('/drafts', requireMinRole(UserRole.COORDINATOR), asyncHandler(async 
 router.delete('/drafts/:id', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    // TODO: Excluir do banco
+    // Garantir que só deleta se pertence ao usuário
+    await prisma.emailDraft.delete({
+      where: { id, userId }
+    });
+
     res.json({
       success: true,
       message: 'Rascunho excluído'
@@ -857,10 +948,49 @@ router.delete('/drafts/:id', requireMinRole(UserRole.COORDINATOR), asyncHandler(
  */
 router.get('/trash', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // TODO: Implementar soft delete e listar emails deletados
+    const {
+      search,
+      limit = 50,
+      offset = 0
+    } = req.query;
+
+    // Buscar servidor de email ativo
+    const emailServer = await prisma.emailServer.findFirst({
+      where: { isActive: true },
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
+    });
+
+    if (!emailServer) {
+      return res.json({
+        success: true,
+        emails: [],
+        total: 0,
+        limit: Number(limit),
+        offset: Number(offset)
+      });
+    }
+
+    // Importar serviço de emails recebidos
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
+
+    // Listar emails da lixeira
+    const result = await receivedEmailService.listReceivedEmails({
+      emailServerId: emailServer.id,
+      isTrash: true,
+      search: search as string,
+      limit: Number(limit),
+      offset: Number(offset)
+    });
+
     res.json({
       success: true,
-      emails: []
+      ...result
     });
   } catch (error) {
     console.error('Error fetching trash:', error);
@@ -879,8 +1009,10 @@ router.get('/trash', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (r
 router.post('/trash/:id/restore', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
 
-    // TODO: Restaurar email
+    await receivedEmailService.restoreFromTrash(id);
+
     res.json({
       success: true,
       message: 'Email restaurado'
@@ -902,8 +1034,10 @@ router.post('/trash/:id/restore', requireMinRole(UserRole.COORDINATOR), asyncHan
 router.delete('/trash/:id', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
 
-    // TODO: Excluir permanentemente
+    await receivedEmailService.deletePermanently(id);
+
     res.json({
       success: true,
       message: 'Email excluído permanentemente'
@@ -924,10 +1058,37 @@ router.delete('/trash/:id', requireMinRole(UserRole.COORDINATOR), asyncHandler(a
  */
 router.post('/trash/empty', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // TODO: Excluir todos os emails da lixeira
+    // Buscar servidor de email ativo
+    const emailServer = await prisma.emailServer.findFirst({
+      where: { isActive: true },
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
+    });
+
+    if (!emailServer) {
+      return res.json({
+        success: true,
+        message: 'Nenhum servidor de email encontrado'
+      });
+    }
+
+    // Deletar todos os emails da lixeira
+    const result = await prisma.receivedEmail.deleteMany({
+      where: {
+        emailServerId: emailServer.id,
+        isTrash: true
+      }
+    });
+
     res.json({
       success: true,
-      message: 'Lixeira esvaziada'
+      message: `Lixeira esvaziada: ${result.count} emails deletados`,
+      count: result.count
     });
   } catch (error) {
     console.error('Error emptying trash:', error);

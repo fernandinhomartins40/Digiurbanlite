@@ -383,26 +383,21 @@ async function main() {
     }
 
     // ========================================================================
-    // 6. SERVIDOR DE EMAIL
+    // 6. PLANOS DE EMAIL (Configuráveis) - EXECUTAR PRIMEIRO!
     // ========================================================================
-    console.log('\n6️⃣  Servidor de Email');
+    console.log('\n6️⃣  Planos de Email (Configuráveis)');
+    console.log('   ─────────────────────────────\n');
+
+    const { seedEmailPlans } = await import('./seeds/email-plans.seed');
+    await seedEmailPlans();
+
+    // ========================================================================
+    // 7. SERVIDOR DE EMAIL (Precisa dos planos já criados)
+    // ========================================================================
+    console.log('\n7️⃣  Servidor de Email');
     console.log('   ─────────────────────────────\n');
 
     await seedEmailServer();
-
-    // ========================================================================
-    // 7. PLANOS DE EMAIL (Configuráveis)
-    // ========================================================================
-    console.log('\n7️⃣  Planos de Email (Configuráveis)');
-    console.log('   ─────────────────────────────\n');
-
-    try {
-      const { seedEmailPlans } = await import('./seeds/email-plans.seed');
-      await seedEmailPlans();
-    } catch (error: any) {
-      console.error('   ⚠️  Erro ao importar planos de email:', error.message);
-      console.log('   ℹ️  Continuando sem os planos de email...\n');
-    }
 
     console.log('\n╔════════════════════════════════════════════════════════╗');
     console.log('║  🚀 Sistema pronto para uso!                          ║');

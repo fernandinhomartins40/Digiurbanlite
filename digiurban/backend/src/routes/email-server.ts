@@ -184,7 +184,14 @@ router.get('/dashboard-stats', async (req: Request, res: Response) => {
 router.get('/config', async (req: Request, res: Response) => {
   try {
     const emailServer = await prisma.emailServer.findFirst({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
     });
 
     if (!emailServer) {
@@ -219,7 +226,7 @@ router.get('/config', async (req: Request, res: Response) => {
         authRequired: true, // TODO: Adicionar ao schema
         isPremiumService: emailServer.isPremiumService,
         monthlyPrice: Number(emailServer.monthlyPrice),
-        maxEmailsPerMonth: emailServer.maxEmailsPerMonth
+        maxEmailsPerMonth: emailServer.subscription?.planConfig?.maxEmailsPerMonth || 0
       }
     });
   } catch (error) {
@@ -262,7 +269,6 @@ router.put('/config', async (req: Request, res: Response) => {
           keyPath,
           isPremiumService,
           monthlyPrice,
-          maxEmailsPerMonth,
           isActive: true
         }
       });
@@ -278,8 +284,7 @@ router.put('/config', async (req: Request, res: Response) => {
           certPath,
           keyPath,
           isPremiumService,
-          monthlyPrice,
-          maxEmailsPerMonth
+          monthlyPrice
         }
       });
     }
@@ -309,7 +314,6 @@ router.post('/start', async (req: Request, res: Response) => {
           tlsEnabled: true,
           isPremiumService: true,
           monthlyPrice: 99.00,
-          maxEmailsPerMonth: 10000,
           isActive: true
         }
       });
@@ -382,7 +386,6 @@ router.post('/restart', async (req: Request, res: Response) => {
           tlsEnabled: true,
           isPremiumService: true,
           monthlyPrice: 99.00,
-          maxEmailsPerMonth: 10000,
           isActive: true
         }
       });

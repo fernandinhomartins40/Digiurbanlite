@@ -186,9 +186,51 @@ export default function ComposeEmailPage() {
                   ))}
                 </select>
                 {selectedAccount && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Enviando de: {selectedAccount.email}
-                  </p>
+                  <div className="text-xs text-gray-500 mt-1 space-y-1">
+                    <p>Enviando de: {selectedAccount.email}</p>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span>Hoje: {selectedAccount.sentToday}/{selectedAccount.dailyLimit}</span>
+                        <div className="h-1.5 w-20 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              (selectedAccount.sentToday / selectedAccount.dailyLimit) * 100 >= 90
+                                ? 'bg-red-500'
+                                : (selectedAccount.sentToday / selectedAccount.dailyLimit) * 100 >= 70
+                                ? 'bg-yellow-500'
+                                : 'bg-green-500'
+                            }`}
+                            style={{
+                              width: `${Math.min((selectedAccount.sentToday / selectedAccount.dailyLimit) * 100, 100)}%`
+                            }}
+                          />
+                        </div>
+                        <span className="text-[10px]">
+                          {Math.round((selectedAccount.sentToday / selectedAccount.dailyLimit) * 100)}%
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>Mês: {selectedAccount.sentThisMonth}/{selectedAccount.monthlyLimit}</span>
+                        <div className="h-1.5 w-20 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              (selectedAccount.sentThisMonth / selectedAccount.monthlyLimit) * 100 >= 90
+                                ? 'bg-red-500'
+                                : (selectedAccount.sentThisMonth / selectedAccount.monthlyLimit) * 100 >= 70
+                                ? 'bg-yellow-500'
+                                : 'bg-green-500'
+                            }`}
+                            style={{
+                              width: `${Math.min((selectedAccount.sentThisMonth / selectedAccount.monthlyLimit) * 100, 100)}%`
+                            }}
+                          />
+                        </div>
+                        <span className="text-[10px]">
+                          {Math.round((selectedAccount.sentThisMonth / selectedAccount.monthlyLimit) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 

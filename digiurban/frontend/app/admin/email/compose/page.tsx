@@ -468,9 +468,47 @@ export default function ComposeEmailPage() {
 
           {/* Ações do formulário */}
           <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-sm text-muted-foreground">
-              <Users className="inline h-4 w-4 mr-1" />
-              Conta selecionada: {accounts.find(a => a.id === selectedAccount)?.email}
+            <div className="text-sm space-y-1">
+              <div className="text-muted-foreground">
+                <Users className="inline h-4 w-4 mr-1" />
+                Conta selecionada: {accounts.find(a => a.id === selectedAccount)?.email}
+              </div>
+              {selectedAccount && (() => {
+                const account = accounts.find(a => a.id === selectedAccount);
+                if (!account) return null;
+
+                const dailyPercent = account.dailyLimit > 0
+                  ? Math.round((account.sentToday / account.dailyLimit) * 100)
+                  : 0;
+                const monthlyPercent = account.monthlyLimit > 0
+                  ? Math.round((account.sentThisMonth / account.monthlyLimit) * 100)
+                  : 0;
+
+                return (
+                  <div className="text-xs text-muted-foreground space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span>Hoje: {account.sentToday}/{account.dailyLimit}</span>
+                      <div className="h-1.5 w-20 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${dailyPercent >= 90 ? 'bg-red-500' : dailyPercent >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                          style={{ width: `${Math.min(dailyPercent, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px]">{dailyPercent}%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span>Mês: {account.sentThisMonth}/{account.monthlyLimit}</span>
+                      <div className="h-1.5 w-20 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${monthlyPercent >= 90 ? 'bg-red-500' : monthlyPercent >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                          style={{ width: `${Math.min(monthlyPercent, 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px]">{monthlyPercent}%</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleCancel} disabled={loading}>

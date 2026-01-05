@@ -68,6 +68,9 @@ model User {
   // Recuperação de senha
   passwordResetTokens PasswordResetToken[]
 
+  // Email drafts
+  emailDrafts EmailDraft[]
+
   @@map("users")
 }
 
@@ -1220,7 +1223,7 @@ model EmailServer {
   isActive          Boolean       @default(false)
   isPremiumService  Boolean       @default(true)
   monthlyPrice      Decimal       @default(99.00)
-  maxEmailsPerMonth Int           @default(10000)
+  // maxEmailsPerMonth removido - usar subscription.planConfig.maxEmailsPerMonth
   tlsEnabled        Boolean       @default(true)
   certPath          String?
   keyPath           String?
@@ -1413,11 +1416,11 @@ model EmailSubscription {
   id                 String             @id @default(cuid())
   emailServerId      String             @unique @map("email_server_id")
   plan               EmailPlan
-  planConfigId       String?            @map("plan_config_id") // ✅ NOVO: Referência ao plano configurável
+  planConfigId       String?            @map("plan_config_id") // ✅ Referência ao plano configurável
   status             SubscriptionStatus @default(ACTIVE)
   monthlyPrice       Decimal            @map("monthly_price")
-  maxEmailsPerMonth  Int                @map("max_emails_per_month")
-  maxAccounts        Int                @map("max_accounts") // Número de contas de email incluídas
+  // maxEmailsPerMonth removido - usar planConfig.maxEmailsPerMonth
+  // maxAccounts removido - usar planConfig.maxAccounts
   currentPeriodStart DateTime           @map("current_period_start")
   currentPeriodEnd   DateTime           @map("current_period_end")
   trialEndsAt        DateTime?          @map("trial_ends_at") // Se estiver em trial
@@ -1466,6 +1469,27 @@ model EmailPlanAllowedDomain {
   @@index([planId])
   @@index([domainId])
   @@map("email_plan_allowed_domains")
+}
+
+// ✅ NOVA TABELA: Rascunhos de email
+model EmailDraft {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  accountId   String?  @map("account_id")
+  to          String?
+  cc          String?
+  bcc         String?
+  subject     String?
+  textContent String?  @map("text_content") @db.Text
+  htmlContent String?  @map("html_content") @db.Text
+  priority    Int      @default(3)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("email_drafts")
 }
 
 model EmailInvoice {

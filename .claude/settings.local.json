@@ -75,7 +75,9 @@
       "Bash(del test-dmarc-mapping.js)",
       "Bash(del:*)",
       "Bash(npm run db:seed:*)",
-      "Bash(BUILD_TIMESTAMP=12345 docker-compose:*)"
+      "Bash(BUILD_TIMESTAMP=12345 docker-compose:*)",
+      "Bash(npm run db:reset:*)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma db push:*)"
     ],
     "deny": [],
     "ask": []

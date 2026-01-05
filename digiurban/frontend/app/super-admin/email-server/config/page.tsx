@@ -42,8 +42,8 @@ export default function EmailServerConfigPage() {
     keyPath: '',
     authRequired: true,
     isPremiumService: true,
-    monthlyPrice: 99.00,
-    maxEmailsPerMonth: 10000
+    monthlyPrice: 99.00
+    // maxEmailsPerMonth removido - agora vem do EmailPlanConfig
   });
   const [logs, setLogs] = useState<any[]>([]);
   const [showLogs, setShowLogs] = useState(false);
@@ -486,17 +486,28 @@ export default function EmailServerConfigPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Limite de Emails/Mês
-              </label>
-              <input
-                type="number"
-                value={config.maxEmailsPerMonth}
-                onChange={(e) => setConfig({ ...config, maxEmailsPerMonth: parseInt(e.target.value) })}
-                disabled={!config.isPremiumService}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-              />
+            {/* Campo removido: maxEmailsPerMonth agora vem do EmailPlanConfig vinculado via subscription */}
+            <div className="col-span-2">
+              <div className="rounded-md bg-blue-50 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-blue-800">
+                      Limites gerenciados por Planos
+                    </h3>
+                    <div className="mt-2 text-sm text-blue-700">
+                      <p>
+                        Os limites de emails/mês e número de contas agora são definidos nos <strong>Planos de Email</strong>.
+                        Para alterar os limites, modifique o plano vinculado à assinatura do servidor.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>

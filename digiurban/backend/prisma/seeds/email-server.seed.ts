@@ -44,6 +44,15 @@ export async function seedEmailServer() {
       return;
     }
 
+    // Buscar plano STANDARD (padrão para novos servidores)
+    const standardPlan = await prisma.emailPlanConfig.findUnique({
+      where: { code: 'STANDARD' }
+    });
+
+    if (!standardPlan) {
+      throw new Error('Plano STANDARD não encontrado! Execute seedEmailPlans() primeiro.');
+    }
+
     // Criar EmailServer padrão
     // IMPORTANTE: hostname usa nome do container Docker para comunicação interna
     const emailServer = await prisma.emailServer.create({
@@ -56,12 +65,35 @@ export async function seedEmailServer() {
         keyPath: null,
         isPremiumService: false,
         isActive: true,
-        monthlyPrice: 0,
-        maxEmailsPerMonth: 0
+        monthlyPrice: standardPlan.monthlyPrice
       }
     });
 
     console.log(`  ✅ Email Server criado: ${emailServer.hostname}`);
+
+    // ✅ CRIAR SUBSCRIPTION VINCULADA AO PLANO STANDARD
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setMonth(periodEnd.getMonth() + 1); // 1 mês de período
+
+    const subscription = await prisma.emailSubscription.create({
+      data: {
+        emailServerId: emailServer.id,
+        plan: 'STANDARD',
+        planConfigId: standardPlan.id,
+        status: 'ACTIVE',
+        monthlyPrice: standardPlan.monthlyPrice,
+        currentPeriodStart: now,
+        currentPeriodEnd: periodEnd,
+        trialEndsAt: null
+      }
+    });
+
+    console.log(`  ✅ Email Subscription criada:`);
+    console.log(`     - Plano: ${standardPlan.name}`);
+    console.log(`     - Limites: ${standardPlan.maxEmailsPerMonth} emails/mês, ${standardPlan.maxAccounts} contas`);
+    console.log(`     - Preço: R$ ${standardPlan.monthlyPrice}/mês`);
+    console.log(`     - Status: ${subscription.status}`);
 
     // Criar domínio padrão
     // NOTA: Não gerar novas chaves DKIM, pois elas já estão configuradas no DNS
