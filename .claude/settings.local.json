@@ -70,7 +70,10 @@
       "Bash(del nul \"digiurban\\frontend\\nul\")",
       "Bash(docker-compose:*)",
       "Bash(git ls-tree:*)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(git log:*)",
+      "Bash(del test-dmarc-mapping.js)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

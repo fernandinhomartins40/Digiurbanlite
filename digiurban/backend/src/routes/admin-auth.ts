@@ -187,7 +187,8 @@ router.post(
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 3600000,
-        path: '/'
+        path: '/',
+        domain: process.env.NODE_ENV === 'production' ? '.digiurban.com.br' : undefined
         });
 
       // Remover senha da resposta
@@ -519,7 +520,8 @@ router.post('/logout', handleAsyncRoute(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/'
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.digiurban.com.br' : undefined
         });
 
     res.json({
