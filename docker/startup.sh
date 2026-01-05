@@ -36,6 +36,12 @@ PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_US
   echo "⚠️ Aviso: Erro ao criar enums (pode ser que já existam)"
 }
 
+# Corrigir enum SubscriptionStatus (adicionar valores faltantes)
+echo "🔧 Corrigindo enum SubscriptionStatus..."
+PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -f /app/fix-subscription-status-enum.sql || {
+  echo "⚠️ Aviso: Erro ao corrigir enum SubscriptionStatus"
+}
+
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
 npx prisma migrate deploy || {
