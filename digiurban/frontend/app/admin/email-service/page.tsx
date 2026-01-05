@@ -166,7 +166,9 @@ export default function EmailServiceManagement() {
 
   const loadEmailConfig = async () => {
     try {
-      const response = await fetch('/api/admin/email-service')
+      const response = await fetch('/api/admin/email-service', {
+        credentials: 'include' // ✅ Enviar cookie de autenticação
+      })
       const data = await response.json()
       setEmailConfig(data)
     } catch (error) {
@@ -182,7 +184,9 @@ export default function EmailServiceManagement() {
 
   const loadEmailStats = async () => {
     try {
-      const response = await fetch('/api/admin/email-service/stats')
+      const response = await fetch('/api/admin/email-service/stats', {
+        credentials: 'include' // ✅ Enviar cookie de autenticação
+      })
       const data = await response.json()
       setEmailStats(data)
     } catch (error) {
@@ -192,7 +196,9 @@ export default function EmailServiceManagement() {
 
   const loadTemplates = async () => {
     try {
-      const response = await fetch('/api/admin/email-service/templates')
+      const response = await fetch('/api/admin/email-service/templates', {
+        credentials: 'include' // ✅ Enviar cookie de autenticação
+      })
       const data = await response.json()
       setTemplates(data)
     } catch (error) {
@@ -208,6 +214,7 @@ export default function EmailServiceManagement() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // ✅ Enviar cookie de autenticação
         body: JSON.stringify({ planId })
       })
 
@@ -244,6 +251,7 @@ export default function EmailServiceManagement() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // ✅ Enviar cookie de autenticação
         body: JSON.stringify({ domain: newDomain })
       })
 
