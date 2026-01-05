@@ -1231,6 +1231,7 @@ model EmailServer {
   statistics        EmailStats[]
   users             EmailUser[]
   emails            Email[]
+  receivedEmails    ReceivedEmail[]
   subscription      EmailSubscription?
 
   @@map("email_servers")
@@ -1275,9 +1276,10 @@ model EmailUser {
   lastLoginAt   DateTime?
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
-  authAttempts  EmailAuthAttempt[]
-  emailServer   EmailServer        @relation(fields: [emailServerId], references: [id])
-  sentEmails    Email[]
+  authAttempts    EmailAuthAttempt[]
+  emailServer     EmailServer        @relation(fields: [emailServerId], references: [id])
+  sentEmails      Email[]
+  receivedEmails  ReceivedEmail[]
 
   @@unique([emailServerId, email])
   @@map("email_users")
@@ -1500,6 +1502,53 @@ model EmailAddon {
 
   @@index([subscriptionId])
   @@map("email_addons")
+}
+
+// ============================================================================
+// RECEIVED EMAILS (INBOX)
+// ============================================================================
+
+model ReceivedEmail {
+  id              String    @id @default(cuid())
+  messageId       String    @unique @map("message_id")
+  fromEmail       String    @map("from_email")
+  fromName        String?   @map("from_name")
+  toEmail         String    @map("to_email")
+  ccEmails        Json?     @map("cc_emails")
+  bccEmails       Json?     @map("bcc_emails")
+  replyTo         String?   @map("reply_to")
+  subject         String
+  textContent     String?   @map("text_content") @db.Text
+  htmlContent     String?   @map("html_content") @db.Text
+  headers         Json?
+  attachments     Json?
+  size            Int       @default(0)
+  receivedAt      DateTime  @map("received_at")
+  isRead          Boolean   @default(false) @map("is_read")
+  isStarred       Boolean   @default(false) @map("is_starred")
+  isArchived      Boolean   @default(false) @map("is_archived")
+  isTrash         Boolean   @default(false) @map("is_trash")
+  isSpam          Boolean   @default(false) @map("is_spam")
+  folder          String    @default("inbox")
+  labels          Json?
+  emailServerId   String    @map("email_server_id")
+  emailUserId     String?   @map("email_user_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  emailServer     EmailServer @relation(fields: [emailServerId], references: [id], onDelete: Cascade)
+  emailUser       EmailUser?  @relation(fields: [emailUserId], references: [id], onDelete: SetNull)
+
+  @@index([emailServerId])
+  @@index([emailUserId])
+  @@index([toEmail])
+  @@index([fromEmail])
+  @@index([isRead])
+  @@index([isTrash])
+  @@index([isSpam])
+  @@index([folder])
+  @@index([receivedAt])
+  @@map("received_emails")
 }
 
 model Integration {

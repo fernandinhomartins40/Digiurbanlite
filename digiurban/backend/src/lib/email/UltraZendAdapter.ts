@@ -11,6 +11,7 @@ import * as dns from 'dns';
 import crypto from 'crypto';
 import { prisma } from '../prisma';
 import { EmailStatus } from '@prisma/client';
+import { receivedEmailService } from '../../services/ReceivedEmailService';
 
 interface SMTPServerConfig {
   emailServerId: string;
@@ -95,13 +96,26 @@ export class UltraZendSMTPServer {
     // Inicializar servidores
     this.initializeServers();
 
+    // Iniciar servidor MX (porta 25)
+    await new Promise<void>((resolve, reject) => {
+      this.mxServer!.listen(this.config.mxPort, (err?: Error) => {
+        if (err) {
+          console.error(`❌ Erro ao iniciar MX Server na porta ${this.config.mxPort}:`, err);
+          reject(err);
+        } else {
+          console.log(`📥 UltraZend MX Server (recebimento) na porta ${this.config.mxPort}`);
+          resolve();
+        }
+      });
+    });
+
     // Iniciar servidor Submission (porta 587)
     await new Promise<void>((resolve, reject) => {
       this.submissionServer!.listen(this.config.submissionPort, (err?: Error) => {
         if (err) {
           reject(err);
         } else {
-          console.log(`📧 UltraZend SMTP Server running on port ${this.config.submissionPort}`);
+          console.log(`📤 UltraZend Submission Server (envio) na porta ${this.config.submissionPort}`);
           this.isRunning = true;
           this.startedAt = Date.now();
           resolve();
@@ -124,10 +138,19 @@ export class UltraZendSMTPServer {
       return;
     }
 
+    if (this.mxServer) {
+      await new Promise<void>((resolve) => {
+        this.mxServer!.close(() => {
+          console.log('📥 UltraZend MX Server stopped');
+          resolve();
+        });
+      });
+    }
+
     if (this.submissionServer) {
       await new Promise<void>((resolve) => {
         this.submissionServer!.close(() => {
-          console.log('UltraZend SMTP Server stopped');
+          console.log('📤 UltraZend Submission Server stopped');
           resolve();
         });
       });
@@ -146,14 +169,31 @@ export class UltraZendSMTPServer {
     this.isRunning = false;
     this.startedAt = null;
 
-    await this.logEvent('INFO', 'UltraZend SMTP Server stopped', {});
+    await this.logEvent('INFO', 'UltraZend SMTP Servers stopped', {});
   }
 
   /**
    * Inicializa servidores SMTP
    */
   private initializeServers(): void {
-    // Servidor Submission (porta 587)
+    // Servidor MX (porta 25) - Recebe emails de outros servidores
+    this.mxServer = new NodeSMTPServer({
+      name: this.config.hostname,
+      banner: `${this.config.hostname} ESMTP UltraZend DigiUrban Mail Server`,
+      authOptional: true, // MX não requer autenticação
+      maxClients: this.config.maxConnections,
+      size: this.config.maxMessageSize,
+      socketTimeout: 60000,
+      closeTimeout: 30000,
+      logger: false,
+
+      onConnect: (session, callback) => this.handleConnect(session as SMTPSession, callback),
+      onMailFrom: (address, session, callback) => this.handleMailFrom(address, session as SMTPSession, callback),
+      onRcptTo: (address, session, callback) => this.handleRcptTo(address, session as SMTPSession, callback),
+      onData: (stream, session, callback) => this.handleData(stream, session as SMTPSession, callback)
+    });
+
+    // Servidor Submission (porta 587) - Envia emails autenticados
     this.submissionServer = new NodeSMTPServer({
       name: this.config.hostname,
       banner: `${this.config.hostname} ESMTP UltraZend DigiUrban Mail Server`,
@@ -291,7 +331,11 @@ export class UltraZendSMTPServer {
       const parsedEmail = await simpleParser(stream);
 
       if (session.authenticated) {
+        // Email de saída (SMTP Submission - porta 587)
         await this.processOutgoingEmail(parsedEmail, session);
+      } else {
+        // Email de entrada (MX - porta 25)
+        await this.processIncomingEmail(parsedEmail, session);
       }
 
       callback();
@@ -375,6 +419,39 @@ export class UltraZendSMTPServer {
       console.log(`Email ${result.success ? 'delivered' : 'failed'}:`, messageId, toEmail);
     } catch (error) {
       console.error('Failed to process outgoing email:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Processa email de entrada (MX - porta 25)
+   */
+  private async processIncomingEmail(parsedEmail: ParsedMail, session: SMTPSession): Promise<void> {
+    try {
+      console.log('📥 Processando email recebido via MX...');
+
+      // Usar serviço de emails recebidos
+      const emailId = await receivedEmailService.processIncomingEmail(
+        parsedEmail,
+        this.config.hostname
+      );
+
+      console.log(`✅ Email recebido salvo com ID: ${emailId}`);
+
+      // Log do evento
+      await this.logEvent('INFO', 'Email recebido via MX', {
+        emailId,
+        from: parsedEmail.from?.text,
+        to: parsedEmail.to?.text,
+        subject: parsedEmail.subject
+      });
+    } catch (error) {
+      console.error('❌ Erro ao processar email recebido:', error);
+      await this.logEvent('ERROR', 'Falha ao processar email recebido', {
+        error: error instanceof Error ? error.message : String(error),
+        from: parsedEmail.from?.text,
+        to: parsedEmail.to?.text
+      });
       throw error;
     }
   }
