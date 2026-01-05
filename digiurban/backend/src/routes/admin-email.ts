@@ -87,25 +87,34 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
     const { planId } = req.body;
     const userId = req.user.id;
 
-    // Validar plano
-    const validPlans = ['basic', 'standard', 'premium', 'enterprise'];
-    if (!validPlans.includes(planId)) {
+    // Buscar plano configurável no banco de dados
+    const planConfig = await prisma.emailPlanConfig.findUnique({
+      where: { id: planId },
+      include: {
+        allowedDomains: {
+          include: {
+            domain: true
+          }
+        }
+      }
+    });
+
+    if (!planConfig || !planConfig.isActive) {
       res
         .status(400)
-        .json({ success: false, error: 'Plano inválido', message: 'Plano inválido' });
+        .json({ success: false, error: 'Plano inválido ou inativo', message: 'Plano inválido ou inativo' });
       return;
     }
 
-    // Mapear plano para enum
+    // Mapear código do plano para enum (para compatibilidade)
     const planMapping: Record<string, EmailPlan> = {
-      basic: EmailPlan.BASIC,
-      standard: EmailPlan.STANDARD,
-      premium: EmailPlan.PREMIUM,
-      enterprise: EmailPlan.ENTERPRISE
+      BASIC: EmailPlan.BASIC,
+      STANDARD: EmailPlan.STANDARD,
+      PREMIUM: EmailPlan.PREMIUM,
+      ENTERPRISE: EmailPlan.ENTERPRISE
     };
 
-    const plan = planMapping[planId];
-    const planDetails = getEmailPlanDetails(planId);
+    const plan = planMapping[planConfig.code] || EmailPlan.BASIC;
 
     // Verificar se já existe servidor de email
     let emailServer = await prisma.emailServer.findFirst({
@@ -120,9 +129,10 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         where: { id: emailServer.subscription.id },
         data: {
           plan,
-          monthlyPrice: planDetails.price,
-          maxEmailsPerMonth: planDetails.emailsPerMonth,
-          maxAccounts: planDetails.accounts,
+          planConfigId: planConfig.id,
+          monthlyPrice: planConfig.monthlyPrice,
+          maxEmailsPerMonth: planConfig.maxEmailsPerMonth,
+          maxAccounts: planConfig.maxAccounts,
           currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // +30 dias
         }
       });
@@ -130,13 +140,13 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
       await prisma.emailServer.update({
         where: { id: emailServer.id },
         data: {
-          maxEmailsPerMonth: planDetails.emailsPerMonth
+          maxEmailsPerMonth: planConfig.maxEmailsPerMonth
         }
       });
 
       return res.json({
         success: true,
-        message: `Plano atualizado para ${planDetails.name} com sucesso!`,
+        message: `Plano atualizado para ${planConfig.name} com sucesso!`,
         server: emailServer
       });
     }
@@ -151,15 +161,16 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         submissionPort: 587,
         tlsEnabled: true,
         isPremiumService: true,
-        monthlyPrice: planDetails.price,
-        maxEmailsPerMonth: planDetails.emailsPerMonth,
+        monthlyPrice: planConfig.monthlyPrice,
+        maxEmailsPerMonth: planConfig.maxEmailsPerMonth,
         isActive: true,
         subscription: {
           create: {
             plan,
-            monthlyPrice: planDetails.price,
-            maxEmailsPerMonth: planDetails.emailsPerMonth,
-            maxAccounts: planDetails.accounts,
+            planConfigId: planConfig.id,
+            monthlyPrice: planConfig.monthlyPrice,
+            maxEmailsPerMonth: planConfig.maxEmailsPerMonth,
+            maxAccounts: planConfig.maxAccounts,
             status: 'TRIAL', // 30 dias de trial
             currentPeriodStart: new Date(),
             currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 dias
@@ -185,8 +196,8 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         name: 'Administrador',
         isActive: true,
         isAdmin: true,
-        dailyLimit: Math.floor(planDetails.emailsPerMonth / 30),
-        monthlyLimit: planDetails.emailsPerMonth
+        dailyLimit: Math.floor(planConfig.maxEmailsPerMonth / 30),
+        monthlyLimit: planConfig.maxEmailsPerMonth
       }
     });
 
@@ -210,7 +221,7 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         userId,
         action: 'EMAIL_SERVICE_SUBSCRIBED',
         resource: 'email_service',
-        details: { planId, message: `Contratou plano de email: ${planDetails.name}` },
+        details: { planId, planName: planConfig.name, message: `Contratou plano de email: ${planConfig.name}` },
         ip: req.ip || 'unknown',
         success: true
       }
