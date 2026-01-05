@@ -4,7 +4,7 @@
  */
 
 import { SMTPServer as NodeSMTPServer } from 'smtp-server';
-import { simpleParser, ParsedMail } from 'mailparser';
+import { simpleParser, ParsedMail, AddressObject } from 'mailparser';
 import bcrypt from 'bcrypt';
 import { createTransport, Transporter } from 'nodemailer';
 import * as dns from 'dns';
@@ -74,6 +74,19 @@ export class UltraZendSMTPServer {
       certPath: config.certPath || '',
       keyPath: config.keyPath || ''
     };
+  }
+
+  /**
+   * Extrai texto de AddressObject (type-safe)
+   */
+  private extractAddressText(address: AddressObject | AddressObject[] | undefined): string {
+    if (!address) return '';
+
+    if (Array.isArray(address)) {
+      return address.map(a => a.text).join(', ');
+    }
+
+    return address.text;
   }
 
   /**
@@ -441,16 +454,16 @@ export class UltraZendSMTPServer {
       // Log do evento
       await this.logEvent('INFO', 'Email recebido via MX', {
         emailId,
-        from: parsedEmail.from?.text,
-        to: parsedEmail.to?.text,
+        from: this.extractAddressText(parsedEmail.from),
+        to: this.extractAddressText(parsedEmail.to),
         subject: parsedEmail.subject
       });
     } catch (error) {
       console.error('❌ Erro ao processar email recebido:', error);
       await this.logEvent('ERROR', 'Falha ao processar email recebido', {
         error: error instanceof Error ? error.message : String(error),
-        from: parsedEmail.from?.text,
-        to: parsedEmail.to?.text
+        from: this.extractAddressText(parsedEmail.from),
+        to: this.extractAddressText(parsedEmail.to)
       });
       throw error;
     }

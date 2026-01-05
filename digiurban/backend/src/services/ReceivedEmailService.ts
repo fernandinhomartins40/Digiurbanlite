@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { ParsedMail, AddressObject } from 'mailparser';
 import * as crypto from 'crypto';
 
@@ -148,14 +148,14 @@ export class ReceivedEmailService {
           fromEmail,
           fromName: this.extractName(parsedEmail.from),
           toEmail,
-          ccEmails: ccEmails && ccEmails.length > 0 ? ccEmails : null,
-          bccEmails: bccEmails && bccEmails.length > 0 ? bccEmails : null,
+          ccEmails: ccEmails && ccEmails.length > 0 ? ccEmails : Prisma.JsonNull,
+          bccEmails: bccEmails && bccEmails.length > 0 ? bccEmails : Prisma.JsonNull,
           replyTo: parsedEmail.replyTo ? this.extractEmail(parsedEmail.replyTo) : null,
           subject: parsedEmail.subject || '(Sem assunto)',
           textContent: parsedEmail.text || null,
           htmlContent: parsedEmail.html ? parsedEmail.html.toString() : null,
           headers,
-          attachments: attachments && attachments.length > 0 ? attachments : null,
+          attachments: attachments && attachments.length > 0 ? attachments : Prisma.JsonNull,
           size: this.calculateSize(parsedEmail),
           receivedAt: parsedEmail.date || new Date(),
           emailServerId: emailServer.id,
@@ -254,7 +254,7 @@ export class ReceivedEmailService {
     ]);
 
     return {
-      emails: emails.map(email => ({
+      emails: emails.map((email: any) => ({
         ...email,
         preview: email.textContent?.substring(0, 150) || ''
       })),
