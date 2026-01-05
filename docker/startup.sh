@@ -30,6 +30,12 @@ fi
 
 echo "✅ PostgreSQL está pronto!"
 
+# Criar enums PostgreSQL ANTES das migrations
+echo "🔧 Criando enums PostgreSQL..."
+PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -f /app/create-enums.sql || {
+  echo "⚠️ Aviso: Erro ao criar enums (pode ser que já existam)"
+}
+
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
 npx prisma migrate deploy || {

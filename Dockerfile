@@ -121,6 +121,7 @@ RUN mkdir -p /var/log/nginx && \
 # ===== Supervisord =====
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/startup.sh /app/startup.sh
+COPY docker/create-enums.sql /app/create-enums.sql
 RUN chmod +x /app/startup.sh
 
 # Expor portas

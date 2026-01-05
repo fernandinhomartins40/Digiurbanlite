@@ -390,6 +390,20 @@ async function main() {
 
     await seedEmailServer();
 
+    // ========================================================================
+    // 7. PLANOS DE EMAIL (Configuráveis)
+    // ========================================================================
+    console.log('\n7️⃣  Planos de Email (Configuráveis)');
+    console.log('   ─────────────────────────────\n');
+
+    try {
+      const { seedEmailPlans } = await import('./seeds/email-plans.seed');
+      await seedEmailPlans();
+    } catch (error: any) {
+      console.error('   ⚠️  Erro ao importar planos de email:', error.message);
+      console.log('   ℹ️  Continuando sem os planos de email...\n');
+    }
+
     console.log('\n╔════════════════════════════════════════════════════════╗');
     console.log('║  🚀 Sistema pronto para uso!                          ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
