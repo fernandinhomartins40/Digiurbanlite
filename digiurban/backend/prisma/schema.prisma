@@ -1409,19 +1409,19 @@ model EmailTemplate {
 
 model EmailSubscription {
   id                 String             @id @default(cuid())
-  emailServerId      String             @unique
+  emailServerId      String             @unique @map("email_server_id")
   plan               EmailPlan
-  planConfigId       String?            // ✅ NOVO: Referência ao plano configurável
+  planConfigId       String?            @map("plan_config_id") // ✅ NOVO: Referência ao plano configurável
   status             SubscriptionStatus @default(ACTIVE)
-  monthlyPrice       Decimal
-  maxEmailsPerMonth  Int
-  maxAccounts        Int                // Número de contas de email incluídas
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  trialEndsAt        DateTime?          // Se estiver em trial
-  canceledAt         DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  monthlyPrice       Decimal            @map("monthly_price")
+  maxEmailsPerMonth  Int                @map("max_emails_per_month")
+  maxAccounts        Int                @map("max_accounts") // Número de contas de email incluídas
+  currentPeriodStart DateTime           @map("current_period_start")
+  currentPeriodEnd   DateTime           @map("current_period_end")
+  trialEndsAt        DateTime?          @map("trial_ends_at") // Se estiver em trial
+  canceledAt         DateTime?          @map("canceled_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
   emailServer        EmailServer        @relation(fields: [emailServerId], references: [id], onDelete: Cascade)
   planConfig         EmailPlanConfig?   @relation(fields: [planConfigId], references: [id], onDelete: SetNull)
   invoices           EmailInvoice[]
