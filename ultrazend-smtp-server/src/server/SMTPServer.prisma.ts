@@ -386,7 +386,9 @@ export class UltraZendSMTPServer {
           subject: parsedEmail.subject || '(Sem assunto)',
           textContent: parsedEmail.text || null,
           htmlContent: parsedEmail.html ? parsedEmail.html.toString() : null,
-          headers: parsedEmail.headers ? Object.fromEntries(parsedEmail.headers.entries()) : null,
+          headers: parsedEmail.headers
+            ? JSON.parse(JSON.stringify(Object.fromEntries(parsedEmail.headers.entries())))
+            : null,
           attachments: attachments.length > 0 ? attachments : null,
           size: this.calculateEmailSize(parsedEmail),
           receivedAt: parsedEmail.date || new Date(),
