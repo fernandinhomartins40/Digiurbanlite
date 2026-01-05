@@ -1438,13 +1438,13 @@ model EmailPlanConfig {
   id                String                    @id @default(cuid())
   name              String                    // Ex: "Básico Municipal"
   code              String                    @unique // Ex: "BASIC", "STANDARD"
-  monthlyPrice      Decimal                   // Ex: 49.00
-  maxEmailsPerMonth Int                       // Ex: 5000, -1 = ilimitado
-  maxAccounts       Int                       // Ex: 5
+  monthlyPrice      Decimal                   @map("monthly_price") // Ex: 49.00
+  maxEmailsPerMonth Int                       @map("max_emails_per_month") // Ex: 5000, -1 = ilimitado
+  maxAccounts       Int                       @map("max_accounts") // Ex: 5
   features          Json                      // ["DKIM/SPF", "Templates", "Suporte básico"]
-  isActive          Boolean                   @default(true)
-  createdAt         DateTime                  @default(now())
-  updatedAt         DateTime                  @updatedAt
+  isActive          Boolean                   @default(true) @map("is_active")
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  updatedAt         DateTime                  @updatedAt @map("updated_at")
   subscriptions     EmailSubscription[]       // Assinaturas usando este plano
   allowedDomains    EmailPlanAllowedDomain[]  // Domínios permitidos para este plano
 
@@ -1454,9 +1454,9 @@ model EmailPlanConfig {
 // ✅ NOVA TABELA: Domínios permitidos por plano
 model EmailPlanAllowedDomain {
   id        String          @id @default(cuid())
-  planId    String
-  domainId  String
-  createdAt DateTime        @default(now())
+  planId    String          @map("plan_id")
+  domainId  String          @map("domain_id")
+  createdAt DateTime        @default(now()) @map("created_at")
   plan      EmailPlanConfig @relation(fields: [planId], references: [id], onDelete: Cascade)
   domain    EmailDomain     @relation(fields: [domainId], references: [id], onDelete: Cascade)
 
