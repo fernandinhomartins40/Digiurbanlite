@@ -277,6 +277,8 @@ console.log('🔧 Carregando rotas complementares...');
 try { console.log('   → custom-modules...'); app.use('/api/admin/custom-modules', require('./routes/custom-modules').default); console.log('   ✓'); } catch (e) { console.error('❌ custom-modules:', e); }
 try { console.log('   → templates...'); app.use('/api/admin/templates', require('./routes/service-templates').default); console.log('   ✓'); } catch (e) { console.error('❌ templates:', e); }
 try { console.log('   → email...'); app.use('/api/admin/email', require('./routes/admin-email').default); console.log('   ✓'); } catch (e) { console.error('❌ email:', e); }
+try { console.log('   → email-service...'); app.use('/api/admin/email-service', require('./routes/admin-email').default); console.log('   ✓'); } catch (e) { console.error('❌ email-service:', e); }
+try { console.log('   → email-accounts...'); app.use('/api/admin/email-accounts', require('./routes/admin-email-accounts').default); console.log('   ✓'); } catch (e) { console.error('❌ email-accounts:', e); }
 try { console.log('   → integrations...'); app.use('/api/integrations', require('./routes/integrations').default); console.log('   ✓'); } catch (e) { console.error('❌ integrations:', e); }
 try { console.log('   → municipality...'); app.use('/api/municipality', require('./routes/municipality-config').default); console.log('   ✓'); } catch (e) { console.error('❌ municipality:', e); }
 // DIA 3: DISABLED - arquivo não existe
