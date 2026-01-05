@@ -9,8 +9,8 @@ WORKDIR /app/backend
 ARG BUILD_TIMESTAMP
 RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
 
-# Instalar dependências do sistema
-RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev
+# Instalar dependências do sistema (incluindo openssl para Prisma)
+RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev openssl
 
 # Copiar package files do backend
 COPY digiurban/backend/package.json digiurban/backend/package-lock.json ./
