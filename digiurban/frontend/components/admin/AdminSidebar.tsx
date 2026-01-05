@@ -32,7 +32,14 @@ import {
   GitBranch,
   Crown,
   TrendingUp,
-  Award
+  Award,
+  Mail,
+  Send,
+  Inbox,
+  UserCircle,
+  MailOpen,
+  Trash2,
+  ScrollText
 } from 'lucide-react'
 
 interface NavItem {
@@ -159,6 +166,65 @@ export function AdminSidebar() {
           icon: UserCheck,
           permissions: ['citizens:verify'],
           badge: stats?.pendingCitizens?.toString()
+        }
+      ]
+    },
+    {
+      title: 'Email',
+      items: [
+        {
+          title: 'Dashboard',
+          href: '/admin/email',
+          icon: Mail,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Caixa de Entrada',
+          href: '/admin/email/inbox',
+          icon: Inbox,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Escrever Email',
+          href: '/admin/email/compose',
+          icon: Send,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Enviados',
+          href: '/admin/email/sent',
+          icon: MailOpen,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Rascunhos',
+          href: '/admin/email/drafts',
+          icon: FileText,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Templates',
+          href: '/admin/email/templates',
+          icon: ScrollText,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Lixeira',
+          href: '/admin/email/trash',
+          icon: Trash2,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Contas',
+          href: '/admin/email-accounts',
+          icon: UserCircle,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Configurações',
+          href: '/admin/email-service',
+          icon: Settings,
+          minRole: 'ADMIN'
         }
       ]
     }

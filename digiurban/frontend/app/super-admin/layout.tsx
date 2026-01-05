@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { SuperAdminAuthProvider, useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
 import {
   LayoutDashboard,
-  Building2,
   UserCog,
   Users,
   Activity,
@@ -21,7 +20,10 @@ import {
   Database,
   Bell,
   Search,
-  Mail
+  Mail,
+  Globe,
+  ScrollText,
+  CreditCard
 } from 'lucide-react';
 
 interface MenuItem {
@@ -76,11 +78,12 @@ const menuItems: MenuItem[] = [
     href: '#email',
     icon: Mail,
     children: [
-      { title: 'Dashboard', href: '/super-admin/email-server', icon: Mail },
+      { title: 'Dashboard', href: '/super-admin/email-server', icon: LayoutDashboard },
       { title: 'Configurações', href: '/super-admin/email-server/config', icon: Settings },
-      { title: 'Domínios', href: '/super-admin/email-server/domains', icon: Building2 },
+      { title: 'Domínios', href: '/super-admin/email-server/domains', icon: Globe },
       { title: 'Logs', href: '/super-admin/email-server/logs', icon: FileText },
-      { title: 'Templates', href: '/super-admin/email-templates', icon: FileText },
+      { title: 'Templates', href: '/super-admin/email-templates', icon: ScrollText },
+      { title: 'Faturamento', href: '/super-admin/email-billing', icon: CreditCard },
     ]
   },
   {

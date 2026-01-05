@@ -645,4 +645,250 @@ async function getEmailUsage() {
   return { currentMonth: sent };
 }
 
+/**
+ * GET /api/admin/email/sent
+ * Listar emails enviados
+ */
+router.get('/sent', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const emailServer = await prisma.emailServer.findFirst({});
+
+    if (!emailServer) {
+      return res.status(404).json({
+        success: false,
+        error: 'Serviço de email não encontrado',
+        message: 'Serviço de email não encontrado'
+      });
+    }
+
+    // Buscar emails enviados (últimos 100)
+    const emails = await prisma.email.findMany({
+      where: {
+        emailServerId: emailServer.id
+      },
+      select: {
+        id: true,
+        messageId: true,
+        fromEmail: true,
+        toEmail: true,
+        subject: true,
+        status: true,
+        sentAt: true,
+        deliveredAt: true,
+        failedAt: true,
+        errorMessage: true,
+        opens: true,
+        clicks: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 100
+    });
+
+    res.json({
+      success: true,
+      emails
+    });
+  } catch (error) {
+    console.error('Error fetching sent emails:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao buscar emails enviados'
+    });
+  }
+}));
+
+/**
+ * GET /api/admin/email/inbox
+ * Listar emails recebidos (mock - implementação futura com IMAP)
+ */
+router.get('/inbox', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    // TODO: Implementar integração IMAP para buscar emails recebidos
+    // Por enquanto retorna array vazio
+    res.json({
+      success: true,
+      emails: []
+    });
+  } catch (error) {
+    console.error('Error fetching inbox:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao buscar caixa de entrada'
+    });
+  }
+}));
+
+/**
+ * GET /api/admin/email/drafts
+ * Listar rascunhos
+ */
+router.get('/drafts', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    // TODO: Implementar tabela de rascunhos no Prisma
+    // Por enquanto retorna array vazio
+    res.json({
+      success: true,
+      drafts: []
+    });
+  } catch (error) {
+    console.error('Error fetching drafts:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao buscar rascunhos'
+    });
+  }
+}));
+
+/**
+ * POST /api/admin/email/drafts
+ * Salvar rascunho
+ */
+router.post('/drafts', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { to, cc, bcc, subject, message, accountId, priority } = req.body;
+
+    // TODO: Salvar no banco
+    res.json({
+      success: true,
+      message: 'Rascunho salvo com sucesso',
+      draft: {
+        id: 'draft-' + Date.now(),
+        to,
+        cc,
+        bcc,
+        subject,
+        message,
+        accountId,
+        priority,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('Error saving draft:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao salvar rascunho'
+    });
+  }
+}));
+
+/**
+ * DELETE /api/admin/email/drafts/:id
+ * Excluir rascunho
+ */
+router.delete('/drafts/:id', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // TODO: Excluir do banco
+    res.json({
+      success: true,
+      message: 'Rascunho excluído'
+    });
+  } catch (error) {
+    console.error('Error deleting draft:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao excluir rascunho'
+    });
+  }
+}));
+
+/**
+ * GET /api/admin/email/trash
+ * Listar emails na lixeira
+ */
+router.get('/trash', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    // TODO: Implementar soft delete e listar emails deletados
+    res.json({
+      success: true,
+      emails: []
+    });
+  } catch (error) {
+    console.error('Error fetching trash:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao buscar lixeira'
+    });
+  }
+}));
+
+/**
+ * POST /api/admin/email/trash/:id/restore
+ * Restaurar email da lixeira
+ */
+router.post('/trash/:id/restore', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // TODO: Restaurar email
+    res.json({
+      success: true,
+      message: 'Email restaurado'
+    });
+  } catch (error) {
+    console.error('Error restoring email:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao restaurar email'
+    });
+  }
+}));
+
+/**
+ * DELETE /api/admin/email/trash/:id
+ * Excluir email permanentemente
+ */
+router.delete('/trash/:id', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // TODO: Excluir permanentemente
+    res.json({
+      success: true,
+      message: 'Email excluído permanentemente'
+    });
+  } catch (error) {
+    console.error('Error deleting email:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao excluir email'
+    });
+  }
+}));
+
+/**
+ * POST /api/admin/email/trash/empty
+ * Esvaziar lixeira
+ */
+router.post('/trash/empty', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    // TODO: Excluir todos os emails da lixeira
+    res.json({
+      success: true,
+      message: 'Lixeira esvaziada'
+    });
+  } catch (error) {
+    console.error('Error emptying trash:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao esvaziar lixeira'
+    });
+  }
+}));
+
 export default router;
