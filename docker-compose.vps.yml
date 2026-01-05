@@ -122,7 +122,9 @@ services:
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3001}
     container_name: digiurban-vps
     ports:
-      - "3060:80"  # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)
+      - "3060:80"   # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)
+      - "25:25"     # MX Server (receber emails externos)
+      - "587:587"   # Submission Server (enviar emails autenticados)
     environment:
       # Node.js
       - NODE_ENV=production

@@ -126,7 +126,7 @@ COPY docker/fix-subscription-status-enum.sql /app/fix-subscription-status-enum.s
 RUN chmod +x /app/startup.sh
 
 # Expor portas
-EXPOSE 80
+EXPOSE 80 25 587
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
