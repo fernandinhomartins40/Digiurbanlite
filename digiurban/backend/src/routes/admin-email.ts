@@ -714,15 +714,52 @@ router.get('/sent', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (re
 
 /**
  * GET /api/admin/email/inbox
- * Listar emails recebidos (mock - implementação futura com IMAP)
+ * Listar emails recebidos
  */
 router.get('/inbox', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // TODO: Implementar integração IMAP para buscar emails recebidos
-    // Por enquanto retorna array vazio
+    const userId = req.user.id;
+    const {
+      folder = 'inbox',
+      isRead,
+      isStarred,
+      search,
+      limit = 50,
+      offset = 0
+    } = req.query;
+
+    // Buscar servidor de email ativo
+    const emailServer = await prisma.emailServer.findFirst({
+      where: { isActive: true }
+    });
+
+    if (!emailServer) {
+      return res.json({
+        success: true,
+        emails: [],
+        total: 0,
+        limit: Number(limit),
+        offset: Number(offset)
+      });
+    }
+
+    // Importar serviço de emails recebidos
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
+
+    // Listar emails
+    const result = await receivedEmailService.listReceivedEmails({
+      emailServerId: emailServer.id,
+      folder: folder as string,
+      isRead: isRead === 'true' ? true : isRead === 'false' ? false : undefined,
+      isStarred: isStarred === 'true' ? true : isStarred === 'false' ? false : undefined,
+      search: search as string,
+      limit: Number(limit),
+      offset: Number(offset)
+    });
+
     res.json({
       success: true,
-      emails: []
+      ...result
     });
   } catch (error) {
     console.error('Error fetching inbox:', error);
@@ -898,6 +935,173 @@ router.post('/trash/empty', requireMinRole(UserRole.ADMIN), asyncHandler(async (
       success: false,
       error: 'Internal server error',
       message: 'Erro ao esvaziar lixeira'
+    });
+  }
+}));
+
+/**
+ * GET /api/admin/email/inbox/:id
+ * Buscar email específico por ID
+ */
+router.get('/inbox/:id', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
+
+    const email = await prisma.receivedEmail.findUnique({
+      where: { id },
+      include: {
+        emailServer: true,
+        emailUser: true
+      }
+    });
+
+    if (!email) {
+      return res.status(404).json({
+        success: false,
+        error: 'Email not found',
+        message: 'Email não encontrado'
+      });
+    }
+
+    res.json({
+      success: true,
+      email
+    });
+  } catch (error) {
+    console.error('Error fetching email:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao buscar email'
+    });
+  }
+}));
+
+/**
+ * PUT /api/admin/email/inbox/:id/read
+ * Marcar email como lido/não lido
+ */
+router.put('/inbox/:id/read', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { isRead } = req.body;
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
+
+    const email = await receivedEmailService.markAsRead(id, isRead);
+
+    res.json({
+      success: true,
+      message: isRead ? 'Email marcado como lido' : 'Email marcado como não lido',
+      email
+    });
+  } catch (error) {
+    console.error('Error updating email read status:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao atualizar status do email'
+    });
+  }
+}));
+
+/**
+ * PUT /api/admin/email/inbox/:id/star
+ * Alternar favorito do email
+ */
+router.put('/inbox/:id/star', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
+
+    const email = await receivedEmailService.toggleStar(id);
+
+    res.json({
+      success: true,
+      message: email.isStarred ? 'Email marcado como favorito' : 'Email removido dos favoritos',
+      email
+    });
+  } catch (error) {
+    console.error('Error toggling email star:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao alternar favorito'
+    });
+  }
+}));
+
+/**
+ * DELETE /api/admin/email/inbox/:id
+ * Mover email para lixeira
+ */
+router.delete('/inbox/:id', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
+
+    await receivedEmailService.moveToTrash(id);
+
+    res.json({
+      success: true,
+      message: 'Email movido para lixeira'
+    });
+  } catch (error) {
+    console.error('Error moving email to trash:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao mover email para lixeira'
+    });
+  }
+}));
+
+/**
+ * POST /api/admin/email/inbox/:id/restore
+ * Restaurar email da lixeira
+ */
+router.post('/inbox/:id/restore', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
+
+    await receivedEmailService.restoreFromTrash(id);
+
+    res.json({
+      success: true,
+      message: 'Email restaurado da lixeira'
+    });
+  } catch (error) {
+    console.error('Error restoring email:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao restaurar email'
+    });
+  }
+}));
+
+/**
+ * DELETE /api/admin/email/inbox/:id/permanent
+ * Deletar email permanentemente
+ */
+router.delete('/inbox/:id/permanent', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { receivedEmailService } = await import('../services/ReceivedEmailService');
+
+    await receivedEmailService.deletePermanently(id);
+
+    res.json({
+      success: true,
+      message: 'Email deletado permanentemente'
+    });
+  } catch (error) {
+    console.error('Error deleting email permanently:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao deletar email'
     });
   }
 }));

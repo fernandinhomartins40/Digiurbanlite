@@ -76,61 +76,13 @@ export default function InboxPage() {
     } catch (error: any) {
       console.error('Error fetching inbox emails:', error);
 
-      // Se a rota não existe, mostrar dados mockados para demonstração
-      if (error.message?.includes('404')) {
-        toast({
-          title: 'Funcionalidade em desenvolvimento',
-          description: 'A caixa de entrada está sendo configurada',
-          variant: 'default'
-        });
-        // Dados mockados
-        setEmails([
-          {
-            id: '1',
-            messageId: 'msg-001',
-            fromEmail: 'prefeito@cidade.gov.br',
-            fromName: 'Gabinete do Prefeito',
-            toEmail: 'admin@digiurban.com.br',
-            subject: 'Aprovação de Projeto de Lei Municipal',
-            preview: 'Solicito aprovação urgente do projeto de lei que trata sobre a regularização fundiária...',
-            isRead: false,
-            isStarred: true,
-            receivedAt: new Date(Date.now() - 3600000).toISOString(),
-            attachments: 2
-          },
-          {
-            id: '2',
-            messageId: 'msg-002',
-            fromEmail: 'secretaria.saude@cidade.gov.br',
-            fromName: 'Secretaria de Saúde',
-            toEmail: 'admin@digiurban.com.br',
-            subject: 'Relatório Mensal de Atendimentos - Janeiro 2026',
-            preview: 'Segue em anexo o relatório consolidado dos atendimentos realizados no mês de janeiro...',
-            isRead: true,
-            isStarred: false,
-            receivedAt: new Date(Date.now() - 86400000).toISOString(),
-            attachments: 1
-          },
-          {
-            id: '3',
-            messageId: 'msg-003',
-            fromEmail: 'cidadao@email.com',
-            fromName: 'João Silva',
-            toEmail: 'admin@digiurban.com.br',
-            subject: 'Solicitação de Iluminação Pública',
-            preview: 'Venho através deste solicitar a instalação de iluminação pública na Rua das Flores...',
-            isRead: false,
-            isStarred: false,
-            receivedAt: new Date(Date.now() - 7200000).toISOString()
-          }
-        ]);
-      } else {
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível carregar a caixa de entrada',
-          variant: 'destructive'
-        });
-      }
+      toast({
+        title: 'Erro ao carregar emails',
+        description: 'Não foi possível carregar os emails recebidos',
+        variant: 'destructive'
+      });
+
+      setEmails([]);
     } finally {
       setLoading(false);
     }
