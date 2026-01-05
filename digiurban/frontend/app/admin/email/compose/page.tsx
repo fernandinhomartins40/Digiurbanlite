@@ -26,6 +26,10 @@ interface EmailAccount {
   email: string;
   name: string;
   isActive: boolean;
+  dailyLimit: number;
+  monthlyLimit: number;
+  sentToday: number;
+  sentThisMonth: number;
 }
 
 interface Template {
