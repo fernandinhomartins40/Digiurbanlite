@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -19,9 +20,13 @@ import {
   Archive,
   MailOpen,
   Loader2,
-  Eye,
-  X
+  RefreshCw,
+  ChevronLeft,
+  Paperclip,
+  MoreVertical,
+  Clock
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface InboxEmail {
   id: string;
@@ -50,7 +55,7 @@ export default function InboxPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'unread' | 'starred'>('all');
   const [selectedEmail, setSelectedEmail] = useState<InboxEmail | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchInboxEmails();
@@ -125,7 +130,6 @@ export default function InboxPage() {
         title: isRead ? 'Marcado como lido' : 'Marcado como não lido'
       });
     } catch (error) {
-      // Fallback local se API não existir
       setEmails(prev => prev.map(e => e.id === emailId ? { ...e, isRead } : e));
     }
   };
@@ -144,7 +148,6 @@ export default function InboxPage() {
         e.id === emailId ? { ...e, isStarred: !e.isStarred } : e
       ));
     } catch (error) {
-      // Fallback local
       setEmails(prev => prev.map(e =>
         e.id === emailId ? { ...e, isStarred: !e.isStarred } : e
       ));
@@ -152,29 +155,29 @@ export default function InboxPage() {
   };
 
   const moveToTrash = async (emailId: string) => {
-    if (!confirm('Mover este email para a lixeira?')) return;
-
     try {
       await apiRequest(`/admin/email/inbox/${emailId}`, {
         method: 'DELETE'
       });
 
       setEmails(prev => prev.filter(e => e.id !== emailId));
-      setShowDetails(false);
+      if (selectedEmail?.id === emailId) {
+        setSelectedEmail(null);
+      }
 
       toast({
         title: 'Email movido para lixeira'
       });
     } catch (error) {
-      // Fallback local
       setEmails(prev => prev.filter(e => e.id !== emailId));
-      setShowDetails(false);
+      if (selectedEmail?.id === emailId) {
+        setSelectedEmail(null);
+      }
     }
   };
 
   const viewEmail = (email: InboxEmail) => {
     setSelectedEmail(email);
-    setShowDetails(true);
     if (!email.isRead) {
       markAsRead(email.id, true);
     }
@@ -188,6 +191,24 @@ export default function InboxPage() {
     router.push(`/admin/email/compose?forward=${email.id}&subject=Fwd: ${email.subject}`);
   };
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    const diffInDays = diffInHours / 24;
+
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffInDays < 7) {
+      return date.toLocaleDateString('pt-BR', { weekday: 'short' });
+    } else if (date.getFullYear() === now.getFullYear()) {
+      return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+    } else {
+      return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  };
+
   const unreadCount = emails.filter(e => !e.isRead).length;
   const starredCount = emails.filter(e => e.isStarred).length;
 
@@ -195,228 +216,265 @@ export default function InboxPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando caixa de entrada...</p>
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Carregando emails...</p>
         </div>
       </div>
     );
   }
 
+  // Layout de 2 colunas estilo Gmail
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Caixa de Entrada</h1>
-          <p className="text-muted-foreground mt-2">
-            {unreadCount} não {unreadCount === 1 ? 'lido' : 'lidos'}
-          </p>
+    <div className="h-[calc(100vh-120px)] flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Caixa de Entrada</h1>
+          {unreadCount > 0 && (
+            <span className="bg-primary text-primary-foreground text-xs font-semibold px-2.5 py-0.5 rounded-full">
+              {unreadCount}
+            </span>
+          )}
         </div>
-        <Button onClick={() => router.push('/admin/email/compose')}>
-          <Mail className="mr-2 h-4 w-4" />
-          Nova Mensagem
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={fetchInboxEmails}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button onClick={() => router.push('/admin/email/compose')}>
+            <Mail className="mr-2 h-4 w-4" />
+            Escrever
+          </Button>
+        </div>
       </div>
 
-      {/* Filtros */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-[300px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar emails..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
+      {/* Search and Filters */}
+      <div className="py-3 flex items-center gap-3 border-b">
+        <div className="relative flex-1 max-w-lg">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Pesquisar emails..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-muted/50"
+          />
+        </div>
+        <div className="flex gap-1">
+          <Button
+            variant={filterType === 'all' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setFilterType('all')}
+          >
+            Todas
+          </Button>
+          <Button
+            variant={filterType === 'unread' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setFilterType('unread')}
+          >
+            Não lidas
+          </Button>
+          <Button
+            variant={filterType === 'starred' ? 'secondary' : 'ghost'}
+            size="sm"
+            onClick={() => setFilterType('starred')}
+          >
+            <Star className="mr-1 h-3.5 w-3.5" />
+            Com estrela
+          </Button>
+        </div>
+      </div>
 
-            <div className="flex gap-2">
-              <Button
-                variant={filterType === 'all' ? 'default' : 'outline'}
-                onClick={() => setFilterType('all')}
-              >
-                Todas ({emails.length})
-              </Button>
-              <Button
-                variant={filterType === 'unread' ? 'default' : 'outline'}
-                onClick={() => setFilterType('unread')}
-              >
-                Não lidas ({unreadCount})
-              </Button>
-              <Button
-                variant={filterType === 'starred' ? 'default' : 'outline'}
-                onClick={() => setFilterType('starred')}
-              >
-                <Star className="mr-2 h-4 w-4" />
-                Destacadas ({starredCount})
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lista de emails */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {filteredEmails.length} email{filteredEmails.length !== 1 ? 's' : ''}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Email List & Preview (2 columns like Gmail) */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Email List */}
+        <div className={cn(
+          "border-r overflow-y-auto",
+          selectedEmail ? "w-[400px]" : "flex-1"
+        )}>
           {filteredEmails.length === 0 ? (
-            <div className="text-center py-12">
-              <InboxIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum email encontrado</h3>
-              <p className="text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <InboxIcon className="h-16 w-16 text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {emails.length === 0 ? 'Nenhum email' : 'Nenhum email encontrado'}
+              </h3>
+              <p className="text-sm text-muted-foreground">
                 {emails.length === 0
                   ? 'Sua caixa de entrada está vazia'
-                  : 'Tente ajustar os filtros de busca'}
+                  : 'Tente ajustar os filtros'}
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y">
               {filteredEmails.map((email) => (
                 <div
                   key={email.id}
-                  className={`border rounded-lg p-4 transition-colors cursor-pointer ${
-                    email.isRead ? 'bg-white hover:bg-gray-50' : 'bg-blue-50 hover:bg-blue-100 border-blue-200'
-                  }`}
                   onClick={() => viewEmail(email)}
+                  className={cn(
+                    "flex items-start gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors border-l-2",
+                    !email.isRead
+                      ? "bg-blue-50/50 border-l-primary font-medium"
+                      : "border-l-transparent",
+                    selectedEmail?.id === email.id && "bg-muted"
+                  )}
                 >
-                  <div className="flex items-start gap-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleStar(email.id);
-                      }}
-                      className="mt-1"
-                    >
-                      {email.isStarred ? (
-                        <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                      ) : (
-                        <StarOff className="h-5 w-5 text-gray-400 hover:text-yellow-500" />
-                      )}
-                    </button>
+                  {/* Star */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleStar(email.id);
+                    }}
+                    className="mt-1 flex-shrink-0"
+                  >
+                    {email.isStarred ? (
+                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    ) : (
+                      <Star className="h-4 w-4 text-muted-foreground/40 hover:text-yellow-500" />
+                    )}
+                  </button>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className={`font-semibold ${!email.isRead ? 'text-blue-900' : ''}`}>
-                              {email.fromName}
-                            </h4>
-                            {!email.isRead && (
-                              <span className="inline-flex h-2 w-2 rounded-full bg-blue-600" />
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{email.fromEmail}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(email.receivedAt).toLocaleString('pt-BR', {
-                              day: '2-digit',
-                              month: 'short',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                          {email.attachments && email.attachments > 0 && (
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                              📎 {email.attachments}
-                            </div>
-                          )}
-                        </div>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={cn(
+                        "text-sm truncate",
+                        !email.isRead && "font-semibold"
+                      )}>
+                        {email.fromName || email.fromEmail}
+                      </span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {email.attachments && email.attachments > 0 && (
+                          <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(email.receivedAt)}
+                        </span>
                       </div>
-
-                      <h5 className={`font-medium mb-1 ${!email.isRead ? 'text-blue-900' : ''}`}>
-                        {email.subject}
-                      </h5>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {email.preview}
-                      </p>
                     </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          viewEmail(email);
-                        }}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                    <div className={cn(
+                      "text-sm truncate",
+                      !email.isRead && "font-semibold"
+                    )}>
+                      {email.subject || '(Sem assunto)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {email.preview}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Modal de detalhes */}
-      {showDetails && selectedEmail && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-3xl w-full max-h-[85vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex justify-between items-start gap-4">
+        {/* Email Preview/Detail */}
+        {selectedEmail && (
+          <div className="flex-1 flex flex-col overflow-hidden bg-white">
+            {/* Email Header */}
+            <div className="border-b p-6 space-y-4">
+              <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <CardTitle>{selectedEmail.subject}</CardTitle>
-                  <div className="mt-2 space-y-1 text-sm">
-                    <p><strong>De:</strong> {selectedEmail.fromName} ({selectedEmail.fromEmail})</p>
-                    <p><strong>Para:</strong> {selectedEmail.toEmail}</p>
-                    <p><strong>Data:</strong> {new Date(selectedEmail.receivedAt).toLocaleString('pt-BR')}</p>
+                  <h2 className="text-2xl font-semibold mb-4">{selectedEmail.subject || '(Sem assunto)'}</h2>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                      {(selectedEmail.fromName || selectedEmail.fromEmail).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{selectedEmail.fromName}</span>
+                        <span className="text-muted-foreground text-sm">
+                          {'<'}{selectedEmail.fromEmail}{'>'}
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        para {selectedEmail.toEmail}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      {new Date(selectedEmail.receivedAt).toLocaleString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)}>
-                  <X className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedEmail(null)}
+                >
+                  <ChevronLeft className="h-5 w-5" />
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="prose max-w-none">
-                {selectedEmail.htmlContent ? (
-                  <div dangerouslySetInnerHTML={{ __html: selectedEmail.htmlContent }} />
-                ) : (
-                  <pre className="whitespace-pre-wrap font-sans">
-                    {selectedEmail.textContent || selectedEmail.preview}
-                  </pre>
-                )}
-              </div>
 
-              <div className="flex gap-2 pt-4 border-t">
-                <Button onClick={() => replyEmail(selectedEmail)}>
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => replyEmail(selectedEmail)}
+                >
                   <Reply className="mr-2 h-4 w-4" />
                   Responder
                 </Button>
-                <Button variant="outline" onClick={() => forwardEmail(selectedEmail)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => forwardEmail(selectedEmail)}
+                >
                   <Forward className="mr-2 h-4 w-4" />
                   Encaminhar
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => markAsRead(selectedEmail.id, !selectedEmail.isRead)}
+                  size="sm"
+                  onClick={() => toggleStar(selectedEmail.id)}
                 >
-                  <MailOpen className="mr-2 h-4 w-4" />
-                  {selectedEmail.isRead ? 'Marcar como não lido' : 'Marcar como lido'}
+                  {selectedEmail.isStarred ? (
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  ) : (
+                    <Star className="h-4 w-4" />
+                  )}
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="outline"
+                  size="sm"
                   onClick={() => moveToTrash(selectedEmail.id)}
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => markAsRead(selectedEmail.id, !selectedEmail.isRead)}
+                >
+                  <MailOpen className="h-4 w-4" />
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+
+            {/* Email Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="prose max-w-none">
+                {selectedEmail.htmlContent ? (
+                  <div
+                    dangerouslySetInnerHTML={{ __html: selectedEmail.htmlContent }}
+                    className="email-content"
+                  />
+                ) : (
+                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                    {selectedEmail.textContent || selectedEmail.preview}
+                  </pre>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
