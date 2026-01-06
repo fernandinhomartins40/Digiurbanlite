@@ -23,11 +23,8 @@ import {
   Calendar,
   Map,
   Users,
-  FolderKanban,
   Settings,
   Mail,
-  MessageSquare,
-  ClipboardList,
   Sprout,
   HandHeart,
   Palette,
@@ -36,12 +33,22 @@ import {
   Home,
   TreePine,
   Truck,
-  Hammer,
+  MapPin,
   Shield,
-  HeartPulse,
-  Landmark,
+  Heart,
+  Camera,
   Building2 as Building,
-  BarChart3
+  BarChart3,
+  UserPlus,
+  UserCheck,
+  GitBranch,
+  TrendingUp,
+  Send,
+  Inbox,
+  UserCircle,
+  MailOpen,
+  Trash2,
+  ScrollText
 } from 'lucide-react'
 
 interface NavItem {
@@ -49,7 +56,7 @@ interface NavItem {
   href: string
   icon: LucideIcon
   permissions?: string[]
-  minRole?: 'USER' | 'COORDINATOR' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN'
+  minRole?: 'GUEST' | 'USER' | 'COORDINATOR' | 'MANAGER' | 'ADMIN' | 'SUPER_ADMIN'
   badge?: string
 }
 
@@ -74,36 +81,165 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
     {
       title: 'Principal',
       items: [
-        { title: 'Início', href: '/admin', icon: House },
-        { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-        { title: 'Protocolos', href: '/admin/protocolos', icon: FileText, permissions: ['protocols:read'], badge: stats?.pendingProtocols?.toString() }
+        {
+          title: 'Início',
+          href: '/admin',
+          icon: House
+        },
+        {
+          title: 'Dashboard',
+          href: '/admin/dashboard',
+          icon: LayoutDashboard
+        },
+        {
+          title: 'Protocolos',
+          href: '/admin/protocolos',
+          icon: FileText,
+          permissions: ['protocols:read'],
+          badge: stats?.pendingProtocols?.toString()
+        }
       ]
     },
     {
       title: 'Gabinete do Prefeito',
       items: [
-        { title: 'Painel do Prefeito', href: '/admin/gabinete/painel-prefeito', icon: Crown, minRole: 'ADMIN', badge: 'NOVO' },
-        { title: 'Criar Chamado', href: '/admin/chamados', icon: AlertCircle, minRole: 'ADMIN' },
-        { title: 'Agenda Executiva', href: '/admin/gabinete/agenda', icon: Calendar, minRole: 'ADMIN' },
-        { title: 'Mapa de Demandas', href: '/admin/gabinete/mapa-demandas', icon: Map, minRole: 'ADMIN' }
+        {
+          title: 'Painel do Prefeito',
+          href: '/admin/gabinete/painel-prefeito',
+          icon: Crown,
+          minRole: 'ADMIN',
+          badge: 'NOVO'
+        },
+        {
+          title: 'Criar Chamado',
+          href: '/admin/chamados',
+          icon: AlertCircle,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Agenda Executiva',
+          href: '/admin/gabinete/agenda',
+          icon: Calendar,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Mapa de Demandas',
+          href: '/admin/gabinete/mapa-demandas',
+          icon: Map,
+          minRole: 'ADMIN'
+        }
       ]
     },
     {
       title: 'Gestão',
       items: [
-        { title: 'Cidadãos', href: '/admin/cidadaos', icon: Users, permissions: ['citizens:read'] },
-        { title: 'Serviços', href: '/admin/servicos', icon: FolderKanban, permissions: ['services:read'] },
-        { title: 'Departamentos', href: '/admin/departamentos', icon: Building, permissions: ['departments:read'], minRole: 'ADMIN' },
-        { title: 'Funcionários', href: '/admin/funcionarios', icon: Users, permissions: ['users:read'], minRole: 'COORDINATOR' },
-        { title: 'Configurações', href: '/admin/configuracoes', icon: Settings, minRole: 'COORDINATOR' }
+        {
+          title: 'Catálogo de Serviços',
+          href: '/admin/servicos',
+          icon: Settings,
+          permissions: ['services:create', 'services:update']
+        },
+        {
+          title: 'Workflows',
+          href: '/admin/workflows',
+          icon: GitBranch,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Estatísticas',
+          href: '/admin/gerenciamento-servicos',
+          icon: TrendingUp,
+          permissions: ['services:read']
+        },
+        {
+          title: 'Relatórios',
+          href: '/admin/relatorios',
+          icon: BarChart3,
+          permissions: ['reports:department', 'reports:full']
+        }
       ]
     },
     {
-      title: 'Comunicação',
+      title: 'Pessoas',
       items: [
-        { title: 'Email', href: '/admin/email', icon: Mail, permissions: ['email:read'], minRole: 'COORDINATOR' },
-        { title: 'Mensagens', href: '/admin/mensagens', icon: MessageSquare, permissions: ['messages:read'] },
-        { title: 'Ouvidoria', href: '/admin/ouvidoria', icon: ClipboardList, permissions: ['complaints:read'], minRole: 'COORDINATOR' }
+        {
+          title: 'Equipe',
+          href: '/admin/equipe',
+          icon: Users,
+          permissions: ['team:read']
+        },
+        {
+          title: 'Cidadãos',
+          href: '/admin/cidadaos',
+          icon: UserPlus,
+          permissions: ['citizens:read']
+        },
+        {
+          title: 'Cidadãos Pendentes',
+          href: '/admin/cidadaos/pendentes',
+          icon: UserCheck,
+          permissions: ['citizens:verify'],
+          badge: stats?.pendingCitizens?.toString()
+        }
+      ]
+    },
+    {
+      title: 'Email',
+      items: [
+        {
+          title: 'Dashboard',
+          href: '/admin/email',
+          icon: Mail,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Caixa de Entrada',
+          href: '/admin/email/inbox',
+          icon: Inbox,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Escrever Email',
+          href: '/admin/email/compose',
+          icon: Send,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Enviados',
+          href: '/admin/email/sent',
+          icon: MailOpen,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Rascunhos',
+          href: '/admin/email/drafts',
+          icon: FileText,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Templates',
+          href: '/admin/email/templates',
+          icon: ScrollText,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Lixeira',
+          href: '/admin/email/trash',
+          icon: Trash2,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Contas',
+          href: '/admin/email-accounts',
+          icon: UserCircle,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Configurações',
+          href: '/admin/email-service',
+          icon: Settings,
+          minRole: 'ADMIN'
+        }
       ]
     }
   ]
@@ -111,18 +247,84 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   const secretariaNavigation: NavSection = {
     title: 'Secretarias',
     items: [
-      { title: 'Agricultura', href: '/admin/secretarias/agricultura', icon: Sprout, minRole: 'COORDINATOR' },
-      { title: 'Assistência Social', href: '/admin/secretarias/assistencia-social', icon: HandHeart, minRole: 'COORDINATOR' },
-      { title: 'Cultura', href: '/admin/secretarias/cultura', icon: Palette, minRole: 'COORDINATOR' },
-      { title: 'Educação', href: '/admin/secretarias/educacao', icon: GraduationCap, minRole: 'COORDINATOR' },
-      { title: 'Esportes', href: '/admin/secretarias/esportes', icon: Trophy, minRole: 'COORDINATOR' },
-      { title: 'Habitação', href: '/admin/secretarias/habitacao', icon: Home, minRole: 'COORDINATOR' },
-      { title: 'Meio Ambiente', href: '/admin/secretarias/meio-ambiente', icon: TreePine, minRole: 'COORDINATOR' },
-      { title: 'Obras Públicas', href: '/admin/secretarias/obras-publicas', icon: Truck, minRole: 'COORDINATOR' },
-      { title: 'Planejamento', href: '/admin/secretarias/planejamento', icon: Hammer, minRole: 'COORDINATOR' },
-      { title: 'Segurança Pública', href: '/admin/secretarias/seguranca-publica', icon: Shield, minRole: 'COORDINATOR' },
-      { title: 'Saúde', href: '/admin/secretarias/saude', icon: HeartPulse, minRole: 'COORDINATOR' },
-      { title: 'Finanças', href: '/admin/secretarias/financas', icon: Landmark, minRole: 'COORDINATOR' }
+      {
+        title: 'Agricultura',
+        href: '/admin/secretarias/agricultura',
+        icon: Sprout,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Assistência Social',
+        href: '/admin/secretarias/assistencia-social',
+        icon: HandHeart,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Cultura',
+        href: '/admin/secretarias/cultura',
+        icon: Palette,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Educação',
+        href: '/admin/secretarias/educacao',
+        icon: GraduationCap,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Esportes',
+        href: '/admin/secretarias/esportes',
+        icon: Trophy,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Habitação',
+        href: '/admin/secretarias/habitacao',
+        icon: Home,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Meio Ambiente',
+        href: '/admin/secretarias/meio-ambiente',
+        icon: TreePine,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Obras Públicas',
+        href: '/admin/secretarias/obras-publicas',
+        icon: Truck,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Planejamento Urbano',
+        href: '/admin/secretarias/planejamento-urbano',
+        icon: MapPin,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Saúde',
+        href: '/admin/secretarias/saude',
+        icon: Heart,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Segurança Pública',
+        href: '/admin/secretarias/seguranca-publica',
+        icon: Shield,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Serviços Públicos',
+        href: '/admin/secretarias/servicos-publicos',
+        icon: Settings,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Turismo',
+        href: '/admin/secretarias/turismo',
+        icon: Camera,
+        minRole: 'COORDINATOR'
+      }
     ]
   }
 
@@ -152,9 +354,11 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
         </h3>
         <nav className="space-y-1">
           {visibleItems.map((item) => {
+            // Para o link "Início" (/admin), só ativa se for exatamente essa rota
+            // Para outros links, ativa se for a rota exata ou subrotas
             const isActive = item.href === '/admin'
               ? pathname === '/admin'
-              : pathname.startsWith(item.href)
+              : pathname === item.href || pathname.startsWith(item.href + '/')
             const Icon = item.icon
 
             return (
@@ -173,10 +377,12 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
                 <span className="flex-1">{item.title}</span>
                 {item.badge && (
                   <span className={cn(
-                    'ml-auto text-xs px-2 py-0.5 rounded-full font-medium',
+                    'ml-2 inline-block py-0.5 px-2 text-xs font-semibold rounded-full',
                     isActive
-                      ? 'bg-primary-foreground/20 text-primary-foreground'
-                      : 'bg-primary/10 text-primary'
+                      ? 'bg-primary-foreground text-primary'
+                      : item.badge === 'NOVO'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white animate-pulse'
+                      : 'bg-red-100 text-red-800'
                   )}>
                     {item.badge}
                   </span>
