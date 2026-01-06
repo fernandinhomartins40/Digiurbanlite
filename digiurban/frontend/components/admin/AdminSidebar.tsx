@@ -63,18 +63,7 @@ export function AdminSidebar() {
   const { user, stats } = useAdminAuth()
   const { hasPermission, hasMinRole } = useAdminPermissions()
   const pathname = usePathname()
-  const { isOpen, isMobile, close, setIsMobile } = useSidebar()
-
-  // Detectar se é mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [setIsMobile])
+  const { isOpen, isMobile, close } = useSidebar()
 
   // Fechar sidebar ao mudar de rota em mobile
   useEffect(() => {
@@ -448,8 +437,10 @@ export function AdminSidebar() {
       <div
         className={cn(
           "flex flex-col w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
-          isMobile && !isOpen && "-translate-x-full",
-          (!isMobile || isOpen) && "translate-x-0"
+          // Desktop: sempre visível (translate-x-0)
+          // Mobile fechado: escondido (-translate-x-full)
+          // Mobile aberto: visível (translate-x-0)
+          isMobile ? (isOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
         )}
       >
         {/* Logo e botão fechar (mobile) */}

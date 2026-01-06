@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, ReactNode, useMemo } from 'react'
+import { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react'
 
 interface SidebarContextType {
   isOpen: boolean
@@ -15,11 +15,30 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => {
+    // Detectar mobile no estado inicial (SSR safe)
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768
+    }
+    return false
+  })
 
   const toggle = () => setIsOpen((prev) => !prev)
   const open = () => setIsOpen(true)
   const close = () => setIsOpen(false)
+
+  // Listener para mudanças de tamanho da janela
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    // Adicionar listener
+    window.addEventListener('resize', handleResize)
+
+    // Limpar listener
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const value = useMemo(
     () => ({

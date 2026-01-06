@@ -58,17 +58,15 @@ export function AdminHeader() {
         {/* Botão Menu Mobile + Título */}
         <div className="flex items-center space-x-3">
           {/* Botão Menu Hambúrguer (Mobile) */}
-          {isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggle}
-              className="md:hidden"
-              aria-label="Abrir menu"
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="md:hidden"
+            aria-label="Abrir menu"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
 
           {/* Título da página atual */}
           <div>
