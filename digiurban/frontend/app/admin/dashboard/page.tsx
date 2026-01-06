@@ -14,7 +14,6 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-  XCircle,
   Bell,
   ExternalLink
 } from 'lucide-react'
@@ -207,16 +206,16 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header do Dashboard */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
             Dashboard {roleLabels[user.role]}
           </h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm lg:text-base text-gray-600 mt-1">
             Visão geral das suas atividades e responsabilidades
           </p>
         </div>
-        <Badge variant="outline" className="text-xs sm:text-sm w-fit">
+        <Badge variant="outline" className="text-xs sm:text-sm whitespace-nowrap shrink-0">
           {user.department?.name || 'Administração Geral'}
         </Badge>
       </div>
@@ -225,13 +224,13 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         {/* Total de Protocolos */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Protocolos</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total de Protocolos</CardTitle>
+            <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProtocols}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold">{stats.totalProtocols}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               {user.role === 'USER' ? 'Atribuídos a você' :
                user.role === 'ADMIN' ? 'Todo o município' : 'Do seu setor'}
             </p>
@@ -240,13 +239,13 @@ export default function AdminDashboard() {
 
         {/* Protocolos Pendentes */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Pendentes</CardTitle>
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.pendingProtocols}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold text-orange-600">{stats.pendingProtocols}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Requerem atenção
             </p>
           </CardContent>
@@ -254,13 +253,13 @@ export default function AdminDashboard() {
 
         {/* Protocolos Concluídos */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Concluídos</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Concluídos</CardTitle>
+            <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.completedProtocols}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.completedProtocols}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Taxa de conclusão: {completionRate}%
             </p>
           </CardContent>
@@ -268,13 +267,13 @@ export default function AdminDashboard() {
 
         {/* Taxa de Eficiência */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Eficiência</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Eficiência</CardTitle>
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completionRate}%</div>
-            <Progress value={completionRate} className="mt-2" />
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold">{completionRate}%</div>
+            <Progress value={completionRate} className="mt-2 h-2" />
           </CardContent>
         </Card>
       </div>
@@ -282,14 +281,14 @@ export default function AdminDashboard() {
       {/* Distribuição por Status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Distribuição por Status</CardTitle>
-            <CardDescription>
+          <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-base sm:text-lg">Distribuição por Status</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Visualização dos protocolos por status atual
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
+            <div className="space-y-2 sm:space-y-3">
               {stats.protocolsByStatus.map((item) => {
                 const count = item._count?._all || 0
                 const percentage = stats.totalProtocols > 0
@@ -297,19 +296,19 @@ export default function AdminDashboard() {
                   : 0
 
                 return (
-                  <div key={item.status} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
+                  <div key={item.status} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex items-center flex-wrap gap-2">
                       <Badge
                         variant="secondary"
-                        className={statusColors[item.status as keyof typeof statusColors]}
+                        className={`${statusColors[item.status as keyof typeof statusColors]} text-xs whitespace-nowrap`}
                       >
                         {statusLabels[item.status as keyof typeof statusLabels]}
                       </Badge>
-                      <span className="text-sm text-gray-600">
-                        {count} protocolos
+                      <span className="text-xs sm:text-sm text-gray-600">
+                        {count} {count === 1 ? 'protocolo' : 'protocolos'}
                       </span>
                     </div>
-                    <span className="text-sm font-medium">{percentage}%</span>
+                    <span className="text-xs sm:text-sm font-medium shrink-0">{percentage}%</span>
                   </div>
                 )
               })}
@@ -319,20 +318,20 @@ export default function AdminDashboard() {
 
         {/* Ações Rápidas */}
         <Card>
-          <CardHeader>
-            <CardTitle>Ações Rápidas</CardTitle>
-            <CardDescription>
+          <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
+            <CardTitle className="text-base sm:text-lg">Ações Rápidas</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Acesso rápido às funcionalidades principais
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               {hasPermission('protocols:read') && (
                 <a
                   href="/admin/protocolos"
-                  className="flex items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors active:bg-gray-100"
                 >
-                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2" />
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2 shrink-0" />
                   <span className="text-xs sm:text-sm font-medium">Ver Protocolos</span>
                 </a>
               )}
@@ -340,9 +339,9 @@ export default function AdminDashboard() {
               {hasPermission('chamados:create') && (
                 <a
                   href="/admin/chamados"
-                  className="flex items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors active:bg-gray-100"
                 >
-                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 mr-2" />
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 mr-2 shrink-0" />
                   <span className="text-xs sm:text-sm font-medium">Novo Chamado</span>
                 </a>
               )}
@@ -350,9 +349,9 @@ export default function AdminDashboard() {
               {hasPermission('team:read') && (
                 <a
                   href="/admin/equipe"
-                  className="flex items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors active:bg-gray-100"
                 >
-                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2" />
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2 shrink-0" />
                   <span className="text-xs sm:text-sm font-medium">Gerenciar Equipe</span>
                 </a>
               )}
@@ -360,9 +359,9 @@ export default function AdminDashboard() {
               {(hasPermission('reports:department') || hasPermission('reports:full')) && (
                 <a
                   href="/admin/relatorios"
-                  className="flex items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors active:bg-gray-100"
                 >
-                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mr-2" />
+                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mr-2 shrink-0" />
                   <span className="text-xs sm:text-sm font-medium">Relatórios</span>
                 </a>
               )}
@@ -374,39 +373,40 @@ export default function AdminDashboard() {
       {/* Protocolos Pendentes - Apenas para Prefeito (ADMIN) */}
       {user.role === 'ADMIN' && (
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center">
-                  <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
-                  Protocolos que Requerem Atenção
+          <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="flex items-center text-base sm:text-lg flex-wrap gap-2">
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 shrink-0" />
+                  <span>Protocolos que Requerem Atenção</span>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm mt-1.5">
                   Protocolos em andamento que ainda não foram concluídos (ordenados por data de criação)
                 </CardDescription>
               </div>
               {hasPermission('protocols:read') && (
-                <a href="/admin/protocolos">
-                  <Button variant="outline" size="sm">
-                    Ver Todos
-                    <ExternalLink className="h-4 w-4 ml-2" />
+                <a href="/admin/protocolos" className="shrink-0">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs sm:text-sm">
+                    <span className="hidden sm:inline">Ver Todos</span>
+                    <span className="sm:hidden">Ver Todos os Protocolos</span>
+                    <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
                   </Button>
                 </a>
               )}
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             {loadingProtocols ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
               </div>
             ) : pendingProtocols.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                <CheckCircle2 className="h-12 w-12 mx-auto mb-2 text-green-500" />
-                <p>Nenhum protocolo pendente no momento!</p>
+                <CheckCircle2 className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-green-500" />
+                <p className="text-sm sm:text-base">Nenhum protocolo pendente no momento!</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 sm:space-y-4">
                 {pendingProtocols.map((protocol) => {
                   const daysOld = protocol.createdAt
                     ? Math.floor((Date.now() - new Date(protocol.createdAt).getTime()) / (1000 * 60 * 60 * 24))
@@ -423,33 +423,33 @@ export default function AdminDashboard() {
                   return (
                     <div
                       key={protocol.id}
-                      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg transition-colors gap-3 ${
+                      className={`flex flex-col gap-3 p-3 sm:p-4 border rounded-lg transition-colors ${
                         lastRequestUpdate ? 'bg-amber-50 border-amber-300 hover:bg-amber-100' : 'hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2">
                           <a
                             href={`/admin/protocolos?search=${protocol.number}`}
-                            className="text-sm sm:text-base font-medium text-blue-600 hover:underline"
+                            className="text-sm sm:text-base font-medium text-blue-600 hover:underline shrink-0"
                           >
                             #{protocol.number}
                           </a>
                           {/* Badge de Prioridade */}
                           <Badge
                             variant="secondary"
-                            className={`border text-xs ${getPriorityBadgeClass(protocol.priority)}`}
+                            className={`border text-xs shrink-0 ${getPriorityBadgeClass(protocol.priority)}`}
                           >
                             {getPriorityIcon(protocol.priority)} {getPriorityLabel(protocol.priority)}
                           </Badge>
                           <Badge
                             variant="secondary"
-                            className={`text-xs ${statusColors[protocol.status as keyof typeof statusColors]}`}
+                            className={`text-xs shrink-0 ${statusColors[protocol.status as keyof typeof statusColors]}`}
                           >
                             {statusLabels[protocol.status as keyof typeof statusLabels]}
                           </Badge>
                           {lastRequestUpdate && (
-                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300 text-xs">
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300 text-xs shrink-0">
                               ⚠️ Agilidade Cobrada
                             </Badge>
                           )}
@@ -459,20 +459,20 @@ export default function AdminDashboard() {
                             </span>
                           )}
                         </div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{protocol.title}</h4>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-gray-500">
-                          <span>
-                            <strong>Cidadão:</strong> {protocol.citizen?.name || 'N/A'}
+                        <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-2 line-clamp-2 break-words">{protocol.title}</h4>
+                        <div className="flex flex-col gap-1 text-xs sm:text-sm text-gray-500">
+                          <span className="truncate">
+                            <strong className="text-gray-700">Cidadão:</strong> {protocol.citizen?.name || 'N/A'}
                           </span>
-                          <span>
-                            <strong>Setor:</strong> {protocol.department?.name || 'Não definido'}
+                          <span className="truncate">
+                            <strong className="text-gray-700">Setor:</strong> {protocol.department?.name || 'Não definido'}
                           </span>
-                          <span>
-                            <strong>Responsável:</strong> {protocol.assignedUser?.name || 'Não atribuído'}
+                          <span className="truncate">
+                            <strong className="text-gray-700">Responsável:</strong> {protocol.assignedUser?.name || 'Não atribuído'}
                           </span>
                         </div>
                         {lastRequestUpdate && (
-                          <div className="mt-2 text-xs text-amber-700 font-medium">
+                          <div className="mt-2 text-xs sm:text-sm text-amber-700 font-medium">
                             Última cobrança: há {requestUpdateDaysAgo > 0
                               ? `${requestUpdateDaysAgo} ${requestUpdateDaysAgo === 1 ? 'dia' : 'dias'}`
                               : requestUpdateHoursAgo > 0
@@ -487,9 +487,9 @@ export default function AdminDashboard() {
                         variant="outline"
                         onClick={() => requestUpdate(protocol.id)}
                         disabled={requestingUpdate === protocol.id}
-                        className="border-red-600 text-red-600 hover:bg-red-50 w-full sm:w-auto shrink-0"
+                        className="border-red-600 text-red-600 hover:bg-red-50 active:bg-red-100 w-full shrink-0"
                       >
-                        <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5" />
                         <span className="text-xs sm:text-sm">{requestingUpdate === protocol.id ? 'Enviando...' : 'Cobrar Agilidade'}</span>
                       </Button>
                     </div>
