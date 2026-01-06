@@ -336,18 +336,18 @@ export class UltraZendSMTPServer {
       });
 
       if (!emailServer) {
-        logger.warn('Email server not found or inactive', { hostname: this.config.hostname });
-        // Continuar mesmo assim para não rejeitar o email
+        logger.error('Email server not found or inactive', { hostname: this.config.hostname });
+        throw new Error(`Email server ${this.config.hostname} not found or inactive`);
       }
 
       // Tentar encontrar usuário destinatário
-      const emailUser = emailServer ? await prisma.emailUser.findFirst({
+      const emailUser = await prisma.emailUser.findFirst({
         where: {
           emailServerId: emailServer.id,
           email: toEmail,
           isActive: true
         }
-      }) : null;
+      });
 
       // Processar anexos
       const attachments = parsedEmail.attachments?.map(att => ({
@@ -392,7 +392,7 @@ export class UltraZendSMTPServer {
           attachments: attachments.length > 0 ? attachments : null,
           size: this.calculateEmailSize(parsedEmail),
           receivedAt: parsedEmail.date || new Date(),
-          emailServerId: emailServer?.id || '',
+          emailServerId: emailServer.id,
           emailUserId: emailUser?.id || null,
           isRead: false,
           isStarred: false,
