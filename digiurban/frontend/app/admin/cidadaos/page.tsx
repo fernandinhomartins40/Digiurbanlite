@@ -46,7 +46,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface Citizen {
   id: string
@@ -387,18 +387,18 @@ export default function CidadaosPage() {
           </Tabs>
         </CardHeader>
 
-        <CardContent className="p-0 sm:p-6">
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="whitespace-nowrap">Cidadão</TableHead>
-                  <TableHead className="whitespace-nowrap">CPF</TableHead>
-                  <TableHead className="whitespace-nowrap">Contato</TableHead>
-                  <TableHead className="whitespace-nowrap">Origem</TableHead>
-                  <TableHead className="whitespace-nowrap">Verificação</TableHead>
-                  <TableHead className="whitespace-nowrap">Data</TableHead>
-                  <TableHead className="text-right whitespace-nowrap">Ações</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm">Cidadão</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm hidden md:table-cell">CPF</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm hidden lg:table-cell">Contato</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm hidden xl:table-cell">Origem</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm">Verificação</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm hidden sm:table-cell">Data</TableHead>
+                  <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Ações</TableHead>
                 </TableRow>
               </TableHeader>
             <TableBody>
@@ -420,74 +420,84 @@ export default function CidadaosPage() {
               ) : (
                 filteredCitizens.map((citizen) => (
                   <TableRow key={citizen.id} className={!citizen.isActive ? 'opacity-50' : ''}>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell className="py-3 px-2 sm:px-4">
                       <div>
-                        <div className="font-medium">{citizen.name}</div>
+                        <div className="font-medium text-sm sm:text-base">{citizen.name}</div>
                         <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                          <MapPin className="h-3 w-3" />
-                          {formatAddress(citizen.address)}
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate max-w-[150px] sm:max-w-none">{formatAddress(citizen.address)}</span>
+                        </div>
+                        {/* Mostrar CPF em mobile abaixo do nome */}
+                        <div className="text-xs text-muted-foreground mt-1 md:hidden">
+                          <span className="font-mono">{citizen.cpf}</span>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <span className="font-mono text-sm">{citizen.cpf}</span>
+                    <TableCell className="hidden md:table-cell py-3 px-2 sm:px-4">
+                      <span className="font-mono text-xs sm:text-sm">{citizen.cpf}</span>
                     </TableCell>
-                    <TableCell>
-                      <div className="space-y-1 text-sm">
+                    <TableCell className="hidden lg:table-cell py-3 px-2 sm:px-4">
+                      <div className="space-y-1 text-xs sm:text-sm">
                         <div className="flex items-center gap-1">
-                          <Mail className="h-3 w-3 text-muted-foreground" />
-                          {citizen.email}
+                          <Mail className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                          <span className="truncate max-w-[200px]">{citizen.email}</span>
                         </div>
                         {citizen.phone && (
                           <div className="flex items-center gap-1">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
+                            <Phone className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                             {citizen.phone}
                           </div>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden xl:table-cell py-3 px-2 sm:px-4">
                       <div className="flex items-center gap-1 text-xs">
                         {getSourceIcon(citizen.registrationSource)}
                         {getSourceLabel(citizen.registrationSource)}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-3 px-2 sm:px-4">
                       <div className="flex flex-col gap-1">
                         {citizen.verificationStatus === 'VERIFIED' ? (
-                          <Badge className="bg-blue-100 text-blue-800">
+                          <Badge className="bg-blue-100 text-blue-800 text-xs whitespace-nowrap">
                             <ShieldCheck className="h-3 w-3 mr-1" />
-                            Prata
+                            <span className="hidden sm:inline">Prata</span>
+                            <span className="sm:hidden">P</span>
                           </Badge>
                         ) : citizen.verificationStatus === 'PENDING' ? (
-                          <Badge className="bg-yellow-100 text-yellow-800">
+                          <Badge className="bg-yellow-100 text-yellow-800 text-xs whitespace-nowrap">
                             <Clock className="h-3 w-3 mr-1" />
-                            Bronze
+                            <span className="hidden sm:inline">Bronze</span>
+                            <span className="sm:hidden">B</span>
                           </Badge>
                         ) : citizen.verificationStatus === 'REJECTED' ? (
-                          <Badge className="bg-red-100 text-red-800">
+                          <Badge className="bg-red-100 text-red-800 text-xs whitespace-nowrap">
                             <XCircle className="h-3 w-3 mr-1" />
-                            Rejeitado
+                            <span className="hidden sm:inline">Rejeitado</span>
+                            <span className="sm:hidden">R</span>
                           </Badge>
                         ) : (
-                          <Badge variant="outline">-</Badge>
+                          <Badge variant="outline" className="text-xs">-</Badge>
                         )}
                         {citizen._count?.documents && citizen._count.documents > 0 && (
-                          <Badge variant="destructive" className="text-xs">
+                          <Badge variant="destructive" className="text-xs whitespace-nowrap">
                             <FileText className="h-3 w-3 mr-1" />
-                            {citizen._count.documents} doc{citizen._count.documents > 1 ? 's' : ''} pendente{citizen._count.documents > 1 ? 's' : ''}
+                            <span className="hidden sm:inline">
+                              {citizen._count.documents} doc{citizen._count.documents > 1 ? 's' : ''} pendente{citizen._count.documents > 1 ? 's' : ''}
+                            </span>
+                            <span className="sm:hidden">{citizen._count.documents}</span>
                           </Badge>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell py-3 px-2 sm:px-4">
                       <div className="flex items-center text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3 mr-1" />
+                        <Calendar className="h-3 w-3 mr-1 flex-shrink-0" />
                         {new Date(citizen.createdAt).toLocaleDateString('pt-BR')}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                    <TableCell className="text-right py-3 px-2 sm:px-4">
+                      <div className="flex items-center justify-end gap-1 sm:gap-2">
                         {/* Botões de ação rápida para pendentes */}
                         {citizen.verificationStatus === 'PENDING' && canVerify && (
                           <>
@@ -497,10 +507,10 @@ export default function CidadaosPage() {
                                 setSelectedCitizen(citizen)
                                 setShowApproveDialog(true)
                               }}
-                              className="bg-green-600 hover:bg-green-700"
+                              className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
                             >
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Aprovar
+                              <CheckCircle className="h-3 w-3 sm:mr-1" />
+                              <span className="hidden sm:inline">Aprovar</span>
                             </Button>
                             <Button
                               size="sm"
@@ -509,10 +519,10 @@ export default function CidadaosPage() {
                                 setSelectedCitizen(citizen)
                                 setShowRejectDialog(true)
                               }}
-                              className="border-red-500 text-red-600 hover:bg-red-50"
+                              className="border-red-500 text-red-600 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-3"
                             >
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Rejeitar
+                              <XCircle className="h-3 w-3 sm:mr-1" />
+                              <span className="hidden sm:inline">Rejeitar</span>
                             </Button>
                           </>
                         )}
@@ -520,18 +530,18 @@ export default function CidadaosPage() {
                         {/* Menu de ações */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel className="text-xs sm:text-sm">Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleViewCitizen(citizen.id)}>
+                            <DropdownMenuItem onClick={() => handleViewCitizen(citizen.id)} className="text-xs sm:text-sm">
                               <Eye className="h-4 w-4 mr-2" />
                               Ver Detalhes
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleViewProtocols(citizen.id)}>
+                            <DropdownMenuItem onClick={() => handleViewProtocols(citizen.id)} className="text-xs sm:text-sm">
                               <FileText className="h-4 w-4 mr-2" />
                               Ver Protocolos
                             </DropdownMenuItem>
