@@ -150,8 +150,8 @@ router.get('/stats', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
       prisma.email.count({
         where: {
           emailServerId: emailServer.id,
-          status: 'BOUNCED',
-          bouncedAt: { gte: currentMonth }
+          bounced: true,
+          sentAt: { gte: currentMonth }
         }
       })
     ]);
