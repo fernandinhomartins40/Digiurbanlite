@@ -37,9 +37,10 @@ export class EmailSenderService {
         host: process.env.SMTP_HOST || 'ultrazend-smtp',
         port: parseInt(process.env.SMTP_PORT || '587'),
         secure: false, // STARTTLS
-        // ⚠️ Autenticação desabilitada para comunicação interna Docker
-        // O ultrazend-smtp confia no backend DigiUrban na mesma rede Docker
-        // Em produção, considere usar tokens ou certificados TLS mútuo
+        // ⚠️ SEGURANÇA: Comunicação interna sem autenticação
+        // OK porque: containers na mesma rede Docker privada (172.20.0.0/16)
+        // IMPORTANTE: Porta 587 NÃO deve ser exposta publicamente, apenas via proxy
+        // TODO: Considerar porta 2525 exclusiva para backend (sem autenticação)
         tls: {
           rejectUnauthorized: false // Aceitar certificados self-signed em dev
         }

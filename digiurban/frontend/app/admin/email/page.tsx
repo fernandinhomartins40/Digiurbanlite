@@ -53,7 +53,11 @@ interface EmailService {
   server?: {
     hostname: string;
     isActive: boolean;
-    maxEmailsPerMonth: number;
+    subscription: {
+      planConfig: {
+        maxEmailsPerMonth: number;
+      }
+    }
   };
   accounts?: any[];
 }

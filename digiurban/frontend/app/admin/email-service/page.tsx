@@ -69,16 +69,22 @@ interface EmailConfig {
   plan: {
     id: string
     name: string
+    code: string
     price: number
     emailsPerMonth: number
+    maxAccounts: number
   }
   server?: {
     hostname: string
     isActive: boolean
-    maxEmailsPerMonth: number
+    subscription: {
+      planConfig: {
+        maxEmailsPerMonth: number
+      }
+    }
   }
   domains: any[]
-  statistics: any[]
+  accounts: any[]
   usage: {
     currentMonth: number
   }
