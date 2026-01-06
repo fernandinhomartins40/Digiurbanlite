@@ -61,6 +61,17 @@ jobs:
             cd $APP_DIR
             docker-compose -f docker-compose.vps.yml down || true
 
+            # Remover containers órfãos que possam estar em conflito
+            echo "Removendo containers órfãos..."
+            docker stop ultrazend-smtp 2>/dev/null || true
+            docker rm ultrazend-smtp 2>/dev/null || true
+            docker stop ultrazend-messages 2>/dev/null || true
+            docker rm ultrazend-messages 2>/dev/null || true
+            docker stop digiurban-postgres 2>/dev/null || true
+            docker rm digiurban-postgres 2>/dev/null || true
+            docker stop digiurban-redis 2>/dev/null || true
+            docker rm digiurban-redis 2>/dev/null || true
+
             echo "Verificando código sincronizado..."
             ls -la
 
