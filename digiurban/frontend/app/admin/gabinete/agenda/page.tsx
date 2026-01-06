@@ -340,56 +340,56 @@ export default function AgendaPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Agenda Executiva</h1>
-          <p className="text-gray-600 mt-1">Gerencie compromissos oficiais e eventos do gabinete</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Agenda Executiva</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">Gerencie compromissos oficiais e eventos do gabinete</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToICS}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
+          <Button variant="outline" onClick={exportToICS} className="flex-1 sm:flex-none">
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Exportar</span>
           </Button>
-          <Button onClick={() => { setSelectedEvent(null); setModalOpen(true) }}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Evento
+          <Button onClick={() => { setSelectedEvent(null); setModalOpen(true) }} className="flex-1 sm:flex-none">
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Novo Evento</span>
           </Button>
         </div>
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total de Eventos</CardDescription>
-            <CardTitle className="text-3xl">{stats.total}</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Total de Eventos</CardDescription>
+            <CardTitle className="text-2xl sm:text-3xl">{stats.total}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Próximos Eventos</CardDescription>
-            <CardTitle className="text-3xl text-blue-600">{stats.proximosEventos}</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Próximos Eventos</CardDescription>
+            <CardTitle className="text-2xl sm:text-3xl text-blue-600">{stats.proximosEventos}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Realizados</CardDescription>
-            <CardTitle className="text-3xl text-green-600">{stats.porStatus.REALIZADO || 0}</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Realizados</CardDescription>
+            <CardTitle className="text-2xl sm:text-3xl text-green-600">{stats.porStatus.REALIZADO || 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Confirmados</CardDescription>
-            <CardTitle className="text-3xl text-purple-600">{stats.porStatus.CONFIRMADO || 0}</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Confirmados</CardDescription>
+            <CardTitle className="text-2xl sm:text-3xl text-purple-600">{stats.porStatus.CONFIRMADO || 0}</CardTitle>
           </CardHeader>
         </Card>
         <Card className={conflicts.length > 0 ? 'border-orange-500' : ''}>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1">
-              {conflicts.length > 0 && <AlertTriangle className="h-4 w-4 text-orange-500" />}
+            <CardDescription className="flex items-center gap-1 text-xs sm:text-sm">
+              {conflicts.length > 0 && <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />}
               Conflitos
             </CardDescription>
-            <CardTitle className={`text-3xl ${conflicts.length > 0 ? 'text-orange-600' : 'text-gray-600'}`}>
+            <CardTitle className={`text-2xl sm:text-3xl ${conflicts.length > 0 ? 'text-orange-600' : 'text-gray-600'}`}>
               {conflicts.length}
             </CardTitle>
           </CardHeader>
@@ -398,95 +398,100 @@ export default function AgendaPage() {
 
       {/* Filtros e Controles */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === 'calendar' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('calendar')}
-              >
-                <Grid className="h-4 w-4 mr-2" />
-                Calendário
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4 mr-2" />
-                Lista
-              </Button>
-            </div>
-
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar eventos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-md"
-              />
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filtros
-              {(filterTipo !== 'all' || filterStatus !== 'all') && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
-                  !
-                </Badge>
-              )}
-            </Button>
-          </div>
-
-          {showFilters && (
-            <div className="mt-4 pt-4 border-t grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Tipo de Evento</label>
-                <Select value={filterTipo} onValueChange={setFilterTipo}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os tipos</SelectItem>
-                    {TIPOS_EVENTO.map(tipo => (
-                      <SelectItem key={tipo} value={tipo}>
-                        {TIPOS_LABELS[tipo]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Status</label>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os status</SelectItem>
-                    {STATUS_OPTIONS.map(status => (
-                      <SelectItem key={status.value} value={status.value}>
-                        {status.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-end">
-                <Button variant="outline" size="sm" onClick={clearFilters}>
-                  <X className="h-4 w-4 mr-2" />
-                  Limpar Filtros
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={viewMode === 'calendar' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('calendar')}
+                  className="flex-1 sm:flex-none"
+                >
+                  <Grid className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Calendário</span>
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="flex-1 sm:flex-none"
+                >
+                  <List className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Lista</span>
                 </Button>
               </div>
+
+              <div className="flex-1">
+                <Input
+                  placeholder="Buscar eventos..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:max-w-md"
+                />
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full sm:w-auto"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filtros
+                {(filterTipo !== 'all' || filterStatus !== 'all') && (
+                  <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+                    !
+                  </Badge>
+                )}
+              </Button>
             </div>
-          )}
+
+            {showFilters && (
+              <div className="pt-4 border-t grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Tipo de Evento</label>
+                  <Select value={filterTipo} onValueChange={setFilterTipo}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os tipos</SelectItem>
+                      {TIPOS_EVENTO.map(tipo => (
+                        <SelectItem key={tipo} value={tipo}>
+                          {TIPOS_LABELS[tipo]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Status</label>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os status</SelectItem>
+                      {STATUS_OPTIONS.map(status => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-end">
+                  <Button variant="outline" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
+                    <X className="h-4 w-4 mr-2" />
+                    Limpar Filtros
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -504,48 +509,51 @@ export default function AgendaPage() {
       {/* Visualização de Calendário */}
       {viewMode === 'calendar' ? (
         <Card>
-          <CardContent className="pt-6">
-            <Calendar
-              localizer={localizer}
-              events={calendarEvents}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 700 }}
-              view={calendarView}
-              onView={setCalendarView}
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              selectable
-              culture="pt-BR"
-              messages={{
-                next: 'Próximo',
-                previous: 'Anterior',
-                today: 'Hoje',
-                month: 'Mês',
-                week: 'Semana',
-                day: 'Dia',
-                agenda: 'Agenda',
-                date: 'Data',
-                time: 'Hora',
-                event: 'Evento',
-                noEventsInRange: 'Não há eventos neste período',
-                showMore: (total: number) => `+ ${total} mais`
-              }}
-              eventPropGetter={(event: CalendarEvent) => {
-                const agendaEvent = event.resource as AgendaEvent
-                const backgroundColor = TIPO_COLORS[agendaEvent.tipo] || '#6b7280'
-                const opacity = agendaEvent.status === 'CANCELADO' ? 0.5 : 1
+          <CardContent className="pt-4 sm:pt-6 overflow-x-auto">
+            <div className="min-w-[600px]">
+              <Calendar
+                localizer={localizer}
+                events={calendarEvents}
+                startAccessor="start"
+                endAccessor="end"
+                style={{ height: 500 }}
+                className="sm:!h-[600px] lg:!h-[700px]"
+                view={calendarView}
+                onView={setCalendarView}
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+                selectable
+                culture="pt-BR"
+                messages={{
+                  next: 'Próximo',
+                  previous: 'Anterior',
+                  today: 'Hoje',
+                  month: 'Mês',
+                  week: 'Semana',
+                  day: 'Dia',
+                  agenda: 'Agenda',
+                  date: 'Data',
+                  time: 'Hora',
+                  event: 'Evento',
+                  noEventsInRange: 'Não há eventos neste período',
+                  showMore: (total: number) => `+ ${total} mais`
+                }}
+                eventPropGetter={(event: CalendarEvent) => {
+                  const agendaEvent = event.resource as AgendaEvent
+                  const backgroundColor = TIPO_COLORS[agendaEvent.tipo] || '#6b7280'
+                  const opacity = agendaEvent.status === 'CANCELADO' ? 0.5 : 1
 
-                return {
-                  style: {
-                    backgroundColor,
-                    opacity,
-                    border: 'none',
-                    borderRadius: '4px'
+                  return {
+                    style: {
+                      backgroundColor,
+                      opacity,
+                      border: 'none',
+                      borderRadius: '4px'
+                    }
                   }
-                }
-              }}
-            />
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -567,69 +575,76 @@ export default function AgendaPage() {
 
                 return (
                   <Card key={event.id} className={hasConflict ? 'border-orange-500' : ''}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
+                    <CardHeader className="pb-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <div
-                              className="w-3 h-3 rounded-full"
+                              className="w-3 h-3 rounded-full flex-shrink-0"
                               style={{ backgroundColor: TIPO_COLORS[event.tipo] }}
                             />
-                            <CardTitle>{event.titulo}</CardTitle>
+                            <CardTitle className="text-base sm:text-lg break-words">{event.titulo}</CardTitle>
                             {hasConflict && (
-                              <Badge variant="destructive" className="flex items-center gap-1">
+                              <Badge variant="destructive" className="flex items-center gap-1 text-xs">
                                 <AlertTriangle className="h-3 w-3" />
                                 Conflito
                               </Badge>
                             )}
                           </div>
-                          <CardDescription>
+                          <CardDescription className="text-xs sm:text-sm">
                             {format(new Date(event.dataHoraInicio), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                             {' - '}
                             {format(new Date(event.dataHoraFim), "HH:mm", { locale: ptBR })}
                           </CardDescription>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 sm:flex-shrink-0">
                           {event.status !== 'REALIZADO' && event.status !== 'CANCELADO' && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleMarkRealized(event.id)}
                               title="Marcar como realizado"
+                              className="flex-1 sm:flex-none"
                             >
                               <Check className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button size="sm" variant="outline" onClick={() => { setSelectedEvent(event); setModalOpen(true) }}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { setSelectedEvent(event); setModalOpen(true) }}
+                            className="flex-1 sm:flex-none"
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="destructive"
                             onClick={() => handleDelete(event.id)}
+                            className="flex-1 sm:flex-none"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">Tipo:</span>
-                          <Badge variant="outline">{TIPOS_LABELS[event.tipo]}</Badge>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs sm:text-sm font-medium">Tipo:</span>
+                          <Badge variant="outline" className="text-xs">{TIPOS_LABELS[event.tipo]}</Badge>
                         </div>
                         {event.descricao && (
-                          <p className="text-sm"><strong>Descrição:</strong> {event.descricao}</p>
+                          <p className="text-xs sm:text-sm break-words"><strong>Descrição:</strong> {event.descricao}</p>
                         )}
                         {event.local && (
-                          <p className="text-sm"><strong>Local:</strong> {event.local}</p>
+                          <p className="text-xs sm:text-sm break-words"><strong>Local:</strong> {event.local}</p>
                         )}
                         {event.participantes && (
-                          <p className="text-sm"><strong>Participantes:</strong> {event.participantes}</p>
+                          <p className="text-xs sm:text-sm break-words"><strong>Participantes:</strong> {event.participantes}</p>
                         )}
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium">Status:</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs sm:text-sm font-medium">Status:</span>
                           <Badge className={
                             event.status === 'REALIZADO' ? 'bg-green-100 text-green-800 hover:bg-green-100' :
                             event.status === 'CONFIRMADO' ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' :
@@ -640,7 +655,7 @@ export default function AgendaPage() {
                           </Badge>
                         </div>
                         {event.createdBy && (
-                          <p className="text-xs text-gray-500">Criado por: {event.createdBy.name}</p>
+                          <p className="text-xs text-gray-500 break-words">Criado por: {event.createdBy.name}</p>
                         )}
                       </div>
                     </CardContent>
