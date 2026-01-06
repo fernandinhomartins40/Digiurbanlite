@@ -315,21 +315,21 @@ Senha: ${credentials.password}`
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Server className="h-6 w-6" />
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Server className="h-5 w-5 md:h-6 md:w-6" />
             Serviço de Email Próprio
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             Gerencie seu servidor de email municipal independente
           </p>
         </div>
 
         {emailConfig?.hasEmailService && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="default" className="bg-green-100 text-green-800">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               Serviço Ativo
@@ -343,28 +343,30 @@ Senha: ${credentials.password}`
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(value: any) => setActiveTab(value)}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="plans" className="flex items-center gap-2">
-            <Crown className="h-4 w-4" />
-            Planos
-          </TabsTrigger>
-          <TabsTrigger value="domains" disabled={!emailConfig?.hasEmailService}>
-            <Globe className="h-4 w-4 mr-2" />
-            Domínios
-          </TabsTrigger>
-          <TabsTrigger value="stats" disabled={!emailConfig?.hasEmailService}>
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Estatísticas
-          </TabsTrigger>
-          <TabsTrigger value="templates" disabled={!emailConfig?.hasEmailService}>
-            <Mail className="h-4 w-4 mr-2" />
-            Templates
-          </TabsTrigger>
-          <TabsTrigger value="settings" disabled={!emailConfig?.hasEmailService}>
-            <Settings className="h-4 w-4 mr-2" />
-            Configurações
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex w-full md:grid md:grid-cols-5 min-w-max md:min-w-0">
+            <TabsTrigger value="plans" className="flex items-center gap-2">
+              <Crown className="h-4 w-4" />
+              <span className="hidden sm:inline">Planos</span>
+            </TabsTrigger>
+            <TabsTrigger value="domains" disabled={!emailConfig?.hasEmailService} className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              <span className="hidden sm:inline">Domínios</span>
+            </TabsTrigger>
+            <TabsTrigger value="stats" disabled={!emailConfig?.hasEmailService} className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Estatísticas</span>
+            </TabsTrigger>
+            <TabsTrigger value="templates" disabled={!emailConfig?.hasEmailService} className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              <span className="hidden sm:inline">Templates</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" disabled={!emailConfig?.hasEmailService} className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Configurações</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Tab: Planos */}
         <TabsContent value="plans" className="space-y-6">
@@ -499,7 +501,7 @@ Senha: ${credentials.password}`
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4">Configurar Domínio de Email</h2>
 
-            <div className="flex space-x-4 mb-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
               <div className="flex-1">
                 <Input
                   type="text"
@@ -508,7 +510,7 @@ Senha: ${credentials.password}`
                   onChange={(e) => setNewDomain(e.target.value)}
                 />
               </div>
-              <Button onClick={addDomain} disabled={!newDomain.trim()}>
+              <Button onClick={addDomain} disabled={!newDomain.trim()} className="sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar Domínio
               </Button>
@@ -540,7 +542,7 @@ Senha: ${credentials.password}`
               <div className="space-y-4">
                 {emailConfig?.domains.map((domain: any) => (
                   <Card key={domain.id} className="p-4 border-l-4 border-l-blue-500">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-semibold">{domain.domainName}</h3>
                         <p className="text-sm text-muted-foreground">
@@ -548,7 +550,7 @@ Senha: ${credentials.password}`
                         </p>
                       </div>
 
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <Badge variant={domain.isVerified ? 'default' : 'secondary'}>
                           {domain.isVerified ? (
                             <>
@@ -564,8 +566,8 @@ Senha: ${credentials.password}`
                         </Badge>
 
                         <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4 mr-2" />
-                          Ver DNS
+                          <Eye className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Ver DNS</span>
                         </Button>
                       </div>
                     </div>
@@ -679,11 +681,11 @@ Senha: ${credentials.password}`
             <div className="grid gap-4">
               {templates.map((template) => (
                 <Card key={template.id} className="p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="font-semibold">{template.name}</h3>
                       <p className="text-sm text-muted-foreground">{template.subject}</p>
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <Badge variant="outline">{template.category}</Badge>
                         <Badge variant={template.isActive ? 'default' : 'secondary'}>
                           {template.isActive ? 'Ativo' : 'Inativo'}
@@ -691,14 +693,14 @@ Senha: ${credentials.password}`
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Button size="sm" variant="outline">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Visualizar
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button size="sm" variant="outline" className="flex-1 sm:flex-none">
+                        <Eye className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Visualizar</span>
                       </Button>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar
+                      <Button size="sm" variant="outline" className="flex-1 sm:flex-none">
+                        <Edit className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Editar</span>
                       </Button>
                     </div>
                   </div>

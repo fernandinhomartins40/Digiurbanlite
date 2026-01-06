@@ -337,20 +337,20 @@ export default function IntegrationsManagement() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Link className="h-6 w-6" />
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Link className="h-5 w-5 md:h-6 md:w-6" />
             Integrações Externas
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             Configure integrações com sistemas governamentais e serviços externos
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="text-green-600">
             {integrations.filter(i => i.isActive).length} ativas
           </Badge>
@@ -470,7 +470,7 @@ export default function IntegrationsManagement() {
             <div className="grid gap-4">
               {integrations.map(integration => (
                 <Card key={integration.id} className="p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="flex items-center gap-3">
                       {getTypeIcon(integration.type)}
                       <div>
@@ -481,8 +481,8 @@ export default function IntegrationsManagement() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <Badge variant={integration.isActive ? 'default' : 'secondary'}>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                      <Badge variant={integration.isActive ? 'default' : 'secondary'} className="w-fit">
                         {integration.isActive ? 'Ativa' : 'Inativa'}
                       </Badge>
 
@@ -492,19 +492,20 @@ export default function IntegrationsManagement() {
                         </p>
                       )}
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => setTestDialog({ open: true, integration })}
+                          className="flex-1 sm:flex-none"
                         >
-                          <Activity className="h-4 w-4 mr-2" />
-                          Testar
+                          <Activity className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Testar</span>
                         </Button>
 
-                        <Button size="sm" variant="outline">
-                          <Settings className="h-4 w-4 mr-2" />
-                          Configurar
+                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none">
+                          <Settings className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Configurar</span>
                         </Button>
                       </div>
                     </div>
@@ -550,7 +551,7 @@ export default function IntegrationsManagement() {
 
             <div className="space-y-2">
               {logs.map(log => (
-                <div key={log.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                <div key={log.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 border rounded-lg">
                   <Badge
                     variant={log.status === 'success' ? 'default' : 'destructive'}
                     className="w-20 justify-center"
@@ -559,9 +560,9 @@ export default function IntegrationsManagement() {
                   </Badge>
 
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                       <span className="font-medium">{log.integration?.name}</span>
-                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground hidden sm:inline">•</span>
                       <span className="text-sm">{log.action}</span>
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -569,7 +570,7 @@ export default function IntegrationsManagement() {
                     </p>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <p className="text-xs text-muted-foreground">
                       {new Date(log.createdAt).toLocaleString('pt-BR')}
                     </p>

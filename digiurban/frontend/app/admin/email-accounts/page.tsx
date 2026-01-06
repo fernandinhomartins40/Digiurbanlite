@@ -215,34 +215,34 @@ export default function EmailAccountsPage() {
   const canCreateMore = currentAccountsCount < maxAccounts;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Mail className="w-8 h-8 text-blue-600" />
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
+            <Mail className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
             Contas de Email
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-sm md:text-base text-gray-600 mt-2">
             Gerenciar contas de email corporativo do município
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             onClick={() => window.location.href = '/admin/email-accounts/compose'}
             variant="outline"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-1 sm:flex-none"
           >
             <Send className="w-4 h-4" />
-            Enviar Email
+            <span className="hidden sm:inline">Enviar Email</span>
           </Button>
           <Button
             onClick={() => setCreateModalOpen(true)}
             disabled={!canCreateMore}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 flex-1 sm:flex-none"
           >
             <Plus className="w-4 h-4" />
-            Nova Conta
+            <span className="hidden sm:inline">Nova Conta</span>
           </Button>
         </div>
       </div>
@@ -345,28 +345,32 @@ export default function EmailAccountsPage() {
                     key={account.id}
                     className="border rounded-lg p-4 hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Mail className={`w-5 h-5 ${account.isActive ? 'text-blue-600' : 'text-gray-400'}`} />
-                          <div>
-                            <p className="font-semibold text-gray-900">{account.name}</p>
-                            <p className="text-sm text-gray-600">{account.email}</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+                          <div className="flex items-center gap-3">
+                            <Mail className={`w-5 h-5 ${account.isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                            <div>
+                              <p className="font-semibold text-gray-900">{account.name}</p>
+                              <p className="text-sm text-gray-600">{account.email}</p>
+                            </div>
                           </div>
-                          {account.isAdmin && (
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded">
-                              ADMIN
-                            </span>
-                          )}
-                          {account.isActive ? (
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
-                              ATIVA
-                            </span>
-                          ) : (
-                            <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
-                              INATIVA
-                            </span>
-                          )}
+                          <div className="flex gap-2 flex-wrap">
+                            {account.isAdmin && (
+                              <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded">
+                                ADMIN
+                              </span>
+                            )}
+                            {account.isActive ? (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
+                                ATIVA
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded">
+                                INATIVA
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Uso Mensal */}
@@ -411,7 +415,7 @@ export default function EmailAccountsPage() {
                       </div>
 
                       {/* Ações */}
-                      <div className="flex items-center gap-2 ml-4">
+                      <div className="grid grid-cols-2 lg:flex lg:items-center gap-2 lg:ml-4">
                         <Button
                           size="sm"
                           variant="outline"
@@ -419,10 +423,10 @@ export default function EmailAccountsPage() {
                             setSelectedAccount(account);
                             setUsageModalOpen(true);
                           }}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 justify-center"
                         >
                           <BarChart3 className="w-4 h-4" />
-                          Estatísticas
+                          <span className="hidden xl:inline">Estatísticas</span>
                         </Button>
                         <Button
                           size="sm"
@@ -431,28 +435,28 @@ export default function EmailAccountsPage() {
                             setSelectedAccount(account);
                             setEditModalOpen(true);
                           }}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 justify-center"
                         >
                           <Settings className="w-4 h-4" />
-                          Editar
+                          <span className="hidden xl:inline">Editar</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleResetPassword(account.id)}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 justify-center"
                         >
                           <Key className="w-4 h-4" />
-                          Resetar Senha
+                          <span className="hidden xl:inline">Resetar Senha</span>
                         </Button>
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleDeleteAccount(account.id)}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 justify-center"
                         >
                           <Trash2 className="w-4 h-4" />
-                          Desativar
+                          <span className="hidden xl:inline">Desativar</span>
                         </Button>
                       </div>
                     </div>
