@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,18 +12,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal'
-import { useToast } from '@/hooks/use-toast'
 import {
   Search,
   Filter,
   Eye,
-  UserPlus,
   MessageSquare,
   Calendar,
   AlertCircle,
   CheckCircle2,
-  Clock,
-  ArrowUpDown
+  Clock
 } from 'lucide-react'
 import { getPriorityLabel, getPriorityBadgeClass } from '@/lib/protocol-helpers'
 
@@ -91,7 +88,6 @@ export default function ProtocolsPage() {
   const router = useRouter()
   const { user, apiRequest, loading: authLoading } = useAdminAuth()
   const { hasPermission } = useAdminPermissions()
-  const { toast } = useToast()
   const [protocols, setProtocols] = useState<Protocol[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -319,16 +315,16 @@ export default function ProtocolsPage() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between mt-4">
-                      <div className="flex items-center space-x-4 text-xs text-gray-400">
-                        <span>Criado em {new Date(protocol.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <div className="mt-4">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-400">
+                        <span className="whitespace-nowrap">Criado em {new Date(protocol.createdAt).toLocaleDateString('pt-BR')}</span>
                         {protocol.dueDate && (
-                          <span className="flex items-center">
+                          <span className="flex items-center whitespace-nowrap">
                             <Calendar className="h-3 w-3 mr-1" />
                             Prazo: {new Date(protocol.dueDate).toLocaleDateString('pt-BR')}
                           </span>
                         )}
-                        <span className="flex items-center">
+                        <span className="flex items-center whitespace-nowrap">
                           <MessageSquare className="h-3 w-3 mr-1" />
                           {protocol._count?.history || 0} interações
                         </span>
@@ -399,11 +395,11 @@ export default function ProtocolsPage() {
               />
             </div>
 
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 sm:space-x-2">
+              <Button variant="outline" onClick={() => setShowAssignDialog(false)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
-              <Button onClick={assignProtocol} disabled={!selectedAssignee}>
+              <Button onClick={assignProtocol} disabled={!selectedAssignee} className="w-full sm:w-auto">
                 Atribuir
               </Button>
             </div>
@@ -454,9 +450,9 @@ export default function ProtocolsPage() {
               {/* Informações do Cidadão */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Cidadão</CardTitle>
+                  <CardTitle className="text-sm sm:text-base">Cidadão</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-2 text-sm sm:text-base">
                   <div>
                     <span className="font-medium">Nome:</span> {selectedProtocol.citizen?.name || 'N/A'}
                   </div>
@@ -466,7 +462,7 @@ export default function ProtocolsPage() {
                     </div>
                   )}
                   {selectedProtocol.citizen?.email && (
-                    <div>
+                    <div className="break-all">
                       <span className="font-medium">Email:</span> {selectedProtocol.citizen.email}
                     </div>
                   )}
@@ -474,27 +470,27 @@ export default function ProtocolsPage() {
               </Card>
 
               {/* Informações do Serviço e Departamento */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Serviço</CardTitle>
+                    <CardTitle className="text-sm sm:text-base">Serviço</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>{selectedProtocol.service?.name || 'N/A'}</p>
+                    <p className="text-sm sm:text-base">{selectedProtocol.service?.name || 'N/A'}</p>
                     {selectedProtocol.service?.category && (
-                      <p className="text-sm text-gray-500 mt-1">{selectedProtocol.service.category}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">{selectedProtocol.service.category}</p>
                     )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Departamento</CardTitle>
+                    <CardTitle className="text-sm sm:text-base">Departamento</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p>{selectedProtocol.department?.name || 'N/A'}</p>
+                    <p className="text-sm sm:text-base">{selectedProtocol.department?.name || 'N/A'}</p>
                     {selectedProtocol.department?.code && (
-                      <p className="text-sm text-gray-500 mt-1">Código: {selectedProtocol.department.code}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">Código: {selectedProtocol.department.code}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -504,14 +500,14 @@ export default function ProtocolsPage() {
               {selectedProtocol.assignedUser && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Atribuído a</CardTitle>
+                    <CardTitle className="text-sm sm:text-base">Atribuído a</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="space-y-2 text-sm sm:text-base">
                     <div>
                       <span className="font-medium">Nome:</span> {selectedProtocol.assignedUser.name}
                     </div>
                     {selectedProtocol.assignedUser.email && (
-                      <div>
+                      <div className="break-all">
                         <span className="font-medium">Email:</span> {selectedProtocol.assignedUser.email}
                       </div>
                     )}
@@ -527,33 +523,41 @@ export default function ProtocolsPage() {
               {/* Datas */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Cronologia</CardTitle>
+                  <CardTitle className="text-sm sm:text-base">Cronologia</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <div className="flex items-center text-sm">
-                    <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                    <span className="font-medium">Criado em:</span>
-                    <span className="ml-2">{new Date(selectedProtocol.createdAt).toLocaleString('pt-BR')}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm gap-1 sm:gap-0">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2 text-gray-400 shrink-0" />
+                      <span className="font-medium">Criado em:</span>
+                    </div>
+                    <span className="sm:ml-2">{new Date(selectedProtocol.createdAt).toLocaleString('pt-BR')}</span>
                   </div>
                   {selectedProtocol.updatedAt && (
-                    <div className="flex items-center text-sm">
-                      <Clock className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="font-medium">Atualizado em:</span>
-                      <span className="ml-2">{new Date(selectedProtocol.updatedAt).toLocaleString('pt-BR')}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm gap-1 sm:gap-0">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2 text-gray-400 shrink-0" />
+                        <span className="font-medium">Atualizado em:</span>
+                      </div>
+                      <span className="sm:ml-2">{new Date(selectedProtocol.updatedAt).toLocaleString('pt-BR')}</span>
                     </div>
                   )}
                   {selectedProtocol.dueDate && (
-                    <div className="flex items-center text-sm">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="font-medium">Prazo:</span>
-                      <span className="ml-2">{new Date(selectedProtocol.dueDate).toLocaleString('pt-BR')}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm gap-1 sm:gap-0">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2 text-gray-400 shrink-0" />
+                        <span className="font-medium">Prazo:</span>
+                      </div>
+                      <span className="sm:ml-2">{new Date(selectedProtocol.dueDate).toLocaleString('pt-BR')}</span>
                     </div>
                   )}
                   {selectedProtocol.concludedAt && (
-                    <div className="flex items-center text-sm">
-                      <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
-                      <span className="font-medium">Concluído em:</span>
-                      <span className="ml-2">{new Date(selectedProtocol.concludedAt).toLocaleString('pt-BR')}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center text-xs sm:text-sm gap-1 sm:gap-0">
+                      <div className="flex items-center">
+                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-600 shrink-0" />
+                        <span className="font-medium">Concluído em:</span>
+                      </div>
+                      <span className="sm:ml-2">{new Date(selectedProtocol.concludedAt).toLocaleString('pt-BR')}</span>
                     </div>
                   )}
                 </CardContent>
@@ -563,11 +567,11 @@ export default function ProtocolsPage() {
               {selectedProtocol._count && selectedProtocol._count.history > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Interações</CardTitle>
+                    <CardTitle className="text-sm sm:text-base">Interações</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center text-sm">
-                      <MessageSquare className="h-4 w-4 mr-2 text-gray-400" />
+                    <div className="flex items-center text-xs sm:text-sm">
+                      <MessageSquare className="h-4 w-4 mr-2 text-gray-400 shrink-0" />
                       <span>{selectedProtocol._count.history} interações registradas</span>
                     </div>
                   </CardContent>
@@ -577,7 +581,7 @@ export default function ProtocolsPage() {
           )}
 
           <div className="flex justify-end flex-shrink-0 border-t pt-4">
-            <Button variant="outline" onClick={() => setSelectedProtocol(null)}>
+            <Button variant="outline" onClick={() => setSelectedProtocol(null)} className="w-full sm:w-auto">
               Fechar
             </Button>
           </div>
