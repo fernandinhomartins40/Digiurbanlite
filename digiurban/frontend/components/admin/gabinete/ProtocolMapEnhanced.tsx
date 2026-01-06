@@ -270,6 +270,10 @@ export function ProtocolMapEnhanced({
   showHeatmap: initialHeatmap = false,
   height = '500px'
 }: ProtocolMapEnhancedProps) {
+  // Altura responsiva
+  const mapHeight = height === 'mobile-responsive'
+    ? 'h-[400px] md:h-[600px]'
+    : `h-[${height}]`
   const [isMounted, setIsMounted] = useState(false)
   const [showClustering, setShowClustering] = useState(initialClustering)
   const [showServiceCircles, setShowServiceCircles] = useState(true) // Novo: círculos de serviço
@@ -361,21 +365,21 @@ export function ProtocolMapEnhanced({
     : defaultCenter
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 md:space-y-4">
       {/* Controles */}
       <Card>
-        <CardContent className="p-4">
-          <div className="space-y-4">
+        <CardContent className="p-3 md:p-4">
+          <div className="space-y-3 md:space-y-4">
             {/* Alerta de Segurança */}
             {stats.alertCount > 0 && (
-              <div className="bg-red-50 border-2 border-red-500 rounded-lg p-3 animate-pulse">
+              <div className="bg-red-50 border-2 border-red-500 rounded-lg p-2 md:p-3 animate-pulse">
                 <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-red-600" />
-                  <span className="font-bold text-red-900">
+                  <Shield className="h-4 w-4 md:h-5 md:w-5 text-red-600 flex-shrink-0" />
+                  <span className="font-bold text-sm md:text-base text-red-900">
                     🚨 {stats.alertCount} ALERTA{stats.alertCount > 1 ? 'S' : ''} DE SEGURANÇA ATIVO{stats.alertCount > 1 ? 'S' : ''}
                   </span>
                 </div>
-                <p className="text-xs text-red-700 mt-1 ml-7">
+                <p className="text-xs text-red-700 mt-1 ml-6 md:ml-7">
                   Pedidos de ajuda prioritários - Ação imediata necessária
                 </p>
               </div>
@@ -383,29 +387,33 @@ export function ProtocolMapEnhanced({
 
             {/* Controles de Visualização */}
             <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-sm font-medium text-gray-700">Visualização:</span>
+              <span className="text-xs md:text-sm font-medium text-gray-700 w-full md:w-auto mb-1 md:mb-0">Visualização:</span>
               <Button
                 variant={showClustering ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowClustering(!showClustering)}
+                className="text-xs md:text-sm flex-1 md:flex-none"
               >
-                <MapPin className="h-4 w-4 mr-2" />
-                {showClustering ? 'Clustering Ativo' : 'Clustering Desativado'}
+                <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">{showClustering ? 'Clustering Ativo' : 'Clustering Desativado'}</span>
+                <span className="sm:hidden">Cluster</span>
               </Button>
               <Button
                 variant={showServiceCircles ? "default" : "outline"}
                 size="sm"
                 onClick={() => setShowServiceCircles(!showServiceCircles)}
+                className="text-xs md:text-sm flex-1 md:flex-none"
               >
-                <Flame className="h-4 w-4 mr-2" />
-                {showServiceCircles ? 'Áreas de Serviço Ativas' : 'Áreas de Serviço'}
+                <Flame className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">{showServiceCircles ? 'Áreas de Serviço Ativas' : 'Áreas de Serviço'}</span>
+                <span className="sm:hidden">Áreas</span>
               </Button>
             </div>
 
             {/* Filtros */}
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                <Filter className="h-4 w-4" />
+            <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:items-center">
+              <span className="text-xs md:text-sm font-medium text-gray-700 flex items-center gap-1">
+                <Filter className="h-3 w-3 md:h-4 md:w-4" />
                 Filtros:
               </span>
 
@@ -413,7 +421,7 @@ export function ProtocolMapEnhanced({
               <select
                 value={selectedCategory || ''}
                 onChange={(e) => setSelectedCategory(e.target.value || null)}
-                className="text-sm border rounded px-2 py-1 font-medium"
+                className="text-xs md:text-sm border rounded px-2 py-1.5 md:py-1 font-medium w-full md:w-auto"
               >
                 <option value="">Todas as Categorias</option>
                 {Object.entries(stats.byCategory)
@@ -432,7 +440,7 @@ export function ProtocolMapEnhanced({
               <select
                 value={selectedStatus || ''}
                 onChange={(e) => setSelectedStatus(e.target.value || null)}
-                className="text-sm border rounded px-2 py-1"
+                className="text-xs md:text-sm border rounded px-2 py-1.5 md:py-1 w-full md:w-auto"
               >
                 <option value="">Todos os Status</option>
                 {Object.keys(stats.byStatus).map(status => (
@@ -446,7 +454,7 @@ export function ProtocolMapEnhanced({
               <select
                 value={selectedDepartment || ''}
                 onChange={(e) => setSelectedDepartment(e.target.value || null)}
-                className="text-sm border rounded px-2 py-1"
+                className="text-xs md:text-sm border rounded px-2 py-1.5 md:py-1 w-full md:w-auto"
               >
                 <option value="">Todas as Secretarias</option>
                 {Object.keys(stats.byDepartment).map(dept => (
@@ -466,6 +474,7 @@ export function ProtocolMapEnhanced({
                     setSelectedDepartment(null)
                     setSelectedCategory(null)
                   }}
+                  className="text-xs md:text-sm w-full md:w-auto"
                 >
                   Limpar Filtros
                 </Button>
@@ -473,9 +482,9 @@ export function ProtocolMapEnhanced({
             </div>
 
             {/* Legenda de Categorias */}
-            <div className="border-t pt-3">
+            <div className="border-t pt-2 md:pt-3">
               <p className="text-xs font-medium text-gray-700 mb-2">Legenda de Categorias:</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 md:gap-2">
                 {Object.entries(stats.byCategory)
                   .sort((a, b) => b[1] - a[1])
                   .map(([category, count]) => {
@@ -484,7 +493,7 @@ export function ProtocolMapEnhanced({
                       <Badge
                         key={category}
                         variant="secondary"
-                        className="cursor-pointer hover:opacity-80"
+                        className="cursor-pointer hover:opacity-80 text-xs"
                         style={{
                           backgroundColor: config.color + '20',
                           color: config.color,
@@ -494,7 +503,8 @@ export function ProtocolMapEnhanced({
                         onClick={() => setSelectedCategory(category === selectedCategory ? null : category)}
                       >
                         <span className="mr-1">{config.icon}</span>
-                        {config.label}: {count}
+                        <span className="hidden sm:inline">{config.label}: {count}</span>
+                        <span className="sm:hidden">{count}</span>
                       </Badge>
                     )
                   })}
@@ -502,17 +512,17 @@ export function ProtocolMapEnhanced({
             </div>
 
             {/* Estatísticas Rápidas */}
-            <div className="flex flex-wrap gap-2 border-t pt-3">
-              <Badge variant="secondary">
+            <div className="flex flex-wrap gap-1.5 md:gap-2 border-t pt-2 md:pt-3">
+              <Badge variant="secondary" className="text-xs">
                 <MapPin className="h-3 w-3 mr-1" />
                 {stats.total} protocolos
               </Badge>
-              <Badge variant="secondary">
+              <Badge variant="secondary" className="text-xs">
                 <TrendingUp className="h-3 w-3 mr-1" />
                 {stats.gpsCount} com GPS ({stats.gpsPercentage}%)
               </Badge>
               {stats.alertCount > 0 && (
-                <Badge variant="destructive" className="animate-pulse">
+                <Badge variant="destructive" className="animate-pulse text-xs">
                   <Shield className="h-3 w-3 mr-1" />
                   {stats.alertCount} Alertas de Segurança
                 </Badge>
@@ -523,7 +533,7 @@ export function ProtocolMapEnhanced({
       </Card>
 
       {/* Mapa */}
-      <div className="rounded-lg overflow-hidden border border-gray-200" style={{ height }}>
+      <div className={`rounded-lg overflow-hidden border border-gray-200 ${height === 'mobile-responsive' ? 'h-[400px] md:h-[600px]' : ''}`} style={height !== 'mobile-responsive' ? { height } : {}}>
         <MapContainer
           center={center}
           zoom={13}
@@ -592,7 +602,7 @@ export function ProtocolMapEnhanced({
                     icon={createServiceIcon(protocol.department?.name, isGPS)}
                   >
                     <Popup>
-                      <div className="p-2 min-w-[280px]">
+                      <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-2xl">{config.icon}</span>
                           <div>
@@ -683,7 +693,7 @@ export function ProtocolMapEnhanced({
                     icon={createServiceIcon(protocol.department?.name, isGPS)}
                   >
                     <Popup>
-                      <div className="p-2 min-w-[280px]">
+                      <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-2xl">{config.icon}</span>
                           <div>
@@ -751,17 +761,17 @@ export function ProtocolMapEnhanced({
 
       {/* Análise Estatística */}
       <Card>
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
+        <CardContent className="p-3 md:p-4">
+          <h3 className="font-semibold text-base md:text-lg mb-3 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
             Análise por Região e Categoria
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
             {/* Categorias Mais Solicitadas */}
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Categorias Mais Solicitadas</h4>
-              <div className="space-y-1">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <h4 className="text-xs md:text-sm font-medium text-gray-700 mb-2">Categorias Mais Solicitadas</h4>
+              <div className="space-y-1.5">
                 {Object.entries(stats.byCategory)
                   .sort((a, b) => b[1] - a[1])
                   .slice(0, 5)
@@ -771,11 +781,11 @@ export function ProtocolMapEnhanced({
                       <div key={category} className="flex justify-between items-center text-xs">
                         <span className="truncate flex-1 flex items-center gap-1">
                           <span>{config.icon}</span>
-                          <span>{config.label}</span>
+                          <span className="truncate">{config.label}</span>
                         </span>
                         <Badge
                           variant="secondary"
-                          className="ml-2"
+                          className="ml-2 shrink-0"
                           style={{ backgroundColor: config.color + '20', color: config.color }}
                         >
                           {count}
@@ -787,45 +797,45 @@ export function ProtocolMapEnhanced({
             </div>
 
             {/* Secretarias com Mais Demandas */}
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Secretarias com Mais Demandas</h4>
-              <div className="space-y-1">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <h4 className="text-xs md:text-sm font-medium text-gray-700 mb-2">Secretarias com Mais Demandas</h4>
+              <div className="space-y-1.5">
                 {Object.entries(stats.byDepartment)
                   .sort((a, b) => b[1] - a[1])
                   .slice(0, 5)
                   .map(([dept, count]) => (
                     <div key={dept} className="flex justify-between text-xs">
                       <span className="truncate flex-1">{dept}</span>
-                      <Badge variant="secondary" className="ml-2">{count}</Badge>
+                      <Badge variant="secondary" className="ml-2 shrink-0">{count}</Badge>
                     </div>
                   ))}
               </div>
             </div>
 
             {/* Precisão e Alertas */}
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Qualidade e Alertas</h4>
+            <div className="bg-gray-50 rounded-lg p-3">
+              <h4 className="text-xs md:text-sm font-medium text-gray-700 mb-2">Qualidade e Alertas</h4>
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span>Com GPS</span>
-                  <Badge variant="default">{stats.gpsCount} ({stats.gpsPercentage}%)</Badge>
+                  <Badge variant="default" className="shrink-0">{stats.gpsCount} ({stats.gpsPercentage}%)</Badge>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span>Sem GPS</span>
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="shrink-0">
                     {stats.total - stats.gpsCount} ({(100 - parseFloat(stats.gpsPercentage)).toFixed(1)}%)
                   </Badge>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-green-500"
+                    className="h-full bg-green-500 transition-all"
                     style={{ width: `${stats.gpsPercentage}%` }}
                   />
                 </div>
                 {stats.alertCount > 0 && (
                   <div className="flex justify-between text-xs mt-3 p-2 bg-red-50 rounded border border-red-200">
-                    <span className="font-medium text-red-900">🚨 Alertas Ativos</span>
-                    <Badge variant="destructive">{stats.alertCount}</Badge>
+                    <span className="font-medium text-red-900 truncate">🚨 Alertas Ativos</span>
+                    <Badge variant="destructive" className="shrink-0 ml-2">{stats.alertCount}</Badge>
                   </div>
                 )}
               </div>

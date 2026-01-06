@@ -50,10 +50,10 @@ export default function MapaDemandasPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-0">
       <div>
-        <h1 className="text-3xl font-bold">Mapa de Demandas</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl md:text-3xl font-bold">Mapa de Demandas</h1>
+        <p className="text-sm md:text-base text-gray-600 mt-1">
           Visualização geoespacial e análise de solicitações municipais
         </p>
       </div>
@@ -61,7 +61,7 @@ export default function MapaDemandasPage() {
       {/* Mapa Interativo com Análise Integrada */}
       <Suspense
         fallback={
-          <div className="bg-gray-100 h-[600px] rounded-lg flex items-center justify-center">
+          <div className="bg-gray-100 h-[400px] md:h-[600px] rounded-lg flex items-center justify-center">
             <Skeleton className="h-full w-full" />
           </div>
         }
@@ -70,7 +70,7 @@ export default function MapaDemandasPage() {
           protocols={protocols}
           showClustering={true}
           showHeatmap={false}
-          height="600px"
+          height="mobile-responsive"
         />
       </Suspense>
     </div>
