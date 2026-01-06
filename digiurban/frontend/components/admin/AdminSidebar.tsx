@@ -65,12 +65,12 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const { isOpen, isMobile, close } = useSidebar()
 
-  // Fechar sidebar ao mudar de rota em mobile
+  // Fechar sidebar ao mudar de rota em mobile (apenas quando já estiver aberta)
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile && isOpen) {
       close()
     }
-  }, [pathname, isMobile, close])
+  }, [pathname, isMobile, isOpen, close])
 
   if (!user) return null
 
