@@ -579,12 +579,30 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
     const { accountId, to, cc, bcc, subject, body, attachments } = req.body;
     const userId = req.user.id;
 
+    // Log de debug
+    console.log('📧 [EMAIL SEND] Request body:', JSON.stringify(req.body, null, 2));
+
     // Validar campos obrigatórios
     if (!accountId || !to || !subject || !body) {
+      console.error('❌ [EMAIL SEND] Validation failed:', {
+        hasAccountId: !!accountId,
+        hasTo: !!to,
+        hasSubject: !!subject,
+        hasBody: !!body,
+        receivedFields: Object.keys(req.body)
+      });
+
       return res.status(400).json({
         success: false,
         error: 'Dados incompletos',
-        message: 'accountId, to, subject e body são obrigatórios'
+        message: 'accountId, to, subject e body são obrigatórios',
+        debug: {
+          hasAccountId: !!accountId,
+          hasTo: !!to,
+          hasSubject: !!subject,
+          hasBody: !!body,
+          receivedFields: Object.keys(req.body)
+        }
       });
     }
 
