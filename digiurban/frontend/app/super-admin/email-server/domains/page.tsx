@@ -145,7 +145,7 @@ export default function EmailDomainsPage() {
       type: 'TXT',
       name: '_dmarc',  // Apenas o prefixo, sem o domínio
       value: dmarcValue,
-      status: 'pending',  // Será atualizado pela verificação DNS
+      status: domain.isVerified ? 'verified' : 'pending',  // Usar mesmo status dos outros registros
       description: 'Define o que fazer com emails que falham SPF/DKIM. Protege seu domínio contra falsificação (phishing).'
     });
 
