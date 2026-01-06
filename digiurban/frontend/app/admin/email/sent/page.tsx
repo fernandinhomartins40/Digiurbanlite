@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -14,14 +13,15 @@ import {
   XCircle,
   Clock,
   Search,
-  Filter,
-  Eye,
-  RotateCcw,
   Loader2,
   AlertCircle,
   TrendingUp,
-  MousePointerClick
+  MousePointerClick,
+  RefreshCw,
+  ChevronLeft,
+  User
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SentEmail {
   id: string;
@@ -40,12 +40,12 @@ interface SentEmail {
 }
 
 const statusConfig = {
-  QUEUED: { label: 'Na Fila', icon: Clock, color: 'text-gray-500', bg: 'bg-gray-100' },
-  SENDING: { label: 'Enviando', icon: Send, color: 'text-blue-500', bg: 'bg-blue-100' },
-  SENT: { label: 'Enviado', icon: Send, color: 'text-blue-600', bg: 'bg-blue-100' },
-  DELIVERED: { label: 'Entregue', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-100' },
-  FAILED: { label: 'Falhou', icon: XCircle, color: 'text-red-600', bg: 'bg-red-100' },
-  BOUNCED: { label: 'Rejeitado', icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-100' }
+  QUEUED: { label: 'Na Fila', icon: Clock, color: 'text-gray-600', bg: 'bg-gray-100', badge: 'bg-gray-500' },
+  SENDING: { label: 'Enviando', icon: Send, color: 'text-blue-600', bg: 'bg-blue-50', badge: 'bg-blue-500' },
+  SENT: { label: 'Enviado', icon: Send, color: 'text-blue-600', bg: 'bg-blue-50', badge: 'bg-blue-500' },
+  DELIVERED: { label: 'Entregue', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', badge: 'bg-green-500' },
+  FAILED: { label: 'Falhou', icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', badge: 'bg-red-500' },
+  BOUNCED: { label: 'Rejeitado', icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-50', badge: 'bg-orange-500' }
 };
 
 export default function SentEmailsPage() {
@@ -59,7 +59,6 @@ export default function SentEmailsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [selectedEmail, setSelectedEmail] = useState<SentEmail | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     fetchSentEmails();
@@ -73,22 +72,6 @@ export default function SentEmailsPage() {
     try {
       setLoading(true);
 
-      // Buscar servidor de email primeiro
-      const serverResponse = await apiRequest('/admin/email-service', {
-        method: 'GET'
-      });
-
-      if (!serverResponse?.hasEmailService) {
-        toast({
-          title: 'Serviço não ativado',
-          description: 'Configure o serviço de email primeiro',
-          variant: 'destructive'
-        });
-        router.push('/admin/email-service');
-        return;
-      }
-
-      // Buscar emails enviados
       const response = await apiRequest('/admin/email/sent', {
         method: 'GET'
       });
@@ -101,14 +84,12 @@ export default function SentEmailsPage() {
     } catch (error: any) {
       console.error('Error fetching sent emails:', error);
 
-      // Se a rota não existe ainda, mostrar mensagem amigável
       if (error.message?.includes('404')) {
         toast({
           title: 'Funcionalidade em desenvolvimento',
           description: 'A API de emails enviados está sendo implementada',
           variant: 'default'
         });
-        // Dados mockados para demonstração
         setEmails([]);
       } else {
         toast({
@@ -125,12 +106,10 @@ export default function SentEmailsPage() {
   const filterEmails = () => {
     let filtered = emails;
 
-    // Filtro por status
     if (statusFilter !== 'ALL') {
       filtered = filtered.filter(email => email.status === statusFilter);
     }
 
-    // Filtro por busca
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(email =>
@@ -143,9 +122,22 @@ export default function SentEmailsPage() {
     setFilteredEmails(filtered);
   };
 
-  const viewDetails = (email: SentEmail) => {
-    setSelectedEmail(email);
-    setShowDetails(true);
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    const diffInDays = diffInHours / 24;
+
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    } else if (diffInDays < 7) {
+      return date.toLocaleDateString('pt-BR', { weekday: 'short' });
+    } else if (date.getFullYear() === now.getFullYear()) {
+      return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+    } else {
+      return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
   };
 
   const getStats = () => {
@@ -163,7 +155,7 @@ export default function SentEmailsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">Carregando emails enviados...</p>
         </div>
       </div>
@@ -171,135 +163,118 @@ export default function SentEmailsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Emails Enviados</h1>
-          <p className="text-muted-foreground mt-2">
-            Histórico de emails enviados pelo sistema
-          </p>
+    <div className="h-[calc(100vh-120px)] flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b">
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">Enviados</h1>
+          <span className="text-sm text-muted-foreground">
+            {stats.total} email{stats.total !== 1 ? 's' : ''}
+          </span>
         </div>
-        <Button onClick={() => router.push('/admin/email/compose')}>
-          <Send className="mr-2 h-4 w-4" />
-          Novo Email
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={fetchSentEmails}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button onClick={() => router.push('/admin/email/compose')}>
+            <Mail className="mr-2 h-4 w-4" />
+            Escrever
+          </Button>
+        </div>
       </div>
 
-      {/* Cards de estatísticas */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-              <Mail className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Entregues</p>
-                <p className="text-2xl font-bold text-green-600">{stats.delivered}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Falharam</p>
-                <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
-              </div>
-              <XCircle className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Pendentes</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.pending}</p>
-              </div>
-              <Clock className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtros e busca */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-[300px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por destinatário, assunto..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="ALL">Todos os status</option>
-              <option value="DELIVERED">Entregues</option>
-              <option value="SENT">Enviados</option>
-              <option value="FAILED">Falharam</option>
-              <option value="BOUNCED">Rejeitados</option>
-              <option value="QUEUED">Na fila</option>
-            </select>
-
-            <Button variant="outline" onClick={fetchSentEmails}>
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Atualizar
-            </Button>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-4 gap-4 py-4 border-b">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <Mail className="h-5 w-5 text-blue-600" />
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <p className="text-sm text-muted-foreground">Total</p>
+            <p className="text-xl font-bold">{stats.total}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Entregues</p>
+            <p className="text-xl font-bold text-green-600">{stats.delivered}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+            <XCircle className="h-5 w-5 text-red-600" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Falharam</p>
+            <p className="text-xl font-bold text-red-600">{stats.failed}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+            <Clock className="h-5 w-5 text-yellow-600" />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Pendentes</p>
+            <p className="text-xl font-bold text-yellow-600">{stats.pending}</p>
+          </div>
+        </div>
+      </div>
 
-      {/* Lista de emails */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {filteredEmails.length} email{filteredEmails.length !== 1 ? 's' : ''}
-            {searchTerm || statusFilter !== 'ALL' ? ' (filtrado)' : ''}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      {/* Search and Filters */}
+      <div className="py-3 flex items-center gap-3 border-b">
+        <div className="relative flex-1 max-w-lg">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Pesquisar emails enviados..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-muted/50"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+        >
+          <option value="ALL">Todos</option>
+          <option value="DELIVERED">Entregues</option>
+          <option value="SENT">Enviados</option>
+          <option value="FAILED">Falharam</option>
+          <option value="BOUNCED">Rejeitados</option>
+          <option value="QUEUED">Na fila</option>
+        </select>
+      </div>
+
+      {/* Email List & Preview */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Email List */}
+        <div className={cn(
+          "border-r overflow-y-auto",
+          selectedEmail ? "w-[400px]" : "flex-1"
+        )}>
           {filteredEmails.length === 0 ? (
-            <div className="text-center py-12">
-              <Mail className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum email encontrado</h3>
-              <p className="text-muted-foreground mb-4">
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <Send className="h-16 w-16 text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">
+                {emails.length === 0 ? 'Nenhum email enviado' : 'Nenhum email encontrado'}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
                 {emails.length === 0
-                  ? 'Você ainda não enviou nenhum email'
-                  : 'Tente ajustar os filtros de busca'}
+                  ? 'Seus emails enviados aparecerão aqui'
+                  : 'Tente ajustar os filtros'}
               </p>
               {emails.length === 0 && (
                 <Button onClick={() => router.push('/admin/email/compose')}>
-                  <Send className="mr-2 h-4 w-4" />
-                  Enviar Primeiro Email
+                  <Mail className="mr-2 h-4 w-4" />
+                  Enviar Email
                 </Button>
               )}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y">
               {filteredEmails.map((email) => {
                 const config = statusConfig[email.status];
                 const StatusIcon = config.icon;
@@ -307,139 +282,172 @@ export default function SentEmailsPage() {
                 return (
                   <div
                     key={email.id}
-                    className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => viewDetails(email)}
+                    onClick={() => setSelectedEmail(email)}
+                    className={cn(
+                      "flex items-start gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors",
+                      selectedEmail?.id === email.id && "bg-muted"
+                    )}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}>
-                            <StatusIcon className="h-3 w-3" />
-                            {config.label}
-                          </span>
+                    {/* Status Indicator */}
+                    <div className={cn(
+                      "w-2 h-2 rounded-full mt-2 flex-shrink-0",
+                      config.badge
+                    )} />
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium truncate">
+                          {email.toEmail}
+                        </span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           {email.opens > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
-                              <TrendingUp className="h-3 w-3" />
-                              {email.opens} abertura{email.opens !== 1 ? 's' : ''}
+                            <span className="text-xs text-purple-600" title="Aberturas">
+                              <TrendingUp className="h-3.5 w-3.5 inline" /> {email.opens}
                             </span>
                           )}
                           {email.clicks > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                              <MousePointerClick className="h-3 w-3" />
-                              {email.clicks} click{email.clicks !== 1 ? 's' : ''}
+                            <span className="text-xs text-blue-600" title="Cliques">
+                              <MousePointerClick className="h-3.5 w-3.5 inline" /> {email.clicks}
                             </span>
                           )}
-                        </div>
-                        <h4 className="font-semibold truncate">{email.subject}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Para: {email.toEmail}
-                        </p>
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                          <span>De: {email.fromEmail}</span>
-                          <span>•</span>
-                          <span>
-                            {email.sentAt
-                              ? new Date(email.sentAt).toLocaleString('pt-BR')
-                              : new Date(email.createdAt).toLocaleString('pt-BR')}
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(email.sentAt || email.createdAt)}
                           </span>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    {email.errorMessage && (
-                      <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-                        <strong>Erro:</strong> {email.errorMessage}
+                      <div className="text-sm truncate font-medium">
+                        {email.subject || '(Sem assunto)'}
                       </div>
-                    )}
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs",
+                          config.bg,
+                          config.color
+                        )}>
+                          <StatusIcon className="h-3 w-3" />
+                          {config.label}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Modal de detalhes (simplificado) */}
-      {showDetails && selectedEmail && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>Detalhes do Email</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setShowDetails(false)}>
-                  <XCircle className="h-4 w-4" />
+        {/* Email Detail */}
+        {selectedEmail && (
+          <div className="flex-1 flex flex-col overflow-hidden bg-white">
+            {/* Email Header */}
+            <div className="border-b p-6 space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h2 className="text-2xl font-semibold mb-4">{selectedEmail.subject || '(Sem assunto)'}</h2>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                      {selectedEmail.toEmail.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">Para:</span>
+                        <span className="text-muted-foreground">{selectedEmail.toEmail}</span>
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        De: {selectedEmail.fromEmail}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      {new Date(selectedEmail.sentAt || selectedEmail.createdAt).toLocaleString('pt-BR', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSelectedEmail(null)}
+                >
+                  <ChevronLeft className="h-5 w-5" />
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Status</label>
-                <div className="mt-1">
-                  <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${statusConfig[selectedEmail.status].bg} ${statusConfig[selectedEmail.status].color}`}>
+
+              {/* Status & Metrics */}
+              <div className="flex gap-4">
+                <div className={cn(
+                  "flex items-center gap-2 px-3 py-2 rounded-lg",
+                  statusConfig[selectedEmail.status].bg
+                )}>
+                  {(() => {
+                    const StatusIcon = statusConfig[selectedEmail.status].icon;
+                    return <StatusIcon className={cn("h-4 w-4", statusConfig[selectedEmail.status].color)} />;
+                  })()}
+                  <span className={cn("text-sm font-medium", statusConfig[selectedEmail.status].color)}>
                     {statusConfig[selectedEmail.status].label}
                   </span>
                 </div>
-              </div>
 
-              <div>
-                <label className="text-sm font-medium">De</label>
-                <p className="mt-1">{selectedEmail.fromEmail}</p>
-              </div>
+                {selectedEmail.opens > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-50">
+                    <TrendingUp className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-600">
+                      {selectedEmail.opens} abertura{selectedEmail.opens !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
 
-              <div>
-                <label className="text-sm font-medium">Para</label>
-                <p className="mt-1">{selectedEmail.toEmail}</p>
+                {selectedEmail.clicks > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50">
+                    <MousePointerClick className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-600">
+                      {selectedEmail.clicks} click{selectedEmail.clicks !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div>
-                <label className="text-sm font-medium">Assunto</label>
-                <p className="mt-1 font-semibold">{selectedEmail.subject}</p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Message ID</label>
-                <p className="mt-1 text-xs font-mono text-muted-foreground">{selectedEmail.messageId}</p>
-              </div>
+            {/* Email Details */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {selectedEmail.errorMessage && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-red-900 mb-1">Erro no Envio</h4>
+                      <p className="text-sm text-red-800">{selectedEmail.errorMessage}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium">Aberturas</label>
-                  <p className="mt-1 text-2xl font-bold">{selectedEmail.opens}</p>
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Message ID</label>
+                  <p className="mt-1 text-sm font-mono text-muted-foreground break-all">{selectedEmail.messageId}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Cliques</label>
-                  <p className="mt-1 text-2xl font-bold">{selectedEmail.clicks}</p>
-                </div>
+
+                {selectedEmail.deliveredAt && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground uppercase">Entregue em</label>
+                    <p className="mt-1 text-sm">
+                      {new Date(selectedEmail.deliveredAt).toLocaleString('pt-BR')}
+                    </p>
+                  </div>
+                )}
               </div>
-
-              {selectedEmail.sentAt && (
-                <div>
-                  <label className="text-sm font-medium">Enviado em</label>
-                  <p className="mt-1">{new Date(selectedEmail.sentAt).toLocaleString('pt-BR')}</p>
-                </div>
-              )}
-
-              {selectedEmail.deliveredAt && (
-                <div>
-                  <label className="text-sm font-medium">Entregue em</label>
-                  <p className="mt-1">{new Date(selectedEmail.deliveredAt).toLocaleString('pt-BR')}</p>
-                </div>
-              )}
-
-              {selectedEmail.errorMessage && (
-                <div>
-                  <label className="text-sm font-medium text-red-600">Mensagem de Erro</label>
-                  <p className="mt-1 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-                    {selectedEmail.errorMessage}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
