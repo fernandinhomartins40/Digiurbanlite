@@ -73,14 +73,18 @@ export const unidadesSaudeData = [
 export async function seedUnidadesSaude() {
   console.log('🏥 Criando Unidades de Saúde...');
 
-  for (const unidade of unidadesSaudeData) {
-    await prisma.unidadeSaude.upsert({
-      where: { nome: unidade.nome },
-      update: unidade,
-      create: unidade
-    });
-    console.log(`   ✅ ${unidade.nome}`);
+  // Verifica se já existem unidades antes de criar
+  const existing = await prisma.unidadeSaude.count();
+  if (existing > 0) {
+    console.log(`   ℹ️  ${existing} unidades já existem - pulando criação\n`);
+    return;
   }
+
+  // Cria todas de uma vez
+  await prisma.unidadeSaude.createMany({
+    data: unidadesSaudeData,
+    skipDuplicates: true
+  });
 
   console.log(`✅ ${unidadesSaudeData.length} unidades de saúde criadas\n`);
 }

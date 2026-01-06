@@ -221,18 +221,18 @@ export async function migrateDocumentsToTable() {
   console.log('\n📄 === MIGRAÇÃO: Campo JSON → Tabela ProtocolDocument ===\n');
 
   try {
-    // 1. Buscar todos protocolos com documentos no JSON
+    // NOTA: Campo 'documents' foi removido do schema ProtocolSimplified
+    // Todos os documentos agora são armazenados na tabela ProtocolDocument
+    // Esta migração não é mais necessária em bancos novos
     console.log('1️⃣  Buscando protocolos com documentos em JSON...');
+    console.log('   ℹ️  Campo documents não existe mais - pulando migração\n');
+    return;
+
     const protocolsWithDocs = await prisma.protocolSimplified.findMany({
-      where: {
-        documents: {
-          not: Prisma.JsonNull
-        }
-      },
+      where: {},
       select: {
         id: true,
         number: true,
-        documents: true,
         citizenId: true,
         createdAt: true,
         moduleType: true

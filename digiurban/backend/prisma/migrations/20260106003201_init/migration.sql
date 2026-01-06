@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "InteractionType" AS ENUM ('MESSAGE', 'DOCUMENT_REQUEST', 'DOCUMENT_UPLOAD', 'PENDING_CREATED', 'PENDING_RESOLVED', 'STATUS_CHANGED', 'ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED', 'APPROVAL', 'REJECTION', 'CANCELLATION', 'NOTE');
+CREATE TYPE "InteractionType" AS ENUM ('MESSAGE', 'DOCUMENT_REQUEST', 'DOCUMENT_UPLOAD', 'PENDING_CREATED', 'PENDING_RESOLVED', 'STATUS_CHANGED', 'ASSIGNED', 'INSPECTION_SCHEDULED', 'INSPECTION_COMPLETED', 'APPROVAL', 'REJECTION', 'CANCELLATION', 'NOTE', 'URGENCY_REQUEST');
 
 -- CreateEnum
 CREATE TYPE "DocumentStatus" AS ENUM ('PENDING', 'UPLOADED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'EXPIRED');
@@ -18,6 +18,9 @@ CREATE TYPE "UserRole" AS ENUM ('GUEST', 'USER', 'COORDINATOR', 'MANAGER', 'ADMI
 
 -- CreateEnum
 CREATE TYPE "ProtocolStatus" AS ENUM ('VINCULADO', 'PROGRESSO', 'ATUALIZACAO', 'CONCLUIDO', 'PENDENCIA', 'CANCELADO');
+
+-- CreateEnum
+CREATE TYPE "TicketStatus" AS ENUM ('PENDING', 'ACCEPTED', 'PROTOCOL_CREATED', 'REJECTED', 'CANCELLED');
 
 -- CreateEnum
 CREATE TYPE "ServiceType" AS ENUM ('COM_DADOS', 'SEM_DADOS');
@@ -66,6 +69,12 @@ CREATE TYPE "LogLevel" AS ENUM ('DEBUG', 'INFO', 'WARN', 'ERROR');
 
 -- CreateEnum
 CREATE TYPE "EmailPlan" AS ENUM ('NONE', 'BASIC', 'STANDARD', 'PREMIUM', 'ENTERPRISE');
+
+-- CreateEnum
+CREATE TYPE "SubscriptionStatus" AS ENUM ('ACTIVE', 'TRIAL', 'SUSPENDED', 'CANCELLED', 'EXPIRED');
+
+-- CreateEnum
+CREATE TYPE "EmailAddonType" AS ENUM ('EXTRA_ACCOUNTS', 'EXTRA_EMAILS', 'DEDICATED_IP', 'PRIORITY_SUPPORT', 'API_ACCESS', 'CUSTOM_REPORTS');
 
 -- CreateEnum
 CREATE TYPE "VerificationStatus" AS ENUM ('PENDING', 'VERIFIED', 'GOLD', 'REJECTED');
@@ -214,9 +223,6 @@ CREATE TYPE "StatusPagamento" AS ENUM ('AGUARDANDO', 'PENDENTE', 'PROCESSANDO', 
 -- CreateEnum
 CREATE TYPE "MeioPagamento" AS ENUM ('DINHEIRO', 'PIX', 'TRANSFERENCIA', 'CARTAO_DEBITO', 'CARTAO_CREDITO', 'BOLETO', 'OUTRO');
 
--- CreateEnum
-CREATE TYPE "TicketStatus" AS ENUM ('PENDING', 'ACCEPTED', 'PROTOCOL_CREATED', 'REJECTED', 'CANCELLED');
-
 -- CreateTable
 CREATE TABLE "municipio_config" (
     "id" TEXT NOT NULL DEFAULT 'singleton',
@@ -260,33 +266,6 @@ CREATE TABLE "users" (
     "lastLogin" TIMESTAMP(3),
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "admin_tickets" (
-    "id" TEXT NOT NULL,
-    "number" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "priority" INTEGER NOT NULL DEFAULT 3,
-    "requestedById" TEXT NOT NULL,
-    "citizenId" TEXT NOT NULL,
-    "serviceId" TEXT NOT NULL,
-    "departmentId" TEXT NOT NULL,
-    "status" "TicketStatus" NOT NULL DEFAULT 'PENDING',
-    "protocolId" TEXT,
-    "assignedUserId" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-    "acceptedAt" TIMESTAMP(3),
-    "rejectedAt" TIMESTAMP(3),
-    "protocolCreatedAt" TIMESTAMP(3),
-    "observations" TEXT,
-    "rejectionReason" TEXT,
-    "acceptedBy" TEXT,
-    "rejectedBy" TEXT,
-
-    CONSTRAINT "admin_tickets_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -345,6 +324,22 @@ CREATE TABLE "citizens" (
     "familyIncome" TEXT,
 
     CONSTRAINT "citizens_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "password_reset_tokens" (
+    "id" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "userId" TEXT,
+    "citizenId" TEXT,
+    "userType" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "used" BOOLEAN NOT NULL DEFAULT false,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "password_reset_tokens_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -460,6 +455,9 @@ CREATE TABLE "services_simplified" (
     "category" TEXT,
     "icon" TEXT,
     "color" TEXT,
+    "requiresSpecificLocation" BOOLEAN NOT NULL DEFAULT false,
+    "locationLabel" TEXT,
+    "enableMapSelection" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -482,6 +480,9 @@ CREATE TABLE "protocols_simplified" (
     "latitude" DOUBLE PRECISION,
     "longitude" DOUBLE PRECISION,
     "address" TEXT,
+    "locationType" TEXT,
+    "geocodingProvider" TEXT,
+    "specificLocation" TEXT,
     "assignedUserId" TEXT,
     "createdById" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -517,6 +518,33 @@ CREATE TABLE "protocol_evaluations_simplified" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "protocol_evaluations_simplified_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "admin_tickets" (
+    "id" TEXT NOT NULL,
+    "number" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "priority" INTEGER NOT NULL DEFAULT 3,
+    "requestedById" TEXT NOT NULL,
+    "citizenId" TEXT NOT NULL,
+    "serviceId" TEXT NOT NULL,
+    "departmentId" TEXT NOT NULL,
+    "status" "TicketStatus" NOT NULL DEFAULT 'PENDING',
+    "protocolId" TEXT,
+    "assignedUserId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "acceptedAt" TIMESTAMP(3),
+    "rejectedAt" TIMESTAMP(3),
+    "protocolCreatedAt" TIMESTAMP(3),
+    "observations" TEXT,
+    "rejectionReason" TEXT,
+    "acceptedBy" TEXT,
+    "rejectedBy" TEXT,
+
+    CONSTRAINT "admin_tickets_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -997,7 +1025,6 @@ CREATE TABLE "email_servers" (
     "isActive" BOOLEAN NOT NULL DEFAULT false,
     "isPremiumService" BOOLEAN NOT NULL DEFAULT true,
     "monthlyPrice" DECIMAL(65,30) NOT NULL DEFAULT 99.00,
-    "maxEmailsPerMonth" INTEGER NOT NULL DEFAULT 10000,
     "tlsEnabled" BOOLEAN NOT NULL DEFAULT true,
     "certPath" TEXT,
     "keyPath" TEXT,
@@ -1166,6 +1193,132 @@ CREATE TABLE "email_templates" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "email_templates_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_subscriptions" (
+    "id" TEXT NOT NULL,
+    "email_server_id" TEXT NOT NULL,
+    "plan" "EmailPlan" NOT NULL,
+    "plan_config_id" TEXT,
+    "status" "SubscriptionStatus" NOT NULL DEFAULT 'ACTIVE',
+    "monthly_price" DECIMAL(65,30) NOT NULL,
+    "current_period_start" TIMESTAMP(3) NOT NULL,
+    "current_period_end" TIMESTAMP(3) NOT NULL,
+    "trial_ends_at" TIMESTAMP(3),
+    "canceled_at" TIMESTAMP(3),
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "email_subscriptions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_plan_configs" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "monthly_price" DECIMAL(65,30) NOT NULL,
+    "max_emails_per_month" INTEGER NOT NULL,
+    "max_accounts" INTEGER NOT NULL,
+    "features" JSONB NOT NULL,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "email_plan_configs_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_plan_allowed_domains" (
+    "id" TEXT NOT NULL,
+    "plan_id" TEXT NOT NULL,
+    "domain_id" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "email_plan_allowed_domains_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_drafts" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "account_id" TEXT,
+    "to" TEXT,
+    "cc" TEXT,
+    "bcc" TEXT,
+    "subject" TEXT,
+    "text_content" TEXT,
+    "html_content" TEXT,
+    "priority" INTEGER NOT NULL DEFAULT 3,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "email_drafts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_invoices" (
+    "id" TEXT NOT NULL,
+    "subscriptionId" TEXT NOT NULL,
+    "invoiceNumber" TEXT NOT NULL,
+    "amount" DECIMAL(65,30) NOT NULL,
+    "description" TEXT NOT NULL,
+    "status" "InvoiceStatus" NOT NULL DEFAULT 'PENDING',
+    "dueDate" TIMESTAMP(3) NOT NULL,
+    "paidAt" TIMESTAMP(3),
+    "paymentMethod" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "email_invoices_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "email_addons" (
+    "id" TEXT NOT NULL,
+    "subscriptionId" TEXT NOT NULL,
+    "addonType" "EmailAddonType" NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 1,
+    "price" DECIMAL(65,30) NOT NULL,
+    "description" TEXT NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "email_addons_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "received_emails" (
+    "id" TEXT NOT NULL,
+    "message_id" TEXT NOT NULL,
+    "from_email" TEXT NOT NULL,
+    "from_name" TEXT,
+    "to_email" TEXT NOT NULL,
+    "cc_emails" JSONB,
+    "bcc_emails" JSONB,
+    "reply_to" TEXT,
+    "subject" TEXT NOT NULL,
+    "text_content" TEXT,
+    "html_content" TEXT,
+    "headers" JSONB,
+    "attachments" JSONB,
+    "size" INTEGER NOT NULL DEFAULT 0,
+    "received_at" TIMESTAMP(3) NOT NULL,
+    "is_read" BOOLEAN NOT NULL DEFAULT false,
+    "is_starred" BOOLEAN NOT NULL DEFAULT false,
+    "is_archived" BOOLEAN NOT NULL DEFAULT false,
+    "is_trash" BOOLEAN NOT NULL DEFAULT false,
+    "is_spam" BOOLEAN NOT NULL DEFAULT false,
+    "folder" TEXT NOT NULL DEFAULT 'inbox',
+    "labels" JSONB,
+    "email_server_id" TEXT NOT NULL,
+    "email_user_id" TEXT,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "received_emails_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -2558,24 +2711,6 @@ CREATE UNIQUE INDEX "municipio_config_cnpj_key" ON "municipio_config"("cnpj");
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "admin_tickets_number_key" ON "admin_tickets"("number");
-
--- CreateIndex
-CREATE UNIQUE INDEX "admin_tickets_protocolId_key" ON "admin_tickets"("protocolId");
-
--- CreateIndex
-CREATE INDEX "admin_tickets_status_idx" ON "admin_tickets"("status");
-
--- CreateIndex
-CREATE INDEX "admin_tickets_departmentId_status_idx" ON "admin_tickets"("departmentId", "status");
-
--- CreateIndex
-CREATE INDEX "admin_tickets_createdAt_idx" ON "admin_tickets"("createdAt");
-
--- CreateIndex
-CREATE INDEX "admin_tickets_requestedById_idx" ON "admin_tickets"("requestedById");
-
--- CreateIndex
 CREATE INDEX "user_departments_userId_idx" ON "user_departments"("userId");
 
 -- CreateIndex
@@ -2595,6 +2730,24 @@ CREATE UNIQUE INDEX "departments_code_key" ON "departments"("code");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "citizens_cpf_key" ON "citizens"("cpf");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "password_reset_tokens_token_key" ON "password_reset_tokens"("token");
+
+-- CreateIndex
+CREATE INDEX "password_reset_tokens_token_idx" ON "password_reset_tokens"("token");
+
+-- CreateIndex
+CREATE INDEX "password_reset_tokens_email_idx" ON "password_reset_tokens"("email");
+
+-- CreateIndex
+CREATE INDEX "password_reset_tokens_userId_idx" ON "password_reset_tokens"("userId");
+
+-- CreateIndex
+CREATE INDEX "password_reset_tokens_citizenId_idx" ON "password_reset_tokens"("citizenId");
+
+-- CreateIndex
+CREATE INDEX "password_reset_tokens_expiresAt_idx" ON "password_reset_tokens"("expiresAt");
 
 -- CreateIndex
 CREATE INDEX "citizen_documents_citizenId_idx" ON "citizen_documents"("citizenId");
@@ -2649,6 +2802,24 @@ CREATE INDEX "protocols_simplified_departmentId_status_idx" ON "protocols_simpli
 
 -- CreateIndex
 CREATE INDEX "protocols_simplified_citizenId_idx" ON "protocols_simplified"("citizenId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "admin_tickets_number_key" ON "admin_tickets"("number");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "admin_tickets_protocolId_key" ON "admin_tickets"("protocolId");
+
+-- CreateIndex
+CREATE INDEX "admin_tickets_status_idx" ON "admin_tickets"("status");
+
+-- CreateIndex
+CREATE INDEX "admin_tickets_departmentId_status_idx" ON "admin_tickets"("departmentId", "status");
+
+-- CreateIndex
+CREATE INDEX "admin_tickets_createdAt_idx" ON "admin_tickets"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "admin_tickets_requestedById_idx" ON "admin_tickets"("requestedById");
 
 -- CreateIndex
 CREATE INDEX "protocol_interactions_protocolId_createdAt_idx" ON "protocol_interactions"("protocolId", "createdAt");
@@ -2787,6 +2958,81 @@ CREATE UNIQUE INDEX "email_stats_emailServerId_date_key" ON "email_stats"("email
 
 -- CreateIndex
 CREATE UNIQUE INDEX "email_templates_name_key" ON "email_templates"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "email_subscriptions_email_server_id_key" ON "email_subscriptions"("email_server_id");
+
+-- CreateIndex
+CREATE INDEX "email_subscriptions_status_idx" ON "email_subscriptions"("status");
+
+-- CreateIndex
+CREATE INDEX "email_subscriptions_current_period_end_idx" ON "email_subscriptions"("current_period_end");
+
+-- CreateIndex
+CREATE INDEX "email_subscriptions_plan_config_id_idx" ON "email_subscriptions"("plan_config_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "email_plan_configs_code_key" ON "email_plan_configs"("code");
+
+-- CreateIndex
+CREATE INDEX "email_plan_allowed_domains_plan_id_idx" ON "email_plan_allowed_domains"("plan_id");
+
+-- CreateIndex
+CREATE INDEX "email_plan_allowed_domains_domain_id_idx" ON "email_plan_allowed_domains"("domain_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "email_plan_allowed_domains_plan_id_domain_id_key" ON "email_plan_allowed_domains"("plan_id", "domain_id");
+
+-- CreateIndex
+CREATE INDEX "email_drafts_user_id_idx" ON "email_drafts"("user_id");
+
+-- CreateIndex
+CREATE INDEX "email_drafts_created_at_idx" ON "email_drafts"("created_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "email_invoices_invoiceNumber_key" ON "email_invoices"("invoiceNumber");
+
+-- CreateIndex
+CREATE INDEX "email_invoices_status_idx" ON "email_invoices"("status");
+
+-- CreateIndex
+CREATE INDEX "email_invoices_dueDate_idx" ON "email_invoices"("dueDate");
+
+-- CreateIndex
+CREATE INDEX "email_invoices_subscriptionId_idx" ON "email_invoices"("subscriptionId");
+
+-- CreateIndex
+CREATE INDEX "email_addons_subscriptionId_idx" ON "email_addons"("subscriptionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "received_emails_message_id_key" ON "received_emails"("message_id");
+
+-- CreateIndex
+CREATE INDEX "received_emails_email_server_id_idx" ON "received_emails"("email_server_id");
+
+-- CreateIndex
+CREATE INDEX "received_emails_email_user_id_idx" ON "received_emails"("email_user_id");
+
+-- CreateIndex
+CREATE INDEX "received_emails_to_email_idx" ON "received_emails"("to_email");
+
+-- CreateIndex
+CREATE INDEX "received_emails_from_email_idx" ON "received_emails"("from_email");
+
+-- CreateIndex
+CREATE INDEX "received_emails_is_read_idx" ON "received_emails"("is_read");
+
+-- CreateIndex
+CREATE INDEX "received_emails_is_trash_idx" ON "received_emails"("is_trash");
+
+-- CreateIndex
+CREATE INDEX "received_emails_is_spam_idx" ON "received_emails"("is_spam");
+
+-- CreateIndex
+CREATE INDEX "received_emails_folder_idx" ON "received_emails"("folder");
+
+-- CreateIndex
+CREATE INDEX "received_emails_received_at_idx" ON "received_emails"("received_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "integrations_provider_key" ON "integrations"("provider");
@@ -3332,28 +3578,16 @@ CREATE INDEX "pagamentos_beneficio_inscricaoId_competencia_idx" ON "pagamentos_b
 ALTER TABLE "users" ADD CONSTRAINT "users_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "departments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_requestedById_fkey" FOREIGN KEY ("requestedById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_citizenId_fkey" FOREIGN KEY ("citizenId") REFERENCES "citizens"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "services_simplified"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "departments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_protocolId_fkey" FOREIGN KEY ("protocolId") REFERENCES "protocols_simplified"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_assignedUserId_fkey" FOREIGN KEY ("assignedUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "user_departments" ADD CONSTRAINT "user_departments_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_departments" ADD CONSTRAINT "user_departments_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "departments"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "password_reset_tokens" ADD CONSTRAINT "password_reset_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "password_reset_tokens" ADD CONSTRAINT "password_reset_tokens_citizenId_fkey" FOREIGN KEY ("citizenId") REFERENCES "citizens"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "citizen_documents" ADD CONSTRAINT "citizen_documents_citizenId_fkey" FOREIGN KEY ("citizenId") REFERENCES "citizens"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -3393,6 +3627,24 @@ ALTER TABLE "protocol_history_simplified" ADD CONSTRAINT "protocol_history_simpl
 
 -- AddForeignKey
 ALTER TABLE "protocol_evaluations_simplified" ADD CONSTRAINT "protocol_evaluations_simplified_protocolId_fkey" FOREIGN KEY ("protocolId") REFERENCES "protocols_simplified"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_requestedById_fkey" FOREIGN KEY ("requestedById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_citizenId_fkey" FOREIGN KEY ("citizenId") REFERENCES "citizens"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "services_simplified"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "departments"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_protocolId_fkey" FOREIGN KEY ("protocolId") REFERENCES "protocols_simplified"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "admin_tickets" ADD CONSTRAINT "admin_tickets_assignedUserId_fkey" FOREIGN KEY ("assignedUserId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "protocol_interactions" ADD CONSTRAINT "protocol_interactions_protocolId_fkey" FOREIGN KEY ("protocolId") REFERENCES "protocols_simplified"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -3450,6 +3702,33 @@ ALTER TABLE "email_stats" ADD CONSTRAINT "email_stats_emailServerId_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "email_auth_attempts" ADD CONSTRAINT "email_auth_attempts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "email_users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "email_subscriptions" ADD CONSTRAINT "email_subscriptions_email_server_id_fkey" FOREIGN KEY ("email_server_id") REFERENCES "email_servers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "email_subscriptions" ADD CONSTRAINT "email_subscriptions_plan_config_id_fkey" FOREIGN KEY ("plan_config_id") REFERENCES "email_plan_configs"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "email_plan_allowed_domains" ADD CONSTRAINT "email_plan_allowed_domains_plan_id_fkey" FOREIGN KEY ("plan_id") REFERENCES "email_plan_configs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "email_plan_allowed_domains" ADD CONSTRAINT "email_plan_allowed_domains_domain_id_fkey" FOREIGN KEY ("domain_id") REFERENCES "email_domains"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "email_drafts" ADD CONSTRAINT "email_drafts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "email_invoices" ADD CONSTRAINT "email_invoices_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "email_subscriptions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "email_addons" ADD CONSTRAINT "email_addons_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "email_subscriptions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "received_emails" ADD CONSTRAINT "received_emails_email_server_id_fkey" FOREIGN KEY ("email_server_id") REFERENCES "email_servers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "received_emails" ADD CONSTRAINT "received_emails_email_user_id_fkey" FOREIGN KEY ("email_user_id") REFERENCES "email_users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "integration_logs" ADD CONSTRAINT "integration_logs_integrationId_fkey" FOREIGN KEY ("integrationId") REFERENCES "integrations"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -3528,4 +3807,3 @@ ALTER TABLE "acompanhamentos_beneficio" ADD CONSTRAINT "acompanhamentos_benefici
 
 -- AddForeignKey
 ALTER TABLE "pagamentos_beneficio" ADD CONSTRAINT "pagamentos_beneficio_inscricaoId_fkey" FOREIGN KEY ("inscricaoId") REFERENCES "inscricoes_programas_sociais"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-

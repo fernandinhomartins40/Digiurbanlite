@@ -85,14 +85,18 @@ export const unidadesEducacaoData = [
 export async function seedUnidadesEducacao() {
   console.log('🎓 Criando Unidades Educacionais...');
 
-  for (const unidade of unidadesEducacaoData) {
-    await prisma.unidadeEducacao.upsert({
-      where: { nome: unidade.nome },
-      update: unidade,
-      create: unidade
-    });
-    console.log(`   ✅ ${unidade.nome}`);
+  // Verifica se já existem unidades antes de criar
+  const existing = await prisma.unidadeEducacao.count();
+  if (existing > 0) {
+    console.log(`   ℹ️  ${existing} unidades já existem - pulando criação\n`);
+    return;
   }
+
+  // Cria todas de uma vez
+  await prisma.unidadeEducacao.createMany({
+    data: unidadesEducacaoData,
+    skipDuplicates: true
+  });
 
   console.log(`✅ ${unidadesEducacaoData.length} unidades educacionais criadas\n`);
 }

@@ -64,13 +64,18 @@ export const conjuntosHabitacionaisData = [
 export async function seedConjuntosHabitacionais() {
   console.log('   🏘️  Conjuntos Habitacionais...');
 
-  for (const data of conjuntosHabitacionaisData) {
-    await prisma.conjuntoHabitacional.upsert({
-      where: { nome: data.nome },
-      update: data,
-      create: data,
-    });
+  // Verifica se já existem conjuntos antes de criar
+  const existing = await prisma.conjuntoHabitacional.count();
+  if (existing > 0) {
+    console.log(`      ℹ️  ${existing} conjuntos já existem - pulando criação`);
+    return;
   }
+
+  // Cria todos de uma vez
+  await prisma.conjuntoHabitacional.createMany({
+    data: conjuntosHabitacionaisData,
+    skipDuplicates: true
+  });
 
   console.log(`   ✅ ${conjuntosHabitacionaisData.length} conjuntos habitacionais criados`);
 }
@@ -229,13 +234,18 @@ export const parquesPracasData = [
 export async function seedParquesPracas() {
   console.log('   🌳 Parques e Praças...');
 
-  for (const data of parquesPracasData) {
-    await prisma.parquePraca.upsert({
-      where: { nome: data.nome },
-      update: data,
-      create: data,
-    });
+  // Verifica se já existem parques antes de criar
+  const existing = await prisma.parquePraca.count();
+  if (existing > 0) {
+    console.log(`      ℹ️  ${existing} parques já existem - pulando criação`);
+    return;
   }
+
+  // Cria todos de uma vez
+  await prisma.parquePraca.createMany({
+    data: parquesPracasData,
+    skipDuplicates: true
+  });
 
   console.log(`   ✅ ${parquesPracasData.length} parques e praças criados`);
 }
@@ -306,13 +316,18 @@ export const estabelecimentosTuristicosData = [
 export async function seedEstabelecimentosTuristicos() {
   console.log('   🏨 Estabelecimentos Turísticos...');
 
-  for (const data of estabelecimentosTuristicosData) {
-    await prisma.estabelecimentoTuristico.upsert({
-      where: { nome: data.nome },
-      update: data,
-      create: data,
-    });
+  // Verifica se já existem estabelecimentos antes de criar
+  const existing = await prisma.estabelecimentoTuristico.count();
+  if (existing > 0) {
+    console.log(`      ℹ️  ${existing} estabelecimentos já existem - pulando criação`);
+    return;
   }
+
+  // Cria todos de uma vez
+  await prisma.estabelecimentoTuristico.createMany({
+    data: estabelecimentosTuristicosData,
+    skipDuplicates: true
+  });
 
   console.log(`   ✅ ${estabelecimentosTuristicosData.length} estabelecimentos turísticos criados`);
 }
