@@ -143,6 +143,43 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         }
       });
 
+      // Verificar se existe pelo menos uma conta de email
+      const existingUser = await prisma.emailUser.findFirst({
+        where: { emailServerId: emailServer.id }
+      });
+
+      // Se não existir, criar conta admin padrão
+      if (!existingUser) {
+        const defaultPassword = generateSecurePassword();
+        const passwordHash = await bcrypt.hash(defaultPassword, 12);
+        const adminEmail = `admin@digiurban.com.br`;
+
+        await prisma.emailUser.create({
+          data: {
+            emailServerId: emailServer.id,
+            email: adminEmail,
+            passwordHash,
+            name: 'Administrador',
+            isActive: true,
+            isAdmin: true,
+            dailyLimit: Math.floor(planConfig.maxEmailsPerMonth / 30),
+            monthlyLimit: planConfig.maxEmailsPerMonth
+          }
+        });
+
+        return res.json({
+          success: true,
+          message: `Plano atualizado para ${planConfig.name} com sucesso!`,
+          credentials: {
+            email: adminEmail,
+            password: defaultPassword,
+            server: emailServer.hostname,
+            port: 587
+          },
+          server: emailServer
+        });
+      }
+
       return res.json({
         success: true,
         message: `Plano atualizado para ${planConfig.name} com sucesso!`,
