@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,9 +25,7 @@ import {
   CheckCircle,
   Phone,
   Mail,
-  X,
   Search,
-  XCircle,
   Loader2,
   UserCheck
 } from 'lucide-react'
@@ -301,18 +298,18 @@ export default function CriarChamadoPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <AlertCircle className="h-8 w-8 text-orange-600 mr-3" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
+            <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600 mr-2 sm:mr-3" />
             Criar Novo Chamado
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-sm sm:text-base text-gray-600 mt-2">
             Abertura de chamados/protocolos para cidadãos cadastrados
           </p>
         </div>
         <Link href="/admin/chamados/lista">
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <FileText className="h-4 w-4 mr-2" />
             Ver Meus Chamados
           </Button>
@@ -428,17 +425,17 @@ export default function CriarChamadoPage() {
                         <p className="font-medium text-lg text-green-900">{selectedCitizen.name}</p>
                         <p className="text-sm text-green-700">CPF: {selectedCitizen.cpf}</p>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-green-700">
+                      <div className="grid grid-cols-1 gap-2 text-sm text-green-700">
                         {selectedCitizen.phone && (
                           <div className="flex items-center">
-                            <Phone className="h-4 w-4 mr-2" />
-                            {selectedCitizen.phone}
+                            <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
+                            <span className="break-all">{selectedCitizen.phone}</span>
                           </div>
                         )}
                         {selectedCitizen.email && (
                           <div className="flex items-center">
-                            <Mail className="h-4 w-4 mr-2" />
-                            {selectedCitizen.email}
+                            <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
+                            <span className="break-all">{selectedCitizen.email}</span>
                           </div>
                         )}
                       </div>
@@ -705,12 +702,13 @@ export default function CriarChamadoPage() {
 
             {/* Botões de Ação */}
             {selectedCitizen && selectedService && (
-              <div className="flex justify-end space-x-4">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:space-x-4 sm:gap-0">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => router.back()}
                   disabled={isSubmitting}
+                  className="w-full sm:w-auto"
                 >
                   Cancelar
                 </Button>
@@ -722,6 +720,7 @@ export default function CriarChamadoPage() {
                     formData.description.length < 10 ||
                     !formData.priority
                   }
+                  className="w-full sm:w-auto"
                 >
                   {isSubmitting ? (
                     <>

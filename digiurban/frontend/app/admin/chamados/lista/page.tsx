@@ -193,73 +193,76 @@ export default function ListaChamadosPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/admin/chamados')}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
-            </Button>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-              <Phone className="h-8 w-8 text-blue-600 mr-3" />
-              Meus Chamados Administrativos
-            </h1>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/admin/chamados')}
+                className="self-start"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
+                <Phone className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mr-2 sm:mr-3" />
+                Meus Chamados
+              </h1>
+            </div>
+            <p className="text-sm sm:text-base text-gray-600 mt-2">
+              Acompanhe o status dos chamados criados
+            </p>
           </div>
-          <p className="text-gray-600 mt-2">
-            Acompanhe o status dos chamados criados
-          </p>
+          <Button onClick={loadTickets} disabled={isLoading} className="w-full sm:w-auto">
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
         </div>
-        <Button onClick={loadTickets} disabled={isLoading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
       </div>
 
       {/* Stats Cards */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Total</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Total</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.stats.total}</div>
+              <div className="text-xl sm:text-2xl font-bold">{data.stats.total}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-yellow-600">Pendentes</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-yellow-600">Pendentes</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.stats.byStatus.PENDING || 0}</div>
+              <div className="text-xl sm:text-2xl font-bold">{data.stats.byStatus.PENDING || 0}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-green-600">Com Protocolo</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-green-600">Com Protocolo</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.stats.byStatus.PROTOCOL_CREATED || 0}</div>
+              <div className="text-xl sm:text-2xl font-bold">{data.stats.byStatus.PROTOCOL_CREATED || 0}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-red-600">Recusados</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-red-600">Recusados</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.stats.byStatus.REJECTED || 0}</div>
+              <div className="text-xl sm:text-2xl font-bold">{data.stats.byStatus.REJECTED || 0}</div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Cancelados</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium text-gray-600">Cancelados</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.stats.byStatus.CANCELLED || 0}</div>
+              <div className="text-xl sm:text-2xl font-bold">{data.stats.byStatus.CANCELLED || 0}</div>
             </CardContent>
           </Card>
         </div>
@@ -333,18 +336,19 @@ export default function ListaChamadosPage() {
                       <div className="flex-1 min-w-0">
                         {/* Header */}
                         <div className="flex items-center gap-2 mb-3 flex-wrap">
-                          <span className="font-mono text-sm font-semibold text-blue-600">
+                          <span className="font-mono text-xs sm:text-sm font-semibold text-blue-600">
                             {ticket.number}
                           </span>
                           <Badge
                             variant="outline"
-                            className={statusColors[ticket.status]}
+                            className={`${statusColors[ticket.status]} text-xs`}
                           >
                             <StatusIcon className="h-3 w-3 mr-1" />
-                            {statusLabels[ticket.status]}
+                            <span className="hidden sm:inline">{statusLabels[ticket.status]}</span>
+                            <span className="sm:hidden">{statusLabels[ticket.status].split(' ')[0]}</span>
                           </Badge>
                           {ticket.priority >= 4 && (
-                            <Badge className={priorityColors[ticket.priority]}>
+                            <Badge className={`${priorityColors[ticket.priority]} text-xs`}>
                               {priorityLabels[ticket.priority]}
                             </Badge>
                           )}
@@ -354,23 +358,23 @@ export default function ListaChamadosPage() {
                         </div>
 
                         {/* Title */}
-                        <h3 className="font-medium text-gray-900 mb-2">
+                        <h3 className="font-medium text-sm sm:text-base text-gray-900 mb-2">
                           {ticket.title}
                         </h3>
 
                         {/* Info Grid */}
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600 mb-3">
-                          <div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-xs sm:text-sm text-gray-600 mb-3">
+                          <div className="truncate">
                             <strong>Cidadão:</strong> {ticket.citizen.name}
                           </div>
-                          <div>
+                          <div className="truncate">
                             <strong>Serviço:</strong> {ticket.service.name}
                           </div>
-                          <div>
+                          <div className="truncate">
                             <strong>Secretaria:</strong> {ticket.department.name}
                           </div>
                           {ticket.assignedUser && (
-                            <div>
+                            <div className="truncate">
                               <strong>Servidor:</strong> {ticket.assignedUser.name}
                             </div>
                           )}
@@ -380,11 +384,11 @@ export default function ListaChamadosPage() {
                         {ticket.protocol && (
                           <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
                             <div className="flex items-center gap-2 mb-2">
-                              <FileText className="h-4 w-4 text-green-600" />
-                              <span className="font-medium text-green-900">Protocolo Criado</span>
+                              <FileText className="h-4 w-4 text-green-600 flex-shrink-0" />
+                              <span className="font-medium text-xs sm:text-sm text-green-900">Protocolo Criado</span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2 text-sm text-green-800">
-                              <div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm text-green-800">
+                              <div className="break-all">
                                 <strong>Número:</strong>{' '}
                                 <Link
                                   href={`/admin/protocolos?search=${ticket.protocol.number}`}
@@ -397,7 +401,7 @@ export default function ListaChamadosPage() {
                                 <strong>Status:</strong> {ticket.protocol.status}
                               </div>
                               {ticket.protocol.assignedUser && (
-                                <div className="col-span-2">
+                                <div className="sm:col-span-2 break-words">
                                   <strong>Responsável:</strong> {ticket.protocol.assignedUser.name}
                                 </div>
                               )}
@@ -409,12 +413,12 @@ export default function ListaChamadosPage() {
                         {ticket.status === 'REJECTED' && ticket.rejectionReason && (
                           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                             <div className="flex items-center gap-2 mb-2">
-                              <XCircle className="h-4 w-4 text-red-600" />
-                              <span className="font-medium text-red-900">Motivo da Recusa</span>
+                              <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                              <span className="font-medium text-xs sm:text-sm text-red-900">Motivo da Recusa</span>
                             </div>
-                            <p className="text-sm text-red-800">{ticket.rejectionReason}</p>
+                            <p className="text-xs sm:text-sm text-red-800 break-words">{ticket.rejectionReason}</p>
                             {ticket.rejectedBy && (
-                              <p className="text-xs text-red-600 mt-1">
+                              <p className="text-xs text-red-600 mt-1 break-words">
                                 Recusado por: {ticket.rejectedBy}
                               </p>
                             )}
