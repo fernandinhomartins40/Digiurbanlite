@@ -576,31 +576,38 @@ router.get('/:id/usage', requireMinRole(UserRole.ADMIN), asyncHandler(async (req
  */
 router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { accountId, to, cc, bcc, subject, body, attachments } = req.body;
+    const { accountId, to, cc, bcc, subject, text, html, body, attachments } = req.body;
     const userId = req.user.id;
 
     // Log de debug
     console.log('📧 [EMAIL SEND] Request body:', JSON.stringify(req.body, null, 2));
 
+    // Aceitar tanto "body" quanto "text"/"html" (compatibilidade com diferentes frontends)
+    const emailBody = body || text || html;
+
     // Validar campos obrigatórios
-    if (!accountId || !to || !subject || !body) {
+    if (!accountId || !to || !subject || !emailBody) {
       console.error('❌ [EMAIL SEND] Validation failed:', {
         hasAccountId: !!accountId,
         hasTo: !!to,
         hasSubject: !!subject,
         hasBody: !!body,
+        hasText: !!text,
+        hasHtml: !!html,
         receivedFields: Object.keys(req.body)
       });
 
       return res.status(400).json({
         success: false,
         error: 'Dados incompletos',
-        message: 'accountId, to, subject e body são obrigatórios',
+        message: 'accountId, to, subject e body/text/html são obrigatórios',
         debug: {
           hasAccountId: !!accountId,
           hasTo: !!to,
           hasSubject: !!subject,
           hasBody: !!body,
+          hasText: !!text,
+          hasHtml: !!html,
           receivedFields: Object.keys(req.body)
         }
       });
@@ -732,8 +739,8 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
         ccEmails: cc ? cc.split(',').map((e: string) => e.trim()) : null,
         bccEmails: bcc ? bcc.split(',').map((e: string) => e.trim()) : null,
         subject,
-        textContent: body, // Guardar também como text
-        htmlContent: body,
+        textContent: text || emailBody, // Priorizar text se existir
+        htmlContent: html || emailBody, // Priorizar html se existir
         status: 'QUEUED', // ← QUEUED ao invés de SENT
         priority: 3
       }
