@@ -49,5 +49,6 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
 # Usar dumb-init para gerenciar processos
 ENTRYPOINT ["dumb-init", "--"]
 
-# Comando padrão: executar migrations e depois iniciar o servidor
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+# Comando padrão: iniciar o servidor
+# Nota: Migrations são executadas pelo container principal (digiurban)
+CMD ["node", "dist/index.js"]
