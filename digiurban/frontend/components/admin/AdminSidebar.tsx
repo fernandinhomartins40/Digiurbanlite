@@ -67,7 +67,9 @@ export function AdminSidebar() {
 
   // Fechar sidebar ao mudar de rota em mobile (apenas quando já estiver aberta)
   useEffect(() => {
+    console.log('[SIDEBAR DEBUG] useEffect disparado. isMobile:', isMobile, 'isOpen:', isOpen, 'pathname:', pathname)
     if (isMobile && isOpen) {
+      console.log('[SIDEBAR DEBUG] Fechando sidebar devido a mudança de rota')
       close()
     }
   }, [pathname, isMobile, isOpen, close])

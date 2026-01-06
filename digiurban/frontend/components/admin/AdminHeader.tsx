@@ -1,8 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
-import { useSidebar } from '@/hooks/use-sidebar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -15,6 +15,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Bell, LogOut, Settings, User, Menu } from 'lucide-react'
+import { MobileSidebar } from './MobileSidebar'
 import type { UserRole } from '@/contexts/AdminAuthContext'
 
 const roleLabels: Record<UserRole, string> = {
@@ -38,7 +39,7 @@ const roleColors: Record<UserRole, string> = {
 export function AdminHeader() {
   const router = useRouter()
   const { user, logout, stats } = useAdminAuth()
-  const { toggle, isMobile } = useSidebar()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   if (!user) return null
 
@@ -53,20 +54,23 @@ export function AdminHeader() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 md:py-4">
-      <div className="flex items-center justify-between">
-        {/* Botão Menu Mobile + Título */}
-        <div className="flex items-center space-x-3">
-          {/* Botão Menu Hambúrguer (Mobile) */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggle}
-            className="md:hidden"
-            aria-label="Abrir menu"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
+    <>
+      <MobileSidebar open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} />
+
+      <header className="bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 md:py-4">
+        <div className="flex items-center justify-between">
+          {/* Botão Menu Mobile + Título */}
+          <div className="flex items-center space-x-3">
+            {/* Botão Menu Hambúrguer (Mobile) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden"
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
 
           {/* Título da página atual */}
           <div>
@@ -169,5 +173,6 @@ export function AdminHeader() {
         </div>
       </div>
     </header>
+    </>
   )
 }

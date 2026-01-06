@@ -23,9 +23,21 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     return false
   })
 
-  const toggle = () => setIsOpen((prev) => !prev)
-  const open = () => setIsOpen(true)
-  const close = () => setIsOpen(false)
+  const toggle = () => {
+    console.log('[SIDEBAR DEBUG] toggle() chamado. Estado atual:', isOpen, 'isMobile:', isMobile)
+    setIsOpen((prev) => {
+      console.log('[SIDEBAR DEBUG] Mudando isOpen de', prev, 'para', !prev)
+      return !prev
+    })
+  }
+  const open = () => {
+    console.log('[SIDEBAR DEBUG] open() chamado')
+    setIsOpen(true)
+  }
+  const close = () => {
+    console.log('[SIDEBAR DEBUG] close() chamado')
+    setIsOpen(false)
+  }
 
   // Listener para mudanças de tamanho da janela
   useEffect(() => {
