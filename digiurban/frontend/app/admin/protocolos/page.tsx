@@ -199,18 +199,18 @@ export default function ProtocolsPage() {
   })
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gerenciador de Protocolos</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gerenciador de Protocolos</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             {user?.role === 'USER' ? 'Seus protocolos atribuídos' :
              user?.role === 'ADMIN' ? 'Todos os protocolos municipais' :
              'Protocolos do seu setor'}
           </p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           {hasPermission('protocols:create') && (
             <Button onClick={() => setShowServiceSelectorModal(true)}>
               <AlertCircle className="h-4 w-4 mr-2" />
@@ -223,7 +223,7 @@ export default function ProtocolsPage() {
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -276,32 +276,32 @@ export default function ProtocolsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {filteredProtocols.map((protocol) => (
             <Card key={protocol.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-4 mb-2">
-                      <h3 className="text-lg font-semibold">#{protocol.number}</h3>
+              <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      <h3 className="text-base sm:text-lg font-semibold">#{protocol.number}</h3>
                       <Badge
                         variant="secondary"
-                        className={statusColors[protocol.status as keyof typeof statusColors]}
+                        className={`text-xs ${statusColors[protocol.status as keyof typeof statusColors]}`}
                       >
                         {statusLabels[protocol.status as keyof typeof statusLabels]}
                       </Badge>
                       <Badge
                         variant="outline"
-                        className={`border ${getPriorityBadgeClass(protocol.priority)}`}
+                        className={`border text-xs ${getPriorityBadgeClass(protocol.priority)}`}
                       >
                         {getPriorityLabel(protocol.priority)}
                       </Badge>
                     </div>
 
-                    <h4 className="font-medium text-gray-900 mb-1">{protocol.title}</h4>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{protocol.description || 'Sem descrição'}</p>
+                    <h4 className="text-sm sm:text-base font-medium text-gray-900 mb-1 line-clamp-1">{protocol.title}</h4>
+                    <p className="text-xs sm:text-sm text-gray-600 mb-3 line-clamp-2">{protocol.description || 'Sem descrição'}</p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-500">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                       <div>
                         <span className="font-medium">Cidadão:</span> {protocol.citizen?.name || 'N/A'}
                       </div>
@@ -336,14 +336,15 @@ export default function ProtocolsPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col ml-4">
+                  <div className="flex flex-col w-full sm:w-auto shrink-0">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => router.push(`/admin/protocolos/${protocol.id}`)}
+                      className="w-full sm:w-auto"
                     >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Mais Detalhes
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      <span className="text-xs sm:text-sm">Detalhes</span>
                     </Button>
                   </div>
                 </div>
@@ -418,7 +419,7 @@ export default function ProtocolsPage() {
 
       {/* Dialog de Visualização */}
       <Dialog open={!!selectedProtocol && !showAssignDialog} onOpenChange={(open) => !open && setSelectedProtocol(null)}>
-        <DialogContent className="max-w-3xl max-h-[calc(100vh-4rem)] flex flex-col">
+        <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-3xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)] flex flex-col mx-3 sm:mx-0">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Detalhes do Protocolo #{selectedProtocol?.number}</DialogTitle>
             <DialogDescription>

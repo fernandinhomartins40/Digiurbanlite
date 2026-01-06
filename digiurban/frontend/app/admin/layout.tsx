@@ -2,6 +2,7 @@
 
 import { AdminAuthProvider } from '@/contexts/AdminAuthContext'
 import { AdminLayout } from '@/components/admin/AdminLayout'
+import { SidebarProvider } from '@/hooks/use-sidebar'
 
 export default function AdminRootLayout({
   children,
@@ -10,9 +11,11 @@ export default function AdminRootLayout({
 }) {
   return (
     <AdminAuthProvider>
-      <AdminLayout>
-        {children}
-      </AdminLayout>
+      <SidebarProvider>
+        <AdminLayout>
+          {children}
+        </AdminLayout>
+      </SidebarProvider>
     </AdminAuthProvider>
   )
 }

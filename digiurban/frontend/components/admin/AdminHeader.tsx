@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import { useSidebar } from '@/hooks/use-sidebar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -13,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Bell, LogOut, Settings, User } from 'lucide-react'
+import { Bell, LogOut, Settings, User, Menu } from 'lucide-react'
 import type { UserRole } from '@/contexts/AdminAuthContext'
 
 const roleLabels: Record<UserRole, string> = {
@@ -37,6 +38,7 @@ const roleColors: Record<UserRole, string> = {
 export function AdminHeader() {
   const router = useRouter()
   const { user, logout, stats } = useAdminAuth()
+  const { toggle, isMobile } = useSidebar()
 
   if (!user) return null
 
@@ -51,22 +53,38 @@ export function AdminHeader() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 md:py-4">
       <div className="flex items-center justify-between">
-        {/* Título da página atual */}
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Portal Administrativo
-          </h1>
-          {user.department && (
-            <p className="text-sm text-gray-600">
-              {user.department.name}
-            </p>
+        {/* Botão Menu Mobile + Título */}
+        <div className="flex items-center space-x-3">
+          {/* Botão Menu Hambúrguer (Mobile) */}
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggle}
+              className="md:hidden"
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
           )}
+
+          {/* Título da página atual */}
+          <div>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">
+              Portal Administrativo
+            </h1>
+            {user.department && (
+              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+                {user.department.name}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Área do usuário e notificações */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Estatísticas rápidas */}
           {stats && (
             <div className="hidden md:flex items-center space-x-4 text-sm">
@@ -85,13 +103,13 @@ export function AdminHeader() {
           <Button
             variant="ghost"
             size="icon"
-            className="relative"
+            className="relative h-8 w-8 sm:h-10 sm:w-10"
             onClick={() => router.push('/admin/protocolos')}
             title="Ver protocolos pendentes"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
             {stats && stats.pendingProtocols > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center text-[10px] sm:text-xs">
                 {stats.pendingProtocols > 9 ? '9+' : stats.pendingProtocols}
               </span>
             )}
@@ -100,14 +118,14 @@ export function AdminHeader() {
           {/* Menu do usuário */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-auto px-3">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+              <Button variant="ghost" className="relative h-8 sm:h-10 w-auto px-2 sm:px-3">
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs sm:text-sm">
                       {getUserInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="hidden md:block text-left">
+                  <div className="hidden lg:block text-left">
                     <div className="text-sm font-medium">{user.name || 'Usuário'}</div>
                     <Badge
                       variant="secondary"

@@ -205,24 +205,24 @@ export default function AdminDashboard() {
     : 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header do Dashboard */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Dashboard {roleLabels[user.role]}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Visão geral das suas atividades e responsabilidades
           </p>
         </div>
-        <Badge variant="outline" className="text-sm">
+        <Badge variant="outline" className="text-xs sm:text-sm w-fit">
           {user.department?.name || 'Administração Geral'}
         </Badge>
       </div>
 
       {/* Cartões de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         {/* Total de Protocolos */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -280,7 +280,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Distribuição por Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Distribuição por Status</CardTitle>
@@ -326,44 +326,44 @@ export default function AdminDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               {hasPermission('protocols:read') && (
                 <a
                   href="/admin/protocolos"
-                  className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <FileText className="h-5 w-5 text-blue-600 mr-2" />
-                  <span className="text-sm font-medium">Ver Protocolos</span>
+                  <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mr-2" />
+                  <span className="text-xs sm:text-sm font-medium">Ver Protocolos</span>
                 </a>
               )}
 
               {hasPermission('chamados:create') && (
                 <a
                   href="/admin/chamados"
-                  className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
-                  <span className="text-sm font-medium">Novo Chamado</span>
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 mr-2" />
+                  <span className="text-xs sm:text-sm font-medium">Novo Chamado</span>
                 </a>
               )}
 
               {hasPermission('team:read') && (
                 <a
                   href="/admin/equipe"
-                  className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <Users className="h-5 w-5 text-green-600 mr-2" />
-                  <span className="text-sm font-medium">Gerenciar Equipe</span>
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2" />
+                  <span className="text-xs sm:text-sm font-medium">Gerenciar Equipe</span>
                 </a>
               )}
 
               {(hasPermission('reports:department') || hasPermission('reports:full')) && (
                 <a
                   href="/admin/relatorios"
-                  className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  <BarChart3 className="h-5 w-5 text-purple-600 mr-2" />
-                  <span className="text-sm font-medium">Relatórios</span>
+                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 mr-2" />
+                  <span className="text-xs sm:text-sm font-medium">Relatórios</span>
                 </a>
               )}
             </div>
@@ -423,44 +423,44 @@ export default function AdminDashboard() {
                   return (
                     <div
                       key={protocol.id}
-                      className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border rounded-lg transition-colors gap-3 ${
                         lastRequestUpdate ? 'bg-amber-50 border-amber-300 hover:bg-amber-100' : 'hover:bg-gray-50'
                       }`}
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
                           <a
                             href={`/admin/protocolos?search=${protocol.number}`}
-                            className="font-medium text-blue-600 hover:underline"
+                            className="text-sm sm:text-base font-medium text-blue-600 hover:underline"
                           >
                             #{protocol.number}
                           </a>
                           {/* Badge de Prioridade */}
                           <Badge
                             variant="secondary"
-                            className={`border ${getPriorityBadgeClass(protocol.priority)}`}
+                            className={`border text-xs ${getPriorityBadgeClass(protocol.priority)}`}
                           >
                             {getPriorityIcon(protocol.priority)} {getPriorityLabel(protocol.priority)}
                           </Badge>
                           <Badge
                             variant="secondary"
-                            className={statusColors[protocol.status as keyof typeof statusColors]}
+                            className={`text-xs ${statusColors[protocol.status as keyof typeof statusColors]}`}
                           >
                             {statusLabels[protocol.status as keyof typeof statusLabels]}
                           </Badge>
                           {lastRequestUpdate && (
-                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300">
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-300 text-xs">
                               ⚠️ Agilidade Cobrada
                             </Badge>
                           )}
                           {daysOld > 0 && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
                               há {daysOld} {daysOld === 1 ? 'dia' : 'dias'}
                             </span>
                           )}
                         </div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-1">{protocol.title}</h4>
-                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                        <h4 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">{protocol.title}</h4>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-gray-500">
                           <span>
                             <strong>Cidadão:</strong> {protocol.citizen?.name || 'N/A'}
                           </span>
@@ -487,10 +487,10 @@ export default function AdminDashboard() {
                         variant="outline"
                         onClick={() => requestUpdate(protocol.id)}
                         disabled={requestingUpdate === protocol.id}
-                        className="ml-4 border-red-600 text-red-600 hover:bg-red-50"
+                        className="border-red-600 text-red-600 hover:bg-red-50 w-full sm:w-auto shrink-0"
                       >
-                        <Bell className="h-4 w-4 mr-1" />
-                        {requestingUpdate === protocol.id ? 'Enviando...' : 'Cobrar Agilidade'}
+                        <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                        <span className="text-xs sm:text-sm">{requestingUpdate === protocol.id ? 'Enviando...' : 'Cobrar Agilidade'}</span>
                       </Button>
                     </div>
                   )

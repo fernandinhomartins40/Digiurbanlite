@@ -262,19 +262,19 @@ export default function CidadaosPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <Users className="h-8 w-8 text-blue-600 mr-3" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
+            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mr-2 sm:mr-3" />
             Gerenciamento de Cidadãos
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
             Sistema Unificado de Cadastro - Bronze, Prata e Ouro
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {stats.pending > 0 && (
             <Button
               variant="outline"
@@ -294,7 +294,7 @@ export default function CidadaosPage() {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total</CardTitle>
@@ -354,52 +354,53 @@ export default function CidadaosPage() {
       {/* Tabela de Cidadãos */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <CardTitle>Cadastro de Cidadãos</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Cadastro de Cidadãos</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Lista completa com aprovação rápida de cadastros SELF
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nome, CPF, email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-[300px]"
+                  className="pl-8 w-full sm:w-[300px]"
                 />
               </div>
             </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList>
-              <TabsTrigger value="all">Todos ({stats.total})</TabsTrigger>
-              <TabsTrigger value="pending">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+              <TabsTrigger value="all" className="text-xs sm:text-sm">Todos ({stats.total})</TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs sm:text-sm">
                 Pendentes ({stats.pending})
                 {stats.pending > 0 && <span className="ml-1 text-yellow-600">●</span>}
               </TabsTrigger>
-              <TabsTrigger value="verified">Verificados ({stats.verified})</TabsTrigger>
-              <TabsTrigger value="inactive">Inativos ({stats.inactive})</TabsTrigger>
+              <TabsTrigger value="verified" className="text-xs sm:text-sm">Verificados ({stats.verified})</TabsTrigger>
+              <TabsTrigger value="inactive" className="text-xs sm:text-sm">Inativos ({stats.inactive})</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
 
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cidadão</TableHead>
-                <TableHead>CPF</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Origem</TableHead>
-                <TableHead>Verificação</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
+        <CardContent className="p-0 sm:p-6">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="whitespace-nowrap">Cidadão</TableHead>
+                  <TableHead className="whitespace-nowrap">CPF</TableHead>
+                  <TableHead className="whitespace-nowrap">Contato</TableHead>
+                  <TableHead className="whitespace-nowrap">Origem</TableHead>
+                  <TableHead className="whitespace-nowrap">Verificação</TableHead>
+                  <TableHead className="whitespace-nowrap">Data</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
@@ -419,7 +420,7 @@ export default function CidadaosPage() {
               ) : (
                 filteredCitizens.map((citizen) => (
                   <TableRow key={citizen.id} className={!citizen.isActive ? 'opacity-50' : ''}>
-                    <TableCell>
+                    <TableCell className="whitespace-nowrap">
                       <div>
                         <div className="font-medium">{citizen.name}</div>
                         <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
@@ -542,13 +543,14 @@ export default function CidadaosPage() {
                 ))
               )}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
       {/* Dialog de Aprovação */}
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-full sm:max-w-lg mx-3 sm:mx-0">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-green-600">
               <CheckCircle className="h-5 w-5" />
@@ -601,7 +603,7 @@ export default function CidadaosPage() {
 
       {/* Dialog de Rejeição */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-full sm:max-w-lg mx-3 sm:mx-0">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <XCircle className="h-5 w-5" />

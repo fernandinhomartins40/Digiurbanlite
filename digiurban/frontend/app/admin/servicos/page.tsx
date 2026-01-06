@@ -169,16 +169,16 @@ export default function ServicesManagementPage() {
   const categories = Array.from(new Set(services.map(s => s.category).filter(Boolean)))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gerenciamento de Serviços</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gerenciamento de Serviços</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
             Gerencie o catálogo de serviços públicos do município
           </p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           {hasPermission('services:create') && (
             <Link href="/admin/servicos/novo">
               <Button>
@@ -191,7 +191,7 @@ export default function ServicesManagementPage() {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -244,7 +244,7 @@ export default function ServicesManagementPage() {
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -348,7 +348,7 @@ export default function ServicesManagementPage() {
                     </Badge>
                   </div>
 
-                  <div className="pt-3 flex space-x-2">
+                  <div className="pt-3 flex flex-col sm:flex-row gap-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -359,7 +359,7 @@ export default function ServicesManagementPage() {
                       className="flex-1"
                     >
                       <Eye className="h-3 w-3 mr-1" />
-                      Ver
+                      <span className="text-xs">Ver</span>
                     </Button>
 
                     {hasPermission('services:update') && (
@@ -370,7 +370,7 @@ export default function ServicesManagementPage() {
                           className="w-full"
                         >
                           <Edit className="h-3 w-3 mr-1" />
-                          Editar
+                          <span className="text-xs">Editar</span>
                         </Button>
                       </Link>
                     )}
@@ -380,6 +380,7 @@ export default function ServicesManagementPage() {
                         size="sm"
                         variant="destructive"
                         onClick={() => deleteService(service.id)}
+                        className="sm:w-auto"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -408,7 +409,7 @@ export default function ServicesManagementPage() {
 
       {/* Dialog Ver Detalhes */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-full sm:max-w-lg lg:max-w-2xl mx-3 sm:mx-0">
           <DialogHeader>
             <DialogTitle>Detalhes do Serviço</DialogTitle>
           </DialogHeader>

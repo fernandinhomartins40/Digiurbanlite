@@ -62,13 +62,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Sidebar fixa */}
       <AdminSidebar />
 
-      {/* Conteúdo principal com margem para compensar sidebar */}
-      <div className="ml-64 min-h-screen flex flex-col">
+      {/* Conteúdo principal com margem responsiva para compensar sidebar */}
+      <div className="md:ml-64 min-h-screen flex flex-col transition-all duration-300">
         {/* Header */}
         <AdminHeader />
 
         {/* Conteúdo da página */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-3 sm:p-4 md:p-6">
           {children}
         </main>
       </div>
