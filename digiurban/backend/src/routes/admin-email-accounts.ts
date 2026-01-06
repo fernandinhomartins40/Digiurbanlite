@@ -728,6 +728,10 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
     // Gerar ID de mensagem único
     const messageId = `<${crypto.randomBytes(16).toString('hex')}@${account.emailServer.hostname}>`;
 
+    // Normalizar destinatários (to pode vir como string ou array)
+    const toEmails = Array.isArray(to) ? to : [to];
+    const primaryTo = toEmails[0]; // Primeiro destinatário principal
+
     // ✅ CRIAR registro no banco com status QUEUED
     const email = await prisma.email.create({
       data: {
@@ -735,9 +739,9 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
         userId: accountId,
         messageId,
         fromEmail: account.email,
-        toEmail: to,
-        ccEmails: cc ? cc.split(',').map((e: string) => e.trim()) : null,
-        bccEmails: bcc ? bcc.split(',').map((e: string) => e.trim()) : null,
+        toEmail: primaryTo, // String (primeiro destinatário)
+        ccEmails: cc ? (Array.isArray(cc) ? cc : cc.split(',').map((e: string) => e.trim())) : null,
+        bccEmails: bcc ? (Array.isArray(bcc) ? bcc : bcc.split(',').map((e: string) => e.trim())) : null,
         subject,
         textContent: text || emailBody, // Priorizar text se existir
         htmlContent: html || emailBody, // Priorizar html se existir
