@@ -113,19 +113,19 @@ export function ChamadosRecentesList() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Phone className="h-6 w-6 text-blue-600" />
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <Phone className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               Chamados Recentes
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Protocolos criados pela equipe administrativa - {data?.stats.total || 0} no total
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
             {data?.stats.byStatus && (
-              <div className="flex gap-1 text-xs">
+              <div className="flex flex-wrap gap-1 text-xs">
                 {Object.entries(data.stats.byStatus).map(([status, count]) => (
                   <Badge key={status} variant="outline" className={statusColors[status]}>
                     {status}: {count}
@@ -133,15 +133,18 @@ export function ChamadosRecentesList() {
                 ))}
               </div>
             )}
-            <Button variant="outline" size="sm" onClick={loadChamados} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            </Button>
-            <Link href="/admin/chamados/lista">
-              <Button variant="outline" size="sm">
-                Ver Todos
-                <ExternalLink className="h-4 w-4 ml-1" />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={loadChamados} disabled={isLoading}>
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
-            </Link>
+              <Link href="/admin/chamados/lista">
+                <Button variant="outline" size="sm">
+                  <span className="hidden sm:inline">Ver Todos</span>
+                  <span className="sm:hidden">Todos</span>
+                  <ExternalLink className="h-4 w-4 ml-1" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -163,24 +166,24 @@ export function ChamadosRecentesList() {
                 key={chamado.id}
                 className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <Link
                         href={`/admin/protocolos?search=${chamado.number}`}
-                        className="font-medium text-blue-600 hover:underline"
+                        className="font-medium text-blue-600 hover:underline text-sm"
                       >
                         #{chamado.number}
                       </Link>
                       <Badge
                         variant="secondary"
-                        className={statusColors[chamado.status] || 'bg-gray-100 text-gray-800'}
+                        className={`${statusColors[chamado.status] || 'bg-gray-100 text-gray-800'} text-xs`}
                       >
                         {chamado.status}
                       </Badge>
                       {chamado.priority > 3 && (
                         <Badge
-                          className={priorityColors[chamado.priority]}
+                          className={`${priorityColors[chamado.priority]} text-xs`}
                         >
                           {priorityLabels[chamado.priority]}
                         </Badge>
@@ -194,29 +197,29 @@ export function ChamadosRecentesList() {
                       {chamado.title}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
                       {chamado.citizen && (
-                        <div>
+                        <div className="truncate">
                           <strong>Cidadão:</strong> {chamado.citizen.name}
                         </div>
                       )}
                       {chamado.service && (
-                        <div>
+                        <div className="truncate">
                           <strong>Serviço:</strong> {chamado.service.name}
                         </div>
                       )}
                       {chamado.department && (
-                        <div>
+                        <div className="truncate">
                           <strong>Secretaria:</strong> {chamado.department.name}
                         </div>
                       )}
                       {chamado.assignedUser && (
-                        <div>
+                        <div className="truncate">
                           <strong>Responsável:</strong> {chamado.assignedUser.name}
                         </div>
                       )}
                       {chamado.createdBy && (
-                        <div className="col-span-2">
+                        <div className="col-span-1 sm:col-span-2 truncate">
                           <strong>Criado por:</strong> {chamado.createdBy.name}
                         </div>
                       )}
