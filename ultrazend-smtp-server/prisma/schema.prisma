@@ -24,7 +24,7 @@ model EmailServer {
   isActive          Boolean         @default(false)
   isPremiumService  Boolean         @default(true)
   monthlyPrice      Decimal         @default(99.00)
-  maxEmailsPerMonth Int             @default(10000)
+  // maxEmailsPerMonth removido - usar subscription.planConfig.maxEmailsPerMonth
   tlsEnabled        Boolean         @default(true)
   certPath          String?
   keyPath           String?

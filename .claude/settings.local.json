@@ -80,7 +80,8 @@
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma db push:*)",
       "Bash(git checkout:*)",
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma migrate reset --force)",
-      "Bash(move use-sidebar.ts use-sidebar.tsx)"
+      "Bash(move use-sidebar.ts use-sidebar.tsx)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
