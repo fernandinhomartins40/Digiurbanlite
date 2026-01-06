@@ -72,6 +72,11 @@ COPY digiurban/frontend ./
 # Build Next.js com variáveis corretas (ENV já definida na linha 61)
 RUN npm run build
 
+# Validar que o build do Next.js foi bem-sucedido
+RUN test -d .next || (echo "❌ ERRO: Build do Next.js falhou! Diretório .next não foi criado!" && exit 1)
+RUN test -f .next/BUILD_ID || (echo "❌ ERRO: BUILD_ID não foi gerado!" && exit 1)
+RUN echo "✅ Build do Next.js concluído com sucesso"
+
 # ========== STAGE 3: Production Image ==========
 FROM node:18-alpine AS runner
 WORKDIR /app

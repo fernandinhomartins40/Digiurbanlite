@@ -42,8 +42,8 @@ export default function EmailServerConfigPage() {
     keyPath: '',
     authRequired: true,
     isPremiumService: true,
-    monthlyPrice: 99.00
-    // maxEmailsPerMonth removido - agora vem do EmailPlanConfig
+    monthlyPrice: 99.00,
+    maxEmailsPerMonth: 10000 // Valor padrão - pode ser sobrescrito pelo EmailPlanConfig
   });
   const [logs, setLogs] = useState<any[]>([]);
   const [showLogs, setShowLogs] = useState(false);
