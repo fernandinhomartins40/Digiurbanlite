@@ -191,9 +191,9 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-80 p-0">
+      <SheetContent side="left" className="w-80 p-0 flex flex-col">
         {/* Header */}
-        <SheetHeader className="px-6 py-4 border-b border-gray-200">
+        <SheetHeader className="flex-shrink-0 px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <Building2 className="h-8 w-8 text-primary" />
@@ -205,7 +205,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
           </div>
         </SheetHeader>
 
-        {/* Navigation */}
+        {/* Navigation - área com scroll */}
         <div className="flex-1 overflow-y-auto py-6 px-3">
           {mainNavigation.map(renderNavSection)}
           {renderNavSection(secretariaNavigation)}
@@ -213,7 +213,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
         </div>
 
         {/* User Info */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="flex-shrink-0 border-t border-gray-200 p-4">
           <div className="text-xs text-gray-500">
             <div className="font-medium">{user.name || user.email || 'Usuário'}</div>
             {user.departments && user.departments.length > 0 ? (
