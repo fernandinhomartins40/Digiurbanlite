@@ -437,10 +437,10 @@ export function AdminSidebar() {
       <div
         className={cn(
           "flex flex-col w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 z-50 transition-transform duration-300 ease-in-out",
-          // Desktop: sempre visível (translate-x-0)
-          // Mobile fechado: escondido (-translate-x-full)
-          // Mobile aberto: visível (translate-x-0)
-          isMobile ? (isOpen ? "translate-x-0" : "-translate-x-full") : "translate-x-0"
+          // Aplicar apenas UMA classe translate por vez para evitar conflitos
+          isMobile
+            ? (isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")
+            : "translate-x-0"
         )}
       >
         {/* Logo e botão fechar (mobile) */}
