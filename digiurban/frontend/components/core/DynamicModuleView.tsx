@@ -171,27 +171,27 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{service.name}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold truncate">{service.name}</h1>
           {service.description && (
-            <p className="text-muted-foreground mt-2">{service.description}</p>
+            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base line-clamp-2">{service.description}</p>
           )}
-          <div className="flex gap-2 mt-2">
-            <Badge variant="outline">
+          <div className="flex flex-wrap gap-2 mt-2">
+            <Badge variant="outline" className="text-xs sm:text-sm">
               {typeof service.department === 'string'
                 ? service.department
                 : service.department?.name || 'Sem departamento'}
             </Badge>
             {service.moduleType && (
-              <Badge variant="secondary">{service.moduleType}</Badge>
+              <Badge variant="secondary" className="text-xs sm:text-sm">{service.moduleType}</Badge>
             )}
           </div>
         </div>
 
-        <Button onClick={() => setIsCreateModalOpen(true)} size="lg">
+        <Button onClick={() => setIsCreateModalOpen(true)} size="default" className="w-full sm:w-auto shrink-0">
           <Plus className="h-4 w-4 mr-2" />
           Nova Solicitação
         </Button>
@@ -199,12 +199,12 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
       {/* Filtro de Atribuição */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <Filter className="h-5 w-5 text-muted-foreground" />
-            <div className="flex-1">
+        <CardContent className="pt-4 sm:pt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <Filter className="h-5 w-5 text-muted-foreground hidden sm:block" />
+            <div className="flex-1 w-full sm:w-auto">
               <Select value={assignedFilter} onValueChange={setAssignedFilter}>
-                <SelectTrigger className="w-[250px]">
+                <SelectTrigger className="w-full sm:w-[250px]">
                   <SelectValue placeholder="Filtrar por atribuição" />
                 </SelectTrigger>
                 <SelectContent>
@@ -215,7 +215,7 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               Exibindo <span className="font-semibold">{filteredProtocols.length}</span> de {protocols.length}
             </div>
           </div>
@@ -223,65 +223,65 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
       </Card>
 
       {/* KPIs Rápidos */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="pb-2 p-4 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Total
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{protocols.length}</div>
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{protocols.length}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="pb-2 p-4 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Pendentes
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-yellow-600">
               {protocols.filter((p) => p.status === 'VINCULADO').length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="pb-2 p-4 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Em Análise
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">
               {protocols.filter((p) => p.status === 'PROGRESSO').length}
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardHeader className="pb-2 p-4 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Concluídos
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">
               {protocols.filter((p) => p.status === 'CONCLUIDO').length}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="col-span-2 sm:col-span-1">
+          <CardHeader className="pb-2 p-4 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Não Atribuídos
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-orange-600">
               {unassignedCount}
             </div>
           </CardContent>
@@ -290,57 +290,63 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
       {/* Abas Principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="list" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            Solicitações
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1">
+          <TabsTrigger value="list" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <List className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Solicitações</span>
+            <span className="sm:hidden">Lista</span>
           </TabsTrigger>
 
-          <TabsTrigger value="approval" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            Aprovações
+          <TabsTrigger value="approval" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Aprovações</span>
+            <span className="sm:hidden">Aprov.</span>
             {pendingCount > 0 && (
-              <Badge variant="destructive" className="ml-1">
+              <Badge variant="destructive" className="ml-0.5 sm:ml-1 text-[10px] sm:text-xs h-4 px-1 sm:h-5 sm:px-1.5">
                 {pendingCount}
               </Badge>
             )}
           </TabsTrigger>
 
-          <TabsTrigger value="data" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Dados
+          <TabsTrigger value="data" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span>Dados</span>
           </TabsTrigger>
 
-          <TabsTrigger value="documents" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Documentos
+          <TabsTrigger value="documents" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Documentos</span>
+            <span className="sm:hidden">Docs</span>
           </TabsTrigger>
 
           {hasAdvancedFeatures && (
-            <TabsTrigger value="advanced" className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Recursos
+            <TabsTrigger value="advanced" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Recursos</span>
+              <span className="sm:hidden">Rec.</span>
             </TabsTrigger>
           )}
 
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <PieChart className="h-4 w-4" />
-            Relatórios
+          <TabsTrigger value="reports" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <PieChart className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Relatórios</span>
+            <span className="sm:hidden">Rel.</span>
           </TabsTrigger>
         </TabsList>
 
         {/* ABA 1: SOLICITAÇÕES (Lista Compacta) */}
         <TabsContent value="list" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Lista de Solicitações</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h2 className="text-lg sm:text-xl font-semibold">Lista de Solicitações</h2>
             <Button
               variant="outline"
               size="sm"
               onClick={() => refetch()}
               disabled={protocolsLoading}
+              className="w-full sm:w-auto"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${protocolsLoading ? 'animate-spin' : ''}`} />
-              Atualizar
+              <RefreshCw className={`h-4 w-4 sm:mr-2 ${protocolsLoading ? 'animate-spin' : ''}`} />
+              <span className="ml-2 sm:ml-0">Atualizar</span>
             </Button>
           </div>
 
@@ -357,12 +363,12 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
         <TabsContent value="approval" className="space-y-4">
           {service?.serviceType === 'COM_DADOS' && selectedProtocol ? (
             <>
-              <h2 className="text-xl font-semibold">Gestão de Workflow - {selectedProtocol.number}</h2>
+              <h2 className="text-lg sm:text-xl font-semibold truncate">Gestão de Workflow - {selectedProtocol.number}</h2>
               <Tabs defaultValue="workflow" className="space-y-4">
-                <TabsList>
-                  <TabsTrigger value="workflow">Etapas</TabsTrigger>
-                  <TabsTrigger value="documents">Documentos</TabsTrigger>
-                  <TabsTrigger value="pendings">Pendências</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="workflow" className="text-xs sm:text-sm">Etapas</TabsTrigger>
+                  <TabsTrigger value="documents" className="text-xs sm:text-sm">Documentos</TabsTrigger>
+                  <TabsTrigger value="pendings" className="text-xs sm:text-sm">Pendências</TabsTrigger>
                 </TabsList>
                 <TabsContent value="workflow">
                   <ProtocolWorkflowPanel protocolId={selectedProtocol.id} />
@@ -377,7 +383,7 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
             </>
           ) : (
             <>
-              <h2 className="text-xl font-semibold">Fila de Aprovação</h2>
+              <h2 className="text-lg sm:text-xl font-semibold">Fila de Aprovação</h2>
               <ApprovalQueue
                 protocols={protocols}
                 service={service}
@@ -390,7 +396,7 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
         {/* ABA 3: DADOS COLETADOS (Tabela Genérica) */}
         <TabsContent value="data" className="space-y-4">
-          <h2 className="text-xl font-semibold">Dados Coletados</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Dados Coletados</h2>
           <GenericDataTable
             protocols={protocols}
             service={service}
@@ -400,19 +406,19 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
         {/* ABA 4: DOCUMENTOS */}
         <TabsContent value="documents" className="space-y-4">
-          <h2 className="text-xl font-semibold">Gestão de Documentos</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Gestão de Documentos</h2>
 
           {protocols.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">
+              <CardContent className="py-8 sm:py-12 text-center px-4">
+                <FileText className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Nenhuma solicitação criada ainda. Crie uma solicitação para gerenciar documentos.
                 </p>
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {protocols.map((protocol) => {
                 // Extrair documentos do campo JSON
                 const protocolDocs = protocol.documents && Array.isArray(protocol.documents)
@@ -421,13 +427,13 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
                 return (
                   <Card key={protocol.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-lg">
+                    <CardHeader className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                        <div className="min-w-0 flex-1">
+                          <CardTitle className="text-base sm:text-lg truncate">
                             Protocolo: {protocol.number}
                           </CardTitle>
-                          <CardDescription>
+                          <CardDescription className="truncate text-xs sm:text-sm">
                             {protocol.title || service.name}
                           </CardDescription>
                         </div>
@@ -435,31 +441,31 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
                           protocol.status === 'CONCLUIDO' ? 'default' :
                           protocol.status === 'PROGRESSO' ? 'secondary' :
                           protocol.status === 'VINCULADO' ? 'outline' : 'destructive'
-                        }>
+                        } className="w-fit text-xs sm:text-sm">
                           {protocol.status}
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-4 sm:p-6 pt-0">
                       {protocolDocs.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm">Nenhum documento enviado ainda</p>
+                        <div className="text-center py-6 sm:py-8 text-muted-foreground">
+                          <FileText className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-xs sm:text-sm">Nenhum documento enviado ainda</p>
                         </div>
                       ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                           {protocolDocs.map((doc: any, index: number) => (
                             <div
                               key={index}
-                              className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
+                              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border rounded-lg bg-muted/30"
                             >
-                              <div className="flex items-center gap-3">
-                                <FileText className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                  <p className="font-medium text-sm">
+                              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium text-xs sm:text-sm truncate">
                                     {doc.originalName || doc.filename}
                                   </p>
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                                     {doc.mimetype} • {(doc.size / 1024).toFixed(2)} KB
                                     {doc.uploadedAt && ` • ${new Date(doc.uploadedAt).toLocaleDateString('pt-BR')}`}
                                   </p>
@@ -474,8 +480,9 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
                                   const downloadUrl = `${backendUrl}/uploads/${doc.path || doc.filename}`;
                                   window.open(downloadUrl, '_blank');
                                 }}
+                                className="w-full sm:w-auto text-xs shrink-0"
                               >
-                                <FileText className="h-4 w-4 mr-2" />
+                                <FileText className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                                 Baixar
                               </Button>
                             </div>
@@ -493,11 +500,11 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
         {/* ABA 5: RECURSOS AVANÇADOS (Mapa, Imagens, Calendário) */}
         {hasAdvancedFeatures && (
           <TabsContent value="advanced" className="space-y-4">
-            <h2 className="text-xl font-semibold">Recursos Avançados</h2>
+            <h2 className="text-lg sm:text-xl font-semibold">Recursos Avançados</h2>
             <Card>
-              <CardContent className="py-12 text-center">
-                <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">
+              <CardContent className="py-12 text-center px-4">
+                <MapPin className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Selecione uma solicitação para visualizar recursos avançados
                 </p>
               </CardContent>
@@ -507,16 +514,16 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
         {/* ABA 6: RELATÓRIOS (Dashboard + Exportação) */}
         <TabsContent value="reports" className="space-y-4">
-          <h2 className="text-xl font-semibold">Relatórios e Métricas</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Relatórios e Métricas</h2>
           <ModuleDashboard protocols={protocols} service={service} />
         </TabsContent>
       </Tabs>
 
       {/* Modal para CRIAR Protocolo */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova Solicitação - {service.name}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl pr-8">Nova Solicitação - {service.name}</DialogTitle>
           </DialogHeader>
 
           {service?.formSchema && (
@@ -542,17 +549,17 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
             setSelectedProtocol(null);
           }
         }}>
-          <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto">
+          <DialogContent className="max-w-[98vw] sm:max-w-[95vw] lg:max-w-[90vw] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
-              <div className="flex items-center justify-between">
-                <DialogTitle className="text-2xl">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <DialogTitle className="text-lg sm:text-xl lg:text-2xl truncate">
                   Protocolo #{selectedProtocol.number}
                 </DialogTitle>
                 <Badge variant={
                   selectedProtocol.status === 'CONCLUIDO' ? 'default' :
                   selectedProtocol.status === 'PROGRESSO' ? 'secondary' :
                   selectedProtocol.status === 'VINCULADO' ? 'outline' : 'destructive'
-                }>
+                } className="w-fit">
                   {selectedProtocol.status}
                 </Badge>
               </div>
@@ -588,12 +595,18 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
 
             {/* Tabs Completas */}
             <Tabs defaultValue="checklist" className="mt-4">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="checklist">Checklist</TabsTrigger>
-                <TabsTrigger value="documents">Documentos</TabsTrigger>
-                <TabsTrigger value="pendings">Pendências</TabsTrigger>
-                <TabsTrigger value="stages">Etapas</TabsTrigger>
-                <TabsTrigger value="data">Dados</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
+                <TabsTrigger value="checklist" className="text-xs sm:text-sm">Checklist</TabsTrigger>
+                <TabsTrigger value="documents" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Documentos</span>
+                  <span className="sm:hidden">Docs</span>
+                </TabsTrigger>
+                <TabsTrigger value="pendings" className="text-xs sm:text-sm">
+                  <span className="hidden sm:inline">Pendências</span>
+                  <span className="sm:hidden">Pend.</span>
+                </TabsTrigger>
+                <TabsTrigger value="stages" className="text-xs sm:text-sm">Etapas</TabsTrigger>
+                <TabsTrigger value="data" className="text-xs sm:text-sm col-span-2 sm:col-span-1">Dados</TabsTrigger>
               </TabsList>
 
               <TabsContent value="checklist" className="space-y-4">
@@ -655,19 +668,21 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
             </Tabs>
 
             {/* Botões de Ação */}
-            <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4 pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={() => {
                   setIsDetailModalOpen(false);
                   setSelectedProtocol(null);
                 }}
+                className="w-full sm:w-auto order-2 sm:order-1"
               >
                 Fechar
               </Button>
               <Button
                 variant="outline"
                 onClick={() => handleAssignProtocol(selectedProtocol)}
+                className="w-full sm:w-auto order-1 sm:order-2"
               >
                 <UserPlus className="h-4 w-4 mr-2" />
                 Atribuir
