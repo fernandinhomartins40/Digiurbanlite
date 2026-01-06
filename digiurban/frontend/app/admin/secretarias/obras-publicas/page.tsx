@@ -85,17 +85,17 @@ export default function SecretariaObrasPublicasPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <Construction className="h-8 w-8 text-orange-600 mr-3" />
-            Secretaria de Obras Públicas
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center flex-wrap gap-3">
+            <Construction className="h-7 w-7 md:h-8 md:w-8 text-orange-600 flex-shrink-0" />
+            <span>Secretaria de Obras Públicas</span>
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-sm md:text-base text-gray-600 mt-1">
             Gestão de obras, reparos, vistorias técnicas e infraestrutura urbana
           </p>
         </div>
-        <Badge variant="outline" className="text-orange-600 border-orange-200">
+        <Badge variant="outline" className="text-orange-600 border-orange-200 self-start md:self-auto">
           Infraestrutura
         </Badge>
       </div>
@@ -345,21 +345,21 @@ export default function SecretariaObrasPublicasPage() {
             onClick={() => router.push('/admin/secretarias/obras-publicas/servicos-gerais')}
           >
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex-1">
                   <Badge className="mb-3 bg-green-600 text-white">
                     Painel Agregado SEM_DADOS
                   </Badge>
-                  <CardTitle className="text-2xl flex items-center gap-3 group-hover:text-green-700 transition-colors">
-                    <FileBarChart className="h-7 w-7 text-green-600" />
-                    Gerenciar Todos os Serviços Gerais
+                  <CardTitle className="text-xl md:text-2xl flex items-center gap-3 group-hover:text-green-700 transition-colors">
+                    <FileBarChart className="h-6 w-6 md:h-7 md:w-7 text-green-600 flex-shrink-0" />
+                    <span>Gerenciar Todos os Serviços Gerais</span>
                   </CardTitle>
-                  <CardDescription className="mt-2 text-base">
+                  <CardDescription className="mt-2 text-sm md:text-base">
                     Visão consolidada de {services.filter((s: any) => s.serviceType === 'SEM_DADOS').length} serviços em um único painel com filtros, busca e estatísticas
                   </CardDescription>
                 </div>
-                <div className="p-3 bg-green-100 rounded-full group-hover:bg-green-200 transition-colors">
-                  <FileText className="h-8 w-8 text-green-700" />
+                <div className="p-3 bg-green-100 rounded-full group-hover:bg-green-200 transition-colors self-start">
+                  <FileText className="h-7 w-7 md:h-8 md:w-8 text-green-700" />
                 </div>
               </div>
             </CardHeader>
@@ -370,17 +370,17 @@ export default function SecretariaObrasPublicasPage() {
                     .filter((s: any) => s.serviceType === 'SEM_DADOS')
                     .slice(0, 6)
                     .map((service: any) => (
-                      <Badge key={service.id} variant="outline" className="bg-white text-green-700 border-green-300">
+                      <Badge key={service.id} variant="outline" className="bg-white text-green-700 border-green-300 text-xs md:text-sm">
                         {service.name}
                       </Badge>
                     ))}
                   {services.filter((s: any) => s.serviceType === 'SEM_DADOS').length > 6 && (
-                    <Badge variant="outline" className="bg-white text-green-700 border-green-300">
+                    <Badge variant="outline" className="bg-white text-green-700 border-green-300 text-xs md:text-sm">
                       +{services.filter((s: any) => s.serviceType === 'SEM_DADOS').length - 6} mais
                     </Badge>
                   )}
                 </div>
-                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-green-200">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-green-200">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-700">
                       {services.filter((s: any) => s.serviceType === 'SEM_DADOS').length}
