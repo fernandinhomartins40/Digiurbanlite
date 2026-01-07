@@ -283,16 +283,17 @@ export default function SolicitarServicoPage() {
         console.log('📍 [FRONTEND DEBUG] locationData enviado:', locationData);
       }
 
-      // ✅ FORMATO SIMPLES: Enviar array documentTypes (mais robusto)
+      // ✅ FORMATO CORRETO: Enviar com índices para compatibilidade com Multer .any()
       const filesArray = Object.entries(uploadedFiles);
-      const documentTypesArray = filesArray.map(([docId]) => docId);
 
-      // Enviar array de tipos (formato preferido pelo backend)
+      // Enviar documentTypes como array
+      const documentTypesArray = filesArray.map(([docId]) => docId);
       formData.append('documentTypes', JSON.stringify(documentTypesArray));
 
-      // Adicionar arquivos (sem metadados extras)
-      filesArray.forEach(([_, file]) => {
-        formData.append('documents', file);
+      // Adicionar arquivos com formato indexado que funciona com upload.any()
+      filesArray.forEach(([docId, file], index) => {
+        formData.append(`documents[${index}][id]`, docId);
+        formData.append(`documents[${index}][file]`, file);
       });
 
       console.log('📤 Enviando solicitação com', Object.keys(uploadedFiles).length, 'arquivo(s)');
