@@ -1829,7 +1829,7 @@ export function DocumentScanner({
         throw new Error('Seu navegador não suporta upload de câmera. Por favor, use o botão "Selecionar Arquivo".')
       }
 
-      const file = new File([blob], fileName, {
+      let file = new File([blob], fileName, {
         type: 'image/jpeg',
         lastModified: timestamp
       })
