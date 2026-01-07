@@ -10,8 +10,15 @@ import { Label } from '@/components/ui/label'
 import { AlertCircle, FileText, Info, Calendar, Send, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { DocumentUploadField } from '@/components/ui/document-upload-field'
-import { DocumentType } from '@/components/ui/camera-capture'
+import { DocumentUpload } from '@/components/common/DocumentUpload'
+
+// Tipos de documento suportados
+type DocumentType =
+  | 'rg' | 'cpf' | 'cnh'
+  | 'certidao_nascimento' | 'certidao_casamento'
+  | 'comprovante_residencia' | 'titulo_eleitor'
+  | 'carteira_trabalho' | 'documento_generico'
+  | 'foto_perfil'
 
 export interface ProtocolPending {
   id: string
@@ -214,15 +221,17 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
                 <div className="text-sm font-medium text-gray-700 mb-2">
                   Enviar documento para resolver esta pendência:
                 </div>
-                <DocumentUploadField
-                  id={`doc-${pending.id}`}
-                  label="Documento Solicitado"
-                  description={pending.description}
-                  required
-                  documentType={(pending.metadata?.documentType as DocumentType) || 'documento_generico'}
+                <DocumentUpload
+                  documentConfig={{
+                    name: "Documento Solicitado",
+                    description: pending.description,
+                    required: true,
+                    acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
+                    allowCameraUpload: true,
+                    maxSizeMB: 10
+                  }}
                   value={uploadedFile}
                   onChange={setUploadedFile}
-                  maxSizeMB={10}
                 />
                 <Button
                   onClick={handleSubmit}

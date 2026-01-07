@@ -30,7 +30,22 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     // Gerar nome único: timestamp-random-originalname
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-    const ext = path.extname(file.originalname);
+    let ext = path.extname(file.originalname);
+
+    // ✅ CORREÇÃO: Fallback para .jpg se extensão vazia (ex: "blob")
+    if (!ext || ext === '.') {
+      // Detectar extensão pelo MIME type
+      if (file.mimetype.startsWith('image/')) {
+        ext = file.mimetype === 'image/png' ? '.png' :
+              file.mimetype === 'image/gif' ? '.gif' :
+              file.mimetype === 'image/webp' ? '.webp' : '.jpg';
+      } else if (file.mimetype === 'application/pdf') {
+        ext = '.pdf';
+      } else {
+        ext = '.jpg'; // Fallback padrão
+      }
+    }
+
     const name = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_');
     cb(null, `${uniqueSuffix}-${name}${ext}`);
   }

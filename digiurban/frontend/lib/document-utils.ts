@@ -265,7 +265,9 @@ export async function compressImage(
                   (blob2) => {
                     if (blob2) {
                       console.log('[Compress] Blob final:', blob2.size, 'bytes')
-                      const compressedFile = new File([blob2], file.name, {
+                      // ✅ CORREÇÃO: Garantir extensão .jpg se ausente
+                      const fileName = file.name.includes('.') ? file.name : `${file.name}.jpg`
+                      const compressedFile = new File([blob2], fileName, {
                         type: 'image/jpeg',
                         lastModified: Date.now(),
                       });
@@ -278,7 +280,9 @@ export async function compressImage(
                   finalQuality * 0.95 // Reduzir um pouco mais a qualidade
                 )
               } else {
-                const compressedFile = new File([blob], file.name, {
+                // ✅ CORREÇÃO: Garantir extensão .jpg se ausente
+                const fileName = file.name.includes('.') ? file.name : `${file.name}.jpg`
+                const compressedFile = new File([blob], fileName, {
                   type: 'image/jpeg',
                   lastModified: Date.now(),
                 });

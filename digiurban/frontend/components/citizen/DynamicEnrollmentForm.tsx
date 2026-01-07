@@ -21,8 +21,15 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { apiClient } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { DocumentUploadField } from '@/components/ui/document-upload-field';
-import { DocumentType } from '@/components/ui/camera-capture';
+import { DocumentUpload } from '@/components/common/DocumentUpload';
+
+// Tipos de documento suportados
+type DocumentType =
+  | 'rg' | 'cpf' | 'cnh'
+  | 'certidao_nascimento' | 'certidao_casamento'
+  | 'comprovante_residencia' | 'titulo_eleitor'
+  | 'carteira_trabalho' | 'documento_generico'
+  | 'foto_perfil'
 
 interface FormField {
   id: string;
@@ -345,28 +352,17 @@ export function DynamicEnrollmentForm({
   const renderDocumentUpload = (doc: DocumentRequirement) => {
     const uploadedFile = getUploadedFile(doc.id);
 
-    // Mapear formatos aceitos para MIME types
-    const mimeTypes = doc.acceptedFormats?.map(format => {
-      const mimeMap: Record<string, string> = {
-        'pdf': 'application/pdf',
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
-        'gif': 'image/gif'
-      };
-      return mimeMap[format.toLowerCase()] || `image/${format}`;
-    }) || ['image/jpeg', 'image/png', 'application/pdf'];
-
     return (
       <div key={doc.id}>
-        <DocumentUploadField
-          id={doc.id}
-          label={doc.name}
-          description={doc.description}
-          required={doc.required}
-          acceptedFormats={mimeTypes}
-          maxSizeMB={doc.maxSizeMB || 5}
-          documentType={doc.documentType || 'documento_generico'}
+        <DocumentUpload
+          documentConfig={{
+            name: doc.name,
+            description: doc.description,
+            required: doc.required,
+            acceptedFormats: doc.acceptedFormats || ['pdf', 'jpg', 'jpeg', 'png'],
+            allowCameraUpload: true,
+            maxSizeMB: doc.maxSizeMB || 5
+          }}
           value={uploadedFile?.file || null}
           onChange={(file) => handleFileUpload(doc.id, file)}
         />

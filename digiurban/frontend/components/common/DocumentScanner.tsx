@@ -1818,7 +1818,9 @@ export function DocumentScanner({
       })
 
       const timestamp = Date.now()
-      const fileName = `${documentName}_${timestamp}.jpg`
+      // ✅ CORREÇÃO: Sanitizar documentName e garantir extensão .jpg
+      const sanitizedName = documentName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
+      const fileName = `${sanitizedName}_${timestamp}.jpg`
 
       // Criar File de forma mais compatível
       let file: File
