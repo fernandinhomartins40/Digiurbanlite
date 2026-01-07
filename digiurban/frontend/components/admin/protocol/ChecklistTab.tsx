@@ -66,6 +66,8 @@ export function ChecklistTab({
   const [formData, setFormData] = useState<any>(null)
   const [pendings, setPendings] = useState<ProtocolPending[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isStartingService, setIsStartingService] = useState(false)
+  const [sla, setSLA] = useState<any>(null)
 
   // Estado para interações
   const [interactionText, setInteractionText] = useState('')
@@ -132,10 +134,52 @@ export function ChecklistTab({
       const pendingsData = await getProtocolPendings(protocolId)
       setPendings(pendingsData)
 
+      // Carregar SLA
+      try {
+        const slaResponse = await apiRequest(`/protocols/${protocolId}/sla`)
+        if (slaResponse.success) {
+          setSLA(slaResponse.data)
+        }
+      } catch (error) {
+        console.log('[ChecklistTab] SLA não encontrado')
+        setSLA(null)
+      }
+
     } catch (error) {
       console.error('Erro ao carregar dados do checklist:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleStartService = async () => {
+    try {
+      setIsStartingService(true)
+
+      const response = await apiRequest(`/protocols/${protocolId}/sla/start-service`, {
+        method: 'POST'
+      })
+
+      if (response.success) {
+        toast({
+          title: 'Atendimento iniciado',
+          description: 'O SLA foi criado e o atendimento foi iniciado com sucesso.'
+        })
+
+        // Recarregar dados
+        loadChecklistData()
+
+        // Recarregar página inteira para atualizar sidebar
+        window.location.reload()
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro ao iniciar atendimento',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsStartingService(false)
     }
   }
 
@@ -577,6 +621,46 @@ export function ChecklistTab({
 
   return (
     <div className="space-y-6">
+      {/* Botão Iniciar Atendimento - Aparece apenas se SLA não existe */}
+      {!sla && (
+        <Card className="border-blue-300 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-900">
+              <Clock className="h-5 w-5" />
+              Atendimento Não Iniciado
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-blue-800">
+              Este protocolo ainda não teve o atendimento iniciado. Clique no botão abaixo para:
+            </p>
+            <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
+              <li>Criar o SLA (prazo de atendimento)</li>
+              <li>Iniciar o workflow de etapas</li>
+              <li>Alterar status para "EM PROGRESSO"</li>
+            </ul>
+            <Button
+              onClick={handleStartService}
+              disabled={isStartingService}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              size="lg"
+            >
+              {isStartingService ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Iniciando atendimento...
+                </>
+              ) : (
+                <>
+                  <Clock className="h-5 w-5 mr-2" />
+                  Iniciar Atendimento
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Status Geral */}
       <Card className={validation.canProgress ? 'border-green-300' : 'border-amber-300'}>
         <CardHeader>
