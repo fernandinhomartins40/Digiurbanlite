@@ -130,7 +130,10 @@ async function createPendingDocumentsForProtocol(
 router.use(citizenAuthMiddleware);
 
 // POST /api/citizen/protocols - Criar novo protocolo com upload de arquivos
-router.post('/', upload.array('documents'), async (req, res) => {
+// ✅ CORREÇÃO CRÍTICA: usar .any() ao invés de .array('documents')
+// Frontend envia: documents[0][file], documents[1][file], etc
+// Multer .array() só aceita: documents[], documents[], etc
+router.post('/', upload.any(), async (req, res) => {
   try {
     const citizenId = (req as any).citizen?.id;
     const citizenName = (req as any).citizen?.name;
