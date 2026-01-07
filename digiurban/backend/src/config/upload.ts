@@ -93,7 +93,44 @@ export const deleteFile = (filePath: string): void => {
   }
 };
 
-// Função para obter URL pública do arquivo
-export const getFileUrl = (filename: string): string => {
-  return `/uploads/documents/${filename}`;
+// ============================================================================
+// FASE 1: PADRÃO ÚNICO DE ARMAZENAMENTO
+// ============================================================================
+
+/**
+ * Obtém URL pública do arquivo no padrão canônico
+ * PADRÃO: /uploads/protocols/{protocolId}/{filename}
+ */
+export const getProtocolFileUrl = (protocolId: string, filename: string): string => {
+  return `/uploads/protocols/${protocolId}/${filename}`;
 };
+
+/**
+ * Obtém caminho físico absoluto do arquivo
+ * PADRÃO: {cwd}/uploads/protocols/{protocolId}/{filename}
+ */
+export const getProtocolFilePath = (protocolId: string, filename: string): string => {
+  return path.join(UPLOAD_DIR, 'protocols', protocolId, filename);
+};
+
+/**
+ * Extrai filename de uma URL completa
+ * Ex: "/uploads/protocols/abc123/file.pdf" => "file.pdf"
+ */
+export const extractFilename = (fileUrl: string): string => {
+  return path.basename(fileUrl);
+};
+
+/**
+ * Cria diretório do protocolo se não existir
+ */
+export const ensureProtocolDir = (protocolId: string): string => {
+  const protocolDir = path.join(UPLOAD_DIR, 'protocols', protocolId);
+  if (!fs.existsSync(protocolDir)) {
+    fs.mkdirSync(protocolDir, { recursive: true });
+  }
+  return protocolDir;
+};
+
+// ❌ REMOVIDO: getFileUrl() deprecated
+// Sistema agora usa APENAS getProtocolFileUrl() - padrão único sem exceções

@@ -5,9 +5,33 @@ import { requireRole } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
 import { UserRole } from '@prisma/client';
 import * as documentService from '../services/protocol-document.service';
-import { guessMimeFromExtension, resolveLocalFilePath } from '../utils/document-path';
+import { getProtocolFilePath, extractFilename } from '../config/upload';
+import { prisma } from '../lib/prisma';
 
 const router = express.Router();
+
+/**
+ * Função inline para detectar MIME type baseado na extensão do arquivo
+ * (Movida de document-path.ts após simplificação)
+ */
+const guessMimeFromExtension = (fileName?: string, fallback = 'application/octet-stream'): string => {
+  if (!fileName) return fallback;
+  const lower = fileName.toLowerCase();
+  if (lower.endsWith('.pdf')) return 'application/pdf';
+  if (lower.match(/\.(jpg|jpeg)$/)) return 'image/jpeg';
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.bmp')) return 'image/bmp';
+  if (lower.endsWith('.svg')) return 'image/svg+xml';
+  if (lower.endsWith('.doc')) return 'application/msword';
+  if (lower.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  if (lower.endsWith('.xls')) return 'application/vnd.ms-excel';
+  if (lower.endsWith('.xlsx')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (lower.endsWith('.txt')) return 'text/plain';
+  if (lower.match(/\.(zip|rar|7z)$/)) return 'application/zip';
+  return fallback;
+};
 
 /**
  * POST /api/protocols/:protocolId/documents
@@ -316,15 +340,16 @@ router.get(
  * Download/Visualização de um documento
  * Query params: ?inline=true para visualização, sem parâmetro para download
  * NOTA: Rota pública para permitir visualização em <img> e <iframe>
+ * ✅ FASE 1: Simplificado com padrão único de armazenamento
  */
 router.get(
   '/:protocolId/documents/:documentId/download',
   async (req, res) => {
     try {
-      const { documentId } = req.params;
+      const { protocolId, documentId } = req.params;
       const inline = req.query.inline === 'true';
 
-      console.log(`\n[DOWNLOAD] DocumentId: ${documentId}, Inline: ${inline}`);
+      console.log(`\n[DOWNLOAD] ProtocolId: ${protocolId}, DocumentId: ${documentId}, Inline: ${inline}`);
 
       // Buscar documento
       const document = await documentService.getDocumentById(documentId);
@@ -353,19 +378,19 @@ router.get(
         return res.redirect(document.fileUrl);
       }
 
-      // Caminho local - usar resolveLocalFilePath
-      const resolution = resolveLocalFilePath(document.fileUrl);
+      // ✅ FASE 1: Caminho local - usar padrão único
+      const filename = extractFilename(document.fileUrl);
+      const filePath = getProtocolFilePath(document.protocolId, filename);
 
-      if (!resolution.found) {
-        console.log(`[DOWNLOAD] Arquivo não existe nas tentativas: ${resolution.tried.join(' | ')}`);
+      if (!fs.existsSync(filePath)) {
+        console.log(`[DOWNLOAD] Arquivo não existe: ${filePath}`);
         return res.status(404).json({
           success: false,
           error: 'Arquivo não encontrado no servidor',
-          tried: resolution.tried
+          expectedPath: filePath
         });
       }
 
-      const filePath = (resolution as any).filePath;
       const mimeType = document.mimeType || guessMimeFromExtension(document.fileName || undefined, 'application/octet-stream');
 
       console.log(`[DOWNLOAD] Arquivo existe, enviando... MimeType: ${mimeType}, Caminho: ${filePath}`);
@@ -417,6 +442,361 @@ router.delete(
         error: 'Erro ao deletar documento',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
         });
+    }
+  }
+);
+
+// ============================================================================
+// FASE 2: ROTAS DE AUDITORIA E INTEGRIDADE
+// ============================================================================
+
+/**
+ * GET /api/protocols/:protocolId/documents/audit
+ * Auditoria de integridade dos documentos de um protocolo
+ */
+router.get(
+  '/:protocolId/documents/audit',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.MANAGER),
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+      const { validateProtocolIntegrity } = await import('../services/document-integrity.service');
+
+      const result = await validateProtocolIntegrity(protocolId);
+
+      return res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Erro na auditoria de documentos:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao auditar documentos',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/protocols/:protocolId/documents/:documentId/integrity
+ * Verifica integridade de um documento específico
+ */
+router.get(
+  '/:protocolId/documents/:documentId/integrity',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { documentId } = req.params;
+      const { validateDocumentIntegrity } = await import('../services/document-integrity.service');
+
+      const result = await validateDocumentIntegrity(documentId);
+
+      return res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Erro ao verificar integridade:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao verificar integridade',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/protocols/:protocolId/documents/:documentId/reconcile
+ * Reconcilia um documento com estado inconsistente
+ */
+router.post(
+  '/:protocolId/documents/:documentId/reconcile',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.MANAGER),
+  async (req, res) => {
+    try {
+      const { documentId } = req.params;
+      const { reconcileDocument } = await import('../services/document-integrity.service');
+
+      const result = await reconcileDocument(documentId);
+
+      return res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Erro ao reconciliar documento:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao reconciliar documento',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/admin/documents/audit/all
+ * Auditoria global de todos os documentos do sistema
+ * ADMIN only
+ */
+router.get(
+  '/admin/documents/audit/all',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.ADMIN),
+  async (req, res) => {
+    try {
+      const { auditAllDocuments } = await import('../services/document-integrity.service');
+
+      const result = await auditAllDocuments();
+
+      return res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Erro na auditoria global:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao executar auditoria global',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+// ============================================================================
+// FASE 5: VERSIONAMENTO DE DOCUMENTOS
+// ============================================================================
+
+/**
+ * GET /api/protocols/:protocolId/documents/:documentId/versions
+ * Lista todas as versões de um documento
+ */
+router.get(
+  '/:protocolId/documents/:documentId/versions',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { documentId } = req.params;
+
+      // Buscar documento atual
+      let currentDoc = await documentService.getDocumentById(documentId);
+
+      if (!currentDoc) {
+        return res.status(404).json({
+          success: false,
+          error: 'Documento não encontrado'
+        });
+      }
+
+      // Buscar todas as versões (navegando por previousDocId)
+      const versions: any[] = [currentDoc];
+      let previousDocId = currentDoc.previousDocId;
+
+      while (previousDocId) {
+        const previousDoc = await documentService.getDocumentById(previousDocId);
+
+        if (!previousDoc) break;
+
+        versions.push(previousDoc);
+        previousDocId = previousDoc.previousDocId;
+      }
+
+      // Ordenar por versão (mais antiga primeiro)
+      versions.reverse();
+
+      return res.json({
+        success: true,
+        data: {
+          totalVersions: versions.length,
+          currentVersion: currentDoc.version,
+          versions: versions.map((v, index) => ({
+            id: v.id,
+            version: v.version,
+            fileName: v.fileName,
+            fileUrl: v.fileUrl,
+            fileSize: v.fileSize,
+            mimeType: v.mimeType,
+            status: v.status,
+            uploadedAt: v.uploadedAt,
+            uploadedBy: v.uploadedBy,
+            validatedAt: v.validatedAt,
+            validatedBy: v.validatedBy,
+            rejectedAt: v.rejectedAt,
+            rejectionReason: v.rejectionReason,
+            isCurrent: index === versions.length - 1
+          }))
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao listar versões do documento:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao listar versões do documento',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/protocols/:protocolId/documents/:documentId/version/:versionId/download
+ * Download de uma versão específica do documento
+ */
+router.get(
+  '/:protocolId/documents/:documentId/version/:versionId/download',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId, versionId } = req.params;
+      const inline = req.query.inline === 'true';
+
+      // Buscar versão específica
+      const document = await documentService.getDocumentById(versionId);
+
+      if (!document) {
+        return res.status(404).json({
+          success: false,
+          error: 'Versão do documento não encontrada'
+        });
+      }
+
+      if (!document.fileUrl) {
+        return res.status(404).json({
+          success: false,
+          error: 'Arquivo não disponível para esta versão'
+        });
+      }
+
+      // Se fileUrl é uma URL externa
+      if (document.fileUrl.startsWith('http')) {
+        return res.redirect(document.fileUrl);
+      }
+
+      // Caminho local
+      const filename = extractFilename(document.fileUrl);
+      const filePath = getProtocolFilePath(document.protocolId, filename);
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({
+          success: false,
+          error: 'Arquivo físico não encontrado para esta versão'
+        });
+      }
+
+      const mimeType = document.mimeType || guessMimeFromExtension(document.fileName || undefined, 'application/octet-stream');
+
+      // Configurar headers
+      const disposition = inline ? 'inline' : 'attachment';
+      res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'} (v${document.version})"`);
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('X-Document-Version', document.version.toString());
+
+      // Stream do arquivo
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error('Erro ao fazer download da versão:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao fazer download da versão',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/protocols/:protocolId/documents/:documentId/restore-version
+ * Restaura uma versão anterior do documento
+ * Body: { versionId: string }
+ */
+router.post(
+  '/:protocolId/documents/:documentId/restore-version',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.MANAGER),
+  async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { documentId } = req.params;
+      const { versionId } = req.body;
+
+      if (!versionId) {
+        return res.status(400).json({
+          success: false,
+          error: 'versionId é obrigatório'
+        });
+      }
+
+      // Buscar versão antiga
+      const oldVersion = await documentService.getDocumentById(versionId);
+
+      if (!oldVersion) {
+        return res.status(404).json({
+          success: false,
+          error: 'Versão não encontrada'
+        });
+      }
+
+      // Buscar documento atual
+      const currentDoc = await documentService.getDocumentById(documentId);
+
+      if (!currentDoc) {
+        return res.status(404).json({
+          success: false,
+          error: 'Documento atual não encontrado'
+        });
+      }
+
+      // Criar nova versão baseada na versão antiga
+      const newVersion = currentDoc.version + 1;
+
+      const restoredDoc = await prisma.protocolDocument.update({
+        where: { id: documentId },
+        data: {
+          fileName: oldVersion.fileName,
+          fileUrl: oldVersion.fileUrl,
+          fileSize: oldVersion.fileSize,
+          mimeType: oldVersion.mimeType,
+          version: newVersion,
+          previousDocId: documentId,
+          uploadedAt: new Date(),
+          uploadedBy: authReq.userId,
+          status: 'UPLOADED', // Resetar status
+          validatedAt: null,
+          validatedBy: null,
+          rejectedAt: null,
+          rejectionReason: null
+        }
+      });
+
+      // Criar histórico
+      await prisma.protocolHistorySimplified.create({
+        data: {
+          protocolId: currentDoc.protocolId,
+          action: 'DOCUMENTO_RESTAURADO',
+          comment: `Documento "${currentDoc.documentType}" restaurado para versão ${oldVersion.version}`,
+          userId: authReq.userId
+        }
+      });
+
+      return res.json({
+        success: true,
+        data: restoredDoc,
+        message: `Documento restaurado para versão ${oldVersion.version}`
+      });
+    } catch (error) {
+      console.error('Erro ao restaurar versão:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao restaurar versão',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
     }
   }
 );

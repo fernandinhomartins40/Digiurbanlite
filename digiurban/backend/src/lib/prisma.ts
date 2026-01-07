@@ -1,6 +1,7 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import path from 'path';
 import '../types/globals'; // Importar tipos globais
+import { cascadeDeleteExtension } from '../middleware/prisma-cascade-delete.middleware';
 
 export { Prisma };
 
@@ -28,24 +29,31 @@ const getDatabaseUrl = (): string => {
   return `file:${defaultPath}`;
 };
 
+// Criar PrismaClient base
+const prismaBase = new PrismaClient({
+  datasources: {
+    db: {
+      url: getDatabaseUrl()
+    }
+  },
+  log: ['query', 'error', 'warn']
+});
+
+// ✅ FASE 4: Aplicar extension de cascade delete para arquivos físicos
+// Usa Prisma Client Extensions API (compatível com Prisma 6.x)
+const prismaExtended = prismaBase.$extends(cascadeDeleteExtension) as unknown as PrismaClient;
+
 // Prevent multiple instances of Prisma Client in development
 // Global declaration in src/types/globals.ts
-export const prisma =
-  globalThis.__prisma ||
-  new PrismaClient({
-    datasources: {
-      db: {
-        url: getDatabaseUrl()
-        }
-        },
-    log: ['query', 'error', 'warn']
-        });
+export const prisma: PrismaClient =
+  (globalThis.__prisma as PrismaClient) || prismaExtended;
 
 if (process.env.NODE_ENV !== 'production') {
-  globalThis.__prisma = prisma;
+  globalThis.__prisma = prisma as any;
 }
 
 // Log do caminho do banco ao inicializar (apenas uma vez)
 if (!globalThis.__prisma) {
   console.log(`📊 Database: ${getDatabaseUrl()}`);
+  console.log('🗑️  Cascade delete extension ativada');
 }

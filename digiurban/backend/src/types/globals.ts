@@ -19,8 +19,9 @@ declare global {
   /**
    * Instância global do Prisma para desenvolvimento
    * Previne múltiplas instâncias durante hot reload
+   * Aceita tanto PrismaClient base quanto estendido com extensions
    */
-  var __prisma: PrismaClient | undefined;
+  var __prisma: any;
 }
 
 // ============================================================================

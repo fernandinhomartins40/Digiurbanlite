@@ -8,12 +8,15 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
-import { upload, getFileUrl } from '../config/upload';
+import { upload, getProtocolFileUrl, ensureProtocolDir } from '../config/upload';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
 import { DocumentStatus } from '@prisma/client';
 import { applyWorkflowToProtocol } from '../services/module-workflow.service';
 import { createProtocolSLA } from '../services/protocol-sla.service';
+import { sanitizeDocumentId, matchDocumentType, mapUploadedFilesToDocuments } from '../utils/document-mapping';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 
@@ -48,42 +51,36 @@ async function createPendingDocumentsForProtocol(
       return;
     }
 
-    // ✅ MAPEAMENTO ROBUSTO E EXATO
-    const usedFiles = new Set<number>();
+    // ✅ FASE 3: MAPEAMENTO ROBUSTO com sanitização
+    const normalizedRequiredDocs = requiredDocs.map(docConfig => ({
+      id: sanitizeDocumentId(docConfig.id || docConfig.name || docConfig),
+      name: docConfig.name || docConfig.id || docConfig,
+      required: docConfig.required !== false
+    }));
 
-    for (const docConfig of requiredDocs) {
-      const docId = docConfig.id || docConfig.name || docConfig;
-      const docName = docConfig.name || docConfig.id || docConfig;
-      const isRequired = docConfig.required !== false;  // ✅ TRUE por padrão
+    const normalizedUploadedFiles = uploadedFiles.map(file => ({
+      ...file,
+      documentId: sanitizeDocumentId(file.documentId || file.id)
+    }));
 
-      // ✅ MAPEAMENTO EXATO (sem .includes() permissivo)
-      const uploadedFileIndex = uploadedFiles.findIndex((f, idx) => {
-        if (usedFiles.has(idx)) return false;
+    const mapping = mapUploadedFilesToDocuments(
+      normalizedUploadedFiles,
+      normalizedRequiredDocs
+    );
 
-        const fileDocId = f.documentId || f.id;
-        // Match EXATO: apenas igualdade direta (case-insensitive)
-        const matches =
-          fileDocId === docId ||
-          fileDocId === docName ||
-          fileDocId?.toLowerCase() === docId?.toLowerCase() ||
-          fileDocId?.toLowerCase() === docName?.toLowerCase();
+    // Criar documentos baseado no mapeamento
+    for (const reqDoc of normalizedRequiredDocs) {
+      const fileIndex = mapping.mapped.get(reqDoc.id);
 
-        if (matches) {
-          console.log(`   ✓ Mapeado EXATO: ${docName} → ${f.name} (documentId: ${fileDocId})`);
-        }
-        return matches;
-      });
+      if (fileIndex !== undefined) {
+        // Arquivo foi enviado - criar como UPLOADED
+        const uploadedFile = uploadedFiles[fileIndex];
 
-      if (uploadedFileIndex !== -1) {
-        const uploadedFile = uploadedFiles[uploadedFileIndex];
-        usedFiles.add(uploadedFileIndex);
-
-        // Criar como UPLOADED
         await prisma.protocolDocument.create({
           data: {
             protocolId,
-            documentType: docName,
-            isRequired,  // ✅ Preserva required do seed
+            documentType: reqDoc.name,
+            isRequired: reqDoc.required,
             fileName: uploadedFile.name,
             fileUrl: uploadedFile.url,
             fileSize: uploadedFile.size,
@@ -92,32 +89,37 @@ async function createPendingDocumentsForProtocol(
             uploadedAt: new Date()
           }
         });
-        console.log(`   ✓ Documento UPLOADED: ${docName} (isRequired=${isRequired})`);
+        console.log(`   ✓ Documento UPLOADED: ${reqDoc.name} (sanitized: ${reqDoc.id})`);
       } else {
-        // Criar como PENDING
+        // Arquivo não foi enviado - criar como PENDING
         await prisma.protocolDocument.create({
           data: {
             protocolId,
-            documentType: docName,
-            isRequired,  // ✅ Preserva required do seed
+            documentType: reqDoc.name,
+            isRequired: reqDoc.required,
             status: DocumentStatus.PENDING
           }
         });
-        console.log(`   → Documento PENDING: ${docName} (isRequired=${isRequired})`);
+        console.log(`   → Documento PENDING: ${reqDoc.name} (sanitized: ${reqDoc.id})`);
       }
     }
 
-    // ⚠️  AVISO: Arquivos sem mapeamento (não deveria acontecer se frontend enviar corretamente)
-    for (let idx = 0; idx < uploadedFiles.length; idx++) {
-      if (!usedFiles.has(idx)) {
+    // ⚠️  AVISO: Arquivos sem mapeamento
+    if (mapping.unmappedFiles.length > 0) {
+      for (const idx of mapping.unmappedFiles) {
         const file = uploadedFiles[idx];
         console.warn(`   ⚠️  ATENÇÃO: Arquivo não mapeado: ${file.name} (documentId: ${file.documentId})`);
-        console.warn(`   → Este arquivo NÃO será salvo no protocolo!`);
-        console.warn(`   → Frontend deve enviar documentTypes correspondentes aos requiredDocuments do seed`);
+        console.warn(`      → Sanitizado como: ${normalizedUploadedFiles[idx].documentId}`);
+        console.warn(`      → Este arquivo NÃO será salvo no protocolo!`);
       }
     }
 
-    console.log(`   ✅ Total processado: ${requiredDocs.length} requeridos | ${usedFiles.size} enviados | ${uploadedFiles.length - usedFiles.size} não mapeados`);
+    // ⚠️  AVISO: Documentos obrigatórios faltando
+    if (mapping.missingRequired.length > 0) {
+      console.warn(`   ⚠️  Documentos obrigatórios não enviados: ${mapping.missingRequired.join(', ')}`);
+    }
+
+    console.log(`   ✅ Total processado: ${requiredDocs.length} requeridos | ${mapping.mapped.size} enviados | ${mapping.unmappedFiles.length} não mapeados`);
   } catch (error) {
     console.error('Erro ao criar documentos PENDING:', error);
     // Não falhar a criação do protocolo se documentos falharem
@@ -195,8 +197,9 @@ router.post('/', upload.array('documents'), async (req, res) => {
     console.log('   🏷️  Document Types extraídos:', documentTypes);
     console.log('   📦 Total de arquivos:', files?.length || 0);
 
-    // Processar arquivos enviados - Mapear com documentTypes por índice
-    const uploadedDocuments = files ? files.map((file, index) => {
+    // TEMPORÁRIO: Mover arquivos para diretório temporário
+    // Após criar protocolo, moveremos para /uploads/protocols/{protocolId}/
+    const tempUploadedFiles = files ? files.map((file, index) => {
       const documentType = documentTypes[index];
 
       if (!documentType) {
@@ -210,16 +213,14 @@ router.post('/', upload.array('documents'), async (req, res) => {
         id: documentType || file.originalname,
         documentId: documentType || file.originalname,
         name: file.originalname,
-        url: getFileUrl(file.filename),
-        uploadedAt: new Date().toISOString(),
+        tempPath: file.path,  // Caminho temporário em /uploads/documents
         size: file.size,
         mimetype: file.mimetype,
-        filename: file.filename,
-        path: file.path
+        filename: file.filename
       };
     }) : [];
 
-    console.log('Uploaded Documents:', uploadedDocuments.length);
+    console.log('Uploaded Documents (temp):', tempUploadedFiles.length);
 
     // Buscar serviço
     const service = await prisma.serviceSimplified.findFirst({
@@ -273,6 +274,23 @@ router.post('/', upload.array('documents'), async (req, res) => {
       }
         }
         });
+
+    // ✅ FASE 1: Mover arquivos para diretório do protocolo com padrão único
+    const protocolDir = ensureProtocolDir(protocol.id);
+    const uploadedDocuments = tempUploadedFiles.map(file => {
+      const newFilename = file.filename;
+      const newPath = path.join(protocolDir, newFilename);
+
+      // Mover arquivo de /uploads/documents para /uploads/protocols/{protocolId}
+      fs.renameSync(file.tempPath, newPath);
+      console.log(`   ✓ Arquivo movido: ${file.name} → ${newPath}`);
+
+      return {
+        ...file,
+        url: getProtocolFileUrl(protocol.id, newFilename),
+        uploadedAt: new Date().toISOString()
+      };
+    });
 
     // Criar histórico inicial
     await prisma.protocolHistorySimplified.create({
@@ -1016,6 +1034,11 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('do
     const metadata = pending.metadata as any;
     const documentType = metadata?.documentType || pending.title || 'DOCUMENTO_PENDENCIA';
 
+    // ✅ FASE 1: Mover arquivo para diretório do protocolo
+    const protocolDir = ensureProtocolDir(protocolId);
+    const newPath = path.join(protocolDir, file.filename);
+    fs.renameSync(file.path, newPath);
+
     const uploadedDoc = await prisma.protocolDocument.create({
       data: {
         protocolId,
@@ -1023,7 +1046,7 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('do
         isRequired: true,
         status: DocumentStatus.UPLOADED,
         fileName: file.originalname,
-        fileUrl: getFileUrl(file.filename),
+        fileUrl: getProtocolFileUrl(protocolId, file.filename),
         fileSize: file.size,
         mimeType: file.mimetype,
         uploadedAt: new Date(),

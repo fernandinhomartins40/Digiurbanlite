@@ -82,7 +82,9 @@
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma migrate reset --force)",
       "Bash(move use-sidebar.ts use-sidebar.tsx)",
       "Bash(rm:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(xargs:*)",
+      "Bash(npx next build)"
     ],
     "deny": [],
     "ask": []
