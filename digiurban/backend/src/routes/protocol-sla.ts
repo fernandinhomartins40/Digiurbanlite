@@ -416,7 +416,7 @@ router.post(
       await prisma.protocolInteraction.create({
         data: {
           protocolId,
-          type: 'STATUS_UPDATE',
+          type: 'STATUS_CHANGED',
           authorType: 'SERVER',
           authorId: adminUser.id,
           authorName: adminUser.name || 'Servidor',
