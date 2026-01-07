@@ -25,8 +25,8 @@ ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
 RUN npx prisma generate
 
-# Build TypeScript
-RUN npm run build
+# Build TypeScript (limpar cache incremental primeiro)
+RUN rm -rf dist/.tsbuildinfo dist/* && npm run build
 
 # Validar que arquivos críticos foram compilados
 RUN test -f dist/index.js || (echo "❌ ERRO: index.js não foi compilado!" && exit 1)

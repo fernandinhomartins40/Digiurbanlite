@@ -32,9 +32,7 @@
     },
     "types": ["node"],
     "moduleResolution": "node",
-    "incremental": true,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "assumeChangesOnlyAffectDirectDependencies": true
+    "incremental": false
   },
   "include": [
     "src/**/*"
