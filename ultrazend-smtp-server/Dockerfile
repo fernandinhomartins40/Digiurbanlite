@@ -30,12 +30,12 @@ RUN npx prisma generate
 # Compilar TypeScript (apenas arquivos Prisma)
 RUN npm run build:prisma
 
-# Remover devDependencies após build
-RUN npm prune --omit=dev
-
-# Criar diretórios necessários
+# Criar diretórios necessários (antes do npm prune para garantir que sh existe)
 RUN mkdir -p /app/data /app/logs && \
     chown -R node:node /app
+
+# Remover devDependencies após build (movido para depois de criar diretórios)
+RUN npm prune --omit=dev || true
 
 # Usar usuário não-root
 USER node
