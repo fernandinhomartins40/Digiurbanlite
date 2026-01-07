@@ -91,7 +91,10 @@ export const upload = multer({
         });
 
 // Upload múltiplo de documentos
-export const uploadDocuments = upload.array('documents', 20); // Máximo 20 arquivos
+// ✅ CORREÇÃO CRÍTICA: usar .any() ao invés de .array('documents')
+// Frontend envia: documents[0][file], documents[1][file], etc
+// Multer .array() só aceita: documents[], documents[], etc
+export const uploadDocuments = upload.any(); // Aceita qualquer campo
 
 // Upload único
 export const uploadSingle = upload.single('file');
