@@ -1823,16 +1823,18 @@ export function DocumentScanner({
       const sanitizedName = (documentName || 'documento').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || 'documento'
       const fileName = `${sanitizedName}_${timestamp}.jpg`
 
-      // ✅ CORREÇÃO CRÍTICA: Sempre usar File constructor (sem fallback para Blob)
+      // ✅ CORREÇÃO CRÍTICA: Testar File constructor por tentativa (mais robusto que typeof)
       // Blob não tem propriedade 'name' nativa - FormData envia como "blob"
-      if (typeof File !== 'function') {
+      let file: File
+      try {
+        file = new File([blob], fileName, {
+          type: 'image/jpeg',
+          lastModified: timestamp
+        })
+      } catch (e) {
+        console.error('[ConfirmPhoto] File constructor não suportado:', e)
         throw new Error('Seu navegador não suporta upload de câmera. Por favor, use o botão "Selecionar Arquivo".')
       }
-
-      let file = new File([blob], fileName, {
-        type: 'image/jpeg',
-        lastModified: timestamp
-      })
 
       console.log('[ConfirmPhoto] File criado:', fileName, file.size, 'bytes')
 
