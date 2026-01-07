@@ -81,7 +81,7 @@ async function createPendingDocumentsForProtocol(
             protocolId,
             documentType: reqDoc.name,
             isRequired: reqDoc.required,
-            fileName: uploadedFile.name,
+            fileName: uploadedFile.filename, // ✅ Usar filename (processado) ao invés de name (original)
             fileUrl: uploadedFile.url,
             fileSize: uploadedFile.size,
             mimeType: uploadedFile.mimetype,
