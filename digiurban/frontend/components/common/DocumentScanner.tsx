@@ -1823,11 +1823,12 @@ export function DocumentScanner({
       const sanitizedName = (documentName || 'documento').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || 'documento'
       const fileName = `${sanitizedName}_${timestamp}.jpg`
 
-      // ✅ CORREÇÃO CRÍTICA: Testar File constructor por tentativa (mais robusto que typeof)
+      // ✅ CORREÇÃO CRÍTICA: Usar window.File para evitar minificação incorreta
       // Blob não tem propriedade 'name' nativa - FormData envia como "blob"
       let file: File
       try {
-        file = new File([blob], fileName, {
+        // Usar window.File explicitamente para evitar problemas de minificação
+        file = new window.File([blob], fileName, {
           type: 'image/jpeg',
           lastModified: timestamp
         })
