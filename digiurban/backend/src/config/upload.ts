@@ -46,7 +46,13 @@ const storage = multer.diskStorage({
       }
     }
 
-    const name = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_');
+    let name = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '_');
+
+    // ✅ CORREÇÃO: Se nome é "blob" ou vazio, usar "documento"
+    if (!name || name === 'blob' || name.length < 3) {
+      name = 'documento';
+    }
+
     cb(null, `${uniqueSuffix}-${name}${ext}`);
   }
 });

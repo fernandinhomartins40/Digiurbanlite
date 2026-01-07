@@ -254,8 +254,9 @@ export class DocumentUploadService {
 
     createSecureDirectory(protocolDir);
 
-    // Gerar nome seguro
-    const secureFilename = generateSecureFilename(file.originalname, userId);
+    // ✅ CORREÇÃO: Usar filename do Multer (já processado com timestamp e extensão)
+    // originalname pode ser "blob" se vier de câmera, filename sempre está correto
+    const secureFilename = file.filename;
     const targetPath = path.join(protocolDir, secureFilename);
 
     // Mover arquivo
