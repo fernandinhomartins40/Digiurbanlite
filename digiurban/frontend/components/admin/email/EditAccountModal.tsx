@@ -62,13 +62,13 @@ export function EditAccountModal({ open, onClose, account, onSubmit }: EditAccou
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <Settings className="w-6 h-6 text-blue-600" />
+          <DialogTitle className="flex items-center gap-2 text-xl md:text-2xl">
+            <Settings className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             Editar Conta
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm break-all">
             Atualizar configurações da conta {account.email}
           </DialogDescription>
         </DialogHeader>
@@ -76,7 +76,7 @@ export function EditAccountModal({ open, onClose, account, onSubmit }: EditAccou
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nome */}
           <div>
-            <Label htmlFor="name" className="flex items-center gap-2">
+            <Label htmlFor="name" className="flex items-center gap-2 text-sm">
               <UserCircle className="w-4 h-4" />
               Nome Completo
             </Label>
@@ -91,14 +91,14 @@ export function EditAccountModal({ open, onClose, account, onSubmit }: EditAccou
 
           {/* Limites */}
           <div className="border-t pt-4">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm md:text-base">
               <Hash className="w-4 h-4" />
               Limites de Envio
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="dailyLimit">Limite Diário</Label>
+                <Label htmlFor="dailyLimit" className="text-sm">Limite Diário</Label>
                 <Input
                   id="dailyLimit"
                   type="number"
@@ -112,7 +112,7 @@ export function EditAccountModal({ open, onClose, account, onSubmit }: EditAccou
               </div>
 
               <div>
-                <Label htmlFor="monthlyLimit">Limite Mensal</Label>
+                <Label htmlFor="monthlyLimit" className="text-sm">Limite Mensal</Label>
                 <Input
                   id="monthlyLimit"
                   type="number"
@@ -129,14 +129,14 @@ export function EditAccountModal({ open, onClose, account, onSubmit }: EditAccou
 
           {/* Status */}
           <div className="border-t pt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Power className="w-4 h-4 text-gray-600" />
-                <div>
-                  <Label htmlFor="isActive" className="cursor-pointer">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-start gap-2 flex-1">
+                <Power className="w-4 h-4 text-gray-600 mt-1" />
+                <div className="flex-1">
+                  <Label htmlFor="isActive" className="cursor-pointer text-sm">
                     Conta Ativa
                   </Label>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 mt-1">
                     Permitir que esta conta envie emails
                   </p>
                 </div>
@@ -149,11 +149,11 @@ export function EditAccountModal({ open, onClose, account, onSubmit }: EditAccou
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               {loading ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </DialogFooter>

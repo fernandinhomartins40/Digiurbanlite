@@ -49,7 +49,7 @@ export function UsageStatsModal({ open, onClose, accountId }: UsageStatsModalPro
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
@@ -62,13 +62,13 @@ export function UsageStatsModal({ open, onClose, accountId }: UsageStatsModalPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <BarChart3 className="w-6 h-6 text-blue-600" />
+          <DialogTitle className="flex items-center gap-2 text-xl md:text-2xl">
+            <BarChart3 className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             Estatísticas de Uso
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Estatísticas detalhadas de envio de emails
           </DialogDescription>
         </DialogHeader>
@@ -76,11 +76,11 @@ export function UsageStatsModal({ open, onClose, accountId }: UsageStatsModalPro
         <div className="space-y-6">
           {/* Uso do Mês Atual */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm md:text-base">
               <Calendar className="w-4 h-4" />
               Uso do Mês Atual
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
@@ -133,7 +133,7 @@ export function UsageStatsModal({ open, onClose, accountId }: UsageStatsModalPro
 
           {/* Limites */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm md:text-base">
               <Clock className="w-4 h-4" />
               Limites e Uso
             </h3>
@@ -182,7 +182,7 @@ export function UsageStatsModal({ open, onClose, accountId }: UsageStatsModalPro
           {/* Alertas */}
           {(parseFloat(stats.percentages.daily) >= 80 || parseFloat(stats.percentages.monthly) >= 80) && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-800">
+              <p className="text-xs sm:text-sm text-yellow-800">
                 ⚠️ <strong>Atenção:</strong> Esta conta está próxima do limite de envios.
                 {parseFloat(stats.percentages.monthly) >= 90 && ' Considere aumentar os limites mensais.'}
               </p>

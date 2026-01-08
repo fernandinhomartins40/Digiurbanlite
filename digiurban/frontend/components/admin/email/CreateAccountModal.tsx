@@ -70,13 +70,13 @@ export function CreateAccountModal({ open, onClose, onSubmit, serverHostname }: 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <UserCircle className="w-6 h-6 text-blue-600" />
+          <DialogTitle className="flex items-center gap-2 text-xl md:text-2xl">
+            <UserCircle className="w-5 h-5 md:w-6 md:h-6 text-blue-600" />
             Nova Conta de Email
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Criar uma nova conta de email corporativo para um servidor municipal
           </DialogDescription>
         </DialogHeader>
@@ -84,7 +84,7 @@ export function CreateAccountModal({ open, onClose, onSubmit, serverHostname }: 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nome Completo */}
           <div>
-            <Label htmlFor="name" className="flex items-center gap-2">
+            <Label htmlFor="name" className="flex items-center gap-2 text-sm">
               <UserCircle className="w-4 h-4" />
               Nome Completo *
             </Label>
@@ -100,11 +100,11 @@ export function CreateAccountModal({ open, onClose, onSubmit, serverHostname }: 
 
           {/* Email */}
           <div>
-            <Label htmlFor="email" className="flex items-center gap-2">
+            <Label htmlFor="email" className="flex items-center gap-2 text-sm">
               <Mail className="w-4 h-4" />
               Email *
             </Label>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1">
               <Input
                 id="email"
                 value={formData.emailUsername}
@@ -113,17 +113,17 @@ export function CreateAccountModal({ open, onClose, onSubmit, serverHostname }: 
                 required
                 className="flex-1"
               />
-              <span className="text-gray-600 font-medium">@{domain}</span>
+              <span className="text-gray-600 font-medium text-sm sm:text-base">@{domain}</span>
             </div>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 mt-1">
               Use apenas letras minúsculas, números, pontos e hífens
             </p>
           </div>
 
           {/* Cargo e Departamento */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="position" className="flex items-center gap-2">
+              <Label htmlFor="position" className="flex items-center gap-2 text-sm">
                 <Briefcase className="w-4 h-4" />
                 Cargo
               </Label>
@@ -137,7 +137,7 @@ export function CreateAccountModal({ open, onClose, onSubmit, serverHostname }: 
             </div>
 
             <div>
-              <Label htmlFor="department" className="flex items-center gap-2">
+              <Label htmlFor="department" className="flex items-center gap-2 text-sm">
                 <Building2 className="w-4 h-4" />
                 Departamento
               </Label>
@@ -153,14 +153,14 @@ export function CreateAccountModal({ open, onClose, onSubmit, serverHostname }: 
 
           {/* Limites */}
           <div className="border-t pt-4">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm md:text-base">
               <Hash className="w-4 h-4" />
               Limites de Envio
             </h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="dailyLimit">Limite Diário</Label>
+                <Label htmlFor="dailyLimit" className="text-sm">Limite Diário</Label>
                 <Input
                   id="dailyLimit"
                   type="number"
@@ -174,7 +174,7 @@ export function CreateAccountModal({ open, onClose, onSubmit, serverHostname }: 
               </div>
 
               <div>
-                <Label htmlFor="monthlyLimit">Limite Mensal</Label>
+                <Label htmlFor="monthlyLimit" className="text-sm">Limite Mensal</Label>
                 <Input
                   id="monthlyLimit"
                   type="number"
@@ -189,11 +189,11 @@ export function CreateAccountModal({ open, onClose, onSubmit, serverHostname }: 
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               {loading ? 'Criando...' : 'Criar Conta'}
             </Button>
           </DialogFooter>

@@ -38,20 +38,20 @@ export function CredentialsModal({ open, onClose, credentials }: CredentialsModa
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <Shield className="w-6 h-6 text-green-600" />
+          <DialogTitle className="flex items-center gap-2 text-xl md:text-2xl">
+            <Shield className="w-5 h-5 md:w-6 md:h-6 text-green-600" />
             Credenciais SMTP Criadas
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Guarde estas informações com segurança. A senha não será exibida novamente!
           </DialogDescription>
         </DialogHeader>
 
         <Alert className="bg-yellow-50 border-yellow-200">
           <AlertCircle className="w-4 h-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800">
+          <AlertDescription className="text-yellow-800 text-xs sm:text-sm">
             <strong>ATENÇÃO:</strong> Esta é a única vez que a senha será exibida. Copie e guarde em local seguro!
           </AlertDescription>
         </Alert>
@@ -141,30 +141,30 @@ export function CredentialsModal({ open, onClose, credentials }: CredentialsModa
                 Configurações do Servidor SMTP
               </h3>
 
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-blue-700 font-medium mb-1">Servidor SMTP</p>
-                  <code className="bg-white px-2 py-1 rounded border text-xs block">
+                  <p className="text-blue-700 font-medium mb-1 text-xs sm:text-sm">Servidor SMTP</p>
+                  <code className="bg-white px-2 py-1 rounded border text-xs block break-all">
                     {credentials.server}
                   </code>
                 </div>
 
                 <div>
-                  <p className="text-blue-700 font-medium mb-1">Porta</p>
+                  <p className="text-blue-700 font-medium mb-1 text-xs sm:text-sm">Porta</p>
                   <code className="bg-white px-2 py-1 rounded border text-xs block">
                     {credentials.port || 587}
                   </code>
                 </div>
 
                 <div>
-                  <p className="text-blue-700 font-medium mb-1">Segurança</p>
+                  <p className="text-blue-700 font-medium mb-1 text-xs sm:text-sm">Segurança</p>
                   <code className="bg-white px-2 py-1 rounded border text-xs block">
                     {credentials.security || 'STARTTLS'}
                   </code>
                 </div>
 
                 <div>
-                  <p className="text-blue-700 font-medium mb-1">Autenticação</p>
+                  <p className="text-blue-700 font-medium mb-1 text-xs sm:text-sm">Autenticação</p>
                   <code className="bg-white px-2 py-1 rounded border text-xs block">
                     Obrigatória
                   </code>
@@ -175,18 +175,18 @@ export function CredentialsModal({ open, onClose, credentials }: CredentialsModa
 
           {/* Instruções */}
           <div className="border-t pt-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Como usar:</h3>
-            <ul className="space-y-2 text-sm text-gray-700">
+            <h3 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">Como usar:</h3>
+            <ul className="space-y-2 text-xs sm:text-sm text-gray-700">
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">1.</span>
+                <span className="text-blue-600 font-bold min-w-[1.5rem]">1.</span>
                 <span>Configure seu cliente de email (Thunderbird, Outlook, Gmail App)</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">2.</span>
+                <span className="text-blue-600 font-bold min-w-[1.5rem]">2.</span>
                 <span>Use as credenciais acima para autenticação SMTP</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-blue-600 font-bold">3.</span>
+                <span className="text-blue-600 font-bold min-w-[1.5rem]">3.</span>
                 <span>Certifique-se de usar STARTTLS na porta 587</span>
               </li>
             </ul>
@@ -194,7 +194,7 @@ export function CredentialsModal({ open, onClose, credentials }: CredentialsModa
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={onClose}>
+          <Button onClick={onClose} className="w-full sm:w-auto">
             Entendi, Fechar
           </Button>
         </div>
