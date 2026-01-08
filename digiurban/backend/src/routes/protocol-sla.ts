@@ -317,6 +317,104 @@ router.delete(
 );
 
 /**
+ * POST /api/protocols/:protocolId/sla/start-service
+ * Iniciar atendimento: criar workflow com primeira etapa IN_PROGRESS e SLA
+ * Usado quando protocolo foi criado sem workflow/SLA (correção manual)
+ */
+router.post(
+  '/:protocolId/sla/start-service',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.USER),
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+
+      console.log(`🚀 Iniciando atendimento manual para protocolo ${protocolId}`);
+
+      // 1. Verificar se protocolo existe
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        include: {
+          stages: true,
+          sla: true
+        }
+      });
+
+      if (!protocol) {
+        return res.status(404).json({
+          success: false,
+          error: 'Protocolo não encontrado'
+        });
+      }
+
+      // 2. Verificar se já tem workflow
+      const hasWorkflow = protocol.stages && protocol.stages.length > 0;
+      const hasSLA = !!protocol.sla;
+
+      // 3. Criar workflow se não existir
+      if (!hasWorkflow && protocol.moduleType) {
+        try {
+          console.log(`📋 Criando workflow para módulo: ${protocol.moduleType}`);
+          await workflowService.applyWorkflowToProtocol(protocolId, protocol.moduleType);
+          console.log('   ✓ Workflow criado com primeira etapa IN_PROGRESS');
+        } catch (error) {
+          console.error('❌ Erro ao criar workflow:', error);
+          return res.status(500).json({
+            success: false,
+            error: 'Erro ao criar workflow',
+            details: error instanceof Error ? error.message : 'Erro desconhecido'
+          });
+        }
+      }
+
+      // 4. Criar SLA se não existir
+      if (!hasSLA) {
+        try {
+          console.log('⏱️  Criando SLA');
+          await ensureSLAFromWorkflow(protocolId);
+          console.log('   ✓ SLA criado com sucesso');
+        } catch (error) {
+          console.error('❌ Erro ao criar SLA:', error);
+          return res.status(500).json({
+            success: false,
+            error: 'Erro ao criar SLA',
+            details: error instanceof Error ? error.message : 'Erro desconhecido'
+          });
+        }
+      }
+
+      // 5. Buscar protocolo atualizado
+      const updatedProtocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        include: {
+          stages: {
+            orderBy: { stageOrder: 'asc' }
+          },
+          sla: true
+        }
+      });
+
+      return res.json({
+        success: true,
+        message: 'Atendimento iniciado com sucesso',
+        data: {
+          protocol: updatedProtocol,
+          workflowCreated: !hasWorkflow,
+          slaCreated: !hasSLA
+        }
+      });
+    } catch (error) {
+      console.error('Erro ao iniciar atendimento:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao iniciar atendimento',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+/**
  * Tenta criar SLA automaticamente a partir do workflow do módulo do protocolo.
  */
 async function ensureSLAFromWorkflow(protocolId: string) {

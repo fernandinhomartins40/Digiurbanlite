@@ -71,6 +71,9 @@ export function ChecklistTab({
   const [interactionText, setInteractionText] = useState('')
   const [isSendingInteraction, setIsSendingInteraction] = useState(false)
 
+  // Estado para iniciar atendimento (correção manual de workflow/SLA)
+  const [isStartingService, setIsStartingService] = useState(false)
+
   // Estado para modal de pendência
   const [showPendingModal, setShowPendingModal] = useState(false)
   const [pendingType, setPendingType] = useState<'document' | 'field' | null>(null)
@@ -380,6 +383,39 @@ export function ChecklistTab({
     }
   }
 
+  // Iniciar atendimento: criar workflow e SLA manualmente (correção)
+  const handleStartService = async () => {
+    try {
+      setIsStartingService(true)
+
+      const response = await apiRequest(`/api/protocols/${protocolId}/sla/start-service`, {
+        method: 'POST'
+      })
+
+      if (!response.success) {
+        throw new Error(response.error || 'Erro ao iniciar atendimento')
+      }
+
+      toast({
+        title: 'Atendimento Iniciado',
+        description: 'Workflow e SLA criados com sucesso. Recarregue a página para continuar.',
+      })
+
+      // Recarregar página após 2 segundos
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000)
+    } catch (error) {
+      toast({
+        title: 'Erro ao iniciar atendimento',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsStartingService(false)
+    }
+  }
+
   // Atualizar valor de campo e resolver pendência associada
   const handleUpdateFieldValue = async (fieldId: string, value: string) => {
     try {
@@ -568,9 +604,30 @@ export function ChecklistTab({
               <p className="text-xs font-mono">Protocolo ID: {protocolId}</p>
               <p className="text-xs font-mono">Erro: Nenhuma etapa de workflow encontrada</p>
             </div>
-            <p className="mt-4 font-medium">
-              Entre em contato com o suporte técnico informando o ID do protocolo acima.
-            </p>
+            <div className="mt-4 p-4 bg-blue-50 rounded border border-blue-300">
+              <p className="font-medium mb-2 text-blue-900">Solução:</p>
+              <p className="text-sm mb-3 text-blue-800">
+                Você pode iniciar o atendimento manualmente clicando no botão abaixo.
+                Isso criará o workflow e SLA necessários para este protocolo.
+              </p>
+              <Button
+                onClick={handleStartService}
+                disabled={isStartingService}
+                className="w-full"
+              >
+                {isStartingService ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Iniciando Atendimento...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Iniciar Atendimento
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

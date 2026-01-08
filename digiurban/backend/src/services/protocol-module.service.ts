@@ -193,15 +193,19 @@ export class ProtocolModuleService {
 
     // ============================================================================
     // APLICAR WORKFLOW E SLA (FORA DA TRANSAÇÃO)
+    // ✅ RESILIENTE: Se falhar, protocolo continua existindo para correção manual
     // ============================================================================
 
     // Aplicar workflow se houver moduleType
     if (result.protocol.moduleType) {
       try {
+        console.log(`📋 Inicializando workflow para módulo: ${result.protocol.moduleType}`);
         await this.applyWorkflowToProtocol(result.protocol.id, result.protocol.moduleType);
+        console.log('   ✓ Workflow inicializado com primeira etapa IN_PROGRESS');
       } catch (error) {
-        console.error('Erro ao aplicar workflow:', error);
-        // Não falhar a criação do protocolo se workflow falhar
+        console.error('⚠️ Erro ao inicializar workflow:', error);
+        console.warn('   → Protocolo criado SEM workflow. Admin pode inicializar manualmente via botão "Iniciar Atendimento".');
+        // NÃO deletar protocolo, NÃO lançar erro - permite correção manual
       }
     }
 
@@ -225,6 +229,43 @@ export class ProtocolModuleService {
     } catch (error) {
       console.error('Erro ao processar citizen links:', error);
       // Não falhar a criação do protocolo se citizen links falharem
+    }
+
+    // ============================================================================
+    // VALIDAÇÃO PÓS-CRIAÇÃO: Verificar workflow e SLA (sem deletar se falhar)
+    // ============================================================================
+
+    const validation = await prisma.protocolSimplified.findUnique({
+      where: { id: result.protocol.id },
+      include: {
+        sla: true,
+        stages: {
+          where: { status: 'IN_PROGRESS' },
+          orderBy: { stageOrder: 'asc' },
+          take: 1
+        }
+      }
+    });
+
+    if (!validation) {
+      console.error('⚠️ VALIDAÇÃO: Protocolo não encontrado após criação');
+      // Protocolo foi criado mas não conseguimos validá-lo - continuar
+    } else {
+      if (!validation.sla) {
+        console.warn('⚠️ VALIDAÇÃO: SLA não foi criado');
+        console.warn('   → Admin pode criar SLA manualmente via botão "Iniciar Atendimento"');
+      }
+
+      if (validation.stages.length === 0) {
+        console.warn('⚠️ VALIDAÇÃO: Nenhuma etapa IN_PROGRESS foi criada');
+        console.warn('   → Admin pode inicializar workflow manualmente via botão "Iniciar Atendimento"');
+      }
+
+      if (validation.sla && validation.stages.length > 0) {
+        console.log('✅ Protocolo criado e validado:', result.protocol.number);
+        console.log(`   → SLA: ${validation.sla.workingDays} dias úteis`);
+        console.log(`   → Workflow: ${validation.stages[0].stageName} (IN_PROGRESS)`);
+      }
     }
 
     // ============================================================================
