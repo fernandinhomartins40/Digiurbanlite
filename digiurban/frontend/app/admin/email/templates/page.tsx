@@ -215,14 +215,14 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Templates de Email</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">Templates de Email</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             {templates.length} template{templates.length !== 1 ? 's' : ''} disponível{templates.length !== 1 ? 'eis' : ''}
           </p>
         </div>
-        <Button onClick={openNewModal}>
+        <Button onClick={openNewModal} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Novo Template
         </Button>
@@ -250,7 +250,7 @@ export default function TemplatesPage() {
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg truncate">{template.name}</CardTitle>
+                    <CardTitle className="text-base sm:text-lg truncate">{template.name}</CardTitle>
                     {template.category && (
                       <span className="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
                         {template.category}
@@ -261,54 +261,58 @@ export default function TemplatesPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Assunto:</p>
-                  <p className="text-sm truncate">{template.subject}</p>
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Assunto:</p>
+                  <p className="text-xs sm:text-sm truncate">{template.subject}</p>
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Conteúdo:</p>
-                  <p className="text-sm text-muted-foreground line-clamp-3">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">Conteúdo:</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
                     {template.textContent}
                   </p>
                 </div>
 
-                <div className="flex gap-2 pt-3 border-t">
+                <div className="flex flex-wrap gap-2 pt-3 border-t">
                   <Button
                     variant="default"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 min-w-[100px]"
                     onClick={() => useTemplate(template)}
                   >
-                    <Send className="mr-2 h-4 w-4" />
-                    Usar
+                    <Send className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="text-xs sm:text-sm">Usar</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setPreviewTemplate(template)}
+                    title="Visualizar"
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => openEditModal(template)}
+                    title="Editar"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => duplicateTemplate(template)}
+                    title="Duplicar"
                   >
-                    <Copy className="h-4 w-4" />
+                    <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => deleteTemplate(template.id)}
+                    title="Excluir"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </CardContent>
@@ -322,8 +326,8 @@ export default function TemplatesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>
+              <div className="flex justify-between items-start gap-4">
+                <CardTitle className="text-lg sm:text-xl">
                   {editingTemplate ? 'Editar Template' : 'Novo Template'}
                 </CardTitle>
                 <Button variant="ghost" size="sm" onClick={closeModal}>
@@ -334,45 +338,49 @@ export default function TemplatesPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Template *</Label>
+                  <Label htmlFor="name" className="text-sm sm:text-base">Nome do Template *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Ex: Confirmação de Protocolo"
+                    className="text-sm sm:text-base"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Categoria</Label>
+                  <Label htmlFor="category" className="text-sm sm:text-base">Categoria</Label>
                   <Input
                     id="category"
                     value={formData.category}
                     onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                     placeholder="Ex: Atendimento, Notificações, etc"
+                    className="text-sm sm:text-base"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="subject">Assunto *</Label>
+                  <Label htmlFor="subject" className="text-sm sm:text-base">Assunto *</Label>
                   <Input
                     id="subject"
                     value={formData.subject}
                     onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                     placeholder="Assunto do email"
+                    className="text-sm sm:text-base"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="textContent">Conteúdo *</Label>
+                  <Label htmlFor="textContent" className="text-sm sm:text-base">Conteúdo *</Label>
                   <Textarea
                     id="textContent"
                     value={formData.textContent}
                     onChange={(e) => setFormData(prev => ({ ...prev, textContent: e.target.value }))}
                     placeholder="Corpo do email..."
                     rows={12}
+                    className="text-sm sm:text-base"
                     required
                   />
                   <p className="text-xs text-muted-foreground">
@@ -380,11 +388,11 @@ export default function TemplatesPage() {
                   </p>
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t">
-                  <Button type="button" variant="outline" onClick={closeModal} className="flex-1">
+                <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
+                  <Button type="button" variant="outline" onClick={closeModal} className="flex-1 w-full">
                     Cancelar
                   </Button>
-                  <Button type="submit" className="flex-1">
+                  <Button type="submit" className="flex-1 w-full">
                     {editingTemplate ? 'Atualizar' : 'Criar'} Template
                   </Button>
                 </div>
@@ -399,8 +407,8 @@ export default function TemplatesPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <Card className="max-w-2xl w-full max-h-[85vh] overflow-y-auto">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>{previewTemplate.name}</CardTitle>
+              <div className="flex justify-between items-start gap-4">
+                <CardTitle className="text-lg sm:text-xl">{previewTemplate.name}</CardTitle>
                 <Button variant="ghost" size="sm" onClick={() => setPreviewTemplate(null)}>
                   <X className="h-4 w-4" />
                 </Button>
@@ -408,27 +416,27 @@ export default function TemplatesPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Assunto:</Label>
-                <p className="mt-1 font-medium">{previewTemplate.subject}</p>
+                <Label className="text-sm sm:text-base">Assunto:</Label>
+                <p className="mt-1 font-medium text-sm sm:text-base">{previewTemplate.subject}</p>
               </div>
 
               <div>
-                <Label>Conteúdo:</Label>
-                <div className="mt-2 p-4 bg-gray-50 rounded-lg border">
-                  <pre className="whitespace-pre-wrap font-sans text-sm">
+                <Label className="text-sm sm:text-base">Conteúdo:</Label>
+                <div className="mt-2 p-3 sm:p-4 bg-gray-50 rounded-lg border overflow-x-auto">
+                  <pre className="whitespace-pre-wrap font-sans text-xs sm:text-sm">
                     {previewTemplate.textContent}
                   </pre>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
                 <Button
                   variant="default"
                   onClick={() => {
                     useTemplate(previewTemplate);
                     setPreviewTemplate(null);
                   }}
-                  className="flex-1"
+                  className="flex-1 w-full"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   Usar Template
@@ -436,6 +444,7 @@ export default function TemplatesPage() {
                 <Button
                   variant="outline"
                   onClick={() => setPreviewTemplate(null)}
+                  className="w-full sm:w-auto"
                 >
                   Fechar
                 </Button>
