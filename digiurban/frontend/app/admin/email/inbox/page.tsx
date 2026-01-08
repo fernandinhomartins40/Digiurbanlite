@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -13,17 +11,14 @@ import {
   Inbox as InboxIcon,
   Search,
   Star,
-  StarOff,
   Trash2,
   Reply,
   Forward,
-  Archive,
   MailOpen,
   Loader2,
   RefreshCw,
   ChevronLeft,
   Paperclip,
-  MoreVertical,
   Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -55,7 +50,6 @@ export default function InboxPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'unread' | 'starred'>('all');
   const [selectedEmail, setSelectedEmail] = useState<InboxEmail | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchInboxEmails();
@@ -210,7 +204,6 @@ export default function InboxPage() {
   };
 
   const unreadCount = emails.filter(e => !e.isRead).length;
-  const starredCount = emails.filter(e => e.isStarred).length;
 
   if (loading) {
     return (
@@ -225,31 +218,32 @@ export default function InboxPage() {
 
   // Layout de 2 colunas estilo Gmail
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col">
+    <div className="h-[calc(100vh-120px)] flex flex-col p-2 sm:p-4 md:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">Caixa de Entrada</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 sm:pb-4 border-b gap-3">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold truncate">Caixa de Entrada</h1>
           {unreadCount > 0 && (
-            <span className="bg-primary text-primary-foreground text-xs font-semibold px-2.5 py-0.5 rounded-full">
+            <span className="bg-primary text-primary-foreground text-xs font-semibold px-2 sm:px-2.5 py-0.5 rounded-full shrink-0">
               {unreadCount}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={fetchInboxEmails}>
+          <Button variant="ghost" size="icon" onClick={fetchInboxEmails} className="shrink-0">
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button onClick={() => router.push('/admin/email/compose')}>
+          <Button onClick={() => router.push('/admin/email/compose')} className="w-full sm:w-auto" size="sm">
             <Mail className="mr-2 h-4 w-4" />
-            Escrever
+            <span className="hidden sm:inline">Escrever</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="py-3 flex items-center gap-3 border-b">
-        <div className="relative flex-1 max-w-lg">
+      <div className="py-3 flex flex-col sm:flex-row sm:items-center gap-3 border-b">
+        <div className="relative flex-1 max-w-full sm:max-w-lg">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Pesquisar emails..."
@@ -258,28 +252,33 @@ export default function InboxPage() {
             className="pl-9 bg-muted/50"
           />
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto pb-1">
           <Button
             variant={filterType === 'all' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setFilterType('all')}
+            className="shrink-0"
           >
-            Todas
+            <span className="hidden sm:inline">Todas</span>
+            <span className="sm:hidden">Todas</span>
           </Button>
           <Button
             variant={filterType === 'unread' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setFilterType('unread')}
+            className="shrink-0"
           >
-            Não lidas
+            <span className="hidden sm:inline">Não lidas</span>
+            <span className="sm:hidden">Não lidas</span>
           </Button>
           <Button
             variant={filterType === 'starred' ? 'secondary' : 'ghost'}
             size="sm"
             onClick={() => setFilterType('starred')}
+            className="shrink-0"
           >
-            <Star className="mr-1 h-3.5 w-3.5" />
-            Com estrela
+            <Star className="mr-0 sm:mr-1 h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Com estrela</span>
           </Button>
         </div>
       </div>
@@ -288,16 +287,18 @@ export default function InboxPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Email List */}
         <div className={cn(
-          "border-r overflow-y-auto",
-          selectedEmail ? "w-[400px]" : "flex-1"
+          "overflow-y-auto",
+          selectedEmail
+            ? "hidden md:block md:w-[350px] lg:w-[400px] md:border-r"
+            : "flex-1"
         )}>
           {filteredEmails.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <InboxIcon className="h-16 w-16 text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
+              <InboxIcon className="h-12 sm:h-16 w-12 sm:w-16 text-muted-foreground/30 mb-3 sm:mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">
                 {emails.length === 0 ? 'Nenhum email' : 'Nenhum email encontrado'}
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {emails.length === 0
                   ? 'Sua caixa de entrada está vazia'
                   : 'Tente ajustar os filtros'}
@@ -310,7 +311,7 @@ export default function InboxPage() {
                   key={email.id}
                   onClick={() => viewEmail(email)}
                   className={cn(
-                    "flex items-start gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors border-l-2",
+                    "flex items-start gap-2 sm:gap-3 p-2 sm:p-3 hover:bg-muted/50 cursor-pointer transition-colors border-l-2",
                     !email.isRead
                       ? "bg-blue-50/50 border-l-primary font-medium"
                       : "border-l-transparent",
@@ -326,37 +327,37 @@ export default function InboxPage() {
                     className="mt-1 flex-shrink-0"
                   >
                     {email.isStarred ? (
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                      <Star className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-yellow-500 fill-yellow-500" />
                     ) : (
-                      <Star className="h-4 w-4 text-muted-foreground/40 hover:text-yellow-500" />
+                      <Star className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-muted-foreground/40 hover:text-yellow-500" />
                     )}
                   </button>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex-1 min-w-0 space-y-0.5 sm:space-y-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className={cn(
-                        "text-sm truncate",
+                        "text-xs sm:text-sm truncate",
                         !email.isRead && "font-semibold"
                       )}>
                         {email.fromName || email.fromEmail}
                       </span>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                         {email.attachments && email.attachments > 0 && (
-                          <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Paperclip className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-muted-foreground" />
                         )}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">
                           {formatDate(email.receivedAt)}
                         </span>
                       </div>
                     </div>
                     <div className={cn(
-                      "text-sm truncate",
+                      "text-xs sm:text-sm truncate",
                       !email.isRead && "font-semibold"
                     )}>
                       {email.subject || '(Sem assunto)'}
                     </div>
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
                       {email.preview}
                     </div>
                   </div>
@@ -370,28 +371,41 @@ export default function InboxPage() {
         {selectedEmail && (
           <div className="flex-1 flex flex-col overflow-hidden bg-white">
             {/* Email Header */}
-            <div className="border-b p-6 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-semibold mb-4">{selectedEmail.subject || '(Sem assunto)'}</h2>
+            <div className="border-b p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-semibold mb-3 sm:mb-4 break-words">
+                    {selectedEmail.subject || '(Sem assunto)'}
+                  </h2>
 
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                  <div className="flex items-start gap-2 sm:gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm sm:text-base shrink-0">
                       {(selectedEmail.fromName || selectedEmail.fromEmail).charAt(0).toUpperCase()}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{selectedEmail.fromName}</span>
-                        <span className="text-muted-foreground text-sm">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        <span className="font-semibold text-sm sm:text-base truncate">
+                          {selectedEmail.fromName}
+                        </span>
+                        <span className="text-muted-foreground text-xs sm:text-sm truncate">
                           {'<'}{selectedEmail.fromEmail}{'>'}
                         </span>
                       </div>
-                      <div className="text-sm text-muted-foreground mt-1">
+                      <div className="text-xs sm:text-sm text-muted-foreground mt-1 truncate">
                         para {selectedEmail.toEmail}
                       </div>
+                      <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground mt-1 sm:hidden">
+                        <Clock className="h-3 w-3" />
+                        {new Date(selectedEmail.receivedAt).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
+                    <div className="hidden sm:flex items-center gap-1 text-xs sm:text-sm text-muted-foreground shrink-0">
+                      <Clock className="h-3 sm:h-4 w-3 sm:w-4" />
                       {new Date(selectedEmail.receivedAt).toLocaleString('pt-BR', {
                         day: '2-digit',
                         month: 'short',
@@ -406,67 +420,73 @@ export default function InboxPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setSelectedEmail(null)}
+                  className="shrink-0"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-4 sm:h-5 w-4 sm:w-5" />
                 </Button>
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => replyEmail(selectedEmail)}
+                  className="flex-1 sm:flex-initial"
                 >
-                  <Reply className="mr-2 h-4 w-4" />
-                  Responder
+                  <Reply className="mr-1 sm:mr-2 h-3 sm:h-4 w-3 sm:w-4" />
+                  <span className="text-xs sm:text-sm">Responder</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => forwardEmail(selectedEmail)}
+                  className="flex-1 sm:flex-initial"
                 >
-                  <Forward className="mr-2 h-4 w-4" />
-                  Encaminhar
+                  <Forward className="mr-1 sm:mr-2 h-3 sm:h-4 w-3 sm:w-4" />
+                  <span className="text-xs sm:text-sm">Encaminhar</span>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => toggleStar(selectedEmail.id)}
+                  className="shrink-0"
                 >
                   {selectedEmail.isStarred ? (
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    <Star className="h-3 sm:h-4 w-3 sm:w-4 text-yellow-500 fill-yellow-500" />
                   ) : (
-                    <Star className="h-4 w-4" />
+                    <Star className="h-3 sm:h-4 w-3 sm:w-4" />
                   )}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => moveToTrash(selectedEmail.id)}
+                  className="shrink-0"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 sm:h-4 w-3 sm:w-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => markAsRead(selectedEmail.id, !selectedEmail.isRead)}
+                  className="shrink-0"
                 >
-                  <MailOpen className="h-4 w-4" />
+                  <MailOpen className="h-3 sm:h-4 w-3 sm:w-4" />
                 </Button>
               </div>
             </div>
 
             {/* Email Body */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="prose max-w-none">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
+              <div className="prose prose-sm sm:prose max-w-none">
                 {selectedEmail.htmlContent ? (
                   <div
                     dangerouslySetInnerHTML={{ __html: selectedEmail.htmlContent }}
-                    className="email-content"
+                    className="email-content text-sm sm:text-base"
                   />
                 ) : (
-                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                  <pre className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed">
                     {selectedEmail.textContent || selectedEmail.preview}
                   </pre>
                 )}
