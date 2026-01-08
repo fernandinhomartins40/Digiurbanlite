@@ -113,12 +113,24 @@ export function ChecklistTab({
       // Se não tem stage ativa, não precisa carregar validação/docs
       if (!currentStage) return
 
-      // Carregar validação
-      const validationResponse = await apiRequest(
-        `/protocols/${protocolId}/stages/${currentStage.id}/validate`
-      )
-      if (validationResponse.success) {
-        setValidation(validationResponse.data.validation)
+      // Carregar validação apenas se stage está IN_PROGRESS
+      // Stages concluídas não precisam de validação
+      if (currentStage.status === StageStatus.IN_PROGRESS) {
+        const validationResponse = await apiRequest(
+          `/protocols/${protocolId}/stages/${currentStage.id}/validate`
+        )
+        if (validationResponse.success) {
+          setValidation(validationResponse.data.validation)
+        }
+      } else {
+        // Stage concluída - marcar como sem pendências
+        setValidation({
+          canProgress: true,
+          blockers: [],
+          warnings: [],
+          missingDocuments: [],
+          missingFormFields: []
+        })
       }
 
       // Carregar documentos
@@ -577,8 +589,14 @@ export function ChecklistTab({
     }
   }
 
-  // ❌ ERRO CRÍTICO: Se não há stage ativa, protocolo não foi inicializado corretamente
-  if (!currentStage || currentStage.status !== StageStatus.IN_PROGRESS) {
+  // ❌ ERRO CRÍTICO: Se não há stage ativa E não está concluído, protocolo não foi inicializado
+  // ✅ Aceitar: IN_PROGRESS (em andamento) ou COMPLETED (concluído)
+  const isValidStage = currentStage && (
+    currentStage.status === StageStatus.IN_PROGRESS ||
+    currentStage.status === StageStatus.COMPLETED
+  );
+
+  if (!isValidStage) {
     return (
       <Card className="border-red-500 bg-red-50">
         <CardHeader>
