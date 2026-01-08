@@ -11,13 +11,19 @@
  * - Deleta arquivos sem registro (órfãos)
  * - Deleta diretórios vazios
  *
+ * 🛡️ PROTEÇÃO DE PRESERVAÇÃO MUNICIPAL:
+ * - NUNCA deleta arquivos de protocolos com documentos registrados no banco
+ * - NUNCA deleta arquivos de protocolos CONCLUÍDOS, CANCELADOS ou qualquer outro status
+ * - Documentos são patrimônio público e devem ser preservados permanentemente
+ * - Apenas deleta arquivos órfãos sem nenhum vínculo no banco de dados
+ *
  * USO:
  *   node -r ts-node/register src/jobs/cleanup-orphan-files.job.ts [--dry-run]
  */
 
 import { PrismaClient } from '@prisma/client';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -63,7 +69,9 @@ async function fileExistsInDatabase(
 }
 
 /**
- * Verifica se protocolo existe
+ * Verifica se protocolo existe E se tem documentos associados
+ * ⚠️ CRÍTICO: NUNCA deletar arquivos de protocolos com documentos registrados,
+ * independente do status (CONCLUIDO, CANCELADO, etc)
  */
 async function protocolExists(protocolId: string): Promise<boolean> {
   const protocol = await prisma.protocolSimplified.findUnique({
@@ -72,6 +80,18 @@ async function protocolExists(protocolId: string): Promise<boolean> {
   });
 
   return protocol !== null;
+}
+
+/**
+ * Verifica se protocolo tem documentos registrados no banco
+ * Se tiver documentos, NUNCA deletar arquivos (preservação municipal)
+ */
+async function protocolHasDocuments(protocolId: string): Promise<boolean> {
+  const count = await prisma.protocolDocument.count({
+    where: { protocolId }
+  });
+
+  return count > 0;
 }
 
 /**
@@ -84,11 +104,23 @@ async function processProtocolDirectory(protocolId: string): Promise<void> {
     return;
   }
 
-  // Verificar se protocolo existe
+  // ⚠️ CRÍTICO: Verificar se protocolo existe
   const protocolExistsFlag = await protocolExists(protocolId);
+
+  // 🛡️ PROTEÇÃO: Verificar se tem documentos registrados
+  const hasDocuments = await protocolHasDocuments(protocolId);
 
   if (!protocolExistsFlag) {
     console.log(`   ⚠️  Protocolo ${protocolId.substring(0, 8)}... não existe no banco`);
+
+    // 🛡️ PRESERVAÇÃO MUNICIPAL: NUNCA deletar se tiver documentos
+    if (hasDocuments) {
+      console.log(`      🛡️  PROTEGIDO: Protocolo tem ${await prisma.protocolDocument.count({ where: { protocolId } })} documento(s) registrado(s)`);
+      console.log(`      📁 Arquivos preservados para fins de auditoria e compliance`);
+      console.log(`      ⚠️  Protocolo pode ter sido deletado incorretamente - verificar!`);
+      return;
+    }
+
     console.log(`      Deletando diretório completo: ${protocolDir}`);
 
     if (!DRY_RUN) {

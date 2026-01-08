@@ -6,13 +6,19 @@
  * Prisma Client Extension para deletar arquivos físicos automaticamente
  * quando documentos ou protocolos são deletados do banco de dados
  *
+ * 🛡️ PROTEÇÃO DE PRESERVAÇÃO MUNICIPAL:
+ * ⚠️ AVISO CRÍTICO: Esta funcionalidade está DESABILITADA para protocolos
+ * - Documentos municipais são patrimônio público permanente
+ * - NUNCA deletar arquivos de protocolos, mesmo que deletados do banco
+ * - Apenas documentos individuais podem ter arquivos removidos manualmente
+ *
  * Compatível com Prisma 6.x usando Client Extensions API
  * Referência: https://www.prisma.io/docs/orm/prisma-client/client-extensions
  */
 
 import { Prisma } from '@prisma/client';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { getProtocolFilePath, extractFilename } from '../config/upload';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'protocols');
@@ -147,6 +153,7 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
     protocolSimplified: {
       /**
        * Hook para delete único de protocolo
+       * 🛡️ PROTEÇÃO: NUNCA deletar arquivos de protocolo (preservação municipal)
        */
       async delete({ args, query }) {
         // 1. Buscar informações do protocolo antes de deletar
@@ -158,9 +165,12 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
         // 2. Executar delete no banco (cascade delete de documentos via onDelete: Cascade)
         const result = await query(args);
 
-        // 3. Deletar diretório completo do protocolo
+        // 🛡️ PRESERVAÇÃO MUNICIPAL: Arquivos NÃO são deletados
+        // Os arquivos permanecem no disco para fins de auditoria e compliance
         if (protocol) {
-          deleteProtocolDirectory(protocol.id, protocol.number);
+          console.log(`   🛡️  Protocolo ${protocol.number} deletado do banco`);
+          console.log(`   📁 Arquivos preservados em: uploads/protocols/${protocol.id}/`);
+          console.log(`   ⚠️  Documentos municipais são patrimônio público permanente`);
         }
 
         return result;
@@ -168,6 +178,7 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
 
       /**
        * Hook para deleteMany de protocolos
+       * 🛡️ PROTEÇÃO: NUNCA deletar arquivos de protocolo (preservação municipal)
        */
       async deleteMany({ args, query }) {
         // 1. Buscar protocolos antes de deletar
@@ -179,9 +190,12 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
         // 2. Executar delete no banco
         const result = await query(args);
 
-        // 3. Deletar diretórios de cada protocolo
-        for (const protocol of protocols) {
-          deleteProtocolDirectory(protocol.id, protocol.number);
+        // 🛡️ PRESERVAÇÃO MUNICIPAL: Arquivos NÃO são deletados
+        // Os arquivos permanecem no disco para fins de auditoria e compliance
+        if (protocols.length > 0) {
+          console.log(`   🛡️  ${protocols.length} protocolo(s) deletado(s) do banco`);
+          console.log(`   📁 Arquivos preservados para compliance e auditoria`);
+          console.log(`   ⚠️  Documentos municipais são patrimônio público permanente`);
         }
 
         return result;
