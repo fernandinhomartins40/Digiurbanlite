@@ -371,8 +371,8 @@ Senha: ${credentials.password}`
         {/* Tab: Planos */}
         <TabsContent value="plans" className="space-y-6">
           {!emailConfig?.hasEmailService && (
-            <Card className="p-6 bg-blue-50 border-blue-200">
-              <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+            <Card className="p-4 sm:p-6 bg-blue-50 border-blue-200">
+              <h3 className="text-base sm:text-lg font-semibold text-blue-900 mb-2 flex items-center gap-2">
                 <Rocket className="h-5 w-5" />
                 Servidor de Email Próprio
               </h3>
@@ -380,30 +380,30 @@ Senha: ${credentials.password}`
                 Tenha total independência com seu próprio servidor de email municipal.
                 Domínio personalizado, entrega direta e controle completo.
               </p>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Domínio personalizado (prefeitura.com.br)
+              <ul className="text-xs sm:text-sm text-blue-700 space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>Domínio personalizado (prefeitura.com.br)</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Entrega direta sem dependência de terceiros
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>Entrega direta sem dependência de terceiros</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  DKIM/SPF automático para reputação
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>DKIM/SPF automático para reputação</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Servidor dedicado para sua prefeitura
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                  <span>Servidor dedicado para sua prefeitura</span>
                 </li>
               </ul>
             </Card>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {availablePlans.length === 0 ? (
-              <div className="col-span-4 text-center py-8">
+              <div className="col-span-full text-center py-8">
                 <RefreshCw className="h-12 w-12 text-gray-400 mx-auto mb-3 animate-spin" />
                 <p className="text-gray-500">Carregando planos disponíveis...</p>
               </div>
@@ -411,7 +411,7 @@ Senha: ${credentials.password}`
               availablePlans.map((plan) => (
                 <Card
                   key={plan.id}
-                  className={`relative p-6 transition-all hover:shadow-lg ${
+                  className={`relative p-4 sm:p-6 transition-all hover:shadow-lg ${
                     plan.recommended
                       ? 'border-blue-500 shadow-lg bg-blue-50/30'
                       : 'border-gray-200'
@@ -423,7 +423,7 @@ Senha: ${credentials.password}`
                 >
                   {plan.recommended && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-blue-500 text-white">
+                      <Badge className="bg-blue-500 text-white text-xs">
                         <Star className="h-3 w-3 mr-1" />
                         Recomendado
                       </Badge>
@@ -434,12 +434,12 @@ Senha: ${credentials.password}`
                     <div className="flex items-center justify-center mb-2">
                       {getPlanIcon(plan.code)}
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900">{plan.name}</h3>
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">{plan.name}</h3>
                     <div className="mt-2">
-                      <span className="text-3xl font-bold text-gray-900">R$ {plan.monthlyPrice}</span>
-                      <span className="text-gray-600">/mês</span>
+                      <span className="text-2xl sm:text-3xl font-bold text-gray-900">R$ {plan.monthlyPrice}</span>
+                      <span className="text-sm sm:text-base text-gray-600">/mês</span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
                       {plan.maxEmailsPerMonth === -1 || plan.maxEmailsPerMonth >= 999999
                         ? 'Emails ilimitados'
                         : `${plan.maxEmailsPerMonth.toLocaleString()} emails/mês`
@@ -447,11 +447,11 @@ Senha: ${credentials.password}`
                     </p>
                   </div>
 
-                  <ul className="space-y-2 mb-6">
+                  <ul className="space-y-2 mb-6 min-h-[120px]">
                     {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
-                        {feature}
+                      <li key={index} className="flex items-start text-xs sm:text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                        <span className="break-words">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -459,7 +459,7 @@ Senha: ${credentials.password}`
                   <Button
                     onClick={() => setSubscribeDialog({ open: true, plan })}
                     disabled={subscribing || emailConfig?.plan.id === plan.id}
-                    className={`w-full ${
+                    className={`w-full text-sm ${
                       emailConfig?.plan.id === plan.id
                         ? 'bg-green-100 text-green-800 cursor-not-allowed'
                         : plan.recommended
@@ -582,21 +582,21 @@ Senha: ${credentials.password}`
         <TabsContent value="stats" className="space-y-6">
           {emailStats && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <Card className="p-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Emails Enviados</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Emails Enviados</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">
                         {emailStats.currentMonth.totalSent.toLocaleString()}
                       </p>
                     </div>
-                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0 ml-2">
                       <Send className="h-4 w-4 text-blue-600" />
                     </div>
                   </div>
                   <div className="mt-2">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground break-words">
                       de {emailStats.usage.limit.toLocaleString()} este mês ({emailStats.usage.percentage})
                     </span>
                   </div>
@@ -604,13 +604,13 @@ Senha: ${credentials.password}`
 
                 <Card className="p-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Taxa de Entrega</p>
-                      <p className="text-2xl font-bold text-green-600">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Taxa de Entrega</p>
+                      <p className="text-xl sm:text-2xl font-bold text-green-600">
                         {emailStats.currentMonth.deliveryRate}
                       </p>
                     </div>
-                    <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                    <div className="w-8 h-8 bg-green-100 rounded flex items-center justify-center flex-shrink-0 ml-2">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                     </div>
                   </div>
@@ -618,13 +618,13 @@ Senha: ${credentials.password}`
 
                 <Card className="p-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Taxa de Bounces</p>
-                      <p className="text-2xl font-bold text-red-600">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Taxa de Bounces</p>
+                      <p className="text-xl sm:text-2xl font-bold text-red-600">
                         {emailStats.currentMonth.bounceRate}
                       </p>
                     </div>
-                    <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+                    <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center flex-shrink-0 ml-2">
                       <XCircle className="h-4 w-4 text-red-600" />
                     </div>
                   </div>
@@ -632,25 +632,25 @@ Senha: ${credentials.password}`
 
                 <Card className="p-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Entregues</p>
-                      <p className="text-2xl font-bold text-gray-900">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Entregues</p>
+                      <p className="text-xl sm:text-2xl font-bold text-gray-900">
                         {emailStats.currentMonth.totalDelivered.toLocaleString()}
                       </p>
                     </div>
-                    <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
+                    <div className="w-8 h-8 bg-purple-100 rounded flex items-center justify-center flex-shrink-0 ml-2">
                       <TrendingUp className="h-4 w-4 text-purple-600" />
                     </div>
                   </div>
                 </Card>
               </div>
 
-              <Card className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Uso do Plano</h2>
+              <Card className="p-4 sm:p-6">
+                <h2 className="text-base sm:text-lg font-semibold mb-4">Uso do Plano</h2>
                 <div className="space-y-4">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0 text-xs sm:text-sm">
                     <span>Emails utilizados este mês</span>
-                    <span>{emailStats.usage.current.toLocaleString()} de {emailStats.usage.limit.toLocaleString()}</span>
+                    <span className="font-semibold">{emailStats.usage.current.toLocaleString()} de {emailStats.usage.limit.toLocaleString()}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div
@@ -669,10 +669,10 @@ Senha: ${credentials.password}`
 
         {/* Tab: Templates */}
         <TabsContent value="templates" className="space-y-6">
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Templates de Email</h2>
-              <Button onClick={() => setTemplateDialog(true)}>
+          <Card className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4">
+              <h2 className="text-base sm:text-lg font-semibold">Templates de Email</h2>
+              <Button onClick={() => setTemplateDialog(true)} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Template
               </Button>
@@ -682,12 +682,12 @@ Senha: ${credentials.password}`
               {templates.map((template) => (
                 <Card key={template.id} className="p-4">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{template.name}</h3>
-                      <p className="text-sm text-muted-foreground">{template.subject}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm sm:text-base break-words">{template.name}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground break-words">{template.subject}</p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <Badge variant="outline">{template.category}</Badge>
-                        <Badge variant={template.isActive ? 'default' : 'secondary'}>
+                        <Badge variant="outline" className="text-xs">{template.category}</Badge>
+                        <Badge variant={template.isActive ? 'default' : 'secondary'} className="text-xs">
                           {template.isActive ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </div>
@@ -712,63 +712,65 @@ Senha: ${credentials.password}`
 
         {/* Tab: Configurações */}
         <TabsContent value="settings" className="space-y-6">
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Configurações do Servidor</h2>
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">Configurações do Servidor</h2>
 
             <div className="space-y-4">
               <div>
-                <Label htmlFor="senderName">Nome do Remetente Padrão</Label>
+                <Label htmlFor="senderName" className="text-sm">Nome do Remetente Padrão</Label>
                 <Input
                   id="senderName"
                   defaultValue="Prefeitura Municipal"
+                  className="mt-1.5"
                 />
               </div>
 
               <div>
-                <Label htmlFor="senderEmail">Email Padrão do Remetente</Label>
+                <Label htmlFor="senderEmail" className="text-sm">Email Padrão do Remetente</Label>
                 <Input
                   id="senderEmail"
                   type="email"
                   defaultValue="noreply@prefeitura.com.br"
+                  className="mt-1.5"
                 />
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 py-2">
                 <Switch id="trackOpens" defaultChecked />
-                <Label htmlFor="trackOpens">Rastrear aberturas de email</Label>
+                <Label htmlFor="trackOpens" className="text-sm cursor-pointer">Rastrear aberturas de email</Label>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 py-2">
                 <Switch id="trackClicks" defaultChecked />
-                <Label htmlFor="trackClicks">Rastrear cliques em links</Label>
+                <Label htmlFor="trackClicks" className="text-sm cursor-pointer">Rastrear cliques em links</Label>
               </div>
 
-              <Button>
+              <Button className="w-full sm:w-auto">
                 Salvar Configurações
               </Button>
             </div>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Informações do Servidor</h2>
+          <Card className="p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold mb-4">Informações do Servidor</h2>
 
             {emailConfig?.server && (
               <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Hostname:</span>
-                  <code className="text-sm">{emailConfig.server.hostname}</code>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                  <span className="text-xs sm:text-sm font-medium">Hostname:</span>
+                  <code className="text-xs sm:text-sm break-all">{emailConfig.server.hostname}</code>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Porta SMTP:</span>
-                  <code className="text-sm">587</code>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                  <span className="text-xs sm:text-sm font-medium">Porta SMTP:</span>
+                  <code className="text-xs sm:text-sm">587</code>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Segurança:</span>
-                  <code className="text-sm">STARTTLS</code>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                  <span className="text-xs sm:text-sm font-medium">Segurança:</span>
+                  <code className="text-xs sm:text-sm">STARTTLS</code>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">Status:</span>
-                  <Badge variant={emailConfig.server.isActive ? 'default' : 'secondary'}>
+                <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
+                  <span className="text-xs sm:text-sm font-medium">Status:</span>
+                  <Badge variant={emailConfig.server.isActive ? 'default' : 'secondary'} className="text-xs w-fit">
                     {emailConfig.server.isActive ? 'Ativo' : 'Inativo'}
                   </Badge>
                 </div>
@@ -780,10 +782,10 @@ Senha: ${credentials.password}`
 
       {/* Dialog: Confirmar Assinatura */}
       <AlertDialog open={subscribeDialog.open} onOpenChange={(open) => setSubscribeDialog({ open })}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Contratar Plano {subscribeDialog.plan?.name}</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-base sm:text-lg">Contratar Plano {subscribeDialog.plan?.name}</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
               Você está prestes a contratar o plano {subscribeDialog.plan?.name} por R$ {subscribeDialog.plan?.monthlyPrice}/mês.
               {subscribeDialog.plan?.maxEmailsPerMonth === -1 || (subscribeDialog.plan?.maxEmailsPerMonth ?? 0) >= 999999
                 ? ' Este plano inclui emails ilimitados.'
@@ -791,11 +793,12 @@ Senha: ${credentials.password}`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => subscribeDialog.plan && subscribeToPlan(subscribeDialog.plan.id)}
               disabled={subscribing}
+              className="w-full sm:w-auto"
             >
               {subscribing ? 'Processando...' : 'Confirmar Contratação'}
             </AlertDialogAction>
@@ -805,39 +808,39 @@ Senha: ${credentials.password}`
 
       {/* Dialog: Credenciais SMTP */}
       <Dialog open={credentialsDialog.open} onOpenChange={(open) => setCredentialsDialog({ open })}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Credenciais do Servidor SMTP</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-base sm:text-lg">Credenciais do Servidor SMTP</DialogTitle>
+            <DialogDescription className="text-sm">
               Guarde estas informações em local seguro. Elas serão necessárias para configurar seu cliente de email.
             </DialogDescription>
           </DialogHeader>
 
           {credentialsDialog.credentials && (
             <div className="space-y-4">
-              <div className="bg-muted p-4 rounded-lg space-y-2">
+              <div className="bg-muted p-3 sm:p-4 rounded-lg space-y-2">
                 <div>
                   <Label className="text-xs">Servidor SMTP</Label>
-                  <p className="font-mono text-sm">{credentialsDialog.credentials.server}</p>
+                  <p className="font-mono text-xs sm:text-sm break-all">{credentialsDialog.credentials.server}</p>
                 </div>
                 <div>
                   <Label className="text-xs">Porta</Label>
-                  <p className="font-mono text-sm">{credentialsDialog.credentials.port}</p>
+                  <p className="font-mono text-xs sm:text-sm">{credentialsDialog.credentials.port}</p>
                 </div>
                 <div>
                   <Label className="text-xs">Email</Label>
-                  <p className="font-mono text-sm">{credentialsDialog.credentials.email}</p>
+                  <p className="font-mono text-xs sm:text-sm break-all">{credentialsDialog.credentials.email}</p>
                 </div>
                 <div>
                   <Label className="text-xs">Senha</Label>
-                  <p className="font-mono text-sm bg-yellow-100 p-2 rounded">
+                  <p className="font-mono text-xs sm:text-sm bg-yellow-100 p-2 rounded break-all">
                     {credentialsDialog.credentials.password}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+                <p className="text-xs sm:text-sm text-yellow-800">
                   <AlertTriangle className="h-4 w-4 inline mr-1" />
                   <strong>Importante:</strong> Guarde esta senha em local seguro.
                   Ela não será mostrada novamente por motivos de segurança.
@@ -846,15 +849,16 @@ Senha: ${credentials.password}`
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               onClick={() => credentialsDialog.credentials && copyCredentials(credentialsDialog.credentials)}
               variant="outline"
+              className="w-full sm:w-auto"
             >
               <Copy className="h-4 w-4 mr-2" />
               Copiar Credenciais
             </Button>
-            <Button onClick={() => setCredentialsDialog({ open: false })}>
+            <Button onClick={() => setCredentialsDialog({ open: false })} className="w-full sm:w-auto">
               Entendido
             </Button>
           </DialogFooter>
