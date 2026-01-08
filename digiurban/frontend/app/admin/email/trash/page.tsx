@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import {
   Trash2,
   Search,
@@ -29,7 +28,6 @@ interface TrashedEmail {
 export default function TrashPage() {
   const { apiRequest } = useAdminAuth();
   const { toast } = useToast();
-  const router = useRouter();
 
   const [trashedEmails, setTrashedEmails] = useState<TrashedEmail[]>([]);
   const [filteredEmails, setFilteredEmails] = useState<TrashedEmail[]>([]);
@@ -228,16 +226,16 @@ export default function TrashPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Lixeira</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">Lixeira</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
             {trashedEmails.length} item{trashedEmails.length !== 1 ? 'ns' : ''} na lixeira
           </p>
         </div>
         {trashedEmails.length > 0 && (
-          <Button variant="destructive" onClick={emptyTrash}>
+          <Button variant="destructive" onClick={emptyTrash} className="w-full sm:w-auto">
             <Trash2 className="mr-2 h-4 w-4" />
             Esvaziar Lixeira
           </Button>
@@ -247,13 +245,13 @@ export default function TrashPage() {
       {/* Alerta */}
       {trashedEmails.length > 0 && (
         <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="flex items-center gap-3 py-4">
+          <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4 px-4 sm:px-6">
             <AlertTriangle className="h-5 w-5 text-orange-600 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-orange-900">
+            <div className="flex-1">
+              <p className="text-sm sm:text-base font-medium text-orange-900">
                 Os emails na lixeira serão excluídos permanentemente após 30 dias
               </p>
-              <p className="text-sm text-orange-700">
+              <p className="text-xs sm:text-sm text-orange-700 mt-1">
                 Você pode restaurar emails antes da exclusão automática
               </p>
             </div>
@@ -263,14 +261,14 @@ export default function TrashPage() {
 
       {/* Busca */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar na lixeira..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm sm:text-base"
             />
           </div>
         </CardContent>
@@ -278,51 +276,58 @@ export default function TrashPage() {
 
       {/* Lista de emails */}
       <Card>
-        <CardHeader>
-          <CardTitle>
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="text-lg sm:text-xl">
             {filteredEmails.length} email{filteredEmails.length !== 1 ? 's' : ''}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           {filteredEmails.length === 0 ? (
-            <div className="text-center py-12">
-              <Trash2 className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="text-center py-8 sm:py-12">
+              <Trash2 className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">
                 {trashedEmails.length === 0 ? 'Lixeira vazia' : 'Nenhum email encontrado'}
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 {trashedEmails.length === 0
                   ? 'Nenhum email foi excluído'
                   : 'Tente ajustar a busca'}
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3 sm:space-y-4">
               {filteredEmails.map((email) => (
                 <div
                   key={email.id}
-                  className="border border-red-200 rounded-lg p-4 bg-red-50/30 hover:bg-red-50 transition-colors"
+                  className="border border-red-200 rounded-lg p-3 sm:p-4 bg-red-50/30 hover:bg-red-50 transition-colors"
                 >
-                  <div className="flex items-start gap-4">
-                    <Trash2 className="h-5 w-5 text-red-600 mt-1 flex-shrink-0" />
+                  <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                    <Trash2 className="hidden sm:block h-5 w-5 text-red-600 mt-1 flex-shrink-0" />
 
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 w-full">
                       <div className="flex items-center gap-2 mb-2">
+                        <Trash2 className="sm:hidden h-4 w-4 text-red-600 flex-shrink-0" />
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(email.type)}`}>
                           {getTypeLabel(email.type)}
                         </span>
                       </div>
 
-                      <h4 className="font-semibold mb-1">
+                      <h4 className="text-sm sm:text-base font-semibold mb-1 break-words">
                         {email.subject || '(Sem assunto)'}
                       </h4>
 
-                      <p className="text-sm text-muted-foreground mb-2">
-                        De: {email.fromEmail} → Para: {email.toEmail}
-                      </p>
+                      <div className="text-xs sm:text-sm text-muted-foreground mb-2 space-y-1">
+                        <p className="break-all">
+                          <span className="font-medium">De:</span> {email.fromEmail}
+                        </p>
+                        <p className="break-all">
+                          <span className="font-medium">Para:</span> {email.toEmail}
+                        </p>
+                      </div>
 
                       <div className="text-xs text-muted-foreground">
-                        Excluído em: {new Date(email.deletedAt).toLocaleString('pt-BR', {
+                        <span className="font-medium">Excluído em:</span>{' '}
+                        {new Date(email.deletedAt).toLocaleString('pt-BR', {
                           day: '2-digit',
                           month: 'long',
                           year: 'numeric',
@@ -332,22 +337,26 @@ export default function TrashPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 flex-shrink-0">
+                    <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto sm:flex-shrink-0">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => restoreEmail(email.id)}
+                        className="flex-1 sm:flex-initial text-xs sm:text-sm"
                       >
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Restaurar
+                        <RotateCcw className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">Restaurar</span>
+                        <span className="sm:hidden">Restaurar</span>
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => permanentlyDelete(email.id)}
+                        className="flex-1 sm:flex-initial text-xs sm:text-sm"
                       >
-                        <X className="mr-2 h-4 w-4" />
-                        Excluir
+                        <X className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="hidden sm:inline">Excluir</span>
+                        <span className="sm:hidden">Excluir</span>
                       </Button>
                     </div>
                   </div>
