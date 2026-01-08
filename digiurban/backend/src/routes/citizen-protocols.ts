@@ -322,9 +322,16 @@ router.post('/', upload.any(), async (req, res) => {
     // Criar documentos PENDING/UPLOADED na tabela ProtocolDocument
     await createPendingDocumentsForProtocol(protocol.id, service, uploadedDocuments);
 
-    // ✅ WORKFLOW e SLA serão iniciados manualmente pelo servidor
-    // via botão "Iniciar Atendimento" na aba Checklist
-    console.log('ℹ️  Protocolo criado. Workflow e SLA serão iniciados pelo servidor.');
+    // ✅ INICIALIZAR WORKFLOW AUTOMATICAMENTE COM PRIMEIRA STAGE IN_PROGRESS
+    try {
+      const moduleTypeToUse = protocol.moduleType || 'GERAL';
+      console.log(`📋 Inicializando workflow para módulo: ${moduleTypeToUse}`);
+      await applyWorkflowToProtocol(protocol.id, moduleTypeToUse);
+      console.log('   ✓ Workflow inicializado com primeira etapa IN_PROGRESS');
+    } catch (workflowError) {
+      console.warn('⚠️  Erro ao inicializar workflow:', workflowError);
+      // Não falhar a criação do protocolo se workflow falhar
+    }
 
     console.log('✅ Protocolo criado:', protocol.number);
     console.log('========== FIM POST /protocols ==========\n');

@@ -100,16 +100,28 @@ export function ChecklistTab({
   const [viewingDoc, setViewingDoc] = useState<ProtocolDocument | null>(null)
 
   useEffect(() => {
-    if (currentStage?.id) {
-      loadChecklistData()
-    }
-  }, [currentStage?.id])
+    // Carregar dados sempre, mesmo sem currentStage
+    loadChecklistData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [protocolId])
 
   const loadChecklistData = async () => {
-    if (!currentStage) return
-
     try {
       setIsLoading(true)
+
+      // Carregar SLA SEMPRE (independente de ter stage)
+      try {
+        const slaResponse = await apiRequest(`/protocols/${protocolId}/sla`)
+        if (slaResponse.success) {
+          setSLA(slaResponse.data)
+        }
+      } catch (error) {
+        console.log('[ChecklistTab] SLA não encontrado')
+        setSLA(null)
+      }
+
+      // Se não tem stage ativa, não precisa carregar validação/docs
+      if (!currentStage) return
 
       // Carregar validação
       const validationResponse = await apiRequest(
@@ -133,17 +145,6 @@ export function ChecklistTab({
       // Carregar pendências
       const pendingsData = await getProtocolPendings(protocolId)
       setPendings(pendingsData)
-
-      // Carregar SLA
-      try {
-        const slaResponse = await apiRequest(`/protocols/${protocolId}/sla`)
-        if (slaResponse.success) {
-          setSLA(slaResponse.data)
-        }
-      } catch (error) {
-        console.log('[ChecklistTab] SLA não encontrado')
-        setSLA(null)
-      }
 
     } catch (error) {
       console.error('Erro ao carregar dados do checklist:', error)
@@ -584,14 +585,61 @@ export function ChecklistTab({
     }
   }
 
+  // Se não há stage ativa, mostrar botão para iniciar atendimento
   if (!currentStage || currentStage.status !== StageStatus.IN_PROGRESS) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center text-muted-foreground">
-          <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-          <p>Nenhuma etapa em andamento no momento</p>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        {/* Botão Iniciar Atendimento - Aparece quando não há workflow ativo */}
+        {!sla && (
+          <Card className="border-blue-300 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-900">
+                <Clock className="h-5 w-5" />
+                Atendimento Não Iniciado
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-blue-800">
+                Este protocolo ainda não teve o atendimento iniciado. Clique no botão abaixo para:
+              </p>
+              <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
+                <li>Criar o SLA (prazo de atendimento)</li>
+                <li>Iniciar o workflow de etapas</li>
+                <li>Alterar status para "EM PROGRESSO"</li>
+              </ul>
+              <Button
+                onClick={handleStartService}
+                disabled={isStartingService}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                size="lg"
+              >
+                {isStartingService ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Iniciando atendimento...
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-5 w-5 mr-2" />
+                    Iniciar Atendimento
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Mensagem quando já tem SLA mas workflow ainda está iniciando */}
+        {sla && (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>Aguardando inicialização do workflow...</p>
+              <p className="text-sm mt-2">Recarregue a página se o problema persistir</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     )
   }
 
@@ -621,46 +669,6 @@ export function ChecklistTab({
 
   return (
     <div className="space-y-6">
-      {/* Botão Iniciar Atendimento - Aparece apenas se SLA não existe */}
-      {!sla && (
-        <Card className="border-blue-300 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-900">
-              <Clock className="h-5 w-5" />
-              Atendimento Não Iniciado
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-blue-800">
-              Este protocolo ainda não teve o atendimento iniciado. Clique no botão abaixo para:
-            </p>
-            <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
-              <li>Criar o SLA (prazo de atendimento)</li>
-              <li>Iniciar o workflow de etapas</li>
-              <li>Alterar status para "EM PROGRESSO"</li>
-            </ul>
-            <Button
-              onClick={handleStartService}
-              disabled={isStartingService}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-              size="lg"
-            >
-              {isStartingService ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Iniciando atendimento...
-                </>
-              ) : (
-                <>
-                  <Clock className="h-5 w-5 mr-2" />
-                  Iniciar Atendimento
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Status Geral */}
       <Card className={validation.canProgress ? 'border-green-300' : 'border-amber-300'}>
         <CardHeader>
