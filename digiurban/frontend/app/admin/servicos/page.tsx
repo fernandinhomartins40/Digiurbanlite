@@ -303,36 +303,36 @@ export default function ServicesManagementPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filteredServices.map((service) => (
             <Card key={service.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg line-clamp-1">{service.name}</CardTitle>
-                    <CardDescription className="line-clamp-2 mt-1">
+              <CardHeader className="pb-3 sm:pb-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base sm:text-lg line-clamp-1">{service.name}</CardTitle>
+                    <CardDescription className="line-clamp-2 mt-1 text-xs sm:text-sm">
                       {service.description || 'Sem descrição'}
                     </CardDescription>
                   </div>
-                  <Badge variant={service.isActive ? "default" : "secondary"}>
+                  <Badge variant={service.isActive ? "default" : "secondary"} className="text-xs shrink-0">
                     {service.isActive ? 'Ativo' : 'Inativo'}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
+              <CardContent className="pt-0">
+                <div className="space-y-2.5 sm:space-y-3">
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
                     <span className="text-gray-600">Categoria:</span>
-                    <Badge variant="outline">{service.category || 'Sem categoria'}</Badge>
+                    <Badge variant="outline" className="text-xs">{service.category || 'Sem categoria'}</Badge>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
                     <span className="text-gray-600">Departamento:</span>
-                    <span className="font-medium text-xs">{service.department.name}</span>
+                    <span className="font-medium text-xs text-right line-clamp-1 max-w-[60%]">{service.department.name}</span>
                   </div>
 
                   {service.estimatedDays !== null && (
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-xs sm:text-sm">
                       <span className="text-gray-600">Prazo:</span>
                       <span className="flex items-center">
                         <Clock className="h-3 w-3 mr-1" />
@@ -341,14 +341,14 @@ export default function ServicesManagementPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
                     <span className="text-gray-600">Documentos:</span>
                     <Badge variant={service.requiresDocuments ? "default" : "secondary"} className="text-xs">
                       {service.requiresDocuments ? 'Requer' : 'Não requer'}
                     </Badge>
                   </div>
 
-                  <div className="pt-3 flex flex-col sm:flex-row gap-2">
+                  <div className="pt-3 flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -356,14 +356,14 @@ export default function ServicesManagementPage() {
                         setSelectedService(service)
                         setShowViewDialog(true)
                       }}
-                      className="flex-1"
+                      className="flex-1 min-w-[80px]"
                     >
                       <Eye className="h-3 w-3 mr-1" />
                       <span className="text-xs">Ver</span>
                     </Button>
 
                     {hasPermission('services:update') && (
-                      <Link href={`/admin/servicos/${service.id}/editar`} className="flex-1">
+                      <Link href={`/admin/servicos/${service.id}/editar`} className="flex-1 min-w-[80px]">
                         <Button
                           size="sm"
                           variant="outline"
@@ -380,7 +380,7 @@ export default function ServicesManagementPage() {
                         size="sm"
                         variant="destructive"
                         onClick={() => deleteService(service.id)}
-                        className="sm:w-auto"
+                        className="w-10"
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
@@ -409,88 +409,96 @@ export default function ServicesManagementPage() {
 
       {/* Dialog Ver Detalhes */}
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="max-w-full sm:max-w-lg lg:max-w-2xl mx-3 sm:mx-0">
+        <DialogContent className="max-w-full sm:max-w-lg lg:max-w-2xl mx-3 sm:mx-0 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Serviço</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">Detalhes do Serviço</DialogTitle>
           </DialogHeader>
 
           {selectedService && (
-            <div className="space-y-4">
+            <div className="space-y-4 sm:space-y-5">
               <div>
-                <Label className="text-gray-600">Nome</Label>
-                <p className="font-medium">{selectedService.name}</p>
+                <Label className="text-xs sm:text-sm text-gray-600">Nome</Label>
+                <p className="font-medium text-sm sm:text-base mt-1">{selectedService.name}</p>
               </div>
 
               {selectedService.description && (
                 <div>
-                  <Label className="text-gray-600">Descrição</Label>
-                  <p>{selectedService.description}</p>
+                  <Label className="text-xs sm:text-sm text-gray-600">Descrição</Label>
+                  <p className="text-sm sm:text-base mt-1">{selectedService.description}</p>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <Label className="text-gray-600">Categoria</Label>
-                  <p>{selectedService.category || 'Sem categoria'}</p>
+                  <Label className="text-xs sm:text-sm text-gray-600">Categoria</Label>
+                  <p className="text-sm sm:text-base mt-1">{selectedService.category || 'Sem categoria'}</p>
                 </div>
 
                 <div>
-                  <Label className="text-gray-600">Departamento</Label>
-                  <p>{selectedService.department.name}</p>
+                  <Label className="text-xs sm:text-sm text-gray-600">Departamento</Label>
+                  <p className="text-sm sm:text-base mt-1">{selectedService.department.name}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <Label className="text-gray-600">Prazo Estimado</Label>
-                  <p>{selectedService.estimatedDays ? `${selectedService.estimatedDays} dias` : 'Não definido'}</p>
+                  <Label className="text-xs sm:text-sm text-gray-600">Prazo Estimado</Label>
+                  <p className="text-sm sm:text-base mt-1">{selectedService.estimatedDays ? `${selectedService.estimatedDays} dias` : 'Não definido'}</p>
                 </div>
 
                 <div>
-                  <Label className="text-gray-600">Prioridade</Label>
-                  <Badge variant="outline">{selectedService.priority}/5</Badge>
+                  <Label className="text-xs sm:text-sm text-gray-600">Prioridade</Label>
+                  <div className="mt-1">
+                    <Badge variant="outline" className="text-xs">{selectedService.priority}/5</Badge>
+                  </div>
                 </div>
 
                 <div>
-                  <Label className="text-gray-600">Status</Label>
-                  <Badge variant={selectedService.isActive ? "default" : "secondary"}>
-                    {selectedService.isActive ? 'Ativo' : 'Inativo'}
-                  </Badge>
+                  <Label className="text-xs sm:text-sm text-gray-600">Status</Label>
+                  <div className="mt-1">
+                    <Badge variant={selectedService.isActive ? "default" : "secondary"} className="text-xs">
+                      {selectedService.isActive ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </div>
                 </div>
               </div>
 
               <div>
-                <Label className="text-gray-600">Requer Documentos</Label>
-                <p>{selectedService.requiresDocuments ? 'Sim' : 'Não'}</p>
+                <Label className="text-xs sm:text-sm text-gray-600">Requer Documentos</Label>
+                <p className="text-sm sm:text-base mt-1">{selectedService.requiresDocuments ? 'Sim' : 'Não'}</p>
               </div>
 
               {selectedService.requiresDocuments && Array.isArray(selectedService.requiredDocuments) && selectedService.requiredDocuments.length > 0 && (
                 <div>
-                  <Label className="text-gray-600">Documentos Necessários</Label>
+                  <Label className="text-xs sm:text-sm text-gray-600">Documentos Necessários</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {selectedService.requiredDocuments.map((doc, index) => (
-                      <Badge key={index} variant="secondary">{doc}</Badge>
+                      <Badge key={index} variant="secondary" className="text-xs">{doc}</Badge>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4 text-sm text-gray-500">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500">
                 <div>
-                  <Label className="text-gray-600">Criado em</Label>
-                  <p>{new Date(selectedService.createdAt).toLocaleString('pt-BR')}</p>
+                  <Label className="text-xs sm:text-sm text-gray-600">Criado em</Label>
+                  <p className="mt-1">{new Date(selectedService.createdAt).toLocaleString('pt-BR')}</p>
                 </div>
 
                 <div>
-                  <Label className="text-gray-600">Atualizado em</Label>
-                  <p>{new Date(selectedService.updatedAt).toLocaleString('pt-BR')}</p>
+                  <Label className="text-xs sm:text-sm text-gray-600">Atualizado em</Label>
+                  <p className="mt-1">{new Date(selectedService.updatedAt).toLocaleString('pt-BR')}</p>
                 </div>
               </div>
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowViewDialog(false); setSelectedService(null); }}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => { setShowViewDialog(false); setSelectedService(null); }}
+              className="w-full sm:w-auto"
+            >
               Fechar
             </Button>
           </DialogFooter>
