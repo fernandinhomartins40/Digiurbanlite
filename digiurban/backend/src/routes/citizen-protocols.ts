@@ -323,32 +323,102 @@ router.post('/', upload.any(), async (req, res) => {
     await createPendingDocumentsForProtocol(protocol.id, service, uploadedDocuments);
 
     // ✅ INICIALIZAR WORKFLOW AUTOMATICAMENTE COM PRIMEIRA STAGE IN_PROGRESS
+    // 🔴 FAIL FAST: Se workflow falhar, deletar protocolo e retornar erro
     try {
       const moduleTypeToUse = protocol.moduleType || 'GERAL';
       console.log(`📋 Inicializando workflow para módulo: ${moduleTypeToUse}`);
       await applyWorkflowToProtocol(protocol.id, moduleTypeToUse);
       console.log('   ✓ Workflow inicializado com primeira etapa IN_PROGRESS');
     } catch (workflowError) {
-      console.warn('⚠️  Erro ao inicializar workflow:', workflowError);
-      // Não falhar a criação do protocolo se workflow falhar
+      console.error('🔴 ERRO CRÍTICO ao inicializar workflow:', workflowError);
+
+      // Deletar protocolo criado para evitar estado inconsistente
+      await prisma.protocolSimplified.delete({ where: { id: protocol.id } });
+      console.error('   ✗ Protocolo deletado devido à falha no workflow');
+
+      return res.status(500).json({
+        success: false,
+        error: 'Falha ao inicializar workflow do protocolo',
+        message: workflowError instanceof Error ? workflowError.message : 'Erro desconhecido',
+        details: 'O protocolo não foi criado. Tente novamente ou entre em contato com o suporte.'
+      });
     }
 
     // ✅ CRIAR SLA AUTOMATICAMENTE
+    // 🔴 FAIL FAST: Se SLA falhar, deletar protocolo e retornar erro
     try {
       console.log('⏱️  Criando SLA do protocolo');
       await createProtocolSLA(protocol.id);
       console.log('   ✓ SLA criado com sucesso');
     } catch (slaError) {
-      console.warn('⚠️  Erro ao criar SLA:', slaError);
-      // Não falhar a criação do protocolo se SLA falhar
+      console.error('🔴 ERRO CRÍTICO ao criar SLA:', slaError);
+
+      // Deletar protocolo criado para evitar estado inconsistente
+      await prisma.protocolSimplified.delete({ where: { id: protocol.id } });
+      console.error('   ✗ Protocolo deletado devido à falha no SLA');
+
+      return res.status(500).json({
+        success: false,
+        error: 'Falha ao criar SLA do protocolo',
+        message: slaError instanceof Error ? slaError.message : 'Erro desconhecido',
+        details: 'O protocolo não foi criado. Tente novamente ou entre em contato com o suporte.'
+      });
     }
 
-    console.log('✅ Protocolo criado:', protocol.number);
+    // ✅ VALIDAÇÃO PÓS-CRIAÇÃO: Garantir que workflow e SLA foram criados
+    const validation = await prisma.protocolSimplified.findUnique({
+      where: { id: protocol.id },
+      include: {
+        sla: true,
+        stages: {
+          where: { status: 'IN_PROGRESS' },
+          orderBy: { stageOrder: 'asc' },
+          take: 1
+        }
+      }
+    });
+
+    if (!validation) {
+      console.error('🔴 VALIDAÇÃO FALHOU: Protocolo não encontrado após criação');
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao validar protocolo criado',
+        details: 'Protocolo não foi encontrado no banco após criação'
+      });
+    }
+
+    if (!validation.sla) {
+      console.error('🔴 VALIDAÇÃO FALHOU: SLA não foi criado');
+      await prisma.protocolSimplified.delete({ where: { id: protocol.id } });
+      return res.status(500).json({
+        success: false,
+        error: 'SLA não foi criado corretamente',
+        details: 'O protocolo foi removido. Tente novamente.'
+      });
+    }
+
+    if (validation.stages.length === 0) {
+      console.error('🔴 VALIDAÇÃO FALHOU: Nenhuma etapa IN_PROGRESS foi criada');
+      await prisma.protocolSimplified.delete({ where: { id: protocol.id } });
+      return res.status(500).json({
+        success: false,
+        error: 'Workflow não foi inicializado corretamente',
+        details: 'Nenhuma etapa em progresso foi encontrada. O protocolo foi removido.'
+      });
+    }
+
+    console.log('✅ Protocolo criado e validado:', protocol.number);
+    console.log(`   → SLA: ${validation.sla.workingDays} dias úteis`);
+    console.log(`   → Workflow: ${validation.stages[0].stageName} (IN_PROGRESS)`);
     console.log('========== FIM POST /protocols ==========\n');
 
     return res.status(201).json({
       success: true,
-      protocol,
+      protocol: {
+        ...protocol,
+        sla: validation.sla,
+        currentStage: validation.stages[0]
+      },
       message: 'Protocolo criado com sucesso'
         });
   } catch (error) {

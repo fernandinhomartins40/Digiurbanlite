@@ -66,8 +66,6 @@ export function ChecklistTab({
   const [formData, setFormData] = useState<any>(null)
   const [pendings, setPendings] = useState<ProtocolPending[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isStartingService, setIsStartingService] = useState(false)
-  const [sla, setSLA] = useState<any>(null)
 
   // Estado para interações
   const [interactionText, setInteractionText] = useState('')
@@ -109,17 +107,6 @@ export function ChecklistTab({
     try {
       setIsLoading(true)
 
-      // Carregar SLA SEMPRE (independente de ter stage)
-      try {
-        const slaResponse = await apiRequest(`/protocols/${protocolId}/sla`)
-        if (slaResponse.success) {
-          setSLA(slaResponse.data)
-        }
-      } catch (error) {
-        console.log('[ChecklistTab] SLA não encontrado')
-        setSLA(null)
-      }
-
       // Se não tem stage ativa, não precisa carregar validação/docs
       if (!currentStage) return
 
@@ -150,37 +137,6 @@ export function ChecklistTab({
       console.error('Erro ao carregar dados do checklist:', error)
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleStartService = async () => {
-    try {
-      setIsStartingService(true)
-
-      const response = await apiRequest(`/protocols/${protocolId}/sla/start-service`, {
-        method: 'POST'
-      })
-
-      if (response.success) {
-        toast({
-          title: 'Atendimento iniciado',
-          description: 'O SLA foi criado e o atendimento foi iniciado com sucesso.'
-        })
-
-        // Recarregar dados
-        loadChecklistData()
-
-        // Recarregar página inteira para atualizar sidebar
-        window.location.reload()
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro ao iniciar atendimento',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
-        variant: 'destructive'
-      })
-    } finally {
-      setIsStartingService(false)
     }
   }
 
@@ -585,61 +541,39 @@ export function ChecklistTab({
     }
   }
 
-  // Se não há stage ativa, mostrar botão para iniciar atendimento
+  // ❌ ERRO CRÍTICO: Se não há stage ativa, protocolo não foi inicializado corretamente
   if (!currentStage || currentStage.status !== StageStatus.IN_PROGRESS) {
     return (
-      <div className="space-y-6">
-        {/* Botão Iniciar Atendimento - Aparece quando não há workflow ativo */}
-        {!sla && (
-          <Card className="border-blue-300 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-900">
-                <Clock className="h-5 w-5" />
-                Atendimento Não Iniciado
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-blue-800">
-                Este protocolo ainda não teve o atendimento iniciado. Clique no botão abaixo para:
-              </p>
-              <ul className="text-sm text-blue-800 list-disc list-inside space-y-1">
-                <li>Criar o SLA (prazo de atendimento)</li>
-                <li>Iniciar o workflow de etapas</li>
-                <li>Alterar status para "EM PROGRESSO"</li>
-              </ul>
-              <Button
-                onClick={handleStartService}
-                disabled={isStartingService}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                size="lg"
-              >
-                {isStartingService ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Iniciando atendimento...
-                  </>
-                ) : (
-                  <>
-                    <Clock className="h-5 w-5 mr-2" />
-                    Iniciar Atendimento
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Mensagem quando já tem SLA mas workflow ainda está iniciando */}
-        {sla && (
-          <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">
-              <AlertCircle className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>Aguardando inicialização do workflow...</p>
-              <p className="text-sm mt-2">Recarregue a página se o problema persistir</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      <Card className="border-red-500 bg-red-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-900">
+            <AlertCircle className="h-5 w-5" />
+            Erro de Inicialização do Protocolo
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm text-red-800 space-y-2">
+            <p className="font-medium">
+              Este protocolo não foi inicializado corretamente durante a criação.
+            </p>
+            <p>
+              O sistema deveria ter criado automaticamente:
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-2">
+              <li>Workflow de etapas com primeira etapa IN_PROGRESS</li>
+              <li>SLA (prazo de atendimento) baseado no serviço</li>
+            </ul>
+            <div className="mt-4 p-3 bg-red-100 rounded border border-red-300">
+              <p className="font-medium mb-1">Informações Técnicas:</p>
+              <p className="text-xs font-mono">Protocolo ID: {protocolId}</p>
+              <p className="text-xs font-mono">Erro: Nenhuma etapa de workflow encontrada</p>
+            </div>
+            <p className="mt-4 font-medium">
+              Entre em contato com o suporte técnico informando o ID do protocolo acima.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
