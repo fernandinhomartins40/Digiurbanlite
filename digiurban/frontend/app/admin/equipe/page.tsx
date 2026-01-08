@@ -217,33 +217,34 @@ export default function EquipePage() {
   const adminCount = teamMembers.filter(m => ['ADMIN', 'SUPER_ADMIN'].includes(m.role)).length
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-            <Users className="h-8 w-8 text-blue-600 mr-3" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
+            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mr-2 sm:mr-3" />
             Gerenciamento de Equipe
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
             Gerencie usuários, permissões e acessos do sistema
           </p>
         </div>
-        <Button className="flex items-center" onClick={handleCreateUser}>
+        <Button className="w-full sm:w-auto flex items-center justify-center" onClick={handleCreateUser}>
           <UserPlus className="h-4 w-4 mr-2" />
-          Adicionar Membro
+          <span className="hidden sm:inline">Adicionar Membro</span>
+          <span className="sm:hidden">Adicionar</span>
         </Button>
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Membros</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Total de Membros</CardTitle>
+            <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{teamMembers.length}</div>
+            <div className="text-xl sm:text-2xl font-bold">{teamMembers.length}</div>
             <p className="text-xs text-muted-foreground">
               Usuários cadastrados
             </p>
@@ -252,11 +253,11 @@ export default function EquipePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Membros Ativos</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Membros Ativos</CardTitle>
+            <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{activeMembers}</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{activeMembers}</div>
             <p className="text-xs text-muted-foreground">
               Com acesso ativo
             </p>
@@ -265,11 +266,11 @@ export default function EquipePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inativos</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Inativos</CardTitle>
+            <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{inactiveMembers}</div>
+            <div className="text-xl sm:text-2xl font-bold text-red-600">{inactiveMembers}</div>
             <p className="text-xs text-muted-foreground">
               Sem acesso
             </p>
@@ -278,11 +279,11 @@ export default function EquipePage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Administradores</CardTitle>
-            <Shield className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Administradores</CardTitle>
+            <Shield className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{adminCount}</div>
+            <div className="text-xl sm:text-2xl font-bold text-purple-600">{adminCount}</div>
             <p className="text-xs text-muted-foreground">
               Permissões elevadas
             </p>
@@ -293,62 +294,70 @@ export default function EquipePage() {
       {/* Tabela de Membros */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <CardTitle>Membros da Equipe</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-lg sm:text-xl">Membros da Equipe</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Lista completa de todos os usuários do sistema
               </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar membros..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-[300px]"
+                  className="pl-8 w-full sm:w-[250px] md:w-[300px]"
                 />
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Departamento</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead className="min-w-[120px]">Nome</TableHead>
+                <TableHead className="hidden sm:table-cell min-w-[180px]">Email</TableHead>
+                <TableHead className="hidden md:table-cell min-w-[150px]">Departamento</TableHead>
+                <TableHead className="min-w-[100px]">Cargo</TableHead>
+                <TableHead className="hidden lg:table-cell min-w-[80px]">Status</TableHead>
+                <TableHead className="text-right min-w-[60px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8">
-                    Carregando...
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : filteredMembers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
                     Nenhum membro encontrado
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredMembers.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {member.email}
+                    <TableCell className="font-medium">
+                      <div className="flex flex-col">
+                        <span className="text-sm">{member.name}</span>
+                        <span className="sm:hidden text-xs text-muted-foreground flex items-center mt-1">
+                          <Mail className="h-3 w-3 mr-1" />
+                          {member.email}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex items-center text-sm">
+                        <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="truncate max-w-[200px]">{member.email}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex items-center">
                         <Building2 className="h-4 w-4 mr-2 text-muted-foreground flex-shrink-0" />
                         {member.departments && member.departments.length > 0 ? (
@@ -368,21 +377,21 @@ export default function EquipePage() {
                             })}
                           </div>
                         ) : member.department ? (
-                          <span>{member.department.name}</span>
+                          <span className="text-sm">{member.department.name}</span>
                         ) : (
-                          <span className="text-muted-foreground">Sem departamento</span>
+                          <span className="text-sm text-muted-foreground">Sem departamento</span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>{getRoleBadge(member.role)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {member.isActive ? (
-                        <Badge variant="outline" className="bg-green-100 text-green-800">
+                        <Badge variant="outline" className="bg-green-100 text-green-800 text-xs">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Ativo
                         </Badge>
                       ) : (
-                        <Badge variant="outline" className="bg-red-100 text-red-800">
+                        <Badge variant="outline" className="bg-red-100 text-red-800 text-xs">
                           <XCircle className="h-3 w-3 mr-1" />
                           Inativo
                         </Badge>
@@ -391,11 +400,12 @@ export default function EquipePage() {
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Abrir menu</span>
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEditUser(member)}>

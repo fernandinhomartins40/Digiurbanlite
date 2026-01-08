@@ -260,12 +260,12 @@ export function UserManagementModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">
             {isEditMode ? 'Editar Usuário' : 'Novo Usuário'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             {isEditMode
               ? 'Edite as informações do usuário abaixo'
               : 'Crie um novo usuário com role inferior ao seu'
@@ -273,27 +273,28 @@ export function UserManagementModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {error && (
-            <Alert variant="destructive">
+            <Alert variant="destructive" className="text-sm">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="text-xs sm:text-sm">{error}</AlertDescription>
             </Alert>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome *</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="name" className="text-sm">Nome *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Nome completo"
               disabled={loading}
+              className="text-sm"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="email" className="text-sm">Email *</Label>
             <Input
               id="email"
               type="email"
@@ -301,13 +302,14 @@ export function UserManagementModal({
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="email@exemplo.com"
               disabled={loading}
+              className="text-sm"
             />
           </div>
 
           {!isEditMode && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha *</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="password" className="text-sm">Senha *</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -316,7 +318,7 @@ export function UserManagementModal({
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Mínimo 8 caracteres"
                     disabled={loading}
-                    className="pr-10"
+                    className="pr-10 text-sm"
                   />
                   <button
                     type="button"
@@ -359,8 +361,8 @@ export function UserManagementModal({
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm">Confirmar Senha *</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -369,7 +371,7 @@ export function UserManagementModal({
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Digite a senha novamente"
                     disabled={loading}
-                    className="pr-10"
+                    className="pr-10 text-sm"
                   />
                   <button
                     type="button"
@@ -390,14 +392,14 @@ export function UserManagementModal({
             </>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="role">Cargo *</Label>
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label htmlFor="role" className="text-sm">Cargo *</Label>
             <Select
               value={formData.role}
               onValueChange={(value) => setFormData({ ...formData, role: value })}
               disabled={loading}
             >
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Selecione um cargo" />
               </SelectTrigger>
               <SelectContent>
@@ -407,7 +409,7 @@ export function UserManagementModal({
                   </SelectItem>
                 ) : (
                   availableRoles.map((role) => (
-                    <SelectItem key={role.value} value={role.value}>
+                    <SelectItem key={role.value} value={role.value} className="text-sm">
                       {role.label}
                     </SelectItem>
                   ))
@@ -420,13 +422,13 @@ export function UserManagementModal({
           </div>
 
           {/* ✅ NOVO: Seleção de múltiplos departamentos com checkboxes */}
-          <div className="space-y-2">
-            <Label>Departamentos</Label>
-            <div className="border rounded-md p-3 max-h-[200px] overflow-y-auto space-y-2">
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="text-sm">Departamentos</Label>
+            <div className="border rounded-md p-2 sm:p-3 max-h-[180px] sm:max-h-[200px] overflow-y-auto space-y-2">
               {loadingDepartments ? (
-                <p className="text-sm text-muted-foreground">Carregando departamentos...</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Carregando departamentos...</p>
               ) : departments.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum departamento disponível</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Nenhum departamento disponível</p>
               ) : (
                 departments.map((dept) => {
                   const isSelected = formData.departmentIds?.includes(dept.id) || false;
@@ -434,7 +436,7 @@ export function UserManagementModal({
                   const canSelect = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
 
                   return (
-                    <div key={dept.id} className="flex items-center justify-between">
+                    <div key={dept.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex items-center space-x-2">
                         <input
                           type="checkbox"
@@ -469,10 +471,10 @@ export function UserManagementModal({
                         />
                         <Label
                           htmlFor={`dept-${dept.id}`}
-                          className={`cursor-pointer text-sm ${isPrimary ? 'font-semibold' : ''}`}
+                          className={`cursor-pointer text-xs sm:text-sm ${isPrimary ? 'font-semibold' : ''}`}
                         >
                           {dept.name}
-                          {isPrimary && <span className="ml-2 text-xs text-primary">★ Principal</span>}
+                          {isPrimary && <span className="ml-1 sm:ml-2 text-xs text-primary">★ Principal</span>}
                         </Label>
                       </div>
 
@@ -489,7 +491,7 @@ export function UserManagementModal({
                             });
                           }}
                           disabled={loading || !canSelect}
-                          className="h-7 text-xs"
+                          className="h-7 text-xs ml-6 sm:ml-0"
                         >
                           Definir como principal
                         </Button>
@@ -523,17 +525,27 @@ export function UserManagementModal({
                 disabled={loading}
                 className="h-4 w-4"
               />
-              <Label htmlFor="isActive" className="cursor-pointer">
+              <Label htmlFor="isActive" className="cursor-pointer text-sm">
                 Usuário ativo
               </Label>
             </div>
           )}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+              className="w-full sm:w-auto text-sm"
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading || availableRoles.length === 0}>
+            <Button
+              type="submit"
+              disabled={loading || availableRoles.length === 0}
+              className="w-full sm:w-auto text-sm"
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEditMode ? 'Salvar Alterações' : 'Criar Usuário'}
             </Button>

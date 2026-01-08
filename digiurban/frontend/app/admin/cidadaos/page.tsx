@@ -264,29 +264,29 @@ export default function CidadaosPage() {
   return (
     <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+      <div className="flex flex-col gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
-            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mr-2 sm:mr-3" />
-            Gerenciamento de Cidadãos
+            <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 mr-2 sm:mr-3 flex-shrink-0" />
+            <span className="break-words">Gerenciamento de Cidadãos</span>
           </h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
             Sistema Unificado de Cadastro - Bronze, Prata e Ouro
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           {stats.pending > 0 && (
             <Button
               variant="outline"
               onClick={() => router.push('/admin/cidadaos/pendentes')}
-              className="border-yellow-500 text-yellow-700 hover:bg-yellow-50"
+              className="border-yellow-500 text-yellow-700 hover:bg-yellow-50 w-full sm:w-auto justify-center"
             >
               <AlertCircle className="h-4 w-4 mr-2" />
               {stats.pending} Pendentes
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           )}
-          <Button onClick={() => router.push('/admin/cidadaos/novo')}>
+          <Button onClick={() => router.push('/admin/cidadaos/novo')} className="w-full sm:w-auto justify-center">
             <UserPlus className="h-4 w-4 mr-2" />
             Adicionar Cidadão
           </Button>
@@ -296,56 +296,56 @@ export default function CidadaosPage() {
       {/* Estatísticas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Users className="h-4 w-4 text-blue-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total</CardTitle>
+            <Users className="h-4 w-4 text-blue-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground">Cadastros no sistema</p>
           </CardContent>
         </Card>
 
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('pending')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes (Bronze)</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Pendentes (Bronze)</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-yellow-600">{stats.pending}</div>
             <p className="text-xs text-yellow-700">Aguardando aprovação</p>
           </CardContent>
         </Card>
 
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('verified')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Verificados (Prata)</CardTitle>
-            <ShieldCheck className="h-4 w-4 text-blue-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Verificados (Prata)</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-blue-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.verified}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">{stats.verified}</div>
             <p className="text-xs text-blue-700">Cadastros aprovados</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Auto-Cadastro</CardTitle>
-            <Smartphone className="h-4 w-4 text-green-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Auto-Cadastro</CardTitle>
+            <Smartphone className="h-4 w-4 text-green-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.selfRegistered}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.selfRegistered}</div>
             <p className="text-xs text-green-700">Portal/App cidadão</p>
           </CardContent>
         </Card>
 
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('inactive')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inativos</CardTitle>
-            <XCircle className="h-4 w-4 text-red-600" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Inativos</CardTitle>
+            <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
+          <CardContent className="p-3 sm:p-6 pt-0">
+            <div className="text-xl sm:text-2xl font-bold text-red-600">{stats.inactive}</div>
             <p className="text-xs text-red-700">Cadastros desativados</p>
           </CardContent>
         </Card>
@@ -353,22 +353,22 @@ export default function CidadaosPage() {
 
       {/* Tabela de Cidadãos */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <CardHeader className="p-3 sm:p-6">
+          <div className="flex flex-col gap-3">
             <div>
-              <CardTitle className="text-lg sm:text-xl">Cadastro de Cidadãos</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
+              <CardTitle className="text-base sm:text-lg md:text-xl">Cadastro de Cidadãos</CardTitle>
+              <CardDescription className="text-xs sm:text-sm mt-1">
                 Lista completa com aprovação rápida de cadastros SELF
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative flex-1 sm:flex-none">
+              <div className="relative w-full">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nome, CPF, email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-full sm:w-[300px]"
+                  className="pl-8 w-full text-sm"
                 />
               </div>
             </div>
@@ -376,13 +376,13 @@ export default function CidadaosPage() {
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
-              <TabsTrigger value="all" className="text-xs sm:text-sm">Todos ({stats.total})</TabsTrigger>
-              <TabsTrigger value="pending" className="text-xs sm:text-sm">
+              <TabsTrigger value="all" className="text-xs sm:text-sm py-2">Todos ({stats.total})</TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs sm:text-sm py-2">
                 Pendentes ({stats.pending})
                 {stats.pending > 0 && <span className="ml-1 text-yellow-600">●</span>}
               </TabsTrigger>
-              <TabsTrigger value="verified" className="text-xs sm:text-sm">Verificados ({stats.verified})</TabsTrigger>
-              <TabsTrigger value="inactive" className="text-xs sm:text-sm">Inativos ({stats.inactive})</TabsTrigger>
+              <TabsTrigger value="verified" className="text-xs sm:text-sm py-2">Verificados ({stats.verified})</TabsTrigger>
+              <TabsTrigger value="inactive" className="text-xs sm:text-sm py-2">Inativos ({stats.inactive})</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardHeader>
@@ -392,13 +392,13 @@ export default function CidadaosPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="whitespace-nowrap text-xs sm:text-sm">Cidadão</TableHead>
-                  <TableHead className="whitespace-nowrap text-xs sm:text-sm hidden md:table-cell">CPF</TableHead>
-                  <TableHead className="whitespace-nowrap text-xs sm:text-sm hidden lg:table-cell">Contato</TableHead>
-                  <TableHead className="whitespace-nowrap text-xs sm:text-sm hidden xl:table-cell">Origem</TableHead>
-                  <TableHead className="whitespace-nowrap text-xs sm:text-sm">Verificação</TableHead>
-                  <TableHead className="whitespace-nowrap text-xs sm:text-sm hidden sm:table-cell">Data</TableHead>
-                  <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm">Ações</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4">Cidadão</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 hidden md:table-cell">CPF</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 hidden lg:table-cell">Contato</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 hidden xl:table-cell">Origem</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4">Verificação</TableHead>
+                  <TableHead className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 hidden sm:table-cell">Data</TableHead>
+                  <TableHead className="text-right whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4">Ações</TableHead>
                 </TableRow>
               </TableHeader>
             <TableBody>
@@ -500,14 +500,14 @@ export default function CidadaosPage() {
                       <div className="flex items-center justify-end gap-1 sm:gap-2">
                         {/* Botões de ação rápida para pendentes */}
                         {citizen.verificationStatus === 'PENDING' && canVerify && (
-                          <>
+                          <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 w-full sm:w-auto">
                             <Button
                               size="sm"
                               onClick={() => {
                                 setSelectedCitizen(citizen)
                                 setShowApproveDialog(true)
                               }}
-                              className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm px-2 sm:px-3"
+                              className="bg-green-600 hover:bg-green-700 text-xs px-2 sm:px-3 h-7 sm:h-8 w-full sm:w-auto justify-center"
                             >
                               <CheckCircle className="h-3 w-3 sm:mr-1" />
                               <span className="hidden sm:inline">Aprovar</span>
@@ -519,29 +519,29 @@ export default function CidadaosPage() {
                                 setSelectedCitizen(citizen)
                                 setShowRejectDialog(true)
                               }}
-                              className="border-red-500 text-red-600 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-3"
+                              className="border-red-500 text-red-600 hover:bg-red-50 text-xs px-2 sm:px-3 h-7 sm:h-8 w-full sm:w-auto justify-center"
                             >
                               <XCircle className="h-3 w-3 sm:mr-1" />
                               <span className="hidden sm:inline">Rejeitar</span>
                             </Button>
-                          </>
+                          </div>
                         )}
 
                         {/* Menu de ações */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Button variant="ghost" size="sm" className="h-7 w-7 sm:h-8 sm:w-8 p-0 flex-shrink-0">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuLabel className="text-xs sm:text-sm">Ações</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleViewCitizen(citizen.id)} className="text-xs sm:text-sm">
+                            <DropdownMenuItem onClick={() => handleViewCitizen(citizen.id)} className="text-xs sm:text-sm cursor-pointer">
                               <Eye className="h-4 w-4 mr-2" />
                               Ver Detalhes
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleViewProtocols(citizen.id)} className="text-xs sm:text-sm">
+                            <DropdownMenuItem onClick={() => handleViewProtocols(citizen.id)} className="text-xs sm:text-sm cursor-pointer">
                               <FileText className="h-4 w-4 mr-2" />
                               Ver Protocolos
                             </DropdownMenuItem>
@@ -560,51 +560,61 @@ export default function CidadaosPage() {
 
       {/* Dialog de Aprovação */}
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-        <DialogContent className="max-w-full sm:max-w-lg mx-3 sm:mx-0">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg mx-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-green-600">
-              <CheckCircle className="h-5 w-5" />
-              Aprovar Cadastro (Bronze → Prata)
+            <DialogTitle className="flex items-center gap-2 text-green-600 text-base sm:text-lg">
+              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="break-words">Aprovar Cadastro (Bronze → Prata)</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               Aprovar o cadastro de {selectedCitizen?.name}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-900">
+          <div className="space-y-3 sm:space-y-4 py-3 sm:py-4 max-h-[60vh] overflow-y-auto">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-blue-900 break-words">
                 <strong>Nome:</strong> {selectedCitizen?.name}
               </p>
-              <p className="text-sm text-blue-900">
+              <p className="text-xs sm:text-sm text-blue-900 break-all">
                 <strong>CPF:</strong> {selectedCitizen?.cpf}
               </p>
-              <p className="text-sm text-blue-900">
+              <p className="text-xs sm:text-sm text-blue-900 break-all">
                 <strong>Email:</strong> {selectedCitizen?.email}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="approval-notes">Observações (opcional)</Label>
+              <Label htmlFor="approval-notes" className="text-xs sm:text-sm">Observações (opcional)</Label>
               <Textarea
                 id="approval-notes"
                 value={approvalNotes}
                 onChange={(e) => setApprovalNotes(e.target.value)}
                 placeholder="Ex: Documentos conferidos no balcão..."
                 rows={3}
+                className="text-xs sm:text-sm mt-1"
               />
             </div>
 
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-green-800">
               ✅ O cidadão será notificado por email/app e terá acesso completo aos serviços
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApproveDialog(false)} disabled={processing}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowApproveDialog(false)}
+              disabled={processing}
+              className="w-full sm:w-auto text-xs sm:text-sm"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleApprove} disabled={processing} className="bg-green-600 hover:bg-green-700">
+            <Button
+              onClick={handleApprove}
+              disabled={processing}
+              className="bg-green-600 hover:bg-green-700 w-full sm:w-auto text-xs sm:text-sm"
+            >
               {processing ? 'Aprovando...' : 'Aprovar Cadastro'}
             </Button>
           </DialogFooter>
@@ -613,29 +623,29 @@ export default function CidadaosPage() {
 
       {/* Dialog de Rejeição */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent className="max-w-full sm:max-w-lg mx-3 sm:mx-0">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg mx-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <XCircle className="h-5 w-5" />
-              Rejeitar Cadastro
+            <DialogTitle className="flex items-center gap-2 text-red-600 text-base sm:text-lg">
+              <XCircle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="break-words">Rejeitar Cadastro</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               Rejeitar o cadastro de {selectedCitizen?.name}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <p className="text-sm text-gray-900">
+          <div className="space-y-3 sm:space-y-4 py-3 sm:py-4 max-h-[60vh] overflow-y-auto">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4">
+              <p className="text-xs sm:text-sm text-gray-900 break-words">
                 <strong>Nome:</strong> {selectedCitizen?.name}
               </p>
-              <p className="text-sm text-gray-900">
+              <p className="text-xs sm:text-sm text-gray-900 break-all">
                 <strong>CPF:</strong> {selectedCitizen?.cpf}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="rejection-reason">Motivo da Rejeição *</Label>
+              <Label htmlFor="rejection-reason" className="text-xs sm:text-sm">Motivo da Rejeição *</Label>
               <Textarea
                 id="rejection-reason"
                 value={rejectionReason}
@@ -643,25 +653,32 @@ export default function CidadaosPage() {
                 placeholder="Descreva o motivo da rejeição..."
                 rows={4}
                 required
+                className="text-xs sm:text-sm mt-1"
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Este motivo será enviado ao cidadão
               </p>
             </div>
 
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-red-800">
               ⚠️ O cadastro será desativado e o cidadão será notificado
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRejectDialog(false)} disabled={processing}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowRejectDialog(false)}
+              disabled={processing}
+              className="w-full sm:w-auto text-xs sm:text-sm"
+            >
               Cancelar
             </Button>
             <Button
               variant="destructive"
               onClick={handleReject}
               disabled={processing || !rejectionReason.trim()}
+              className="w-full sm:w-auto text-xs sm:text-sm"
             >
               {processing ? 'Rejeitando...' : 'Rejeitar Cadastro'}
             </Button>
