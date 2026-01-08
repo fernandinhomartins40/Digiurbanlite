@@ -224,6 +224,28 @@ const moduleWorkflows = [
   { moduleType: 'REGISTRO_ATRATIVO_TURISTICO', name: 'Atrativos Turísticos', description: 'Registro de atrativos turísticos', defaultSLA: 10 },
   { moduleType: 'CADASTRO_ROTEIRO_TURISTICO', name: 'Roteiros Turísticos', description: 'Cadastro de roteiros turísticos', defaultSLA: 10 },
   { moduleType: 'CADASTRO_EVENTO_TURISTICO', name: 'Eventos Turísticos', description: 'Cadastro de eventos turísticos', defaultSLA: 10 },
+  { moduleType: 'REGISTRO_EVENTO_TURISTICO', name: 'Registro de Eventos Turísticos', description: 'Registro de eventos turísticos', defaultSLA: 10 },
+
+  // MÓDULOS ADICIONAIS (FALTANTES)
+  { moduleType: 'AGENDAMENTO_CONSULTA', name: 'Agendamento de Consulta Médica', description: 'Agendamento de consultas médicas', defaultSLA: 3 },
+  { moduleType: 'CARTAO_SUS', name: 'Cartão SUS', description: 'Solicitação de cartão SUS', defaultSLA: 5 },
+  { moduleType: 'CAMPANHAS_VACINACAO', name: 'Campanhas de Vacinação', description: 'Gestão de campanhas de vacinação', defaultSLA: 1 },
+  { moduleType: 'SOLICITACAO_EXAMES', name: 'Solicitação de Exames', description: 'Solicitação e agendamento de exames', defaultSLA: 5 },
+  { moduleType: 'CONSULTA_FREQUENCIA_NOTAS', name: 'Consulta de Frequência e Notas', description: 'Consulta de frequência escolar e notas', defaultSLA: 1 },
+  { moduleType: 'AUXILIO_EMERGENCIAL', name: 'Auxílio Emergencial', description: 'Solicitação de auxílio emergencial (cesta básica)', defaultSLA: 2 },
+  { moduleType: 'VISITA_DOMICILIAR', name: 'Visita Domiciliar', description: 'Agendamento de visita domiciliar', defaultSLA: 5 },
+  { moduleType: 'ANALISE_SOLO', name: 'Análise de Solo', description: 'Solicitação de análise de solo rural', defaultSLA: 10 },
+  { moduleType: 'LICENCA_EVENTOS_RURAIS', name: 'Licença para Eventos Rurais', description: 'Licenciamento de eventos rurais', defaultSLA: 10 },
+  { moduleType: 'APOIO_CULTURAL', name: 'Apoio Cultural', description: 'Solicitação de apoio para eventos culturais', defaultSLA: 15 },
+  { moduleType: 'VISTORIA_HABITACIONAL', name: 'Vistoria Habitacional', description: 'Solicitação de vistoria habitacional', defaultSLA: 10 },
+  { moduleType: 'AUTORIZACAO_PODA_ARVORES', name: 'Autorização para Poda de Árvores', description: 'Autorização para poda ou supressão de árvores', defaultSLA: 7 },
+  { moduleType: 'APROVACAO_PROJETO_ARQUITETONICO', name: 'Aprovação de Projeto Arquitetônico', description: 'Aprovação de projetos arquitetônicos', defaultSLA: 20 },
+  { moduleType: 'AUTORIZACAO_INTERVENCAO_VIA', name: 'Autorização para Intervenção em Via Pública', description: 'Autorização para obras em vias públicas', defaultSLA: 15 },
+  { moduleType: 'AUTORIZACAO_EVENTO_SEGURANCA', name: 'Autorização de Segurança para Eventos', description: 'Autorização de segurança para eventos públicos', defaultSLA: 10 },
+  { moduleType: 'SOLICITACAO_PATRULHAMENTO', name: 'Solicitação de Patrulhamento', description: 'Solicitação de patrulhamento preventivo', defaultSLA: 1 },
+  { moduleType: 'LAUDO_VISTORIA_SEGURANCA', name: 'Laudo de Vistoria de Segurança', description: 'Emissão de laudo de vistoria de segurança', defaultSLA: 10 },
+  { moduleType: 'CAPINA_ROCAGEM', name: 'Capina e Roçagem', description: 'Solicitação de capina e roçagem', defaultSLA: 7 },
+  { moduleType: 'REGISTRO_PROBLEMA_FOTO', name: 'Registro de Problema com Foto', description: 'Registro de problemas urbanos com foto', defaultSLA: 5 },
 ];
 
 export async function seedModuleWorkflows() {
