@@ -18,8 +18,7 @@ import {
   TrendingUp,
   MousePointerClick,
   RefreshCw,
-  ChevronLeft,
-  User
+  ChevronLeft
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -165,67 +164,68 @@ export default function SentEmailsPage() {
   return (
     <div className="h-[calc(100vh-120px)] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">Enviados</h1>
-          <span className="text-sm text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <h1 className="text-xl sm:text-2xl font-bold">Enviados</h1>
+          <span className="text-xs sm:text-sm text-muted-foreground">
             {stats.total} email{stats.total !== 1 ? 's' : ''}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={fetchSentEmails}>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button variant="ghost" size="icon" onClick={fetchSentEmails} className="flex-shrink-0">
             <RefreshCw className="h-4 w-4" />
           </Button>
-          <Button onClick={() => router.push('/admin/email/compose')}>
+          <Button onClick={() => router.push('/admin/email/compose')} className="flex-1 sm:flex-initial">
             <Mail className="mr-2 h-4 w-4" />
-            Escrever
+            <span className="hidden sm:inline">Escrever</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4 py-4 border-b">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-            <Mail className="h-5 w-5 text-blue-600" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 py-3 sm:py-4 border-b">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total</p>
-            <p className="text-xl font-bold">{stats.total}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Entregues</p>
-            <p className="text-xl font-bold text-green-600">{stats.delivered}</p>
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
+            <p className="text-lg sm:text-xl font-bold">{stats.total}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-            <XCircle className="h-5 w-5 text-red-600" />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Falharam</p>
-            <p className="text-xl font-bold text-red-600">{stats.failed}</p>
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm text-muted-foreground">Entregues</p>
+            <p className="text-lg sm:text-xl font-bold text-green-600">{stats.delivered}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
-            <Clock className="h-5 w-5 text-yellow-600" />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Pendentes</p>
-            <p className="text-xl font-bold text-yellow-600">{stats.pending}</p>
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm text-muted-foreground">Falharam</p>
+            <p className="text-lg sm:text-xl font-bold text-red-600">{stats.failed}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
+            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm text-muted-foreground">Pendentes</p>
+            <p className="text-lg sm:text-xl font-bold text-yellow-600">{stats.pending}</p>
           </div>
         </div>
       </div>
 
       {/* Search and Filters */}
-      <div className="py-3 flex items-center gap-3 border-b">
-        <div className="relative flex-1 max-w-lg">
+      <div className="py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 border-b">
+        <div className="relative flex-1 sm:max-w-lg">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Pesquisar emails enviados..."
@@ -237,7 +237,7 @@ export default function SentEmailsPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm w-full sm:w-auto"
         >
           <option value="ALL">Todos</option>
           <option value="DELIVERED">Entregues</option>
@@ -249,25 +249,25 @@ export default function SentEmailsPage() {
       </div>
 
       {/* Email List & Preview */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* Email List */}
         <div className={cn(
-          "border-r overflow-y-auto",
-          selectedEmail ? "w-[400px]" : "flex-1"
+          "lg:border-r overflow-y-auto",
+          selectedEmail ? "hidden lg:block lg:w-[400px]" : "flex-1"
         )}>
           {filteredEmails.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <Send className="h-16 w-16 text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
+              <Send className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/30 mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">
                 {emails.length === 0 ? 'Nenhum email enviado' : 'Nenhum email encontrado'}
               </h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                 {emails.length === 0
                   ? 'Seus emails enviados aparecerão aqui'
                   : 'Tente ajustar os filtros'}
               </p>
               {emails.length === 0 && (
-                <Button onClick={() => router.push('/admin/email/compose')}>
+                <Button onClick={() => router.push('/admin/email/compose')} className="w-full sm:w-auto">
                   <Mail className="mr-2 h-4 w-4" />
                   Enviar Email
                 </Button>
@@ -284,7 +284,7 @@ export default function SentEmailsPage() {
                     key={email.id}
                     onClick={() => setSelectedEmail(email)}
                     className={cn(
-                      "flex items-start gap-3 p-3 hover:bg-muted/50 cursor-pointer transition-colors",
+                      "flex items-start gap-2 sm:gap-3 p-2 sm:p-3 hover:bg-muted/50 cursor-pointer transition-colors",
                       selectedEmail?.id === email.id && "bg-muted"
                     )}
                   >
@@ -297,18 +297,20 @@ export default function SentEmailsPage() {
                     {/* Content */}
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium truncate">
+                        <span className="text-xs sm:text-sm font-medium truncate">
                           {email.toEmail}
                         </span>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                           {email.opens > 0 && (
                             <span className="text-xs text-purple-600" title="Aberturas">
-                              <TrendingUp className="h-3.5 w-3.5 inline" /> {email.opens}
+                              <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 inline" />
+                              <span className="hidden sm:inline">{email.opens}</span>
                             </span>
                           )}
                           {email.clicks > 0 && (
                             <span className="text-xs text-blue-600" title="Cliques">
-                              <MousePointerClick className="h-3.5 w-3.5 inline" /> {email.clicks}
+                              <MousePointerClick className="h-3 w-3 sm:h-3.5 sm:w-3.5 inline" />
+                              <span className="hidden sm:inline">{email.clicks}</span>
                             </span>
                           )}
                           <span className="text-xs text-muted-foreground">
@@ -316,17 +318,17 @@ export default function SentEmailsPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="text-sm truncate font-medium">
+                      <div className="text-xs sm:text-sm truncate font-medium">
                         {email.subject || '(Sem assunto)'}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={cn(
-                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs",
+                          "inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-xs",
                           config.bg,
                           config.color
                         )}>
-                          <StatusIcon className="h-3 w-3" />
-                          {config.label}
+                          <StatusIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                          <span className="hidden sm:inline">{config.label}</span>
                         </span>
                       </div>
                     </div>
@@ -341,25 +343,35 @@ export default function SentEmailsPage() {
         {selectedEmail && (
           <div className="flex-1 flex flex-col overflow-hidden bg-white">
             {/* Email Header */}
-            <div className="border-b p-6 space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h2 className="text-2xl font-semibold mb-4">{selectedEmail.subject || '(Sem assunto)'}</h2>
+            <div className="border-b p-3 sm:p-6 space-y-3 sm:space-y-4">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 break-words">{selectedEmail.subject || '(Sem assunto)'}</h2>
 
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold flex-shrink-0">
                       {selectedEmail.toEmail.charAt(0).toUpperCase()}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">Para:</span>
-                        <span className="text-muted-foreground">{selectedEmail.toEmail}</span>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        <span className="font-semibold text-xs sm:text-sm">Para:</span>
+                        <span className="text-muted-foreground text-xs sm:text-sm break-all">{selectedEmail.toEmail}</span>
                       </div>
-                      <div className="text-sm text-muted-foreground mt-1">
+                      <div className="text-xs sm:text-sm text-muted-foreground break-all">
                         De: {selectedEmail.fromEmail}
                       </div>
+                      <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground sm:hidden">
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                        {new Date(selectedEmail.sentAt || selectedEmail.createdAt).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground flex-shrink-0">
                       <Clock className="h-4 w-4" />
                       {new Date(selectedEmail.sentAt || selectedEmail.createdAt).toLocaleString('pt-BR', {
                         day: '2-digit',
@@ -375,39 +387,40 @@ export default function SentEmailsPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setSelectedEmail(null)}
+                  className="flex-shrink-0 lg:hidden"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
               </div>
 
               {/* Status & Metrics */}
-              <div className="flex gap-4">
+              <div className="flex flex-wrap gap-2 sm:gap-4">
                 <div className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg",
+                  "flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg",
                   statusConfig[selectedEmail.status].bg
                 )}>
                   {(() => {
                     const StatusIcon = statusConfig[selectedEmail.status].icon;
-                    return <StatusIcon className={cn("h-4 w-4", statusConfig[selectedEmail.status].color)} />;
+                    return <StatusIcon className={cn("h-3 w-3 sm:h-4 sm:w-4", statusConfig[selectedEmail.status].color)} />;
                   })()}
-                  <span className={cn("text-sm font-medium", statusConfig[selectedEmail.status].color)}>
+                  <span className={cn("text-xs sm:text-sm font-medium", statusConfig[selectedEmail.status].color)}>
                     {statusConfig[selectedEmail.status].label}
                   </span>
                 </div>
 
                 {selectedEmail.opens > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-50">
-                    <TrendingUp className="h-4 w-4 text-purple-600" />
-                    <span className="text-sm font-medium text-purple-600">
+                  <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-purple-50">
+                    <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
+                    <span className="text-xs sm:text-sm font-medium text-purple-600">
                       {selectedEmail.opens} abertura{selectedEmail.opens !== 1 ? 's' : ''}
                     </span>
                   </div>
                 )}
 
                 {selectedEmail.clicks > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50">
-                    <MousePointerClick className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-600">
+                  <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-blue-50">
+                    <MousePointerClick className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
+                    <span className="text-xs sm:text-sm font-medium text-blue-600">
                       {selectedEmail.clicks} click{selectedEmail.clicks !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -416,29 +429,29 @@ export default function SentEmailsPage() {
             </div>
 
             {/* Email Details */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
               {selectedEmail.errorMessage && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-start gap-2">
-                    <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-red-900 mb-1">Erro no Envio</h4>
-                      <p className="text-sm text-red-800">{selectedEmail.errorMessage}</p>
+                    <XCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-red-900 mb-1 text-sm sm:text-base">Erro no Envio</h4>
+                      <p className="text-xs sm:text-sm text-red-800 break-words">{selectedEmail.errorMessage}</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="text-xs font-medium text-muted-foreground uppercase">Message ID</label>
-                  <p className="mt-1 text-sm font-mono text-muted-foreground break-all">{selectedEmail.messageId}</p>
+                  <p className="mt-1 text-xs sm:text-sm font-mono text-muted-foreground break-all">{selectedEmail.messageId}</p>
                 </div>
 
                 {selectedEmail.deliveredAt && (
                   <div>
                     <label className="text-xs font-medium text-muted-foreground uppercase">Entregue em</label>
-                    <p className="mt-1 text-sm">
+                    <p className="mt-1 text-xs sm:text-sm">
                       {new Date(selectedEmail.deliveredAt).toLocaleString('pt-BR')}
                     </p>
                   </div>
