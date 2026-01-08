@@ -254,7 +254,12 @@ export default function ProtocolDetailPage() {
             <TabsContent value="checklist" className="mt-6">
               <ChecklistTab
                 protocolId={protocolId}
-                currentStage={stages.find(s => s.status === StageStatus.IN_PROGRESS)}
+                currentStage={
+                  // Prioridade: IN_PROGRESS > última COMPLETED > null
+                  stages.find(s => s.status === StageStatus.IN_PROGRESS) ||
+                  [...stages].sort((a, b) => (b.stageOrder || 0) - (a.stageOrder || 0)).find(s => s.status === StageStatus.COMPLETED) ||
+                  null
+                }
                 onNavigateToDocuments={() => setActiveTab('documents')}
               />
             </TabsContent>
