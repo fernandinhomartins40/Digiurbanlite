@@ -25,7 +25,8 @@ RUN npm install --legacy-peer-deps
 COPY prisma ./prisma
 COPY src ./src
 
-# Gerar Prisma Client
+# Gerar Prisma Client (com DATABASE_URL dummy para build)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 
 # Build TypeScript
@@ -48,6 +49,7 @@ RUN npm install --omit=dev --legacy-peer-deps
 
 # Copiar Prisma schema e gerar client de produção
 COPY prisma ./prisma
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 
 # Copiar código compilado do builder
