@@ -11,9 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import {
   Send,
-  Save,
   X,
-  Paperclip,
   Users,
   Mail,
   Loader2,
@@ -257,15 +255,18 @@ export default function ComposeEmailPage() {
 
   if (accounts.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6 w-full px-2 sm:px-4 lg:px-0">
         <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Mail className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Nenhuma conta de email disponível</h3>
-            <p className="text-muted-foreground text-center mb-6 max-w-md">
+          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+            <Mail className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground mb-3 sm:mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold mb-2 text-center">Nenhuma conta de email disponível</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground text-center mb-4 sm:mb-6 max-w-md">
               Você precisa criar pelo menos uma conta de email antes de enviar emails.
             </p>
-            <Button onClick={() => router.push('/admin/email-accounts')}>
+            <Button
+              onClick={() => router.push('/admin/email-accounts')}
+              className="w-full sm:w-auto text-xs sm:text-sm h-9 sm:h-10"
+            >
               Criar Conta de Email
             </Button>
           </CardContent>
@@ -275,29 +276,40 @@ export default function ComposeEmailPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6 w-full max-w-4xl mx-auto px-2 sm:px-4 lg:px-0">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Escrever Email</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">Escrever Email</h1>
+          <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
             Enviar email institucional
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleCancel}>
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            className="flex-1 sm:flex-none"
+          >
             <X className="mr-2 h-4 w-4" />
-            Cancelar
+            <span className="hidden sm:inline">Cancelar</span>
+            <span className="sm:hidden">Cancelar</span>
           </Button>
-          <Button onClick={handleSend} disabled={loading}>
+          <Button
+            onClick={handleSend}
+            disabled={loading}
+            className="flex-1 sm:flex-none"
+          >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Enviando...
+                <span className="hidden sm:inline">Enviando...</span>
+                <span className="sm:hidden">Enviando...</span>
               </>
             ) : (
               <>
                 <Send className="mr-2 h-4 w-4" />
-                Enviar Email
+                <span className="hidden sm:inline">Enviar Email</span>
+                <span className="sm:hidden">Enviar</span>
               </>
             )}
           </Button>
@@ -305,18 +317,18 @@ export default function ComposeEmailPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Nova Mensagem</CardTitle>
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="text-lg sm:text-xl">Nova Mensagem</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
           {/* Seleção de conta */}
           <div className="space-y-2">
-            <Label htmlFor="account">De (Conta de Email)</Label>
+            <Label htmlFor="account" className="text-sm sm:text-base">De (Conta de Email)</Label>
             <select
               id="account"
               value={selectedAccount}
               onChange={(e) => setSelectedAccount(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-2 sm:px-3 py-2 text-xs sm:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
@@ -334,24 +346,24 @@ export default function ComposeEmailPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => setShowTemplates(!showTemplates)}
-                className="w-full justify-between"
+                className="w-full justify-between text-xs sm:text-sm h-8 sm:h-9"
               >
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Usar Template
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>Usar Template</span>
                 </div>
-                <ChevronDown className={`h-4 w-4 transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
               </Button>
               {showTemplates && (
-                <div className="border rounded-lg p-2 space-y-1 max-h-48 overflow-y-auto">
+                <div className="border rounded-lg p-2 space-y-1 max-h-40 sm:max-h-48 overflow-y-auto">
                   {templates.map((template) => (
                     <button
                       key={template.id}
                       onClick={() => useTemplate(template)}
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded transition-colors"
+                      className="w-full text-left px-2 sm:px-3 py-2 text-xs sm:text-sm hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
                     >
-                      <div className="font-medium">{template.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">
+                      <div className="font-medium truncate">{template.name}</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground truncate">
                         {template.subject}
                       </div>
                     </button>
@@ -363,24 +375,29 @@ export default function ComposeEmailPage() {
 
           {/* Para */}
           <div className="space-y-2">
-            <Label htmlFor="to">Para</Label>
+            <Label htmlFor="to" className="text-sm sm:text-base">Para</Label>
             <Input
               id="to"
               type="text"
-              placeholder="destinatario@exemplo.com (separe múltiplos emails com vírgula)"
+              placeholder="destinatario@exemplo.com"
               value={formData.to}
               onChange={(e) => handleInputChange('to', e.target.value)}
+              className="text-xs sm:text-sm h-9 sm:h-10"
             />
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
+              Separe múltiplos emails com vírgula
+            </p>
           </div>
 
           {/* CC e BCC */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {!showCc && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowCc(true)}
+                className="text-xs sm:text-sm h-7 sm:h-8"
               >
                 Cc
               </Button>
@@ -391,6 +408,7 @@ export default function ComposeEmailPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowBcc(true)}
+                className="text-xs sm:text-sm h-7 sm:h-8"
               >
                 Bcc
               </Button>
@@ -399,50 +417,53 @@ export default function ComposeEmailPage() {
 
           {showCc && (
             <div className="space-y-2">
-              <Label htmlFor="cc">Cc (Com Cópia)</Label>
+              <Label htmlFor="cc" className="text-sm sm:text-base">Cc (Com Cópia)</Label>
               <Input
                 id="cc"
                 type="text"
                 placeholder="cc@exemplo.com"
                 value={formData.cc}
                 onChange={(e) => handleInputChange('cc', e.target.value)}
+                className="text-xs sm:text-sm h-9 sm:h-10"
               />
             </div>
           )}
 
           {showBcc && (
             <div className="space-y-2">
-              <Label htmlFor="bcc">Bcc (Cópia Oculta)</Label>
+              <Label htmlFor="bcc" className="text-sm sm:text-base">Bcc (Cópia Oculta)</Label>
               <Input
                 id="bcc"
                 type="text"
                 placeholder="bcc@exemplo.com"
                 value={formData.bcc}
                 onChange={(e) => handleInputChange('bcc', e.target.value)}
+                className="text-xs sm:text-sm h-9 sm:h-10"
               />
             </div>
           )}
 
           {/* Assunto */}
           <div className="space-y-2">
-            <Label htmlFor="subject">Assunto</Label>
+            <Label htmlFor="subject" className="text-sm sm:text-base">Assunto</Label>
             <Input
               id="subject"
               type="text"
               placeholder="Assunto do email"
               value={formData.subject}
               onChange={(e) => handleInputChange('subject', e.target.value)}
+              className="text-xs sm:text-sm h-9 sm:h-10"
             />
           </div>
 
           {/* Prioridade */}
           <div className="space-y-2">
-            <Label htmlFor="priority">Prioridade</Label>
+            <Label htmlFor="priority" className="text-sm sm:text-base">Prioridade</Label>
             <select
               id="priority"
               value={formData.priority}
               onChange={(e) => handleInputChange('priority', parseInt(e.target.value))}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-2 sm:px-3 py-2 text-xs sm:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value={1}>Alta</option>
               <option value={3}>Normal</option>
@@ -452,26 +473,29 @@ export default function ComposeEmailPage() {
 
           {/* Mensagem */}
           <div className="space-y-2">
-            <Label htmlFor="message">Mensagem</Label>
+            <Label htmlFor="message" className="text-sm sm:text-base">Mensagem</Label>
             <Textarea
               id="message"
               placeholder="Escreva sua mensagem aqui..."
               value={formData.message}
               onChange={(e) => handleInputChange('message', e.target.value)}
-              rows={12}
-              className="font-mono"
+              rows={10}
+              className="font-mono text-xs sm:text-sm min-h-[200px] sm:min-h-[300px]"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
               {formData.message.length} caracteres
             </p>
           </div>
 
           {/* Ações do formulário */}
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-sm space-y-1">
-              <div className="text-muted-foreground">
-                <Users className="inline h-4 w-4 mr-1" />
-                Conta selecionada: {accounts.find(a => a.id === selectedAccount)?.email}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pt-3 sm:pt-4 border-t">
+            <div className="text-xs sm:text-sm space-y-1 w-full sm:w-auto">
+              <div className="text-muted-foreground flex items-center gap-1">
+                <Users className="inline h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="truncate">
+                  <span className="hidden sm:inline">Conta: </span>
+                  {accounts.find(a => a.id === selectedAccount)?.email}
+                </span>
               </div>
               {selectedAccount && (() => {
                 const account = accounts.find(a => a.id === selectedAccount);
@@ -485,45 +509,54 @@ export default function ComposeEmailPage() {
                   : 0;
 
                 return (
-                  <div className="text-xs text-muted-foreground space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <span>Hoje: {account.sentToday}/{account.dailyLimit}</span>
-                      <div className="h-1.5 w-20 bg-secondary rounded-full overflow-hidden">
+                  <div className="text-[10px] sm:text-xs text-muted-foreground space-y-0.5">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <span className="whitespace-nowrap">Hoje: {account.sentToday}/{account.dailyLimit}</span>
+                      <div className="h-1.5 w-16 sm:w-20 bg-secondary rounded-full overflow-hidden">
                         <div
                           className={`h-full transition-all ${dailyPercent >= 90 ? 'bg-red-500' : dailyPercent >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
                           style={{ width: `${Math.min(dailyPercent, 100)}%` }}
                         />
                       </div>
-                      <span className="text-[10px]">{dailyPercent}%</span>
+                      <span className="text-[9px] sm:text-[10px]">{dailyPercent}%</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span>Mês: {account.sentThisMonth}/{account.monthlyLimit}</span>
-                      <div className="h-1.5 w-20 bg-secondary rounded-full overflow-hidden">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <span className="whitespace-nowrap">Mês: {account.sentThisMonth}/{account.monthlyLimit}</span>
+                      <div className="h-1.5 w-16 sm:w-20 bg-secondary rounded-full overflow-hidden">
                         <div
                           className={`h-full transition-all ${monthlyPercent >= 90 ? 'bg-red-500' : monthlyPercent >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
                           style={{ width: `${Math.min(monthlyPercent, 100)}%` }}
                         />
                       </div>
-                      <span className="text-[10px]">{monthlyPercent}%</span>
+                      <span className="text-[9px] sm:text-[10px]">{monthlyPercent}%</span>
                     </div>
                   </div>
                 );
               })()}
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCancel} disabled={loading}>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                disabled={loading}
+                className="flex-1 sm:flex-none text-xs sm:text-sm h-8 sm:h-9"
+              >
                 Cancelar
               </Button>
-              <Button onClick={handleSend} disabled={loading}>
+              <Button
+                onClick={handleSend}
+                disabled={loading}
+                className="flex-1 sm:flex-none text-xs sm:text-sm h-8 sm:h-9"
+              >
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
+                    <Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                    <span>Enviando...</span>
                   </>
                 ) : (
                   <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Enviar
+                    <Send className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>Enviar</span>
                   </>
                 )}
               </Button>
