@@ -1,9 +1,8 @@
-FROM node:22-alpine
+# ========== STAGE 1: Build ==========
+FROM node:22-alpine AS builder
 
-# Instalar dependências do sistema
+# Instalar dependências de build
 RUN apk add --no-cache \
-    dumb-init \
-    tini \
     python3 \
     make \
     g++ \
@@ -19,7 +18,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY tsconfig.prisma.json ./
 
-# Instalar dependências
+# Instalar TODAS as dependências (incluindo devDependencies para build)
 RUN npm install --legacy-peer-deps
 
 # Copiar código
@@ -33,8 +32,26 @@ RUN npx prisma generate
 RUN npm run build:prisma
 RUN npm run build
 
-# Remover devDependencies
-RUN npm prune --omit=dev
+# ========== STAGE 2: Production ==========
+FROM node:22-alpine
+
+# Instalar apenas dependências de runtime
+RUN apk add --no-cache dumb-init tini
+
+WORKDIR /app
+
+# Copiar package files
+COPY package*.json ./
+
+# Instalar APENAS dependências de produção
+RUN npm install --omit=dev --legacy-peer-deps
+
+# Copiar Prisma schema e gerar client de produção
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Copiar código compilado do builder
+COPY --from=builder /app/dist ./dist
 
 # Criar diretórios
 RUN mkdir -p uploads logs

@@ -1,13 +1,6 @@
-# UltraZend SMTP Server - Production Dockerfile
-FROM node:22-alpine
+# ========== STAGE 1: Build ==========
+FROM node:22-alpine AS builder
 
-# Instalar dependências do sistema
-RUN apk add --no-cache \
-    openssl \
-    ca-certificates \
-    dumb-init
-
-# Criar diretório de trabalho
 WORKDIR /app
 
 # Copiar package files
@@ -15,14 +8,12 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY tsconfig.prisma.json ./
 
-# Instalar todas as dependências (incluindo devDependencies para build)
-# Nota: Usando npm install porque package-lock.json não está versionado
+# Instalar TODAS as dependências (incluindo devDependencies para build)
 RUN npm install --legacy-peer-deps
 
 # Copiar código fonte
 COPY prisma ./prisma
 COPY src ./src
-COPY start-server-production.js ./
 
 # Gerar Prisma Client
 RUN npx prisma generate
@@ -30,12 +21,37 @@ RUN npx prisma generate
 # Compilar TypeScript (apenas arquivos Prisma)
 RUN npm run build:prisma
 
-# Criar diretórios necessários (antes do npm prune para garantir que sh existe)
+# ========== STAGE 2: Production ==========
+FROM node:22-alpine
+
+# Instalar dependências de runtime
+RUN apk add --no-cache \
+    openssl \
+    ca-certificates \
+    dumb-init
+
+WORKDIR /app
+
+# Copiar package files
+COPY package*.json ./
+
+# Instalar APENAS dependências de produção
+RUN npm install --omit=dev --legacy-peer-deps
+
+# Copiar Prisma schema e gerar client de produção
+COPY prisma ./prisma
+RUN npx prisma generate
+
+# Copiar código compilado do builder (se houver dist)
+COPY --from=builder /app/dist ./dist
+
+# Copiar código fonte e script de produção
+COPY src ./src
+COPY start-server-production.js ./
+
+# Criar diretórios necessários
 RUN mkdir -p /app/data /app/logs && \
     chown -R node:node /app
-
-# Remover devDependencies após build (movido para depois de criar diretórios)
-RUN npm prune --omit=dev || true
 
 # Usar usuário não-root
 USER node
