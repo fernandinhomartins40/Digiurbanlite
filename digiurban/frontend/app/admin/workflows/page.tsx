@@ -12,7 +12,6 @@ import {
   Search,
   Trash2,
   Edit,
-  Eye,
   Zap,
   AlertCircle
 } from 'lucide-react'
@@ -151,13 +150,13 @@ export default function WorkflowsPage() {
   )
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-3">
-            <GitBranch className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Workflows de Módulos</h1>
+            <GitBranch className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
+            <h1 className="text-2xl sm:text-3xl font-bold">Workflows de Módulos</h1>
           </div>
           <HelpButton
             onClick={() => setShowHelp(true)}
@@ -166,7 +165,7 @@ export default function WorkflowsPage() {
             size="md"
           />
         </div>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Gerencie os fluxos de trabalho com etapas, aprovações e SLAs
         </p>
       </div>
@@ -218,8 +217,8 @@ export default function WorkflowsPage() {
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex-1 max-w-full sm:max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -230,17 +229,19 @@ export default function WorkflowsPage() {
             />
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             variant="outline"
             onClick={handleCreateDefaults}
             disabled={loading}
+            className="w-full sm:w-auto"
           >
-            <Zap className="h-4 w-4 mr-2" />
-            Criar Workflows Padrão
+            <Zap className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="hidden md:inline">Criar Workflows Padrão</span>
+            <span className="md:hidden">Workflows Padrão</span>
           </Button>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
             Novo Workflow
           </Button>
         </div>
@@ -267,13 +268,14 @@ export default function WorkflowsPage() {
                 }
               </p>
               {!searchTerm && (
-                <div className="flex gap-2 justify-center">
-                  <Button variant="outline" onClick={handleCreateDefaults}>
-                    <Zap className="h-4 w-4 mr-2" />
-                    Criar Workflows Padrão
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  <Button variant="outline" onClick={handleCreateDefaults} className="w-full sm:w-auto">
+                    <Zap className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <span className="hidden md:inline">Criar Workflows Padrão</span>
+                    <span className="md:hidden">Workflows Padrão</span>
                   </Button>
-                  <Button onClick={() => setShowCreateModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">
+                    <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
                     Novo Workflow
                   </Button>
                 </div>
@@ -286,36 +288,40 @@ export default function WorkflowsPage() {
           {filteredWorkflows.map((workflow) => (
             <Card key={workflow.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CardTitle className="text-xl">{workflow.name}</CardTitle>
-                      <Badge variant="secondary">{workflow.moduleType}</Badge>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                      <CardTitle className="text-lg sm:text-xl truncate">{workflow.name}</CardTitle>
+                      <Badge variant="secondary" className="w-fit">{workflow.moduleType}</Badge>
                     </div>
-                    <CardDescription>
+                    <CardDescription className="text-sm">
                       {workflow.description || 'Sem descrição'}
                     </CardDescription>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 self-end sm:self-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(workflow)}
+                      title="Editar workflow"
                     >
                       <Edit className="h-4 w-4" />
+                      <span className="sr-only">Editar</span>
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(workflow.moduleType)}
+                      title="Deletar workflow"
                     >
                       <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Deletar</span>
                     </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Etapas:</span>{' '}
                     <span className="font-medium">{workflow.stages.length}</span>
@@ -326,7 +332,7 @@ export default function WorkflowsPage() {
                       {workflow.defaultSLA ? `${workflow.defaultSLA} dias` : 'N/A'}
                     </span>
                   </div>
-                  <div>
+                  <div className="sm:col-span-2 lg:col-span-1">
                     <span className="text-muted-foreground">Última atualização:</span>{' '}
                     <span className="font-medium">
                       {new Date(workflow.updatedAt).toLocaleDateString('pt-BR')}

@@ -186,22 +186,22 @@ export function WorkflowFormModal({ workflow, onClose, onSaveSuccess }: Workflow
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-full sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <GitBranch className="h-5 w-5" />
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <GitBranch className="h-5 w-5 flex-shrink-0" />
             {workflow ? 'Editar Workflow' : 'Novo Workflow'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Configure as etapas, aprovações e SLAs do fluxo de trabalho
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Informações Básicas */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="space-y-2">
-              <Label htmlFor="moduleType">Tipo de Módulo *</Label>
+              <Label htmlFor="moduleType" className="text-sm">Tipo de Módulo *</Label>
               <Input
                 id="moduleType"
                 placeholder="Ex: CARTAO_SUS, MATRICULA_ESCOLAR"
@@ -209,6 +209,7 @@ export function WorkflowFormModal({ workflow, onClose, onSaveSuccess }: Workflow
                 onChange={(e) => setFormData({ ...formData, moduleType: e.target.value.toUpperCase() })}
                 disabled={!!workflow}
                 required
+                className="text-sm"
               />
               <p className="text-xs text-muted-foreground">
                 Identificador único do módulo (não pode ser alterado depois)
@@ -216,52 +217,55 @@ export function WorkflowFormModal({ workflow, onClose, onSaveSuccess }: Workflow
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Nome do Workflow *</Label>
+              <Label htmlFor="name" className="text-sm">Nome do Workflow *</Label>
               <Input
                 id="name"
                 placeholder="Ex: Emissão de Cartão SUS"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                className="text-sm"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+            <Label htmlFor="description" className="text-sm">Descrição</Label>
             <Textarea
               id="description"
               placeholder="Descreva o propósito deste workflow..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
+              className="text-sm resize-none"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="defaultSLA">SLA Padrão (dias úteis)</Label>
+            <Label htmlFor="defaultSLA" className="text-sm">SLA Padrão (dias úteis)</Label>
             <Input
               id="defaultSLA"
               type="number"
               min="1"
               value={formData.defaultSLA}
               onChange={(e) => setFormData({ ...formData, defaultSLA: parseInt(e.target.value) })}
+              className="text-sm"
             />
           </div>
 
           {/* Etapas */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base">Etapas do Workflow</Label>
-              <Button type="button" size="sm" onClick={handleAddStage}>
-                <Plus className="h-4 w-4 mr-2" />
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+              <Label className="text-sm sm:text-base">Etapas do Workflow</Label>
+              <Button type="button" size="sm" onClick={handleAddStage} className="w-full sm:w-auto">
+                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
                 Adicionar Etapa
               </Button>
             </div>
 
             {formData.stages.length === 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
+                <CardContent className="py-6 sm:py-8 text-center text-sm text-muted-foreground">
                   Nenhuma etapa adicionada. Clique em "Adicionar Etapa" para começar.
                 </CardContent>
               </Card>
@@ -270,22 +274,24 @@ export function WorkflowFormModal({ workflow, onClose, onSaveSuccess }: Workflow
                 {formData.stages.map((stage, index) => (
                   <Card key={index}>
                     <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">Etapa {stage.order}</Badge>
-                          <CardTitle className="text-base">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <Badge variant="outline" className="flex-shrink-0">Etapa {stage.order}</Badge>
+                          <CardTitle className="text-sm sm:text-base truncate">
                             {stage.name || `Etapa ${stage.order}`}
                           </CardTitle>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 self-end sm:self-auto">
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => handleMoveStage(index, 'up')}
                             disabled={index === 0}
+                            title="Mover para cima"
                           >
                             <MoveUp className="h-4 w-4" />
+                            <span className="sr-only">Mover para cima</span>
                           </Button>
                           <Button
                             type="button"
@@ -293,38 +299,44 @@ export function WorkflowFormModal({ workflow, onClose, onSaveSuccess }: Workflow
                             size="sm"
                             onClick={() => handleMoveStage(index, 'down')}
                             disabled={index === formData.stages.length - 1}
+                            title="Mover para baixo"
                           >
                             <MoveDown className="h-4 w-4" />
+                            <span className="sr-only">Mover para baixo</span>
                           </Button>
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoveStage(index)}
+                            title="Remover etapa"
                           >
                             <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Remover</span>
                           </Button>
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <Label>Nome da Etapa *</Label>
+                          <Label className="text-sm">Nome da Etapa *</Label>
                           <Input
                             placeholder="Ex: Análise Técnica"
                             value={stage.name}
                             onChange={(e) => handleStageChange(index, 'name', e.target.value)}
                             required
+                            className="text-sm"
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label>SLA (dias úteis)</Label>
+                          <Label className="text-sm">SLA (dias úteis)</Label>
                           <Input
                             type="number"
                             min="1"
                             value={stage.slaDays}
                             onChange={(e) => handleStageChange(index, 'slaDays', parseInt(e.target.value))}
+                            className="text-sm"
                           />
                         </div>
                       </div>
@@ -334,7 +346,7 @@ export function WorkflowFormModal({ workflow, onClose, onSaveSuccess }: Workflow
                           checked={stage.canSkip}
                           onCheckedChange={(checked) => handleStageChange(index, 'canSkip', checked)}
                         />
-                        <Label htmlFor={`canSkip-${index}`} className="text-sm font-normal cursor-pointer">
+                        <Label htmlFor={`canSkip-${index}`} className="text-xs sm:text-sm font-normal cursor-pointer">
                           Permitir pular esta etapa
                         </Label>
                       </div>
@@ -346,11 +358,21 @@ export function WorkflowFormModal({ workflow, onClose, onSaveSuccess }: Workflow
           </div>
 
           {/* Ações */}
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto order-1 sm:order-2"
+            >
               {loading ? 'Salvando...' : (workflow ? 'Atualizar' : 'Criar Workflow')}
             </Button>
           </div>
