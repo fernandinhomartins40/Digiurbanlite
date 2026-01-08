@@ -66,25 +66,25 @@ export function WorkflowProgress({ stages }: WorkflowProgressProps) {
           {/* Etapas */}
           <div className="space-y-3">
             {sortedStages.map((stage, index) => (
-              <div key={stage.id} className="relative flex items-start gap-3">
+              <div key={stage.id} className="relative flex items-start gap-2 sm:gap-3">
                 {/* Ícone */}
-                <div className="relative z-10 bg-white">
+                <div className="relative z-10 bg-white shrink-0">
                   {getStatusIcon(stage.status)}
                 </div>
 
                 {/* Conteúdo */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-xs text-muted-foreground">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+                      <span className="text-xs text-muted-foreground shrink-0">
                         {stage.stageOrder}.
                       </span>
-                      <p className={`text-sm truncate ${getStatusColor(stage.status)}`}>
+                      <p className={`text-xs sm:text-sm break-words ${getStatusColor(stage.status)}`}>
                         {stage.stageName}
                       </p>
                     </div>
                     {stage.status === StageStatus.IN_PROGRESS && (
-                      <Badge variant="default" className="ml-2 text-xs bg-blue-600 flex-shrink-0">
+                      <Badge variant="default" className="text-xs bg-blue-600 shrink-0 px-2 py-0">
                         Atual
                       </Badge>
                     )}

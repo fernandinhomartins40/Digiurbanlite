@@ -786,7 +786,7 @@ export function ChecklistTab({
                 return (
                   <div
                     key={index}
-                    className={`p-4 rounded-lg border-2 ${
+                    className={`p-3 sm:p-4 rounded-lg border-2 ${
                       hasPending
                         ? 'bg-purple-50 border-purple-400'
                         : isApproved
@@ -800,8 +800,8 @@ export function ChecklistTab({
                         : 'bg-red-50 border-red-300'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
                         {hasPending ? (
                           <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                         ) : isApproved ? (
@@ -815,9 +815,9 @@ export function ChecklistTab({
                         ) : (
                           <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                         )}
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`text-sm font-semibold ${
+                            <span className={`text-xs sm:text-sm font-semibold break-words ${
                               hasPending ? 'text-purple-900' : isApproved ? 'text-green-900' : isUploaded ? 'text-cyan-900' : isPending ? 'text-blue-900' : isRejected ? 'text-orange-900' : 'text-red-900'
                             }`}>
                               {docType}
@@ -986,17 +986,17 @@ export function ChecklistTab({
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2 flex-shrink-0">
+                      <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto sm:min-w-[140px]">
                         {displayDoc && (
                           <>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => handleViewDocument(displayDoc.id)}
-                              className="w-full"
+                              className="flex-1 sm:w-full"
                             >
-                              <Eye className="h-4 w-4 mr-1" />
-                              Visualizar
+                              <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 shrink-0" />
+                              <span className="truncate">Ver</span>
                             </Button>
 
                             {/* Botões de Aprovar/Rejeitar para documentos UPLOADED ou UNDER_REVIEW */}
@@ -1006,17 +1006,17 @@ export function ChecklistTab({
                                   size="sm"
                                   onClick={() => handleApproveDocument(displayDoc.id)}
                                   disabled={approvingDocId === displayDoc.id}
-                                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                                  className="flex-1 sm:w-full bg-green-600 hover:bg-green-700 text-white"
                                 >
                                   {approvingDocId === displayDoc.id ? (
                                     <>
-                                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                      Aprovando...
+                                      <Loader2 className="h-3 w-3 mr-1 animate-spin shrink-0" />
+                                      <span className="truncate">Aprovando...</span>
                                     </>
                                   ) : (
                                     <>
-                                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                                      Aprovar
+                                      <CheckCircle2 className="h-3 w-3 mr-1 shrink-0" />
+                                      <span className="truncate">Aprovar</span>
                                     </>
                                   )}
                                 </Button>
@@ -1025,10 +1025,10 @@ export function ChecklistTab({
                                   variant="destructive"
                                   onClick={() => handleOpenRejectDialog(displayDoc.id, docType)}
                                   disabled={rejectingDocId === displayDoc.id}
-                                  className="w-full"
+                                  className="flex-1 sm:w-full"
                                 >
-                                  <AlertTriangle className="h-3 w-3 mr-1" />
-                                  Rejeitar
+                                  <AlertTriangle className="h-3 w-3 mr-1 shrink-0" />
+                                  <span className="truncate">Rejeitar</span>
                                 </Button>
                               </>
                             )}
@@ -1039,10 +1039,10 @@ export function ChecklistTab({
                           variant={isMissing || isRejected ? 'default' : 'outline'}
                           onClick={() => handleOpenPendingModal('document', docType)}
                           disabled={isApproved}
-                          className="w-full"
+                          className="flex-1 sm:w-full"
                         >
-                          <AlertCircle className="h-4 w-4 mr-1" />
-                          {isApproved ? 'Aprovado ✓' : 'Criar Pendência'}
+                          <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 shrink-0" />
+                          <span className="truncate">{isApproved ? 'Aprovado ✓' : 'Criar Pendência'}</span>
                         </Button>
                       </div>
                     </div>
@@ -1076,7 +1076,7 @@ export function ChecklistTab({
                 return (
                   <div
                     key={index}
-                    className={`p-4 rounded-lg border-2 ${
+                    className={`p-3 sm:p-4 rounded-lg border-2 ${
                       hasPending
                         ? 'bg-purple-50 border-purple-400'
                         : isFilled
@@ -1084,8 +1084,8 @@ export function ChecklistTab({
                         : 'bg-red-50 border-red-300'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
                         {hasPending ? (
                           <AlertCircle className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                         ) : isFilled ? (
@@ -1093,9 +1093,9 @@ export function ChecklistTab({
                         ) : (
                           <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                         )}
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className={`text-sm font-semibold ${
+                            <span className={`text-xs sm:text-sm font-semibold break-words ${
                               hasPending ? 'text-purple-900' : isFilled ? 'text-green-900' : 'text-red-900'
                             }`}>
                               {fieldId}
@@ -1176,15 +1176,18 @@ export function ChecklistTab({
                           )}
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenPendingModal('field', fieldId)}
-                        disabled={isFilled}
-                      >
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        {isFilled ? 'Preenchido ✓' : 'Criar Pendência'}
-                      </Button>
+                      <div className="w-full sm:w-auto">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenPendingModal('field', fieldId)}
+                          disabled={isFilled}
+                          className="w-full sm:w-auto"
+                        >
+                          <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 shrink-0" />
+                          <span className="truncate">{isFilled ? 'Preenchido ✓' : 'Criar Pendência'}</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )
@@ -1358,22 +1361,22 @@ export function ChecklistTab({
 
       {/* Modal de Visualização de Documento */}
       <Dialog open={!!viewingDoc} onOpenChange={(open) => !open && setViewingDoc(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-full">
           <DialogHeader>
-            <DialogTitle>{viewingDoc?.documentType || 'Documento'}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-base sm:text-lg break-words">{viewingDoc?.documentType || 'Documento'}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm break-words">
               {viewingDoc?.fileName} • {viewingDoc ? (viewingDoc.fileSize / 1024).toFixed(2) : 0} KB
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             {/* Preview do documento */}
-            <div className="border rounded-lg p-4 bg-muted/30 min-h-[400px] flex items-center justify-center">
+            <div className="border rounded-lg p-2 sm:p-4 bg-muted/30 min-h-[300px] sm:min-h-[400px] flex items-center justify-center">
               {isImageDoc(viewingDoc) ? (
                 <img
                   src={viewingDoc ? getDocumentPreviewUrl(viewingDoc) : ''}
                   alt={viewingDoc?.fileName || 'Documento'}
-                  className="max-w-full max-h-[500px] object-contain"
+                  className="max-w-full max-h-[300px] sm:max-h-[500px] object-contain"
                   onError={(e) => {
                     console.error('[ChecklistTab] Erro ao carregar imagem:', viewingDoc)
                   }}
@@ -1381,34 +1384,34 @@ export function ChecklistTab({
               ) : isPdfDoc(viewingDoc) ? (
                 <iframe
                   src={viewingDoc ? getDocumentPreviewUrl(viewingDoc) : ''}
-                  className="w-full h-[500px] rounded"
+                  className="w-full h-[300px] sm:h-[500px] rounded"
                   title={viewingDoc?.fileName || 'Documento'}
                 />
               ) : (
-                <div className="text-center text-muted-foreground">
-                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p>Pré-visualização não disponível para este tipo de arquivo</p>
-                  <p className="text-sm mt-2">{viewingDoc?.mimeType}</p>
+                <div className="text-center text-muted-foreground p-4">
+                  <FileText className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm sm:text-base">Pré-visualização não disponível para este tipo de arquivo</p>
+                  <p className="text-xs sm:text-sm mt-2">{viewingDoc?.mimeType}</p>
                 </div>
               )}
             </div>
 
             {/* Informações do documento */}
             {viewingDoc && (
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Tamanho</p>
-                  <p className="font-medium">
+                  <p className="text-muted-foreground text-xs">Tamanho</p>
+                  <p className="font-medium text-sm break-words">
                     {viewingDoc.fileSize ? `${(viewingDoc.fileSize / 1024).toFixed(2)} KB` : 'N/A'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Tipo</p>
-                  <p className="font-medium">{viewingDoc.mimeType || 'N/A'}</p>
+                  <p className="text-muted-foreground text-xs">Tipo</p>
+                  <p className="font-medium text-sm break-words">{viewingDoc.mimeType || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Enviado em</p>
-                  <p className="font-medium">
+                  <p className="text-muted-foreground text-xs">Enviado em</p>
+                  <p className="font-medium text-sm break-words">
                     {new Date(viewingDoc.createdAt).toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: '2-digit',
@@ -1419,33 +1422,36 @@ export function ChecklistTab({
                   </p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Status</p>
-                  <p className="font-medium">{viewingDoc.status}</p>
+                  <p className="text-muted-foreground text-xs">Status</p>
+                  <p className="font-medium text-sm">{viewingDoc.status}</p>
                 </div>
               </div>
             )}
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             {viewingDoc && (
               <Button
                 variant="outline"
                 asChild
+                className="w-full sm:w-auto"
               >
                 <a
                   href={getDocumentDownloadUrl(protocolId, viewingDoc.id)}
                   download={viewingDoc.fileName}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="flex items-center justify-center"
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Baixar
+                  <Download className="h-4 w-4 mr-2 shrink-0" />
+                  <span className="truncate">Baixar</span>
                 </a>
               </Button>
             )}
             <Button
               variant="default"
               onClick={() => setViewingDoc(null)}
+              className="w-full sm:w-auto"
             >
               Fechar
             </Button>

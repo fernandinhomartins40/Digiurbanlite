@@ -153,8 +153,8 @@ export function ProtocolStageActions({
     <>
       <Card className="border-blue-200 bg-blue-50">
         <CardHeader>
-          <CardTitle className="text-lg">Ações da Etapa: {stageName}</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-base sm:text-lg break-words">Ações da Etapa: {stageName}</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Aprove, rejeite ou crie pendências para esta etapa do workflow
           </CardDescription>
         </CardHeader>
@@ -278,10 +278,10 @@ export function ProtocolStageActions({
           {/* Requisitos da etapa */}
           {metadata?.requiredDocumentTypes?.length > 0 && (
             <div className="pt-3 border-t">
-              <p className="text-sm font-medium mb-2">Documentos Exigidos:</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-xs sm:text-sm font-medium mb-2">Documentos Exigidos:</p>
+              <div className="flex flex-wrap gap-1 sm:gap-2">
                 {metadata.requiredDocumentTypes.map((doc: string, i: number) => (
-                  <Badge key={i} variant="outline" className="text-xs">
+                  <Badge key={i} variant="outline" className="text-xs break-words">
                     {doc}
                   </Badge>
                 ))}

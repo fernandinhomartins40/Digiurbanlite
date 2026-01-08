@@ -59,10 +59,10 @@ export function ProtocolSLAIndicator({
   return (
     <Card className={isCompleted ? 'border-green-200' : isNearDue ? 'border-yellow-200' : sla.isOverdue ? 'border-red-200' : ''}>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            Prazo de Atendimento (SLA)
+        <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <Clock className="h-4 w-4 shrink-0" />
+            <span className="truncate">Prazo de Atendimento (SLA)</span>
           </div>
           {isCompleted && (
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -112,20 +112,20 @@ export function ProtocolSLAIndicator({
         </div>
 
         {/* Informações de Prazo */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
           <div>
-            <p className="text-muted-foreground mb-1">Início</p>
-            <p className="font-medium">
+            <p className="text-muted-foreground mb-1 text-xs">Início</p>
+            <p className="font-medium text-sm break-words">
               {format(new Date(sla.startDate), "dd/MM/yyyy 'às' HH:mm", {
                 locale: ptBR,
               })}
             </p>
           </div>
           <div>
-            <p className="text-muted-foreground mb-1">
+            <p className="text-muted-foreground mb-1 text-xs">
               {isCompleted ? 'Concluído em' : 'Vencimento'}
             </p>
-            <p className={`font-medium ${sla.isOverdue && !isCompleted ? 'text-red-600' : ''}`}>
+            <p className={`font-medium text-sm break-words ${sla.isOverdue && !isCompleted ? 'text-red-600' : ''}`}>
               {isCompleted
                 ? format(new Date(sla.actualEndDate!), "dd/MM/yyyy 'às' HH:mm", {
                     locale: ptBR,
@@ -143,14 +143,14 @@ export function ProtocolSLAIndicator({
         </div>
 
         {/* Informações de Dias Úteis */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 text-sm">
           <div>
-            <p className="text-muted-foreground mb-1">Dias Úteis</p>
-            <p className="font-medium">{sla.workingDays} dias</p>
+            <p className="text-muted-foreground mb-1 text-xs">Dias Úteis</p>
+            <p className="font-medium text-sm">{sla.workingDays} dias</p>
           </div>
           <div>
-            <p className="text-muted-foreground mb-1">Dias Corridos</p>
-            <p className="font-medium">{sla.calendarDays} dias</p>
+            <p className="text-muted-foreground mb-1 text-xs">Dias Corridos</p>
+            <p className="font-medium text-sm">{sla.calendarDays} dias</p>
           </div>
         </div>
 
@@ -168,7 +168,7 @@ export function ProtocolSLAIndicator({
 
         {/* Ações */}
         {!isCompleted && (
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col sm:flex-row gap-2 pt-2">
             {!sla.isPaused ? (
               <Button
                 size="sm"
@@ -177,8 +177,8 @@ export function ProtocolSLAIndicator({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Pause className="h-4 w-4 mr-2" />
-                Pausar
+                <Pause className="h-3 w-3 sm:h-4 sm:w-4 mr-2 shrink-0" />
+                <span className="truncate">Pausar</span>
               </Button>
             ) : (
               <Button
@@ -188,8 +188,8 @@ export function ProtocolSLAIndicator({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <Play className="h-4 w-4 mr-2" />
-                Retomar
+                <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-2 shrink-0" />
+                <span className="truncate">Retomar</span>
               </Button>
             )}
             <Button
@@ -199,8 +199,8 @@ export function ProtocolSLAIndicator({
               disabled={isLoading}
               className="flex-1"
             >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Concluir
+              <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2 shrink-0" />
+              <span className="truncate">Concluir</span>
             </Button>
           </div>
         )}

@@ -170,21 +170,21 @@ export default function ProtocolDetailPage() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <CardTitle className="text-2xl">{protocol.number}</CardTitle>
-                  <Badge variant="outline">{protocol.status}</Badge>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                  <CardTitle className="text-xl sm:text-2xl break-words">{protocol.number}</CardTitle>
+                  <Badge variant="outline" className="shrink-0">{protocol.status}</Badge>
                 </div>
-                <p className="text-lg text-muted-foreground mb-2">{protocol.title}</p>
+                <p className="text-base sm:text-lg text-muted-foreground mb-2 break-words">{protocol.title}</p>
                 {protocol.description && (
-                  <p className="text-sm text-muted-foreground">{protocol.description}</p>
+                  <p className="text-sm text-muted-foreground break-words">{protocol.description}</p>
                 )}
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               {protocol.citizen && (
                 <div>
                   <p className="text-muted-foreground mb-1">Cidadão</p>
@@ -232,22 +232,22 @@ export default function ProtocolDetailPage() {
         {/* Conteúdo Principal (2/3) */}
         <div className="lg:col-span-2 space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="checklist" className="flex items-center gap-2">
-                <CheckSquare className="h-4 w-4" />
-                Checklist
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
+              <TabsTrigger value="checklist" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate">Checklist</span>
               </TabsTrigger>
-              <TabsTrigger value="documents" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Documentos
+              <TabsTrigger value="documents" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate">Docs</span>
               </TabsTrigger>
-              <TabsTrigger value="timeline" className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Timeline
+              <TabsTrigger value="timeline" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate">Timeline</span>
               </TabsTrigger>
-              <TabsTrigger value="interactions" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Histórico
+              <TabsTrigger value="interactions" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                <span className="truncate">Histórico</span>
               </TabsTrigger>
             </TabsList>
 
@@ -316,22 +316,22 @@ export default function ProtocolDetailPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div>
-                <p className="text-muted-foreground mb-1">Última Atualização</p>
-                <p className="font-medium">
+                <p className="text-muted-foreground mb-1 text-xs">Última Atualização</p>
+                <p className="font-medium text-sm break-words">
                   {formatDate(protocol.updatedAt)}
                 </p>
               </div>
               {protocol.dueDate && (
                 <div>
-                  <p className="text-muted-foreground mb-1">Data de Vencimento</p>
-                  <p className="font-medium">
+                  <p className="text-muted-foreground mb-1 text-xs">Data de Vencimento</p>
+                  <p className="font-medium text-sm break-words">
                     {formatDateOnly(protocol.dueDate)}
                   </p>
                 </div>
               )}
               <div>
-                <p className="text-muted-foreground mb-1">Prioridade</p>
-                <p className="font-medium">Nível {protocol.priority}</p>
+                <p className="text-muted-foreground mb-1 text-xs">Prioridade</p>
+                <p className="font-medium text-sm">Nível {protocol.priority}</p>
               </div>
             </CardContent>
           </Card>

@@ -130,15 +130,15 @@ export function CurrentStageHighlight({
   return (
     <Card className="border-2 border-blue-500 bg-gradient-to-r from-blue-50 to-white">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <CardTitle className="text-xl">🎯 Etapa Atual</CardTitle>
-              <Badge variant="default" className="bg-blue-600">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <CardTitle className="text-lg sm:text-xl">🎯 Etapa Atual</CardTitle>
+              <Badge variant="default" className="bg-blue-600 shrink-0">
                 {currentStage.stageOrder} de {totalStages}
               </Badge>
             </div>
-            <h3 className="text-2xl font-bold text-blue-900">{currentStage.stageName}</h3>
+            <h3 className="text-xl sm:text-2xl font-bold text-blue-900 break-words">{currentStage.stageName}</h3>
           </div>
         </div>
 
@@ -303,7 +303,7 @@ export function CurrentStageHighlight({
 
             {/* Ações Rápidas */}
             {validation.canProgress && currentStage.status === StageStatus.IN_PROGRESS && (
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   className="flex-1 bg-green-600 hover:bg-green-700"
                   size="lg"
@@ -313,12 +313,12 @@ export function CurrentStageHighlight({
                   {isCompleting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Aprovando...
+                      <span className="truncate">Aprovando...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Aprovar e Avançar
+                      <CheckCircle2 className="h-4 w-4 mr-2 shrink-0" />
+                      <span className="truncate">Aprovar e Avançar</span>
                     </>
                   )}
                 </Button>
