@@ -39,10 +39,10 @@ COPY package*.json ./
 # Instalar APENAS dependências de produção
 RUN npm install --omit=dev --legacy-peer-deps
 
-# Copiar Prisma schema e gerar client de produção
+# Copiar Prisma Client gerado no builder (evita conflito de versões)
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY prisma ./prisma
-ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate
 
 # Copiar código compilado do builder (se houver dist)
 COPY --from=builder /app/dist ./dist
