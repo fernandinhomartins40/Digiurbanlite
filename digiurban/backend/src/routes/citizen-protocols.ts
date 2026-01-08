@@ -333,6 +333,16 @@ router.post('/', upload.any(), async (req, res) => {
       // Não falhar a criação do protocolo se workflow falhar
     }
 
+    // ✅ CRIAR SLA AUTOMATICAMENTE
+    try {
+      console.log('⏱️  Criando SLA do protocolo');
+      await createProtocolSLA(protocol.id);
+      console.log('   ✓ SLA criado com sucesso');
+    } catch (slaError) {
+      console.warn('⚠️  Erro ao criar SLA:', slaError);
+      // Não falhar a criação do protocolo se SLA falhar
+    }
+
     console.log('✅ Protocolo criado:', protocol.number);
     console.log('========== FIM POST /protocols ==========\n');
 
