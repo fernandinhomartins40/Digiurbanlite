@@ -125,10 +125,28 @@ jobs:
             find . -name "*.db-*" -type f ! -path "*/node_modules/*" -delete || true
             echo "✅ Arquivos .db removidos"
 
-            # Limpar containers e imagens antigas (PRESERVAR volumes do PostgreSQL)
-            echo "Limpando recursos antigos..."
+            # ===== LIMPEZA SEGURA: Remover APENAS imagens antigas (PRESERVAR volumes!) =====
+            echo "=== Limpando recursos antigos de forma segura ==="
+
+            # Listar volumes ANTES da limpeza (para garantir que não serão tocados)
+            echo "📦 Volumes existentes (serão preservados):"
+            docker volume ls | grep -E "postgres_data|digiurban_uploads|messages_uploads|smtp_data|digiurban_backups" || echo "Nenhum volume encontrado ainda"
+
+            # Limpar containers parados (seguro - não afeta volumes)
+            echo "🧹 Removendo containers parados..."
             docker container prune -f || true
+
+            # Remover imagens antigas do DigiUrban (força rebuild completo)
+            echo "🗑️ Removendo imagens antigas do DigiUrban..."
+            docker images | grep -E "digiurban|backend-builder|frontend-builder" | awk '{print $3}' | tail -n +2 | xargs -r docker rmi -f 2>/dev/null || echo "Nenhuma imagem antiga encontrada"
+
+            # Remover imagens não utilizadas (NÃO remove volumes)
+            echo "🗑️ Removendo imagens órfãs..."
             docker image prune -af || true
+
+            # Verificar que volumes AINDA existem após limpeza
+            echo "✅ Verificando integridade dos volumes após limpeza:"
+            docker volume ls | grep -E "postgres_data|digiurban_uploads|messages_uploads|smtp_data|digiurban_backups" || echo "⚠️ AVISO: Alguns volumes não foram encontrados!"
 
             # Garantir BUILD_TIMESTAMP como variável de ambiente ANTES do build
             export BUILD_TIMESTAMP=$(date +%s)

@@ -12,6 +12,9 @@ RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
 # Instalar dependências do sistema (incluindo openssl para Prisma)
 RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev openssl
 
+# ⚡ CACHE BUSTER: Força invalidação de cache antes de copiar código
+RUN echo "Backend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
+
 # Copiar package files do backend
 COPY digiurban/backend/package.json digiurban/backend/package-lock.json ./
 RUN npm install --legacy-peer-deps
@@ -54,6 +57,9 @@ RUN apk add --no-cache \
     pangomm-dev \
     libjpeg-turbo-dev \
     freetype-dev
+
+# ⚡ CACHE BUSTER: Força invalidação de cache antes de copiar código
+RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
 
 # ✅ CRÍTICO: API URL para produção (caminho relativo /api será roteado pelo Nginx)
 # Next.js compila isso no código durante o build
