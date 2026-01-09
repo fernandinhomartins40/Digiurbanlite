@@ -110,8 +110,28 @@ export function ChecklistTab({
     try {
       setIsLoading(true)
 
-      // Se não tem stage ativa, não precisa carregar validação/docs
-      if (!currentStage) return
+      // ✅ NOVO: Se não tem currentStage, verificar se serviço tem workflow
+      if (!currentStage) {
+        // Buscar protocolo para pegar serviceId
+        const protocolResponse = await apiRequest(`/protocols/${protocolId}`)
+        if (protocolResponse.success && protocolResponse.data) {
+          const protocol = protocolResponse.data
+
+          // Verificar se serviço tem workflow configurado
+          const workflowResponse = await apiRequest(`/service-workflows/service/${protocol.serviceId}`)
+
+          if (workflowResponse.success && workflowResponse.data) {
+            // Serviço TEM workflow, mas protocolo não tem stages
+            // Inicializar workflow automaticamente
+            console.log('🔄 Serviço tem workflow, mas protocolo não tem stages. Inicializando automaticamente...')
+            await handleStartService()
+            return // handleStartService já recarrega a página
+          }
+        }
+
+        // Se chegou aqui, serviço realmente não tem workflow
+        return
+      }
 
       // Carregar validação apenas se stage está IN_PROGRESS
       // Stages concluídas não precisam de validação
