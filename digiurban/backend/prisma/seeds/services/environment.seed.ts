@@ -298,12 +298,12 @@ export const environmentServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão Ambiental',
-    description: 'Emissão de certidão de regularidade ambiental',
+    description: 'Emissão de certidão de regularidade ambiental (usa dados do perfil do cidadão)',
     departmentCode: 'MEIO_AMBIENTE',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Propriedade'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 15,
     priority: 3,
     category: 'Certidões',
@@ -313,12 +313,12 @@ export const environmentServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Conformidade Ambiental',
-    description: 'Emissão de declaração de conformidade com normas ambientais',
+    description: 'Emissão de declaração de conformidade com normas ambientais (usa dados do perfil do cidadão)',
     departmentCode: 'MEIO_AMBIENTE',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Licença Ambiental (se possuir)'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 10,
     priority: 3,
     category: 'Declarações',
@@ -328,12 +328,12 @@ export const environmentServices: ServiceDefinition[] = [
 
   {
     name: 'Laudo Técnico Ambiental',
-    description: 'Emissão de laudo técnico ambiental',
+    description: 'Emissão de laudo técnico ambiental (usa dados do perfil do cidadão)',
     departmentCode: 'MEIO_AMBIENTE',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Documentação da Propriedade', 'ART'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 30,
     priority: 4,
     category: 'Laudos',

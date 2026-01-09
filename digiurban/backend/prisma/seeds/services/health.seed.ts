@@ -197,12 +197,12 @@ export const healthServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Atendimento',
-    description: 'Certidão de atendimento em unidade de saúde',
+    description: 'Certidão de atendimento em unidade de saúde (usa dados do perfil do cidadão)',
     departmentCode: 'SAUDE',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['RG ou CPF', 'Cartão SUS'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 2,
     category: 'Certidões',
@@ -212,12 +212,12 @@ export const healthServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Vacinação',
-    description: 'Declaração comprovando vacinação realizada',
+    description: 'Declaração comprovando vacinação realizada (usa dados do perfil do cidadão)',
     departmentCode: 'SAUDE',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['Cartão de Vacina', 'RG ou CPF'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 3,
     priority: 2,
     category: 'Declarações',
@@ -227,12 +227,12 @@ export const healthServices: ServiceDefinition[] = [
 
   {
     name: 'Histórico de Atendimentos',
-    description: 'Consulta ao histórico de atendimentos do cidadão',
+    description: 'Consulta ao histórico de atendimentos do cidadão (usa dados do perfil do cidadão)',
     departmentCode: 'SAUDE',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['RG ou CPF', 'Cartão SUS'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 2,
     category: 'Consultas',

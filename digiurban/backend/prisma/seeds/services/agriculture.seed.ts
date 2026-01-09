@@ -445,12 +445,12 @@ export const agricultureServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Produtor Rural',
-    description: 'Emissão de certidão comprovando cadastro como produtor rural',
+    description: 'Emissão de certidão comprovando cadastro como produtor rural (usa dados do perfil do cidadão)',
     departmentCode: 'AGRICULTURA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 7,
     priority: 3,
     category: 'Certidões',
@@ -460,12 +460,12 @@ export const agricultureServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Atividade Rural',
-    description: 'Emissão de declaração comprovando exercício de atividade rural',
+    description: 'Emissão de declaração comprovando exercício de atividade rural (usa dados do perfil do cidadão)',
     departmentCode: 'AGRICULTURA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'DAP - Declaração de Aptidão ao Pronaf'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 7,
     priority: 3,
     category: 'Declarações',
@@ -475,12 +475,12 @@ export const agricultureServices: ServiceDefinition[] = [
 
   {
     name: 'Segunda Via de Cadastro de Produtor',
-    description: 'Emissão de segunda via do cadastro de produtor rural',
+    description: 'Emissão de segunda via do cadastro de produtor rural (usa dados do perfil do cidadão)',
     departmentCode: 'AGRICULTURA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Protocolo Original (opcional)'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 3,
     priority: 2,
     category: 'Documentos',

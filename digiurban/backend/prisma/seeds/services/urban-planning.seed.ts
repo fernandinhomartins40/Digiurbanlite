@@ -500,12 +500,12 @@ export const urbanPlanningServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Zoneamento e Uso do Solo',
-    description: 'Emissão de certidão de zoneamento e uso do solo de imóvel',
+    description: 'Emissão de certidão de zoneamento e uso do solo de imóvel (usa dados do perfil do cidadão)',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Matrícula do Imóvel ou Endereço Completo'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 7,
     priority: 4,
     category: 'Certidões',
@@ -515,12 +515,12 @@ export const urbanPlanningServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Conformidade Urbanística',
-    description: 'Declaração de que o imóvel está em conformidade com as normas urbanísticas',
+    description: 'Declaração de que o imóvel está em conformidade com as normas urbanísticas (usa dados do perfil do cidadão)',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'CNPJ (se empresa)', 'Matrícula do Imóvel', 'Projeto Aprovado'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 10,
     priority: 4,
     category: 'Declarações',
@@ -530,12 +530,12 @@ export const urbanPlanningServices: ServiceDefinition[] = [
 
   {
     name: 'Laudo de Vistoria Urbanística',
-    description: 'Laudo técnico de vistoria urbanística de imóvel',
+    description: 'Laudo técnico de vistoria urbanística de imóvel (usa dados do perfil do cidadão)',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Matrícula do Imóvel', 'Comprovante de Propriedade'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 15,
     priority: 4,
     category: 'Laudos',
@@ -545,12 +545,12 @@ export const urbanPlanningServices: ServiceDefinition[] = [
 
   {
     name: 'Atestado de Regularidade de Obra',
-    description: 'Emissão de atestado confirmando regularidade da obra executada',
+    description: 'Emissão de atestado confirmando regularidade da obra executada (usa dados do perfil do cidadão)',
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Alvará de Construção', 'ART'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 15,
     priority: 3,
     category: 'Atestados',

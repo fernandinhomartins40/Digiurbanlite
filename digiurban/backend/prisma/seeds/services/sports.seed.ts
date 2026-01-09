@@ -116,12 +116,12 @@ export const sportsServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Atleta Municipal',
-    description: 'Emissão de certidão comprovando cadastro como atleta municipal',
+    description: 'Emissão de certidão comprovando cadastro como atleta municipal (usa dados do perfil do cidadão)',
     departmentCode: 'ESPORTES',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 3,
     category: 'Certidões',
@@ -131,12 +131,12 @@ export const sportsServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Participação em Competição',
-    description: 'Emissão de declaração de participação em evento esportivo',
+    description: 'Emissão de declaração de participação em evento esportivo (usa dados do perfil do cidadão)',
     departmentCode: 'ESPORTES',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Inscrição'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 3,
     priority: 2,
     category: 'Declarações',

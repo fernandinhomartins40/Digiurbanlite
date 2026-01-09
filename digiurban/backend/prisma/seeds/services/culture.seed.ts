@@ -469,12 +469,12 @@ export const cultureServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Artista Local',
-    description: 'Emissão de certidão comprovando registro como artista local',
+    description: 'Emissão de certidão comprovando registro como artista local (usa dados do perfil do cidadão)',
     departmentCode: 'CULTURA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Portfólio Artístico'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 3,
     category: 'Certidões',
@@ -484,12 +484,12 @@ export const cultureServices: ServiceDefinition[] = [
 
   {
     name: 'Atestado de Capacitação Cultural',
-    description: 'Emissão de atestado de conclusão de oficina cultural',
+    description: 'Emissão de atestado de conclusão de oficina cultural (usa dados do perfil do cidadão)',
     departmentCode: 'CULTURA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Inscrição'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 2,
     category: 'Atestados',
@@ -499,12 +499,12 @@ export const cultureServices: ServiceDefinition[] = [
 
   {
     name: 'Segunda Via de Cadastro Cultural',
-    description: 'Emissão de segunda via de cadastros culturais (artista, grupo, etc.)',
+    description: 'Emissão de segunda via de cadastros culturais (usa dados do perfil do cidadão)',
     departmentCode: 'CULTURA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Protocolo Original (opcional)'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 3,
     priority: 2,
     category: 'Documentos',

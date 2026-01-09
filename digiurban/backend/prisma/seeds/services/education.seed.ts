@@ -243,12 +243,12 @@ export const educationServices: ServiceDefinition[] = [
 
   {
     name: 'Histórico Escolar',
-    description: 'Emissão de histórico escolar completo',
+    description: 'Emissão de histórico escolar completo (usa dados do perfil do cidadão)',
     departmentCode: 'EDUCACAO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['RG do Responsável', 'RG do Aluno (se possuir)'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 7,
     priority: 4,
     category: 'Documentos',
@@ -258,12 +258,12 @@ export const educationServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Matrícula',
-    description: 'Emissão de declaração de matrícula',
+    description: 'Emissão de declaração de matrícula (usa dados do perfil do cidadão)',
     departmentCode: 'EDUCACAO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['RG ou CPF', 'Nome do Aluno'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 3,
     priority: 2,
     category: 'Declarações',
@@ -273,12 +273,12 @@ export const educationServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Conclusão',
-    description: 'Emissão de declaração de conclusão de série ou nível de ensino',
+    description: 'Emissão de declaração de conclusão de série ou nível de ensino (usa dados do perfil do cidadão)',
     departmentCode: 'EDUCACAO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['RG do Responsável', 'Comprovante de Conclusão'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 3,
     category: 'Declarações',
@@ -288,12 +288,12 @@ export const educationServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Escolaridade',
-    description: 'Emissão de certidão comprovando nível de escolaridade',
+    description: 'Emissão de certidão comprovando nível de escolaridade (usa dados do perfil do cidadão)',
     departmentCode: 'EDUCACAO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['RG do Responsável', 'RG do Aluno (se possuir)'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 2,
     category: 'Certidões',

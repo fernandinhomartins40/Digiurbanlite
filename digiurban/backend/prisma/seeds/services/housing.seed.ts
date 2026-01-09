@@ -159,12 +159,12 @@ export const housingServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Regularidade Fundiária',
-    description: 'Emissão de certidão de regularidade fundiária',
+    description: 'Emissão de certidão de regularidade fundiária (usa dados do perfil do cidadão)',
     departmentCode: 'HABITACAO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Matrícula do Imóvel'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 10,
     priority: 3,
     category: 'Certidões',
@@ -174,12 +174,12 @@ export const housingServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Residência',
-    description: 'Emissão de declaração de residência',
+    description: 'Emissão de declaração de residência (usa dados do perfil do cidadão)',
     departmentCode: 'HABITACAO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 2,
     category: 'Declarações',
@@ -189,12 +189,12 @@ export const housingServices: ServiceDefinition[] = [
 
   {
     name: 'Laudo de Vistoria Habitacional',
-    description: 'Emissão de laudo técnico de vistoria',
+    description: 'Emissão de laudo técnico de vistoria (usa dados do perfil do cidadão)',
     departmentCode: 'HABITACAO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Endereço do Imóvel'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 20,
     priority: 4,
     category: 'Laudos',

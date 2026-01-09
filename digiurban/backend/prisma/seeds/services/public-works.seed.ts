@@ -202,12 +202,12 @@ export const publicWorksServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Numeração Predial',
-    description: 'Emissão de certidão de numeração predial',
+    description: 'Emissão de certidão de numeração predial (usa dados do perfil do cidadão)',
     departmentCode: 'OBRAS_PUBLICAS',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Propriedade'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 10,
     priority: 3,
     category: 'Certidões',
@@ -217,12 +217,12 @@ export const publicWorksServices: ServiceDefinition[] = [
 
   {
     name: 'Habite-se',
-    description: 'Emissão de habite-se (certificado de conclusão de obra)',
+    description: 'Emissão de habite-se (certificado de conclusão de obra) (usa dados do perfil do cidadão)',
     departmentCode: 'OBRAS_PUBLICAS',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Alvará de Construção', 'ART', 'Fotos da Obra Concluída'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 20,
     priority: 4,
     category: 'Certificados',
@@ -232,12 +232,12 @@ export const publicWorksServices: ServiceDefinition[] = [
 
   {
     name: 'Laudo de Vistoria Técnica',
-    description: 'Emissão de laudo de vistoria técnica de edificação',
+    description: 'Emissão de laudo de vistoria técnica de edificação (usa dados do perfil do cidadão)',
     departmentCode: 'OBRAS_PUBLICAS',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Propriedade', 'Solicitação Formal'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 15,
     priority: 3,
     category: 'Laudos',

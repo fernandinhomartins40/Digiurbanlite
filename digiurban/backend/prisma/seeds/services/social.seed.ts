@@ -207,12 +207,12 @@ export const socialServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de CadÚnico',
-    description: 'Emissão de certidão de inscrição no Cadastro Único',
+    description: 'Emissão de certidão de inscrição no Cadastro Único (usa dados do perfil do cidadão)',
     departmentCode: 'ASSISTENCIA_SOCIAL',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 3,
     category: 'Certidões',
@@ -222,12 +222,12 @@ export const socialServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Benefício',
-    description: 'Emissão de declaração de recebimento de benefício social',
+    description: 'Emissão de declaração de recebimento de benefício social (usa dados do perfil do cidadão)',
     departmentCode: 'ASSISTENCIA_SOCIAL',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'NIS'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 3,
     category: 'Declarações',
@@ -237,12 +237,12 @@ export const socialServices: ServiceDefinition[] = [
 
   {
     name: 'Laudo Social',
-    description: 'Emissão de laudo técnico social',
+    description: 'Emissão de laudo técnico social (usa dados do perfil do cidadão)',
     departmentCode: 'ASSISTENCIA_SOCIAL',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 15,
     priority: 4,
     category: 'Laudos',

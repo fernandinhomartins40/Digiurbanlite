@@ -108,12 +108,12 @@ export const tourismServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Cadastro Turístico',
-    description: 'Emissão de certidão de cadastro turístico',
+    description: 'Emissão de certidão de cadastro turístico (usa dados do perfil do cidadão)',
     departmentCode: 'TURISMO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'CNPJ (se empresa)'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 7,
     priority: 3,
     category: 'Certidões',
@@ -123,12 +123,12 @@ export const tourismServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Apoio a Evento Turístico',
-    description: 'Emissão de declaração de apoio municipal a evento turístico',
+    description: 'Emissão de declaração de apoio municipal a evento turístico (usa dados do perfil do cidadão)',
     departmentCode: 'TURISMO',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Projeto do Evento'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 10,
     priority: 3,
     category: 'Declarações',

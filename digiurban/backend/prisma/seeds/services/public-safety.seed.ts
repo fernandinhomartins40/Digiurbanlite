@@ -572,12 +572,12 @@ export const publicSafetyServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Antecedentes',
-    description: 'Emissão de certidão de antecedentes da guarda municipal',
+    description: 'Emissão de certidão de antecedentes da guarda municipal (usa dados do perfil do cidadão)',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 5,
     priority: 3,
     category: 'Certidões',
@@ -587,12 +587,12 @@ export const publicSafetyServices: ServiceDefinition[] = [
 
   {
     name: 'Certidão de Ocorrência Policial',
-    description: 'Emissão de certidão de registro de ocorrência policial',
+    description: 'Emissão de certidão de registro de ocorrência policial (usa dados do perfil do cidadão)',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Número da Ocorrência'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 3,
     priority: 3,
     category: 'Certidões',
@@ -602,12 +602,12 @@ export const publicSafetyServices: ServiceDefinition[] = [
 
   {
     name: 'Declaração de Perda de Documentos',
-    description: 'Emissão de declaração de perda de documentos',
+    description: 'Emissão de declaração de perda de documentos (usa dados do perfil do cidadão)',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'BO (opcional)'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 1,
     priority: 2,
     category: 'Declarações',
@@ -617,12 +617,12 @@ export const publicSafetyServices: ServiceDefinition[] = [
 
   {
     name: 'Atestado de Bons Antecedentes',
-    description: 'Emissão de atestado de bons antecedentes municipais',
+    description: 'Emissão de atestado de bons antecedentes municipais (usa dados do perfil do cidadão)',
     departmentCode: 'SEGURANCA_PUBLICA',
     serviceType: 'SEM_DADOS',
     moduleType: null,
-    requiresDocuments: true,
-    requiredDocuments: ['CPF', 'RG', 'Comprovante de Residência'],
+    requiresDocuments: false,
+    requiredDocuments: [],
     estimatedDays: 7,
     priority: 3,
     category: 'Atestados',
