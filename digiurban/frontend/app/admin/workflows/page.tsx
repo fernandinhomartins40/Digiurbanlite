@@ -13,7 +13,8 @@ import {
   Trash2,
   Edit,
   Zap,
-  AlertCircle
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react'
 import { WorkflowFormModal } from '@/components/admin/workflows/WorkflowFormModal'
 import { useToast } from '@/hooks/use-toast'
@@ -21,37 +22,48 @@ import { HelpButton } from '@/components/common/HelpButton'
 import { HelpModal } from '@/components/common/HelpModal'
 import { workflowsHelpContent } from '@/src/content/help/workflows-help'
 
-interface ModuleWorkflow {
+// ✅ ATUALIZADO: ServiceWorkflow (novo modelo)
+interface ServiceWorkflow {
   id: string
-  moduleType: string
+  serviceId: string
   name: string
   description: string | null
   defaultSLA: number | null
   stages: any[]
+  isActive: boolean
   createdAt: string
   updatedAt: string
+  service: {
+    id: string
+    name: string
+    department: {
+      name: string
+    }
+  }
 }
 
 export default function WorkflowsPage() {
   const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
-  const [workflows, setWorkflows] = useState<ModuleWorkflow[]>([])
+  const [workflows, setWorkflows] = useState<ServiceWorkflow[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [editingWorkflow, setEditingWorkflow] = useState<ModuleWorkflow | null>(null)
+  const [editingWorkflow, setEditingWorkflow] = useState<ServiceWorkflow | null>(null)
   const [stats, setStats] = useState<any>(null)
   const [showHelp, setShowHelp] = useState(false)
+  const [creatingDefaults, setCreatingDefaults] = useState(false)
 
   useEffect(() => {
     loadWorkflows()
     loadStats()
   }, [])
 
+  // ✅ ATUALIZADO: Usa /service-workflows
   const loadWorkflows = async () => {
     try {
       setLoading(true)
-      const response = await apiRequest('/workflows')
+      const response = await apiRequest('/service-workflows')
       if (response.success) {
         setWorkflows(response.data || [])
       }
@@ -67,9 +79,10 @@ export default function WorkflowsPage() {
     }
   }
 
+  // ✅ ATUALIZADO: Usa /service-workflows/stats
   const loadStats = async () => {
     try {
-      const response = await apiRequest('/workflows/stats')
+      const response = await apiRequest('/service-workflows/stats')
       if (response.success) {
         setStats(response.data)
       }
@@ -78,17 +91,32 @@ export default function WorkflowsPage() {
     }
   }
 
+  // ✅ ATUALIZADO: Usa /service-workflows/seed-all
   const handleCreateDefaults = async () => {
+    if (!confirm('Isso criará workflows GENÉRICOS para todos os serviços sem workflow. Continuar?')) {
+      return
+    }
+
     try {
-      const response = await apiRequest('/workflows/seed-defaults', {
+      setCreatingDefaults(true)
+      const response = await apiRequest('/service-workflows/seed-all', {
         method: 'POST'
       })
 
       if (response.success) {
+        const { created, errors, total } = response.data || {}
+
         toast({
-          title: 'Workflows padrão criados',
-          description: response.message || 'Workflows criados com sucesso',
+          title: '✅ Workflows criados com sucesso',
+          description: `${total || 0} workflows genéricos criados. ${errors?.length > 0 ? `${errors.length} erros.` : ''}`,
+          duration: 5000
         })
+
+        // Mostrar detalhes se houver erros
+        if (errors && errors.length > 0) {
+          console.error('Erros ao criar workflows:', errors)
+        }
+
         loadWorkflows()
         loadStats()
       }
@@ -98,16 +126,19 @@ export default function WorkflowsPage() {
         description: error instanceof Error ? error.message : 'Erro desconhecido',
         variant: 'destructive'
       })
+    } finally {
+      setCreatingDefaults(false)
     }
   }
 
-  const handleDelete = async (moduleType: string) => {
-    if (!confirm(`Tem certeza que deseja deletar o workflow "${moduleType}"?`)) {
+  // ✅ ATUALIZADO: Usa /service-workflows/service/:serviceId
+  const handleDelete = async (serviceId: string, serviceName: string) => {
+    if (!confirm(`Tem certeza que deseja deletar o workflow de "${serviceName}"?`)) {
       return
     }
 
     try {
-      const response = await apiRequest(`/workflows/${moduleType}`, {
+      const response = await apiRequest(`/service-workflows/service/${serviceId}`, {
         method: 'DELETE'
       })
 
@@ -128,7 +159,7 @@ export default function WorkflowsPage() {
     }
   }
 
-  const handleEdit = (workflow: ModuleWorkflow) => {
+  const handleEdit = (workflow: ServiceWorkflow) => {
     setEditingWorkflow(workflow)
     setShowCreateModal(true)
   }
@@ -144,9 +175,11 @@ export default function WorkflowsPage() {
     loadStats()
   }
 
+  // ✅ ATUALIZADO: Busca por nome do serviço ao invés de moduleType
   const filteredWorkflows = workflows.filter(w =>
     w.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    w.moduleType.toLowerCase().includes(searchTerm.toLowerCase())
+    w.service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    w.service.department.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   return (
@@ -156,7 +189,7 @@ export default function WorkflowsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-3">
             <GitBranch className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
-            <h1 className="text-2xl sm:text-3xl font-bold">Workflows de Módulos</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Workflows de Serviços</h1>
           </div>
           <HelpButton
             onClick={() => setShowHelp(true)}
@@ -166,7 +199,7 @@ export default function WorkflowsPage() {
           />
         </div>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Gerencie os fluxos de trabalho com etapas, aprovações e SLAs
+          Gerencie os fluxos de trabalho com etapas, aprovações e SLAs para todos os serviços
         </p>
       </div>
 
@@ -181,6 +214,9 @@ export default function WorkflowsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalWorkflows || 0}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                de 125 serviços
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -203,14 +239,26 @@ export default function WorkflowsPage() {
               <div className="text-2xl font-bold">{stats.activeStages || 0}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className={stats.servicesWithoutWorkflow > 0 ? 'border-orange-500' : 'border-green-500'}>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                SLA Médio
+                Serviços Sem Workflow
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.averageSLA || 0} dias</div>
+              <div className="flex items-center gap-2">
+                <div className={`text-2xl font-bold ${stats.servicesWithoutWorkflow > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                  {stats.servicesWithoutWorkflow || 0}
+                </div>
+                {stats.servicesWithoutWorkflow === 0 && (
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                )}
+              </div>
+              {stats.servicesWithoutWorkflow > 0 && (
+                <p className="text-xs text-orange-600 mt-1">
+                  Clique em "Criar Workflows Padrão"
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -222,7 +270,7 @@ export default function WorkflowsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nome ou tipo..."
+              placeholder="Buscar por serviço, workflow ou departamento..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -233,12 +281,21 @@ export default function WorkflowsPage() {
           <Button
             variant="outline"
             onClick={handleCreateDefaults}
-            disabled={loading}
+            disabled={loading || creatingDefaults}
             className="w-full sm:w-auto"
           >
-            <Zap className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="hidden md:inline">Criar Workflows Padrão</span>
-            <span className="md:hidden">Workflows Padrão</span>
+            {creatingDefaults ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2" />
+                Criando...
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="hidden md:inline">Criar Workflows Padrão</span>
+                <span className="md:hidden">Workflows Padrão</span>
+              </>
+            )}
           </Button>
           <Button onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -264,12 +321,17 @@ export default function WorkflowsPage() {
               <p className="text-muted-foreground mb-4">
                 {searchTerm
                   ? 'Tente buscar por outro termo'
-                  : 'Comece criando workflows padrão ou crie um novo workflow personalizado'
+                  : 'Comece criando workflows padrão para todos os serviços ou crie um workflow personalizado'
                 }
               </p>
               {!searchTerm && (
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                  <Button variant="outline" onClick={handleCreateDefaults} className="w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    onClick={handleCreateDefaults}
+                    disabled={creatingDefaults}
+                    className="w-full sm:w-auto"
+                  >
                     <Zap className="h-4 w-4 mr-2 flex-shrink-0" />
                     <span className="hidden md:inline">Criar Workflows Padrão</span>
                     <span className="md:hidden">Workflows Padrão</span>
@@ -286,13 +348,19 @@ export default function WorkflowsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {filteredWorkflows.map((workflow) => (
-            <Card key={workflow.id} className="hover:shadow-md transition-shadow">
+            <Card key={workflow.id} className={`hover:shadow-md transition-shadow ${!workflow.isActive ? 'opacity-60' : ''}`}>
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                       <CardTitle className="text-lg sm:text-xl truncate">{workflow.name}</CardTitle>
-                      <Badge variant="secondary" className="w-fit">{workflow.moduleType}</Badge>
+                      <div className="flex gap-2 flex-wrap">
+                        <Badge variant="secondary" className="w-fit">{workflow.service.name}</Badge>
+                        <Badge variant="outline" className="w-fit">{workflow.service.department.name}</Badge>
+                        {!workflow.isActive && (
+                          <Badge variant="destructive" className="w-fit">Inativo</Badge>
+                        )}
+                      </div>
                     </div>
                     <CardDescription className="text-sm">
                       {workflow.description || 'Sem descrição'}
@@ -311,7 +379,7 @@ export default function WorkflowsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(workflow.moduleType)}
+                      onClick={() => handleDelete(workflow.serviceId, workflow.service.name)}
                       title="Deletar workflow"
                     >
                       <Trash2 className="h-4 w-4" />
