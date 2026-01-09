@@ -106,8 +106,10 @@ COPY --from=backend-builder /app/backend/node_modules/.prisma ./node_modules/.pr
 COPY digiurban/backend/scripts ./scripts
 
 # Criar diretórios de dados e uploads no local correto
-RUN mkdir -p /app/data /app/backend/uploads /app/logs && \
-    chown -R backend:nodejs /app/data /app/backend/uploads /app/logs
+# IMPORTANTE: /app/uploads é montado como volume no docker-compose
+RUN mkdir -p /app/data /app/uploads /app/logs && \
+    chown -R backend:nodejs /app/data /app/uploads /app/logs && \
+    ln -sf /app/uploads /app/backend/uploads
 
 # ===== Frontend =====
 WORKDIR /app/frontend
