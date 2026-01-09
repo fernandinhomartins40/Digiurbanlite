@@ -1,25 +1,65 @@
 /**
  * ============================================================================
- * MODULE WORKFLOW SERVICE - LEGADO (COMPATIBILIDADE)
+ * SERVICE WORKFLOW SERVICE - NOVO MODELO
  * ============================================================================
  *
- * ⚠️ DEPRECADO: Este serviço está sendo gradualmente substituído por service-workflow.service.ts
- * Mantido temporariamente para compatibilidade com código legado
- *
- * NOVO: Use service-workflow.service.ts para workflows por serviço
+ * Gerenciamento de Workflows por Serviço (não por ModuleType)
+ * Permite que TODOS os serviços tenham workflow customizado
  */
 
 import { prisma } from '../lib/prisma';
-import type { CreateWorkflowData, UpdateWorkflowData, WorkflowStage, StageValidationResult } from '../types/workflow.types';
+import type { WorkflowStage, StageValidationResult } from '../types/workflow.types';
 import { DocumentStatus } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { generateWorkflowFromService } from './workflow-template.service';
-import * as ServiceWorkflowService from './service-workflow.service';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface CreateServiceWorkflowData {
+  serviceId: string;
+  name: string;
+  description?: string;
+  stages: Omit<WorkflowStage, 'id'>[];
+  defaultSLA?: number;
+  rules?: any;
+}
+
+export interface UpdateServiceWorkflowData {
+  name?: string;
+  description?: string;
+  stages?: Omit<WorkflowStage, 'id'>[];
+  defaultSLA?: number;
+  rules?: any;
+  isActive?: boolean;
+}
+
+// ============================================================================
+// CRUD OPERATIONS
+// ============================================================================
 
 /**
- * Cria um novo workflow de módulo
+ * Cria um novo workflow de serviço
  */
-export async function createWorkflow(data: CreateWorkflowData) {
+export async function createServiceWorkflow(data: CreateServiceWorkflowData) {
+  // Validar que serviço existe
+  const service = await prisma.serviceSimplified.findUnique({
+    where: { id: data.serviceId }
+  });
+
+  if (!service) {
+    throw new Error(`Serviço não encontrado: ${data.serviceId}`);
+  }
+
+  // Verificar se já existe workflow para este serviço
+  const existing = await prisma.serviceWorkflow.findUnique({
+    where: { serviceId: data.serviceId }
+  });
+
+  if (existing) {
+    throw new Error(`Serviço já possui workflow: ${service.name}`);
+  }
+
   // Adicionar IDs únicos às stages
   const stagesWithIds: WorkflowStage[] = data.stages.map((stage, index) => ({
     ...stage,
@@ -30,32 +70,73 @@ export async function createWorkflow(data: CreateWorkflowData) {
   // Ordenar stages
   const sortedStages = [...stagesWithIds].sort((a, b) => a.order - b.order);
 
-  return await prisma.moduleWorkflow.create({
+  return await prisma.serviceWorkflow.create({
     data: {
-      moduleType: data.moduleType,
+      serviceId: data.serviceId,
       name: data.name,
       description: data.description,
       stages: sortedStages as any,
       defaultSLA: data.defaultSLA,
       rules: data.rules
+    },
+    include: {
+      service: true
     }
   });
 }
 
 /**
- * Obtém um workflow por tipo de módulo
+ * Obtém workflow por ID do serviço
  */
-export async function getWorkflowByModuleType(moduleType: string) {
-  return await prisma.moduleWorkflow.findUnique({
-    where: { moduleType }
+export async function getWorkflowByServiceId(serviceId: string) {
+  return await prisma.serviceWorkflow.findUnique({
+    where: { serviceId },
+    include: {
+      service: true
+    }
+  });
+}
+
+/**
+ * Obtém workflow por ID
+ */
+export async function getWorkflowById(id: string) {
+  return await prisma.serviceWorkflow.findUnique({
+    where: { id },
+    include: {
+      service: true
+    }
   });
 }
 
 /**
  * Lista todos os workflows
  */
-export async function getAllWorkflows() {
-  return await prisma.moduleWorkflow.findMany({
+export async function getAllServiceWorkflows(filters?: {
+  isActive?: boolean;
+  departmentId?: string;
+}) {
+  const where: any = {};
+
+  if (filters?.isActive !== undefined) {
+    where.isActive = filters.isActive;
+  }
+
+  if (filters?.departmentId) {
+    where.service = {
+      departmentId: filters.departmentId
+    };
+  }
+
+  return await prisma.serviceWorkflow.findMany({
+    where,
+    include: {
+      service: {
+        include: {
+          department: true
+        }
+      }
+    },
     orderBy: { name: 'asc' }
   });
 }
@@ -63,9 +144,9 @@ export async function getAllWorkflows() {
 /**
  * Atualiza um workflow
  */
-export async function updateWorkflow(
-  moduleType: string,
-  data: UpdateWorkflowData
+export async function updateServiceWorkflow(
+  serviceId: string,
+  data: UpdateServiceWorkflowData
 ) {
   const updateData: any = {};
 
@@ -73,6 +154,7 @@ export async function updateWorkflow(
   if (data.description !== undefined) updateData.description = data.description;
   if (data.defaultSLA !== undefined) updateData.defaultSLA = data.defaultSLA;
   if (data.rules !== undefined) updateData.rules = data.rules;
+  if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
   if (data.stages) {
     // Adicionar IDs se não existirem
@@ -86,83 +168,34 @@ export async function updateWorkflow(
     updateData.stages = sortedStages;
   }
 
-  return await prisma.moduleWorkflow.update({
-    where: { moduleType },
-    data: updateData
+  return await prisma.serviceWorkflow.update({
+    where: { serviceId },
+    data: updateData,
+    include: {
+      service: true
+    }
   });
 }
 
 /**
  * Deleta um workflow
  */
-export async function deleteWorkflow(moduleType: string) {
-  return await prisma.moduleWorkflow.delete({
-    where: { moduleType }
+export async function deleteServiceWorkflow(serviceId: string) {
+  return await prisma.serviceWorkflow.delete({
+    where: { serviceId }
   });
 }
 
+// ============================================================================
+// APLICAÇÃO DE WORKFLOW A PROTOCOLOS
+// ============================================================================
+
 /**
- * Aplica workflow a um protocolo (cria as etapas)
- *
- * ✅ ATUALIZADO: Tenta usar ServiceWorkflow primeiro, depois ModuleWorkflow (legado)
+ * Aplica workflow a um protocolo
+ * Busca workflow pelo serviceId do protocolo
  */
-export async function applyWorkflowToProtocol(
-  protocolId: string,
-  moduleType?: string
-) {
-  // ✅ NOVO: Tentar usar workflow por serviço PRIMEIRO
-  try {
-    console.log(`🔄 Tentando aplicar ServiceWorkflow ao protocolo...`);
-    const stages = await ServiceWorkflowService.applyWorkflowToProtocol(protocolId);
-
-    if (stages && stages.length > 0) {
-      console.log(`✅ ServiceWorkflow aplicado com sucesso (${stages.length} etapas)`);
-      return stages;
-    }
-  } catch (error) {
-    console.warn(`⚠️  ServiceWorkflow não disponível: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    console.log(`   → Tentando ModuleWorkflow (legado)...`);
-  }
-
-  // ⚠️ LEGADO: Fallback para ModuleWorkflow
-  if (!moduleType) {
-    console.warn(`⚠️  Nenhum moduleType fornecido e ServiceWorkflow não disponível`);
-    return [];
-  }
-
-  let workflow = await getWorkflowByModuleType(moduleType);
-
-  // Se não encontrar workflow específico, tentar criar genérico
-  if (!workflow) {
-    console.warn(`⚠️  Workflow não encontrado para módulo: ${moduleType}`);
-    console.log(`   → Tentando buscar workflow GENERICO`);
-    workflow = await getWorkflowByModuleType('GENERICO');
-  }
-
-  // Se ainda não encontrar, criar workflow padrão simples
-  if (!workflow) {
-    console.warn(`⚠️  Nenhum workflow encontrado! Criando workflow básico...`);
-    // Criar etapas básicas manualmente
-    await prisma.protocolStage.create({
-      data: {
-        protocolId,
-        stageName: 'Análise',
-        stageOrder: 1,
-        status: 'PENDING',
-        metadata: {
-          description: 'Análise do protocolo',
-          requiredDocumentTypes: [],
-          requiredFormFieldIds: [],
-          allowedActions: ['APPROVE', 'REJECT']
-        }
-      }
-    });
-    return [];
-  }
-
-  const stages = workflow.stages as any as WorkflowStage[];
-
-  // Buscar o serviço para validar referências
+export async function applyWorkflowToProtocol(protocolId: string) {
+  // Buscar protocolo com serviço
   const protocol = await prisma.protocolSimplified.findUnique({
     where: { id: protocolId },
     include: { service: true }
@@ -170,6 +203,32 @@ export async function applyWorkflowToProtocol(
 
   if (!protocol) {
     throw new Error('Protocolo não encontrado');
+  }
+
+  // Buscar workflow do serviço
+  const workflow = await getWorkflowByServiceId(protocol.serviceId);
+
+  if (!workflow) {
+    console.warn(`⚠️  Serviço "${protocol.service.name}" não possui workflow configurado`);
+    console.log(`   → Protocolo ${protocol.number} criado SEM workflow`);
+    return [];
+  }
+
+  if (!workflow.isActive) {
+    console.warn(`⚠️  Workflow do serviço "${protocol.service.name}" está INATIVO`);
+    return [];
+  }
+
+  const stages = workflow.stages as any as WorkflowStage[];
+
+  // Verificar se já existem stages para este protocolo
+  const existingStages = await prisma.protocolStage.findMany({
+    where: { protocolId }
+  });
+
+  if (existingStages.length > 0) {
+    console.warn(`⚠️  Protocolo ${protocol.number} já possui ${existingStages.length} stage(s)`);
+    return existingStages;
   }
 
   // Criar todas as etapas do workflow
@@ -205,12 +264,14 @@ export async function applyWorkflowToProtocol(
     })
   );
 
+  console.log(`✅ Workflow "${workflow.name}" aplicado ao protocolo ${protocol.number}`);
+  console.log(`   → ${createdStages.length} etapa(s) criada(s)`);
+
   return createdStages;
 }
 
 /**
  * Valida se todas as condições de uma etapa foram atendidas
- * ✅ ALINHADO COM SERVIÇOS
  */
 export async function validateStageConditions(
   protocolId: string,
@@ -261,7 +322,6 @@ export async function validateStageConditions(
     const approvedDocs = documents.filter(d => d.status === DocumentStatus.APPROVED);
     const approvedDocTypes = approvedDocs.map(d => d.documentType);
 
-    // Documentos faltantes ou não aprovados
     const missingDocs = requiredDocTypes.filter(
       (docType: string) => !approvedDocTypes.includes(docType)
     );
@@ -278,14 +338,12 @@ export async function validateStageConditions(
   if (requiredFieldIds.length > 0 && stage.protocol.customData) {
     const customData = stage.protocol.customData as any;
 
-    // Verificar quais campos obrigatórios não foram preenchidos
     const missingFields = requiredFieldIds.filter((fieldId: string) => {
       const value = customData[fieldId];
       return value === null || value === undefined || value === '';
     });
 
     if (missingFields.length > 0) {
-      // Buscar labels dos campos no formSchema do serviço
       let formSchemaRaw = service?.formSchema as any;
       if (typeof formSchemaRaw === 'string') {
         try {
@@ -327,11 +385,15 @@ export async function validateStageConditions(
   };
 }
 
+// ============================================================================
+// ESTATÍSTICAS E RELATÓRIOS
+// ============================================================================
+
 /**
  * Obtém estatísticas de workflows
  */
 export async function getWorkflowStats() {
-  const workflows = await getAllWorkflows();
+  const workflows = await getAllServiceWorkflows({ isActive: true });
 
   // Contar protocolos com workflow aplicado
   const protocolsWithWorkflow = await prisma.protocolSimplified.count({
@@ -349,25 +411,39 @@ export async function getWorkflowStats() {
     }
   });
 
+  // Serviços sem workflow
+  const servicesWithoutWorkflow = await prisma.serviceSimplified.count({
+    where: {
+      isActive: true,
+      workflow: null
+    }
+  });
+
   return {
     totalWorkflows: workflows.length,
     protocolsWithWorkflow,
     activeStages,
+    servicesWithoutWorkflow,
     workflows: workflows.map((w) => ({
-      moduleType: w.moduleType,
-      name: w.name,
+      serviceId: w.serviceId,
+      serviceName: w.service.name,
+      workflowName: w.name,
       stagesCount: Array.isArray(w.stages) ? w.stages.length : 0,
-      defaultSLA: w.defaultSLA
+      defaultSLA: w.defaultSLA,
+      isActive: w.isActive
     }))
   };
 }
 
 /**
- * Busca serviço para criar workflow
+ * Obtém informações do serviço para criar workflow
  */
-export async function getServiceForWorkflow(moduleType: string) {
+export async function getServiceForWorkflow(serviceId: string) {
   const service = await prisma.serviceSimplified.findUnique({
-    where: { moduleType }
+    where: { id: serviceId },
+    include: {
+      department: true
+    }
   });
 
   if (!service) {
@@ -396,70 +472,14 @@ export async function getServiceForWorkflow(moduleType: string) {
 
   return {
     id: service.id,
-    moduleType: service.moduleType!,
     name: service.name,
     description: service.description,
+    departmentId: service.departmentId,
+    departmentName: service.department.name,
+    serviceType: service.serviceType,
+    moduleType: service.moduleType,
     estimatedDays: service.estimatedDays,
     requiredDocuments,
     formFields
   };
-}
-
-/**
- * ✅ NOVA: Cria workflows padrão ALINHADOS com os serviços existentes
- */
-export async function createDefaultWorkflows() {
-  console.log('🔄 Criando workflows padrão alinhados com serviços...');
-
-  const services = await prisma.serviceSimplified.findMany({
-    where: {
-      isActive: true,
-      moduleType: { not: null }
-    }
-  });
-
-  const created: any[] = [];
-  const skipped: string[] = [];
-  const errors: string[] = [];
-
-  for (const service of services) {
-    try {
-      if (!service.moduleType) {
-        skipped.push(`${service.name} (sem moduleType)`);
-        continue;
-      }
-
-      // Verificar se já existe workflow
-      const existing = await getWorkflowByModuleType(service.moduleType);
-      if (existing) {
-        skipped.push(`${service.name} (já existe)`);
-        continue;
-      }
-
-      // Gerar workflow ALINHADO com o serviço
-      const workflowData = generateWorkflowFromService(service);
-
-      // Criar workflow
-      const workflow = await createWorkflow(workflowData);
-
-      created.push({
-        moduleType: workflow.moduleType,
-        name: workflow.name,
-        stagesCount: (workflow.stages as any[]).length
-      });
-
-      console.log(`✅ ${workflow.name} - ${(workflow.stages as any[]).length} etapas`);
-    } catch (error) {
-      const errorMsg = `${service.name}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
-      errors.push(errorMsg);
-      console.error(`❌ ${errorMsg}`);
-    }
-  }
-
-  console.log(`\n📊 Resultado:`);
-  console.log(`   ✅ Criados: ${created.length}`);
-  console.log(`   ⏭️ Ignorados: ${skipped.length}`);
-  console.log(`   ❌ Erros: ${errors.length}`);
-
-  return created;
 }

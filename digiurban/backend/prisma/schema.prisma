@@ -369,6 +369,9 @@ model ServiceSimplified {
   protocols  ProtocolSimplified[]
   tickets    AdminTicket[]
 
+  // ✅ NOVO: Workflow próprio do serviço
+  workflow   ServiceWorkflow?
+
   @@map("services_simplified")
 }
 
@@ -685,6 +688,42 @@ enum PendingStatus {
 // ========================================
 // WORKFLOW ESPECÍFICO POR MÓDULO
 // ========================================
+
+// ============================================================================
+// WORKFLOWS - NOVO MODELO POR SERVIÇO
+// ============================================================================
+
+model ServiceWorkflow {
+  id          String  @id @default(cuid())
+  serviceId   String  @unique
+  name        String
+  description String?
+
+  // Etapas estruturadas
+  stages Json // Array de etapas do workflow
+
+  // SLA padrão
+  defaultSLA Int? // Dias úteis
+
+  // Regras de transição
+  rules Json? // Regras de validação e transição
+
+  // Controle
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamento
+  service ServiceSimplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([isActive])
+  @@map("service_workflows")
+}
+
+// ============================================================================
+// WORKFLOWS LEGADO - MANTIDO PARA COMPATIBILIDADE TEMPORÁRIA
+// ============================================================================
 
 model ModuleWorkflow {
   id          String  @id @default(cuid())
