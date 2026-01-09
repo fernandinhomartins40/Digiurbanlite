@@ -228,125 +228,36 @@ router.delete('/service/:serviceId', adminAuthMiddleware, requireMinRole(UserRol
 
 /**
  * POST /api/service-workflows/seed-all
- * Criar workflows GENÉRICOS para todos os serviços sem workflow
+ * Criar workflows para todos os serviços sem workflow
+ * - Serviços COM_DADOS (com moduleType): workflows ESPECÍFICOS
+ * - Serviços SEM_DADOS (sem moduleType): workflows GENÉRICOS
  */
 router.post('/seed-all', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
-    const { prisma } = await import('../lib/prisma');
+    console.log('🌱 Criando workflows para serviços sem workflow...');
 
-    console.log('🌱 Criando workflows GENÉRICOS para serviços sem workflow...');
+    // Importar o seed de workflows usando require (funciona com rootDir)
+    const seedModule = require('../../prisma/seeds/service-workflows.seed');
+    const { seedServiceWorkflows } = seedModule;
 
-    // Buscar serviços sem workflow
-    const servicesWithoutWorkflow = await prisma.serviceSimplified.findMany({
-      where: {
-        isActive: true,
-        workflow: null
-      },
-      include: {
-        department: true
-      }
-    });
-
-    console.log(`   → Encontrados ${servicesWithoutWorkflow.length} serviços sem workflow`);
-
-    const created: any[] = [];
-    const errors: string[] = [];
-
-    for (const service of servicesWithoutWorkflow) {
-      try {
-        const workflow = await serviceWorkflowService.createServiceWorkflow({
-          serviceId: service.id,
-          name: `Workflow - ${service.name}`,
-          description: `Workflow genérico para ${service.name}`,
-          stages: [
-            {
-              name: 'Solicitação Recebida',
-              order: 1,
-              description: 'Protocolo recebido e aguardando análise inicial',
-              slaDays: 2,
-              requiredDocumentTypes: [],
-              requiredFormFieldIds: [],
-              allowedActions: ['APPROVE'],
-              canSkip: false
-            },
-            {
-              name: 'Análise de Documentos',
-              order: 2,
-              description: 'Verificação e validação dos documentos apresentados',
-              slaDays: 3,
-              requiredDocumentTypes: service.requiredDocuments ?
-                (Array.isArray(service.requiredDocuments) ?
-                  (service.requiredDocuments as any[]).map(doc =>
-                    typeof doc === 'string' ? doc : doc.type
-                  ) : []) : [],
-              requiredFormFieldIds: [],
-              allowedActions: ['APPROVE', 'REQUEST_INFO'],
-              canSkip: false
-            },
-            {
-              name: 'Processamento',
-              order: 3,
-              description: `Processamento da solicitação pelo ${service.department.name}`,
-              slaDays: 5,
-              requiredDocumentTypes: [],
-              requiredFormFieldIds: [],
-              allowedActions: ['APPROVE', 'REQUEST_INFO'],
-              canSkip: false
-            },
-            {
-              name: 'Aprovação Final',
-              order: 4,
-              description: 'Aprovação final da solicitação',
-              slaDays: 2,
-              requiredDocumentTypes: [],
-              requiredFormFieldIds: [],
-              allowedActions: ['APPROVE', 'REJECT'],
-              canSkip: false
-            },
-            {
-              name: 'Emissão/Conclusão',
-              order: 5,
-              description: 'Emissão do documento ou conclusão do atendimento',
-              slaDays: 1,
-              requiredDocumentTypes: [],
-              requiredFormFieldIds: [],
-              allowedActions: ['APPROVE'],
-              canSkip: false
-            }
-          ],
-          defaultSLA: service.estimatedDays || 13
-        });
-
-        created.push({
-          serviceId: service.id,
-          serviceName: service.name,
-          workflowId: workflow.id,
-          stagesCount: 5
-        });
-
-        console.log(`   ✅ ${service.name} - 5 etapas`);
-      } catch (error) {
-        const errorMsg = `${service.name}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`;
-        errors.push(errorMsg);
-        console.error(`   ❌ ${errorMsg}`);
-      }
-    }
+    // Executar o seed
+    const result = await seedServiceWorkflows();
 
     console.log(`\n📊 Resultado:`);
-    console.log(`   ✅ Criados: ${created.length}`);
-    console.log(`   ❌ Erros: ${errors.length}`);
+    console.log(`   ✅ Criados: ${result.created}`);
+    console.log(`   ⏭️  Já existiam: ${result.skipped}`);
 
     return res.json({
       success: true,
       data: {
-        created,
-        errors,
-        total: created.length
+        created: result.created,
+        skipped: result.skipped,
+        total: result.created
       },
-      message: `${created.length} workflows criados com sucesso`
+      message: `${result.created} workflows criados com sucesso`
     });
   } catch (error) {
-    console.error('Erro ao criar workflows genéricos:', error);
+    console.error('Erro ao criar workflows:', error);
     return res.status(500).json({
       success: false,
       error: 'Erro ao criar workflows',
