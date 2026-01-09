@@ -290,8 +290,9 @@ try { console.log('   → municipality...'); app.use('/api/municipality', requir
 // DIA 3: DISABLED - arquivo não existe
 // try { console.log('   → admin-agriculture...'); app.use('/api/admin/agriculture', require('./routes/admin-agriculture').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-agriculture:', e); }
 
-// Workflows
-try { console.log('   → workflows...'); app.use('/api/workflows', require('./routes/module-workflows').default); console.log('   ✓'); } catch (e) { console.error('❌ workflows:', e); }
+// Workflows (Legado + Novo)
+try { console.log('   → workflows (legado)...'); app.use('/api/workflows', require('./routes/module-workflows').default); console.log('   ✓'); } catch (e) { console.error('❌ workflows:', e); }
+try { console.log('   → service-workflows (novo)...'); app.use('/api/service-workflows', require('./routes/service-workflows.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ service-workflows:', e); }
 
 console.log('✅ Todas as rotas carregadas com sucesso!');
 
