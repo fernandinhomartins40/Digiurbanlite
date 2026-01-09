@@ -234,14 +234,11 @@ router.delete('/service/:serviceId', adminAuthMiddleware, requireMinRole(UserRol
  */
 router.post('/seed-all', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
-    console.log('🌱 Criando workflows para serviços sem workflow...');
-
-    // Importar o seed de workflows usando require (funciona com rootDir)
-    const seedModule = require('../../prisma/seeds/service-workflows.seed');
-    const { seedServiceWorkflows } = seedModule;
+    // Importar serviço de seed (dentro de src, funciona no build)
+    const { seedAllServiceWorkflows } = await import('../services/service-workflow-seed.service');
 
     // Executar o seed
-    const result = await seedServiceWorkflows();
+    const result = await seedAllServiceWorkflows();
 
     console.log(`\n📊 Resultado:`);
     console.log(`   ✅ Criados: ${result.created}`);
