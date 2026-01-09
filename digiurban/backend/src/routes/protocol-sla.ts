@@ -352,10 +352,20 @@ router.post(
       const hasSLA = !!protocol.sla;
 
       // 3. Criar workflow se não existir
-      if (!hasWorkflow && protocol.moduleType) {
+      if (!hasWorkflow) {
         try {
-          console.log(`📋 Criando workflow para módulo: ${protocol.moduleType}`);
-          await workflowService.applyWorkflowToProtocol(protocolId, protocol.moduleType);
+          console.log(`📋 Criando workflow para protocolo ${protocolId}`);
+
+          if (protocol.moduleType) {
+            // COM_DADOS: usar workflow do módulo
+            console.log(`   → Módulo: ${protocol.moduleType}`);
+            await workflowService.applyWorkflowToProtocol(protocolId, protocol.moduleType);
+          } else {
+            // SEM_DADOS: usar workflow genérico do serviço
+            console.log(`   → Serviço SEM_DADOS, usando ServiceWorkflow`);
+            await workflowService.applyWorkflowToProtocol(protocolId);
+          }
+
           console.log('   ✓ Workflow criado com primeira etapa IN_PROGRESS');
         } catch (error) {
           console.error('❌ Erro ao criar workflow:', error);
