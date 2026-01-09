@@ -322,28 +322,25 @@ router.post('/', upload.any(), async (req, res) => {
     // Criar documentos PENDING/UPLOADED na tabela ProtocolDocument
     await createPendingDocumentsForProtocol(protocol.id, service, uploadedDocuments);
 
-    // ✅ INICIALIZAR WORKFLOW AUTOMATICAMENTE COM PRIMEIRA STAGE IN_PROGRESS
-    // ⚠️ NÃO FALHAR: Se workflow falhar, protocolo continua existindo
-    try {
-      const moduleTypeToUse = protocol.moduleType || 'GERAL';
-      console.log(`📋 Inicializando workflow para módulo: ${moduleTypeToUse}`);
-      await applyWorkflowToProtocol(protocol.id, moduleTypeToUse);
-      console.log('   ✓ Workflow inicializado com primeira etapa IN_PROGRESS');
-    } catch (workflowError) {
-      console.error('⚠️ Erro ao inicializar workflow:', workflowError);
-      console.warn('   → Protocolo criado SEM workflow. Admin pode inicializar manualmente.');
-    }
+    // ✅ INICIALIZAR WORKFLOW OBRIGATORIAMENTE (FALHA SE NÃO CONSEGUIR)
+    console.log(`📋 Inicializando workflow para protocolo ${protocol.id}`);
+    const stages = await applyWorkflowToProtocol(protocol.id, protocol.moduleType || undefined);
 
-    // ✅ CRIAR SLA AUTOMATICAMENTE
-    // ⚠️ NÃO FALHAR: Se SLA falhar, protocolo continua existindo
-    try {
-      console.log('⏱️  Criando SLA do protocolo');
-      await createProtocolSLA(protocol.id);
-      console.log('   ✓ SLA criado com sucesso');
-    } catch (slaError) {
-      console.error('⚠️ Erro ao criar SLA:', slaError);
-      console.warn('   → Protocolo criado SEM SLA. Admin pode criar manualmente.');
+    if (!stages || stages.length === 0) {
+      // ❌ Serviço não tem workflow configurado - FALHA CRIAÇÃO
+      throw new Error(`Serviço "${service.name}" não possui workflow configurado. Configure o workflow antes de criar protocolos.`);
     }
+    console.log(`   ✓ Workflow inicializado com ${stages.length} etapa(s), primeira IN_PROGRESS`);
+
+    // ✅ CRIAR SLA OBRIGATORIAMENTE (FALHA SE NÃO CONSEGUIR)
+    console.log('⏱️  Criando SLA do protocolo');
+    const sla = await createProtocolSLA(protocol.id);
+
+    if (!sla) {
+      // ❌ SLA não foi criado - FALHA CRIAÇÃO
+      throw new Error('Erro ao criar SLA do protocolo');
+    }
+    console.log('   ✓ SLA criado com sucesso');
 
     console.log('✅ Protocolo criado:', protocol.number);
     console.log('========== FIM POST /protocols ==========\n');

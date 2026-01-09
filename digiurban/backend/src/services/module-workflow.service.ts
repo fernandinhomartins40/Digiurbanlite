@@ -104,108 +104,24 @@ export async function deleteWorkflow(moduleType: string) {
 /**
  * Aplica workflow a um protocolo (cria as etapas)
  *
- * ✅ ATUALIZADO: Tenta usar ServiceWorkflow primeiro, depois ModuleWorkflow (legado)
+ * ✅ SIMPLIFICADO: Usa APENAS ServiceWorkflow (sem fallbacks complexos)
+ * @deprecated Use ServiceWorkflowService.applyWorkflowToProtocol() diretamente
  */
 export async function applyWorkflowToProtocol(
   protocolId: string,
   moduleType?: string
 ) {
-  // ✅ NOVO: Tentar usar workflow por serviço PRIMEIRO
-  try {
-    console.log(`🔄 Tentando aplicar ServiceWorkflow ao protocolo...`);
-    const stages = await ServiceWorkflowService.applyWorkflowToProtocol(protocolId);
+  // ✅ RADICAL: Delegar 100% para ServiceWorkflow
+  console.log(`🔄 Aplicando ServiceWorkflow ao protocolo ${protocolId}...`);
+  const stages = await ServiceWorkflowService.applyWorkflowToProtocol(protocolId);
 
-    if (stages && stages.length > 0) {
-      console.log(`✅ ServiceWorkflow aplicado com sucesso (${stages.length} etapas)`);
-      return stages;
-    }
-  } catch (error) {
-    console.warn(`⚠️  ServiceWorkflow não disponível: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    console.log(`   → Tentando ModuleWorkflow (legado)...`);
-  }
-
-  // ⚠️ LEGADO: Fallback para ModuleWorkflow
-  if (!moduleType) {
-    console.warn(`⚠️  Nenhum moduleType fornecido e ServiceWorkflow não disponível`);
+  if (!stages || stages.length === 0) {
+    console.error(`❌ ServiceWorkflow não retornou stages para protocolo ${protocolId}`);
     return [];
   }
 
-  let workflow = await getWorkflowByModuleType(moduleType);
-
-  // Se não encontrar workflow específico, tentar criar genérico
-  if (!workflow) {
-    console.warn(`⚠️  Workflow não encontrado para módulo: ${moduleType}`);
-    console.log(`   → Tentando buscar workflow GENERICO`);
-    workflow = await getWorkflowByModuleType('GENERICO');
-  }
-
-  // Se ainda não encontrar, criar workflow padrão simples
-  if (!workflow) {
-    console.warn(`⚠️  Nenhum workflow encontrado! Criando workflow básico...`);
-    // Criar etapas básicas manualmente
-    await prisma.protocolStage.create({
-      data: {
-        protocolId,
-        stageName: 'Análise',
-        stageOrder: 1,
-        status: 'PENDING',
-        metadata: {
-          description: 'Análise do protocolo',
-          requiredDocumentTypes: [],
-          requiredFormFieldIds: [],
-          allowedActions: ['APPROVE', 'REJECT']
-        }
-      }
-    });
-    return [];
-  }
-
-  const stages = workflow.stages as any as WorkflowStage[];
-
-  // Buscar o serviço para validar referências
-  const protocol = await prisma.protocolSimplified.findUnique({
-    where: { id: protocolId },
-    include: { service: true }
-  });
-
-  if (!protocol) {
-    throw new Error('Protocolo não encontrado');
-  }
-
-  // Criar todas as etapas do workflow
-  const createdStages = await Promise.all(
-    stages.map((stage) => {
-      // ✅ PRIMEIRA ETAPA SEMPRE INICIA COMO IN_PROGRESS
-      const isFirstStage = stage.order === 1;
-
-      return prisma.protocolStage.create({
-        data: {
-          protocolId,
-          stageName: stage.name,
-          stageOrder: stage.order,
-          status: isFirstStage ? 'IN_PROGRESS' : 'PENDING',
-          startedAt: isFirstStage ? new Date() : undefined,
-          dueDate: stage.slaDays
-            ? new Date(Date.now() + stage.slaDays * 24 * 60 * 60 * 1000)
-            : undefined,
-          metadata: {
-            stageId: stage.id,
-            description: stage.description,
-            requiredDocumentTypes: stage.requiredDocumentTypes || [],
-            requiredFormFieldIds: stage.requiredFormFieldIds || [],
-            allowedActions: stage.allowedActions || [],
-            canSkip: stage.canSkip || false,
-            skipCondition: stage.skipCondition,
-            role: stage.role,
-            department: stage.department,
-            requiresApproval: stage.requiresApproval
-          }
-        }
-      });
-    })
-  );
-
-  return createdStages;
+  console.log(`✅ ServiceWorkflow aplicado: ${stages.length} etapa(s) criada(s)`);
+  return stages;
 }
 
 /**
