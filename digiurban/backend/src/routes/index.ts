@@ -49,8 +49,10 @@ export const loadProtocolRoutes = () => {
   const protocolStagesRoutes = require('./protocol-stages').default;
   console.log('    - protocol-sla');
   const protocolSLARoutes = require('./protocol-sla').default;
-  console.log('    - module-workflows');
+  console.log('    - module-workflows (legado)');
   const moduleWorkflowsRoutes = require('./module-workflows').default;
+  console.log('    - service-workflows (novo)');
+  const serviceWorkflowsRoutes = require('./service-workflows.routes').default;
   console.log('    - protocol-citizen-links');
   const protocolCitizenLinksRoutes = require('./protocol-citizen-links.routes').default;
 
@@ -62,7 +64,8 @@ export const loadProtocolRoutes = () => {
   router.use('/protocols', protocolStagesRoutes);
   router.use('/protocols', protocolSLARoutes);
   router.use('/protocols', protocolCitizenLinksRoutes);
-  router.use('/workflows', moduleWorkflowsRoutes);
+  router.use('/workflows', moduleWorkflowsRoutes); // Legado - mantido para compatibilidade
+  router.use('/service-workflows', serviceWorkflowsRoutes); // Novo - workflows por serviço
   router.use('/sla', protocolSLARoutes);
 
   console.log('  ✅ Rotas de protocolos carregadas');
