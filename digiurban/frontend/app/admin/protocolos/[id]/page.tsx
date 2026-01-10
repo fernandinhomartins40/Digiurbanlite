@@ -228,7 +228,7 @@ export default function ProtocolDetailPage() {
             protocol={protocol}
             stages={stages}
             documents={documents}
-            formData={protocol.formData || {}}
+            formData={protocol.customData || {}}
             onComplete={loadProtocolData}
           />
         </div>
@@ -355,7 +355,7 @@ export default function ProtocolDetailPage() {
                 <TabsContent value="dados" className="mt-0">
                   <ProtocolDataTab
                     protocolId={protocolId}
-                    formData={protocol.formData}
+                    formData={protocol.customData || {}}
                     metadata={protocol.metadata}
                     onRefresh={loadProtocolData}
                   />
