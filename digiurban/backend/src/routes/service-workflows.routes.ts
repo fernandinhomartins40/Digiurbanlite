@@ -228,30 +228,28 @@ router.delete('/service/:serviceId', adminAuthMiddleware, requireMinRole(UserRol
 
 /**
  * POST /api/service-workflows/seed-all
- * Criar workflows para todos os serviços sem workflow
- * - Serviços COM_DADOS (com moduleType): workflows ESPECÍFICOS
+ * Criar/atualizar workflows para todos os serviços
+ * - Serviços COM_DADOS (com moduleType): workflows ESPECÍFICOS (79 workflows)
  * - Serviços SEM_DADOS (sem moduleType): workflows GENÉRICOS
  */
 router.post('/seed-all', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
-    // Importar serviço de seed (dentro de src, funciona no build)
-    const { seedAllServiceWorkflows } = await import('../services/service-workflow-seed.service');
+    // ✅ CORRIGIDO: Usar seed correto com 79 workflows específicos
+    const { seedServiceWorkflows } = await import('../../prisma/seeds/service-workflows.seed');
 
-    // Executar o seed
-    const result = await seedAllServiceWorkflows();
+    // Executar o seed (não retorna nada, só imprime logs)
+    await seedServiceWorkflows();
 
-    console.log(`\n📊 Resultado:`);
-    console.log(`   ✅ Criados: ${result.created}`);
-    console.log(`   ⏭️  Já existiam: ${result.skipped}`);
+    // Contar workflows após seed
+    const { prisma } = await import('../lib/prisma');
+    const totalWorkflows = await prisma.serviceWorkflow.count();
 
     return res.json({
       success: true,
       data: {
-        created: result.created,
-        skipped: result.skipped,
-        total: result.created
+        total: totalWorkflows
       },
-      message: `${result.created} workflows criados com sucesso`
+      message: `Workflows criados/atualizados com sucesso! Total: ${totalWorkflows}`
     });
   } catch (error) {
     console.error('Erro ao criar workflows:', error);
