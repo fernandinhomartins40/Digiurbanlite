@@ -234,22 +234,47 @@ router.delete('/service/:serviceId', adminAuthMiddleware, requireMinRole(UserRol
  */
 router.post('/seed-all', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
-    // ✅ CORRIGIDO: Usar seed correto com 79 workflows específicos
-    const { seedServiceWorkflows } = await import('../../prisma/seeds/service-workflows.seed');
+    // ✅ Executar seed via spawn para evitar problema de rootDir
+    const { spawn } = await import('child_process');
+    const path = await import('path');
 
-    // Executar o seed (não retorna nada, só imprime logs)
-    await seedServiceWorkflows();
+    const seedPath = path.join(process.cwd(), 'prisma/seeds/service-workflows.seed.ts');
 
-    // Contar workflows após seed
-    const { prisma } = await import('../lib/prisma');
-    const totalWorkflows = await prisma.serviceWorkflow.count();
+    return new Promise((resolve) => {
+      const seedProcess = spawn('npx', ['tsx', seedPath], {
+        stdio: 'inherit',
+        shell: true
+      });
 
-    return res.json({
-      success: true,
-      data: {
-        total: totalWorkflows
-      },
-      message: `Workflows criados/atualizados com sucesso! Total: ${totalWorkflows}`
+      seedProcess.on('close', async (code) => {
+        if (code === 0) {
+          // Contar workflows após seed
+          const { prisma } = await import('../lib/prisma');
+          const totalWorkflows = await prisma.serviceWorkflow.count();
+
+          resolve(res.json({
+            success: true,
+            data: {
+              total: totalWorkflows
+            },
+            message: `Workflows criados/atualizados com sucesso! Total: ${totalWorkflows}`
+          }));
+        } else {
+          resolve(res.status(500).json({
+            success: false,
+            error: 'Erro ao executar seed de workflows',
+            details: `Processo retornou código ${code}`
+          }));
+        }
+      });
+
+      seedProcess.on('error', (error) => {
+        resolve(res.status(500).json({
+          success: false,
+          error: 'Erro ao iniciar processo de seed',
+          details: error.message
+        }));
+      });
     });
   } catch (error) {
     console.error('Erro ao criar workflows:', error);
