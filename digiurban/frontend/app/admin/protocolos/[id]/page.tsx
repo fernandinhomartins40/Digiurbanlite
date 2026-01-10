@@ -1,22 +1,29 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
-import { Card, CardContent } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { FileText, MessageSquare, AlertCircle, Clock, Users, FormInput } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 
-// Novos componentes modernos
+// Sistema de detecção de modo
+import { getProtocolViewMode, ProtocolViewMode } from '@/lib/protocol-view-mode'
+
+// Views especializadas por modo
+import { CompletingProtocolView } from '@/components/admin/protocol/CompletingProtocolView'
+import { ArchivedProtocolView } from '@/components/admin/protocol/ArchivedProtocolView'
+
+// Componentes para modo ACTIVE
 import { ProtocolHeader } from '@/components/admin/protocol/ProtocolHeader'
 import { WorkflowProgressBar } from '@/components/admin/protocol/WorkflowProgressBar'
-import { ValidationAlert } from '@/components/admin/protocol/ValidationAlert'
+import { StageFocusCard } from '@/components/admin/protocol/StageFocusCard'
+import { DynamicProtocolTabs } from '@/components/admin/protocol/DynamicProtocolTabs'
 import { CompactSLACard } from '@/components/admin/protocol/CompactSLACard'
 import { ProtocolSummaryTab } from '@/components/admin/protocol/ProtocolSummaryTab'
 import { ProtocolDocumentsUnified } from '@/components/admin/protocol/ProtocolDocumentsUnified'
 import { ProtocolDataTab } from '@/components/admin/protocol/ProtocolDataTab'
 import { ProtocolPendingsTab } from '@/components/admin/protocol/ProtocolPendingsTab'
 import { ProtocolCommunicationTab } from '@/components/admin/protocol/ProtocolCommunicationTab'
+import { TabsContent } from '@/components/ui/tabs'
 
 // Services
 import { getProtocolDocuments } from '@/services/protocol-documents.service'
@@ -27,6 +34,8 @@ import { getProtocolInteractions } from '@/services/protocol-interactions.servic
 // Hooks
 import { useToast } from '@/hooks/use-toast'
 import { StageStatus } from '@/types/protocol-enhancements'
+import { Clock, FileText, AlertCircle, MessageSquare, Users } from 'lucide-react'
+import { CardContent } from '@/components/ui/card'
 
 export default function ProtocolDetailPage() {
   const params = useParams()
@@ -45,7 +54,31 @@ export default function ProtocolDetailPage() {
   const [citizenLinks, setCitizenLinks] = useState<any[]>([])
   const [validation, setValidation] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('resumo')
+  const [activeTab, setActiveTab] = useState('')
+
+  // Detectar modo de visualização
+  const viewModeResult = useMemo(() => {
+    if (!protocol || stages.length === 0) {
+      return {
+        mode: ProtocolViewMode.ACTIVE,
+        currentStage: undefined,
+        isLastStage: false,
+        availableTabs: ['resumo'],
+        primaryTab: 'resumo'
+      }
+    }
+
+    return getProtocolViewMode(protocol.status, stages)
+  }, [protocol, stages])
+
+  const { mode, currentStage, availableTabs, primaryTab } = viewModeResult
+
+  // Inicializar tab ativo quando modo for detectado
+  useEffect(() => {
+    if (availableTabs.length > 0 && !activeTab) {
+      setActiveTab(primaryTab || availableTabs[0])
+    }
+  }, [availableTabs, primaryTab, activeTab])
 
   // Carregar dados do protocolo
   useEffect(() => {
@@ -173,9 +206,80 @@ export default function ProtocolDetailPage() {
     )
   }
 
-  // Extrair dados essenciais
-  const currentStage = stages.find(s => s.status === StageStatus.IN_PROGRESS)
+  // ==========================================
+  // MODO: COMPLETING (Última etapa - finalização)
+  // ==========================================
+  if (mode === ProtocolViewMode.COMPLETING) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ProtocolHeader
+          protocolId={protocolId}
+          protocolNumber={protocol.number || protocol.protocolNumber}
+          serviceName={protocol.service?.name || protocol.title}
+          status={protocol.status}
+          citizenName={protocol.citizen?.name}
+          currentStage={currentStage}
+          onActionComplete={loadProtocolData}
+          onBack={() => router.push('/admin/protocolos')}
+        />
+
+        <div className="container mx-auto px-4 sm:px-6 py-6 max-w-7xl">
+          <CompletingProtocolView
+            protocol={protocol}
+            stages={stages}
+            documents={documents}
+            formData={protocol.formData || {}}
+            onComplete={loadProtocolData}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // ==========================================
+  // MODO: ARCHIVED (Protocolo concluído/cancelado)
+  // ==========================================
+  if (mode === ProtocolViewMode.ARCHIVED) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ProtocolHeader
+          protocolId={protocolId}
+          protocolNumber={protocol.number || protocol.protocolNumber}
+          serviceName={protocol.service?.name || protocol.title}
+          status={protocol.status}
+          citizenName={protocol.citizen?.name}
+          currentStage={undefined}
+          onActionComplete={loadProtocolData}
+          onBack={() => router.push('/admin/protocolos')}
+        />
+
+        <div className="container mx-auto px-4 sm:px-6 py-6 max-w-7xl">
+          <ArchivedProtocolView
+            protocol={protocol}
+            stages={stages}
+            documents={documents}
+            pendings={pendings}
+            interactions={interactions}
+            citizenLinks={citizenLinks}
+            onReopen={loadProtocolData}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // ==========================================
+  // MODO: ACTIVE (Workflow em progresso - abas contextuais)
+  // ==========================================
   const openPendings = pendings.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS')
+  const unreadMessages = interactions.filter(i => !i.isRead).length
+
+  // Badges dinâmicos para as abas
+  const tabBadges: Record<string, number> = {
+    documentos: documents.filter(d => d.status === 'PENDING').length,
+    pendencias: openPendings.length,
+    comunicacao: unreadMessages
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -200,13 +304,15 @@ export default function ProtocolDetailPage() {
           </div>
         )}
 
-        {/* Alerta de Validação (se etapa em progresso) */}
-        {currentStage && validation && (
+        {/* Stage Focus Card - Mostra o que precisa ser feito AGORA */}
+        {currentStage && (
           <div className="mb-6">
-            <ValidationAlert
+            <StageFocusCard
+              currentStage={currentStage}
+              totalStages={stages.length}
               validation={validation}
-              onNavigateToDocuments={() => setActiveTab('documentos')}
-              onNavigateToData={() => setActiveTab('dados')}
+              documents={documents}
+              pendings={pendings}
             />
           </div>
         )}
@@ -214,87 +320,71 @@ export default function ProtocolDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Área de Conteúdo Principal (3/4) */}
           <div className="lg:col-span-3">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 bg-white shadow-sm mb-4">
-                <TabsTrigger value="resumo" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span className="hidden sm:inline">Resumo</span>
-                </TabsTrigger>
-                <TabsTrigger value="documentos" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span className="hidden sm:inline">Documentos</span>
-                  {documents.length > 0 && (
-                    <span className="ml-auto text-xs bg-gray-200 rounded-full px-2 py-0.5">
-                      {documents.length}
-                    </span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="dados" className="flex items-center gap-2">
-                  <FormInput className="h-4 w-4" />
-                  <span className="hidden sm:inline">Dados</span>
-                </TabsTrigger>
-                <TabsTrigger value="pendencias" className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <span className="hidden sm:inline">Pendências</span>
-                  {openPendings.length > 0 && (
-                    <span className="ml-auto text-xs bg-red-500 text-white rounded-full px-2 py-0.5">
-                      {openPendings.length}
-                    </span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="comunicacao" className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline">Comunicação</span>
-                </TabsTrigger>
-              </TabsList>
-
+            {/* Abas Dinâmicas Contextuais */}
+            <DynamicProtocolTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              availableTabs={availableTabs}
+              primaryTab={primaryTab}
+              badges={tabBadges}
+            >
               {/* Tab: Resumo */}
-              <TabsContent value="resumo" className="mt-0">
-                <ProtocolSummaryTab
-                  protocol={protocol}
-                  citizenLinks={citizenLinks}
-                />
-              </TabsContent>
+              {availableTabs.includes('resumo') && (
+                <TabsContent value="resumo" className="mt-0">
+                  <ProtocolSummaryTab
+                    protocol={protocol}
+                    citizenLinks={citizenLinks}
+                  />
+                </TabsContent>
+              )}
 
               {/* Tab: Documentos */}
-              <TabsContent value="documentos" className="mt-0">
-                <ProtocolDocumentsUnified
-                  protocolId={protocolId}
-                  documents={documents}
-                  currentStageMetadata={currentStage?.metadata}
-                  onRefresh={loadProtocolData}
-                />
-              </TabsContent>
+              {availableTabs.includes('documentos') && (
+                <TabsContent value="documentos" className="mt-0">
+                  <ProtocolDocumentsUnified
+                    protocolId={protocolId}
+                    documents={documents}
+                    currentStageMetadata={currentStage?.metadata}
+                    onRefresh={loadProtocolData}
+                  />
+                </TabsContent>
+              )}
 
               {/* Tab: Dados */}
-              <TabsContent value="dados" className="mt-0">
-                <ProtocolDataTab
-                  protocolId={protocolId}
-                  formData={protocol.formData}
-                  metadata={protocol.metadata}
-                  onRefresh={loadProtocolData}
-                />
-              </TabsContent>
+              {availableTabs.includes('dados') && (
+                <TabsContent value="dados" className="mt-0">
+                  <ProtocolDataTab
+                    protocolId={protocolId}
+                    formData={protocol.formData}
+                    metadata={protocol.metadata}
+                    onRefresh={loadProtocolData}
+                  />
+                </TabsContent>
+              )}
 
               {/* Tab: Pendências */}
-              <TabsContent value="pendencias" className="mt-0">
-                <ProtocolPendingsTab
-                  protocolId={protocolId}
-                  pendings={pendings}
-                  onRefresh={loadProtocolData}
-                />
-              </TabsContent>
+              {availableTabs.includes('pendencias') && (
+                <TabsContent value="pendencias" className="mt-0">
+                  <ProtocolPendingsTab
+                    protocolId={protocolId}
+                    pendings={pendings}
+                    onRefresh={loadProtocolData}
+                  />
+                </TabsContent>
+              )}
 
               {/* Tab: Comunicação (Workflow + Mensagens) */}
-              <TabsContent value="comunicacao" className="mt-0">
-                <ProtocolCommunicationTab
-                  protocolId={protocolId}
-                  stages={stages}
-                  interactions={interactions}
-                  onRefresh={loadProtocolData}
-                />
-              </TabsContent>
-            </Tabs>
+              {availableTabs.includes('comunicacao') && (
+                <TabsContent value="comunicacao" className="mt-0">
+                  <ProtocolCommunicationTab
+                    protocolId={protocolId}
+                    stages={stages}
+                    interactions={interactions}
+                    onRefresh={loadProtocolData}
+                  />
+                </TabsContent>
+              )}
+            </DynamicProtocolTabs>
           </div>
 
           {/* Sidebar Compacta (1/4) */}
@@ -303,7 +393,6 @@ export default function ProtocolDetailPage() {
             <CompactSLACard
               sla={sla}
               onClick={() => {
-                // Scroll para o SLA ou abrir modal
                 toast({
                   title: 'SLA Detalhado',
                   description: 'Clique para ver detalhes completos do SLA'
