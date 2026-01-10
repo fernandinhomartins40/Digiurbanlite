@@ -17,6 +17,17 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { CitizenLinksDisplay } from '@/components/protocol/CitizenLinksDisplay'
 
+interface AddressObject {
+  uf?: string
+  cep?: string
+  bairro?: string
+  cidade?: string
+  numero?: string
+  logradouro?: string
+  complemento?: string
+  pontoReferencia?: string
+}
+
 interface ProtocolSummaryTabProps {
   protocol: {
     id: string
@@ -30,7 +41,7 @@ interface ProtocolSummaryTabProps {
       email?: string
       cpf: string
       phone?: string
-      address?: string
+      address?: string | AddressObject
       city?: string
       state?: string
     }
@@ -64,6 +75,29 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
     } catch (error) {
       return 'Data inválida'
     }
+  }
+
+  const formatAddress = (address: string | AddressObject | undefined): string => {
+    if (!address) return ''
+
+    if (typeof address === 'string') {
+      return address
+    }
+
+    // É um objeto
+    const parts = []
+    if (address.logradouro) parts.push(address.logradouro)
+    if (address.numero) parts.push(address.numero)
+    if (address.bairro) parts.push(`- ${address.bairro}`)
+    if (address.complemento) parts.push(`(${address.complemento})`)
+
+    const line1 = parts.join(' ')
+    const line2Parts = []
+    if (address.cidade) line2Parts.push(address.cidade)
+    if (address.uf) line2Parts.push(address.uf)
+    if (address.cep) line2Parts.push(`CEP: ${address.cep}`)
+
+    return line1 + (line2Parts.length > 0 ? '\n' + line2Parts.join(' - ') : '')
   }
 
   const getStatusLabel = (status: string) => {
@@ -230,9 +264,11 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
                   <p className="text-xs text-gray-600">Endereço</p>
                 </div>
                 {protocol.citizen.address && (
-                  <p className="text-sm text-gray-900">{protocol.citizen.address}</p>
+                  <p className="text-sm text-gray-900 whitespace-pre-line">
+                    {formatAddress(protocol.citizen.address)}
+                  </p>
                 )}
-                {(protocol.citizen.city || protocol.citizen.state) && (
+                {!protocol.citizen.address && (protocol.citizen.city || protocol.citizen.state) && (
                   <p className="text-sm text-gray-600">
                     {protocol.citizen.city}{protocol.citizen.state && `, ${protocol.citizen.state}`}
                   </p>
