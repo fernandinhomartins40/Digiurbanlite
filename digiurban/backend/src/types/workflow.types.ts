@@ -37,8 +37,13 @@ export interface WorkflowStage {
   order: number;                        // Ordem de execução
   slaDays?: number;                     // SLA em dias para esta etapa
 
+  // ✅ METADADOS DE UI - Definem estrutura da interface
+  availableTabs?: string[];             // Abas disponíveis na UI (ex: ['resumo', 'documentos', 'location'])
+  primaryTab?: string;                  // Aba principal/destacada (ex: 'documentos')
+
   // ✅ NOVO: Referências aos requisitos do SERVIÇO
   requiredDocumentTypes: string[];      // Tipos de documentos do serviço
+  requiredFormFields?: string[];        // Campos de formulário obrigatórios (nomes)
   requiredFormFieldIds: string[];       // IDs de campos do formulário do serviço
 
   // Configurações da etapa
