@@ -250,8 +250,17 @@ export async function applyWorkflowToProtocol(protocolId: string) {
           metadata: {
             stageId: stage.id,
             description: stage.description,
+
+            // ✅ METADADOS DE UI - Definem estrutura da página
+            availableTabs: stage.availableTabs || ['resumo', 'comunicacao'],
+            primaryTab: stage.primaryTab || 'resumo',
+
+            // Requisitos
             requiredDocumentTypes: stage.requiredDocumentTypes || [],
+            requiredFormFields: stage.requiredFormFields || [],
             requiredFormFieldIds: stage.requiredFormFieldIds || [],
+
+            // Ações e regras
             allowedActions: stage.allowedActions || [],
             canSkip: stage.canSkip || false,
             skipCondition: stage.skipCondition,

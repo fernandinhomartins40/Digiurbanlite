@@ -1,12 +1,16 @@
 /**
  * ============================================================================
- * SERVICE WORKFLOWS SEED - Workflows por Serviço
+ * SERVICE WORKFLOWS SEED - Workflows por Serviço COM METADADOS DE UI
  * ============================================================================
  *
- * Este seed cria workflows específicos para serviços COM_DADOS (que têm moduleType)
- * e workflows genéricos para serviços SEM_DADOS (que não têm moduleType).
+ * ATUALIZADO: Agora cada stage define:
+ * - availableTabs: Quais abas mostrar na UI
+ * - primaryTab: Qual aba destacar
+ * - requiredDocumentTypes: Documentos obrigatórios
+ * - requiredFormFields: Campos de formulário obrigatórios
+ * - allowedActions: Ações permitidas
  *
- * A estrutura foi migrada do sistema antigo de ModuleWorkflows para ServiceWorkflows.
+ * Isso permite que o WORKFLOW defina completamente a estrutura da UI
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
@@ -17,7 +21,6 @@ const prisma = new PrismaClient();
  * ============================================================================
  * WORKFLOWS ESPECÍFICOS PARA SERVIÇOS COM_DADOS
  * ============================================================================
- * Baseados no seed antigo de module-workflows.seed.ts
  */
 
 interface SpecificWorkflow {
@@ -42,7 +45,16 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         order: 1,
         description: 'Verificação de documentos obrigatórios (laudos, atestados, exames)',
         slaDays: 2,
+
+        // ✅ METADADOS DE UI
+        availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+        primaryTab: 'documentos',
+
+        // Requisitos
         requiredDocumentTypes: ['Atestado Médico', 'Exames', 'Guia de Encaminhamento'],
+        requiredFormFields: [],
+
+        // Ações
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -51,6 +63,13 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         order: 2,
         description: 'Avaliação técnica pela regulação médica',
         slaDays: 3,
+
+        availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
+        primaryTab: 'dados',
+
+        requiredFormFields: ['parecer_medico', 'cid_principal', 'procedimento_solicitado'],
+        requiredDocumentTypes: [],
+
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -59,6 +78,13 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         order: 3,
         description: 'Aprovação final pela gestão',
         slaDays: 1,
+
+        availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+        primaryTab: 'resumo',
+
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
       },
@@ -67,6 +93,13 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         order: 4,
         description: 'Agendamento do transporte para o paciente',
         slaDays: 1,
+
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+
+        requiredFormFields: ['data_agendamento', 'hora_agendamento', 'veiculo'],
+        requiredDocumentTypes: [],
+
         allowedActions: ['APPROVE'],
         canSkip: false
       }
@@ -84,7 +117,13 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         order: 1,
         description: 'Verificação da solicitação e documentos',
         slaDays: 2,
+
+        availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+        primaryTab: 'documentos',
+
         requiredDocumentTypes: ['Atestado Médico', 'Comprovante de Endereço', 'Cartão SUS'],
+        requiredFormFields: [],
+
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -93,6 +132,13 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         order: 2,
         description: 'Avaliação do tipo de transporte necessário',
         slaDays: 3,
+
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+
+        requiredFormFields: ['tipo_transporte', 'justificativa'],
+        requiredDocumentTypes: [],
+
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -101,48 +147,378 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         order: 3,
         description: 'Agendamento do transporte',
         slaDays: 3,
+
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+
+        requiredFormFields: ['data_transporte', 'hora_transporte', 'destino'],
+        requiredDocumentTypes: [],
+
         allowedActions: ['APPROVE'],
         canSkip: false
       },
       {
         name: 'Confirmação',
         order: 4,
-        description: 'Confirmação com o paciente',
+        description: 'Confirmação do agendamento com o paciente',
         slaDays: 2,
+
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+
         allowedActions: ['APPROVE'],
         canSkip: false
       }
     ]
   },
 
-  AGENDAMENTOS_MEDICOS: {
-    moduleType: 'AGENDAMENTOS_MEDICOS',
-    name: 'Workflow - Agendamentos Médicos',
-    description: 'Fluxo para agendamento de consultas',
-    defaultSLA: 3,
+  // ========== AGRICULTURA ==========
+  CADASTRO_PRODUTOR: {
+    moduleType: 'CADASTRO_PRODUTOR',
+    name: 'Workflow - Cadastro de Produtor Rural',
+    description: 'Fluxo para cadastro de produtores rurais',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de CPF, comprovante de residência e documentos da propriedade',
+        slaDays: 3,
+
+        // ✅ UI DEFINITION
+        availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+        primaryTab: 'documentos',
+
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'DAP - Declaração de Aptidão ao Pronaf (opcional)'],
+        requiredFormFields: [],
+
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Validação de Dados',
+        order: 2,
+        description: 'Verificação dos dados cadastrais do produtor',
+        slaDays: 2,
+
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+
+        requiredFormFields: ['tipo_producao', 'area_propriedade', 'produtos_principais'],
+        requiredDocumentTypes: [],
+
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação Final',
+        order: 3,
+        description: 'Aprovação final do cadastro',
+        slaDays: 2,
+
+        availableTabs: ['resumo', 'pendencias', 'comunicacao'],
+        primaryTab: 'resumo',
+
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Certidão',
+        order: 4,
+        description: 'Emissão da certidão de produtor rural',
+        slaDays: 3,
+
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== PLANEJAMENTO URBANO ==========
+  LICENCA_OBRA: {
+    moduleType: 'LICENCA_OBRA',
+    name: 'Workflow - Licença para Obras',
+    description: 'Fluxo para licenciamento de obras particulares',
+    defaultSLA: 30,
     stages: [
       {
         name: 'Recebimento',
         order: 1,
-        description: 'Recebimento da solicitação de agendamento',
+        description: 'Protocolo recebido e validação inicial',
+        slaDays: 2,
+
+        availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+        primaryTab: 'documentos',
+
+        requiredDocumentTypes: ['Projeto Arquitetônico', 'ART/RRT', 'Matrícula do Imóvel', 'Documento do Proprietário'],
+        requiredFormFields: [],
+
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
+        description: 'Análise da documentação apresentada',
+        slaDays: 5,
+
+        availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
+        primaryTab: 'documentos',
+
+        requiredDocumentTypes: [],
+        requiredFormFields: ['area_construir', 'tipo_obra', 'uso'],
+
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria',
+        order: 3,
+        description: 'Vistoria técnica no local',
+        slaDays: 10,
+
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+
+        requiredFormFields: ['data_vistoria', 'parecer_vistoria', 'responsavel_vistoria'],
+        requiredDocumentTypes: [],
+
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação final e cálculo de taxas',
+        slaDays: 5,
+
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+
+        requiredFormFields: ['valor_taxa', 'validade_licenca'],
+        requiredDocumentTypes: [],
+
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão',
+        order: 5,
+        description: 'Emissão da licença de obra',
+        slaDays: 3,
+
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  ALVARA_FUNCIONAMENTO: {
+    moduleType: 'ALVARA_FUNCIONAMENTO',
+    name: 'Workflow - Alvará de Funcionamento',
+    description: 'Fluxo para emissão de alvará de funcionamento',
+    defaultSLA: 20,
+    stages: [
+      {
+        name: 'Recebimento',
+        order: 1,
+        description: 'Protocolo recebido e validação inicial',
+        slaDays: 2,
+
+        availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+        primaryTab: 'documentos',
+
+        requiredDocumentTypes: ['CNPJ/CPF', 'Contrato Social', 'Comprovante de Endereço', 'Planta Baixa'],
+        requiredFormFields: [],
+
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
+        description: 'Análise da documentação do estabelecimento',
+        slaDays: 5,
+
+        availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
+        primaryTab: 'documentos',
+
+        requiredDocumentTypes: [],
+        requiredFormFields: ['tipo_atividade', 'area_estabelecimento', 'numero_funcionarios'],
+
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria',
+        order: 3,
+        description: 'Vistoria do estabelecimento',
+        slaDays: 8,
+
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+
+        requiredFormFields: ['data_vistoria', 'parecer_vigilancia', 'parecer_bombeiros'],
+        requiredDocumentTypes: [],
+
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão',
+        order: 4,
+        description: 'Emissão do alvará de funcionamento',
+        slaDays: 5,
+
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== SAÚDE (continuação) ==========
+  AGENDAMENTO_CONSULTA: {
+    moduleType: 'AGENDAMENTO_CONSULTA',
+    name: 'Workflow - Agendamento de Consulta Médica',
+    description: 'Fluxo para agendamento de consultas médicas',
+    defaultSLA: 3,
+    stages: [
+      {
+        name: 'Triagem e Validação',
+        order: 1,
+        description: 'Validação de dados e disponibilidade',
         slaDays: 1,
-        requiredDocumentTypes: ['Cartão SUS', 'Encaminhamento Médico'],
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredDocumentTypes: [],
+        requiredFormFields: ['especialidade', 'data_preferencial', 'turno'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
         name: 'Agendamento',
         order: 2,
-        description: 'Agendamento da consulta conforme disponibilidade',
+        description: 'Confirmação de data e horário',
         slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_consulta', 'horario', 'profissional'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
       {
         name: 'Confirmação',
         order: 3,
-        description: 'Confirmação com o paciente',
+        description: 'Notificação ao paciente',
         slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  SOLICITACAO_EXAMES: {
+    moduleType: 'SOLICITACAO_EXAMES',
+    name: 'Workflow - Solicitação de Exames',
+    description: 'Fluxo para solicitação de exames laboratoriais',
+    defaultSLA: 5,
+    stages: [
+      {
+        name: 'Análise de Pedido Médico',
+        order: 1,
+        description: 'Validação de requisição médica',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Requisição Médica', 'Cartão SUS'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Agendamento de Coleta',
+        order: 2,
+        description: 'Definição de data para coleta',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['data_coleta', 'local_coleta'],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Confirmação',
+        order: 3,
+        description: 'Notificação ao paciente',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CARTAO_SUS: {
+    moduleType: 'CARTAO_SUS',
+    name: 'Workflow - Solicitação de Cartão SUS',
+    description: 'Fluxo para emissão de Cartão SUS',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentos pessoais',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'RG ou Certidão'],
+        requiredFormFields: ['nome_completo', 'data_nascimento', 'nome_mae'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro no Sistema',
+        order: 2,
+        description: 'Registro no sistema nacional',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão do Cartão',
+        order: 3,
+        description: 'Impressão e disponibilização',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
         allowedActions: ['APPROVE'],
         canSkip: false
       }
@@ -159,33 +535,33 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Análise de Documentos',
         order: 1,
-        description: 'Verificação de documentos obrigatórios',
+        description: 'Verificação de documentos escolares',
         slaDays: 2,
-        requiredDocumentTypes: ['Certidão de Nascimento', 'Comprovante de Residência', 'Cartão de Vacina'],
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Certidão de Nascimento', 'Comprovante de Residência', 'Cartão de Vacina', 'Histórico Escolar'],
+        requiredFormFields: ['nome_aluno', 'data_nascimento', 'serie_pretendida'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
         name: 'Verificação de Vagas',
         order: 2,
-        description: 'Verificação de disponibilidade de vagas',
+        description: 'Consulta de disponibilidade',
         slaDays: 1,
-        allowedActions: ['APPROVE', 'REJECT'],
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['escola_escolhida', 'turno'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
-        name: 'Efetivação Matrícula',
+        name: 'Efetivação da Matrícula',
         order: 3,
-        description: 'Efetivação da matrícula no sistema',
-        slaDays: 1,
-        allowedActions: ['APPROVE'],
-        canSkip: false
-      },
-      {
-        name: 'Entrega de Documentos',
-        order: 4,
-        description: 'Entrega de comprovante e orientações',
-        slaDays: 1,
+        description: 'Confirmação e registro no sistema',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
         allowedActions: ['APPROVE'],
         canSkip: false
       }
@@ -201,33 +577,550 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Análise de Solicitação',
         order: 1,
-        description: 'Análise da solicitação de transferência',
+        description: 'Verificação de documentos e motivo',
         slaDays: 2,
-        requiredDocumentTypes: ['Declaração de Transferência', 'Histórico Escolar'],
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Histórico Escolar', 'Declaração de Transferência'],
+        requiredFormFields: ['escola_origem', 'escola_destino', 'motivo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
         name: 'Verificação de Vagas',
         order: 2,
-        description: 'Verificação de vagas na escola destino',
+        description: 'Consulta na escola destino',
         slaDays: 2,
-        allowedActions: ['APPROVE', 'REJECT'],
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
         name: 'Processamento',
         order: 3,
-        description: 'Processamento da transferência',
+        description: 'Transferência de documentação',
         slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Confirmação',
+        order: 4,
+        description: 'Matrícula efetivada na nova escola',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  TRANSPORTE_ESCOLAR: {
+    moduleType: 'TRANSPORTE_ESCOLAR',
+    name: 'Workflow - Transporte Escolar',
+    description: 'Fluxo para solicitação de transporte escolar',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise de Elegibilidade',
+        order: 1,
+        description: 'Verificação de critérios (distância, idade)',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredDocumentTypes: ['Comprovante de Residência', 'Declaração de Matrícula'],
+        requiredFormFields: ['endereco_completo', 'escola', 'distancia_km'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Rota',
+        order: 2,
+        description: 'Planejamento logístico',
+        slaDays: 4,
+        availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
+        primaryTab: 'location',
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 3,
+        description: 'Autorização final',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro e Orientação',
+        order: 4,
+        description: 'Informações sobre ponto e horário',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== AGRICULTURA (complementação) ==========
+  ASSISTENCIA_TECNICA: {
+    moduleType: 'ASSISTENCIA_TECNICA',
+    name: 'Workflow - Assistência Técnica Rural',
+    description: 'Fluxo para solicitação de assistência técnica',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Verificação da demanda e documentação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade'],
+        requiredFormFields: ['tipo_assistencia', 'area_propriedade'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Agendamento de Visita',
+        order: 2,
+        description: 'Agendamento de visita técnica',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['data_visita', 'tecnico_responsavel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Técnica',
+        order: 3,
+        description: 'Realização da vistoria in loco',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['parecer_tecnico', 'recomendacoes'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Laudo',
+        order: 4,
+        description: 'Elaboração do laudo técnico',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CADASTRO_PROPRIEDADE_RURAL: {
+    moduleType: 'CADASTRO_PROPRIEDADE_RURAL',
+    name: 'Workflow - Cadastro de Propriedade Rural',
+    description: 'Fluxo para cadastro de propriedades rurais',
+    defaultSLA: 12,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentos da propriedade',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Matrícula do Imóvel', 'CPF/CNPJ', 'Comprovante de Posse'],
+        requiredFormFields: ['area_total', 'localizacao'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria da Propriedade',
+        order: 2,
+        description: 'Vistoria técnica no local',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['coordenadas_gps', 'uso_solo', 'benfeitorias'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Validação Cadastral',
+        order: 3,
+        description: 'Validação dos dados cadastrais',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Certificado',
+        order: 4,
+        description: 'Emissão do certificado de cadastro',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  INSCRICAO_PROGRAMA_RURAL: {
+    moduleType: 'INSCRICAO_PROGRAMA_RURAL',
+    name: 'Workflow - Inscrição em Programa Rural',
+    description: 'Fluxo para inscrição em programas de desenvolvimento rural',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise de Elegibilidade',
+        order: 1,
+        description: 'Verificação de critérios de elegibilidade',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['DAP', 'CPF', 'Comprovante de Propriedade'],
+        requiredFormFields: ['programa_escolhido', 'area_producao'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Validação Técnica',
+        order: 2,
+        description: 'Análise técnica da solicitação',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 3,
+        description: 'Aprovação da inscrição',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro no Programa',
+        order: 4,
+        description: 'Efetivação do cadastro',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  FEIRA_PRODUTOR: {
+    moduleType: 'FEIRA_PRODUTOR',
+    name: 'Workflow - Inscrição em Feira do Produtor',
+    description: 'Fluxo para inscrição em feiras de produtores',
+    defaultSLA: 8,
+    stages: [
+      {
+        name: 'Análise de Inscrição',
+        order: 1,
+        description: 'Verificação de documentos do produtor',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['DAP', 'Atestado de Sanidade'],
+        requiredFormFields: ['produtos_comercializar', 'tipo_banca'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Validação Sanitária',
+        order: 2,
+        description: 'Verificação de conformidade sanitária',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_sanitario'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Alocação de Espaço',
+        order: 3,
+        description: 'Definição de local na feira',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['numero_banca', 'localizacao_feira'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Confirmação',
+        order: 4,
+        description: 'Confirmação da inscrição',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  LICENCA_EVENTOS_RURAIS: {
+    moduleType: 'LICENCA_EVENTOS_RURAIS',
+    name: 'Workflow - Licença para Eventos Rurais',
+    description: 'Fluxo para licenciamento de eventos em área rural',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Verificação de documentos do evento',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto do Evento', 'CPF/CNPJ Organizador', 'Comprovante de Local'],
+        requiredFormFields: ['tipo_evento', 'data_evento', 'publico_estimado'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria do Local',
+        order: 2,
+        description: 'Vistoria técnica no local do evento',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['parecer_vistoria', 'infraestrutura'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Segurança',
+        order: 3,
+        description: 'Avaliação de segurança e sanitária',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['plano_seguranca', 'plano_sanitario'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Licença',
+        order: 4,
+        description: 'Emissão da licença do evento',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  ANALISE_SOLO: {
+    moduleType: 'ANALISE_SOLO',
+    name: 'Workflow - Análise de Solo',
+    description: 'Fluxo para solicitação de análise de solo',
+    defaultSLA: 20,
+    stages: [
+      {
+        name: 'Registro de Solicitação',
+        order: 1,
+        description: 'Registro e validação da solicitação',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade'],
+        requiredFormFields: ['tipo_analise', 'area_amostra'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Agendamento de Coleta',
+        order: 2,
+        description: 'Agendamento da coleta de amostras',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['data_coleta', 'tecnico_responsavel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Laboratorial',
+        order: 3,
+        description: 'Análise das amostras em laboratório',
+        slaDays: 10,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['resultados_analise'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Laudo',
+        order: 4,
+        description: 'Emissão do laudo técnico',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  ATENDIMENTOS_AGRICULTURA: {
+    moduleType: 'ATENDIMENTOS_AGRICULTURA',
+    name: 'Workflow - Atendimentos de Agricultura',
+    description: 'Fluxo para atendimentos gerais da agricultura',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Recepção',
+        order: 1,
+        description: 'Recepção e triagem do atendimento',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_atendimento', 'descricao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 2,
+        description: 'Análise técnica da demanda',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Atendimento',
+        order: 3,
+        description: 'Execução do atendimento',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['providencias_tomadas'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
       {
         name: 'Finalização',
         order: 4,
-        description: 'Emissão de documentos finais',
+        description: 'Finalização e feedback',
         slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  SOLICITACAO_MAQUINAS: {
+    moduleType: 'SOLICITACAO_MAQUINAS',
+    name: 'Workflow - Solicitação de Máquinas Agrícolas',
+    description: 'Fluxo para solicitação de máquinas e equipamentos',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Verificação de elegibilidade',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['DAP', 'Comprovante de Propriedade'],
+        requiredFormFields: ['tipo_maquina', 'area_trabalho', 'finalidade'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Prévia',
+        order: 2,
+        description: 'Vistoria da área a ser trabalhada',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['parecer_vistoria', 'viabilidade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Agendamento',
+        order: 3,
+        description: 'Agendamento da máquina',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['data_agendamento', 'maquina_alocada', 'operador'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Confirmação',
+        order: 4,
+        description: 'Confirmação do agendamento',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       }
@@ -235,50 +1128,114 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
   },
 
   // ========== ASSISTÊNCIA SOCIAL ==========
-  SOLICITACAO_BENEFICIO: {
-    moduleType: 'SOLICITACAO_BENEFICIO',
-    name: 'Workflow - Solicitação de Benefícios',
-    description: 'Fluxo para solicitação de benefícios sociais',
-    defaultSLA: 10,
+  ATENDIMENTO_CRAS: {
+    moduleType: 'ATENDIMENTO_CRAS',
+    name: 'Workflow - Atendimento CRAS',
+    description: 'Fluxo para atendimentos no CRAS',
+    defaultSLA: 5,
     stages: [
       {
-        name: 'Triagem',
+        name: 'Acolhimento',
         order: 1,
-        description: 'Triagem inicial e verificação de elegibilidade',
-        slaDays: 2,
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Comprovante de Residência'],
-        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        description: 'Acolhimento inicial e escuta',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_demanda', 'situacao_familiar'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
         canSkip: false
       },
       {
-        name: 'Análise Socioeconômica',
+        name: 'Avaliação Social',
         order: 2,
-        description: 'Análise detalhada da situação socioeconômica',
-        slaDays: 3,
+        description: 'Avaliação pela assistente social',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_social', 'encaminhamentos'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Encaminhamento',
+        order: 3,
+        description: 'Encaminhamento para serviços apropriados',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['servicos_encaminhados'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Acompanhamento',
+        order: 4,
+        description: 'Acompanhamento do caso',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  AUXILIO_EMERGENCIAL: {
+    moduleType: 'AUXILIO_EMERGENCIAL',
+    name: 'Workflow - Auxílio Emergencial',
+    description: 'Fluxo para solicitação de auxílio emergencial',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Análise de Documentos',
+        order: 1,
+        description: 'Verificação de documentos e elegibilidade',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredFormFields: ['composicao_familiar', 'renda_per_capita'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Visita Domiciliar',
-        order: 3,
-        description: 'Visita domiciliar se necessário',
-        slaDays: 3,
-        allowedActions: ['APPROVE', 'REJECT'],
-        canSkip: true
+        name: 'Avaliação Socioeconômica',
+        order: 2,
+        description: 'Avaliação da situação socioeconômica',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_social', 'situacao_emergencial'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
       },
       {
-        name: 'Aprovação Final',
-        order: 4,
-        description: 'Aprovação final do benefício',
-        slaDays: 1,
+        name: 'Aprovação',
+        order: 3,
+        description: 'Aprovação do auxílio',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['valor_auxilio', 'periodo'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Concessão',
-        order: 5,
-        description: 'Concessão do benefício',
+        name: 'Liberação',
+        order: 4,
+        description: 'Liberação do benefício',
         slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       }
@@ -292,54 +1249,1353 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'Recepção',
+        name: 'Coleta de Documentos',
         order: 1,
-        description: 'Recepção e verificação de documentos',
+        description: 'Verificação de documentos da família',
         slaDays: 1,
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Certidão de Nascimento'],
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF de todos', 'Comprovante de Residência', 'Certidões de Nascimento'],
+        requiredFormFields: ['composicao_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
-        name: 'Entrevista',
+        name: 'Preenchimento do Cadastro',
         order: 2,
-        description: 'Entrevista e preenchimento do formulário',
-        slaDays: 1,
-        allowedActions: ['APPROVE'],
-        canSkip: false
-      },
-      {
-        name: 'Inclusão no Sistema',
-        order: 3,
-        description: 'Inclusão dos dados no sistema CadÚnico',
+        description: 'Preenchimento completo do cadastro',
         slaDays: 2,
-        allowedActions: ['APPROVE'],
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['dados_familia', 'renda_familiar', 'condicoes_moradia'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
-        name: 'Entrega de Comprovante',
-        order: 4,
-        description: 'Entrega do comprovante de cadastro',
+        name: 'Validação',
+        order: 3,
+        description: 'Validação dos dados cadastrados',
         slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Finalização',
+        order: 4,
+        description: 'Envio para base nacional',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       }
     ]
   },
 
-  // ========== PLANEJAMENTO URBANO ==========
-  ALVARA_CONSTRUCAO: {
-    moduleType: 'ALVARA_CONSTRUCAO',
-    name: 'Workflow - Alvará de Construção',
-    description: 'Fluxo para emissão de alvará de construção',
+  INSCRICAO_GRUPO_OFICINA: {
+    moduleType: 'INSCRICAO_GRUPO_OFICINA',
+    name: 'Workflow - Inscrição em Grupo/Oficina Social',
+    description: 'Fluxo para inscrição em grupos e oficinas',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Análise de Inscrição',
+        order: 1,
+        description: 'Verificação de documentos e elegibilidade',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
+        requiredFormFields: ['grupo_interesse', 'faixa_etaria'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Avaliação de Perfil',
+        order: 2,
+        description: 'Avaliação do perfil do candidato',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação de Vagas',
+        order: 3,
+        description: 'Verificação de disponibilidade',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['turma_disponivel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Confirmação',
+        order: 4,
+        description: 'Confirmação da inscrição',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  INSCRICAO_PROGRAMA_SOCIAL: {
+    moduleType: 'INSCRICAO_PROGRAMA_SOCIAL',
+    name: 'Workflow - Inscrição em Programa Social',
+    description: 'Fluxo para inscrição em programas sociais',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentos obrigatórios',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredFormFields: ['programa_solicitado'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Avaliação Socioeconômica',
+        order: 2,
+        description: 'Avaliação da situação familiar',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_social', 'perfil_familiar'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Elegibilidade',
+        order: 3,
+        description: 'Verificação de critérios do programa',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['atende_criterios'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro no Programa',
+        order: 4,
+        description: 'Efetivação do cadastro',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  SOLICITACAO_BENEFICIO: {
+    moduleType: 'SOLICITACAO_BENEFICIO',
+    name: 'Workflow - Solicitação de Benefício',
+    description: 'Fluxo para solicitação de benefícios sociais',
+    defaultSLA: 12,
+    stages: [
+      {
+        name: 'Análise de Documentos',
+        order: 1,
+        description: 'Verificação de documentação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Documentos Específicos'],
+        requiredFormFields: ['tipo_beneficio'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Estudo Social',
+        order: 2,
+        description: 'Estudo socioeconômico',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['relatorio_social', 'conclusao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação Gestão',
+        order: 3,
+        description: 'Aprovação pela gestão',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['parecer_gestor'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Concessão',
+        order: 4,
+        description: 'Concessão do benefício',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  VISITA_DOMICILIAR: {
+    moduleType: 'VISITA_DOMICILIAR',
+    name: 'Workflow - Visita Domiciliar',
+    description: 'Fluxo para agendamento e realização de visitas domiciliares',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Análise da demanda de visita',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['motivo_visita', 'endereco_completo'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Agendamento',
+        order: 2,
+        description: 'Agendamento da visita',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['data_visita', 'tecnico_responsavel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Realização da Visita',
+        order: 3,
+        description: 'Execução da visita domiciliar',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['relatorio_visita', 'condicoes_moradia'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Elaboração de Relatório',
+        order: 4,
+        description: 'Elaboração do relatório técnico',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== CULTURA ==========
+  CADASTRO_ARTISTA: {
+    moduleType: 'CADASTRO_ARTISTA',
+    name: 'Workflow - Cadastro de Artista',
+    description: 'Fluxo para cadastro de artistas locais',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentos pessoais',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
+        requiredFormFields: ['nome_artistico', 'categoria_artistica'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Portfólio',
+        order: 2,
+        description: 'Avaliação do portfólio artístico',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['area_atuacao', 'experiencia'],
+        requiredDocumentTypes: ['Portfólio', 'Curriculum Artístico'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Validação',
+        order: 3,
+        description: 'Validação pela comissão de cultura',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Carteira',
+        order: 4,
+        description: 'Emissão da carteira de artista',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CADASTRO_EVENTO_CULTURAL: {
+    moduleType: 'CADASTRO_EVENTO_CULTURAL',
+    name: 'Workflow - Cadastro de Evento Cultural',
+    description: 'Fluxo para cadastro de eventos culturais',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise de Proposta',
+        order: 1,
+        description: 'Verificação da proposta do evento',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto do Evento', 'CPF/CNPJ Responsável'],
+        requiredFormFields: ['nome_evento', 'data_evento', 'tipo_evento', 'publico_estimado'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 2,
+        description: 'Análise técnica da viabilidade',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico', 'infraestrutura_necessaria'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria de Local',
+        order: 3,
+        description: 'Vistoria do local do evento',
+        slaDays: 4,
+        availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['parecer_vistoria'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação final do evento',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Publicação',
+        order: 5,
+        description: 'Publicação no calendário cultural',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CADASTRO_GRUPO_ARTISTICO: {
+    moduleType: 'CADASTRO_GRUPO_ARTISTICO',
+    name: 'Workflow - Cadastro de Grupo Artístico',
+    description: 'Fluxo para cadastro de grupos artísticos',
+    defaultSLA: 12,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentos do grupo',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF do Representante', 'Estatuto/Regimento', 'Lista de Integrantes'],
+        requiredFormFields: ['nome_grupo', 'categoria', 'numero_integrantes'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Portfólio',
+        order: 2,
+        description: 'Avaliação do trabalho do grupo',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['area_atuacao', 'historico_grupo'],
+        requiredDocumentTypes: ['Portfólio do Grupo', 'Material Promocional'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Validação',
+        order: 3,
+        description: 'Validação pela secretaria de cultura',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Certificação',
+        order: 4,
+        description: 'Emissão de certificado de cadastro',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  INSCRICAO_OFICINA: {
+    moduleType: 'INSCRICAO_OFICINA',
+    name: 'Workflow - Inscrição em Oficina Cultural',
+    description: 'Fluxo para inscrição em oficinas culturais',
+    defaultSLA: 8,
+    stages: [
+      {
+        name: 'Análise de Inscrição',
+        order: 1,
+        description: 'Verificação de documentos',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
+        requiredFormFields: ['oficina_escolhida', 'faixa_etaria'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação de Vagas',
+        order: 2,
+        description: 'Verificação de disponibilidade',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['turma_disponivel', 'horario'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Confirmação',
+        order: 3,
+        description: 'Confirmação da inscrição',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Matrícula',
+        order: 4,
+        description: 'Efetivação da matrícula',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  REGISTRO_MANIFESTACAO_CULTURAL: {
+    moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL',
+    name: 'Workflow - Registro de Manifestação Cultural',
+    description: 'Fluxo para registro de manifestações culturais',
     defaultSLA: 20,
     stages: [
       {
-        name: 'Protocolo',
+        name: 'Análise de Proposta',
         order: 1,
-        description: 'Protocolo da documentação',
+        description: 'Verificação da proposta de registro',
+        slaDays: 5,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Dossiê da Manifestação', 'Documentos do Responsável'],
+        requiredFormFields: ['nome_manifestacao', 'tipo', 'historico'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Pesquisa e Documentação',
+        order: 2,
+        description: 'Levantamento histórico e documental',
+        slaDays: 8,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['pesquisa_historica', 'documentacao_fotografica'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Análise da Comissão',
+        order: 3,
+        description: 'Avaliação pela comissão de patrimônio',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_comissao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Registro Oficial',
+        order: 4,
+        description: 'Registro oficial da manifestação',
         slaDays: 2,
-        requiredDocumentTypes: ['Projeto Arquitetônico', 'Matrícula do Imóvel', 'ART', 'Comprovante de Propriedade'],
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  RESERVA_ESPACO_CULTURAL: {
+    moduleType: 'RESERVA_ESPACO_CULTURAL',
+    name: 'Workflow - Reserva de Espaço Cultural',
+    description: 'Fluxo para reserva de espaços culturais',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Verificação da solicitação de reserva',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['CPF/CNPJ', 'Projeto do Evento'],
+        requiredFormFields: ['espaco_solicitado', 'data_evento', 'tipo_atividade'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação de Disponibilidade',
+        order: 2,
+        description: 'Verificação de agenda do espaço',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['disponibilidade_confirmada'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Prévia',
+        order: 3,
+        description: 'Vistoria e orientações sobre o espaço',
+        slaDays: 3,
+        availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['termo_responsabilidade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Confirmação',
+        order: 4,
+        description: 'Confirmação da reserva',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Liberação do Espaço',
+        order: 5,
+        description: 'Liberação das chaves/acesso',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  APOIO_CULTURAL: {
+    moduleType: 'APOIO_CULTURAL',
+    name: 'Workflow - Apoio Cultural',
+    description: 'Fluxo para solicitação de apoio cultural',
+    defaultSLA: 20,
+    stages: [
+      {
+        name: 'Análise de Projeto',
+        order: 1,
+        description: 'Verificação do projeto cultural',
+        slaDays: 5,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto Cultural', 'Orçamento', 'CPF/CNPJ'],
+        requiredFormFields: ['tipo_apoio', 'valor_solicitado'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 2,
+        description: 'Avaliação técnica do projeto',
+        slaDays: 7,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico', 'relevancia_cultural'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Orçamentária',
+        order: 3,
+        description: 'Análise da viabilidade orçamentária',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_orcamentario', 'valor_aprovado'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Formalização',
+        order: 4,
+        description: 'Formalização do apoio',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  ATENDIMENTOS_CULTURA: {
+    moduleType: 'ATENDIMENTOS_CULTURA',
+    name: 'Workflow - Atendimentos de Cultura',
+    description: 'Fluxo para atendimentos gerais da cultura',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Recepção',
+        order: 1,
+        description: 'Recepção e triagem do atendimento',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_atendimento', 'descricao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Análise',
+        order: 2,
+        description: 'Análise da demanda',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Atendimento',
+        order: 3,
+        description: 'Execução do atendimento',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['providencias_tomadas'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Finalização',
+        order: 4,
+        description: 'Finalização e feedback',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  PROJETO_CULTURAL: {
+    moduleType: 'PROJETO_CULTURAL',
+    name: 'Workflow - Projeto Cultural',
+    description: 'Fluxo para aprovação de projetos culturais',
+    defaultSLA: 25,
+    stages: [
+      {
+        name: 'Análise de Proposta',
+        order: 1,
+        description: 'Verificação da proposta de projeto',
+        slaDays: 5,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto Completo', 'Orçamento Detalhado', 'Cronograma', 'CPF/CNPJ'],
+        requiredFormFields: ['titulo_projeto', 'objetivo', 'publico_alvo'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 2,
+        description: 'Avaliação técnica do projeto',
+        slaDays: 8,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico', 'viabilidade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Financeira',
+        order: 3,
+        description: 'Análise da viabilidade financeira',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_financeiro'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação Final',
+        order: 4,
+        description: 'Aprovação pela secretaria',
+        slaDays: 5,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Formalização',
+        order: 5,
+        description: 'Formalização e publicação',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== EDUCAÇÃO ==========
+  CADASTRO_PROFESSOR: {
+    moduleType: 'CADASTRO_PROFESSOR',
+    name: 'Workflow - Cadastro de Professor',
+    description: 'Fluxo para cadastro de professores na rede municipal',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Validação Documental',
+        order: 1,
+        description: 'Verificação de documentos do professor',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['RG', 'CPF', 'Diploma', 'Certificado de Conclusão', 'Comprovante de Residência'],
+        requiredFormFields: ['nome_completo', 'disciplina', 'nivel_ensino'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Curricular',
+        order: 2,
+        description: 'Análise do currículo e formação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_pedagogico', 'formacao_adequada'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação RH',
+        order: 3,
+        description: 'Aprovação pelo departamento de recursos humanos',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['situacao_cadastral'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro Sistema',
+        order: 4,
+        description: 'Cadastro no sistema educacional',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CONSULTA_FREQUENCIA_NOTAS: {
+    moduleType: 'CONSULTA_FREQUENCIA_NOTAS',
+    name: 'Workflow - Consulta Frequência e Notas',
+    description: 'Fluxo para solicitação de consulta de frequência e notas',
+    defaultSLA: 3,
+    stages: [
+      {
+        name: 'Validação Solicitante',
+        order: 1,
+        description: 'Verificação de vínculo do solicitante com o aluno',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['nome_aluno', 'matricula', 'vinculo'],
+        requiredDocumentTypes: ['Documento de Identidade'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Geração de Relatório',
+        order: 2,
+        description: 'Geração do relatório de frequência e notas',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['periodo_consulta'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Entrega',
+        order: 3,
+        description: 'Disponibilização do relatório',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  INSCRICAO_CURSO_LIVRE: {
+    moduleType: 'INSCRICAO_CURSO_LIVRE',
+    name: 'Workflow - Inscrição em Curso Livre',
+    description: 'Fluxo para inscrição em cursos livres oferecidos pela prefeitura',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Análise de Requisitos',
+        order: 1,
+        description: 'Verificação de requisitos para o curso',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['nome_curso', 'turma', 'turno'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Escolaridade'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação de Vagas',
+        order: 2,
+        description: 'Verificação de disponibilidade de vagas',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['vagas_disponiveis'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Matrícula',
+        order: 3,
+        description: 'Efetivação da matrícula',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['numero_matricula'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Notificação',
+        order: 4,
+        description: 'Notificação ao aluno sobre a matrícula',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  REGISTRO_OCORRENCIA_ESCOLAR: {
+    moduleType: 'REGISTRO_OCORRENCIA_ESCOLAR',
+    name: 'Workflow - Registro de Ocorrência Escolar',
+    description: 'Fluxo para registro e tratamento de ocorrências escolares',
+    defaultSLA: 5,
+    stages: [
+      {
+        name: 'Recepção da Ocorrência',
+        order: 1,
+        description: 'Registro inicial da ocorrência',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_ocorrencia', 'descricao', 'envolvidos'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Pedagógica',
+        order: 2,
+        description: 'Análise pela equipe pedagógica',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_pedagogico', 'providencias'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Providências',
+        order: 3,
+        description: 'Execução das providências necessárias',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['acoes_tomadas'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Acompanhamento',
+        order: 4,
+        description: 'Acompanhamento e fechamento',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  SOLICITACAO_DOCUMENTO_ESCOLAR: {
+    moduleType: 'SOLICITACAO_DOCUMENTO_ESCOLAR',
+    name: 'Workflow - Solicitação de Documento Escolar',
+    description: 'Fluxo para solicitação de documentos escolares (histórico, declarações, etc)',
+    defaultSLA: 5,
+    stages: [
+      {
+        name: 'Validação',
+        order: 1,
+        description: 'Validação da solicitação e documentos',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_documento', 'nome_aluno', 'matricula'],
+        requiredDocumentTypes: ['Documento de Identidade'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Busca de Dados',
+        order: 2,
+        description: 'Busca de informações nos arquivos escolares',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['dados_localizados'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão',
+        order: 3,
+        description: 'Emissão do documento solicitado',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Entrega',
+        order: 4,
+        description: 'Disponibilização para retirada',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== ESPORTES ==========
+  CADASTRO_ATLETA: {
+    moduleType: 'CADASTRO_ATLETA',
+    name: 'Workflow - Cadastro de Atleta',
+    description: 'Fluxo para cadastro de atletas em programas municipais',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Validação Documental',
+        order: 1,
+        description: 'Verificação de documentos do atleta',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['RG', 'CPF', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredFormFields: ['nome_completo', 'modalidade', 'categoria'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Avaliação Física',
+        order: 2,
+        description: 'Avaliação de aptidão física',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_medico', 'apto'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação Técnica',
+        order: 3,
+        description: 'Aprovação pelo técnico responsável',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro Sistema',
+        order: 4,
+        description: 'Cadastro no sistema de esportes',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  INSCRICAO_COMPETICAO: {
+    moduleType: 'INSCRICAO_COMPETICAO',
+    name: 'Workflow - Inscrição em Competição',
+    description: 'Fluxo para inscrição em competições esportivas municipais',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Validação de Inscrição',
+        order: 1,
+        description: 'Verificação de requisitos para participação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['nome_competicao', 'modalidade', 'categoria'],
+        requiredDocumentTypes: ['Ficha de Inscrição', 'Atestado Médico'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação de Vagas',
+        order: 2,
+        description: 'Verificação de disponibilidade',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['vagas_disponiveis'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Homologação',
+        order: 3,
+        description: 'Homologação da inscrição',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['numero_inscricao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Notificação',
+        order: 4,
+        description: 'Notificação sobre a inscrição',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  INSCRICAO_ESCOLINHA: {
+    moduleType: 'INSCRICAO_ESCOLINHA',
+    name: 'Workflow - Inscrição em Escolinha Esportiva',
+    description: 'Fluxo para inscrição em escolinhas esportivas municipais',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Análise de Requisitos',
+        order: 1,
+        description: 'Verificação de requisitos e faixa etária',
+        slaDays: 2,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['modalidade', 'turma', 'turno'],
+        requiredDocumentTypes: ['Certidão de Nascimento', 'Atestado Médico', 'Comprovante de Residência'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação de Vagas',
+        order: 2,
+        description: 'Verificação de disponibilidade de vagas',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['vagas_disponiveis'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Matrícula',
+        order: 3,
+        description: 'Efetivação da matrícula',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['numero_matricula'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Notificação',
+        order: 4,
+        description: 'Notificação ao responsável',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  RESERVA_ESPACO_ESPORTIVO: {
+    moduleType: 'RESERVA_ESPACO_ESPORTIVO',
+    name: 'Workflow - Reserva de Espaço Esportivo',
+    description: 'Fluxo para reserva de quadras, ginásios e espaços esportivos',
+    defaultSLA: 5,
+    stages: [
+      {
+        name: 'Análise de Disponibilidade',
+        order: 1,
+        description: 'Verificação de disponibilidade do espaço',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['espaco_solicitado', 'data', 'horario', 'finalidade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Uso',
+        order: 2,
+        description: 'Análise da finalidade de uso',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_uso'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Autorização',
+        order: 3,
+        description: 'Autorização da reserva',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Confirmação',
+        order: 4,
+        description: 'Confirmação e entrega de autorização',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== HABITAÇÃO ==========
+  AUTORIZACAO_CONSTRUCAO: {
+    moduleType: 'AUTORIZACAO_CONSTRUCAO',
+    name: 'Workflow - Autorização para Construção',
+    description: 'Fluxo para autorização de construções',
+    defaultSLA: 30,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentação técnica',
+        slaDays: 7,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto Arquitetônico', 'Matrícula do Imóvel', 'ART/RRT', 'Comprovante de Propriedade'],
+        requiredFormFields: ['area_construir', 'endereco', 'tipo_construcao'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -348,64 +2604,2201 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         order: 2,
         description: 'Análise técnica do projeto',
         slaDays: 10,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico', 'conformidade_plano_diretor'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
         name: 'Vistoria',
         order: 3,
-        description: 'Vistoria do terreno',
+        description: 'Vistoria no local',
         slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_vistoria'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação final',
+        slaDays: 5,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
       },
       {
         name: 'Emissão de Alvará',
-        order: 4,
+        order: 5,
         description: 'Emissão do alvará de construção',
         slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       }
     ]
   },
 
-  ALVARA_FUNCIONAMENTO: {
-    moduleType: 'ALVARA_FUNCIONAMENTO',
-    name: 'Workflow - Alvará de Funcionamento',
-    description: 'Fluxo para emissão de alvará de funcionamento',
-    defaultSLA: 15,
+  INSCRICAO_PROGRAMA_HABITACIONAL: {
+    moduleType: 'INSCRICAO_PROGRAMA_HABITACIONAL',
+    name: 'Workflow - Inscrição em Programa Habitacional',
+    description: 'Fluxo para inscrição em programas de habitação popular',
+    defaultSLA: 20,
     stages: [
       {
-        name: 'Protocolo',
+        name: 'Validação Documental',
         order: 1,
-        description: 'Protocolo da solicitação',
-        slaDays: 2,
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'IPTU', 'Projeto de Prevenção contra Incêndio'],
+        description: 'Verificação de documentos',
+        slaDays: 5,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'Certidão de Casamento/Nascimento'],
+        requiredFormFields: ['composicao_familiar', 'renda_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Análise Documental',
+        name: 'Análise Socioeconômica',
         order: 2,
-        description: 'Análise da documentação apresentada',
+        description: 'Avaliação da situação socioeconômica',
+        slaDays: 7,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_social', 'pontuacao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Domiciliar',
+        order: 3,
+        description: 'Vistoria na residência atual',
         slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_vistoria'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro',
+        order: 4,
+        description: 'Cadastro no programa habitacional',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Notificação',
+        order: 5,
+        description: 'Notificação sobre o cadastro',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  REGULARIZACAO_FUNDIARIA: {
+    moduleType: 'REGULARIZACAO_FUNDIARIA',
+    name: 'Workflow - Regularização Fundiária',
+    description: 'Fluxo para regularização de terrenos e construções',
+    defaultSLA: 60,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentação',
+        slaDays: 10,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Documento Pessoal', 'Comprovante de Posse', 'Planta do Imóvel'],
+        requiredFormFields: ['tempo_ocupacao', 'area_terreno'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Técnica',
+        order: 2,
+        description: 'Vistoria no local',
+        slaDays: 15,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_tecnico', 'area_medida'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Jurídica',
+        order: 3,
+        description: 'Análise jurídica da situação',
+        slaDays: 20,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_juridico'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação final da regularização',
+        slaDays: 10,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Documentos',
+        order: 5,
+        description: 'Emissão da documentação de regularização',
+        slaDays: 5,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  SOLICITACAO_AUXILIO_ALUGUEL: {
+    moduleType: 'SOLICITACAO_AUXILIO_ALUGUEL',
+    name: 'Workflow - Solicitação de Auxílio Aluguel',
+    description: 'Fluxo para solicitação de auxílio aluguel',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentos',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Contrato de Aluguel', 'Comprovante de Residência'],
+        requiredFormFields: ['valor_aluguel', 'renda_familiar'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Socioeconômica',
+        order: 2,
+        description: 'Avaliação da situação socioeconômica',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_social', 'situacao_emergencial'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
         name: 'Vistoria',
         order: 3,
-        description: 'Vistoria do estabelecimento',
-        slaDays: 5,
+        description: 'Vistoria no imóvel',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_vistoria'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação do auxílio',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['valor_aprovado', 'prazo_beneficio'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro Benefício',
+        order: 5,
+        description: 'Cadastro no sistema de benefícios',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  VISTORIA_HABITACIONAL: {
+    moduleType: 'VISTORIA_HABITACIONAL',
+    name: 'Workflow - Vistoria Habitacional',
+    description: 'Fluxo para vistoria de condições habitacionais',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Agendamento',
+        order: 1,
+        description: 'Agendamento da vistoria',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['endereco', 'motivo_vistoria', 'data_preferencial'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Realização da Vistoria',
+        order: 2,
+        description: 'Execução da vistoria técnica',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_tecnico', 'fotos'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 3,
+        description: 'Análise dos resultados da vistoria',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_final', 'recomendacoes'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Laudo',
+        order: 4,
+        description: 'Emissão do laudo de vistoria',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== MEIO AMBIENTE ==========
+  AUTORIZACAO_PODA_ARVORES: {
+    moduleType: 'AUTORIZACAO_PODA_ARVORES',
+    name: 'Workflow - Autorização para Poda de Árvores',
+    description: 'Fluxo para autorização de poda ou supressão de árvores',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise do Pedido',
+        order: 1,
+        description: 'Análise inicial da solicitação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['endereco', 'tipo_solicitacao', 'motivo'],
+        requiredDocumentTypes: ['Fotos da Árvore', 'Comprovante de Propriedade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Emissão',
+        name: 'Vistoria Técnica',
+        order: 2,
+        description: 'Vistoria no local por engenheiro ambiental',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_tecnico', 'especie', 'estado_arvore'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Ambiental',
+        order: 2,
+        description: 'Análise de impacto ambiental',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_ambiental', 'medidas_compensatorias'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Autorização',
         order: 4,
-        description: 'Emissão do alvará de funcionamento',
+        description: 'Emissão de autorização',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Notificação',
+        order: 5,
+        description: 'Notificação ao solicitante',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  PROGRAMA_AMBIENTAL: {
+    moduleType: 'PROGRAMA_AMBIENTAL',
+    name: 'Workflow - Programa Ambiental',
+    description: 'Fluxo para inscrição em programas ambientais',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Inscrição',
+        order: 1,
+        description: 'Análise da inscrição',
         slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['nome_programa', 'tipo_participacao'],
+        requiredDocumentTypes: ['Documento de Identidade'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Requisitos',
+        order: 2,
+        description: 'Verificação de requisitos',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['atende_requisitos'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro',
+        order: 3,
+        description: 'Cadastro no programa',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Notificação',
+        order: 4,
+        description: 'Notificação sobre o cadastro',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  DENUNCIA_AMBIENTAL: {
+    moduleType: 'DENUNCIA_AMBIENTAL',
+    name: 'Workflow - Denúncia Ambiental',
+    description: 'Fluxo para processamento de denúncias ambientais',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Recepção',
+        order: 1,
+        description: 'Recepção e classificação da denúncia',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_denuncia', 'descricao', 'localizacao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria',
+        order: 2,
+        description: 'Vistoria no local denunciado',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_vistoria', 'irregularidade_confirmada'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 3,
+        description: 'Análise técnica da situação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico', 'providencias'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Providências',
+        order: 4,
+        description: 'Execução de providências',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['acoes_tomadas'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Fechamento',
+        order: 5,
+        description: 'Fechamento da denúncia',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  LICENCIAMENTO_AMBIENTAL: {
+    moduleType: 'LICENCIAMENTO_AMBIENTAL',
+    name: 'Workflow - Licenciamento Ambiental',
+    description: 'Fluxo para licenciamento ambiental de atividades',
+    defaultSLA: 45,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentação',
+        slaDays: 10,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto', 'EIA/RIMA', 'ART', 'Comprovante de Propriedade'],
+        requiredFormFields: ['tipo_atividade', 'porte_empreendimento'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Técnica',
+        order: 2,
+        description: 'Vistoria no local',
+        slaDays: 10,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_tecnico'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Ambiental',
+        order: 3,
+        description: 'Análise de impacto ambiental',
+        slaDays: 15,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_ambiental', 'condicionantes'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação final',
+        slaDays: 5,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Licença',
+        order: 5,
+        description: 'Emissão da licença ambiental',
+        slaDays: 5,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  VISTORIA_AMBIENTAL: {
+    moduleType: 'VISTORIA_AMBIENTAL',
+    name: 'Workflow - Vistoria Ambiental',
+    description: 'Fluxo para vistoria ambiental',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Agendamento',
+        order: 1,
+        description: 'Agendamento da vistoria',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['endereco', 'motivo_vistoria', 'data_preferencial'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Realização',
+        order: 2,
+        description: 'Realização da vistoria',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_vistoria', 'fotos'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 3,
+        description: 'Análise dos resultados',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico', 'recomendacoes'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Laudo',
+        order: 4,
+        description: 'Emissão do laudo',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== OBRAS PÚBLICAS ==========
+  AUTORIZACAO_DEMOLICAO: {
+    moduleType: 'AUTORIZACAO_DEMOLICAO',
+    name: 'Workflow - Autorização para Demolição',
+    description: 'Fluxo para autorização de demolição de edificações',
+    defaultSLA: 20,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentação',
+        slaDays: 5,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto de Demolição', 'ART', 'Matrícula do Imóvel', 'Comprovante de Propriedade'],
+        requiredFormFields: ['endereco', 'area_demolir'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Técnica',
+        order: 2,
+        description: 'Vistoria no local',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_tecnico', 'riscos'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Segurança',
+        order: 3,
+        description: 'Análise de segurança e impactos',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_seguranca', 'medidas_protecao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação final',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Alvará',
+        order: 5,
+        description: 'Emissão do alvará de demolição',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  AUTORIZACAO_INTERVENCAO_VIA: {
+    moduleType: 'AUTORIZACAO_INTERVENCAO_VIA',
+    name: 'Workflow - Autorização para Intervenção em Via Pública',
+    description: 'Fluxo para autorização de intervenções em vias públicas',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise do Pedido',
+        order: 1,
+        description: 'Análise inicial da solicitação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['endereco', 'tipo_intervencao', 'periodo'],
+        requiredDocumentTypes: ['Projeto', 'ART', 'Plano de Sinalização'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 2,
+        description: 'Análise técnica do projeto',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico', 'impacto_transito'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Segurança',
+        order: 3,
+        description: 'Análise de segurança viária',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_seguranca'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação final',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Autorização',
+        order: 5,
+        description: 'Emissão da autorização',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  SOLICITACAO_REPARO_VIA: {
+    moduleType: 'SOLICITACAO_REPARO_VIA',
+    name: 'Workflow - Solicitação de Reparo em Via Pública',
+    description: 'Fluxo para solicitação de reparos em vias públicas',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Recepção',
+        order: 1,
+        description: 'Recepção da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['endereco', 'tipo_reparo', 'descricao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria',
+        order: 2,
+        description: 'Vistoria no local',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_vistoria', 'urgencia'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Orçamento',
+        order: 3,
+        description: 'Elaboração de orçamento',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['orcamento', 'prazo_execucao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação',
+        order: 4,
+        description: 'Aprovação para execução',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Programação',
+        order: 5,
+        description: 'Programação da execução',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== PLANEJAMENTO URBANO ==========
+  PARCELAMENTO_SOLO: {
+    moduleType: 'PARCELAMENTO_SOLO',
+    name: 'Workflow - Parcelamento de Solo',
+    description: 'Fluxo para aprovação de parcelamento de solo urbano',
+    defaultSLA: 60,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentação',
+        slaDays: 15,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto de Parcelamento', 'Matrícula', 'Planta Topográfica', 'Memorial Descritivo', 'ART'],
+        requiredFormFields: ['area_total', 'numero_lotes'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Urbanística',
+        order: 2,
+        description: 'Análise de conformidade urbanística',
+        slaDays: 15,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_urbanistico', 'conformidade_plano_diretor'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Ambiental',
+        order: 3,
+        description: 'Análise de impacto ambiental',
+        slaDays: 10,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_ambiental'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Infraestrutura',
+        order: 4,
+        description: 'Análise de infraestrutura necessária',
+        slaDays: 10,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_infraestrutura'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação Final',
+        order: 5,
+        description: 'Aprovação final do parcelamento',
+        slaDays: 5,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Registro',
+        order: 6,
+        description: 'Registro e formalização',
+        slaDays: 5,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  APROVACAO_PROJETO_ARQUITETONICO: {
+    moduleType: 'APROVACAO_PROJETO_ARQUITETONICO',
+    name: 'Workflow - Aprovação de Projeto Arquitetônico',
+    description: 'Fluxo para análise e aprovação de projetos arquitetônicos',
+    defaultSLA: 30,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentação técnica',
+        slaDays: 5,
+        availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto Arquitetônico', 'ART/RRT', 'Matrícula do Imóvel', 'Planta de Situação'],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 2,
+        description: 'Verificação de conformidade com normas',
+        slaDays: 10,
+        availableTabs: ['resumo', 'documentos', 'location', 'pendencias', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria no Local',
+        order: 3,
+        description: 'Inspeção técnica in loco',
+        slaDays: 7,
+        availableTabs: ['resumo', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Parecer',
+        order: 4,
+        description: 'Avaliação do laudo técnico',
+        slaDays: 5,
+        availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação Final',
+        order: 5,
+        description: 'Emissão de alvará',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      }
+    ]
+  },
+
+  VIABILIDADE_URBANISTICA: {
+    moduleType: 'VIABILIDADE_URBANISTICA',
+    name: 'Workflow - Consulta de Viabilidade Urbanística',
+    description: 'Fluxo para análise de viabilidade de empreendimentos',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise de Documentos',
+        order: 1,
+        description: 'Verificação de documentação do imóvel',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Matrícula do Imóvel', 'Planta de Situação'],
+        requiredFormFields: ['endereco', 'area_terreno', 'tipo_empreendimento'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Urbanística',
+        order: 2,
+        description: 'Verificação de zoneamento e restrições',
+        slaDays: 7,
+        availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Parecer',
+        order: 3,
+        description: 'Elaboração de relatório técnico',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação Final',
+        order: 4,
+        description: 'Emissão de certidão',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  ALVARA_CONSTRUCAO: {
+    moduleType: 'ALVARA_CONSTRUCAO',
+    name: 'Workflow - Alvará de Construção',
+    description: 'Fluxo para emissão de alvará de construção',
+    defaultSLA: 45,
+    stages: [
+      {
+        name: 'Análise Documental',
+        order: 1,
+        description: 'Verificação de documentação completa',
+        slaDays: 7,
+        availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredDocumentTypes: ['Projeto Aprovado', 'ART de Execução', 'Matrícula do Imóvel', 'IPTU', 'Certidão de Viabilidade'],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 2,
+        description: 'Verificação de conformidade técnica',
+        slaDays: 15,
+        availableTabs: ['resumo', 'documentos', 'location', 'pendencias', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Prévia',
+        order: 3,
+        description: 'Inspeção do terreno',
+        slaDays: 10,
+        availableTabs: ['resumo', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Taxas',
+        order: 4,
+        description: 'Cálculo e verificação de taxas',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão do Alvará',
+        order: 5,
+        description: 'Liberação do alvará de construção',
+        slaDays: 8,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  DENUNCIA_CONSTRUCAO_IRREGULAR: {
+    moduleType: 'DENUNCIA_CONSTRUCAO_IRREGULAR',
+    name: 'Workflow - Denúncia de Construção Irregular',
+    description: 'Fluxo para processamento de denúncias de construções irregulares',
+    defaultSLA: 20,
+    stages: [
+      {
+        name: 'Recepção',
+        order: 1,
+        description: 'Recepção e análise da denúncia',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['endereco', 'descricao', 'tipo_irregularidade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria',
+        order: 2,
+        description: 'Vistoria no local denunciado',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['laudo_vistoria', 'irregularidade_confirmada'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 3,
+        description: 'Análise técnica da irregularidade',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_tecnico', 'gravidade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Notificação',
+        order: 4,
+        description: 'Notificação ao responsável',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'comunicacao',
+        requiredFormFields: ['prazo_regularizacao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Acompanhamento',
+        order: 5,
+        description: 'Acompanhamento da regularização',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['situacao_final'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Fechamento',
+        order: 6,
+        description: 'Fechamento do processo',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== SAÚDE ==========
+  CAMPANHAS_VACINACAO: {
+    moduleType: 'CAMPANHAS_VACINACAO',
+    name: 'Workflow - Campanhas de Vacinação',
+    description: 'Fluxo para registro de participação em campanhas de vacinação',
+    defaultSLA: 1,
+    stages: [
+      {
+        name: 'Cadastro',
+        order: 1,
+        description: 'Cadastro do cidadão na campanha',
+        slaDays: 0,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['nome_campanha', 'vacina', 'dose'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Aplicação',
+        order: 2,
+        description: 'Aplicação da vacina',
+        slaDays: 0,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['lote_vacina', 'profissional'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro',
+        order: 3,
+        description: 'Registro no sistema',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CONTROLE_MEDICAMENTOS: {
+    moduleType: 'CONTROLE_MEDICAMENTOS',
+    name: 'Workflow - Controle de Medicamentos',
+    description: 'Fluxo para controle e dispensação de medicamentos',
+    defaultSLA: 3,
+    stages: [
+      {
+        name: 'Análise de Receita',
+        order: 1,
+        description: 'Verificação da receita médica',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredFormFields: ['medicamento', 'dosagem', 'quantidade'],
+        requiredDocumentTypes: ['Receita Médica', 'CPF', 'Cartão SUS'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação de Estoque',
+        order: 2,
+        description: 'Verificação de disponibilidade',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['disponibilidade', 'local_retirada'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Dispensação',
+        order: 3,
+        description: 'Entrega do medicamento',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_retirada', 'farmaceutico_responsavel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  PROGRAMAS_SAUDE: {
+    moduleType: 'PROGRAMAS_SAUDE',
+    name: 'Workflow - Programas de Saúde',
+    description: 'Fluxo para inscrição em programas de saúde',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise de Documentos',
+        order: 1,
+        description: 'Verificação de documentação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredFormFields: ['programa', 'unidade_saude'],
+        requiredDocumentTypes: ['CPF', 'Cartão SUS', 'Comprovante de Residência'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Avaliação Médica',
+        order: 2,
+        description: 'Avaliação da equipe de saúde',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['parecer_medico', 'criterios_atendidos'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro no Programa',
+        order: 3,
+        description: 'Efetivação da inscrição',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== SEGURANÇA PÚBLICA ==========
+  ALERTA_SEGURANCA: {
+    moduleType: 'ALERTA_SEGURANCA',
+    name: 'Workflow - Alerta de Segurança',
+    description: 'Fluxo para envio de alertas de segurança',
+    defaultSLA: 1,
+    stages: [
+      {
+        name: 'Registro do Alerta',
+        order: 1,
+        description: 'Registro do alerta no sistema',
+        slaDays: 0,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_alerta', 'nivel_urgencia', 'descricao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise e Verificação',
+        order: 2,
+        description: 'Análise da central de monitoramento',
+        slaDays: 0,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['verificacao', 'acao_imediata'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Resposta',
+        order: 3,
+        description: 'Acionamento de equipe',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['equipe_acionada', 'resultado'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  AUTORIZACAO_EVENTO_SEGURANCA: {
+    moduleType: 'AUTORIZACAO_EVENTO_SEGURANCA',
+    name: 'Workflow - Autorização de Evento com Segurança',
+    description: 'Fluxo para autorização de eventos que requerem esquema de segurança',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Análise do pedido de autorização',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredFormFields: ['tipo_evento', 'data_evento', 'publico_esperado', 'local'],
+        requiredDocumentTypes: ['Projeto do Evento', 'CPF', 'CNPJ', 'Comprovante de Endereço'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Planejamento de Segurança',
+        order: 2,
+        description: 'Definição do esquema de segurança',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['efetivo_necessario', 'pontos_criticos', 'plano_contingencia'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Prévia',
+        order: 3,
+        description: 'Vistoria do local do evento',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['relatorio_vistoria', 'adequacoes_necessarias'],
+        requiredDocumentTypes: ['Relatório de Vistoria'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Autorização',
+        order: 4,
+        description: 'Liberação do evento',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CADASTRO_PONTO_CRITICO: {
+    moduleType: 'CADASTRO_PONTO_CRITICO',
+    name: 'Workflow - Cadastro de Ponto Crítico',
+    description: 'Fluxo para cadastro de pontos críticos de segurança',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Registro do Ponto',
+        order: 1,
+        description: 'Registro inicial do ponto crítico',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['tipo_ocorrencia', 'descricao', 'frequencia'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Técnica',
+        order: 2,
+        description: 'Avaliação da equipe de segurança',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['nivel_criticidade', 'medidas_sugeridas', 'prioridade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro no Sistema',
+        order: 3,
+        description: 'Inclusão no mapa de pontos críticos',
+        slaDays: 2,
+        availableTabs: ['resumo', 'location', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  DENUNCIA_ANONIMA: {
+    moduleType: 'DENUNCIA_ANONIMA',
+    name: 'Workflow - Denúncia Anônima',
+    description: 'Fluxo para tratamento de denúncias anônimas',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Triagem',
+        order: 1,
+        description: 'Classificação da denúncia',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_denuncia', 'gravidade', 'encaminhamento'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Investigação Preliminar',
+        order: 2,
+        description: 'Verificação inicial das informações',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['verificacao_fatos', 'procedencia'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Encaminhamento',
+        order: 3,
+        description: 'Envio ao órgão competente',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['orgao_destino'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  LAUDO_VISTORIA_SEGURANCA: {
+    moduleType: 'LAUDO_VISTORIA_SEGURANCA',
+    name: 'Workflow - Laudo de Vistoria de Segurança',
+    description: 'Fluxo para emissão de laudo de vistoria de segurança',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Análise do pedido de vistoria',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredFormFields: ['tipo_vistoria', 'finalidade'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Agendamento',
+        order: 2,
+        description: 'Agendamento da vistoria',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['data_vistoria', 'tecnico_responsavel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Realização da Vistoria',
+        order: 3,
+        description: 'Execução da vistoria in loco',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['itens_verificados', 'conformidades', 'nao_conformidades'],
+        requiredDocumentTypes: ['Relatório de Vistoria', 'Fotos'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Emissão de Laudo',
+        order: 4,
+        description: 'Elaboração e emissão do laudo',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  REGISTRO_OCORRENCIA: {
+    moduleType: 'REGISTRO_OCORRENCIA',
+    name: 'Workflow - Registro de Ocorrência',
+    description: 'Fluxo para registro de ocorrências de segurança',
+    defaultSLA: 5,
+    stages: [
+      {
+        name: 'Registro Inicial',
+        order: 1,
+        description: 'Registro da ocorrência',
+        slaDays: 0,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['tipo_ocorrencia', 'descricao', 'data_hora'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Classificação',
+        order: 2,
+        description: 'Classificação da ocorrência',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['gravidade', 'categoria', 'prioridade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Atendimento',
+        order: 3,
+        description: 'Atendimento da ocorrência',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['equipe_responsavel', 'providencias_tomadas'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Finalização',
+        order: 4,
+        description: 'Conclusão do atendimento',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['resultado_final'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  SOLICITACAO_CAMERA_SEGURANCA: {
+    moduleType: 'SOLICITACAO_CAMERA_SEGURANCA',
+    name: 'Workflow - Solicitação de Câmera de Segurança',
+    description: 'Fluxo para solicitação de instalação de câmeras de segurança',
+    defaultSLA: 30,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Análise da demanda',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['justificativa', 'local_proposto', 'area_cobertura'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Estudo de Viabilidade',
+        order: 2,
+        description: 'Análise técnica e financeira',
+        slaDays: 10,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['viabilidade_tecnica', 'custos', 'prioridade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Aprovação Orçamentária',
+        order: 3,
+        description: 'Aprovação de recursos',
+        slaDays: 10,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['orcamento_aprovado', 'previsao_instalacao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Instalação',
+        order: 4,
+        description: 'Instalação da câmera',
+        slaDays: 5,
+        availableTabs: ['resumo', 'location', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_instalacao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  SOLICITACAO_PATRULHAMENTO: {
+    moduleType: 'SOLICITACAO_PATRULHAMENTO',
+    name: 'Workflow - Solicitação de Patrulhamento',
+    description: 'Fluxo para solicitação de patrulhamento em área específica',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Análise de Solicitação',
+        order: 1,
+        description: 'Análise da demanda',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['area_solicitada', 'motivo', 'periodo_desejado'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Avaliação Operacional',
+        order: 2,
+        description: 'Avaliação da equipe operacional',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['viabilidade', 'frequencia_patrulha', 'efetivo_disponivel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Implementação',
+        order: 3,
+        description: 'Início do patrulhamento',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_inicio'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== SERVIÇOS PÚBLICOS ==========
+  DESOBSTRUCAO_BUEIRO: {
+    moduleType: 'DESOBSTRUCAO_BUEIRO',
+    name: 'Workflow - Desobstrução de Bueiro',
+    description: 'Fluxo para solicitação de desobstrução de bueiros',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Registro',
+        order: 1,
+        description: 'Registro da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['descricao_problema', 'nivel_obstrucao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria',
+        order: 2,
+        description: 'Vistoria técnica',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['relatorio_vistoria', 'equipamentos_necessarios'],
+        requiredDocumentTypes: ['Fotos'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Execução',
+        order: 3,
+        description: 'Desobstrução do bueiro',
+        slaDays: 3,
+        availableTabs: ['resumo', 'location', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_execucao', 'equipe_responsavel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação',
+        order: 4,
+        description: 'Confirmação do serviço',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  ILUMINACAO_PUBLICA: {
+    moduleType: 'ILUMINACAO_PUBLICA',
+    name: 'Workflow - Iluminação Pública',
+    description: 'Fluxo para solicitação de reparo ou instalação de iluminação pública',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Registro',
+        order: 1,
+        description: 'Registro da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['tipo_solicitacao', 'descricao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria Técnica',
+        order: 2,
+        description: 'Avaliação técnica do local',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['diagnostico', 'materiais_necessarios'],
+        requiredDocumentTypes: ['Fotos'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Execução',
+        order: 3,
+        description: 'Realização do serviço',
+        slaDays: 5,
+        availableTabs: ['resumo', 'location', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_execucao', 'equipe'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação',
+        order: 4,
+        description: 'Verificação do funcionamento',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  LIMPEZA_URBANA: {
+    moduleType: 'LIMPEZA_URBANA',
+    name: 'Workflow - Limpeza Urbana',
+    description: 'Fluxo para solicitação de serviços de limpeza urbana',
+    defaultSLA: 7,
+    stages: [
+      {
+        name: 'Registro',
+        order: 1,
+        description: 'Registro da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['tipo_limpeza', 'descricao_area'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Planejamento',
+        order: 2,
+        description: 'Planejamento da operação',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['area_abrangencia', 'recursos_necessarios', 'data_prevista'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Execução',
+        order: 3,
+        description: 'Realização da limpeza',
+        slaDays: 3,
+        availableTabs: ['resumo', 'location', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_execucao', 'equipe_responsavel'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação',
+        order: 4,
+        description: 'Verificação do serviço',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  REGISTRO_PROBLEMA_FOTO: {
+    moduleType: 'REGISTRO_PROBLEMA_FOTO',
+    name: 'Workflow - Registro de Problema com Foto',
+    description: 'Fluxo para registro de problemas urbanos com evidência fotográfica',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise do Registro',
+        order: 1,
+        description: 'Análise da solicitação e fotos',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredFormFields: ['tipo_problema', 'descricao'],
+        requiredDocumentTypes: ['Fotos'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Classificação e Encaminhamento',
+        order: 2,
+        description: 'Classificação e envio ao setor competente',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['categoria', 'setor_responsavel', 'prioridade'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Resolução',
+        order: 3,
+        description: 'Resolução do problema',
+        slaDays: 5,
+        availableTabs: ['resumo', 'location', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_resolucao', 'providencias_tomadas'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação',
+        order: 4,
+        description: 'Confirmação da resolução',
+        slaDays: 1,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CAPINA_ROCAGEM: {
+    moduleType: 'CAPINA_ROCAGEM',
+    name: 'Workflow - Capina e Roçagem',
+    description: 'Fluxo para solicitação de capina e roçagem',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Registro',
+        order: 1,
+        description: 'Registro da solicitação',
+        slaDays: 2,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'location',
+        requiredFormFields: ['tipo_servico', 'descricao_area'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria',
+        order: 2,
+        description: 'Vistoria do local',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['area_total', 'tipo_vegetacao', 'equipamentos_necessarios'],
+        requiredDocumentTypes: ['Fotos'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: false
+      },
+      {
+        name: 'Planejamento',
+        order: 3,
+        description: 'Planejamento da operação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['data_prevista', 'equipe', 'recursos'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Execução',
+        order: 4,
+        description: 'Realização do serviço',
+        slaDays: 5,
+        availableTabs: ['resumo', 'location', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: ['data_execucao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Verificação',
+        order: 5,
+        description: 'Verificação do serviço',
+        slaDays: 2,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  // ========== TURISMO ==========
+  CADASTRO_ESTABELECIMENTO_TURISTICO: {
+    moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO',
+    name: 'Workflow - Cadastro de Estabelecimento Turístico',
+    description: 'Fluxo para cadastro de estabelecimentos turísticos',
+    defaultSLA: 20,
+    stages: [
+      {
+        name: 'Análise de Documentos',
+        order: 1,
+        description: 'Verificação de documentação',
+        slaDays: 5,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredFormFields: ['nome_estabelecimento', 'categoria', 'tipo_servico'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará', 'Contrato Social', 'Comprovante de Endereço'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Vistoria',
+        order: 2,
+        description: 'Vistoria do estabelecimento',
+        slaDays: 7,
+        availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['relatorio_vistoria', 'adequacoes_necessarias', 'classificacao'],
+        requiredDocumentTypes: ['Relatório de Vistoria', 'Fotos'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Adequações',
+        order: 3,
+        description: 'Realização de adequações necessárias',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['adequacoes_realizadas'],
+        requiredDocumentTypes: ['Comprovantes'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO'],
+        canSkip: true
+      },
+      {
+        name: 'Cadastro',
+        order: 4,
+        description: 'Efetivação do cadastro',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  CADASTRO_GUIA_TURISTICO: {
+    moduleType: 'CADASTRO_GUIA_TURISTICO',
+    name: 'Workflow - Cadastro de Guia Turístico',
+    description: 'Fluxo para cadastro e credenciamento de guias turísticos',
+    defaultSLA: 15,
+    stages: [
+      {
+        name: 'Análise de Documentos',
+        order: 1,
+        description: 'Verificação de documentação',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
+        primaryTab: 'documentos',
+        requiredFormFields: ['nome_completo', 'idiomas', 'especializacao'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Certificado de Curso', 'Comprovante de Residência'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Avaliação Técnica',
+        order: 2,
+        description: 'Avaliação de qualificação',
+        slaDays: 5,
+        availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['experiencia', 'areas_atuacao', 'avaliacacao'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Teste Prático',
+        order: 3,
+        description: 'Realização de teste prático',
+        slaDays: 4,
+        availableTabs: ['resumo', 'dados', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['data_teste', 'resultado', 'parecer'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Credenciamento',
+        order: 4,
+        description: 'Emissão de credencial',
+        slaDays: 3,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      }
+    ]
+  },
+
+  REGISTRO_EVENTO_TURISTICO: {
+    moduleType: 'REGISTRO_EVENTO_TURISTICO',
+    name: 'Workflow - Registro de Evento Turístico',
+    description: 'Fluxo para registro e divulgação de eventos turísticos',
+    defaultSLA: 10,
+    stages: [
+      {
+        name: 'Análise de Proposta',
+        order: 1,
+        description: 'Análise da proposta de evento',
+        slaDays: 3,
+        availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['nome_evento', 'tipo', 'data_realizacao', 'publico_esperado'],
+        requiredDocumentTypes: ['Projeto do Evento', 'CPF ou CNPJ'],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Avaliação Turística',
+        order: 2,
+        description: 'Avaliação do potencial turístico',
+        slaDays: 3,
+        availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredFormFields: ['relevancia_turistica', 'impacto_esperado', 'apoio_secretaria'],
+        requiredDocumentTypes: [],
+        allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro e Divulgação',
+        order: 3,
+        description: 'Registro no calendário turístico',
+        slaDays: 4,
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredFormFields: [],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       }
@@ -415,9 +4808,149 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
 
 /**
  * ============================================================================
+ * GERADOR INTELIGENTE DE METADADOS DE UI
+ * ============================================================================
+ */
+function generateContextualUIMetadata(service: any, stageName: string, stageOrder: number) {
+  const serviceName = service.name?.toLowerCase() || '';
+  const tabs: string[] = ['resumo'];
+  let primaryTab = 'resumo';
+
+  // Primeira etapa: sempre mostrar documentos
+  if (stageOrder === 1) {
+    tabs.push('documentos');
+    primaryTab = 'documentos';
+  }
+
+  // Serviços que precisam de documentos
+  if (serviceName.includes('certidão') || serviceName.includes('declaração') ||
+      serviceName.includes('atestado') || serviceName.includes('cadastro') ||
+      serviceName.includes('inscrição') || serviceName.includes('licença') ||
+      serviceName.includes('alvará') || serviceName.includes('segunda via') ||
+      serviceName.includes('registro') || serviceName.includes('matrícula') ||
+      serviceName.includes('vistoria') || serviceName.includes('laudo')) {
+    if (!tabs.includes('documentos')) tabs.push('documentos');
+  }
+
+  // Serviços que precisam de dados/formulários
+  if (serviceName.includes('cadastro') || serviceName.includes('inscrição') ||
+      serviceName.includes('matrícula') || serviceName.includes('agendamento') ||
+      serviceName.includes('solicitação') || serviceName.includes('reserva')) {
+    tabs.push('dados');
+    if (stageOrder === 2 && !serviceName.includes('vistoria')) {
+      primaryTab = 'dados';
+    }
+  }
+
+  // Serviços de vistoria/inspeção
+  if (serviceName.includes('vistoria') || serviceName.includes('inspeção') ||
+      serviceName.includes('laudo') || serviceName.includes('aprovação de projeto') ||
+      stageName.toLowerCase().includes('vistoria') || stageName.toLowerCase().includes('inspeção')) {
+    tabs.push('location');
+    if (stageOrder >= 2 && stageOrder <= 3) {
+      primaryTab = 'location';
+    }
+  }
+
+  // Sempre incluir pendências e comunicação
+  tabs.push('pendencias');
+  tabs.push('comunicacao');
+
+  return { availableTabs: tabs, primaryTab: primaryTab };
+}
+
+/**
+ * ============================================================================
+ * GERADOR DE WORKFLOW GENÉRICO CONTEXTUAL
+ * ============================================================================
+ */
+function generateGenericWorkflow(service: any): any[] {
+  const serviceName = service.name?.toLowerCase() || '';
+  const stages: any[] = [];
+
+  stages.push({
+    name: 'Recepção e Análise Documental',
+    order: 1,
+    description: 'Recebimento e verificação de documentos',
+    slaDays: 2,
+    requiredDocumentTypes: [],
+    requiredFormFields: [],
+    allowedActions: ['APPROVE', 'REQUEST_INFO'],
+    canSkip: false,
+    ...generateContextualUIMetadata(service, 'Recepção e Análise Documental', 1)
+  });
+
+  stages.push({
+    name: 'Análise Técnica',
+    order: 2,
+    description: 'Análise técnica da solicitação',
+    slaDays: 3,
+    requiredDocumentTypes: [],
+    requiredFormFields: [],
+    allowedActions: ['APPROVE', 'REQUEST_INFO'],
+    canSkip: false,
+    ...generateContextualUIMetadata(service, 'Análise Técnica', 2)
+  });
+
+  if (serviceName.includes('vistoria') || serviceName.includes('inspeção') ||
+      serviceName.includes('aprovação de projeto') || serviceName.includes('licença') ||
+      serviceName.includes('alvará') || serviceName.includes('laudo')) {
+    stages.push({
+      name: 'Vistoria/Inspeção',
+      order: 3,
+      description: 'Vistoria técnica in loco',
+      slaDays: 5,
+      requiredDocumentTypes: [],
+      requiredFormFields: [],
+      allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+      canSkip: false,
+      ...generateContextualUIMetadata(service, 'Vistoria/Inspeção', 3)
+    });
+  }
+
+  stages.push({
+    name: 'Processamento',
+    order: stages.length + 1,
+    description: 'Processamento e preparação',
+    slaDays: 5,
+    requiredDocumentTypes: [],
+    requiredFormFields: [],
+    allowedActions: ['APPROVE', 'REQUEST_INFO'],
+    canSkip: false,
+    ...generateContextualUIMetadata(service, 'Processamento', stages.length + 1)
+  });
+
+  stages.push({
+    name: 'Aprovação Final',
+    order: stages.length + 1,
+    description: 'Aprovação final do gestor',
+    slaDays: 2,
+    requiredDocumentTypes: [],
+    requiredFormFields: [],
+    allowedActions: ['APPROVE', 'REJECT'],
+    canSkip: false,
+    ...generateContextualUIMetadata(service, 'Aprovação Final', stages.length + 1)
+  });
+
+  stages.push({
+    name: 'Conclusão',
+    order: stages.length + 1,
+    description: 'Emissão de documento ou finalização',
+    slaDays: 1,
+    requiredDocumentTypes: [],
+    requiredFormFields: [],
+    allowedActions: ['APPROVE'],
+    canSkip: false,
+    ...generateContextualUIMetadata(service, 'Conclusão', stages.length + 1)
+  });
+
+  return stages;
+}
+
+/**
+ * ============================================================================
  * WORKFLOW GENÉRICO PARA SERVIÇOS SEM_DADOS
  * ============================================================================
- * Workflow simplificado para serviços que não têm módulos específicos
  */
 const genericWorkflowStages: Prisma.JsonValue = [
   {
@@ -425,8 +4958,12 @@ const genericWorkflowStages: Prisma.JsonValue = [
     order: 1,
     description: 'Protocolo recebido e aguardando análise inicial',
     slaDays: 2,
+
+    availableTabs: ['resumo', 'comunicacao'],
+    primaryTab: 'resumo',
+
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredFormFields: [],
     allowedActions: ['APPROVE'],
     canSkip: false
   },
@@ -435,8 +4972,12 @@ const genericWorkflowStages: Prisma.JsonValue = [
     order: 2,
     description: 'Análise da solicitação',
     slaDays: 3,
+
+    availableTabs: ['resumo', 'pendencias', 'comunicacao'],
+    primaryTab: 'resumo',
+
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredFormFields: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false
   },
@@ -445,8 +4986,12 @@ const genericWorkflowStages: Prisma.JsonValue = [
     order: 3,
     description: 'Processamento da solicitação',
     slaDays: 5,
+
+    availableTabs: ['resumo', 'pendencias', 'comunicacao'],
+    primaryTab: 'resumo',
+
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredFormFields: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false
   },
@@ -455,8 +5000,12 @@ const genericWorkflowStages: Prisma.JsonValue = [
     order: 4,
     description: 'Aprovação final',
     slaDays: 2,
+
+    availableTabs: ['resumo', 'comunicacao'],
+    primaryTab: 'resumo',
+
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredFormFields: [],
     allowedActions: ['APPROVE', 'REJECT'],
     canSkip: false
   },
@@ -465,8 +5014,12 @@ const genericWorkflowStages: Prisma.JsonValue = [
     order: 5,
     description: 'Emissão de documento ou conclusão do atendimento',
     slaDays: 1,
+
+    availableTabs: ['resumo', 'comunicacao'],
+    primaryTab: 'resumo',
+
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredFormFields: [],
     allowedActions: ['APPROVE'],
     canSkip: false
   }
@@ -478,7 +5031,7 @@ const genericWorkflowStages: Prisma.JsonValue = [
  * ============================================================================
  */
 export async function seedServiceWorkflows() {
-  console.log('\n📦 Iniciando seed de ServiceWorkflows...');
+  console.log('\n📦 Iniciando seed de ServiceWorkflows (COM METADADOS DE UI)...');
 
   let created = 0;
   let updated = 0;
@@ -500,78 +5053,81 @@ export async function seedServiceWorkflows() {
   for (const service of services) {
     try {
       // Verificar se já tem workflow
-      const existingWorkflow = await prisma.serviceWorkflow.findUnique({
+      const existing = await prisma.serviceWorkflow.findUnique({
         where: { serviceId: service.id }
       });
 
-      if (existingWorkflow) {
-        console.log(`   ⏭️  ${service.name} - já possui workflow`);
-        skipped++;
-        continue;
-      }
-
       // Determinar qual workflow usar
-      let workflowData: {
-        serviceId: string;
-        name: string;
-        description: string;
-        stages: Prisma.InputJsonValue;
-        defaultSLA: number;
-      };
+      let workflowStages: any;
+      let workflowName: string;
+      let workflowDescription: string;
+      let defaultSLA: number;
 
       if (service.moduleType && specificWorkflows[service.moduleType]) {
-        // Serviço COM_DADOS com workflow específico
-        const specificWorkflow = specificWorkflows[service.moduleType];
-        workflowData = {
-          serviceId: service.id,
-          name: specificWorkflow.name,
-          description: specificWorkflow.description,
-          stages: specificWorkflow.stages,
-          defaultSLA: specificWorkflow.defaultSLA
-        };
-        console.log(`   ✅ ${service.name} - workflow ESPECÍFICO (${service.moduleType})`);
-      } else if (service.serviceType === 'SEM_DADOS' || !service.moduleType) {
-        // Serviço SEM_DADOS - usa workflow genérico
-        workflowData = {
-          serviceId: service.id,
-          name: `Workflow - ${service.name}`,
-          description: `Workflow genérico para ${service.name}`,
-          stages: genericWorkflowStages,
-          defaultSLA: service.estimatedDays || 13
-        };
-        console.log(`   ✅ ${service.name} - workflow GENÉRICO (SEM_DADOS)`);
+        // Usar workflow específico
+        const specific = specificWorkflows[service.moduleType];
+        workflowStages = specific.stages;
+        workflowName = specific.name;
+        workflowDescription = specific.description;
+        defaultSLA = specific.defaultSLA;
       } else {
-        // Serviço COM_DADOS sem workflow específico ainda - usa genérico
-        workflowData = {
-          serviceId: service.id,
-          name: `Workflow - ${service.name}`,
-          description: `Workflow genérico para ${service.name} (aguardando workflow específico)`,
-          stages: genericWorkflowStages,
-          defaultSLA: service.estimatedDays || 13
-        };
-        console.log(`   ⚠️  ${service.name} - workflow GENÉRICO TEMPORÁRIO (COM_DADOS sem workflow específico)`);
+        // Usar workflow genérico
+        workflowStages = generateGenericWorkflow(service);
+        workflowName = `Workflow - ${service.name}`;
+        workflowDescription = `Fluxo padrão para ${service.name}`;
+        defaultSLA = service.estimatedDays || 10;
       }
 
-      // Criar o workflow
-      await prisma.serviceWorkflow.create({
-        data: workflowData
-      });
-
-      created++;
-    } catch (error) {
-      console.error(`   ❌ Erro ao processar ${service.name}:`, error);
+      if (existing) {
+        // Atualizar workflow existente
+        await prisma.serviceWorkflow.update({
+          where: { serviceId: service.id },
+          data: {
+            name: workflowName,
+            description: workflowDescription,
+            stages: workflowStages,
+            defaultSLA: defaultSLA
+          }
+        });
+        updated++;
+        console.log(`   ✓ Atualizado: ${service.name} (${service.department?.name})`);
+      } else {
+        // Criar novo workflow
+        await prisma.serviceWorkflow.create({
+          data: {
+            serviceId: service.id,
+            name: workflowName,
+            description: workflowDescription,
+            stages: workflowStages,
+            defaultSLA: defaultSLA,
+            isActive: true
+          }
+        });
+        created++;
+        console.log(`   ✓ Criado: ${service.name} (${service.department?.name})`);
+      }
+    } catch (error: any) {
+      console.error(`   ✗ Erro ao processar ${service.name}:`, error.message);
+      skipped++;
     }
   }
 
-  console.log(`\n✅ ServiceWorkflows: ${created} criados, ${skipped} já existiam`);
-  return { created, updated, skipped };
+  console.log(`\n✅ Seed de ServiceWorkflows concluído:`);
+  console.log(`   - Criados: ${created}`);
+  console.log(`   - Atualizados: ${updated}`);
+  console.log(`   - Ignorados: ${skipped}`);
+  console.log(`   - Total: ${created + updated + skipped}\n`);
 }
 
-// Executar seed se chamado diretamente
+/**
+ * ============================================================================
+ * EXECUÇÃO STANDALONE
+ * ============================================================================
+ */
 if (require.main === module) {
   seedServiceWorkflows()
     .then(() => {
-      console.log('✅ Seed de ServiceWorkflows concluído!');
+      console.log('✅ Seed executado com sucesso!');
       process.exit(0);
     })
     .catch((error) => {
