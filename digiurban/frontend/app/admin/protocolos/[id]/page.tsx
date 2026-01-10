@@ -3,53 +3,30 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowLeft, FileText, MessageSquare, AlertCircle, CheckSquare, Clock, GitBranch, Users } from 'lucide-react'
-import { ProtocolSLAIndicator } from '@/components/admin/protocol/ProtocolSLAIndicator'
-import { ProtocolInteractionsTab } from '@/components/admin/protocol/ProtocolInteractionsTab'
-import { ProtocolDocumentsTabEnhanced } from '@/components/admin/protocol/ProtocolDocumentsTabEnhanced'
+import { FileText, MessageSquare, AlertCircle, Clock, Users, FormInput } from 'lucide-react'
+
+// Novos componentes modernos
+import { ProtocolHeader } from '@/components/admin/protocol/ProtocolHeader'
+import { WorkflowProgressBar } from '@/components/admin/protocol/WorkflowProgressBar'
+import { ValidationAlert } from '@/components/admin/protocol/ValidationAlert'
+import { CompactSLACard } from '@/components/admin/protocol/CompactSLACard'
+import { ProtocolSummaryTab } from '@/components/admin/protocol/ProtocolSummaryTab'
+import { ProtocolDocumentsUnified } from '@/components/admin/protocol/ProtocolDocumentsUnified'
+import { ProtocolDataTab } from '@/components/admin/protocol/ProtocolDataTab'
 import { ProtocolPendingsTab } from '@/components/admin/protocol/ProtocolPendingsTab'
-import { ProtocolStagesTab } from '@/components/admin/protocol/ProtocolStagesTab'
-import { CurrentStageHighlight } from '@/components/admin/protocol/CurrentStageHighlight'
-import { WorkflowProgress } from '@/components/admin/protocol/WorkflowProgress'
-import { ChecklistTab } from '@/components/admin/protocol/ChecklistTab'
-import { ProtocolStageActions } from '@/components/admin/protocol/ProtocolStageActions'
-import { CitizenLinksDisplay } from '@/components/protocol/CitizenLinksDisplay'
+import { ProtocolCommunicationTab } from '@/components/admin/protocol/ProtocolCommunicationTab'
+
+// Services
 import { getProtocolDocuments } from '@/services/protocol-documents.service'
 import { getProtocolPendings } from '@/services/protocol-pendings.service'
 import { getProtocolStages } from '@/services/protocol-stages.service'
+import { getProtocolInteractions } from '@/services/protocol-interactions.service'
+
+// Hooks
 import { useToast } from '@/hooks/use-toast'
 import { StageStatus } from '@/types/protocol-enhancements'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-
-// Função auxiliar para formatar datas com segurança
-const formatDate = (date: string | Date | null | undefined): string => {
-  if (!date) return 'Data não disponível'
-  try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    if (isNaN(dateObj.getTime())) return 'Data inválida'
-    return format(dateObj, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-  } catch (error) {
-    console.error('Erro ao formatar data:', error)
-    return 'Data inválida'
-  }
-}
-
-const formatDateOnly = (date: string | Date | null | undefined): string => {
-  if (!date) return 'Data não disponível'
-  try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    if (isNaN(dateObj.getTime())) return 'Data inválida'
-    return format(dateObj, "dd/MM/yyyy", { locale: ptBR })
-  } catch (error) {
-    console.error('Erro ao formatar data:', error)
-    return 'Data inválida'
-  }
-}
 
 export default function ProtocolDetailPage() {
   const params = useParams()
@@ -58,14 +35,19 @@ export default function ProtocolDetailPage() {
   const { toast } = useToast()
   const protocolId = params.id as string
 
+  // Estados
   const [protocol, setProtocol] = useState<any>(null)
   const [sla, setSLA] = useState<any>(null)
   const [documents, setDocuments] = useState<any[]>([])
   const [pendings, setPendings] = useState<any[]>([])
   const [stages, setStages] = useState<any[]>([])
+  const [interactions, setInteractions] = useState<any[]>([])
+  const [citizenLinks, setCitizenLinks] = useState<any[]>([])
+  const [validation, setValidation] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('checklist')
+  const [activeTab, setActiveTab] = useState('resumo')
 
+  // Carregar dados do protocolo
   useEffect(() => {
     if (protocolId) {
       loadProtocolData()
@@ -77,14 +59,9 @@ export default function ProtocolDetailPage() {
       setIsLoading(true)
 
       // Carregar protocolo
-      console.log('Carregando protocolo:', protocolId)
       const protocolData = await apiRequest(`/protocols/${protocolId}`)
-      console.log('Resposta do protocolo:', protocolData)
       if (protocolData.success) {
-        console.log('Dados do protocolo:', protocolData.data)
         setProtocol(protocolData.data)
-      } else {
-        console.error('Erro na resposta do protocolo:', protocolData)
       }
 
       // Carregar SLA (opcional)
@@ -92,11 +69,10 @@ export default function ProtocolDetailPage() {
         const slaData = await apiRequest(`/protocols/${protocolId}/sla`)
         if (slaData.success) setSLA(slaData.data)
       } catch (err) {
-        // SLA pode não existir
-        console.log('SLA not available for this protocol')
+        console.log('SLA not available')
       }
 
-      // Carregar documentos REAIS
+      // Carregar documentos
       try {
         const docs = await getProtocolDocuments(protocolId)
         setDocuments(docs)
@@ -105,7 +81,7 @@ export default function ProtocolDetailPage() {
         setDocuments([])
       }
 
-      // Carregar pendências REAIS
+      // Carregar pendências
       try {
         const pends = await getProtocolPendings(protocolId)
         setPendings(pends)
@@ -114,13 +90,39 @@ export default function ProtocolDetailPage() {
         setPendings([])
       }
 
-      // Carregar etapas REAIS
+      // Carregar etapas
       try {
         const stgs = await getProtocolStages(protocolId)
         setStages(stgs)
+
+        // Se há etapa em progresso, carregar validação
+        const currentStage = stgs.find((s: any) => s.status === StageStatus.IN_PROGRESS)
+        if (currentStage) {
+          loadValidation(currentStage.id)
+        }
       } catch (err) {
         console.error('Error loading stages:', err)
         setStages([])
+      }
+
+      // Carregar interações
+      try {
+        const ints = await getProtocolInteractions(protocolId)
+        setInteractions(ints)
+      } catch (err) {
+        console.error('Error loading interactions:', err)
+        setInteractions([])
+      }
+
+      // Carregar vínculos de cidadãos
+      try {
+        const linksData = await apiRequest(`/protocols/${protocolId}/citizen-links`)
+        if (linksData.success) {
+          setCitizenLinks(linksData.data || [])
+        }
+      } catch (err) {
+        console.log('No citizen links')
+        setCitizenLinks([])
       }
 
     } catch (error) {
@@ -134,6 +136,18 @@ export default function ProtocolDetailPage() {
     }
   }
 
+  const loadValidation = async (stageId: string) => {
+    try {
+      const response = await apiRequest(`/protocols/${protocolId}/stages/${stageId}/validate`)
+      if (response.success) {
+        setValidation(response.data.validation)
+      }
+    } catch (error) {
+      console.error('Erro ao validar etapa:', error)
+    }
+  }
+
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -145,196 +159,209 @@ export default function ProtocolDetailPage() {
     )
   }
 
+  // Not found state
   if (!protocol) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Protocolo não encontrado</h1>
-          <Button onClick={() => router.push('/admin/protocolos')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-        </div>
+        <Card className="p-8 text-center">
+          <h1 className="text-2xl font-bold mb-4">Protocolo não encontrado</h1>
+          <p className="text-muted-foreground mb-4">
+            O protocolo solicitado não existe ou você não tem permissão para visualizá-lo.
+          </p>
+        </Card>
       </div>
     )
   }
 
+  // Extrair dados essenciais
+  const currentStage = stages.find(s => s.status === StageStatus.IN_PROGRESS)
+  const openPendings = pendings.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS')
+
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      {/* Cabeçalho */}
-      <div className="mb-6">
-        <Button variant="ghost" onClick={() => router.push('/admin/protocolos')} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar para Protocolos
-        </Button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Fixo com Ações Primárias */}
+      <ProtocolHeader
+        protocolId={protocolId}
+        protocolNumber={protocol.number || protocol.protocolNumber}
+        serviceName={protocol.service?.name || protocol.title}
+        status={protocol.status}
+        citizenName={protocol.citizen?.name}
+        currentStage={currentStage}
+        onActionComplete={loadProtocolData}
+        onBack={() => router.push('/admin/protocolos')}
+      />
 
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                  <CardTitle className="text-xl sm:text-2xl break-words">{protocol.number}</CardTitle>
-                  <Badge variant="outline" className="shrink-0">{protocol.status}</Badge>
-                </div>
-                <p className="text-base sm:text-lg text-muted-foreground mb-2 break-words">{protocol.title}</p>
-                {protocol.description && (
-                  <p className="text-sm text-muted-foreground break-words">{protocol.description}</p>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-              {protocol.citizen && (
-                <div>
-                  <p className="text-muted-foreground mb-1">Cidadão</p>
-                  <p className="font-medium">{protocol.citizen.name}</p>
-                </div>
-              )}
-              {protocol.service && (
-                <div>
-                  <p className="text-muted-foreground mb-1">Serviço</p>
-                  <p className="font-medium">{protocol.service.name}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-muted-foreground mb-1">Criado em</p>
-                <p className="font-medium">
-                  {formatDate(protocol.createdAt)}
-                </p>
-              </div>
-              {protocol.assignedUser && (
-                <div>
-                  <p className="text-muted-foreground mb-1">Responsável</p>
-                  <p className="font-medium">{protocol.assignedUser.name}</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Conteúdo Principal */}
+      <div className="container mx-auto px-4 sm:px-6 py-6 max-w-7xl">
+        {/* Barra de Progresso do Workflow */}
+        {stages.length > 0 && (
+          <div className="mb-6 bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <WorkflowProgressBar stages={stages} />
+          </div>
+        )}
 
-      {/* Current Stage Highlight (se houver etapa em progresso) */}
-      {stages.find(s => s.status === StageStatus.IN_PROGRESS) && (
-        <div className="mb-6">
-          <CurrentStageHighlight
-            protocolId={protocolId}
-            currentStage={stages.find(s => s.status === StageStatus.IN_PROGRESS)!}
-            totalStages={stages.length}
-            pendings={pendings}
-            onNavigateToDocuments={() => setActiveTab('documents')}
-            onNavigateToChecklist={() => setActiveTab('checklist')}
-          />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Conteúdo Principal (2/3) */}
-        <div className="lg:col-span-2 space-y-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1">
-              <TabsTrigger value="checklist" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                <span className="truncate">Checklist</span>
-              </TabsTrigger>
-              <TabsTrigger value="documents" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                <FileText className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                <span className="truncate">Docs</span>
-              </TabsTrigger>
-              <TabsTrigger value="timeline" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                <Clock className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                <span className="truncate">Timeline</span>
-              </TabsTrigger>
-              <TabsTrigger value="interactions" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-                <span className="truncate">Histórico</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="checklist" className="mt-6">
-              <ChecklistTab
-                protocolId={protocolId}
-                currentStage={
-                  // Prioridade: IN_PROGRESS > última COMPLETED > null
-                  stages.find(s => s.status === StageStatus.IN_PROGRESS) ||
-                  [...stages].sort((a, b) => (b.stageOrder || 0) - (a.stageOrder || 0)).find(s => s.status === StageStatus.COMPLETED) ||
-                  null
-                }
-                onNavigateToDocuments={() => setActiveTab('documents')}
-              />
-            </TabsContent>
-
-            <TabsContent value="documents" className="mt-6">
-              <ProtocolDocumentsTabEnhanced
-                protocolId={protocolId}
-                documents={documents}
-                currentStageMetadata={stages.find(s => s.status === StageStatus.IN_PROGRESS)?.metadata}
-                onRefresh={loadProtocolData}
-              />
-            </TabsContent>
-
-            <TabsContent value="timeline" className="mt-6">
-              <ProtocolStagesTab
-                protocolId={protocolId}
-                stages={stages}
-                onRefresh={loadProtocolData}
-              />
-            </TabsContent>
-
-            <TabsContent value="interactions" className="mt-6">
-              <ProtocolInteractionsTab protocolId={protocolId} />
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Sidebar (1/3) */}
-        <div className="space-y-4">
-          {/* Progresso do Workflow */}
-          {stages.length > 0 && (
-            <WorkflowProgress stages={stages} />
-          )}
-
-          {/* Ações da Etapa Atual */}
-          {stages.find(s => s.status === StageStatus.IN_PROGRESS) && (
-            <ProtocolStageActions
-              protocolId={protocolId}
-              stageId={stages.find(s => s.status === StageStatus.IN_PROGRESS)!.id}
-              stageName={stages.find(s => s.status === StageStatus.IN_PROGRESS)!.stageName}
-              stageStatus={stages.find(s => s.status === StageStatus.IN_PROGRESS)!.status}
-              metadata={stages.find(s => s.status === StageStatus.IN_PROGRESS)!.metadata}
-              onActionComplete={loadProtocolData}
+        {/* Alerta de Validação (se etapa em progresso) */}
+        {currentStage && validation && (
+          <div className="mb-6">
+            <ValidationAlert
+              validation={validation}
+              onNavigateToDocuments={() => setActiveTab('documentos')}
+              onNavigateToData={() => setActiveTab('dados')}
             />
-          )}
+          </div>
+        )}
 
-          {/* Indicador de SLA */}
-          <ProtocolSLAIndicator sla={sla} />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Área de Conteúdo Principal (3/4) */}
+          <div className="lg:col-span-3">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-5 bg-white shadow-sm mb-4">
+                <TabsTrigger value="resumo" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">Resumo</span>
+                </TabsTrigger>
+                <TabsTrigger value="documentos" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="hidden sm:inline">Documentos</span>
+                  {documents.length > 0 && (
+                    <span className="ml-auto text-xs bg-gray-200 rounded-full px-2 py-0.5">
+                      {documents.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="dados" className="flex items-center gap-2">
+                  <FormInput className="h-4 w-4" />
+                  <span className="hidden sm:inline">Dados</span>
+                </TabsTrigger>
+                <TabsTrigger value="pendencias" className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">Pendências</span>
+                  {openPendings.length > 0 && (
+                    <span className="ml-auto text-xs bg-red-500 text-white rounded-full px-2 py-0.5">
+                      {openPendings.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="comunicacao" className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <span className="hidden sm:inline">Comunicação</span>
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Informações Adicionais */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Informações</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div>
-                <p className="text-muted-foreground mb-1 text-xs">Última Atualização</p>
-                <p className="font-medium text-sm break-words">
-                  {formatDate(protocol.updatedAt)}
-                </p>
-              </div>
-              {protocol.dueDate && (
-                <div>
-                  <p className="text-muted-foreground mb-1 text-xs">Data de Vencimento</p>
-                  <p className="font-medium text-sm break-words">
-                    {formatDateOnly(protocol.dueDate)}
-                  </p>
+              {/* Tab: Resumo */}
+              <TabsContent value="resumo" className="mt-0">
+                <ProtocolSummaryTab
+                  protocol={protocol}
+                  citizenLinks={citizenLinks}
+                />
+              </TabsContent>
+
+              {/* Tab: Documentos */}
+              <TabsContent value="documentos" className="mt-0">
+                <ProtocolDocumentsUnified
+                  protocolId={protocolId}
+                  documents={documents}
+                  currentStageMetadata={currentStage?.metadata}
+                  onRefresh={loadProtocolData}
+                />
+              </TabsContent>
+
+              {/* Tab: Dados */}
+              <TabsContent value="dados" className="mt-0">
+                <ProtocolDataTab
+                  protocolId={protocolId}
+                  formData={protocol.formData}
+                  metadata={protocol.metadata}
+                  onRefresh={loadProtocolData}
+                />
+              </TabsContent>
+
+              {/* Tab: Pendências */}
+              <TabsContent value="pendencias" className="mt-0">
+                <ProtocolPendingsTab
+                  protocolId={protocolId}
+                  pendings={pendings}
+                  onRefresh={loadProtocolData}
+                />
+              </TabsContent>
+
+              {/* Tab: Comunicação (Workflow + Mensagens) */}
+              <TabsContent value="comunicacao" className="mt-0">
+                <ProtocolCommunicationTab
+                  protocolId={protocolId}
+                  stages={stages}
+                  interactions={interactions}
+                  onRefresh={loadProtocolData}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Sidebar Compacta (1/4) */}
+          <div className="space-y-4">
+            {/* SLA Compacto */}
+            <CompactSLACard
+              sla={sla}
+              onClick={() => {
+                // Scroll para o SLA ou abrir modal
+                toast({
+                  title: 'SLA Detalhado',
+                  description: 'Clique para ver detalhes completos do SLA'
+                })
+              }}
+            />
+
+            {/* Estatísticas Rápidas */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Clock className="h-4 w-4" />
+                    <span>Etapas</span>
+                  </div>
+                  <span className="font-medium text-gray-900">
+                    {stages.filter(s => s.status === 'COMPLETED').length}/{stages.length}
+                  </span>
                 </div>
-              )}
-              <div>
-                <p className="text-muted-foreground mb-1 text-xs">Prioridade</p>
-                <p className="font-medium text-sm">Nível {protocol.priority}</p>
-              </div>
-            </CardContent>
-          </Card>
+
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <FileText className="h-4 w-4" />
+                    <span>Documentos</span>
+                  </div>
+                  <span className="font-medium text-gray-900">{documents.length}</span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Pendências</span>
+                  </div>
+                  <span className={`font-medium ${openPendings.length > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                    {openPendings.length}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Mensagens</span>
+                  </div>
+                  <span className="font-medium text-gray-900">{interactions.length}</span>
+                </div>
+
+                {citizenLinks.length > 0 && (
+                  <div className="flex items-center justify-between text-sm pt-2 border-t">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Users className="h-4 w-4" />
+                      <span>Vínculos</span>
+                    </div>
+                    <span className="font-medium text-gray-900">{citizenLinks.length}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

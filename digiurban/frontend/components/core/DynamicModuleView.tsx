@@ -23,7 +23,7 @@ import { ProtocolWorkflowPanel } from './ProtocolWorkflowPanel';
 import { ProtocolPendingsPanel } from './ProtocolPendingsPanel';
 import { CurrentStageHighlight } from '@/components/admin/protocol/CurrentStageHighlight';
 import { WorkflowProgress } from '@/components/admin/protocol/WorkflowProgress';
-import { ChecklistTab } from '@/components/admin/protocol/ChecklistTab';
+import { ChecklistTab } from '@/components/admin/protocol/ChecklistTab.deprecated';
 import { ProtocolDocumentsTabEnhanced } from '@/components/admin/protocol/ProtocolDocumentsTabEnhanced';
 import { ProtocolPendingsTab } from '@/components/admin/protocol/ProtocolPendingsTab';
 import { ProtocolStagesTab } from '@/components/admin/protocol/ProtocolStagesTab';
