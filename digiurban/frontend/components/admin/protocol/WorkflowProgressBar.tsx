@@ -99,45 +99,45 @@ export function WorkflowProgressBar({ stages, compact = false }: WorkflowProgres
       />
 
       {/* Etapas Horizontal */}
-      <div className="relative">
-        <div className="flex items-start justify-between gap-2 overflow-x-auto pb-2">
+      <div className="relative pt-2">
+        {/* Linha de fundo (cinza) */}
+        <div className="absolute top-7 left-0 right-0 h-0.5 bg-gray-200" />
+
+        <div className="relative flex items-start justify-between gap-2">
           {sortedStages.map((stage, index) => {
             const isCurrentStage = stage.status === StageStatus.IN_PROGRESS
+            const isCompleted = stage.status === StageStatus.COMPLETED
 
             return (
               <div
                 key={stage.id}
-                className="flex flex-col items-center gap-2 min-w-[80px] flex-1"
+                className="relative flex flex-col items-center gap-2 flex-1 min-w-[80px]"
               >
+                {/* Linha de Conexão para etapa concluída */}
+                {index > 0 && isCompleted && (
+                  <div
+                    className="absolute top-5 right-1/2 w-full h-0.5 bg-green-500 -z-10"
+                    style={{ transform: 'translateX(50%)' }}
+                  />
+                )}
+
                 {/* Ícone */}
                 <div
                   className={`
-                    relative flex items-center justify-center
+                    relative z-10 flex items-center justify-center
                     w-10 h-10 rounded-full border-2 bg-white
-                    ${isCurrentStage ? 'border-blue-500 ring-4 ring-blue-100' : 'border-gray-300'}
+                    ${isCurrentStage ? 'border-blue-500 ring-4 ring-blue-100' :
+                      isCompleted ? 'border-green-500' : 'border-gray-300'}
                   `}
                 >
                   {getStatusIcon(stage.status, 'sm')}
                 </div>
 
-                {/* Linha de Conexão */}
-                {index < sortedStages.length - 1 && (
-                  <div
-                    className={`
-                      absolute top-5 h-0.5 transition-all
-                      ${getStageColor(stage.status)}
-                    `}
-                    style={{
-                      left: `calc(${(index / (sortedStages.length - 1)) * 100}% + 40px)`,
-                      width: `calc(${(1 / (sortedStages.length - 1)) * 100}% - 40px)`
-                    }}
-                  />
-                )}
-
                 {/* Nome da Etapa */}
                 <div className="text-center">
                   <p className={`text-xs font-medium line-clamp-2 ${
-                    isCurrentStage ? 'text-blue-700' : 'text-gray-600'
+                    isCurrentStage ? 'text-blue-700' :
+                    isCompleted ? 'text-green-700' : 'text-gray-600'
                   }`}>
                     {stage.stageName}
                   </p>
