@@ -78,6 +78,7 @@ export async function getDocumentById(documentId: string) {
 
 /**
  * Faz upload de um documento (atualiza com arquivo)
+ * ✅ FASE 1: Resolve automaticamente pendências relacionadas ao reenviar documento
  */
 export async function uploadDocument(
   documentId: string,
@@ -98,11 +99,13 @@ export async function uploadDocument(
     throw new Error('Documento não encontrado');
   }
 
+  let updatedDocument;
+
   // Se já existe um arquivo, criar nova versão
   if (currentDoc.fileUrl) {
     const newVersion = currentDoc.version + 1;
 
-    return prisma.protocolDocument.update({
+    updatedDocument = await prisma.protocolDocument.update({
       where: { id: documentId },
       data: {
         fileName: fileData.fileName,
@@ -116,21 +119,66 @@ export async function uploadDocument(
         previousDocId: documentId, // Referência à versão anterior
       }
         });
-  }
-
-  // Primeiro upload
-  return prisma.protocolDocument.update({
-    where: { id: documentId },
-    data: {
-      fileName: fileData.fileName,
-      fileUrl: fileData.fileUrl,
-      fileSize: fileData.fileSize,
-      mimeType: fileData.mimeType,
-      uploadedBy: fileData.uploadedBy,
-      uploadedAt: new Date(),
-      status: DocumentStatus.UPLOADED
+  } else {
+    // Primeiro upload
+    updatedDocument = await prisma.protocolDocument.update({
+      where: { id: documentId },
+      data: {
+        fileName: fileData.fileName,
+        fileUrl: fileData.fileUrl,
+        fileSize: fileData.fileSize,
+        mimeType: fileData.mimeType,
+        uploadedBy: fileData.uploadedBy,
+        uploadedAt: new Date(),
+        status: DocumentStatus.UPLOADED
         }
         });
+  }
+
+  // ✅ FASE 1: Resolver automaticamente pendências relacionadas a este documento
+  try {
+    const { PendingStatus } = await import('@prisma/client');
+    const pendingService = await import('./protocol-pending.service');
+    const workflowOrchestrator = await import('./protocol-workflow-orchestrator.service');
+
+    // Buscar pendências do tipo DOCUMENT relacionadas a este documento
+    const relatedPendings = await prisma.protocolPending.findMany({
+      where: {
+        protocolId: currentDoc.protocolId,
+        type: 'DOCUMENT',
+        status: PendingStatus.OPEN,
+        metadata: {
+          path: ['documentType'],
+          equals: currentDoc.documentType
+        }
+      }
+    });
+
+    if (relatedPendings.length > 0) {
+      console.log(`📄 Documento "${currentDoc.documentType}" reenviado - Resolvendo ${relatedPendings.length} pendência(s) automaticamente`);
+
+      for (const pending of relatedPendings) {
+        await pendingService.resolvePending(
+          pending.id,
+          fileData.uploadedBy,
+          `Documento reenviado pelo cidadão (versão ${updatedDocument.version})`
+        );
+
+        // Disparar evento de pendência resolvida (muda status protocolo, retoma SLA)
+        await workflowOrchestrator.ProtocolWorkflowOrchestrator.prototype.onPendingResolved(
+          pending.id,
+          fileData.uploadedBy
+        );
+
+        console.log(`✅ Pendência "${pending.title}" resolvida automaticamente`);
+      }
+    }
+  } catch (error) {
+    console.error('⚠️ Erro ao resolver pendências automaticamente:', error);
+    // Não falha o upload do documento se pendências não puderem ser resolvidas
+  }
+
+  return updatedDocument;
 }
 
 /**

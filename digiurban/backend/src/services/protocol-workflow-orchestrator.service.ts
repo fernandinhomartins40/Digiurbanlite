@@ -152,15 +152,20 @@ export class ProtocolWorkflowOrchestrator {
 
     console.log(`❌ [Orchestrator] Documento rejeitado: ${doc.documentType}`);
 
-    // 1. Criar pendência automática
+    // 1. ✅ FASE 3: Criar pendência automática (sem duplicar rejectionReason)
     await pendingService.createPending({
       protocolId: doc.protocolId,
       type: 'DOCUMENT',
       title: `Documento Rejeitado: ${doc.documentType}`,
-      description: reason,
+      description: `O documento "${doc.documentType}" foi rejeitado e precisa ser reenviado. Consulte os detalhes da rejeição na aba Documentos.`,
       blocksProgress: true,
       createdBy: rejectedBy,
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
+      metadata: {
+        documentId: documentId,
+        documentType: doc.documentType,
+        // rejectionReason está em ProtocolDocument.rejectionReason
+      }
     });
 
     // 2. ✅ FASE 1: Mudar protocolo para ATUALIZACAO (aguarda ação do cidadão)

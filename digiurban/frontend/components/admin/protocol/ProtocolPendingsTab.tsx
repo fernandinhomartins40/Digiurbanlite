@@ -24,7 +24,14 @@ interface ProtocolPendingsTabProps {
 export function ProtocolPendingsTab({ protocolId, pendings, onRefresh }: ProtocolPendingsTabProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [newPending, setNewPending] = useState({ type: '', title: '', description: '', dueDate: '', blocksProgress: true })
+  const [resolvingPending, setResolvingPending] = useState<string | null>(null)
+  const [resolution, setResolution] = useState('')
   const { toast } = useToast()
+
+  const getFullApiUrl = (path: string) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3060/api'
+    return `${apiUrl}${path}`
+  }
 
   const getStatusBadge = (status: PendingStatus) => {
     const config = {
@@ -46,6 +53,80 @@ export function ProtocolPendingsTab({ protocolId, pendings, onRefresh }: Protoco
       onRefresh()
     } catch (error) {
       toast({ title: 'Erro', description: 'Erro ao criar pendência', variant: 'destructive' })
+    }
+  }
+
+  // ✅ FASE 2: Resolver pendência
+  const handleResolvePending = async (pendingId: string) => {
+    if (!resolution.trim()) {
+      toast({
+        title: 'Descrição obrigatória',
+        description: 'Por favor, descreva como a pendência foi resolvida',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const url = getFullApiUrl(`/protocols/${protocolId}/pendings/${pendingId}/resolve`)
+      const response = await fetch(url, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolution })
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao resolver pendência')
+      }
+
+      toast({
+        title: 'Pendência resolvida',
+        description: 'A pendência foi resolvida com sucesso'
+      })
+
+      setResolvingPending(null)
+      setResolution('')
+      onRefresh()
+    } catch (error) {
+      toast({
+        title: 'Erro ao resolver pendência',
+        description: 'Não foi possível resolver a pendência',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // ✅ FASE 2: Cancelar pendência
+  const handleCancelPending = async (pendingId: string) => {
+    if (!confirm('Tem certeza que deseja cancelar esta pendência?')) {
+      return
+    }
+
+    try {
+      const url = getFullApiUrl(`/protocols/${protocolId}/pendings/${pendingId}/cancel`)
+      const response = await fetch(url, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao cancelar pendência')
+      }
+
+      toast({
+        title: 'Pendência cancelada',
+        description: 'A pendência foi cancelada'
+      })
+
+      onRefresh()
+    } catch (error) {
+      toast({
+        title: 'Erro ao cancelar pendência',
+        description: 'Não foi possível cancelar a pendência',
+        variant: 'destructive'
+      })
     }
   }
 
@@ -115,8 +196,26 @@ export function ProtocolPendingsTab({ protocolId, pendings, onRefresh }: Protoco
                       )}
                     </div>
                     <div className="flex gap-2 ml-4">
-                      <Button size="sm" variant="outline">Resolver</Button>
-                      <Button size="sm" variant="ghost">Cancelar</Button>
+                      {resolvingPending === pending.id ? (
+                        <div className="space-y-2 min-w-[300px]">
+                          <Textarea
+                            placeholder="Descreva como a pendência foi resolvida..."
+                            value={resolution}
+                            onChange={(e) => setResolution(e.target.value)}
+                            rows={2}
+                            className="text-sm"
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleResolvePending(pending.id)}>Confirmar</Button>
+                            <Button size="sm" variant="outline" onClick={() => { setResolvingPending(null); setResolution('') }}>Cancelar</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <Button size="sm" variant="outline" onClick={() => setResolvingPending(pending.id)}>Resolver</Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleCancelPending(pending.id)}>Cancelar</Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
