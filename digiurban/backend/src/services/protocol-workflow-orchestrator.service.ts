@@ -572,6 +572,132 @@ export class ProtocolWorkflowOrchestrator {
       console.log(`⏰ [Orchestrator] SLA vencido! ${daysOverdue} dia(s) de atraso`);
     }
   }
+
+  /**
+   * ═══════════════════════════════════════════════════════════════════
+   * EVENTO 7: CAMPO DE DADOS REJEITADO
+   * ═══════════════════════════════════════════════════════════════════
+   */
+  async onDataFieldRejected(fieldId: string, rejectedBy: string, reason: string) {
+    const field = await prisma.protocolDataField.findUnique({
+      where: { id: fieldId },
+      select: { protocolId: true, fieldLabel: true, isRequired: true }
+    });
+
+    if (!field) return;
+
+    console.log(`❌ [Orchestrator] Campo de dados rejeitado: ${field.fieldLabel}`);
+
+    // 1. Pendência já foi criada pelo service ✅
+
+    // 2. Status já foi atualizado para ATUALIZACAO se obrigatório ✅
+
+    // 3. Pausar SLA
+    await this.pauseSLA(
+      field.protocolId,
+      `Aguardando correção de campo: ${field.fieldLabel}`
+    );
+
+    // 4. Criar interação para cidadão
+    await interactionService.createInteraction({
+      protocolId: field.protocolId,
+      type: 'STATUS_CHANGED',
+      authorType: 'SERVER',
+      authorId: rejectedBy,
+      authorName: 'Analista',
+      message: `⚠️ O campo "${field.fieldLabel}" foi rejeitado. Motivo: ${reason}. Por favor, corrija o campo na aba Dados.`,
+      isInternal: false
+    });
+  }
+
+  /**
+   * ═══════════════════════════════════════════════════════════════════
+   * EVENTO 8: CAMPO DE DADOS CORRIGIDO
+   * ═══════════════════════════════════════════════════════════════════
+   */
+  async onDataFieldCorrected(fieldId: string, correctedBy: string) {
+    const field = await prisma.protocolDataField.findUnique({
+      where: { id: fieldId },
+      select: { protocolId: true, fieldLabel: true }
+    });
+
+    if (!field) return;
+
+    console.log(`📝 [Orchestrator] Campo de dados corrigido: ${field.fieldLabel}`);
+
+    // 1. Pendências já foram resolvidas automaticamente ✅
+
+    // 2. Status já foi atualizado se necessário ✅
+
+    // 3. Verificar se ainda há campos obrigatórios rejeitados
+    const hasRejectedRequired = await prisma.protocolDataField.count({
+      where: {
+        protocolId: field.protocolId,
+        isRequired: true,
+        status: { in: ['REJECTED'] }
+      }
+    });
+
+    // Se não houver mais campos rejeitados, retomar SLA
+    if (hasRejectedRequired === 0) {
+      await this.resumeSLA(field.protocolId);
+
+      // Criar interação informando
+      await interactionService.createInteraction({
+        protocolId: field.protocolId,
+        type: 'STATUS_CHANGED',
+        authorType: 'SERVER',
+        authorId: correctedBy,
+        authorName: 'Sistema',
+        message: `✅ Todos os campos obrigatórios foram corrigidos. Seu protocolo foi retomado e está em andamento.`,
+        isInternal: false
+      });
+    }
+  }
+
+  /**
+   * ═══════════════════════════════════════════════════════════════════
+   * EVENTO 9: CAMPO DE DADOS APROVADO
+   * ═══════════════════════════════════════════════════════════════════
+   */
+  async onDataFieldApproved(fieldId: string, approvedBy: string) {
+    const field = await prisma.protocolDataField.findUnique({
+      where: { id: fieldId },
+      select: { protocolId: true, fieldLabel: true }
+    });
+
+    if (!field) return;
+
+    console.log(`✅ [Orchestrator] Campo de dados aprovado: ${field.fieldLabel}`);
+
+    // Verificar se todos os campos obrigatórios foram aprovados
+    const stats = await prisma.protocolDataField.groupBy({
+      by: ['status'],
+      where: {
+        protocolId: field.protocolId,
+        isRequired: true
+      },
+      _count: true
+    });
+
+    const requiredCount = stats.reduce((acc, s) => acc + s._count, 0);
+    const approvedCount = stats.find(s => s.status === 'APPROVED')?._count || 0;
+
+    if (requiredCount === approvedCount && requiredCount > 0) {
+      console.log(`🎉 [Orchestrator] Todos os ${requiredCount} campos obrigatórios aprovados!`);
+
+      // Criar interação
+      await interactionService.createInteraction({
+        protocolId: field.protocolId,
+        type: 'STATUS_CHANGED',
+        authorType: 'SERVER',
+        authorId: approvedBy,
+        authorName: 'Sistema',
+        message: `✅ Todos os campos obrigatórios foram aprovados! O protocolo pode avançar no fluxo.`,
+        isInternal: false
+      });
+    }
+  }
 }
 
 // ============================================================================

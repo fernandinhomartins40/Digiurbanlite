@@ -222,6 +222,7 @@ console.log('📝 Carregando rotas de protocolos...');
 try { console.log('   → sla...'); app.use('/api/protocols', require('./routes/protocol-sla').default); console.log('   ✓'); } catch (e) { console.error('❌ sla:', e); }
 try { console.log('   → interactions...'); app.use('/api/protocols', require('./routes/protocol-interactions').default); console.log('   ✓'); } catch (e) { console.error('❌ interactions:', e); }
 try { console.log('   → documents...'); app.use('/api/protocols', require('./routes/protocol-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ documents:', e); }
+try { console.log('   → data-fields...'); app.use('/api', require('./routes/protocol-data-fields').default); console.log('   ✓'); } catch (e) { console.error('❌ data-fields:', e); }
 try { console.log('   → pendings...'); app.use('/api/protocols', require('./routes/protocol-pendings').default); console.log('   ✓'); } catch (e) { console.error('❌ pendings:', e); }
 try { console.log('   → stages...'); app.use('/api/protocols', require('./routes/protocol-stages').default); console.log('   ✓'); } catch (e) { console.error('❌ stages:', e); }
 

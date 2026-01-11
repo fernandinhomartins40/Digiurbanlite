@@ -195,6 +195,32 @@ export class ProtocolModuleService {
     }
 
     // ============================================================================
+    // CRIAR CAMPOS DE DADOS PARA APROVAÇÃO (FORA DA TRANSAÇÃO)
+    // ✅ Sistema granular de aprovação por campo
+    // ============================================================================
+    if (result.isComDados && enrichedFormData && Object.keys(enrichedFormData).length > 0) {
+      try {
+        console.log(`📝 Criando campos de dados para aprovação granular...`);
+        const dataFieldService = await import('./protocol-data-field.service');
+
+        // Determinar quais campos são obrigatórios (pode vir do schema do serviço)
+        const requiredFields: string[] = []; // TODO: puxar do serviceSchema se existir
+
+        await dataFieldService.createDataFieldsFromCustomData({
+          protocolId: result.protocol.id,
+          customData: enrichedFormData,
+          requiredFields
+        });
+
+        console.log('   ✓ Campos de dados criados para aprovação');
+      } catch (error) {
+        console.error('⚠️ Erro ao criar campos de dados:', error);
+        console.warn('   → Campos de dados não criados. Protocolo pode continuar normalmente.');
+        // NÃO bloquear criação do protocolo
+      }
+    }
+
+    // ============================================================================
     // PROCESSAR CITIZEN LINKS (FORA DA TRANSAÇÃO)
     // ============================================================================
 

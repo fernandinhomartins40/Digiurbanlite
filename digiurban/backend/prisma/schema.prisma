@@ -425,6 +425,7 @@ model ProtocolSimplified {
   evaluations    ProtocolEvaluationSimplified[]
   interactions   ProtocolInteraction[]
   documentFiles  ProtocolDocument[]
+  dataFields     ProtocolDataField[]
   pendings       ProtocolPending[]
   stages         ProtocolStage[]
   currentStage   ProtocolStage?              @relation("CurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
@@ -688,6 +689,56 @@ enum PendingStatus {
   RESOLVED
   EXPIRED
   CANCELLED
+}
+
+// ========================================
+// SISTEMA DE APROVAÇÃO DE CAMPOS DE DADOS
+// ========================================
+
+model ProtocolDataField {
+  id         String   @id @default(cuid())
+  protocolId String
+
+  // Identificação do campo
+  fieldKey   String   // Ex: "nome_propriedade", "area_hectares"
+  fieldLabel String   // Ex: "Nome da Propriedade", "Área (hectares)"
+  fieldValue String   // Valor armazenado como string
+
+  // Classificação
+  isRequired Boolean  @default(false)
+  fieldType  String?  // "text", "number", "date", "cpf", etc
+
+  // Status de aprovação
+  status        DataFieldStatus @default(PENDING)
+
+  // Validação
+  validatedBy   String?
+  validatedAt   DateTime?
+  rejectedAt    DateTime?
+  rejectionReason String?
+
+  // Histórico de versões
+  version       Int      @default(1)
+  previousValue String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@unique([protocolId, fieldKey]) // Apenas 1 registro por campo
+  @@index([protocolId, status])
+  @@index([status])
+  @@map("protocol_data_fields")
+}
+
+enum DataFieldStatus {
+  PENDING       // Aguardando validação
+  UNDER_REVIEW  // Em análise
+  APPROVED      // Aprovado
+  REJECTED      // Rejeitado, precisa correção
+  CORRECTED     // Corrigido pelo cidadão, aguarda revalidação
 }
 
 // ========================================
