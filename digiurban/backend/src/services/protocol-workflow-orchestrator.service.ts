@@ -163,18 +163,18 @@ export class ProtocolWorkflowOrchestrator {
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
     });
 
-    // 2. Mudar protocolo para PENDENCIA (se ainda não estiver)
+    // 2. ✅ FASE 1: Mudar protocolo para ATUALIZACAO (aguarda ação do cidadão)
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: doc.protocolId }
     });
 
-    if (protocol?.status !== ProtocolStatus.PENDENCIA) {
+    if (protocol?.status !== ProtocolStatus.ATUALIZACAO) {
       await protocolStatusEngine.updateStatus({
         protocolId: doc.protocolId,
-        newStatus: ProtocolStatus.PENDENCIA,
-        actorRole: UserRole.ADMIN, // SYSTEM não existe, usar ADMIN
+        newStatus: ProtocolStatus.ATUALIZACAO, // Aguardando cidadão reenviar documento
+        actorRole: UserRole.ADMIN,
         actorId: rejectedBy,
-        comment: `Documento "${doc.documentType}" rejeitado`,
+        comment: `Documento "${doc.documentType}" rejeitado - Aguardando reenvio`,
         reason: reason
       });
     }

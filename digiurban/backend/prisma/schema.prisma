@@ -404,6 +404,9 @@ model ProtocolSimplified {
   assignedUserId String?
   createdById    String?
 
+  // ✅ FASE 1: Workflow tracking
+  currentStageId String? // Stage atual em execução
+
   // Timestamps
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -424,6 +427,7 @@ model ProtocolSimplified {
   documentFiles  ProtocolDocument[]
   pendings       ProtocolPending[]
   stages         ProtocolStage[]
+  currentStage   ProtocolStage?              @relation("CurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
   sla            ProtocolSLA?
   citizenLinks   ProtocolCitizenLink[]
   tfdSolicitacao SolicitacaoTFD?                @relation("TFDProtocol")
@@ -434,6 +438,7 @@ model ProtocolSimplified {
   @@index([moduleType, status])
   @@index([departmentId, status])
   @@index([citizenId])
+  @@index([currentStageId])
   @@map("protocols_simplified")
 }
 
@@ -771,7 +776,8 @@ model ProtocolStage {
   notes    String?
   metadata Json?
 
-  protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  protocol              ProtocolSimplified   @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  protocolsAsCurrent    ProtocolSimplified[] @relation("CurrentStage")
 
   @@index([protocolId, stageOrder])
   @@index([protocolId])
@@ -2728,7 +2734,7 @@ model WorkflowInstance {
   entityId     String // ID da entidade relacionada
   citizenId    String? // Cidadão vinculado (se aplicável)
   currentStage String // ID do stage atual
-  status       WorkflowStatus
+  status       String // ✅ FASE 2: Mudado de WorkflowStatus para String (valores: ACTIVE, PAUSED, COMPLETED, CANCELLED, ERROR)
   priority     Int                @default(0) // 0-10 (maior = mais urgente)
   metadata     Json? // Dados adicionais do contexto
   createdAt    DateTime           @default(now())
@@ -2765,13 +2771,7 @@ model WorkflowHistory {
   @@map("workflow_history")
 }
 
-enum WorkflowStatus {
-  ACTIVE // Fluxo em andamento
-  PAUSED // Pausado temporariamente
-  COMPLETED // Concluído com sucesso
-  CANCELLED // Cancelado
-  ERROR // Erro no processamento
-}
+// ✅ FASE 2: WorkflowStatus enum removido (não era usado em nenhum modelo)
 
 // ============================================================================
 // MICROSISTEMAS - SECRETARIA DE SAÚDE

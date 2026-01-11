@@ -16,6 +16,7 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
+import { NEEDS_CITIZEN_ACTION } from '../config/protocol-status.config'; // ✅ FASE 2
 import { UserRole, ProtocolStatus } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { getManagementConfig } from './management-configs';
@@ -496,7 +497,7 @@ router.get(
         moduleType: module.toUpperCase(),
         status: pendingOnly
           ? ProtocolStatus.VINCULADO
-          : { in: [ProtocolStatus.VINCULADO, ProtocolStatus.ATUALIZACAO] }
+          : { in: [ProtocolStatus.VINCULADO, ...NEEDS_CITIZEN_ACTION] } // ✅ FASE 2: Constante centralizada
       };
 
       const skip = (page - 1) * limit;

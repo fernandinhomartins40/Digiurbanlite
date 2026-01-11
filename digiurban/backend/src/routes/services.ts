@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { Prisma, UserRole } from '@prisma/client';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
+import { ACTIVE_STATUSES } from '../config/protocol-status.config'; // ✅ FASE 2
 import {
   AuthenticatedRequest,
   SuccessResponse,
@@ -571,7 +572,7 @@ router.delete('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), asy
       where: {
         serviceId: id,
         status: {
-          in: ['VINCULADO', 'PROGRESSO', 'ATUALIZACAO']
+          in: ACTIVE_STATUSES // ✅ FASE 2: Constante centralizada
         }
         }
         });

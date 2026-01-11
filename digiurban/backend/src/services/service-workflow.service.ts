@@ -273,6 +273,19 @@ export async function applyWorkflowToProtocol(protocolId: string) {
     })
   );
 
+  // ✅ FASE 1: Atualizar protocolo para PROGRESSO e setar currentStageId
+  const firstStage = createdStages.find(s => s.stageOrder === 1);
+  if (firstStage) {
+    await prisma.protocolSimplified.update({
+      where: { id: protocolId },
+      data: {
+        status: 'PROGRESSO', // Status muda automaticamente quando workflow inicia
+        currentStageId: firstStage.id
+      }
+    });
+    console.log(`✅ Protocolo ${protocol.number} → status PROGRESSO (stage: ${firstStage.stageName})`);
+  }
+
   console.log(`✅ Workflow "${workflow.name}" aplicado ao protocolo ${protocol.number}`);
   console.log(`   → ${createdStages.length} etapa(s) criada(s)`);
 

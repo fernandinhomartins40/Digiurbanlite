@@ -88,6 +88,36 @@ export const TERMINAL_STATUSES: ProtocolStatus[] = [
 
 /**
  * ============================================================================
+ * ✅ FASE 2: CONSTANTES DE STATUS CENTRALIZADAS
+ * ============================================================================
+ */
+
+/**
+ * Status que indicam protocolo "ativo" (em andamento, pode ser trabalhado)
+ */
+export const ACTIVE_STATUSES: ProtocolStatus[] = [
+  ProtocolStatus.VINCULADO,
+  ProtocolStatus.PROGRESSO,
+  ProtocolStatus.PENDENCIA,
+  ProtocolStatus.ATUALIZACAO
+];
+
+/**
+ * Status que aguardam ação do CIDADÃO
+ */
+export const NEEDS_CITIZEN_ACTION: ProtocolStatus[] = [
+  ProtocolStatus.ATUALIZACAO  // Documento rejeitado, precisa reenviar
+];
+
+/**
+ * Status que aguardam ação da SECRETARIA (problema interno)
+ */
+export const NEEDS_STAFF_ACTION: ProtocolStatus[] = [
+  ProtocolStatus.PENDENCIA  // Pendência interna, problema técnico
+];
+
+/**
+ * ============================================================================
  * MAPEAMENTO DE AÇÕES PARA HISTÓRICO
  * ============================================================================
  */
@@ -254,4 +284,29 @@ export function getDefaultComment(status: ProtocolStatus): string {
  */
 export function getStatusUIConfig(status: ProtocolStatus): StatusUIConfig {
   return STATUS_UI_CONFIG[status] || STATUS_UI_CONFIG[ProtocolStatus.VINCULADO];
+}
+
+/**
+ * ✅ FASE 2: Helper functions para constantes centralizadas
+ */
+
+/**
+ * Verifica se protocolo está ativo (pode ser trabalhado)
+ */
+export function isProtocolActive(status: ProtocolStatus): boolean {
+  return ACTIVE_STATUSES.includes(status);
+}
+
+/**
+ * Verifica se protocolo aguarda ação do cidadão
+ */
+export function needsCitizenAction(status: ProtocolStatus): boolean {
+  return NEEDS_CITIZEN_ACTION.includes(status);
+}
+
+/**
+ * Verifica se protocolo aguarda ação da secretaria
+ */
+export function needsStaffAction(status: ProtocolStatus): boolean {
+  return NEEDS_STAFF_ACTION.includes(status);
 }

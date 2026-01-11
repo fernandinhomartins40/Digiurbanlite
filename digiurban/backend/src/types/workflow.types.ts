@@ -9,7 +9,7 @@
  * - Protocolos executam baseado nas referências
  */
 
-import { WorkflowStatus } from '@prisma/client';
+// ✅ FASE 2: WorkflowStatus removido (não era usado)
 
 // ============================================================================
 // WORKFLOW STAGE - ESTRUTURA ATUALIZADA
@@ -195,6 +195,5 @@ export interface ServiceForWorkflow {
 // EXPORTS
 // ============================================================================
 
-export {
-  WorkflowStatus,
-} from '@prisma/client';
+// ✅ FASE 2: WorkflowStatus enum removido (não era usado)
+// export { WorkflowStatus } from '@prisma/client';

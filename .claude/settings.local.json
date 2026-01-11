@@ -85,7 +85,14 @@
       "Bash(mkdir:*)",
       "Bash(xargs:*)",
       "Bash(npx next build)",
-      "Bash(dir 'c:\\Projetos Cursor\\Digiurbanlite\\digiurban\\backend\\uploads' /s /b)"
+      "Bash(dir 'c:\\Projetos Cursor\\Digiurbanlite\\digiurban\\backend\\uploads' /s /b)",
+      "Bash(dir digiurbanbackenduploadsprotocols /s /b)",
+      "Bash(dir:*)",
+      "Bash(git hash-object:*)",
+      "Bash(where nul)",
+      "Bash(git clean:*)",
+      "Bash(move ChecklistTab.tsx ChecklistTab.deprecated.tsx)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

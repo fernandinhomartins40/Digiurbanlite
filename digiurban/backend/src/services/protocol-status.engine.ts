@@ -171,9 +171,19 @@ export class ProtocolStatusEngine {
       );
     }
 
-    // 3. Validações específicas por tipo de serviço
+    // 3. ✅ FASE 1: Validações específicas por tipo de serviço
     if (protocolType === 'COM_DADOS') {
       const validation = SERVICE_TYPE_VALIDATIONS.COM_DADOS;
+
+      // ✅ BLOQUEAR: VINCULADO → CONCLUIDO (deve passar por PROGRESSO)
+      if (currentStatus === ProtocolStatus.VINCULADO && newStatus === ProtocolStatus.CONCLUIDO) {
+        throw new InvalidTransitionError(
+          `Serviços COM_DADOS não podem ser concluídos diretamente. É necessário iniciar o workflow (status PROGRESSO).`,
+          currentStatus,
+          newStatus,
+          actorRole
+        );
+      }
 
       // Serviços COM_DADOS podem requerer aprovação específica
       if (validation.requiresApproval && newStatus === ProtocolStatus.CONCLUIDO) {

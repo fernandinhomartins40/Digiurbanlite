@@ -3,9 +3,10 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
 import { validateRequest } from '../middleware/validation';
+import { ACTIVE_STATUSES } from '../config/protocol-status.config'; // ✅ FASE 2
 import {
   AuthenticatedRequest,
-  
+
   AdminRouteParams,
   PaginatedRouteResponse,
   SuccessResponse,
@@ -149,7 +150,7 @@ router.get(
         // Protocolos ativos
         prisma.protocolSimplified.count({
           where: {
-                        status: { in: ['VINCULADO', 'PROGRESSO', 'ATUALIZACAO'] }
+            status: { in: ACTIVE_STATUSES } // ✅ FASE 2: Constante centralizada
         }
         }),
 

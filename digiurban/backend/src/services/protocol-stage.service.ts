@@ -78,16 +78,25 @@ export async function updateStage(stageId: string, data: UpdateStageData) {
 
 /**
  * Inicia uma etapa
+ * ✅ FASE 1: Atualiza currentStageId do protocolo
  */
 export async function startStage(stageId: string, userId?: string) {
-  return await prisma.protocolStage.update({
+  const stage = await prisma.protocolStage.update({
     where: { id: stageId },
     data: {
       status: StageStatus.IN_PROGRESS,
       startedAt: new Date(),
       assignedTo: userId
-        }
-        });
+    }
+  });
+
+  // ✅ FASE 1: Atualizar currentStageId do protocolo
+  await prisma.protocolSimplified.update({
+    where: { id: stage.protocolId },
+    data: { currentStageId: stageId }
+  });
+
+  return stage;
 }
 
 /**
