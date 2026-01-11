@@ -1,4 +1,7 @@
-import { PrismaClient, WorkflowStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+
+// ✅ FASE 2: WorkflowStatus agora é String
+type WorkflowStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED' | 'ERROR';
 
 const prisma = new PrismaClient();
 

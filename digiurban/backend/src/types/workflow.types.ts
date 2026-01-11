@@ -84,6 +84,7 @@ export interface WorkflowDefinitionData {
 
 /**
  * Instância de workflow em execução (protocolo)
+ * ✅ FASE 2: WorkflowStatus migrado para string literal
  */
 export interface WorkflowInstanceData {
   id?: string;
@@ -92,7 +93,7 @@ export interface WorkflowInstanceData {
   entityId: string;                     // ID do protocolo
   citizenId?: string;
   currentStage: string;                 // ID da stage atual
-  status: WorkflowStatus;
+  status: 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED' | 'ERROR'; // String ao invés de enum
   priority?: number;
   metadata?: Record<string, any>;
   createdAt?: Date;
