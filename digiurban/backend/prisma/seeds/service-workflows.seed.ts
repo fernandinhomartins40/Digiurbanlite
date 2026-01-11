@@ -41,8 +41,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentos obrigatórios (laudos, atestados, exames)',
         slaDays: 2,
 
@@ -60,7 +72,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -75,7 +87,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Regulação Médica',
-        order: 3,
+        order: 4,
         description: 'Avaliação técnica pela regulação médica',
         slaDays: 3,
 
@@ -90,7 +102,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Gestão',
-        order: 4,
+        order: 5,
         description: 'Aprovação final pela gestão',
         slaDays: 1,
 
@@ -105,7 +117,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento Transporte',
-        order: 5,
+        order: 6,
         description: 'Agendamento do transporte para o paciente',
         slaDays: 1,
 
@@ -128,8 +140,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Verificação da solicitação e documentos',
         slaDays: 2,
 
@@ -144,7 +168,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -159,7 +183,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Técnica',
-        order: 3,
+        order: 4,
         description: 'Avaliação do tipo de transporte necessário',
         slaDays: 3,
 
@@ -174,7 +198,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento',
-        order: 4,
+        order: 5,
         description: 'Agendamento do transporte',
         slaDays: 3,
 
@@ -189,7 +213,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 5,
+        order: 6,
         description: 'Confirmação do agendamento com o paciente',
         slaDays: 2,
 
@@ -213,8 +237,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de CPF, comprovante de residência e documentos da propriedade',
         slaDays: 3,
 
@@ -230,7 +266,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação dos dados cadastrais do produtor',
         slaDays: 2,
 
@@ -245,7 +281,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Final',
-        order: 3,
+        order: 4,
         description: 'Aprovação final do cadastro',
         slaDays: 2,
 
@@ -260,7 +296,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Certidão',
-        order: 4,
+        order: 5,
         description: 'Emissão da certidão de produtor rural',
         slaDays: 3,
 
@@ -468,8 +504,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 3,
     stages: [
       {
-        name: 'Triagem e Validação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Triagem e Validação',
+        order: 2,
         description: 'Validação de dados e disponibilidade',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -481,7 +529,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento',
-        order: 2,
+        order: 3,
         description: 'Confirmação de data e horário',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -492,7 +540,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 3,
+        order: 4,
         description: 'Notificação ao paciente',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -510,8 +558,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'Análise de Pedido Médico',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Pedido Médico',
+        order: 2,
         description: 'Validação de requisição médica',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
@@ -522,7 +582,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -537,7 +597,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento de Coleta',
-        order: 3,
+        order: 4,
         description: 'Definição de data para coleta',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -548,7 +608,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 4,
+        order: 5,
         description: 'Notificação ao paciente',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -566,8 +626,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentos pessoais',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -579,7 +651,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -594,7 +666,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro no Sistema',
-        order: 3,
+        order: 4,
         description: 'Registro no sistema nacional',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -604,7 +676,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão do Cartão',
-        order: 4,
+        order: 5,
         description: 'Impressão e disponibilização',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -623,8 +695,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'Análise de Documentos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Documentos',
+        order: 2,
         description: 'Verificação de documentos escolares',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -636,7 +720,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Vagas',
-        order: 2,
+        order: 3,
         description: 'Consulta de disponibilidade',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -647,7 +731,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Efetivação da Matrícula',
-        order: 3,
+        order: 4,
         description: 'Confirmação e registro no sistema',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -665,8 +749,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Verificação de documentos e motivo',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -678,7 +774,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Vagas',
-        order: 2,
+        order: 3,
         description: 'Consulta na escola destino',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -688,7 +784,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Processamento',
-        order: 3,
+        order: 4,
         description: 'Transferência de documentação',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -698,7 +794,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 4,
+        order: 5,
         description: 'Matrícula efetivada na nova escola',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -716,8 +812,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise de Elegibilidade',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Elegibilidade',
+        order: 2,
         description: 'Verificação de critérios (distância, idade)',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -729,7 +837,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -744,7 +852,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Rota',
-        order: 3,
+        order: 4,
         description: 'Planejamento logístico',
         slaDays: 4,
         availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
@@ -754,7 +862,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 4,
+        order: 5,
         description: 'Autorização final',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -764,7 +872,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro e Orientação',
-        order: 5,
+        order: 6,
         description: 'Informações sobre ponto e horário',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -783,8 +891,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Verificação da demanda e documentação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -796,7 +916,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -811,7 +931,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento de Visita',
-        order: 3,
+        order: 4,
         description: 'Agendamento de visita técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -823,7 +943,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Técnica',
-        order: 4,
+        order: 5,
         description: 'Realização da vistoria in loco',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -835,7 +955,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Laudo',
-        order: 5,
+        order: 6,
         description: 'Elaboração do laudo técnico',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -855,8 +975,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 12,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentos da propriedade',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -868,7 +1000,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria da Propriedade',
-        order: 2,
+        order: 3,
         description: 'Vistoria técnica no local',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -880,7 +1012,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação Cadastral',
-        order: 3,
+        order: 4,
         description: 'Validação dos dados cadastrais',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -892,7 +1024,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Certificado',
-        order: 4,
+        order: 5,
         description: 'Emissão do certificado de cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -912,8 +1044,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise de Elegibilidade',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Elegibilidade',
+        order: 2,
         description: 'Verificação de critérios de elegibilidade',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -925,7 +1069,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação Técnica',
-        order: 2,
+        order: 3,
         description: 'Análise técnica da solicitação',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -937,7 +1081,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 3,
+        order: 4,
         description: 'Aprovação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -949,7 +1093,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro no Programa',
-        order: 4,
+        order: 5,
         description: 'Efetivação do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -969,8 +1113,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 8,
     stages: [
       {
-        name: 'Análise de Inscrição',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Inscrição',
+        order: 2,
         description: 'Verificação de documentos do produtor',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -982,7 +1138,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação Sanitária',
-        order: 2,
+        order: 3,
         description: 'Verificação de conformidade sanitária',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -994,7 +1150,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Alocação de Espaço',
-        order: 3,
+        order: 4,
         description: 'Definição de local na feira',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -1006,7 +1162,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 4,
+        order: 5,
         description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1026,8 +1182,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Verificação de documentos do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -1039,7 +1207,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1054,7 +1222,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria do Local',
-        order: 3,
+        order: 4,
         description: 'Vistoria técnica no local do evento',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -1066,7 +1234,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Segurança',
-        order: 4,
+        order: 5,
         description: 'Avaliação de segurança e sanitária',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1078,7 +1246,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Licença',
-        order: 5,
+        order: 6,
         description: 'Emissão da licença do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1098,8 +1266,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 20,
     stages: [
       {
-        name: 'Registro de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro de Solicitação',
+        order: 2,
         description: 'Registro e validação da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -1111,7 +1291,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1126,7 +1306,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento de Coleta',
-        order: 3,
+        order: 4,
         description: 'Agendamento da coleta de amostras',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -1138,7 +1318,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Laboratorial',
-        order: 4,
+        order: 5,
         description: 'Análise das amostras em laboratório',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1150,7 +1330,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Laudo',
-        order: 5,
+        order: 6,
         description: 'Emissão do laudo técnico',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1242,8 +1422,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Verificação de elegibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -1255,7 +1447,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1270,7 +1462,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Prévia',
-        order: 3,
+        order: 4,
         description: 'Vistoria da área a ser trabalhada',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -1282,7 +1474,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento',
-        order: 4,
+        order: 5,
         description: 'Agendamento da máquina',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1294,7 +1486,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 5,
+        order: 6,
         description: 'Confirmação do agendamento',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1315,8 +1507,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'Acolhimento',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Acolhimento',
+        order: 2,
         description: 'Acolhimento inicial e escuta',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1328,7 +1532,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1343,7 +1547,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Social',
-        order: 3,
+        order: 4,
         description: 'Avaliação pela assistente social',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1355,7 +1559,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Encaminhamento',
-        order: 4,
+        order: 5,
         description: 'Encaminhamento para serviços apropriados',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1367,7 +1571,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Acompanhamento',
-        order: 5,
+        order: 6,
         description: 'Acompanhamento do caso',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1387,8 +1591,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Análise de Documentos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Documentos',
+        order: 2,
         description: 'Verificação de documentos e elegibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -1400,7 +1616,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1415,7 +1631,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Socioeconômica',
-        order: 3,
+        order: 4,
         description: 'Avaliação da situação socioeconômica',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1427,7 +1643,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 4,
+        order: 5,
         description: 'Aprovação do auxílio',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1439,7 +1655,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Liberação',
-        order: 5,
+        order: 6,
         description: 'Liberação do benefício',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1459,8 +1675,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'Coleta de Documentos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Coleta de Documentos',
+        order: 2,
         description: 'Verificação de documentos da família',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -1472,7 +1700,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Preenchimento do Cadastro',
-        order: 2,
+        order: 3,
         description: 'Preenchimento completo do cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1484,7 +1712,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação',
-        order: 3,
+        order: 4,
         description: 'Validação dos dados cadastrados',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1496,7 +1724,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Finalização',
-        order: 4,
+        order: 5,
         description: 'Envio para base nacional',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1516,8 +1744,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Análise de Inscrição',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Inscrição',
+        order: 2,
         description: 'Verificação de documentos e elegibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -1529,7 +1769,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação de Perfil',
-        order: 2,
+        order: 3,
         description: 'Avaliação do perfil do candidato',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1541,7 +1781,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Vagas',
-        order: 3,
+        order: 4,
         description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1553,7 +1793,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 4,
+        order: 5,
         description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1573,8 +1813,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentos obrigatórios',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -1586,7 +1838,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1601,7 +1853,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Socioeconômica',
-        order: 3,
+        order: 4,
         description: 'Avaliação da situação familiar',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1613,7 +1865,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Elegibilidade',
-        order: 4,
+        order: 5,
         description: 'Verificação de critérios do programa',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1625,7 +1877,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro no Programa',
-        order: 5,
+        order: 6,
         description: 'Efetivação do cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1645,8 +1897,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 12,
     stages: [
       {
-        name: 'Análise de Documentos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Documentos',
+        order: 2,
         description: 'Verificação de documentação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -1658,7 +1922,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1673,7 +1937,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Estudo Social',
-        order: 3,
+        order: 4,
         description: 'Estudo socioeconômico',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1685,7 +1949,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Gestão',
-        order: 4,
+        order: 5,
         description: 'Aprovação pela gestão',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1697,7 +1961,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Concessão',
-        order: 5,
+        order: 6,
         description: 'Concessão do benefício',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1717,8 +1981,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Análise da demanda de visita',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -1730,7 +2006,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1745,7 +2021,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento',
-        order: 3,
+        order: 4,
         description: 'Agendamento da visita',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -1757,7 +2033,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Realização da Visita',
-        order: 4,
+        order: 5,
         description: 'Execução da visita domiciliar',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -1769,7 +2045,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Elaboração de Relatório',
-        order: 5,
+        order: 6,
         description: 'Elaboração do relatório técnico',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1790,8 +2066,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentos pessoais',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -1803,7 +2091,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1818,7 +2106,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Portfólio',
-        order: 3,
+        order: 4,
         description: 'Avaliação do portfólio artístico',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1830,7 +2118,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação',
-        order: 4,
+        order: 5,
         description: 'Validação pela comissão de cultura',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1842,7 +2130,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Carteira',
-        order: 5,
+        order: 6,
         description: 'Emissão da carteira de artista',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1862,8 +2150,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise de Proposta',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Proposta',
+        order: 2,
         description: 'Verificação da proposta do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -1875,7 +2175,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1890,7 +2190,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 3,
+        order: 4,
         description: 'Análise técnica da viabilidade',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -1902,7 +2202,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria de Local',
-        order: 4,
+        order: 5,
         description: 'Vistoria do local do evento',
         slaDays: 4,
         availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
@@ -1914,7 +2214,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 5,
+        order: 6,
         description: 'Aprovação final do evento',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1926,7 +2226,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Publicação',
-        order: 6,
+        order: 7,
         description: 'Publicação no calendário cultural',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -1946,8 +2246,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 12,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentos do grupo',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -1959,7 +2271,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -1974,7 +2286,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Portfólio',
-        order: 3,
+        order: 4,
         description: 'Avaliação do trabalho do grupo',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1986,7 +2298,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação',
-        order: 4,
+        order: 5,
         description: 'Validação pela secretaria de cultura',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -1998,7 +2310,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Certificação',
-        order: 5,
+        order: 6,
         description: 'Emissão de certificado de cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2018,8 +2330,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 8,
     stages: [
       {
-        name: 'Análise de Inscrição',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Inscrição',
+        order: 2,
         description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2031,7 +2355,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Vagas',
-        order: 2,
+        order: 3,
         description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2043,7 +2367,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 3,
+        order: 4,
         description: 'Confirmação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2055,7 +2379,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Matrícula',
-        order: 4,
+        order: 5,
         description: 'Efetivação da matrícula',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2075,8 +2399,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 20,
     stages: [
       {
-        name: 'Análise de Proposta',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Proposta',
+        order: 2,
         description: 'Verificação da proposta de registro',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2088,7 +2424,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -2103,7 +2439,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Pesquisa e Documentação',
-        order: 3,
+        order: 4,
         description: 'Levantamento histórico e documental',
         slaDays: 8,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2115,7 +2451,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise da Comissão',
-        order: 4,
+        order: 5,
         description: 'Avaliação pela comissão de patrimônio',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2127,7 +2463,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Registro Oficial',
-        order: 5,
+        order: 6,
         description: 'Registro oficial da manifestação',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2147,8 +2483,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Verificação da solicitação de reserva',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -2160,7 +2508,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Disponibilidade',
-        order: 2,
+        order: 3,
         description: 'Verificação de agenda do espaço',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -2172,7 +2520,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Prévia',
-        order: 3,
+        order: 4,
         description: 'Vistoria e orientações sobre o espaço',
         slaDays: 3,
         availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
@@ -2184,7 +2532,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 4,
+        order: 5,
         description: 'Confirmação da reserva',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2196,7 +2544,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Liberação do Espaço',
-        order: 5,
+        order: 6,
         description: 'Liberação das chaves/acesso',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2216,8 +2564,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 20,
     stages: [
       {
-        name: 'Análise de Projeto',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Projeto',
+        order: 2,
         description: 'Verificação do projeto cultural',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2229,7 +2589,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -2244,7 +2604,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 3,
+        order: 4,
         description: 'Avaliação técnica do projeto',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2256,7 +2616,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Orçamentária',
-        order: 4,
+        order: 5,
         description: 'Análise da viabilidade orçamentária',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2268,7 +2628,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Formalização',
-        order: 5,
+        order: 6,
         description: 'Formalização do apoio',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2360,8 +2720,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 25,
     stages: [
       {
-        name: 'Análise de Proposta',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Proposta',
+        order: 2,
         description: 'Verificação da proposta de projeto',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2373,7 +2745,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -2388,7 +2760,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 3,
+        order: 4,
         description: 'Avaliação técnica do projeto',
         slaDays: 8,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2400,7 +2772,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Financeira',
-        order: 4,
+        order: 5,
         description: 'Análise da viabilidade financeira',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2412,7 +2784,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Final',
-        order: 5,
+        order: 6,
         description: 'Aprovação pela secretaria',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2424,7 +2796,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Formalização',
-        order: 6,
+        order: 7,
         description: 'Formalização e publicação',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2445,8 +2817,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Validação Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Validação Documental',
+        order: 2,
         description: 'Verificação de documentos do professor',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2458,7 +2842,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -2473,7 +2857,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Curricular',
-        order: 3,
+        order: 4,
         description: 'Análise do currículo e formação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2485,7 +2869,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação RH',
-        order: 4,
+        order: 5,
         description: 'Aprovação pelo departamento de recursos humanos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2497,7 +2881,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro Sistema',
-        order: 5,
+        order: 6,
         description: 'Cadastro no sistema educacional',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2517,8 +2901,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 3,
     stages: [
       {
-        name: 'Validação Solicitante',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Validação Solicitante',
+        order: 2,
         description: 'Verificação de vínculo do solicitante com o aluno',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2530,7 +2926,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Geração de Relatório',
-        order: 2,
+        order: 3,
         description: 'Geração do relatório de frequência e notas',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2542,7 +2938,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Entrega',
-        order: 3,
+        order: 4,
         description: 'Disponibilização do relatório',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2562,8 +2958,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Análise de Requisitos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Requisitos',
+        order: 2,
         description: 'Verificação de requisitos para o curso',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2575,7 +2983,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Vagas',
-        order: 2,
+        order: 3,
         description: 'Verificação de disponibilidade de vagas',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2587,7 +2995,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Matrícula',
-        order: 3,
+        order: 4,
         description: 'Efetivação da matrícula',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2599,7 +3007,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Notificação',
-        order: 4,
+        order: 5,
         description: 'Notificação ao aluno sobre a matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2691,8 +3099,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'Validação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Validação',
+        order: 2,
         description: 'Validação da solicitação e documentos',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2704,7 +3124,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Busca de Dados',
-        order: 2,
+        order: 3,
         description: 'Busca de informações nos arquivos escolares',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2716,7 +3136,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão',
-        order: 3,
+        order: 4,
         description: 'Emissão do documento solicitado',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2728,7 +3148,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Entrega',
-        order: 4,
+        order: 5,
         description: 'Disponibilização para retirada',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2749,8 +3169,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Validação Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Validação Documental',
+        order: 2,
         description: 'Verificação de documentos do atleta',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2762,7 +3194,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -2777,7 +3209,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Física',
-        order: 3,
+        order: 4,
         description: 'Avaliação de aptidão física',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2789,7 +3221,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Técnica',
-        order: 4,
+        order: 5,
         description: 'Aprovação pelo técnico responsável',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2801,7 +3233,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro Sistema',
-        order: 5,
+        order: 6,
         description: 'Cadastro no sistema de esportes',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2821,8 +3253,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Validação de Inscrição',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Validação de Inscrição',
+        order: 2,
         description: 'Verificação de requisitos para participação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2834,7 +3278,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Vagas',
-        order: 2,
+        order: 3,
         description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2846,7 +3290,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Homologação',
-        order: 3,
+        order: 4,
         description: 'Homologação da inscrição',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2858,7 +3302,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Notificação',
-        order: 4,
+        order: 5,
         description: 'Notificação sobre a inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2878,8 +3322,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Análise de Requisitos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Requisitos',
+        order: 2,
         description: 'Verificação de requisitos e faixa etária',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -2891,7 +3347,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Vagas',
-        order: 2,
+        order: 3,
         description: 'Verificação de disponibilidade de vagas',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2903,7 +3359,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Matrícula',
-        order: 3,
+        order: 4,
         description: 'Efetivação da matrícula',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2915,7 +3371,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Notificação',
-        order: 4,
+        order: 5,
         description: 'Notificação ao responsável',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2935,8 +3391,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'Análise de Disponibilidade',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Disponibilidade',
+        order: 2,
         description: 'Verificação de disponibilidade do espaço',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2948,7 +3416,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -2963,7 +3431,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Uso',
-        order: 3,
+        order: 4,
         description: 'Análise da finalidade de uso',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -2975,7 +3443,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Autorização',
-        order: 4,
+        order: 5,
         description: 'Autorização da reserva',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -2987,7 +3455,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Confirmação',
-        order: 5,
+        order: 6,
         description: 'Confirmação e entrega de autorização',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3008,8 +3476,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 30,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentação técnica',
         slaDays: 7,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3021,7 +3501,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3036,7 +3516,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 3,
+        order: 4,
         description: 'Análise técnica do projeto',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3048,7 +3528,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria',
-        order: 4,
+        order: 5,
         description: 'Vistoria no local',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3060,7 +3540,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 5,
+        order: 6,
         description: 'Aprovação final',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3072,7 +3552,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Alvará',
-        order: 6,
+        order: 7,
         description: 'Emissão do alvará de construção',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3092,8 +3572,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 20,
     stages: [
       {
-        name: 'Validação Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Validação Documental',
+        order: 2,
         description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3105,7 +3597,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3120,7 +3612,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Socioeconômica',
-        order: 3,
+        order: 4,
         description: 'Avaliação da situação socioeconômica',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3132,7 +3624,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Domiciliar',
-        order: 4,
+        order: 5,
         description: 'Vistoria na residência atual',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3144,7 +3636,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro',
-        order: 5,
+        order: 6,
         description: 'Cadastro no programa habitacional',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3156,7 +3648,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Notificação',
-        order: 6,
+        order: 7,
         description: 'Notificação sobre o cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3176,8 +3668,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 60,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentação',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3189,7 +3693,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3204,7 +3708,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Técnica',
-        order: 3,
+        order: 4,
         description: 'Vistoria no local',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3216,7 +3720,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Jurídica',
-        order: 4,
+        order: 5,
         description: 'Análise jurídica da situação',
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3228,7 +3732,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 5,
+        order: 6,
         description: 'Aprovação final da regularização',
         slaDays: 10,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3240,7 +3744,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Documentos',
-        order: 6,
+        order: 7,
         description: 'Emissão da documentação de regularização',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3260,8 +3764,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3273,7 +3789,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3288,7 +3804,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Socioeconômica',
-        order: 3,
+        order: 4,
         description: 'Avaliação da situação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3300,7 +3816,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria',
-        order: 4,
+        order: 5,
         description: 'Vistoria no imóvel',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3312,7 +3828,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 5,
+        order: 6,
         description: 'Aprovação do auxílio',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3324,7 +3840,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro Benefício',
-        order: 6,
+        order: 7,
         description: 'Cadastro no sistema de benefícios',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3344,8 +3860,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Agendamento',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Agendamento',
+        order: 2,
         description: 'Agendamento da vistoria',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3357,7 +3885,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3372,7 +3900,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Realização da Vistoria',
-        order: 3,
+        order: 4,
         description: 'Execução da vistoria técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3384,7 +3912,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 4,
+        order: 5,
         description: 'Análise dos resultados da vistoria',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3396,7 +3924,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Laudo',
-        order: 5,
+        order: 6,
         description: 'Emissão do laudo de vistoria',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3417,8 +3945,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise do Pedido',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise do Pedido',
+        order: 2,
         description: 'Análise inicial da solicitação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3430,7 +3970,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3445,7 +3985,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Técnica',
-        order: 3,
+        order: 4,
         description: 'Vistoria no local por engenheiro ambiental',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3457,7 +3997,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Ambiental',
-        order: 3,
+        order: 4,
         description: 'Análise de impacto ambiental',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3469,7 +4009,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Autorização',
-        order: 5,
+        order: 6,
         description: 'Emissão de autorização',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3481,7 +4021,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Notificação',
-        order: 6,
+        order: 7,
         description: 'Notificação ao solicitante',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3501,8 +4041,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Inscrição',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Inscrição',
+        order: 2,
         description: 'Análise da inscrição',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3514,7 +4066,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3529,7 +4081,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Requisitos',
-        order: 3,
+        order: 4,
         description: 'Verificação de requisitos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3541,7 +4093,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro',
-        order: 4,
+        order: 5,
         description: 'Cadastro no programa',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3553,7 +4105,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Notificação',
-        order: 5,
+        order: 6,
         description: 'Notificação sobre o cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3657,8 +4209,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 45,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentação',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3670,7 +4234,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3685,7 +4249,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Técnica',
-        order: 3,
+        order: 4,
         description: 'Vistoria no local',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3697,7 +4261,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Ambiental',
-        order: 4,
+        order: 5,
         description: 'Análise de impacto ambiental',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3709,7 +4273,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 5,
+        order: 6,
         description: 'Aprovação final',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3721,7 +4285,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Licença',
-        order: 6,
+        order: 7,
         description: 'Emissão da licença ambiental',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3741,8 +4305,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Agendamento',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Agendamento',
+        order: 2,
         description: 'Agendamento da vistoria',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3754,7 +4330,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3769,7 +4345,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Realização',
-        order: 3,
+        order: 4,
         description: 'Realização da vistoria',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3781,7 +4357,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 4,
+        order: 5,
         description: 'Análise dos resultados',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3793,7 +4369,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Laudo',
-        order: 5,
+        order: 6,
         description: 'Emissão do laudo',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3814,8 +4390,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 20,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentação',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3827,7 +4415,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3842,7 +4430,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Técnica',
-        order: 3,
+        order: 4,
         description: 'Vistoria no local',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3854,7 +4442,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Segurança',
-        order: 4,
+        order: 5,
         description: 'Análise de segurança e impactos',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3866,7 +4454,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 5,
+        order: 6,
         description: 'Aprovação final',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3878,7 +4466,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Alvará',
-        order: 6,
+        order: 7,
         description: 'Emissão do alvará de demolição',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3898,8 +4486,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise do Pedido',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise do Pedido',
+        order: 2,
         description: 'Análise inicial da solicitação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -3911,7 +4511,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -3926,7 +4526,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 3,
+        order: 4,
         description: 'Análise técnica do projeto',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3938,7 +4538,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Segurança',
-        order: 4,
+        order: 5,
         description: 'Análise de segurança viária',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -3950,7 +4550,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação',
-        order: 5,
+        order: 6,
         description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -3962,7 +4562,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Autorização',
-        order: 6,
+        order: 7,
         description: 'Emissão da autorização',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4067,8 +4667,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 60,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentação',
         slaDays: 15,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -4080,7 +4692,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4095,7 +4707,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Urbanística',
-        order: 3,
+        order: 4,
         description: 'Análise de conformidade urbanística',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -4107,7 +4719,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Ambiental',
-        order: 4,
+        order: 5,
         description: 'Análise de impacto ambiental',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -4119,7 +4731,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Infraestrutura',
-        order: 5,
+        order: 6,
         description: 'Análise de infraestrutura necessária',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -4131,7 +4743,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Final',
-        order: 6,
+        order: 7,
         description: 'Aprovação final do parcelamento',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4143,7 +4755,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Registro',
-        order: 7,
+        order: 8,
         description: 'Registro e formalização',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4163,8 +4775,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 30,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentação técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
@@ -4176,7 +4800,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4191,7 +4815,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 3,
+        order: 4,
         description: 'Verificação de conformidade com normas',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'location', 'pendencias', 'comunicacao'],
@@ -4203,7 +4827,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria no Local',
-        order: 4,
+        order: 5,
         description: 'Inspeção técnica in loco',
         slaDays: 7,
         availableTabs: ['resumo', 'location', 'documentos', 'comunicacao'],
@@ -4215,7 +4839,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Parecer',
-        order: 5,
+        order: 6,
         description: 'Avaliação do laudo técnico',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
@@ -4227,7 +4851,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Final',
-        order: 6,
+        order: 7,
         description: 'Emissão de alvará',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4247,8 +4871,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise de Documentos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Documentos',
+        order: 2,
         description: 'Verificação de documentação do imóvel',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
@@ -4260,7 +4896,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4275,7 +4911,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Urbanística',
-        order: 3,
+        order: 4,
         description: 'Verificação de zoneamento e restrições',
         slaDays: 7,
         availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
@@ -4287,7 +4923,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Parecer',
-        order: 4,
+        order: 5,
         description: 'Elaboração de relatório técnico',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
@@ -4299,7 +4935,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Final',
-        order: 5,
+        order: 6,
         description: 'Emissão de certidão',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4319,8 +4955,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 45,
     stages: [
       {
-        name: 'Análise Documental',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise Documental',
+        order: 2,
         description: 'Verificação de documentação completa',
         slaDays: 7,
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
@@ -4332,7 +4980,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4347,7 +4995,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 3,
+        order: 4,
         description: 'Verificação de conformidade técnica',
         slaDays: 15,
         availableTabs: ['resumo', 'documentos', 'location', 'pendencias', 'comunicacao'],
@@ -4359,7 +5007,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Prévia',
-        order: 4,
+        order: 5,
         description: 'Inspeção do terreno',
         slaDays: 10,
         availableTabs: ['resumo', 'location', 'documentos', 'comunicacao'],
@@ -4371,7 +5019,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise de Taxas',
-        order: 5,
+        order: 6,
         description: 'Cálculo e verificação de taxas',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -4383,7 +5031,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão do Alvará',
-        order: 6,
+        order: 7,
         description: 'Liberação do alvará de construção',
         slaDays: 8,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4500,8 +5148,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 1,
     stages: [
       {
-        name: 'Cadastro',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Cadastro',
+        order: 2,
         description: 'Cadastro do cidadão na campanha',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -4513,7 +5173,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4528,7 +5188,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aplicação',
-        order: 3,
+        order: 4,
         description: 'Aplicação da vacina',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -4540,7 +5200,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Registro',
-        order: 4,
+        order: 5,
         description: 'Registro no sistema',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4560,8 +5220,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 3,
     stages: [
       {
-        name: 'Análise de Receita',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Receita',
+        order: 2,
         description: 'Verificação da receita médica',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -4573,7 +5245,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação de Estoque',
-        order: 2,
+        order: 3,
         description: 'Verificação de disponibilidade',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -4585,7 +5257,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Dispensação',
-        order: 3,
+        order: 4,
         description: 'Entrega do medicamento',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4605,8 +5277,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise de Documentos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Documentos',
+        order: 2,
         description: 'Verificação de documentação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -4618,7 +5302,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4633,7 +5317,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Médica',
-        order: 3,
+        order: 4,
         description: 'Avaliação da equipe de saúde',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4645,7 +5329,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro no Programa',
-        order: 4,
+        order: 5,
         description: 'Efetivação da inscrição',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4666,8 +5350,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 1,
     stages: [
       {
-        name: 'Registro do Alerta',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro do Alerta',
+        order: 2,
         description: 'Registro do alerta no sistema',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4679,7 +5375,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise e Verificação',
-        order: 2,
+        order: 3,
         description: 'Análise da central de monitoramento',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4691,7 +5387,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Resposta',
-        order: 3,
+        order: 4,
         description: 'Acionamento de equipe',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4711,8 +5407,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Análise do pedido de autorização',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -4724,7 +5432,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4739,7 +5447,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Planejamento de Segurança',
-        order: 3,
+        order: 4,
         description: 'Definição do esquema de segurança',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4751,7 +5459,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Prévia',
-        order: 4,
+        order: 5,
         description: 'Vistoria do local do evento',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -4763,7 +5471,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Autorização',
-        order: 5,
+        order: 6,
         description: 'Liberação do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4783,8 +5491,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Registro do Ponto',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro do Ponto',
+        order: 2,
         description: 'Registro inicial do ponto crítico',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4796,7 +5516,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4811,7 +5531,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Análise Técnica',
-        order: 3,
+        order: 4,
         description: 'Avaliação da equipe de segurança',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4823,7 +5543,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro no Sistema',
-        order: 4,
+        order: 5,
         description: 'Inclusão no mapa de pontos críticos',
         slaDays: 2,
         availableTabs: ['resumo', 'location', 'comunicacao'],
@@ -4843,8 +5563,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Triagem',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Triagem',
+        order: 2,
         description: 'Classificação da denúncia',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4856,7 +5588,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4871,7 +5603,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Investigação Preliminar',
-        order: 3,
+        order: 4,
         description: 'Verificação inicial das informações',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4883,7 +5615,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Encaminhamento',
-        order: 4,
+        order: 5,
         description: 'Envio ao órgão competente',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -4903,8 +5635,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Análise do pedido de vistoria',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -4916,7 +5660,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -4931,7 +5675,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Agendamento',
-        order: 3,
+        order: 4,
         description: 'Agendamento da vistoria',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4943,7 +5687,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Realização da Vistoria',
-        order: 4,
+        order: 5,
         description: 'Execução da vistoria in loco',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -4955,7 +5699,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Emissão de Laudo',
-        order: 5,
+        order: 6,
         description: 'Elaboração e emissão do laudo',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
@@ -4975,8 +5719,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'Registro Inicial',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro Inicial',
+        order: 2,
         description: 'Registro da ocorrência',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -4988,7 +5744,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5003,7 +5759,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Classificação',
-        order: 3,
+        order: 4,
         description: 'Classificação da ocorrência',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5015,7 +5771,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Atendimento',
-        order: 4,
+        order: 5,
         description: 'Atendimento da ocorrência',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5027,7 +5783,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Finalização',
-        order: 5,
+        order: 6,
         description: 'Conclusão do atendimento',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5047,8 +5803,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 30,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Análise da demanda',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5060,7 +5828,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5075,7 +5843,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Estudo de Viabilidade',
-        order: 3,
+        order: 4,
         description: 'Análise técnica e financeira',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5087,7 +5855,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Aprovação Orçamentária',
-        order: 4,
+        order: 5,
         description: 'Aprovação de recursos',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -5099,7 +5867,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Instalação',
-        order: 5,
+        order: 6,
         description: 'Instalação da câmera',
         slaDays: 5,
         availableTabs: ['resumo', 'location', 'comunicacao'],
@@ -5119,8 +5887,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Análise de Solicitação',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Solicitação',
+        order: 2,
         description: 'Análise da demanda',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5132,7 +5912,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5147,7 +5927,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Operacional',
-        order: 3,
+        order: 4,
         description: 'Avaliação da equipe operacional',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5159,7 +5939,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Implementação',
-        order: 4,
+        order: 5,
         description: 'Início do patrulhamento',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5180,8 +5960,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Registro',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro',
+        order: 2,
         description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5193,7 +5985,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5208,7 +6000,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria',
-        order: 3,
+        order: 4,
         description: 'Vistoria técnica',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -5220,7 +6012,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Execução',
-        order: 4,
+        order: 5,
         description: 'Desobstrução do bueiro',
         slaDays: 3,
         availableTabs: ['resumo', 'location', 'comunicacao'],
@@ -5232,7 +6024,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação',
-        order: 5,
+        order: 6,
         description: 'Confirmação do serviço',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5252,8 +6044,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Registro',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro',
+        order: 2,
         description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5265,7 +6069,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5280,7 +6084,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria Técnica',
-        order: 3,
+        order: 4,
         description: 'Avaliação técnica do local',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -5292,7 +6096,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Execução',
-        order: 4,
+        order: 5,
         description: 'Realização do serviço',
         slaDays: 5,
         availableTabs: ['resumo', 'location', 'comunicacao'],
@@ -5304,7 +6108,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação',
-        order: 5,
+        order: 6,
         description: 'Verificação do funcionamento',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5324,8 +6128,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'Registro',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro',
+        order: 2,
         description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5337,7 +6153,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5352,7 +6168,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Planejamento',
-        order: 3,
+        order: 4,
         description: 'Planejamento da operação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5364,7 +6180,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Execução',
-        order: 4,
+        order: 5,
         description: 'Realização da limpeza',
         slaDays: 3,
         availableTabs: ['resumo', 'location', 'comunicacao'],
@@ -5376,7 +6192,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação',
-        order: 5,
+        order: 6,
         description: 'Verificação do serviço',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5396,8 +6212,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise do Registro',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise do Registro',
+        order: 2,
         description: 'Análise da solicitação e fotos',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -5409,7 +6237,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5424,7 +6252,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Classificação e Encaminhamento',
-        order: 3,
+        order: 4,
         description: 'Classificação e envio ao setor competente',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5436,7 +6264,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Resolução',
-        order: 4,
+        order: 5,
         description: 'Resolução do problema',
         slaDays: 5,
         availableTabs: ['resumo', 'location', 'comunicacao'],
@@ -5448,7 +6276,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação',
-        order: 5,
+        order: 6,
         description: 'Confirmação da resolução',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5468,8 +6296,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Registro',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Registro',
+        order: 2,
         description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5481,7 +6321,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5496,7 +6336,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria',
-        order: 3,
+        order: 4,
         description: 'Vistoria do local',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -5508,7 +6348,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Planejamento',
-        order: 4,
+        order: 5,
         description: 'Planejamento da operação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -5520,7 +6360,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Execução',
-        order: 5,
+        order: 6,
         description: 'Realização do serviço',
         slaDays: 5,
         availableTabs: ['resumo', 'location', 'comunicacao'],
@@ -5532,7 +6372,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Verificação',
-        order: 6,
+        order: 7,
         description: 'Verificação do serviço',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5553,8 +6393,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 20,
     stages: [
       {
-        name: 'Análise de Documentos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Documentos',
+        order: 2,
         description: 'Verificação de documentação',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -5566,7 +6418,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5581,7 +6433,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Vistoria',
-        order: 3,
+        order: 4,
         description: 'Vistoria do estabelecimento',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
@@ -5593,7 +6445,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Adequações',
-        order: 4,
+        order: 5,
         description: 'Realização de adequações necessárias',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5605,7 +6457,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro',
-        order: 5,
+        order: 6,
         description: 'Efetivação do cadastro',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5625,8 +6477,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'Análise de Documentos',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Documentos',
+        order: 2,
         description: 'Verificação de documentação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
@@ -5638,7 +6502,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5653,7 +6517,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Técnica',
-        order: 3,
+        order: 4,
         description: 'Avaliação de qualificação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5665,7 +6529,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Teste Prático',
-        order: 4,
+        order: 5,
         description: 'Realização de teste prático',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -5677,7 +6541,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Credenciamento',
-        order: 5,
+        order: 6,
         description: 'Emissão de credencial',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
@@ -5697,8 +6561,20 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'Análise de Proposta',
+        name: 'Recepção',
         order: 1,
+        description: 'Recebimento e registro inicial da solicitação',
+        slaDays: 1,
+        availableTabs: ['resumo', 'documentos', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false
+      },
+      {
+        name: 'Análise de Proposta',
+        order: 2,
         description: 'Análise da proposta de evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
@@ -5710,7 +6586,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Validação de Dados',
-        order: 2,
+        order: 3,
         description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
@@ -5725,7 +6601,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Avaliação Turística',
-        order: 3,
+        order: 4,
         description: 'Avaliação do potencial turístico',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
@@ -5737,7 +6613,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
       },
       {
         name: 'Cadastro e Divulgação',
-        order: 4,
+        order: 5,
         description: 'Registro no calendário turístico',
         slaDays: 4,
         availableTabs: ['resumo', 'comunicacao'],
