@@ -148,28 +148,13 @@ export class ProtocolModuleService {
         }
       });
 
-      // Criar documentos na tabela ProtocolDocument se houver attachments
-      if (attachments && attachments.length > 0) {
-        const attachmentsArray = Array.isArray(attachments) ? attachments : [];
-        for (const attachment of attachmentsArray) {
-          // Usar documentId do attachment (já vem processado das rotas)
-          const documentType = attachment.documentId || attachment.id || attachment.filename || attachment.originalName;
-
-          await tx.protocolDocument.create({
-            data: {
-              protocolId: protocol.id,
-              documentType, // Tipo específico sem fallback genérico
-              fileName: attachment.filename || attachment.originalName || attachment.name,
-              fileUrl: attachment.path || attachment.url,
-              fileSize: attachment.size || 0,
-              mimeType: attachment.mimetype || 'application/octet-stream',
-              status: 'UPLOADED',
-              isRequired: false,
-              uploadedAt: new Date()
-            }
-          });
-        }
-      }
+      // ✅ CORREÇÃO: Documentos agora são criados pela rota citizen-services.ts
+      // usando documentUploadService.uploadDocumentsToProtocol() e ensureRequiredProtocolDocuments()
+      // Isso evita duplicação e garante que isRequired seja setado corretamente
+      //
+      // REMOVIDO: Criação de ProtocolDocument aqui (causava duplicatas)
+      // Os attachments são passados para a rota que chama este service,
+      // e ela é responsável por criar os documentos com a lógica completa.
 
       // Criar histórico
       await tx.protocolHistorySimplified.create({
