@@ -139,6 +139,12 @@ export function AdminSidebar() {
           permissions: ['services:create', 'services:update']
         },
         {
+          title: 'Templates de Documentos',
+          href: '/admin/templates-documentos',
+          icon: ScrollText,
+          minRole: 'ADMIN'
+        },
+        {
           title: 'Workflows',
           href: '/admin/workflows',
           icon: GitBranch,
