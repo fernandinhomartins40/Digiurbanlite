@@ -102,9 +102,27 @@ function detectFieldType(value: any): string {
 export async function createDataFieldsFromCustomData(input: CreateDataFieldsInput) {
   const { protocolId, customData, requiredFields = [] } = input;
 
-  // Filtrar campos que começam com _ (são metadados internos)
+  // Lista de campos que NÃO devem ser exibidos (técnicos/calculados/IDs)
+  const EXCLUDED_FIELDS = [
+    'id', 'citizenId', 'serviceId', 'protocolId', 'createdAt', 'updatedAt',
+    'createdBy', 'updatedBy', 'deletedAt', 'userId', 'departmentId'
+  ];
+
+  // Prefixos de campos que não devem ser exibidos
+  const EXCLUDED_PREFIXES = ['_', 'citizen', 'user', 'service', 'protocol'];
+
+  // Filtrar campos técnicos e metadados
   const dataFields = Object.entries(customData)
-    .filter(([key]) => !key.startsWith('_'))
+    .filter(([key]) => {
+      // Remover campos da lista de exclusão
+      if (EXCLUDED_FIELDS.includes(key)) return false;
+
+      // Remover campos que começam com prefixos técnicos (case insensitive)
+      const lowerKey = key.toLowerCase();
+      if (EXCLUDED_PREFIXES.some(prefix => lowerKey.startsWith(prefix))) return false;
+
+      return true;
+    })
     .map(([key, value]) => ({
       protocolId,
       fieldKey: key,
