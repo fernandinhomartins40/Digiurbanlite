@@ -92,7 +92,10 @@
       "Bash(where nul)",
       "Bash(git clean:*)",
       "Bash(move ChecklistTab.tsx ChecklistTab.deprecated.tsx)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(chmod:*)",
+      "Bash(git revert:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
