@@ -33,7 +33,6 @@
     "validate:production": "npm run check && npm run test:regression",
     "validate:phase4": "npm run test:phase4",
     "prepare": "husky install",
-    "postinstall": "npx playwright install --with-deps chromium || true",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
