@@ -57,7 +57,7 @@ export function CompletingProtocolView({
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<'summary-final' | 'document-generation' | 'send'>('summary-final')
   const [finalNotes, setFinalNotes] = useState('')
-  const [generatedDocument, setGeneratedDocument] = useState<{ url: string; name: string } | null>(null)
+  const [generatedDocument, setGeneratedDocument] = useState<{ id: string; url: string; name: string } | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
@@ -72,20 +72,32 @@ export function CompletingProtocolView({
   const handleGenerateDocument = async () => {
     setIsGenerating(true)
     try {
-      const result = await apiRequest(`/protocols/${protocol.id}/generate-completion-document`, {
+      // 1. Buscar templates disponíveis para o serviço
+      const templatesResult = await apiRequest('/document-templates?documentType=COMPLETION_REPORT')
+
+      if (!templatesResult.success || !templatesResult.data || templatesResult.data.length === 0) {
+        throw new Error('Nenhum template de relatório de conclusão encontrado. Configure um template primeiro.')
+      }
+
+      // Pegar o primeiro template de COMPLETION_REPORT
+      const template = templatesResult.data[0]
+
+      // 2. Gerar documento
+      const result = await apiRequest(`/protocols/${protocol.id}/generate-document`, {
         method: 'POST',
         body: JSON.stringify({
-          includeStageHistory: true,
-          includeDocuments: true,
-          includeFormData: true,
-          notes: finalNotes
+          templateId: template.id,
+          additionalData: {
+            finalNotes: finalNotes || 'Sem observações adicionais.'
+          }
         })
       })
 
       if (result.success) {
         setGeneratedDocument({
-          url: result.data.documentUrl,
-          name: result.data.documentName
+          id: result.data.id,
+          url: `/api/generated-documents/${result.data.id}/download`,
+          name: result.data.fileName
         })
         toast({
           title: 'Documento gerado',
@@ -108,10 +120,19 @@ export function CompletingProtocolView({
 
   // Enviar para cidadão
   const handleSendToCitizen = async () => {
-    if (!sendMessage.trim()) {
+    if (!generatedDocument?.id) {
       toast({
-        title: 'Mensagem obrigatória',
-        description: 'Digite uma mensagem para o cidadão',
+        title: 'Documento necessário',
+        description: 'Gere o documento primeiro antes de enviar',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    if (!protocol.citizen?.email) {
+      toast({
+        title: 'Email não cadastrado',
+        description: 'O cidadão não possui email cadastrado',
         variant: 'destructive'
       })
       return
@@ -119,19 +140,27 @@ export function CompletingProtocolView({
 
     setIsSending(true)
     try {
-      const result = await apiRequest(`/protocols/${protocol.id}/send-completion`, {
+      const result = await apiRequest(`/generated-documents/${generatedDocument.id}/send`, {
         method: 'POST',
         body: JSON.stringify({
-          message: sendMessage,
-          documentUrl: generatedDocument?.url,
-          notifyEmail: !!protocol.citizen?.email
+          recipientEmail: protocol.citizen.email,
+          recipientName: protocol.citizen.name,
+          subject: `Documento do Protocolo ${protocol.protocolNumber}`,
+          message: sendMessage || `
+            <p>Olá <strong>${protocol.citizen.name}</strong>,</p>
+            <br>
+            <p>Seu protocolo <strong>${protocol.protocolNumber}</strong> foi concluído!</p>
+            <p>Segue em anexo o documento de conclusão.</p>
+            <br>
+            <p>Atenciosamente,<br>Equipe de Atendimento</p>
+          `
         })
       })
 
       if (result.success) {
         toast({
           title: 'Enviado com sucesso',
-          description: 'Cidadão foi notificado sobre a conclusão'
+          description: `Documento enviado para ${protocol.citizen.email}`
         })
       } else {
         throw new Error(result.error || 'Erro ao enviar')

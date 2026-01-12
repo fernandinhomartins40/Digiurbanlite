@@ -225,6 +225,7 @@ try { console.log('   → documents...'); app.use('/api/protocols', require('./r
 try { console.log('   → data-fields...'); app.use('/api', require('./routes/protocol-data-fields').default); console.log('   ✓'); } catch (e) { console.error('❌ data-fields:', e); }
 try { console.log('   → pendings...'); app.use('/api/protocols', require('./routes/protocol-pendings').default); console.log('   ✓'); } catch (e) { console.error('❌ pendings:', e); }
 try { console.log('   → stages...'); app.use('/api/protocols', require('./routes/protocol-stages').default); console.log('   ✓'); } catch (e) { console.error('❌ stages:', e); }
+try { console.log('   → document-templates...'); app.use('/api', require('./routes/document-templates').default); console.log('   ✓'); } catch (e) { console.error('❌ document-templates:', e); }
 
 // 2. Rotas genéricas POR ÚLTIMO (/:id captura tudo)
 try {

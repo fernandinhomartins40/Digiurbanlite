@@ -433,6 +433,7 @@ model ProtocolSimplified {
   citizenLinks   ProtocolCitizenLink[]
   tfdSolicitacao SolicitacaoTFD?                @relation("TFDProtocol")
   ticket         AdminTicket?
+  generatedDocuments GeneratedDocument[]
 
   @@index([status])
   @@index([createdAt])
@@ -4593,5 +4594,115 @@ enum ChannelSubscriptionStatus {
   ACTIVE     // Inscrito e recebendo
   MUTED      // Inscrito mas sem notificações
   BLOCKED    // Bloqueado de se inscrever
+}
+
+// ============================================================================
+// SISTEMA DE GERAÇÃO DE DOCUMENTOS
+// ============================================================================
+
+model DocumentTemplate {
+  id            String   @id @default(cuid())
+
+  // Identificação
+  name          String                      // Ex: "Certidão de Protocolo"
+  code          String   @unique            // Ex: "CERTIDAO_PROTOCOLO"
+  description   String?
+
+  // Tipo de documento
+  documentType  DocumentTemplateType        // PROTOCOL_CERTIFICATE, COMPLETION_REPORT, etc
+  outputFormat  OutputFormat                // PDF, DOCX, HTML
+
+  // Associação com serviços
+  serviceIds    Json     @default("[]")     // Array de IDs de serviços
+  isGlobal      Boolean  @default(false)    // Se true, disponível para todos os serviços
+
+  // Template Handlebars
+  htmlTemplate  String   @db.Text           // HTML com variáveis {{protocolNumber}}, {{citizenName}}
+  headerHtml    String?  @db.Text           // Cabeçalho (logo, brasão)
+  footerHtml    String?  @db.Text           // Rodapé (assinaturas, carimbos)
+  cssStyles     String?  @db.Text           // CSS para estilização
+
+  // Variáveis disponíveis (documentação)
+  availableVariables Json? @default("[]")   // Array de {name, description, example}
+
+  // Configurações de geração
+  pageSize      String   @default("A4")     // A4, Letter, Legal
+  orientation   String   @default("portrait") // portrait, landscape
+  margins       Json?                        // {top, right, bottom, left} em mm
+
+  // Assinaturas/Carimbos
+  requiresSignature Boolean @default(false)
+  signatureFields   Json?   @default("[]")   // Array de {label, role, position}
+
+  // Controle
+  isActive      Boolean  @default(true)
+  version       Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String
+
+  // Relacionamentos
+  generatedDocuments GeneratedDocument[]
+
+  @@index([isActive])
+  @@index([documentType])
+  @@map("document_templates")
+}
+
+enum DocumentTemplateType {
+  PROTOCOL_CERTIFICATE    // Certidão/comprovante de protocolo
+  COMPLETION_REPORT       // Relatório de conclusão
+  RECEIPT                 // Recibo de atendimento
+  AUTHORIZATION           // Autorização/licença
+  NOTIFICATION            // Notificação
+  CUSTOM                  // Personalizado
+}
+
+enum OutputFormat {
+  PDF
+  DOCX
+  HTML
+}
+
+model GeneratedDocument {
+  id              String   @id @default(cuid())
+
+  // Referências
+  protocolId      String
+  templateId      String
+
+  // Arquivo gerado
+  fileName        String
+  filePath        String                    // /uploads/generated/{protocolId}/{timestamp}_{fileName}
+  fileUrl         String?                   // URL pública (se configurado)
+  fileSize        Int
+  mimeType        String
+
+  // Metadados
+  generatedAt     DateTime @default(now())
+  generatedBy     String                    // userId do admin
+  templateVersion Int                       // Versão do template usada
+
+  // Dados usados na geração (snapshot)
+  variablesUsed   Json                      // Snapshot dos dados usados {protocolNumber, citizenName, etc}
+
+  // Envio
+  wasSent         Boolean  @default(false)
+  sentAt          DateTime?
+  sentBy          String?
+  sentTo          String?                   // Email do destinatário
+
+  // Controle
+  isActive        Boolean  @default(true)   // Soft delete
+  deletedAt       DateTime?
+
+  // Relacionamentos
+  protocol        ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  template        DocumentTemplate   @relation(fields: [templateId], references: [id])
+
+  @@index([protocolId])
+  @@index([templateId])
+  @@index([generatedAt])
+  @@map("generated_documents")
 }
 
