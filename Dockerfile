@@ -163,7 +163,7 @@ COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/package.json 
 # ===== Nginx =====
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /var/log/nginx && \
-    chown -R nginx:adm /var/log/nginx /var/lib/nginx || true
+    chown -R www-data:adm /var/log/nginx /var/lib/nginx || true
 
 # ===== Supervisord =====
 COPY docker/supervisord.conf /etc/supervisord.conf
