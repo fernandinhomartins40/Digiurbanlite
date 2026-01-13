@@ -1,5 +1,6 @@
 # DigiUrban - Container Único (Backend + Frontend + Nginx)
-# Baseado no padrão da Advocacia Pitanga com Playwright funcionando
+# Arquitetura: Multi-stage build para otimização
+# MODIFICADO: Debian (node:18-bookworm-slim) ao invés de Alpine para suportar Playwright
 
 # ========== STAGE 1: Build Backend ==========
 FROM node:18-bookworm-slim AS backend-builder
@@ -9,11 +10,16 @@ WORKDIR /app/backend
 ARG BUILD_TIMESTAMP
 RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
 
-# Instalar dependências do sistema necessárias para build
+# Instalar dependências do sistema (Debian equivalentes ao Alpine)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
+    libcairo2-dev \
+    libjpeg-dev \
+    libpango1.0-dev \
+    libgif-dev \
+    openssl \
     && rm -rf /var/lib/apt/lists/*
 
 # ⚡ CACHE BUSTER: Força invalidação de cache antes de copiar código
@@ -26,29 +32,46 @@ RUN npm install --legacy-peer-deps
 # Copiar código do backend
 COPY digiurban/backend ./
 
-# Gerar cliente Prisma
+# Gerar Prisma Client (sem criar banco - apenas gerar tipos)
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
 RUN npx prisma generate
 
-# Build do backend
+# Build TypeScript (limpar cache incremental primeiro)
 RUN rm -rf dist/.tsbuildinfo dist/* && npm run build
+
+# Validar que arquivos críticos foram compilados
+RUN test -f dist/index.js || (echo "❌ ERRO: index.js não foi compilado!" && exit 1)
+RUN test -f dist/routes/citizen-services.js || (echo "❌ ERRO: citizen-services.js não foi compilado!" && exit 1)
+RUN echo "✅ Build do TypeScript concluído com sucesso"
 
 # ========== STAGE 2: Build Frontend ==========
 FROM node:18-bookworm-slim AS frontend-builder
 WORKDIR /app/frontend
 
-# Build timestamp
+# Build timestamp para invalidar cache
 ARG BUILD_TIMESTAMP
 RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
 
-# Instalar dependências do sistema necessárias para build
+# Instalar dependências para jscanify/canvas (Debian)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
+    libcairo2-dev \
+    libjpeg-dev \
+    libpango1.0-dev \
+    libgif-dev \
+    libpixman-1-dev \
+    libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Cache buster
+# ⚡ CACHE BUSTER
 RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
+
+# ✅ CRÍTICO: API URL para produção
+ARG NEXT_PUBLIC_API_URL=/api
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./
@@ -57,26 +80,25 @@ RUN npm install --legacy-peer-deps
 # Copiar código do frontend
 COPY digiurban/frontend ./
 
-# Build arguments para Next.js
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-
-ARG NEXT_PUBLIC_BACKEND_URL
-ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
-
-# Build do frontend
+# Build Next.js
 RUN npm run build
 
-# ========== STAGE 3: Runner (Backend + Frontend + Nginx) ==========
+# Validar que o build do Next.js foi bem-sucedido
+RUN test -d .next || (echo "❌ ERRO: Build do Next.js falhou!" && exit 1)
+RUN test -f .next/BUILD_ID || (echo "❌ ERRO: BUILD_ID não foi gerado!" && exit 1)
+RUN echo "✅ Build do Next.js concluído com sucesso"
+
+# ========== STAGE 3: Production Image ==========
 FROM node:18-bookworm-slim AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
-
-# Instalar dependências necessárias para runtime
+# Instalar Nginx, supervisord, PostgreSQL client, curl e dependências do Playwright
 RUN apt-get update && apt-get install -y --no-install-recommends \
     nginx \
     supervisor \
+    curl \
+    postgresql-client \
+    coreutils \
     libnss3 \
     libnspr4 \
     libatk1.0-0 \
@@ -95,61 +117,67 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libasound2 \
     libatspi2.0-0 \
     fonts-liberation \
-    fonts-freefont-ttf \
-    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Playwright usa seus próprios browsers bundled
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-
-# Criar usuários do sistema
+# Criar usuários (Debian syntax)
 RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 --gid nodejs backend && \
-    useradd --system --uid 1002 --gid nodejs frontend
+    useradd --system --uid 1001 --gid nodejs --shell /bin/sh backend && \
+    useradd --system --uid 1002 --gid nodejs --shell /bin/sh frontend
 
-# ========== Backend Setup ==========
+# ===== Backend =====
 WORKDIR /app/backend
 
-# Copiar build do backend
-COPY --from=backend-builder /app/backend/dist ./dist
-COPY --from=backend-builder /app/backend/package*.json ./
+# Copiar node_modules de produção do backend
 COPY --from=backend-builder /app/backend/node_modules ./node_modules
+COPY --from=backend-builder /app/backend/dist ./dist
 COPY --from=backend-builder /app/backend/prisma ./prisma
+COPY --from=backend-builder /app/backend/src/data ./dist/data
+COPY --from=backend-builder /app/backend/src/seeds ./src/seeds
+COPY --from=backend-builder /app/backend/package.json ./
+COPY --from=backend-builder /app/backend/node_modules/.prisma ./node_modules/.prisma
 
-# Criar diretórios do backend
-RUN mkdir -p uploads/documentos uploads/documentos-gerados data logs backups && \
-    chown -R backend:nodejs uploads data logs backups
+# Copiar scripts diretamente do contexto
+COPY digiurban/backend/scripts ./scripts
 
-# ========== Frontend Setup ==========
-WORKDIR /app/frontend
+# Copiar Playwright do builder e instalar browsers
+COPY --from=backend-builder /app/backend/node_modules/playwright ./node_modules/playwright
 
-# Copiar build do frontend
-COPY --from=frontend-builder /app/frontend/.next/standalone ./
-COPY --from=frontend-builder /app/frontend/.next/static ./.next/static
-COPY --from=frontend-builder /app/frontend/public ./public
-
-# Criar diretório .next
-RUN mkdir -p .next && chown -R frontend:nodejs .next
-
-# ========== Instalar Playwright ANTES de trocar usuário ==========
-WORKDIR /app/backend
+# Playwright: definir path e instalar browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN npx playwright install chromium --with-deps
 
-# ========== Nginx Configuration ==========
-RUN rm -f /etc/nginx/sites-enabled/default
+# Criar diretórios de dados e uploads
+RUN mkdir -p /app/data /app/uploads /app/logs && \
+    chown -R backend:nodejs /app/data /app/uploads /app/logs && \
+    ln -sf /app/uploads /app/backend/uploads
 
-# Copiar configurações do nginx
-COPY digiurban/docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY digiurban/docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+# ===== Frontend =====
+WORKDIR /app/frontend
 
-# ========== Supervisor Configuration ==========
-COPY digiurban/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Copiar build do Next.js
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/.next ./.next
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/public ./public
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/node_modules ./node_modules
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/package.json ./package.json
 
-# Criar diretórios de log
-RUN mkdir -p /var/log/supervisor /var/log/nginx && \
-    chmod -R 755 /var/log/supervisor /var/log/nginx
+# ===== Nginx =====
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+RUN mkdir -p /var/log/nginx && \
+    chown -R nginx:adm /var/log/nginx /var/lib/nginx || true
 
+# ===== Supervisord =====
+COPY docker/supervisord.conf /etc/supervisord.conf
+COPY docker/startup.sh /app/startup.sh
+COPY docker/create-enums.sql /app/create-enums.sql
+COPY docker/fix-subscription-status-enum.sql /app/fix-subscription-status-enum.sql
+RUN chmod +x /app/startup.sh
+
+# Expor portas
 EXPOSE 80
 
-# Iniciar supervisor (gerencia backend, frontend e nginx)
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://127.0.0.1/health || exit 1
+
+# Iniciar com startup script
+CMD ["/app/startup.sh"]
