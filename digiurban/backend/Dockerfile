@@ -1,18 +1,37 @@
 # Backend Dockerfile for DigiUrban
-FROM node:18-alpine AS base
+FROM node:18-slim AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat chromium
 WORKDIR /app
 
-# Instalar dependências do Playwright/Chromium
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Instalar dependências necessárias para Playwright no Debian
+RUN apt-get update && apt-get install -y \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2 \
+    libatspi2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
 RUN npm ci --only=production
+
+# Instalar browsers do Playwright
+RUN npx playwright install --with-deps chromium
 
 # Build stage
 FROM base AS builder
@@ -33,22 +52,31 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
-# Instalar dependências do Playwright
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont
-
-# Configurar Playwright para usar o Chromium do sistema
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Instalar dependências necessárias para Playwright no Debian
+RUN apt-get update && apt-get install -y \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2 \
+    libatspi2.0-0 \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create app user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 backend
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 --gid nodejs backend
 
 # Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
@@ -61,6 +89,9 @@ COPY --from=builder /app/package.json ./package.json
 # Copy Prisma client
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+# Copy Playwright browsers
+COPY --from=deps /root/.cache/ms-playwright /root/.cache/ms-playwright
+
 # Create directory for SQLite database
 RUN mkdir -p /app/data
 RUN chown backend:nodejs /app/data
@@ -72,6 +103,10 @@ RUN chown backend:nodejs /app/logs
 # ✅ Create directory for backups (persistente)
 RUN mkdir -p /app/backups
 RUN chown backend:nodejs /app/backups
+
+# ✅ Create directory for uploads (geração de PDFs)
+RUN mkdir -p /app/uploads/generated
+RUN chown -R backend:nodejs /app/uploads
 
 USER backend
 
