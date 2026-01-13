@@ -1,16 +1,26 @@
 # DigiUrban - Container Único (Backend + Frontend + Nginx)
 # Arquitetura: Multi-stage build para otimização
+# MODIFICADO: Debian (node:18-bookworm-slim) ao invés de Alpine para suportar Playwright
 
 # ========== STAGE 1: Build Backend ==========
-FROM node:18-alpine AS backend-builder
+FROM node:18-bookworm-slim AS backend-builder
 WORKDIR /app/backend
 
 # Build timestamp para invalidar cache
 ARG BUILD_TIMESTAMP
 RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
 
-# Instalar dependências do sistema (incluindo openssl para Prisma)
-RUN apk add --no-cache python3 make g++ cairo-dev jpeg-dev pango-dev giflib-dev openssl
+# Instalar dependências do sistema (Debian equivalentes ao Alpine)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    libcairo2-dev \
+    libjpeg-dev \
+    libpango1.0-dev \
+    libgif-dev \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 # ⚡ CACHE BUSTER: Força invalidação de cache antes de copiar código
 RUN echo "Backend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
@@ -23,7 +33,6 @@ RUN npm install --legacy-peer-deps
 COPY digiurban/backend ./
 
 # Gerar Prisma Client (sem criar banco - apenas gerar tipos)
-# ⚠️ IMPORTANTE: usar DATABASE_URL do PostgreSQL
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
 RUN npx prisma generate
@@ -37,64 +46,83 @@ RUN test -f dist/routes/citizen-services.js || (echo "❌ ERRO: citizen-services
 RUN echo "✅ Build do TypeScript concluído com sucesso"
 
 # ========== STAGE 2: Build Frontend ==========
-FROM node:18-alpine AS frontend-builder
+FROM node:18-bookworm-slim AS frontend-builder
 WORKDIR /app/frontend
 
 # Build timestamp para invalidar cache
 ARG BUILD_TIMESTAMP
 RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
 
-# Instalar dependências para jscanify/canvas (Python, make, g++, cairo, etc.)
-RUN apk add --no-cache \
+# Instalar dependências para jscanify/canvas (Debian)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev \
-    pixman-dev \
-    pangomm-dev \
-    libjpeg-turbo-dev \
-    freetype-dev
+    libcairo2-dev \
+    libjpeg-dev \
+    libpango1.0-dev \
+    libgif-dev \
+    libpixman-1-dev \
+    libfreetype6-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# ⚡ CACHE BUSTER: Força invalidação de cache antes de copiar código
+# ⚡ CACHE BUSTER
 RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
 
-# ✅ CRÍTICO: API URL para produção (caminho relativo /api será roteado pelo Nginx)
-# Next.js compila isso no código durante o build
+# ✅ CRÍTICO: API URL para produção
 ARG NEXT_PUBLIC_API_URL=/api
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./
-
-# Instalar dependências (usar npm install ao invés de npm ci para evitar problemas)
 RUN npm install --legacy-peer-deps
 
 # Copiar código do frontend
 COPY digiurban/frontend ./
 
-# Build Next.js com variáveis corretas (ENV já definida na linha 61)
+# Build Next.js
 RUN npm run build
 
 # Validar que o build do Next.js foi bem-sucedido
-RUN test -d .next || (echo "❌ ERRO: Build do Next.js falhou! Diretório .next não foi criado!" && exit 1)
+RUN test -d .next || (echo "❌ ERRO: Build do Next.js falhou!" && exit 1)
 RUN test -f .next/BUILD_ID || (echo "❌ ERRO: BUILD_ID não foi gerado!" && exit 1)
 RUN echo "✅ Build do Next.js concluído com sucesso"
 
 # ========== STAGE 3: Production Image ==========
-FROM node:18-alpine AS runner
+FROM node:18-bookworm-slim AS runner
 WORKDIR /app
 
-# Instalar Nginx, supervisord, PostgreSQL client e outras dependências
-# coreutils: necessário para o comando 'timeout' usado no startup.sh
-RUN apk add --no-cache nginx supervisor curl postgresql-client coreutils
+# Instalar Nginx, supervisord, PostgreSQL client, curl e dependências do Playwright
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nginx \
+    supervisor \
+    curl \
+    postgresql-client \
+    coreutils \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libdbus-1-3 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2 \
+    libatspi2.0-0 \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 
-# Criar usuários com shell válido para permitir execução pelo supervisord
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 --shell /bin/sh backend && \
-    adduser --system --uid 1002 --shell /bin/sh frontend
+# Criar usuários (Debian syntax)
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs --shell /bin/sh backend && \
+    useradd --system --uid 1002 --gid nodejs --shell /bin/sh frontend
 
 # ===== Backend =====
 WORKDIR /app/backend
@@ -108,11 +136,17 @@ COPY --from=backend-builder /app/backend/src/seeds ./src/seeds
 COPY --from=backend-builder /app/backend/package.json ./
 COPY --from=backend-builder /app/backend/node_modules/.prisma ./node_modules/.prisma
 
-# Copiar scripts diretamente do contexto (não do builder)
+# Copiar scripts diretamente do contexto
 COPY digiurban/backend/scripts ./scripts
 
-# Criar diretórios de dados e uploads no local correto
-# IMPORTANTE: /app/uploads é montado como volume no docker-compose
+# Copiar Playwright do builder e instalar browsers
+COPY --from=backend-builder /app/backend/node_modules/playwright ./node_modules/playwright
+
+# Playwright: definir path e instalar browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN npx playwright install chromium --with-deps
+
+# Criar diretórios de dados e uploads
 RUN mkdir -p /app/data /app/uploads /app/logs && \
     chown -R backend:nodejs /app/data /app/uploads /app/logs && \
     ln -sf /app/uploads /app/backend/uploads
@@ -129,7 +163,7 @@ COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/package.json 
 # ===== Nginx =====
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /var/log/nginx && \
-    chown -R nginx:nginx /var/log/nginx /var/lib/nginx
+    chown -R nginx:adm /var/log/nginx /var/lib/nginx || true
 
 # ===== Supervisord =====
 COPY docker/supervisord.conf /etc/supervisord.conf
@@ -145,5 +179,5 @@ EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://127.0.0.1/health || exit 1
 
-# Iniciar com startup script que prepara DB e depois inicia supervisord
+# Iniciar com startup script
 CMD ["/app/startup.sh"]

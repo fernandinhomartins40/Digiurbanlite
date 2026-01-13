@@ -162,6 +162,9 @@ services:
       # Backups
       - BACKUPS_DIR=/app/backups
 
+      # Playwright
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
     volumes:
       - digiurban_uploads:/app/uploads
       - digiurban_logs:/app/logs
