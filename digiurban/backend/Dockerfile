@@ -30,6 +30,9 @@ RUN apt-get update && apt-get install -y \
 COPY package.json package-lock.json* ./
 RUN npm ci --only=production
 
+# Definir onde o Playwright deve instalar os browsers
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 # Instalar browsers do Playwright
 RUN npx playwright install --with-deps chromium
 
@@ -90,7 +93,8 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Copy Playwright browsers
-COPY --from=deps /root/.cache/ms-playwright /root/.cache/ms-playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+COPY --from=deps /ms-playwright /ms-playwright
 
 # Create directory for SQLite database
 RUN mkdir -p /app/data
