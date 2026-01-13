@@ -273,6 +273,9 @@ export async function generateDocument(input: GenerateDocumentInput) {
 
   // 5. Gerar PDF com Playwright
   const { chromium } = await import('playwright');
+
+  console.log(`   → Playwright procurando browsers em: ${process.env.PLAYWRIGHT_BROWSERS_PATH || 'padrão'}`);
+
   const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']

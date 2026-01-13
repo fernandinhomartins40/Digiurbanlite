@@ -33,8 +33,10 @@ RUN npm ci --only=production
 # Definir onde o Playwright deve instalar os browsers
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
-# Instalar browsers do Playwright
-RUN npx playwright install --with-deps chromium
+# Criar diretório e instalar browsers do Playwright
+RUN mkdir -p /ms-playwright && \
+    npx playwright install --with-deps chromium && \
+    chmod -R 777 /ms-playwright
 
 # Build stage
 FROM base AS builder
@@ -95,6 +97,9 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 # Copy Playwright browsers
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 COPY --from=deps /ms-playwright /ms-playwright
+
+# Garantir permissões corretas para o usuário backend acessar os browsers
+RUN chmod -R 755 /ms-playwright
 
 # Create directory for SQLite database
 RUN mkdir -p /app/data
