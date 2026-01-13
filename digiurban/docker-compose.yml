@@ -43,6 +43,7 @@ services:
       - DEFAULT_TENANT=default
       - LOGS_DIR=/app/logs
       - BACKUPS_DIR=/app/backups
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
     volumes:
       - backend_data:/app/data
       - backend_uploads:/app/uploads
