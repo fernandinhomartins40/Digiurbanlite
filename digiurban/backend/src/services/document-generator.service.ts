@@ -7,7 +7,6 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import puppeteer from 'puppeteer';
 import Handlebars from 'handlebars';
 import fs from 'fs/promises';
 import path from 'path';
@@ -272,13 +271,14 @@ export async function generateDocument(input: GenerateDocumentInput) {
 
   console.log('   ✓ Template compilado');
 
-  // 5. Gerar PDF com Puppeteer
-  const browser = await puppeteer.launch({
+  // 5. Gerar PDF com Playwright
+  const { chromium } = await import('playwright');
+  const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   });
 
-  console.log('   ✓ Puppeteer iniciado');
+  console.log('   ✓ Playwright iniciado');
 
   try {
     const page = await browser.newPage();
@@ -334,7 +334,7 @@ export async function generateDocument(input: GenerateDocumentInput) {
       </html>
     `;
 
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
+    await page.setContent(fullHtml, { waitUntil: 'networkidle' });
 
     // Configurar margens
     const margins = (template.margins as any) || {
