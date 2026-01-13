@@ -30,14 +30,6 @@ RUN apt-get update && apt-get install -y \
 COPY package.json package-lock.json* ./
 RUN npm ci --only=production
 
-# Definir onde o Playwright deve instalar os browsers
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-
-# Criar diretório e instalar browsers do Playwright
-RUN mkdir -p /ms-playwright && \
-    npx playwright install --with-deps chromium && \
-    chmod -R 777 /ms-playwright
-
 # Build stage
 FROM base AS builder
 WORKDIR /app
@@ -94,12 +86,11 @@ COPY --from=builder /app/package.json ./package.json
 # Copy Prisma client
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy Playwright browsers
+# Playwright usa seus próprios browsers bundled
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-COPY --from=deps /ms-playwright /ms-playwright
 
-# Garantir permissões corretas para o usuário backend acessar os browsers
-RUN chmod -R 755 /ms-playwright
+# Instalar browsers do Playwright ANTES de criar usuário não-root
+RUN npx playwright install chromium --with-deps
 
 # Create directory for SQLite database
 RUN mkdir -p /app/data
