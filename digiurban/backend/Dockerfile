@@ -3,8 +3,12 @@ FROM node:18-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat chromium
 WORKDIR /app
+
+# Instalar dependências do Playwright/Chromium
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
@@ -28,6 +32,19 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
+
+# Instalar dependências do Playwright
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Configurar Playwright para usar o Chromium do sistema
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Create app user
 RUN addgroup --system --gid 1001 nodejs
