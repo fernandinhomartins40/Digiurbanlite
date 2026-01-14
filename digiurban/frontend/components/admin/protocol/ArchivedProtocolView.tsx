@@ -52,6 +52,7 @@ interface ArchivedProtocolViewProps {
   }
   stages: any[]
   documents: any[]
+  generatedDocuments?: any[]
   pendings: any[]
   interactions: any[]
   citizenLinks: any[]
@@ -62,6 +63,7 @@ export function ArchivedProtocolView({
   protocol,
   stages,
   documents,
+  generatedDocuments = [],
   pendings,
   interactions,
   citizenLinks,
@@ -87,15 +89,12 @@ export function ArchivedProtocolView({
   const completedStages = stages.filter(s => s.status === 'COMPLETED').length
   const approvedDocs = documents.filter(d => d.status === 'APPROVED').length
   const rejectedDocs = documents.filter(d => d.status === 'REJECTED').length
-  const generatedDocs = documents.filter(d => d.isGenerated).length
+  const generatedDocsCount = generatedDocuments.length
   const totalInteractions = interactions.length
   const citizenMessages = interactions.filter(i => i.isFromCitizen).length
 
-  // Documentos recebidos (não gerados)
-  const receivedDocuments = documents.filter(d => !d.isGenerated)
-
-  // Documentos gerados pelo sistema
-  const generatedDocuments = documents.filter(d => d.isGenerated)
+  // Documentos recebidos (todos os documentos são recebidos, não há mais flag isGenerated)
+  const receivedDocuments = documents
 
   // Pessoas envolvidas (servidores únicos + cidadão principal + vínculos)
   const involvedPeople = (() => {
@@ -272,7 +271,7 @@ export function ArchivedProtocolView({
               <p className="text-xs text-gray-600 mt-1">Docs Aprovados</p>
             </div>
             <div className="text-center p-3 bg-purple-50 rounded-lg">
-              <p className="text-2xl font-bold text-purple-700">{generatedDocs}</p>
+              <p className="text-2xl font-bold text-purple-700">{generatedDocsCount}</p>
               <p className="text-xs text-gray-600 mt-1">Docs Gerados</p>
             </div>
             <div className="text-center p-3 bg-indigo-50 rounded-lg">
@@ -394,7 +393,11 @@ export function ArchivedProtocolView({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(doc.fileUrl, '_blank')}
+                            onClick={() => {
+                              const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+                              const downloadUrl = `${apiUrl}/protocols/${protocol.id}/documents/${doc.id}/download?inline=true`
+                              window.open(downloadUrl, '_blank')
+                            }}
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             Ver
@@ -449,12 +452,16 @@ export function ArchivedProtocolView({
                           )}
                         </div>
                         <div className="flex gap-2">
-                          {doc.fileUrl && (
+                          {(doc.fileUrl || doc.filePath) && (
                             <>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => window.open(doc.fileUrl, '_blank')}
+                                onClick={() => {
+                                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+                                  const downloadUrl = `${apiUrl}/generated-documents/${doc.id}/download?inline=true`
+                                  window.open(downloadUrl, '_blank')
+                                }}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 Ver
@@ -463,10 +470,9 @@ export function ArchivedProtocolView({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  const link = document.createElement('a')
-                                  link.href = doc.fileUrl
-                                  link.download = doc.documentType
-                                  link.click()
+                                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+                                  const downloadUrl = `${apiUrl}/generated-documents/${doc.id}/download`
+                                  window.open(downloadUrl, '_blank')
                                 }}
                               >
                                 <Download className="h-4 w-4 mr-2" />

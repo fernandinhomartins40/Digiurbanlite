@@ -48,6 +48,7 @@ export default function ProtocolDetailPage() {
   const [protocol, setProtocol] = useState<any>(null)
   const [sla, setSLA] = useState<any>(null)
   const [documents, setDocuments] = useState<any[]>([])
+  const [generatedDocuments, setGeneratedDocuments] = useState<any[]>([])
   const [pendings, setPendings] = useState<any[]>([])
   const [stages, setStages] = useState<any[]>([])
   const [interactions, setInteractions] = useState<any[]>([])
@@ -112,6 +113,17 @@ export default function ProtocolDetailPage() {
       } catch (err) {
         console.error('Error loading documents:', err)
         setDocuments([])
+      }
+
+      // Carregar documentos gerados
+      try {
+        const genDocs = await apiRequest(`/protocols/${protocolId}/generated-documents`)
+        if (genDocs.success) {
+          setGeneratedDocuments(genDocs.data || [])
+        }
+      } catch (err) {
+        console.error('Error loading generated documents:', err)
+        setGeneratedDocuments([])
       }
 
       // Carregar pendências
@@ -258,6 +270,7 @@ export default function ProtocolDetailPage() {
             protocol={protocol}
             stages={stages}
             documents={documents}
+            generatedDocuments={generatedDocuments}
             pendings={pendings}
             interactions={interactions}
             citizenLinks={citizenLinks}
