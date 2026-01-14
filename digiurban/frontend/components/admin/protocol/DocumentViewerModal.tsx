@@ -103,7 +103,6 @@ export function DocumentViewerModal({
                 src={`${documentUrl}#view=FitH`}
                 className="w-full h-full min-h-[70vh] bg-white rounded-lg shadow-lg border-0"
                 title={documentName}
-                type="application/pdf"
               />
             ) : isImage ? (
               <div className="flex items-center justify-center">

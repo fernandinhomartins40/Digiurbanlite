@@ -13,6 +13,8 @@ import { AuthenticatedRequest } from '../types';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { protocolServiceSimplified } from '../services/protocol-simplified.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { getWorkflowByServiceId } from '../services/service-workflow.service';
+import type { WorkflowStage } from '../types/workflow.types';
 
 const router = Router();
 
@@ -1167,6 +1169,233 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
 });
 
 // ========================================
+// REABRIR PROTOCOLO (NOVO)
+// ========================================
+
+/**
+ * POST /api/protocols/:id/reopen
+ * Reabre um protocolo concluÇðdo/cancelado
+ * mode: 'restart' | 'append'
+ */
+router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { mode } = req.body;
+    const authReq = req as AuthenticatedRequest;
+
+    if (!mode || (mode !== 'restart' && mode !== 'append')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Modo invÇ­lido. Use "restart" ou "append".'
+      });
+    }
+
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id },
+      include: {
+        stages: { orderBy: { stageOrder: 'asc' } },
+        service: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo nÇœo encontrado'
+      });
+    }
+
+    if (protocol.status !== ProtocolStatus.CONCLUIDO && protocol.status !== ProtocolStatus.CANCELADO) {
+      return res.status(400).json({
+        success: false,
+        error: 'Apenas protocolos concluÇðdos ou cancelados podem ser reabertos'
+      });
+    }
+
+    const workflow = await getWorkflowByServiceId(protocol.serviceId);
+    const workflowStages = (workflow?.stages || []) as unknown as WorkflowStage[];
+    const sortedWorkflowStages = [...workflowStages].sort((a, b) => a.order - b.order);
+
+    if (mode === 'restart' && (!workflow || !workflow.isActive || sortedWorkflowStages.length === 0)) {
+      return res.status(400).json({
+        success: false,
+        error: 'ServiÇõo sem workflow ativo configurado para reiniciar'
+      });
+    }
+
+    const now = new Date();
+    const maxStageOrder = protocol.stages.reduce(
+      (max, stage) => Math.max(max, stage.stageOrder),
+      0
+    );
+
+    const buildStageMetadata = (stage: WorkflowStage) => ({
+      stageId: stage.id,
+      description: stage.description,
+      availableTabs: stage.availableTabs || ['resumo', 'comunicacao'],
+      primaryTab: stage.primaryTab || 'resumo',
+      requiredDocumentTypes: stage.requiredDocumentTypes || [],
+      requiredFormFields: stage.requiredFormFields || [],
+      requiredFormFieldIds: stage.requiredFormFieldIds || [],
+      allowedActions: stage.allowedActions || [],
+      canSkip: stage.canSkip || false,
+      skipCondition: stage.skipCondition,
+      role: stage.role,
+      department: stage.department,
+      requiresApproval: stage.requiresApproval
+    });
+
+    if (protocol.stages.some(stage => stage.status === 'IN_PROGRESS')) {
+      await prisma.protocolStage.updateMany({
+        where: {
+          protocolId: id,
+          status: 'IN_PROGRESS'
+        },
+        data: {
+          status: 'COMPLETED',
+          completedAt: now,
+          result: 'REOPENED',
+          notes: 'Encerrada automaticamente na reabertura'
+        }
+      });
+    }
+
+    let createdStages: any[] = [];
+
+    if (mode === 'restart') {
+      createdStages = await prisma.$transaction(
+        sortedWorkflowStages.map((stage, index) => {
+          const isFirstStage = index === 0;
+          return prisma.protocolStage.create({
+            data: {
+              protocolId: id,
+              stageName: stage.name,
+              stageOrder: maxStageOrder + stage.order,
+              status: isFirstStage ? 'IN_PROGRESS' : 'PENDING',
+              startedAt: isFirstStage ? now : undefined,
+              dueDate: stage.slaDays
+                ? new Date(now.getTime() + stage.slaDays * 24 * 60 * 60 * 1000)
+                : undefined,
+              metadata: buildStageMetadata(stage)
+            }
+          });
+        })
+      );
+    } else {
+      const lastStage = protocol.stages[protocol.stages.length - 1];
+      const lastWorkflowStage = sortedWorkflowStages[sortedWorkflowStages.length - 1];
+      const lastStageMetadata =
+        lastStage?.metadata && typeof lastStage.metadata === 'object' && !Array.isArray(lastStage.metadata)
+          ? (lastStage.metadata as Record<string, any>)
+          : null;
+      const metadataSource = lastStageMetadata || (lastWorkflowStage ? buildStageMetadata(lastWorkflowStage) : null);
+
+      const existingAllowedActions = Array.isArray(metadataSource?.allowedActions)
+        ? metadataSource.allowedActions
+        : [];
+
+      const metadata = metadataSource
+        ? {
+            ...metadataSource,
+            description: 'Reabertura do protocolo',
+            allowedActions: existingAllowedActions.length > 0 ? existingAllowedActions : ['APPROVE']
+          }
+        : {
+            description: 'Reabertura do protocolo',
+            availableTabs: ['resumo', 'pendencias', 'comunicacao'],
+            primaryTab: 'resumo',
+            requiredDocumentTypes: [],
+            requiredFormFields: [],
+            requiredFormFieldIds: [],
+            allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
+            canSkip: false
+          };
+      const stage = await prisma.protocolStage.create({
+        data: {
+          protocolId: id,
+          stageName: 'Reabertura',
+          stageOrder: maxStageOrder + 1,
+          status: 'IN_PROGRESS',
+          startedAt: now,
+          metadata
+        }
+      });
+      createdStages = [stage];
+    }
+
+    await protocolStatusEngine.updateStatus({
+      protocolId: id,
+      newStatus: ProtocolStatus.PROGRESSO,
+      actorId: authReq.userId,
+      actorRole: authReq.user.role,
+      comment: 'Protocolo reaberto',
+      metadata: {
+        action: 'reopen',
+        mode
+      }
+    });
+
+    const updatedProtocol = await prisma.protocolSimplified.update({
+      where: { id },
+      data: {
+        currentStageId: createdStages[0]?.id,
+        concludedAt: null
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId: id,
+        action: 'REABERTURA',
+        oldStatus: protocol.status,
+        newStatus: ProtocolStatus.PROGRESSO,
+        comment: `Protocolo reaberto (${mode === 'restart' ? 'reiniciar workflow' : 'nova etapa'})`,
+        userId: authReq.userId,
+        metadata: {
+          mode,
+          previousConcludedAt: protocol.concludedAt,
+          previousStatus: protocol.status
+        }
+      }
+    });
+
+    await prisma.protocolInteraction.create({
+      data: {
+        protocolId: id,
+        type: 'STATUS_CHANGED',
+        authorType: 'SERVER',
+        authorId: authReq.userId,
+        authorName: authReq.user?.name || 'Servidor',
+        message: `Protocolo reaberto (${mode === 'restart' ? 'workflow reiniciado' : 'etapa de reabertura criada'}).`,
+        isInternal: false,
+        metadata: {
+          mode,
+          action: 'reopen'
+        }
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        protocol: updatedProtocol,
+        stagesCreated: createdStages.length
+      },
+      message: 'Protocolo reaberto com sucesso'
+    });
+  } catch (error: any) {
+    console.error('Erro ao reabrir protocolo:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao reabrir protocolo'
+    });
+  }
+});
+// ========================================
 // RELATÃ“RIO COMPLETO DO PROTOCOLO
 // ========================================
 
@@ -1710,3 +1939,4 @@ router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: an
 });
 
 export default router;
+

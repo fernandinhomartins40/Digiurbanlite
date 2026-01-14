@@ -77,7 +77,8 @@ export class ProtocolStatusEngine {
       newStatus: input.newStatus,
       actorRole: input.actorRole,
       protocolType: protocol.service.serviceType,
-      protocol
+      protocol,
+      metadata: input.metadata
     });
 
     // 3️⃣ EXECUTAR TRANSAÇÃO ATÔMICA
@@ -151,9 +152,18 @@ export class ProtocolStatusEngine {
    * Valida se a transição de status é permitida
    */
   private async validateTransition(context: TransitionValidationContext): Promise<void> {
-    const { currentStatus, newStatus, actorRole, protocolType, protocol } = context;
+    const { currentStatus, newStatus, actorRole, protocolType, protocol, metadata } = context;
 
     // 1. Verificar se status é terminal
+    const isReopen =
+      newStatus === ProtocolStatus.PROGRESSO &&
+      metadata?.action === 'reopen' &&
+      actorRole !== 'CITIZEN';
+
+    if (isTerminalStatus(currentStatus) && isReopen) {
+      return;
+    }
+
     if (isTerminalStatus(currentStatus) && actorRole !== UserRole.ADMIN && actorRole !== UserRole.SUPER_ADMIN) {
       throw new InvalidTransitionError(
         `Protocolo já está em status terminal: ${currentStatus}. Apenas administradores podem alterar.`,
@@ -371,3 +381,4 @@ export class ProtocolStatusEngine {
  * ============================================================================
  */
 export const protocolStatusEngine = new ProtocolStatusEngine();
+

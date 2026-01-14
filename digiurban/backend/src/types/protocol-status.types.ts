@@ -51,6 +51,7 @@ export interface TransitionValidationContext {
   actorRole: ActorRole;
   protocolType: string;
   protocol: any;
+  metadata?: Record<string, any>;
 }
 
 /**

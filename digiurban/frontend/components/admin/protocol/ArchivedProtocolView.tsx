@@ -7,6 +7,14 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
+import {
   Archive,
   Clock,
   FileText,
@@ -74,6 +82,8 @@ export function ArchivedProtocolView({
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<'timeline' | 'documents' | 'generated' | 'communication' | 'involved'>('timeline')
   const [isReopening, setIsReopening] = useState(false)
+  const [showReopenModal, setShowReopenModal] = useState(false)
+  const [reopenMode, setReopenMode] = useState<'restart' | 'append'>('append')
   const [viewerState, setViewerState] = useState<{
     isOpen: boolean
     documentUrl: string
@@ -163,13 +173,14 @@ export function ArchivedProtocolView({
     return Array.from(people.values())
   })()
 
-  const handleReopen = async () => {
+  const handleReopen = async (mode: 'restart' | 'append') => {
     if (!onReopen) return
 
     setIsReopening(true)
     try {
       const result = await apiRequest(`/protocols/${protocol.id}/reopen`, {
-        method: 'POST'
+        method: 'POST',
+        body: JSON.stringify({ mode })
       })
 
       if (result.success) {
@@ -177,6 +188,7 @@ export function ArchivedProtocolView({
           title: 'Protocolo reaberto',
           description: 'O protocolo foi reaberto com sucesso'
         })
+        setShowReopenModal(false)
         onReopen()
       } else {
         throw new Error(result.error || 'Erro ao reabrir')
@@ -307,7 +319,7 @@ export function ArchivedProtocolView({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleReopen}
+                onClick={() => setShowReopenModal(true)}
                 disabled={isReopening}
               >
                 {isReopening ? (
@@ -323,6 +335,54 @@ export function ArchivedProtocolView({
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showReopenModal} onOpenChange={setShowReopenModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reabrir protocolo</DialogTitle>
+            <DialogDescription>
+              Escolha como deseja reabrir o fluxo deste protocolo.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => setReopenMode('append')}
+              className={`w-full text-left rounded-md border p-3 transition ${
+                reopenMode === 'append' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <p className="text-sm font-medium text-gray-900">Criar etapa de Reabertura</p>
+              <p className="text-xs text-gray-600 mt-1">
+                MantÇ¸m todo o histÇürico e adiciona apenas uma nova etapa ao final.
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setReopenMode('restart')}
+              className={`w-full text-left rounded-md border p-3 transition ${
+                reopenMode === 'restart' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <p className="text-sm font-medium text-gray-900">Reiniciar workflow completo</p>
+              <p className="text-xs text-gray-600 mt-1">
+                Duplica todas as etapas do serviÇõo, preservando as anteriores como histÇürico.
+              </p>
+            </button>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReopenModal(false)} disabled={isReopening}>
+              Cancelar
+            </Button>
+            <Button onClick={() => handleReopen(reopenMode)} disabled={isReopening}>
+              {isReopening ? 'Reabrindo...' : 'Confirmar Reabertura'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Estatísticas */}
       <Card>

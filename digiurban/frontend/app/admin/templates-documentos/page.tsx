@@ -294,7 +294,9 @@ export default function TemplatesDocumentosPage() {
                     </CardDescription>
                   </div>
                   {template.isGlobal && (
-                    <Globe className="h-4 w-4 text-blue-500" title="Template Global" />
+                    <span title="Template Global">
+                      <Globe className="h-4 w-4 text-blue-500" />
+                    </span>
                   )}
                 </div>
               </CardHeader>
