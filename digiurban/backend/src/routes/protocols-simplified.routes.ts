@@ -1590,9 +1590,9 @@ router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: an
       timelineEvents.push({
         type: 'interaction',
         timestamp: interaction.createdAt,
-        title: `${interaction.isFromCitizen ? 'Mensagem do Cidadão' : 'Mensagem da Equipe'}`,
-        description: interaction.message,
-        status: interaction.interactionType
+        title: `${interaction.authorType === 'CITIZEN' ? 'Mensagem do Cidadão' : 'Mensagem da Equipe'}`,
+        description: interaction.message || '',
+        status: interaction.type
       });
     });
 

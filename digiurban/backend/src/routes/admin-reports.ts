@@ -533,7 +533,8 @@ router.post('/:id/execute', async (req: Request, res: Response): Promise<void> =
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="relatorio_${report.name.replace(/\s+/g, '_')}_${Date.now()}.pdf"`);
-        return res.send(pdfBuffer);
+        res.send(pdfBuffer);
+        return;
 
       } else if (validatedData.format === 'JSON') {
         const completedExecution = await prisma.reportExecution.update({
@@ -591,7 +592,8 @@ router.post('/:id/execute', async (req: Request, res: Response): Promise<void> =
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="relatorio_${report.name.replace(/\s+/g, '_')}_${Date.now()}.csv"`);
-        return res.send('\ufeff' + csv);
+        res.send('\ufeff' + csv);
+        return;
       }
 
     } catch (generateError) {
