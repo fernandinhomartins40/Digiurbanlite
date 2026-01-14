@@ -1090,4 +1090,76 @@ router.get('/by-number/:number', async (req: Request, res: Response) => {
   }
 });
 
+// ========================================
+// CONCLUIR PROTOCOLO
+// ========================================
+
+/**
+ * POST /api/protocols/:id/complete
+ * Marca o protocolo como concluído (finalizado)
+ */
+router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { finalNotes, documentUrl } = req.body;
+
+    // Buscar protocolo
+    const protocol = await prisma.protocol.findUnique({
+      where: { id },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Atualizar protocolo para COMPLETED
+    const updatedProtocol = await prisma.protocol.update({
+      where: { id },
+      data: {
+        status: ProtocolStatus.COMPLETED,
+        completedAt: new Date(),
+        notes: finalNotes || protocol.notes
+      },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    // Registrar interação
+    await prisma.protocolInteraction.create({
+      data: {
+        protocolId: id,
+        type: 'STATUS_CHANGE',
+        description: `Protocolo concluído${finalNotes ? ': ' + finalNotes : ''}`,
+        userId: (req as AuthenticatedRequest).userId,
+        metadata: {
+          oldStatus: protocol.status,
+          newStatus: 'COMPLETED',
+          documentUrl: documentUrl || null
+        }
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: updatedProtocol,
+      message: `Protocolo ${protocol.number} concluído com sucesso`
+    });
+  } catch (error: any) {
+    console.error('Erro ao concluir protocolo:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao concluir protocolo'
+    });
+  }
+});
+
 export default router;
