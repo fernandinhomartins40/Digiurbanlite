@@ -21,6 +21,7 @@ import {
   Eye
 } from 'lucide-react'
 import { ProtocolTimeline } from './ProtocolTimeline'
+import { DocumentViewerModal } from './DocumentViewerModal'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -73,6 +74,19 @@ export function ArchivedProtocolView({
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<'timeline' | 'documents' | 'generated' | 'communication' | 'involved'>('timeline')
   const [isReopening, setIsReopening] = useState(false)
+  const [viewerState, setViewerState] = useState<{
+    isOpen: boolean
+    documentUrl: string
+    documentName: string
+    documentType?: string
+    downloadUrl?: string
+  }>({
+    isOpen: false,
+    documentUrl: '',
+    documentName: '',
+    documentType: undefined,
+    downloadUrl: undefined
+  })
 
   const isCancelled = protocol.status === 'CANCELADO'
   const isCompleted = protocol.status === 'CONCLUIDO'
@@ -184,6 +198,41 @@ export function ArchivedProtocolView({
       title: 'Em desenvolvimento',
       description: 'Funcionalidade de download de relatório será implementada em breve'
     })
+  }
+
+  const handleViewDocument = (doc: any, isGenerated: boolean = false) => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+    const viewUrl = isGenerated
+      ? `${apiUrl}/generated-documents/${doc.id}/download?inline=true`
+      : `${apiUrl}/protocols/${protocol.id}/documents/${doc.id}/download?inline=true`
+
+    const downloadUrl = isGenerated
+      ? `${apiUrl}/generated-documents/${doc.id}/download`
+      : `${apiUrl}/protocols/${protocol.id}/documents/${doc.id}/download`
+
+    setViewerState({
+      isOpen: true,
+      documentUrl: viewUrl,
+      documentName: doc.fileName || doc.documentType || 'Documento',
+      documentType: doc.mimeType,
+      downloadUrl: downloadUrl
+    })
+  }
+
+  const handleCloseViewer = () => {
+    setViewerState({
+      isOpen: false,
+      documentUrl: '',
+      documentName: '',
+      documentType: undefined,
+      downloadUrl: undefined
+    })
+  }
+
+  const handleDownloadDocument = () => {
+    if (viewerState.downloadUrl) {
+      window.open(viewerState.downloadUrl, '_blank')
+    }
   }
 
   return (
@@ -393,11 +442,7 @@ export function ArchivedProtocolView({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
-                              const downloadUrl = `${apiUrl}/protocols/${protocol.id}/documents/${doc.id}/download?inline=true`
-                              window.open(downloadUrl, '_blank')
-                            }}
+                            onClick={() => handleViewDocument(doc, false)}
                           >
                             <Eye className="h-4 w-4 mr-2" />
                             Ver
@@ -457,11 +502,7 @@ export function ArchivedProtocolView({
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
-                                  const downloadUrl = `${apiUrl}/generated-documents/${doc.id}/download?inline=true`
-                                  window.open(downloadUrl, '_blank')
-                                }}
+                                onClick={() => handleViewDocument(doc, true)}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 Ver
@@ -600,6 +641,16 @@ export function ArchivedProtocolView({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Visualização de Documentos */}
+      <DocumentViewerModal
+        isOpen={viewerState.isOpen}
+        onClose={handleCloseViewer}
+        documentUrl={viewerState.documentUrl}
+        documentName={viewerState.documentName}
+        documentType={viewerState.documentType}
+        onDownload={viewerState.downloadUrl ? handleDownloadDocument : undefined}
+      />
     </div>
   )
 }
