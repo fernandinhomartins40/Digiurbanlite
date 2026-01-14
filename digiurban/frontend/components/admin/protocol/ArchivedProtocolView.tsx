@@ -353,9 +353,9 @@ export function ArchivedProtocolView({
                 reopenMode === 'append' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <p className="text-sm font-medium text-gray-900">Criar etapa de Reabertura</p>
+              <p className="text-sm font-medium text-gray-900">Reabertura como pendência</p>
               <p className="text-xs text-gray-600 mt-1">
-                MantÇ¸m todo o histÇürico e adiciona apenas uma nova etapa ao final.
+                Cria uma etapa de pendência para solicitar informaÇõÇæes ou documentos, mantendo o histÇürico.
               </p>
             </button>
 

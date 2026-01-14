@@ -657,6 +657,9 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     }
 
     // Usar motor centralizado de status
+    const reopenStatus = mode === 'append' ? ProtocolStatus.PENDENCIA : ProtocolStatus.PROGRESSO;
+    const reopenLabel = mode === 'restart' ? 'workflow reiniciado' : 'pendencia criada';
+
     const result = await protocolStatusEngine.updateStatus({
       protocolId: id,
       newStatus: status,
@@ -1282,38 +1285,22 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         })
       );
     } else {
-      const lastStage = protocol.stages[protocol.stages.length - 1];
-      const lastWorkflowStage = sortedWorkflowStages[sortedWorkflowStages.length - 1];
-      const lastStageMetadata =
-        lastStage?.metadata && typeof lastStage.metadata === 'object' && !Array.isArray(lastStage.metadata)
-          ? (lastStage.metadata as Record<string, any>)
-          : null;
-      const metadataSource = lastStageMetadata || (lastWorkflowStage ? buildStageMetadata(lastWorkflowStage) : null);
+      const reopenMetadata = {
+        description: 'Reabertura do protocolo (pendencia)',
+        availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
+        primaryTab: 'pendencias',
+        requiredDocumentTypes: [],
+        requiredFormFields: [],
+        requiredFormFieldIds: [],
+        allowedActions: ['REQUEST_INFO', 'CREATE_PENDING', 'APPROVE', 'REJECT'],
+        canSkip: false
+      };
 
-      const existingAllowedActions = Array.isArray(metadataSource?.allowedActions)
-        ? metadataSource.allowedActions
-        : [];
-
-      const metadata = metadataSource
-        ? {
-            ...metadataSource,
-            description: 'Reabertura do protocolo',
-            allowedActions: existingAllowedActions.length > 0 ? existingAllowedActions : ['APPROVE']
-          }
-        : {
-            description: 'Reabertura do protocolo',
-            availableTabs: ['resumo', 'pendencias', 'comunicacao'],
-            primaryTab: 'resumo',
-            requiredDocumentTypes: [],
-            requiredFormFields: [],
-            requiredFormFieldIds: [],
-            allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
-            canSkip: false
-          };
+      const metadata = reopenMetadata;
       const stage = await prisma.protocolStage.create({
         data: {
           protocolId: id,
-          stageName: 'Reabertura',
+          stageName: 'Reabertura (Pendencia)',
           stageOrder: maxStageOrder + 1,
           status: 'IN_PROGRESS',
           startedAt: now,
@@ -1325,7 +1312,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
 
     await protocolStatusEngine.updateStatus({
       protocolId: id,
-      newStatus: ProtocolStatus.PROGRESSO,
+      newStatus: reopenStatus,
       actorId: authReq.userId,
       actorRole: authReq.user.role,
       comment: 'Protocolo reaberto',
@@ -1352,8 +1339,8 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         protocolId: id,
         action: 'REABERTURA',
         oldStatus: protocol.status,
-        newStatus: ProtocolStatus.PROGRESSO,
-        comment: `Protocolo reaberto (${mode === 'restart' ? 'reiniciar workflow' : 'nova etapa'})`,
+        newStatus: reopenStatus,
+        comment: `Protocolo reaberto (${reopenLabel})`,
         userId: authReq.userId,
         metadata: {
           mode,
@@ -1370,7 +1357,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         authorType: 'SERVER',
         authorId: authReq.userId,
         authorName: authReq.user?.name || 'Servidor',
-        message: `Protocolo reaberto (${mode === 'restart' ? 'workflow reiniciado' : 'etapa de reabertura criada'}).`,
+        message: `Protocolo reaberto (${reopenLabel}).`,
         isInternal: false,
         metadata: {
           mode,

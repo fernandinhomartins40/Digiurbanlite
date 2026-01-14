@@ -156,11 +156,11 @@ export class ProtocolStatusEngine {
 
     // 1. Verificar se status é terminal
     const isReopen =
-      newStatus === ProtocolStatus.PROGRESSO &&
+      (newStatus === ProtocolStatus.PROGRESSO || newStatus === ProtocolStatus.PENDENCIA) &&
       metadata?.action === 'reopen' &&
       actorRole !== 'CITIZEN';
 
-    if (isTerminalStatus(currentStatus) && isReopen) {
+    if (isReopen) {
       return;
     }
 
