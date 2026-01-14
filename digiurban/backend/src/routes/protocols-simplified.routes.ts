@@ -1166,4 +1166,175 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
   }
 });
 
+// ========================================
+// RELATÓRIO COMPLETO DO PROTOCOLO
+// ========================================
+
+/**
+ * GET /api/protocols/:id/report
+ * Gerar relatório completo do protocolo (JSON)
+ */
+router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const format = req.query.format as string || 'json';
+
+    // Buscar todos os dados do protocolo
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id },
+      include: {
+        citizen: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            email: true,
+            phone: true,
+            address: true
+          }
+        },
+        service: {
+          include: {
+            department: true
+          }
+        },
+        department: true,
+        assignedUser: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        history: {
+          orderBy: { timestamp: 'asc' }
+        },
+        interactions: {
+          orderBy: { createdAt: 'asc' }
+        },
+        documentFiles: {
+          orderBy: { createdAt: 'asc' }
+        },
+        dataFields: {
+          orderBy: { createdAt: 'asc' }
+        },
+        pendings: {
+          orderBy: { createdAt: 'asc' }
+        },
+        stages: {
+          orderBy: { stageOrder: 'asc' }
+        },
+        sla: true,
+        citizenLinks: {
+          include: {
+            linkedCitizen: {
+              select: {
+                id: true,
+                name: true,
+                cpf: true,
+                email: true
+              }
+            }
+          }
+        },
+        generatedDocuments: {
+          orderBy: { generatedAt: 'desc' }
+        }
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Calcular estatísticas
+    const stats = {
+      totalDays: protocol.concludedAt || protocol.updatedAt
+        ? Math.ceil(
+            (new Date(protocol.concludedAt || protocol.updatedAt).getTime() -
+              new Date(protocol.createdAt).getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        : 0,
+      completedStages: protocol.stages.filter(s => s.status === 'COMPLETED').length,
+      totalStages: protocol.stages.length,
+      approvedDocs: protocol.documentFiles.filter(d => d.status === 'APPROVED').length,
+      rejectedDocs: protocol.documentFiles.filter(d => d.status === 'REJECTED').length,
+      totalDocs: protocol.documentFiles.length,
+      generatedDocs: protocol.generatedDocuments.length,
+      totalInteractions: protocol.interactions.length,
+      citizenMessages: protocol.interactions.filter(i => i.authorType === 'CITIZEN').length,
+      pendingsResolved: protocol.pendings.filter(p => p.status === 'RESOLVED').length,
+      totalPendings: protocol.pendings.length
+    };
+
+    // Montar relatório completo
+    const report = {
+      protocol: {
+        id: protocol.id,
+        number: protocol.number,
+        title: protocol.title,
+        description: protocol.description,
+        status: protocol.status,
+        priority: protocol.priority,
+        createdAt: protocol.createdAt,
+        updatedAt: protocol.updatedAt,
+        concludedAt: protocol.concludedAt,
+        dueDate: protocol.dueDate
+      },
+      citizen: protocol.citizen,
+      service: protocol.service,
+      department: protocol.department,
+      assignedUser: protocol.assignedUser,
+      createdBy: protocol.createdBy,
+      statistics: stats,
+      timeline: {
+        history: protocol.history,
+        interactions: protocol.interactions,
+        stages: protocol.stages,
+        pendings: protocol.pendings
+      },
+      documents: {
+        received: protocol.documentFiles,
+        generated: protocol.generatedDocuments
+      },
+      dataFields: protocol.dataFields,
+      sla: protocol.sla,
+      citizenLinks: protocol.citizenLinks,
+      generatedAt: new Date()
+    };
+
+    // Se formato for JSON, retornar como JSON
+    if (format === 'json') {
+      // Definir headers para download
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="protocolo_${protocol.number}_relatorio.json"`);
+      return res.json(report);
+    }
+
+    // TODO: Implementar outros formatos (PDF, Excel) no futuro
+    return res.status(400).json({
+      success: false,
+      error: 'Formato não suportado. Use format=json'
+    });
+
+  } catch (error: any) {
+    console.error('Erro ao gerar relatório:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao gerar relatório'
+    });
+  }
+});
+
 export default router;

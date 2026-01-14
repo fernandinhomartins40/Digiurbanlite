@@ -192,12 +192,45 @@ export function ArchivedProtocolView({
     }
   }
 
-  const handleDownloadReport = () => {
-    // TODO: Implementar download de relatório completo
-    toast({
-      title: 'Em desenvolvimento',
-      description: 'Funcionalidade de download de relatório será implementada em breve'
-    })
+  const handleDownloadReport = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+      const reportUrl = `${apiUrl}/protocols/${protocol.id}/report?format=json`
+
+      // Fazer requisição autenticada
+      const response = await fetch(reportUrl, {
+        credentials: 'include' // Incluir cookies de autenticação
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao gerar relatório')
+      }
+
+      // Obter o blob do arquivo
+      const blob = await response.blob()
+
+      // Criar URL temporária e fazer download
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `protocolo_${protocol.protocolNumber || protocol.id}_relatorio.json`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      toast({
+        title: 'Relatório gerado',
+        description: 'O relatório completo foi baixado com sucesso'
+      })
+    } catch (error: any) {
+      console.error('Erro ao baixar relatório:', error)
+      toast({
+        title: 'Erro ao gerar relatório',
+        description: error.message || 'Não foi possível gerar o relatório',
+        variant: 'destructive'
+      })
+    }
   }
 
   const handleViewDocument = (doc: any, isGenerated: boolean = false) => {
