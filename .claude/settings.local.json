@@ -96,7 +96,10 @@
       "Bash(chmod:*)",
       "Bash(git revert:*)",
       "Bash(git stash:*)",
-      "Bash(npx ts-node:*)"
+      "Bash(npx ts-node:*)",
+      "Bash(if [ ! -d \"c:\\\\Projetos Cursor\\\\Digiurbanlite\\\\docker\" ])",
+      "Bash(then cp -r \"c:\\\\Projetos Cursor\\\\Digiurbanlite\\\\digiurban\\\\docker\" \"c:\\\\Projetos Cursor\\\\Digiurbanlite\\\\docker\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": []

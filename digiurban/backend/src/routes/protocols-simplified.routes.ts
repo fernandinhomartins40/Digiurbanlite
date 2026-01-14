@@ -1104,7 +1104,7 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
     const { finalNotes, documentUrl } = req.body;
 
     // Buscar protocolo
-    const protocol = await prisma.protocol.findUnique({
+    const protocol = await prisma.protocolSimplified.findUnique({
       where: { id },
       include: {
         citizen: true,
@@ -1120,12 +1120,11 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
     }
 
     // Atualizar protocolo para COMPLETED
-    const updatedProtocol = await prisma.protocol.update({
+    const updatedProtocol = await prisma.protocolSimplified.update({
       where: { id },
       data: {
-        status: ProtocolStatus.COMPLETED,
-        completedAt: new Date(),
-        notes: finalNotes || protocol.notes
+        status: ProtocolStatus.CONCLUIDO,
+        concludedAt: new Date()
       },
       include: {
         citizen: true,
@@ -1134,16 +1133,21 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
     });
 
     // Registrar interação
+    const authReq = req as AuthenticatedRequest;
     await prisma.protocolInteraction.create({
       data: {
         protocolId: id,
-        type: 'STATUS_CHANGE',
-        description: `Protocolo concluído${finalNotes ? ': ' + finalNotes : ''}`,
-        userId: (req as AuthenticatedRequest).userId,
+        type: 'STATUS_CHANGED',
+        message: `Protocolo concluído${finalNotes ? ': ' + finalNotes : ''}`,
+        authorType: 'SERVER',
+        authorId: authReq.userId,
+        authorName: authReq.user?.name || 'Sistema',
+        isInternal: false,
         metadata: {
           oldStatus: protocol.status,
-          newStatus: 'COMPLETED',
-          documentUrl: documentUrl || null
+          newStatus: 'CONCLUIDO',
+          documentUrl: documentUrl || null,
+          finalNotes: finalNotes || null
         }
       }
     });

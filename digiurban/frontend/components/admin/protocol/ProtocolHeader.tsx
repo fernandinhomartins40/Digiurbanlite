@@ -244,7 +244,7 @@ export function ProtocolHeader({
 
   return (
     <>
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="px-4 sm:px-6 py-4">
           {/* Linha 1: Voltar + Título + Status */}
           <div className="flex items-start justify-between gap-4 mb-4">
