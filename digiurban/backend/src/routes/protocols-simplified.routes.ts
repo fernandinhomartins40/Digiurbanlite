@@ -657,8 +657,9 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     }
 
     // Usar motor centralizado de status
-    const reopenStatus = mode === 'append' ? ProtocolStatus.PENDENCIA : ProtocolStatus.PROGRESSO;
-    const reopenLabel = mode === 'restart' ? 'workflow reiniciado' : 'pendencia criada';
+
+
+
 
     const result = await protocolStatusEngine.updateStatus({
       protocolId: id,
@@ -1309,6 +1310,9 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
       });
       createdStages = [stage];
     }
+
+    const reopenStatus = mode === 'append' ? ProtocolStatus.PENDENCIA : ProtocolStatus.PROGRESSO;
+    const reopenLabel = mode === 'restart' ? 'workflow reiniciado' : 'pendencia criada';
 
     await protocolStatusEngine.updateStatus({
       protocolId: id,
