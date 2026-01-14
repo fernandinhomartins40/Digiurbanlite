@@ -6,7 +6,8 @@
 
 import { Router } from 'express';
 import { authenticateToken, requireAdmin, requireSuperAdmin } from '../middleware/auth';
-import { PrismaClient } from '@prisma/client';
+import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
+import { PrismaClient, UserRole } from '@prisma/client';
 import * as documentGenerator from '../services/document-generator.service';
 import path from 'path';
 
@@ -197,7 +198,7 @@ router.delete('/document-templates/:id', authenticateToken, requireSuperAdmin, a
  * POST /api/protocols/:protocolId/generate-document
  * Gerar documento para protocolo
  */
-router.post('/protocols/:protocolId/generate-document', authenticateToken, async (req, res) => {
+router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { protocolId } = req.params;
     const { templateId, additionalData } = req.body;
@@ -234,7 +235,7 @@ router.post('/protocols/:protocolId/generate-document', authenticateToken, async
  * GET /api/protocols/:protocolId/generated-documents
  * Listar documentos gerados de um protocolo
  */
-router.get('/protocols/:protocolId/generated-documents', authenticateToken, async (req, res) => {
+router.get('/protocols/:protocolId/generated-documents', adminAuthMiddleware, async (req, res) => {
   try {
     const documents = await documentGenerator.getGeneratedDocuments(req.params.protocolId);
 
@@ -252,7 +253,7 @@ router.get('/protocols/:protocolId/generated-documents', authenticateToken, asyn
  * GET /api/generated-documents/:id
  * Obter documento gerado específico
  */
-router.get('/generated-documents/:id', authenticateToken, async (req, res) => {
+router.get('/generated-documents/:id', adminAuthMiddleware, async (req, res) => {
   try {
     const document = await prisma.generatedDocument.findUnique({
       where: { id: req.params.id },
@@ -288,8 +289,9 @@ router.get('/generated-documents/:id', authenticateToken, async (req, res) => {
 /**
  * GET /api/generated-documents/:id/download
  * Download de documento gerado
+ * NOTA: Usa adminAuthMiddleware para permitir visualização no painel admin
  */
-router.get('/generated-documents/:id/download', authenticateToken, async (req, res) => {
+router.get('/generated-documents/:id/download', adminAuthMiddleware, async (req, res) => {
   try {
     const document = await prisma.generatedDocument.findUnique({
       where: { id: req.params.id }
