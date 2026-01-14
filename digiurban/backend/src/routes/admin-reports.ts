@@ -344,25 +344,276 @@ router.post('/:id/execute', async (req: Request, res: Response): Promise<void> =
       data: { lastRun: new Date() }
     });
 
-    // Aqui você implementaria a lógica de geração do relatório
-    // Por enquanto, vamos apenas simular o sucesso
-    const completedExecution = await prisma.reportExecution.update({
-      where: { id: execution.id },
-      data: {
-        status: 'COMPLETED',
-        data: {
-          message: 'Relatório gerado com sucesso',
-          format: validatedData.format
-        } as Prisma.InputJsonValue,
-        completedAt: new Date()
-      }
-    });
+    try {
+      // Gerar dados do relatório baseado no tipo
+      let reportData: any = {};
 
-    res.json({
-      success: true,
-      data: completedExecution,
-      message: 'Relatório executado com sucesso'
-    } as SuccessResponse<typeof completedExecution>);
+      // Buscar protocolos para análise
+      const protocols = await prisma.protocolSimplified.findMany({
+        include: {
+          citizen: true,
+          service: true,
+          department: true,
+          stages: true,
+          documentFiles: true,
+          pendings: true
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 1000 // Limitar para performance
+      });
+
+      // Estatísticas gerais
+      reportData.totalProtocols = protocols.length;
+      reportData.byStatus = protocols.reduce((acc: any, p) => {
+        acc[p.status] = (acc[p.status] || 0) + 1;
+        return acc;
+      }, {});
+
+      reportData.byDepartment = protocols.reduce((acc: any, p) => {
+        const deptName = p.department?.name || 'Sem departamento';
+        acc[deptName] = (acc[deptName] || 0) + 1;
+        return acc;
+      }, {});
+
+      reportData.byService = protocols.reduce((acc: any, p) => {
+        const serviceName = p.service?.name || 'Sem serviço';
+        acc[serviceName] = (acc[serviceName] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Estatísticas de tempo
+      const completedProtocols = protocols.filter(p => p.concludedAt);
+      if (completedProtocols.length > 0) {
+        const avgTime = completedProtocols.reduce((sum, p) => {
+          const days = Math.floor((new Date(p.concludedAt!).getTime() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+          return sum + days;
+        }, 0) / completedProtocols.length;
+        reportData.avgCompletionDays = Math.round(avgTime);
+      }
+
+      // Gerar arquivo baseado no formato
+      if (validatedData.format === 'PDF') {
+        const { chromium } = require('playwright');
+        const browser = await chromium.launch({ headless: true });
+        const page = await browser.newPage();
+
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+              h2 { color: #1e40af; margin-top: 30px; }
+              .header { background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+              .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+              .kpi-box { background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; }
+              .kpi-value { font-size: 32px; font-weight: bold; color: #2563eb; }
+              .kpi-label { font-size: 12px; color: #6b7280; margin-top: 8px; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th { background: #2563eb; color: white; padding: 12px; text-align: left; }
+              td { padding: 10px; border-bottom: 1px solid #e5e7eb; }
+              .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+            </style>
+          </head>
+          <body>
+            <h1>${report.name}</h1>
+
+            <div class="header">
+              <p><strong>Tipo:</strong> ${report.type}</p>
+              <p><strong>Categoria:</strong> ${report.category}</p>
+              <p><strong>Gerado em:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+              ${report.description ? `<p><strong>Descrição:</strong> ${report.description}</p>` : ''}
+            </div>
+
+            <h2>Indicadores Principais</h2>
+            <div class="kpis">
+              <div class="kpi-box">
+                <div class="kpi-value">${reportData.totalProtocols}</div>
+                <div class="kpi-label">Total de Protocolos</div>
+              </div>
+              <div class="kpi-box">
+                <div class="kpi-value">${reportData.avgCompletionDays || 'N/A'}</div>
+                <div class="kpi-label">Média de Dias para Conclusão</div>
+              </div>
+              <div class="kpi-box">
+                <div class="kpi-value">${Object.keys(reportData.byDepartment).length}</div>
+                <div class="kpi-label">Departamentos Ativos</div>
+              </div>
+            </div>
+
+            <h2>Distribuição por Status</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Quantidade</th>
+                  <th>Percentual</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(reportData.byStatus).map(([status, count]: [string, any]) => `
+                  <tr>
+                    <td>${status.replace(/_/g, ' ')}</td>
+                    <td>${count}</td>
+                    <td>${Math.round((count / reportData.totalProtocols) * 100)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <h2>Distribuição por Departamento</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Departamento</th>
+                  <th>Quantidade</th>
+                  <th>Percentual</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(reportData.byDepartment).sort((a: any, b: any) => b[1] - a[1]).map(([dept, count]: [string, any]) => `
+                  <tr>
+                    <td>${dept}</td>
+                    <td>${count}</td>
+                    <td>${Math.round((count / reportData.totalProtocols) * 100)}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <h2>Top 10 Serviços Mais Solicitados</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Serviço</th>
+                  <th>Quantidade</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${Object.entries(reportData.byService)
+                  .sort((a: any, b: any) => b[1] - a[1])
+                  .slice(0, 10)
+                  .map(([service, count]: [string, any]) => `
+                    <tr>
+                      <td>${service}</td>
+                      <td>${count}</td>
+                    </tr>
+                  `).join('')}
+              </tbody>
+            </table>
+
+            <div class="footer">
+              <p>Relatório gerado em ${new Date().toLocaleString('pt-BR')}</p>
+              <p>Sistema DigiUrban - Relatórios Administrativos</p>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await page.setContent(html);
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' }
+        });
+
+        await browser.close();
+
+        // Salvar PDF temporariamente ou retornar direto
+        const completedExecution = await prisma.reportExecution.update({
+          where: { id: execution.id },
+          data: {
+            status: 'COMPLETED',
+            data: reportData as Prisma.InputJsonValue,
+            completedAt: new Date()
+          }
+        });
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="relatorio_${report.name.replace(/\s+/g, '_')}_${Date.now()}.pdf"`);
+        return res.send(pdfBuffer);
+
+      } else if (validatedData.format === 'JSON') {
+        const completedExecution = await prisma.reportExecution.update({
+          where: { id: execution.id },
+          data: {
+            status: 'COMPLETED',
+            data: reportData as Prisma.InputJsonValue,
+            completedAt: new Date()
+          }
+        });
+
+        res.json({
+          success: true,
+          data: completedExecution,
+          reportData: reportData,
+          message: 'Relatório executado com sucesso'
+        } as SuccessResponse<typeof completedExecution>);
+
+      } else if (validatedData.format === 'CSV' || validatedData.format === 'EXCEL') {
+        // Gerar CSV
+        const csv = [
+          [report.name],
+          ['Gerado em', new Date().toLocaleString('pt-BR')],
+          [],
+          ['INDICADORES PRINCIPAIS'],
+          ['Métrica', 'Valor'],
+          ['Total de Protocolos', reportData.totalProtocols.toString()],
+          ['Média de Dias para Conclusão', (reportData.avgCompletionDays || 'N/A').toString()],
+          [],
+          ['DISTRIBUIÇÃO POR STATUS'],
+          ['Status', 'Quantidade', 'Percentual'],
+          ...Object.entries(reportData.byStatus).map(([status, count]: [string, any]) => [
+            status.replace(/_/g, ' '),
+            count.toString(),
+            `${Math.round((count / reportData.totalProtocols) * 100)}%`
+          ]),
+          [],
+          ['DISTRIBUIÇÃO POR DEPARTAMENTO'],
+          ['Departamento', 'Quantidade', 'Percentual'],
+          ...Object.entries(reportData.byDepartment).map(([dept, count]: [string, any]) => [
+            dept,
+            count.toString(),
+            `${Math.round((count / reportData.totalProtocols) * 100)}%`
+          ])
+        ].map(row => row.join(';')).join('\n');
+
+        const completedExecution = await prisma.reportExecution.update({
+          where: { id: execution.id },
+          data: {
+            status: 'COMPLETED',
+            data: reportData as Prisma.InputJsonValue,
+            completedAt: new Date()
+          }
+        });
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="relatorio_${report.name.replace(/\s+/g, '_')}_${Date.now()}.csv"`);
+        return res.send('\ufeff' + csv);
+      }
+
+    } catch (generateError) {
+      console.error('Erro ao gerar relatório:', generateError);
+      await prisma.reportExecution.update({
+        where: { id: execution.id },
+        data: {
+          status: 'FAILED',
+          data: {
+            error: generateError instanceof Error ? generateError.message : 'Erro desconhecido'
+          } as Prisma.InputJsonValue,
+          completedAt: new Date()
+        }
+      });
+
+      res.status(500).json({
+        success: false,
+        error: 'Report Generation Error',
+        message: 'Erro ao gerar relatório'
+      } as ErrorResponse);
+      return;
+    }
 
   } catch (error) {
     if (error instanceof ZodError) {

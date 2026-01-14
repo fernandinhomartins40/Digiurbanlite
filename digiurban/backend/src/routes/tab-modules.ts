@@ -1558,6 +1558,12 @@ router.get(
               name: true,
               cpf: true,
               email: true,
+              phone: true,
+            }
+          },
+          service: {
+            select: {
+              name: true,
             }
           }
         },
@@ -1569,26 +1575,62 @@ router.get(
       if (format === 'csv') {
         const rows: string[] = [];
 
+        // Identificar colunas de customData (pegar as chaves do primeiro protocolo)
+        const customDataKeys: string[] = [];
+        if (protocols.length > 0 && protocols[0].customData) {
+          const customData = protocols[0].customData as any;
+          Object.keys(customData).forEach(key => {
+            if (!['id', 'createdAt', 'updatedAt'].includes(key)) {
+              customDataKeys.push(key);
+            }
+          });
+        }
+
         // Cabeçalho
-        rows.push(['Protocolo', 'Título', 'Status', 'Cidadão', 'CPF', 'Data'].join(','));
+        const headers = [
+          'Protocolo',
+          'Título',
+          'Status',
+          'Serviço',
+          'Cidadão',
+          'CPF',
+          'Email',
+          'Telefone',
+          'Criado em',
+          'Atualizado em',
+          ...customDataKeys.map(key => key.replace(/_/g, ' ').toUpperCase())
+        ];
+        rows.push(headers.join(';'));
 
         // Dados
         protocols.forEach(p => {
-          rows.push([
-            p.number,
-            `"${p.title || ''}"`,
-            p.status,
-            `"${p.citizen?.name || ''}"`,
+          const customData = (p.customData as any) || {};
+          const row = [
+            p.number || '',
+            `"${(p.title || '').replace(/"/g, '""')}"`, // Escapar aspas
+            p.status || '',
+            `"${(p.service?.name || '').replace(/"/g, '""')}"`,
+            `"${(p.citizen?.name || '').replace(/"/g, '""')}"`,
             p.citizen?.cpf || '',
-            p.createdAt.toISOString().split('T')[0]
-          ].join(','));
+            p.citizen?.email || '',
+            p.citizen?.phone || '',
+            new Date(p.createdAt).toLocaleString('pt-BR'),
+            new Date(p.updatedAt).toLocaleString('pt-BR'),
+            ...customDataKeys.map(key => {
+              const value = customData[key];
+              if (value === null || value === undefined) return '';
+              if (typeof value === 'object') return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+              return `"${String(value).replace(/"/g, '""')}"`;
+            })
+          ];
+          rows.push(row.join(';'));
         });
 
         const csv = rows.join('\n');
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename="${module}_${Date.now()}.csv"`);
-        return res.send('\ufeff' + csv);
+        return res.send('\ufeff' + csv); // BOM para Excel
       }
 
       return res.status(400).json({
@@ -1618,14 +1660,222 @@ router.get(
     try {
       const { department, module } = req.params;
       const format = req.query.format as string || 'pdf';
-      const period = req.query.period as string || 'month';
+      const dateFrom = req.query.dateFrom as string || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const dateTo = req.query.dateTo as string || new Date().toISOString();
 
       console.log(`\n[TAB-MODULES] GET /${department}/${module}/dashboard/export (${format})`);
 
-      // Por enquanto retornar erro indicando que será implementado
-      return res.status(501).json({
+      // Buscar departamento
+      const dept = await prisma.department.findFirst({
+        where: { code: department.toUpperCase() }
+      });
+
+      if (!dept) {
+        return res.status(404).json({
+          success: false,
+          error: 'Departamento não encontrado'
+        });
+      }
+
+      const where = {
+        departmentId: dept.id,
+        moduleType: module.toUpperCase(),
+        createdAt: {
+          gte: new Date(dateFrom),
+          lte: new Date(dateTo),
+        },
+      };
+
+      // Buscar dados do dashboard
+      const allProtocols = await prisma.protocolSimplified.findMany({
+        where,
+        select: {
+          id: true,
+          status: true,
+          customData: true,
+          createdAt: true,
+          number: true,
+        },
+      });
+
+      const total = allProtocols.length;
+
+      // Estatísticas por status
+      const byStatus = allProtocols.reduce((acc: any[], protocol) => {
+        const existing = acc.find(item => item.status === protocol.status);
+        if (existing) {
+          existing._count.id++;
+        } else {
+          acc.push({ status: protocol.status, _count: { id: 1 } });
+        }
+        return acc;
+      }, []);
+
+      // Análise temporal (últimos 7 dias)
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - i));
+        return date.toISOString().split('T')[0];
+      });
+
+      const dailyData = last7Days.map(date => {
+        const count = allProtocols.filter(p =>
+          p.createdAt.toISOString().split('T')[0] === date
+        ).length;
+        return { date, count };
+      });
+
+      if (format === 'pdf') {
+        const { chromium } = require('playwright');
+        const browser = await chromium.launch({ headless: true });
+        const page = await browser.newPage();
+
+        // Gerar HTML do dashboard
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; }
+              h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+              h2 { color: #1e40af; margin-top: 30px; }
+              .header { background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+              .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+              .kpi-box { background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; }
+              .kpi-value { font-size: 32px; font-weight: bold; color: #2563eb; }
+              .kpi-label { font-size: 12px; color: #6b7280; margin-top: 8px; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th { background: #2563eb; color: white; padding: 12px; text-align: left; }
+              td { padding: 10px; border-bottom: 1px solid #e5e7eb; }
+              .chart { margin: 20px 0; padding: 20px; background: #f9fafb; border-radius: 8px; }
+              .bar-container { display: flex; align-items: flex-end; gap: 10px; height: 200px; margin-top: 10px; }
+              .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; }
+              .bar { width: 100%; background: #3b82f6; border-radius: 4px 4px 0 0; }
+              .bar-label { font-size: 10px; margin-top: 5px; color: #6b7280; }
+              .bar-value { font-size: 11px; font-weight: bold; margin-bottom: 5px; }
+              .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+            </style>
+          </head>
+          <body>
+            <h1>Dashboard - ${module.toUpperCase()}</h1>
+
+            <div class="header">
+              <h2 style="margin-top: 0;">Resumo do Período</h2>
+              <p><strong>Departamento:</strong> ${dept.name}</p>
+              <p><strong>Período:</strong> ${new Date(dateFrom).toLocaleDateString('pt-BR')} até ${new Date(dateTo).toLocaleDateString('pt-BR')}</p>
+            </div>
+
+            <h2>Indicadores Principais</h2>
+            <div class="kpis">
+              <div class="kpi-box">
+                <div class="kpi-value">${total}</div>
+                <div class="kpi-label">Total de Solicitações</div>
+              </div>
+              ${byStatus.map(item => `
+                <div class="kpi-box">
+                  <div class="kpi-value">${item._count.id}</div>
+                  <div class="kpi-label">${item.status.replace(/_/g, ' ')}</div>
+                </div>
+              `).join('')}
+            </div>
+
+            <h2>Distribuição por Status</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Quantidade</th>
+                  <th>Percentual</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${byStatus.map(item => `
+                  <tr>
+                    <td>${item.status.replace(/_/g, ' ')}</td>
+                    <td>${item._count.id}</td>
+                    <td>${total > 0 ? Math.round((item._count.id / total) * 100) : 0}%</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <h2>Solicitações por Dia (Últimos 7 dias)</h2>
+            <div class="chart">
+              <div class="bar-container">
+                ${dailyData.map(day => {
+                  const maxCount = Math.max(...dailyData.map(d => d.count), 1);
+                  const height = (day.count / maxCount) * 100;
+                  return `
+                    <div class="bar-wrapper">
+                      <div class="bar-value">${day.count}</div>
+                      <div class="bar" style="height: ${height}%"></div>
+                      <div class="bar-label">${new Date(day.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>Relatório gerado em ${new Date().toLocaleString('pt-BR')}</p>
+              <p>Sistema DigiUrban - Dashboard de Módulos</p>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await page.setContent(html);
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          landscape: true,
+          printBackground: true,
+          margin: { top: '15mm', right: '15mm', bottom: '15mm', left: '15mm' }
+        });
+
+        await browser.close();
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="dashboard_${module}_${Date.now()}.pdf"`);
+        return res.send(pdfBuffer);
+      }
+
+      // Formato Excel (CSV com separador de ponto e vírgula)
+      if (format === 'excel' || format === 'csv') {
+        const csv = [
+          ['Dashboard - ' + module.toUpperCase()],
+          ['Departamento', dept.name],
+          ['Período', `${new Date(dateFrom).toLocaleDateString('pt-BR')} até ${new Date(dateTo).toLocaleDateString('pt-BR')}`],
+          [],
+          ['INDICADORES'],
+          ['Métrica', 'Valor'],
+          ['Total de Solicitações', total.toString()],
+          ...byStatus.map(item => [item.status.replace(/_/g, ' '), item._count.id.toString()]),
+          [],
+          ['DISTRIBUIÇÃO POR STATUS'],
+          ['Status', 'Quantidade', 'Percentual'],
+          ...byStatus.map(item => [
+            item.status.replace(/_/g, ' '),
+            item._count.id.toString(),
+            `${total > 0 ? Math.round((item._count.id / total) * 100) : 0}%`
+          ]),
+          [],
+          ['SOLICITAÇÕES POR DIA (ÚLTIMOS 7 DIAS)'],
+          ['Data', 'Quantidade'],
+          ...dailyData.map(day => [
+            new Date(day.date).toLocaleDateString('pt-BR'),
+            day.count.toString()
+          ])
+        ].map(row => row.join(';')).join('\n');
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="dashboard_${module}_${Date.now()}.csv"`);
+        return res.send('\ufeff' + csv); // BOM para Excel reconhecer UTF-8
+      }
+
+      return res.status(400).json({
         success: false,
-        error: 'Exportação de dashboard será implementada em breve'
+        error: 'Formato não suportado. Use format=pdf ou format=excel'
       });
 
     } catch (error) {

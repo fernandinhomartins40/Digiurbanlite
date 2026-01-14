@@ -1474,4 +1474,239 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
   }
 });
 
+/**
+ * GET /api/protocols/:id/timeline/export
+ * Exportar timeline do protocolo em PDF
+ */
+router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+
+    // Buscar protocolo completo
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id },
+      include: {
+        stages: {
+          orderBy: { stageOrder: 'asc' }
+        },
+        documentFiles: {
+          orderBy: { uploadedAt: 'desc' }
+        },
+        pendings: {
+          orderBy: { createdAt: 'desc' }
+        },
+        interactions: {
+          orderBy: { createdAt: 'desc' }
+        },
+        history: {
+          orderBy: { id: 'asc' }
+        }
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Montar eventos da timeline
+    const timelineEvents = [];
+
+    // Evento de criação do protocolo
+    timelineEvents.push({
+      type: 'protocol',
+      timestamp: protocol.createdAt,
+      title: 'Protocolo Criado',
+      description: `Protocolo ${protocol.number} foi criado`,
+      status: 'created'
+    });
+
+    // Eventos de etapas
+    protocol.stages.forEach(stage => {
+      if (stage.startedAt) {
+        timelineEvents.push({
+          type: 'stage',
+          timestamp: stage.startedAt,
+          title: `Etapa Iniciada: ${stage.stageName}`,
+          description: stage.notes || '',
+          status: 'started'
+        });
+      }
+      if (stage.completedAt) {
+        timelineEvents.push({
+          type: 'stage',
+          timestamp: stage.completedAt,
+          title: `Etapa Concluída: ${stage.stageName}`,
+          description: stage.notes || '',
+          status: 'completed'
+        });
+      }
+    });
+
+    // Eventos de documentos
+    protocol.documentFiles.forEach(doc => {
+      timelineEvents.push({
+        type: 'document',
+        timestamp: doc.uploadedAt,
+        title: `Documento Enviado: ${doc.documentType}`,
+        description: doc.fileName,
+        status: doc.status
+      });
+      if (doc.validatedAt) {
+        timelineEvents.push({
+          type: 'document',
+          timestamp: doc.validatedAt,
+          title: `Documento ${doc.status === 'APPROVED' ? 'Aprovado' : 'Rejeitado'}: ${doc.documentType}`,
+          description: doc.rejectionReason || '',
+          status: doc.status
+        });
+      }
+    });
+
+    // Eventos de pendências
+    protocol.pendings.forEach(pending => {
+      timelineEvents.push({
+        type: 'pending',
+        timestamp: pending.createdAt,
+        title: `Pendência Criada`,
+        description: pending.description,
+        status: 'created'
+      });
+      if (pending.resolvedAt) {
+        timelineEvents.push({
+          type: 'pending',
+          timestamp: pending.resolvedAt,
+          title: `Pendência Resolvida`,
+          description: pending.resolution || pending.description,
+          status: pending.status
+        });
+      }
+    });
+
+    // Eventos de interações
+    protocol.interactions.forEach(interaction => {
+      timelineEvents.push({
+        type: 'interaction',
+        timestamp: interaction.createdAt,
+        title: `${interaction.isFromCitizen ? 'Mensagem do Cidadão' : 'Mensagem da Equipe'}`,
+        description: interaction.message,
+        status: interaction.interactionType
+      });
+    });
+
+    // Ordenar eventos por data
+    timelineEvents.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    // Gerar PDF com Playwright
+    const { chromium } = require('playwright');
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; }
+          h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+          h2 { color: #1e40af; margin-top: 30px; font-size: 18px; }
+          .header { background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+          .timeline { position: relative; padding-left: 40px; }
+          .timeline::before { content: ''; position: absolute; left: 15px; top: 0; bottom: 0; width: 2px; background: #e5e7eb; }
+          .timeline-item { position: relative; margin-bottom: 25px; }
+          .timeline-dot { position: absolute; left: -32px; width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; border: 3px solid white; box-shadow: 0 0 0 2px #3b82f6; }
+          .timeline-dot.created { background: #10b981; box-shadow: 0 0 0 2px #10b981; }
+          .timeline-dot.completed { background: #10b981; box-shadow: 0 0 0 2px #10b981; }
+          .timeline-dot.rejected { background: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
+          .timeline-dot.pending { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }
+          .timeline-content { background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; }
+          .timeline-title { font-weight: bold; color: #1f2937; margin-bottom: 5px; }
+          .timeline-time { font-size: 11px; color: #6b7280; margin-bottom: 8px; }
+          .timeline-description { font-size: 13px; color: #4b5563; }
+          .status-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; margin-top: 5px; }
+          .status-created { background: #d1fae5; color: #065f46; }
+          .status-completed { background: #d1fae5; color: #065f46; }
+          .status-approved { background: #d1fae5; color: #065f46; }
+          .status-rejected { background: #fee2e2; color: #991b1b; }
+          .status-pending { background: #fef3c7; color: #92400e; }
+          .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+          .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+          .summary-box { background: #f3f4f6; padding: 15px; border-radius: 8px; text-align: center; }
+          .summary-value { font-size: 24px; font-weight: bold; color: #2563eb; }
+          .summary-label { font-size: 11px; color: #6b7280; margin-top: 5px; }
+        </style>
+      </head>
+      <body>
+        <h1>Timeline do Protocolo ${protocol.number}</h1>
+
+        <div class="header">
+          <p><strong>Protocolo:</strong> ${protocol.number}</p>
+          <p><strong>Status Atual:</strong> ${protocol.status}</p>
+          <p><strong>Criado em:</strong> ${new Date(protocol.createdAt).toLocaleString('pt-BR')}</p>
+        </div>
+
+        <h2>Resumo de Eventos</h2>
+        <div class="summary">
+          <div class="summary-box">
+            <div class="summary-value">${timelineEvents.length}</div>
+            <div class="summary-label">Total de Eventos</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-value">${protocol.stages.length}</div>
+            <div class="summary-label">Etapas</div>
+          </div>
+          <div class="summary-box">
+            <div class="summary-value">${protocol.documentFiles.length}</div>
+            <div class="summary-label">Documentos</div>
+          </div>
+        </div>
+
+        <h2>Linha do Tempo Completa (${timelineEvents.length} eventos)</h2>
+        <div class="timeline">
+          ${timelineEvents.map(event => `
+            <div class="timeline-item">
+              <div class="timeline-dot ${event.status.toLowerCase()}"></div>
+              <div class="timeline-content">
+                <div class="timeline-title">${event.title}</div>
+                <div class="timeline-time">${new Date(event.timestamp).toLocaleString('pt-BR')}</div>
+                ${event.description ? `<div class="timeline-description">${event.description}</div>` : ''}
+                <span class="status-badge status-${event.status.toLowerCase()}">${event.type.toUpperCase()}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="footer">
+          <p>Relatório de Timeline gerado em ${new Date().toLocaleString('pt-BR')}</p>
+          <p>Sistema DigiUrban</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await page.setContent(html);
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' }
+    });
+
+    await browser.close();
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="timeline_protocolo_${protocol.number}_${Date.now()}.pdf"`);
+    return res.send(pdfBuffer);
+
+  } catch (error: any) {
+    console.error('Erro ao exportar timeline:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao exportar timeline'
+    });
+  }
+});
+
 export default router;

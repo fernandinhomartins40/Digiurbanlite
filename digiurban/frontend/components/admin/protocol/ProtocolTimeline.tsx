@@ -310,9 +310,32 @@ export function ProtocolTimeline({
     return format(date, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
   }
 
-  const handleExport = () => {
-    // TODO: Implementar exportação para PDF
-    console.log('Exportar timeline para PDF')
+  const handleExport = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+      const exportUrl = `${apiUrl}/protocols/${protocol.id}/timeline/export`
+
+      const response = await fetch(exportUrl, {
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Erro ao exportar timeline')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `timeline_protocolo_${protocol.protocolNumber}_${Date.now()}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error: any) {
+      console.error('Erro ao exportar timeline:', error)
+      alert('Erro ao exportar timeline em PDF')
+    }
   }
 
   return (
