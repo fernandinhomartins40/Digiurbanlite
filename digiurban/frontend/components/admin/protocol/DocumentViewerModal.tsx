@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Download, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react'
+import { Download, ZoomIn, ZoomOut, RotateCw } from 'lucide-react'
 import { useState } from 'react'
 
 interface DocumentViewerModalProps {
@@ -92,13 +92,6 @@ export function DocumentViewerModal({
                   Baixar
                 </Button>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClose}
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </DialogHeader>
@@ -107,9 +100,10 @@ export function DocumentViewerModal({
           <div className="flex items-center justify-center min-h-full">
             {isPDF ? (
               <iframe
-                src={documentUrl}
-                className="w-full h-full min-h-[70vh] bg-white rounded-lg shadow-lg"
+                src={`${documentUrl}#view=FitH`}
+                className="w-full h-full min-h-[70vh] bg-white rounded-lg shadow-lg border-0"
                 title={documentName}
+                type="application/pdf"
               />
             ) : isImage ? (
               <div className="flex items-center justify-center">

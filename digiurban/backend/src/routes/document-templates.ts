@@ -288,11 +288,14 @@ router.get('/generated-documents/:id', adminAuthMiddleware, async (req, res) => 
 
 /**
  * GET /api/generated-documents/:id/download
- * Download de documento gerado
+ * Download/Visualização de documento gerado
+ * Query params: ?inline=true para visualização, sem parâmetro para download
  * NOTA: Usa adminAuthMiddleware para permitir visualização no painel admin
  */
 router.get('/generated-documents/:id/download', adminAuthMiddleware, async (req, res) => {
   try {
+    const inline = req.query.inline === 'true';
+
     const document = await prisma.generatedDocument.findUnique({
       where: { id: req.params.id }
     });
@@ -306,7 +309,27 @@ router.get('/generated-documents/:id/download', adminAuthMiddleware, async (req,
 
     const filePath = path.join(process.cwd(), document.filePath);
 
-    res.download(filePath, document.fileName);
+    // Verificar se arquivo existe
+    const fs = require('fs');
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Arquivo não encontrado no servidor'
+      });
+    }
+
+    // Configurar headers - inline para visualização, attachment para download
+    const disposition = inline ? 'inline' : 'attachment';
+    res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName}"`);
+    res.setHeader('Content-Type', document.mimeType);
+
+    // Adicionar headers CORS para permitir visualização
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+
+    // Stream do arquivo
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
   } catch (error: any) {
     console.error('Error downloading document:', error);
     res.status(500).json({
