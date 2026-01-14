@@ -195,7 +195,7 @@ export function ArchivedProtocolView({
   const handleDownloadReport = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
-      const reportUrl = `${apiUrl}/protocols/${protocol.id}/report?format=json`
+      const reportUrl = `${apiUrl}/protocols/${protocol.id}/report?format=pdf`
 
       // Fazer requisição autenticada
       const response = await fetch(reportUrl, {
@@ -213,7 +213,7 @@ export function ArchivedProtocolView({
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `protocolo_${protocol.protocolNumber || protocol.id}_relatorio.json`
+      link.download = `protocolo_${protocol.protocolNumber || protocol.id}_relatorio.pdf`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

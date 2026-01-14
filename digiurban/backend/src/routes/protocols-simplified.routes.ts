@@ -1172,12 +1172,12 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
 
 /**
  * GET /api/protocols/:id/report
- * Gerar relatório completo do protocolo (JSON)
+ * Gerar relatório completo do protocolo (PDF ou JSON)
  */
 router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { id } = req.params;
-    const format = req.query.format as string || 'json';
+    const format = req.query.format as string || 'pdf';
 
     // Buscar todos os dados do protocolo
     const protocol = await prisma.protocolSimplified.findUnique({
@@ -1316,16 +1316,153 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
 
     // Se formato for JSON, retornar como JSON
     if (format === 'json') {
-      // Definir headers para download
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="protocolo_${protocol.number}_relatorio.json"`);
       return res.json(report);
     }
 
-    // TODO: Implementar outros formatos (PDF, Excel) no futuro
+    // Se formato for PDF, gerar com Playwright
+    if (format === 'pdf') {
+      const { chromium } = require('playwright');
+
+      const browser = await chromium.launch({ headless: true });
+      const page = await browser.newPage();
+
+      // Gerar HTML do relatório
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            h1 { color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
+            h2 { color: #1e40af; margin-top: 30px; }
+            .header { background: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+            .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+            .stat-box { background: #f3f4f6; padding: 15px; border-radius: 8px; text-align: center; }
+            .stat-value { font-size: 24px; font-weight: bold; color: #2563eb; }
+            .stat-label { font-size: 12px; color: #6b7280; margin-top: 5px; }
+            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+            th { background: #2563eb; color: white; padding: 12px; text-align: left; }
+            td { padding: 10px; border-bottom: 1px solid #e5e7eb; }
+            .status { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+            .status-concluido { background: #d1fae5; color: #065f46; }
+            .status-cancelado { background: #fee2e2; color: #991b1b; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; }
+          </style>
+        </head>
+        <body>
+          <h1>Relatório Completo do Protocolo</h1>
+
+          <div class="header">
+            <h2 style="margin-top: 0;">Protocolo #${protocol.number}</h2>
+            <p><strong>Título:</strong> ${protocol.title || 'N/A'}</p>
+            <p><strong>Status:</strong> <span class="status status-${protocol.status.toLowerCase()}">${protocol.status}</span></p>
+            <p><strong>Data de Criação:</strong> ${new Date(protocol.createdAt).toLocaleString('pt-BR')}</p>
+            ${protocol.concludedAt ? `<p><strong>Data de Conclusão:</strong> ${new Date(protocol.concludedAt).toLocaleString('pt-BR')}</p>` : ''}
+          </div>
+
+          <h2>Estatísticas</h2>
+          <div class="stats">
+            <div class="stat-box">
+              <div class="stat-value">${stats.totalDays}</div>
+              <div class="stat-label">Dias Totais</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${stats.completedStages}/${stats.totalStages}</div>
+              <div class="stat-label">Etapas Concluídas</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${stats.approvedDocs}</div>
+              <div class="stat-label">Docs Aprovados</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${stats.generatedDocs}</div>
+              <div class="stat-label">Docs Gerados</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${stats.totalInteractions}</div>
+              <div class="stat-label">Interações</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value">${stats.pendingsResolved}/${stats.totalPendings}</div>
+              <div class="stat-label">Pendências Resolvidas</div>
+            </div>
+          </div>
+
+          <h2>Informações do Cidadão</h2>
+          <table>
+            <tr><td><strong>Nome:</strong></td><td>${protocol.citizen?.name || 'N/A'}</td></tr>
+            <tr><td><strong>CPF:</strong></td><td>${protocol.citizen?.cpf || 'N/A'}</td></tr>
+            <tr><td><strong>Email:</strong></td><td>${protocol.citizen?.email || 'N/A'}</td></tr>
+            <tr><td><strong>Telefone:</strong></td><td>${protocol.citizen?.phone || 'N/A'}</td></tr>
+          </table>
+
+          <h2>Serviço Solicitado</h2>
+          <table>
+            <tr><td><strong>Serviço:</strong></td><td>${protocol.service?.name || 'N/A'}</td></tr>
+            <tr><td><strong>Departamento:</strong></td><td>${protocol.service?.department?.name || protocol.department?.name || 'N/A'}</td></tr>
+          </table>
+
+          ${protocol.documentFiles.length > 0 ? `
+          <h2>Documentos Recebidos (${protocol.documentFiles.length})</h2>
+          <table>
+            <thead><tr><th>Documento</th><th>Status</th><th>Data de Envio</th></tr></thead>
+            <tbody>
+            ${protocol.documentFiles.map(doc => `
+              <tr>
+                <td>${doc.documentType}</td>
+                <td>${doc.status}</td>
+                <td>${doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleString('pt-BR') : 'N/A'}</td>
+              </tr>
+            `).join('')}
+            </tbody>
+          </table>
+          ` : ''}
+
+          ${protocol.stages.length > 0 ? `
+          <h2>Etapas do Processo (${protocol.stages.length})</h2>
+          <table>
+            <thead><tr><th>Etapa</th><th>Status</th><th>Início</th><th>Conclusão</th></tr></thead>
+            <tbody>
+            ${protocol.stages.map(stage => `
+              <tr>
+                <td>${stage.stageName}</td>
+                <td>${stage.status}</td>
+                <td>${stage.startedAt ? new Date(stage.startedAt).toLocaleString('pt-BR') : 'N/A'}</td>
+                <td>${stage.completedAt ? new Date(stage.completedAt).toLocaleString('pt-BR') : '-'}</td>
+              </tr>
+            `).join('')}
+            </tbody>
+          </table>
+          ` : ''}
+
+          <div class="footer">
+            <p>Relatório gerado em ${new Date().toLocaleString('pt-BR')}</p>
+            <p>Sistema DigiUrban - Gestão de Protocolos</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await page.setContent(html);
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' }
+      });
+
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="protocolo_${protocol.number}_relatorio.pdf"`);
+      return res.send(pdfBuffer);
+    }
+
     return res.status(400).json({
       success: false,
-      error: 'Formato não suportado. Use format=json'
+      error: 'Formato não suportado. Use format=pdf ou format=json'
     });
 
   } catch (error: any) {
