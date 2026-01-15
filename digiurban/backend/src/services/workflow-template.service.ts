@@ -571,14 +571,14 @@ export function generateSpecializedWorkflow(input: {
 
   // ======== STAGE 2: ANÁLISE DOCUMENTAL (se houver docs de identidade/endereço) ========
   if (analysis.hasIdentityDocuments || analysis.hasAddressDocuments) {
-    const docSLA = Math.ceil(remainingSLA * 0.3);
+    const docSLA = Math.ceil(remainingSLA * 0.2);
     stages.push({
       name: 'Análise Documental',
       description: 'Verificação de documentos de identificação e comprovantes',
       order: currentOrder++,
       slaDays: docSLA,
       requiredDocumentTypes: [...identityDocs, ...addressDocs],
-      requiredFormFieldIds: requiredFieldIds,
+      requiredFormFieldIds: [], // Não valida dados aqui, só documentos
       allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING'],
       canSkip: false,
       requiresApproval: true,
@@ -591,19 +591,42 @@ export function generateSpecializedWorkflow(input: {
     remainingSLA -= docSLA;
   }
 
-  // ======== STAGE 3: ANÁLISE TÉCNICA (se houver docs específicos ou complexidade) ========
+  // ======== STAGE 3: ANÁLISE DE DADOS (se houver campos do formulário) ========
+  if (formFields.length > 0) {
+    const dataSLA = Math.ceil(remainingSLA * 0.25);
+    stages.push({
+      name: 'Análise de Dados',
+      description: 'Validação das informações específicas do serviço',
+      order: currentOrder++,
+      slaDays: dataSLA,
+      requiredDocumentTypes: [],
+      requiredFormFieldIds: requiredFieldIds, // TODOS os campos obrigatórios
+      allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING', 'REQUEST_INFO'],
+      canSkip: false,
+      requiresApproval: true,
+      actionLabels: {
+        APPROVE: 'Aprovar dados informados',
+        REJECT: 'Rejeitar por dados incorretos',
+        CREATE_PENDING: 'Solicitar correção de dados',
+        REQUEST_INFO: 'Solicitar informações adicionais'
+      }
+    });
+    remainingSLA -= dataSLA;
+  }
+
+  // ======== STAGE 4: ANÁLISE TÉCNICA (se houver docs específicos ou complexidade) ========
   if (analysis.hasSpecificDocuments || analysis.hasComplexFields) {
-    const techSLA = Math.ceil(remainingSLA * 0.4);
+    const techSLA = Math.ceil(remainingSLA * 0.3);
 
     let stageName = 'Análise Técnica';
-    let stageDescription = 'Avaliação técnica dos dados e documentos específicos';
+    let stageDescription = 'Avaliação técnica de documentos específicos';
 
     if (analysis.hasMedicalContext) {
       stageName = 'Análise Médica';
-      stageDescription = 'Avaliação técnica pela equipe médica';
+      stageDescription = 'Avaliação técnica pela equipe médica de laudos e exames';
     } else if (analysis.hasFinancialContext) {
       stageName = 'Análise Financeira';
-      stageDescription = 'Avaliação de informações financeiras e orçamentárias';
+      stageDescription = 'Avaliação financeira e orçamentária';
     }
 
     stages.push({
@@ -612,7 +635,7 @@ export function generateSpecializedWorkflow(input: {
       order: currentOrder++,
       slaDays: techSLA,
       requiredDocumentTypes: specificDocs,
-      requiredFormFieldIds: allFieldIds,
+      requiredFormFieldIds: allFieldIds, // Valida dados + docs específicos juntos
       allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING', 'REQUEST_INFO'],
       canSkip: false,
       requiresApproval: true,
@@ -626,9 +649,9 @@ export function generateSpecializedWorkflow(input: {
     remainingSLA -= techSLA;
   }
 
-  // ======== STAGE 4: AGENDAMENTO (se necessário) ========
+  // ======== STAGE 5: AGENDAMENTO (se necessário) ========
   if (analysis.requiresScheduling) {
-    const scheduleSLA = Math.ceil(remainingSLA * 0.3);
+    const scheduleSLA = Math.ceil(remainingSLA * 0.25);
     stages.push({
       name: 'Agendamento',
       description: 'Definição de data e horário do atendimento',
@@ -647,9 +670,9 @@ export function generateSpecializedWorkflow(input: {
     remainingSLA -= scheduleSLA;
   }
 
-  // ======== STAGE 5: APROVAÇÃO (se necessário) ========
+  // ======== STAGE 6: APROVAÇÃO (se necessário) ========
   if (analysis.requiresApproval) {
-    const approvalSLA = Math.ceil(remainingSLA * 0.3);
+    const approvalSLA = Math.ceil(remainingSLA * 0.25);
     stages.push({
       name: 'Aprovação',
       description: 'Aprovação final pela coordenação',
