@@ -471,7 +471,7 @@ export function ArchivedProtocolView({
           resetPendingSelections()
         }
       }}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-6">
           <DialogHeader>
             <DialogTitle>Definir pendências da reabertura</DialogTitle>
             <DialogDescription>
