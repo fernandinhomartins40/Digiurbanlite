@@ -1196,10 +1196,26 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     const pendingDataFields = pendingOptions.dataFields || { selected: [], custom: [] };
     const pendingOther = pendingOptions.other || { title: '', description: '' };
     const selectedDocumentTypes = (pendingDocuments.selected || []).map((item: string) => item?.trim()).filter(Boolean);
-    const customDocumentTypes = (pendingDocuments.custom || []).map((item: string) => item?.trim()).filter(Boolean);
+    const customDocumentItemsRaw = pendingDocuments.custom || [];
+    const customDocumentItems = customDocumentItemsRaw
+      .map((item: any) => (typeof item === 'string' ? { label: item, kind: 'OUTRO' } : item))
+      .map((item: any) => ({
+        label: String(item.label || '').trim(),
+        kind: String(item.kind || 'OUTRO').trim().toUpperCase() || 'OUTRO'
+      }))
+      .filter((item: any) => item.label);
+
     const selectedDataFieldIds = (pendingDataFields.selected || []).map((item: string) => item?.trim()).filter(Boolean);
-    const customDataFieldLabels = (pendingDataFields.custom || []).map((item: string) => item?.trim()).filter(Boolean);
-    const normalizedDocuments = [...new Set([...selectedDocumentTypes, ...customDocumentTypes])];
+    const customDataFieldItemsRaw = pendingDataFields.custom || [];
+    const customDataFieldItems = customDataFieldItemsRaw
+      .map((item: any) => (typeof item === 'string' ? { label: item, fieldType: 'text' } : item))
+      .map((item: any) => ({
+        label: String(item.label || '').trim(),
+        fieldType: String(item.fieldType || 'text').trim().toLowerCase() || 'text'
+      }))
+      .filter((item: any) => item.label);
+
+    const normalizedDocuments = [...new Set([...selectedDocumentTypes, ...customDocumentItems.map((item: any) => item.label)])];
     const normalizedOtherTitle = (pendingOther.title || '').trim();
     const normalizedOtherDescription = (pendingOther.description || '').trim();
 
@@ -1210,7 +1226,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
       });
     }
 
-    if (mode === 'append' && normalizedDocuments.length === 0 && selectedDataFieldIds.length === 0 && customDataFieldLabels.length === 0 && !normalizedOtherDescription) {
+    if (mode === 'append' && normalizedDocuments.length === 0 && selectedDataFieldIds.length === 0 && customDataFieldItems.length === 0 && !normalizedOtherDescription) {
       return res.status(400).json({
         success: false,
         error: 'Selecione ao menos uma pendência para reabrir como pendência'
@@ -1357,7 +1373,14 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
           })
         : [];
 
-      for (const documentType of normalizedDocuments) {
+      const customDocumentLabelSet = new Set(
+        customDocumentItems.map((item: { label: string }) => item.label.toLowerCase())
+      );
+
+      for (const documentType of selectedDocumentTypes) {
+        if (customDocumentLabelSet.has(documentType.toLowerCase())) {
+          continue;
+        }
         await pendingService.createPending({
           protocolId: id,
           type: PendingType.DOCUMENT,
@@ -1365,6 +1388,23 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
           description: `Envie ou atualize o documento "${documentType}".`,
           blocksProgress: true,
           metadata: { source: 'reopen', documentType },
+          createdBy: authReq.userId
+        });
+      }
+
+      for (const item of customDocumentItems) {
+        await pendingService.createPending({
+          protocolId: id,
+          type: PendingType.DOCUMENT,
+          title: `Documento pendente: ${item.label}`,
+          description: `Envie ou atualize o documento "${item.label}".`,
+          blocksProgress: true,
+          metadata: {
+            source: 'reopen',
+            documentType: item.label,
+            documentKind: item.kind,
+            custom: true
+          },
           createdBy: authReq.userId
         });
       }
@@ -1381,14 +1421,18 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         });
       }
 
-      for (const label of customDataFieldLabels) {
+      for (const item of customDataFieldItems) {
         await pendingService.createPending({
           protocolId: id,
           type: PendingType.INFORMATION,
-          title: `Dados pendentes: ${label}`,
-          description: `Informe ou atualize o dado "${label}".`,
+          title: `Dados pendentes: ${item.label}`,
+          description: `Informe ou atualize o dado "${item.label}".`,
           blocksProgress: true,
-          metadata: { source: 'reopen', customFieldLabel: label },
+          metadata: {
+            source: 'reopen',
+            customFieldLabel: item.label,
+            fieldType: item.fieldType
+          },
           createdBy: authReq.userId
         });
       }

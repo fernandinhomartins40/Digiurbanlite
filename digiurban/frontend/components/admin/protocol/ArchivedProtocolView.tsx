@@ -91,9 +91,13 @@ export function ArchivedProtocolView({
   const [dataFields, setDataFields] = useState<Array<{ id: string; fieldKey: string; fieldLabel: string }>>([])
   const [isLoadingDataFields, setIsLoadingDataFields] = useState(false)
   const [selectedDocumentTypes, setSelectedDocumentTypes] = useState<string[]>([])
-  const [customDocumentTypes, setCustomDocumentTypes] = useState<string[]>([''])
+  const [customDocumentTypes, setCustomDocumentTypes] = useState<Array<{ label: string; kind: string }>>([
+    { label: '', kind: 'OUTRO' }
+  ])
   const [selectedDataFieldIds, setSelectedDataFieldIds] = useState<string[]>([])
-  const [customDataFields, setCustomDataFields] = useState<string[]>([''])
+  const [customDataFields, setCustomDataFields] = useState<Array<{ label: string; fieldType: string }>>([
+    { label: '', fieldType: 'text' }
+  ])
   const [otherPendingTitle, setOtherPendingTitle] = useState('')
   const [otherPendingDescription, setOtherPendingDescription] = useState('')
   const [viewerState, setViewerState] = useState<{
@@ -188,8 +192,8 @@ export function ArchivedProtocolView({
   const handleReopen = async (
     mode: 'restart' | 'append',
     pendingOptions?: {
-      documents?: { selected: string[]; custom: string[] }
-      dataFields?: { selected: string[]; custom: string[] }
+      documents?: { selected: string[]; custom: Array<{ label: string; kind: string }> }
+      dataFields?: { selected: string[]; custom: Array<{ label: string; fieldType: string }> }
       other?: { title: string; description: string }
     }
   ) => {
@@ -256,21 +260,25 @@ export function ArchivedProtocolView({
     setSelected([...selected, value])
   }
 
-  const normalizedCustomValues = (values: string[]) =>
-    values.map(value => value.trim()).filter(value => value.length > 0)
+  const normalizedCustomDocuments = customDocumentTypes
+    .map(entry => ({ label: entry.label.trim(), kind: entry.kind }))
+    .filter(entry => entry.label.length > 0)
+  const normalizedCustomDataFields = customDataFields
+    .map(entry => ({ label: entry.label.trim(), fieldType: entry.fieldType }))
+    .filter(entry => entry.label.length > 0)
 
   const canSubmitPending =
     selectedDocumentTypes.length > 0 ||
-    normalizedCustomValues(customDocumentTypes).length > 0 ||
+    normalizedCustomDocuments.length > 0 ||
     selectedDataFieldIds.length > 0 ||
-    normalizedCustomValues(customDataFields).length > 0 ||
+    normalizedCustomDataFields.length > 0 ||
     otherPendingDescription.trim().length > 0
 
   const resetPendingSelections = () => {
     setSelectedDocumentTypes([])
-    setCustomDocumentTypes([''])
+    setCustomDocumentTypes([{ label: '', kind: 'OUTRO' }])
     setSelectedDataFieldIds([])
-    setCustomDataFields([''])
+    setCustomDataFields([{ label: '', fieldType: 'text' }])
     setOtherPendingTitle('')
     setOtherPendingDescription('')
   }
@@ -496,22 +504,38 @@ export function ArchivedProtocolView({
               </div>
               <div className="mt-3 space-y-2">
                 {customDocumentTypes.map((value, index) => (
-                  <Input
-                    key={`custom-doc-${index}`}
-                    placeholder="Novo tipo de documento"
-                    value={value}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      const next = [...customDocumentTypes]
-                      next[index] = event.target.value
-                      setCustomDocumentTypes(next)
-                    }}
-                  />
+                  <div key={`custom-doc-${index}`} className="grid gap-2 sm:grid-cols-[1fr_200px]">
+                    <Input
+                      placeholder="Novo documento"
+                      value={value.label}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        const next = [...customDocumentTypes]
+                        next[index] = { ...next[index], label: event.target.value }
+                        setCustomDocumentTypes(next)
+                      }}
+                    />
+                    <select
+                      className="h-10 rounded-md border border-gray-200 bg-white px-3 text-sm"
+                      value={value.kind}
+                      onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                        const next = [...customDocumentTypes]
+                        next[index] = { ...next[index], kind: event.target.value }
+                        setCustomDocumentTypes(next)
+                      }}
+                    >
+                      <option value="OFICIAL">Documento Oficial</option>
+                      <option value="COMPROVANTE">Comprovante</option>
+                      <option value="LAUDO">Laudo/Exame</option>
+                      <option value="FOTO">Foto</option>
+                      <option value="OUTRO">Outro</option>
+                    </select>
+                  </div>
                 ))}
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setCustomDocumentTypes([...customDocumentTypes, ''])}
+                  onClick={() => setCustomDocumentTypes([...customDocumentTypes, { label: '', kind: 'OUTRO' }])}
                 >
                   Adicionar tipo de documento
                 </Button>
@@ -538,22 +562,41 @@ export function ArchivedProtocolView({
               )}
               <div className="mt-3 space-y-2">
                 {customDataFields.map((value, index) => (
-                  <Input
-                    key={`custom-data-${index}`}
-                    placeholder="Novo dado a solicitar"
-                    value={value}
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      const next = [...customDataFields]
-                      next[index] = event.target.value
-                      setCustomDataFields(next)
-                    }}
-                  />
+                  <div key={`custom-data-${index}`} className="grid gap-2 sm:grid-cols-[1fr_200px]">
+                    <Input
+                      placeholder="Novo dado a solicitar"
+                      value={value.label}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        const next = [...customDataFields]
+                        next[index] = { ...next[index], label: event.target.value }
+                        setCustomDataFields(next)
+                      }}
+                    />
+                    <select
+                      className="h-10 rounded-md border border-gray-200 bg-white px-3 text-sm"
+                      value={value.fieldType}
+                      onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                        const next = [...customDataFields]
+                        next[index] = { ...next[index], fieldType: event.target.value }
+                        setCustomDataFields(next)
+                      }}
+                    >
+                      <option value="text">Texto</option>
+                      <option value="textarea">Texto longo</option>
+                      <option value="number">Número</option>
+                      <option value="date">Data</option>
+                      <option value="boolean">Sim/Não</option>
+                      <option value="select">Seleção</option>
+                      <option value="email">Email</option>
+                      <option value="phone">Telefone</option>
+                    </select>
+                  </div>
                 ))}
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setCustomDataFields([...customDataFields, ''])}
+                  onClick={() => setCustomDataFields([...customDataFields, { label: '', fieldType: 'text' }])}
                 >
                   Adicionar dado
                 </Button>
@@ -602,11 +645,11 @@ export function ArchivedProtocolView({
                 handleReopen('append', {
                   documents: {
                     selected: selectedDocumentTypes,
-                    custom: normalizedCustomValues(customDocumentTypes)
+                    custom: normalizedCustomDocuments
                   },
                   dataFields: {
                     selected: selectedDataFieldIds,
-                    custom: normalizedCustomValues(customDataFields)
+                    custom: normalizedCustomDataFields
                   },
                   other: {
                     title: otherPendingTitle.trim(),
