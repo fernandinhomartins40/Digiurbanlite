@@ -71,6 +71,9 @@ model User {
   // Email drafts
   emailDrafts EmailDraft[]
 
+  // Categorias de cidadãos atribuídas por este usuário
+  categoryAssignments CitizenCategoryAssignment[] @relation("CategoryAssignedBy")
+
   @@map("users")
 }
 
@@ -159,6 +162,9 @@ model Citizen {
 
   // Recuperação de senha
   passwordResetTokens PasswordResetToken[]
+
+  // Categorias do cidadão
+  categories          CitizenCategoryAssignment[] @relation("CitizenCategories")
 
   @@unique([cpf])
   @@map("citizens")
@@ -434,6 +440,7 @@ model ProtocolSimplified {
   tfdSolicitacao SolicitacaoTFD?                @relation("TFDProtocol")
   ticket         AdminTicket?
   generatedDocuments GeneratedDocument[]
+  generatedCategories CitizenCategoryAssignment[] @relation("ProtocolGeneratedCategories")
 
   @@index([status])
   @@index([createdAt])
@@ -4704,5 +4711,66 @@ model GeneratedDocument {
   @@index([templateId])
   @@index([generatedAt])
   @@map("generated_documents")
+}
+
+// ========================================
+// CATEGORIZAÇÃO DE CIDADÃOS
+// ========================================
+
+model CitizenCategory {
+  id          String   @id @default(cuid())
+  code        String   @unique  // Ex: PRODUTOR_RURAL, ARTISTA_LOCAL
+  name        String               // Ex: "Produtor Rural", "Artista Local"
+  description String?  @db.Text
+  department  String               // Departamento responsável
+  icon        String?              // Ícone visual
+  color       String?              // Cor para UI
+  active      Boolean  @default(true)
+
+  // Array de moduleTypes que ativam esta categoria automaticamente
+  triggerServices String[] // Ex: ["CADASTRO_PRODUTOR", "INSCRICAO_PROGRAMA_RURAL"]
+
+  // Relacionamento com cidadãos
+  citizens    CitizenCategoryAssignment[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([code])
+  @@index([active])
+  @@map("citizen_categories")
+}
+
+model CitizenCategoryAssignment {
+  id          String   @id @default(cuid())
+
+  citizenId   String
+  citizen     Citizen  @relation("CitizenCategories", fields: [citizenId], references: [id], onDelete: Cascade)
+
+  categoryId  String
+  category    CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Rastreabilidade - protocolo que originou a categoria
+  protocolId  String?
+  protocol    ProtocolSimplified? @relation("ProtocolGeneratedCategories", fields: [protocolId], references: [id], onDelete: SetNull)
+
+  assignedAt  DateTime @default(now())
+  assignedBy  String?          // Usuário que atribuiu (se manual)
+  assignedByUser User? @relation("CategoryAssignedBy", fields: [assignedBy], references: [id], onDelete: SetNull)
+
+  active      Boolean  @default(true)
+  deactivatedAt DateTime?
+  deactivatedBy String?
+  deactivationReason String?
+
+  // Dados específicos desta atribuição (ex: número DAP, especialidade artística)
+  metadata    Json?
+
+  @@unique([citizenId, categoryId])
+  @@index([citizenId])
+  @@index([categoryId])
+  @@index([protocolId])
+  @@index([active])
+  @@map("citizen_category_assignments")
 }
 

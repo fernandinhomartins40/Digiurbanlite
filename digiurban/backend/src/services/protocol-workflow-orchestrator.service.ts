@@ -19,6 +19,7 @@ import * as documentService from './protocol-document.service';
 import * as pendingService from './protocol-pending.service';
 import * as interactionService from './protocol-interaction.service';
 import { protocolStatusEngine } from './protocol-status.engine';
+import * as categoryService from './citizen-category.service';
 
 // ============================================================================
 // TIPOS
@@ -276,6 +277,9 @@ export class ProtocolWorkflowOrchestrator {
 
       // Marcar SLA como concluído
       await slaService.completeSLA(stage.protocolId);
+
+      // ═══ ATRIBUIR CATEGORIAS AO CIDADÃO ═══
+      await this.assignCitizenCategories(stage.protocolId, completedBy);
 
       // Interação de conclusão
       const completer = await prisma.user.findUnique({ where: { id: completedBy }, select: { name: true } });
@@ -611,6 +615,80 @@ export class ProtocolWorkflowOrchestrator {
 
     if (isOverdue && daysOverdue > 0) {
       console.log(`⏰ [Orchestrator] SLA vencido! ${daysOverdue} dia(s) de atraso`);
+    }
+  }
+
+  /**
+   * ═══════════════════════════════════════════════════════════════════
+   * ATRIBUIÇÃO DE CATEGORIAS AO CIDADÃO
+   * ═══════════════════════════════════════════════════════════════════
+   *
+   * Atribui automaticamente categorias ao cidadão após conclusão do protocolo
+   * baseado no moduleType do serviço solicitado.
+   */
+  private async assignCitizenCategories(protocolId: string, assignedBy: string) {
+    try {
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        select: {
+          id: true,
+          citizenId: true,
+          moduleType: true,
+          service: {
+            select: {
+              name: true
+            }
+          }
+        }
+      });
+
+      if (!protocol || !protocol.moduleType) {
+        console.log(`⚠️ [Orchestrator] Protocolo sem moduleType, pulando categorização`);
+        return;
+      }
+
+      console.log(`🏷️ [Orchestrator] Verificando categorias para moduleType: ${protocol.moduleType}`);
+
+      // Atribuir categorias automaticamente
+      const results = await categoryService.autoAssignCategoriesByProtocol(
+        protocol.id,
+        protocol.citizenId,
+        protocol.moduleType,
+        assignedBy
+      );
+
+      if (results.length > 0) {
+        const newCategories = results.filter(r => r.isNew && r.success);
+        const reactivatedCategories = results.filter(r => !r.isNew && r.success);
+
+        if (newCategories.length > 0) {
+          console.log(`✅ [Orchestrator] ${newCategories.length} categoria(s) atribuída(s) ao cidadão`);
+
+          // Criar interação informativa
+          const categoryNames = newCategories
+            .map(r => r.assignment?.category?.name || 'Categoria')
+            .join(', ');
+
+          await interactionService.createInteraction({
+            protocolId: protocol.id,
+            type: 'NOTE',
+            authorType: 'SERVER',
+            authorId: assignedBy,
+            authorName: 'Sistema',
+            message: `🏷️ Categoria(s) atribuída(s): ${categoryNames}`,
+            isInternal: true
+          });
+        }
+
+        if (reactivatedCategories.length > 0) {
+          console.log(`🔄 [Orchestrator] ${reactivatedCategories.length} categoria(s) reativada(s)`);
+        }
+      } else {
+        console.log(`ℹ️ [Orchestrator] Nenhuma categoria configurada para este serviço`);
+      }
+    } catch (error) {
+      console.error(`❌ [Orchestrator] Erro ao atribuir categorias:`, error);
+      // Não falhar o workflow por erro na categorização
     }
   }
 

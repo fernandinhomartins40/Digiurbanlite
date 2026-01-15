@@ -119,6 +119,7 @@ export const loadAdminRoutes = () => {
   const adminCitizensRoutes = require('./admin-citizens').default;
   const adminCitizenDocumentsRoutes = require('./admin-citizen-documents').default;
   const citizenLinksValidationRoutes = require('./citizen-links-validation.routes').default;
+  const citizenCategoriesRoutes = require('./citizen-categories.routes').default;
 
   router.use('/admin/auth', adminAuthRoutes);
   router.use('/admin/management', adminManagementRoutes);
@@ -134,6 +135,7 @@ export const loadAdminRoutes = () => {
   router.use('/admin/citizens', adminCitizensRoutes);
   router.use('/admin/citizen-documents', adminCitizenDocumentsRoutes);
   router.use('/admin/citizens', citizenLinksValidationRoutes);
+  router.use('/admin/categories', citizenCategoriesRoutes);
 
   return router;
 };

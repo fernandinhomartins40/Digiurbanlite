@@ -399,6 +399,15 @@ async function main() {
 
     await seedEmailServer();
 
+    // ========================================================================
+    // 8. CATEGORIAS DE CIDADÃOS
+    // ========================================================================
+    console.log('\n8️⃣  Categorias de Cidadãos');
+    console.log('   ─────────────────────────────\n');
+
+    const { seedCitizenCategories } = await import('./seeds/citizen-categories.seed');
+    await seedCitizenCategories();
+
     console.log('\n╔════════════════════════════════════════════════════════╗');
     console.log('║  🚀 Sistema pronto para uso!                          ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
