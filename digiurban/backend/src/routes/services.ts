@@ -8,7 +8,11 @@ import {
   SuccessResponse,
   ErrorResponse
         } from '../types';
-import { generateDefaultWorkflow } from '../services/workflow-template.service';
+import {
+  generateDefaultWorkflow,
+  generateMinimalWorkflowForSemDados,
+  generateSpecializedWorkflow
+} from '../services/workflow-template.service';
 
 // ====================== TIPOS LOCAIS ISOLADOS ======================
 
@@ -308,11 +312,19 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
         }
       });
 
-      // 2. Se COM_DADOS, criar workflow automaticamente
+      /**
+       * ========================================================================
+       * GERAÇÃO AUTOMÁTICA DE WORKFLOWS (PILARES 1 e 2)
+       * ========================================================================
+       */
       let workflow = null;
       let workflowCreated = false;
+      let workflowType = 'NONE';
 
       if (serviceType === 'COM_DADOS' && moduleType) {
+        // ====== PILAR 2: WORKFLOW ESPECIALIZADO PARA COM_DADOS ======
+        console.log(`[WORKFLOW] Gerando workflow inteligente para ${name} (COM_DADOS)`);
+
         // Extrair documentos
         const requiredDocs = Array.isArray(requiredDocuments)
           ? (requiredDocuments as any[]).map(doc => ({
@@ -322,56 +334,127 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
           : [];
 
         // Extrair campos do formulário do formSchema
-        const formFields = formSchema?.fields
-          ? (formSchema.fields as any[]).map((field: any) => ({
-              id: field.id || field.name,
-              label: field.label || field.name,
-              required: field.required || false
-            }))
-          : [];
+        const formFields: Array<{ id: string; label: string; required: boolean }> = [];
+        if (formSchema) {
+          // Suportar diferentes estruturas de formSchema
+          if (formSchema.properties) {
+            // JSON Schema format
+            const required = formSchema.required || [];
+            Object.keys(formSchema.properties).forEach(fieldId => {
+              const field = formSchema.properties[fieldId];
+              formFields.push({
+                id: fieldId,
+                label: field.title || fieldId,
+                required: required.includes(fieldId)
+              });
+            });
+          } else if (formSchema.fields) {
+            // Custom fields format
+            (formSchema.fields as any[]).forEach((field: any) => {
+              formFields.push({
+                id: field.id || field.name,
+                label: field.label || field.name,
+                required: field.required || false
+              });
+            });
+          }
+        }
 
-        const workflowTemplate = generateDefaultWorkflow({
+        // Gerar workflow especializado baseado em análise inteligente
+        const workflowTemplate = generateSpecializedWorkflow({
           moduleType,
           serviceName: name,
           serviceDescription: description,
           estimatedDays,
+          departmentCode: department.code || undefined,
           departmentName: department.name,
+          priority: priority || 3,
           requiredDocuments: requiredDocs,
           formFields
         });
 
-        // Criar workflow (já validamos que não existe)
+        // Criar workflow
         workflow = await tx.moduleWorkflow.create({
           data: {
             moduleType: workflowTemplate.moduleType,
             name: workflowTemplate.name,
             description: workflowTemplate.description,
             defaultSLA: workflowTemplate.defaultSLA,
-            stages: workflowTemplate.stages as any, // JSON field
-            rules: workflowTemplate.rules as any // JSON field
+            stages: workflowTemplate.stages as any,
+            rules: workflowTemplate.rules as any
           }
         });
 
         workflowCreated = true;
-        console.log(`✅ [AUTO-CREATE] Workflow criado para ${moduleType}`);
+        workflowType = 'SPECIALIZED';
+        console.log(`✅ [INTELLIGENT] Workflow especializado criado para ${moduleType} com ${workflowTemplate.stages.length} etapas`);
+
+      } else if (serviceType === 'SEM_DADOS') {
+        // ====== PILAR 1: WORKFLOW MINIMALISTA PARA SEM_DADOS ======
+        console.log(`[WORKFLOW] Gerando workflow minimalista para ${name} (SEM_DADOS)`);
+
+        const workflowTemplate = generateMinimalWorkflowForSemDados(
+          name,
+          description,
+          estimatedDays
+        );
+
+        // Gerar moduleType único para SEM_DADOS
+        const uniqueModuleType = `SEM_DADOS_${service.id}`;
+
+        // Criar workflow
+        workflow = await tx.moduleWorkflow.create({
+          data: {
+            moduleType: uniqueModuleType,
+            name: workflowTemplate.name,
+            description: workflowTemplate.description,
+            defaultSLA: workflowTemplate.defaultSLA,
+            stages: workflowTemplate.stages as any,
+            rules: workflowTemplate.rules as any
+          }
+        });
+
+        // Vincular workflow ao serviço
+        await tx.serviceSimplified.update({
+          where: { id: service.id },
+          data: { moduleType: uniqueModuleType }
+        });
+
+        workflowCreated = true;
+        workflowType = 'MINIMAL';
+        console.log(`✅ [MINIMAL] Workflow minimalista criado para SEM_DADOS: ${uniqueModuleType}`);
       }
 
-      return { service, workflow, workflowCreated };
+      return { service, workflow, workflowCreated, workflowType };
     });
 
     // ========== RESPOSTA COM INFORMAÇÕES COMPLETAS ==========
 
+    let message = 'Serviço criado com sucesso';
+    const stagesCount = (result.workflow?.stages && Array.isArray(result.workflow.stages))
+      ? result.workflow.stages.length
+      : 0;
+
+    if (result.workflowCreated) {
+      if (result.workflowType === 'SPECIALIZED') {
+        message = `Serviço COM_DADOS criado com workflow especializado inteligente (${stagesCount} etapas). O workflow foi otimizado com base na complexidade do serviço e pode ser ajustado em /admin/workflows`;
+      } else if (result.workflowType === 'MINIMAL') {
+        message = `Serviço SEM_DADOS criado com workflow minimalista (3 etapas). Agora todos os protocolos terão tramitação estruturada.`;
+      }
+    }
+
     return res.status(201).json({
       success: true,
-      message: result.workflowCreated
-        ? `Serviço e workflow criados com sucesso. O workflow foi gerado automaticamente e pode ser editado em /admin/workflows`
-        : 'Serviço criado com sucesso',
+      message,
       service: result.service,
       workflow: result.workflow,
       workflowCreated: result.workflowCreated,
+      workflowType: result.workflowType,
+      workflowStages: stagesCount,
       serviceType: result.service.serviceType,
       hasDataCapture: result.service.serviceType === 'COM_DADOS',
-      moduleType: result.service.moduleType
+      moduleType: result.service.moduleType,
+      intelligentWorkflow: result.workflowType === 'SPECIALIZED'
         });
   } catch (error) {
     console.error('Create service error:', error);

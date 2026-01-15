@@ -572,6 +572,165 @@ router.get('/:id/similar', async (req, res) => {
   }
 });
 
+/**
+ * ============================================================================
+ * PILAR 3: SUGESTÕES PERSONALIZADAS DE SERVIÇOS
+ * ============================================================================
+ * GET /api/services/suggestions - Sugestões baseadas no perfil do cidadão
+ *
+ * Retorna serviços relevantes baseado em:
+ * 1. Categorias atribuídas ao cidadão
+ * 2. Departamentos relacionados às categorias
+ * 3. Serviços ainda não solicitados
+ * 4. Popularidade dos serviços
+ */
+router.get('/suggestions', citizenAuthMiddleware, async (req, res) => {
+  try {
+    const { citizenId } = req as any;
+    const { limit = 5 } = req.query;
+
+    console.log(`[SUGGESTIONS] Gerando sugestões para cidadão ${citizenId}`);
+
+    // 1. Buscar categorias do cidadão
+    const citizenCategories = await prisma.citizenCategoryAssignment.findMany({
+      where: {
+        citizenId,
+        active: true
+      },
+      include: {
+        category: {
+          select: {
+            code: true,
+            department: true,
+            triggerServices: true
+          }
+        }
+      }
+    });
+
+    const categoryCodes = citizenCategories.map(c => c.category.code);
+    const departments = [...new Set(citizenCategories.map(c => c.category.department))];
+    const relatedModuleTypes = citizenCategories.flatMap(c => c.category.triggerServices || []);
+
+    console.log(`[SUGGESTIONS] Cidadão possui ${categoryCodes.length} categorias:`, categoryCodes);
+    console.log(`[SUGGESTIONS] Departamentos relacionados:`, departments);
+
+    // 2. Buscar protocolos já solicitados pelo cidadão
+    const userProtocols = await prisma.protocolSimplified.findMany({
+      where: { citizenId },
+      select: {
+        serviceId: true,
+        moduleType: true
+      },
+      distinct: ['serviceId']
+    });
+
+    const usedServiceIds = userProtocols.map(p => p.serviceId).filter(Boolean);
+    console.log(`[SUGGESTIONS] Cidadão já solicitou ${usedServiceIds.length} serviços`);
+
+    // 3. Gerar sugestões inteligentes
+    let suggestions = [];
+
+    if (categoryCodes.length > 0) {
+      // Cidadão TEM categorias: sugestões personalizadas
+      suggestions = await prisma.serviceSimplified.findMany({
+        where: {
+          isActive: true,
+          id: { notIn: usedServiceIds }, // Não repetir serviços já solicitados
+          OR: [
+            // Serviços do mesmo departamento
+            {
+              department: {
+                name: { in: departments }
+              }
+            },
+            // Serviços cujo moduleType está relacionado às categorias
+            {
+              moduleType: { in: relatedModuleTypes }
+            }
+          ]
+        },
+        include: {
+          department: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          },
+          _count: {
+            select: {
+              protocols: true
+            }
+          }
+        },
+        orderBy: [
+          { priority: 'desc' },          // Prioridade primeiro
+          { protocols: { _count: 'desc' } }, // Depois popularidade
+          { name: 'asc' }
+        ],
+        take: Number(limit)
+      });
+    } else {
+      // Cidadão NÃO TEM categorias: sugestões genéricas por popularidade
+      console.log(`[SUGGESTIONS] Cidadão sem categorias, sugerindo serviços populares`);
+
+      suggestions = await prisma.serviceSimplified.findMany({
+        where: {
+          isActive: true,
+          id: { notIn: usedServiceIds }
+        },
+        include: {
+          department: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          },
+          _count: {
+            select: {
+              protocols: true
+            }
+          }
+        },
+        orderBy: [
+          { priority: 'desc' },
+          { protocols: { _count: 'desc' } },
+          { name: 'asc' }
+        ],
+        take: Number(limit)
+      });
+    }
+
+    console.log(`[SUGGESTIONS] Retornando ${suggestions.length} sugestões`);
+
+    return res.json({
+      success: true,
+      suggestions,
+      metadata: {
+        basedOn: {
+          categories: categoryCodes,
+          categoryCount: categoryCodes.length,
+          departments,
+          departmentCount: departments.length,
+          usedServicesCount: usedServiceIds.length,
+          suggestionsCount: suggestions.length
+        },
+        strategy: categoryCodes.length > 0 ? 'PERSONALIZED' : 'POPULAR',
+        timestamp: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('[SUGGESTIONS] Erro ao gerar sugestões:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno ao gerar sugestões',
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+    });
+  }
+});
+
 // Middleware de autentica+º+úo para rota de solicita+º+úo (outras rotas n+úo precisam de auth)
 // POST /api/services/:id/request - Solicitar um servi+ºo
 // IMPORTANTE: Aplicar middlewares na ordem: upload -> auth -> valida+º+úo
