@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import type { ChangeEvent } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -497,7 +500,7 @@ export function ArchivedProtocolView({
                     key={`custom-doc-${index}`}
                     placeholder="Novo tipo de documento"
                     value={value}
-                    onChange={(event) => {
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
                       const next = [...customDocumentTypes]
                       next[index] = event.target.value
                       setCustomDocumentTypes(next)
@@ -539,7 +542,7 @@ export function ArchivedProtocolView({
                     key={`custom-data-${index}`}
                     placeholder="Novo dado a solicitar"
                     value={value}
-                    onChange={(event) => {
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
                       const next = [...customDataFields]
                       next[index] = event.target.value
                       setCustomDataFields(next)
@@ -563,12 +566,12 @@ export function ArchivedProtocolView({
                 <Input
                   placeholder="TÇðtulo da pendÇ¦ncia (opcional)"
                   value={otherPendingTitle}
-                  onChange={(event) => setOtherPendingTitle(event.target.value)}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => setOtherPendingTitle(event.target.value)}
                 />
                 <Textarea
                   placeholder="Descreva a pendÇ¦ncia"
                   value={otherPendingDescription}
-                  onChange={(event) => setOtherPendingDescription(event.target.value)}
+                  onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setOtherPendingDescription(event.target.value)}
                   rows={3}
                 />
               </div>

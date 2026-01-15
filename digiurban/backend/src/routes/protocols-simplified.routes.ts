@@ -12,7 +12,8 @@ import { UserRole, ProtocolStatus, PendingType } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { protocolServiceSimplified } from '../services/protocol-simplified.service';
-import { protocolStatusEngine } from '../services/protocol-status.engine';\r\nimport * as pendingService from '../services/protocol-pending.service';
+import { protocolStatusEngine } from '../services/protocol-status.engine';
+import * as pendingService from '../services/protocol-pending.service';
 import { getWorkflowByServiceId } from '../services/service-workflow.service';
 import type { WorkflowStage } from '../types/workflow.types';
 
