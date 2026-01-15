@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -84,6 +84,15 @@ export function ArchivedProtocolView({
   const [isReopening, setIsReopening] = useState(false)
   const [showReopenModal, setShowReopenModal] = useState(false)
   const [reopenMode, setReopenMode] = useState<'restart' | 'append'>('append')
+  const [showReopenPendingModal, setShowReopenPendingModal] = useState(false)
+  const [dataFields, setDataFields] = useState<Array<{ id: string; fieldKey: string; fieldLabel: string }>>([])
+  const [isLoadingDataFields, setIsLoadingDataFields] = useState(false)
+  const [selectedDocumentTypes, setSelectedDocumentTypes] = useState<string[]>([])
+  const [customDocumentTypes, setCustomDocumentTypes] = useState<string[]>([''])
+  const [selectedDataFieldIds, setSelectedDataFieldIds] = useState<string[]>([])
+  const [customDataFields, setCustomDataFields] = useState<string[]>([''])
+  const [otherPendingTitle, setOtherPendingTitle] = useState('')
+  const [otherPendingDescription, setOtherPendingDescription] = useState('')
   const [viewerState, setViewerState] = useState<{
     isOpen: boolean
     documentUrl: string
@@ -173,14 +182,24 @@ export function ArchivedProtocolView({
     return Array.from(people.values())
   })()
 
-  const handleReopen = async (mode: 'restart' | 'append') => {
+  const handleReopen = async (
+    mode: 'restart' | 'append',
+    pendingOptions?: {
+      documents?: { selected: string[]; custom: string[] }
+      dataFields?: { selected: string[]; custom: string[] }
+      other?: { title: string; description: string }
+    }
+  ) => {
     if (!onReopen) return
 
     setIsReopening(true)
     try {
       const result = await apiRequest(`/protocols/${protocol.id}/reopen`, {
         method: 'POST',
-        body: JSON.stringify({ mode })
+        body: JSON.stringify({
+          mode,
+          pendingOptions: pendingOptions || undefined
+        })
       })
 
       if (result.success) {
@@ -189,6 +208,7 @@ export function ArchivedProtocolView({
           description: 'O protocolo foi reaberto com sucesso'
         })
         setShowReopenModal(false)
+        setShowReopenPendingModal(false)
         onReopen()
       } else {
         throw new Error(result.error || 'Erro ao reabrir')
@@ -202,6 +222,54 @@ export function ArchivedProtocolView({
     } finally {
       setIsReopening(false)
     }
+  }
+
+  const loadDataFields = async () => {
+    if (isLoadingDataFields) return
+    setIsLoadingDataFields(true)
+    try {
+      const response = await apiRequest(`/protocols/${protocol.id}/data-fields`)
+      if (response.success) {
+        setDataFields(response.data.fields || [])
+      }
+    } catch (error) {
+      console.error('Erro ao carregar campos de dados:', error)
+    } finally {
+      setIsLoadingDataFields(false)
+    }
+  }
+
+  useEffect(() => {
+    if (showReopenPendingModal) {
+      loadDataFields()
+    }
+  }, [showReopenPendingModal])
+
+  const toggleSelection = (value: string, selected: string[], setSelected: (next: string[]) => void) => {
+    if (selected.includes(value)) {
+      setSelected(selected.filter(item => item !== value))
+      return
+    }
+    setSelected([...selected, value])
+  }
+
+  const normalizedCustomValues = (values: string[]) =>
+    values.map(value => value.trim()).filter(value => value.length > 0)
+
+  const canSubmitPending =
+    selectedDocumentTypes.length > 0 ||
+    normalizedCustomValues(customDocumentTypes).length > 0 ||
+    selectedDataFieldIds.length > 0 ||
+    normalizedCustomValues(customDataFields).length > 0 ||
+    otherPendingDescription.trim().length > 0
+
+  const resetPendingSelections = () => {
+    setSelectedDocumentTypes([])
+    setCustomDocumentTypes([''])
+    setSelectedDataFieldIds([])
+    setCustomDataFields([''])
+    setOtherPendingTitle('')
+    setOtherPendingDescription('')
   }
 
   const handleDownloadReport = async () => {
@@ -377,8 +445,175 @@ export function ArchivedProtocolView({
             <Button variant="outline" onClick={() => setShowReopenModal(false)} disabled={isReopening}>
               Cancelar
             </Button>
-            <Button onClick={() => handleReopen(reopenMode)} disabled={isReopening}>
+            <Button
+              onClick={() => {
+                if (reopenMode === 'append') {
+                  setShowReopenModal(false)
+                  setShowReopenPendingModal(true)
+                  return
+                }
+                handleReopen(reopenMode)
+              }}
+              disabled={isReopening}
+            >
               {isReopening ? 'Reabrindo...' : 'Confirmar Reabertura'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showReopenPendingModal} onOpenChange={(open) => {
+        setShowReopenPendingModal(open)
+        if (!open) {
+          resetPendingSelections()
+        }
+      }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Definir pendências da reabertura</DialogTitle>
+            <DialogDescription>
+              Selecione documentos, dados ou descreva outras pendências para o protocolo reaberto.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Pendências de documentos</h4>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {Array.from(new Set(documents.map(doc => doc.documentType))).map((docType) => (
+                  <label key={docType} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedDocumentTypes.includes(docType)}
+                      onChange={() => toggleSelection(docType, selectedDocumentTypes, setSelectedDocumentTypes)}
+                    />
+                    <span>{docType}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="mt-3 space-y-2">
+                {customDocumentTypes.map((value, index) => (
+                  <Input
+                    key={`custom-doc-${index}`}
+                    placeholder="Novo tipo de documento"
+                    value={value}
+                    onChange={(event) => {
+                      const next = [...customDocumentTypes]
+                      next[index] = event.target.value
+                      setCustomDocumentTypes(next)
+                    }}
+                  />
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCustomDocumentTypes([...customDocumentTypes, ''])}
+                >
+                  Adicionar tipo de documento
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Pendências de dados</h4>
+              {isLoadingDataFields ? (
+                <p className="text-sm text-gray-500">Carregando campos...</p>
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {dataFields.map((field) => (
+                    <label key={field.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedDataFieldIds.includes(field.id)}
+                        onChange={() => toggleSelection(field.id, selectedDataFieldIds, setSelectedDataFieldIds)}
+                      />
+                      <span>{field.fieldLabel}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div className="mt-3 space-y-2">
+                {customDataFields.map((value, index) => (
+                  <Input
+                    key={`custom-data-${index}`}
+                    placeholder="Novo dado a solicitar"
+                    value={value}
+                    onChange={(event) => {
+                      const next = [...customDataFields]
+                      next[index] = event.target.value
+                      setCustomDataFields(next)
+                    }}
+                  />
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCustomDataFields([...customDataFields, ''])}
+                >
+                  Adicionar dado
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-2">Outras pendências</h4>
+              <div className="space-y-2">
+                <Input
+                  placeholder="TÇðtulo da pendÇ¦ncia (opcional)"
+                  value={otherPendingTitle}
+                  onChange={(event) => setOtherPendingTitle(event.target.value)}
+                />
+                <Textarea
+                  placeholder="Descreva a pendÇ¦ncia"
+                  value={otherPendingDescription}
+                  onChange={(event) => setOtherPendingDescription(event.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowReopenPendingModal(false)
+                resetPendingSelections()
+              }}
+              disabled={isReopening}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (!canSubmitPending) {
+                  toast({
+                    title: 'Selecione ao menos uma pendÇ¦ncia',
+                    description: 'Escolha documentos, dados ou descreva uma pendÇ¦ncia.',
+                    variant: 'destructive'
+                  })
+                  return
+                }
+                handleReopen('append', {
+                  documents: {
+                    selected: selectedDocumentTypes,
+                    custom: normalizedCustomValues(customDocumentTypes)
+                  },
+                  dataFields: {
+                    selected: selectedDataFieldIds,
+                    custom: normalizedCustomValues(customDataFields)
+                  },
+                  other: {
+                    title: otherPendingTitle.trim(),
+                    description: otherPendingDescription.trim()
+                  }
+                })
+              }}
+              disabled={isReopening}
+            >
+              {isReopening ? 'Reabrindo...' : 'Criar pendências e reabrir'}
             </Button>
           </DialogFooter>
         </DialogContent>

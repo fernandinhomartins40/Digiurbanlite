@@ -8,11 +8,11 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
-import { UserRole, ProtocolStatus } from '@prisma/client';
+import { UserRole, ProtocolStatus, PendingType } from '@prisma/client';
 import { AuthenticatedRequest } from '../types';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { protocolServiceSimplified } from '../services/protocol-simplified.service';
-import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { protocolStatusEngine } from '../services/protocol-status.engine';\r\nimport * as pendingService from '../services/protocol-pending.service';
 import { getWorkflowByServiceId } from '../services/service-workflow.service';
 import type { WorkflowStage } from '../types/workflow.types';
 
@@ -672,6 +672,10 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
       }
     });
 
+
+
+
+
     return res.json({
       success: true,
       data: result.protocol,
@@ -1186,11 +1190,29 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     const { id } = req.params;
     const { mode } = req.body;
     const authReq = req as AuthenticatedRequest;
+    const pendingOptions = req.body?.pendingOptions || {};
+    const pendingDocuments = pendingOptions.documents || { selected: [], custom: [] };
+    const pendingDataFields = pendingOptions.dataFields || { selected: [], custom: [] };
+    const pendingOther = pendingOptions.other || { title: '', description: '' };
+    const selectedDocumentTypes = (pendingDocuments.selected || []).map((item: string) => item?.trim()).filter(Boolean);
+    const customDocumentTypes = (pendingDocuments.custom || []).map((item: string) => item?.trim()).filter(Boolean);
+    const selectedDataFieldIds = (pendingDataFields.selected || []).map((item: string) => item?.trim()).filter(Boolean);
+    const customDataFieldLabels = (pendingDataFields.custom || []).map((item: string) => item?.trim()).filter(Boolean);
+    const normalizedDocuments = [...new Set([...selectedDocumentTypes, ...customDocumentTypes])];
+    const normalizedOtherTitle = (pendingOther.title || '').trim();
+    const normalizedOtherDescription = (pendingOther.description || '').trim();
 
     if (!mode || (mode !== 'restart' && mode !== 'append')) {
       return res.status(400).json({
         success: false,
         error: 'Modo invÇ­lido. Use "restart" ou "append".'
+      });
+    }
+
+    if (mode === 'append' && normalizedDocuments.length === 0 && selectedDataFieldIds.length === 0 && customDataFieldLabels.length === 0 && !normalizedOtherDescription) {
+      return res.status(400).json({
+        success: false,
+        error: 'Selecione ao menos uma pendência para reabrir como pendência'
       });
     }
 
@@ -1325,6 +1347,64 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         mode
       }
     });
+
+    if (mode === 'append') {
+      const dataFields = selectedDataFieldIds.length > 0
+        ? await prisma.protocolDataField.findMany({
+            where: { id: { in: selectedDataFieldIds } },
+            select: { id: true, fieldKey: true, fieldLabel: true }
+          })
+        : [];
+
+      for (const documentType of normalizedDocuments) {
+        await pendingService.createPending({
+          protocolId: id,
+          type: PendingType.DOCUMENT,
+          title: `Documento pendente: ${documentType}`,
+          description: `Envie ou atualize o documento "${documentType}".`,
+          blocksProgress: true,
+          metadata: { source: 'reopen', documentType },
+          createdBy: authReq.userId
+        });
+      }
+
+      for (const field of dataFields) {
+        await pendingService.createPending({
+          protocolId: id,
+          type: PendingType.INFORMATION,
+          title: `Dados pendentes: ${field.fieldLabel}`,
+          description: `Informe ou atualize o dado "${field.fieldLabel}".`,
+          blocksProgress: true,
+          metadata: { source: 'reopen', fieldId: field.id, fieldKey: field.fieldKey, fieldLabel: field.fieldLabel },
+          createdBy: authReq.userId
+        });
+      }
+
+      for (const label of customDataFieldLabels) {
+        await pendingService.createPending({
+          protocolId: id,
+          type: PendingType.INFORMATION,
+          title: `Dados pendentes: ${label}`,
+          description: `Informe ou atualize o dado "${label}".`,
+          blocksProgress: true,
+          metadata: { source: 'reopen', customFieldLabel: label },
+          createdBy: authReq.userId
+        });
+      }
+
+      if (normalizedOtherDescription) {
+        await pendingService.createPending({
+          protocolId: id,
+          type: PendingType.INFORMATION,
+          title: normalizedOtherTitle || 'Pendência adicional',
+          description: normalizedOtherDescription,
+          blocksProgress: true,
+          metadata: { source: 'reopen' },
+          createdBy: authReq.userId
+        });
+      }
+    }
+
 
     const updatedProtocol = await prisma.protocolSimplified.update({
       where: { id },
