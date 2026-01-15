@@ -6856,6 +6856,38 @@ function normalizeWorkflowStages(stages: any[]): any[] {
   const normalizeName = (value: string) => String(value || '').toLowerCase();
   const isReception = (name: string) => normalizeName(name).includes('recep') || normalizeName(name).includes('receb');
   const isConclusion = (name: string) => normalizeName(name).includes('conclus') || normalizeName(name).includes('conclu');
+  const isGenerationStage = (name: string) => {
+    const normalizedName = normalizeName(name);
+    return [
+      'emiss',
+      'emitir',
+      'gerar',
+      'gerac',
+      'certida',
+      'comprov',
+      'declar',
+      'document',
+      'alvara',
+      'licenc',
+      'carteira',
+      'relator',
+      'resultado',
+      'registro',
+      'autoriz',
+      'segunda via',
+      '2 via'
+    ].some(keyword => normalizedName.includes(keyword));
+  };
+  const mergeTabs = (tabs: string[] | undefined, extras: string[]) => {
+    const current = Array.isArray(tabs) ? tabs : [];
+    const combined = [...current];
+    for (const tab of extras) {
+      if (!combined.includes(tab)) {
+        combined.push(tab);
+      }
+    }
+    return combined;
+  };
 
   const receptionStage = {
     name: 'Recepcao',
@@ -6925,10 +6957,17 @@ function normalizeWorkflowStages(stages: any[]): any[] {
     };
   }
 
-  return normalized.map((stage, index) => ({
-    ...stage,
-    order: index + 1
-  }));
+  return normalized.map((stage, index) => {
+    const isGeneration = isGenerationStage(stage?.name);
+    const generationTabs = ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'];
+    return {
+      ...stage,
+      order: index + 1,
+      availableTabs: isGeneration ? mergeTabs(stage?.availableTabs, generationTabs) : stage?.availableTabs,
+      primaryTab: isGeneration ? stage?.primaryTab || 'document-generation' : stage?.primaryTab,
+      stageType: isGeneration ? stage?.stageType || 'DOCUMENT_GENERATION' : stage?.stageType
+    };
+  });
 }
 export async function seedServiceWorkflows() {
   console.log('\n📦 Iniciando seed de ServiceWorkflows (COM METADADOS DE UI)...');

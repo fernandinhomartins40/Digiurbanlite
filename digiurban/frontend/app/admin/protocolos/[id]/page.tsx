@@ -23,6 +23,9 @@ import { ProtocolDocumentsUnified } from '@/components/admin/protocol/ProtocolDo
 import { ProtocolDataTab } from '@/components/admin/protocol/ProtocolDataTab'
 import { ProtocolPendingsTab } from '@/components/admin/protocol/ProtocolPendingsTab'
 import { ProtocolCommunicationTab } from '@/components/admin/protocol/ProtocolCommunicationTab'
+import { ProtocolDocumentGenerationTab } from '@/components/admin/protocol/ProtocolDocumentGenerationTab'
+import { ProtocolGeneratedDocumentsTab } from '@/components/admin/protocol/ProtocolGeneratedDocumentsTab'
+import { ProtocolSendGeneratedDocumentTab } from '@/components/admin/protocol/ProtocolSendGeneratedDocumentTab'
 import { TabsContent } from '@/components/ui/tabs'
 
 // Services
@@ -291,7 +294,8 @@ export default function ProtocolDetailPage() {
   const tabBadges: Record<string, number> = {
     documentos: documents.filter(d => d.status === 'PENDING').length,
     pendencias: openPendings.length,
-    comunicacao: unreadMessages
+    comunicacao: unreadMessages,
+    generated: generatedDocuments.length
   }
 
   return (
@@ -359,6 +363,36 @@ export default function ProtocolDetailPage() {
                     documents={documents}
                     currentStageMetadata={currentStage?.metadata}
                     onRefresh={loadProtocolData}
+                  />
+                </TabsContent>
+              )}
+
+              {availableTabs.includes('generated') && (
+                <TabsContent value="generated" className="mt-0">
+                  <ProtocolGeneratedDocumentsTab
+                    generatedDocuments={generatedDocuments}
+                  />
+                </TabsContent>
+              )}
+
+              {availableTabs.includes('document-generation') && (
+                <TabsContent value="document-generation" className="mt-0">
+                  <ProtocolDocumentGenerationTab
+                    protocolId={protocolId}
+                    serviceId={protocol?.service?.id}
+                    onRefresh={loadProtocolData}
+                  />
+                </TabsContent>
+              )}
+
+              {availableTabs.includes('send') && (
+                <TabsContent value="send" className="mt-0">
+                  <ProtocolSendGeneratedDocumentTab
+                    protocolId={protocolId}
+                    protocolNumber={protocol.number || protocol.protocolNumber}
+                    citizenEmail={protocol.citizen?.email}
+                    citizenName={protocol.citizen?.name}
+                    generatedDocuments={generatedDocuments}
                   />
                 </TabsContent>
               )}
