@@ -6851,6 +6851,85 @@ const genericWorkflowStages: Prisma.JsonValue = [
  * FUNÇÃO PRINCIPAL DE SEED
  * ============================================================================
  */
+function normalizeWorkflowStages(stages: any[]): any[] {
+  const normalized = (stages || []).map(stage => ({ ...stage }));
+  const normalizeName = (value: string) => String(value || '').toLowerCase();
+  const isReception = (name: string) => normalizeName(name).includes('recep') || normalizeName(name).includes('receb');
+  const isConclusion = (name: string) => normalizeName(name).includes('conclus') || normalizeName(name).includes('conclu');
+
+  const receptionStage = {
+    name: 'Recepcao',
+    description: 'Recebimento e inicio do protocolo',
+    order: 1,
+    slaDays: 1,
+    availableTabs: ['resumo', 'documentos', 'comunicacao'],
+    primaryTab: 'resumo',
+    requiredDocumentTypes: [],
+    requiredFormFields: [],
+    requiredFormFieldIds: [],
+    allowedActions: ['APPROVE'],
+    canSkip: false,
+    stageType: 'RECEPTION',
+    actionLabels: { APPROVE: 'Iniciar/Aceitar protocolo' }
+  };
+
+  const conclusionStage = {
+    name: 'Conclusao',
+    description: 'Finalizacao do protocolo',
+    order: 1,
+    slaDays: 1,
+    availableTabs: ['resumo', 'comunicacao'],
+    primaryTab: 'resumo',
+    requiredDocumentTypes: [],
+    requiredFormFields: [],
+    requiredFormFieldIds: [],
+    allowedActions: ['APPROVE'],
+    canSkip: false,
+    stageType: 'CONCLUSION',
+    actionLabels: { APPROVE: 'Concluir protocolo' }
+  };
+
+  const receptionIndex = normalized.findIndex(stage => isReception(stage?.name));
+  if (receptionIndex === -1) {
+    normalized.unshift(receptionStage);
+  } else {
+    const existing = normalized[receptionIndex];
+    normalized[receptionIndex] = {
+      ...existing,
+      stageType: existing.stageType || 'RECEPTION',
+      actionLabels: existing.actionLabels || { APPROVE: 'Iniciar/Aceitar protocolo' },
+      allowedActions: existing.allowedActions && existing.allowedActions.length > 0
+        ? existing.allowedActions
+        : ['APPROVE']
+    };
+  }
+
+  const conclusionIndex = normalized.findIndex(stage => isConclusion(stage?.name));
+  if (conclusionIndex === -1) {
+    normalized.push(conclusionStage);
+  } else if (conclusionIndex !== normalized.length - 1) {
+    const [existing] = normalized.splice(conclusionIndex, 1);
+    normalized.push(existing);
+  }
+
+  const lastIndex = normalized.length - 1;
+  if (lastIndex >= 0) {
+    const existing = normalized[lastIndex];
+    normalized[lastIndex] = {
+      ...existing,
+      stageType: existing.stageType || 'CONCLUSION',
+      actionLabels: existing.actionLabels || { APPROVE: 'Concluir protocolo' },
+      allowedActions: existing.allowedActions && existing.allowedActions.length > 0
+        ? existing.allowedActions
+        : ['APPROVE']
+    };
+  }
+
+  return normalized.map((stage, index) => ({
+    ...stage,
+    order: index + 1
+  }));
+}
 export async function seedServiceWorkflows() {
   console.log('\n📦 Iniciando seed de ServiceWorkflows (COM METADADOS DE UI)...');
 
@@ -6887,13 +6966,13 @@ export async function seedServiceWorkflows() {
       if (service.moduleType && specificWorkflows[service.moduleType]) {
         // Usar workflow específico
         const specific = specificWorkflows[service.moduleType];
-        workflowStages = specific.stages;
+        workflowStages = normalizeWorkflowStages(specific.stages as any[]);
         workflowName = specific.name;
         workflowDescription = specific.description;
         defaultSLA = specific.defaultSLA;
       } else {
         // Usar workflow genérico
-        workflowStages = generateGenericWorkflow(service);
+        workflowStages = normalizeWorkflowStages(generateGenericWorkflow(service));
         workflowName = `Workflow - ${service.name}`;
         workflowDescription = `Fluxo padrão para ${service.name}`;
         defaultSLA = service.estimatedDays || 10;
@@ -6959,3 +7038,5 @@ if (require.main === module) {
       await prisma.$disconnect();
     });
 }
+
+

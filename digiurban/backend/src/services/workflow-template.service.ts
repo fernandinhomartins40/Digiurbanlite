@@ -68,6 +68,19 @@ export function generateDefaultWorkflow(
   // ✅ REMOVIDA ETAPA "NOVO" - Protocolo já nasce novo!
   const stages: Omit<WorkflowStage, 'id'>[] = [
     {
+      name: 'Recepcao',
+      description: 'Recebimento e inicio do protocolo',
+      order: 1,
+      slaDays: 1,
+      requiredDocumentTypes: [],
+      requiredFormFieldIds: [],
+      allowedActions: ['APPROVE'],
+      canSkip: false,
+      requiresApproval: true,
+      stageType: 'RECEPTION',
+      actionLabels: { APPROVE: 'Iniciar/Aceitar protocolo' }
+    },
+    {
       name: 'Análise Documental',
       description: 'Verificação de documentos de identificação e comprovação',
       order: 1,
@@ -107,15 +120,17 @@ export function generateDefaultWorkflow(
     });
 
     stages.push({
-      name: 'Concluído',
-      description: 'Processo concluído com sucesso',
+      name: 'Conclusao',
+      description: 'Finalizacao do protocolo',
       order: 4,
       slaDays: 1,
       requiredDocumentTypes: [],
       requiredFormFieldIds: [],
-      allowedActions: [],
+      allowedActions: ['APPROVE'],
       canSkip: false,
-      requiresApproval: false
+      requiresApproval: false,
+      stageType: 'CONCLUSION',
+      actionLabels: { APPROVE: 'Concluir protocolo' }
     });
   } else {
     // Workflow simples (sem docs técnicos)
@@ -132,17 +147,23 @@ export function generateDefaultWorkflow(
     });
 
     stages.push({
-      name: 'Concluído',
-      description: 'Processo concluído com sucesso',
+      name: 'Conclusao',
+      description: 'Finalizacao do protocolo',
       order: 3,
       slaDays: 1,
       requiredDocumentTypes: [],
       requiredFormFieldIds: [],
-      allowedActions: [],
+      allowedActions: ['APPROVE'],
       canSkip: false,
-      requiresApproval: false
+      requiresApproval: false,
+      stageType: 'CONCLUSION',
+      actionLabels: { APPROVE: 'Concluir protocolo' }
     });
   }
+
+  stages.forEach((stage, index) => {
+    stage.order = index + 1;
+  });
 
   return {
     moduleType,
@@ -277,3 +298,16 @@ export function validateGeneratedWorkflow(workflow: CreateWorkflowData): {
     errors
   };
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

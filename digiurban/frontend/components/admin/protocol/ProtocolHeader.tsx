@@ -72,6 +72,9 @@ export function ProtocolHeader({
   const [notes, setNotes] = useState('')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const stageType = currentStage?.metadata?.stageType
+  const approveActionLabel = currentStage?.metadata?.actionLabels?.APPROVE || 'Aprovar'
+  const isConclusionStage = stageType === 'CONCLUSION'
 
   // Validar etapa atual
   const loadValidation = async () => {
@@ -94,6 +97,11 @@ export function ProtocolHeader({
   // Aprovar etapa
   const handleApprove = async () => {
     if (!currentStage) return
+
+    if (isConclusionStage) {
+      await handleCompleteProtocol()
+      return
+    }
 
     try {
       setIsSubmitting(true)
@@ -118,6 +126,39 @@ export function ProtocolHeader({
     } catch (error) {
       toast({
         title: 'Erro ao aprovar etapa',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleCompleteProtocol = async () => {
+    if (!currentStage) return
+
+    try {
+      setIsSubmitting(true)
+
+      const response = await apiRequest(`/protocols/${protocolId}/complete`, {
+        method: 'POST',
+        body: JSON.stringify({
+          finalNotes: notes
+        })
+      })
+
+      if (response.success) {
+        toast({
+          title: 'Protocolo concluído',
+          description: 'O protocolo foi concluído com sucesso.'
+        })
+        setShowApproveModal(false)
+        setNotes('')
+        onActionComplete()
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro ao concluir protocolo',
         description: error instanceof Error ? error.message : 'Erro desconhecido',
         variant: 'destructive'
       })
@@ -309,7 +350,7 @@ export function ProtocolHeader({
                     disabled={isValidating}
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Aprovar
+                    {approveActionLabel}
                   </Button>
                 )}
 
@@ -368,9 +409,11 @@ export function ProtocolHeader({
       <Dialog open={showApproveModal} onOpenChange={setShowApproveModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Aprovar Etapa: {currentStage?.stageName}</DialogTitle>
+            <DialogTitle>{approveActionLabel}: {currentStage?.stageName}</DialogTitle>
             <DialogDescription>
-              {validation?.canProgress
+              {isConclusionStage
+                ? 'Confirme a conclusão do protocolo.'
+                : validation?.canProgress
                 ? 'Todos os critérios foram atendidos. Confirme a aprovação para avançar.'
                 : 'Atenção: Existem pendências. Tem certeza que deseja aprovar?'}
             </DialogDescription>
@@ -411,7 +454,7 @@ export function ProtocolHeader({
                   Aprovando...
                 </>
               ) : (
-                'Confirmar Aprovação'
+                `Confirmar ${approveActionLabel}`
               )}
             </Button>
           </DialogFooter>

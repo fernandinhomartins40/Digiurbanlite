@@ -152,7 +152,7 @@ export async function completeStage(
 
   // ✨ NOVO: Disparar orquestrador de workflow
   const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
-  await workflowOrchestrator.onStageCompleted(stageId, userId);
+  await workflowOrchestrator.onStageCompleted(stageId, userId, result, notes);
 
   return completedStage;
 }
@@ -275,3 +275,4 @@ export async function deleteProtocolStages(protocolId: string) {
     where: { protocolId }
         });
 }
+

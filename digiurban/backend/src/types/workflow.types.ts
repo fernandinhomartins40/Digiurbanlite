@@ -49,7 +49,11 @@ export interface WorkflowStage {
   // Configurações da etapa
   allowedActions: WorkflowStageAction[]; // Ações permitidas
   canSkip: boolean;                      // Pode ser pulada?
-  skipCondition?: string;                // Condição para pular
+    skipCondition?: string;                // Condicao para pular
+
+  // Identificadores e rotulos de acao para UI
+  stageType?: 'RECEPTION' | 'CONCLUSION' | string;
+  actionLabels?: Record<string, string>;
 
   // Responsabilidade
   role?: string;                         // Role necessária (ex: "MEDICO")
@@ -198,3 +202,6 @@ export interface ServiceForWorkflow {
 
 // ✅ FASE 2: WorkflowStatus enum removido (não era usado)
 // export { WorkflowStatus } from '@prisma/client';
+
+
+

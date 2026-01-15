@@ -204,13 +204,55 @@ export class ProtocolWorkflowOrchestrator {
    * EVENTO 3: STAGE CONCLUÍDA
    * ═══════════════════════════════════════════════════════════════════
    */
-  async onStageCompleted(stageId: string, completedBy: string) {
+  async onStageCompleted(stageId: string, completedBy: string, result?: string, notes?: string) {
     const stage = await prisma.protocolStage.findUnique({
       where: { id: stageId },
       include: { protocol: { include: { stages: true } } }
     });
-
     if (!stage) return;
+
+    const stageMetadata = stage.metadata as any;
+    const finalResult = result || (stage as any).result;
+    const stageType = stageMetadata?.stageType;
+
+    if (finalResult === 'REJECTED') {
+      const rejector = await prisma.user.findUnique({ where: { id: completedBy }, select: { name: true } });
+      await protocolStatusEngine.updateStatus({
+        protocolId: stage.protocolId,
+        newStatus: ProtocolStatus.PENDENCIA,
+        actorRole: UserRole.ADMIN,
+        actorId: completedBy,
+        comment: `Etapa "${stage.stageName}" rejeitada`,
+        reason: notes
+      });
+
+      await this.pauseSLA(stage.protocolId, `Etapa rejeitada: ${stage.stageName}`);
+
+      await interactionService.createInteraction({
+        protocolId: stage.protocolId,
+        type: 'STATUS_CHANGED',
+        authorType: 'SERVER',
+        authorId: completedBy,
+        authorName: rejector?.name || 'Servidor',
+        message: `Seu protocolo foi rejeitado na etapa "${stage.stageName}". Motivo: ${notes || 'Nao informado'}.`,
+        isInternal: false
+      });
+
+      return;
+    }
+
+    if (stageType === 'RECEPTION' && finalResult === 'APPROVED') {
+      const approver = await prisma.user.findUnique({ where: { id: completedBy }, select: { name: true } });
+      await interactionService.createInteraction({
+        protocolId: stage.protocolId,
+        type: 'STATUS_CHANGED',
+        authorType: 'SERVER',
+        authorId: completedBy,
+        authorName: approver?.name || 'Servidor',
+        message: 'Seu protocolo foi aceito e iniciou o fluxo de atendimento.',
+        isInternal: false
+      });
+    }
 
     console.log(`✅ [Orchestrator] Stage concluída: ${stage.stageName} (${stage.stageOrder})`);
 
@@ -304,7 +346,6 @@ export class ProtocolWorkflowOrchestrator {
       where: { id: stageId },
       select: { protocolId: true, stageName: true }
     });
-
     if (!stage) return;
 
     console.log(`❌ [Orchestrator] Stage falhou: ${stage.stageName}`);
@@ -704,3 +745,11 @@ export class ProtocolWorkflowOrchestrator {
 // SINGLETON EXPORT
 // ============================================================================
 export const workflowOrchestrator = new ProtocolWorkflowOrchestrator();
+
+
+
+
+
+
+
+

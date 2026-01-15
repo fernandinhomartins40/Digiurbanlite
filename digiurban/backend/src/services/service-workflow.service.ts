@@ -250,6 +250,8 @@ export async function applyWorkflowToProtocol(protocolId: string) {
           metadata: {
             stageId: stage.id,
             description: stage.description,
+            stageType: (stage as any).stageType,
+            actionLabels: (stage as any).actionLabels,
 
             // ✅ METADADOS DE UI - Definem estrutura da página
             availableTabs: stage.availableTabs || ['resumo', 'comunicacao'],
@@ -505,3 +507,7 @@ export async function getServiceForWorkflow(serviceId: string) {
     formFields
   };
 }
+
+
+
+
