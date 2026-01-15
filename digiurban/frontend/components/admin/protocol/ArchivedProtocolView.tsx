@@ -434,7 +434,7 @@ export function ArchivedProtocolView({
             >
               <p className="text-sm font-medium text-gray-900">Reabertura como pendência</p>
               <p className="text-xs text-gray-600 mt-1">
-                Cria uma etapa de pendência para solicitar informaÇõÇæes ou documentos, mantendo o histÇürico.
+                Cria uma etapa de pendência para solicitar informações ou documentos, mantendo o histórico.
               </p>
             </button>
 
@@ -447,7 +447,7 @@ export function ArchivedProtocolView({
             >
               <p className="text-sm font-medium text-gray-900">Reiniciar workflow completo</p>
               <p className="text-xs text-gray-600 mt-1">
-                Duplica todas as etapas do serviÇõo, preservando as anteriores como histÇürico.
+                Duplica todas as etapas do serviço, preservando as anteriores como histórico.
               </p>
             </button>
           </div>
@@ -607,12 +607,12 @@ export function ArchivedProtocolView({
               <h4 className="text-sm font-semibold text-gray-900 mb-2">Outras pendências</h4>
               <div className="space-y-2">
                 <Input
-                  placeholder="TÇðtulo da pendÇ¦ncia (opcional)"
+                  placeholder="Título da pendência (opcional)"
                   value={otherPendingTitle}
                   onChange={(event: ChangeEvent<HTMLInputElement>) => setOtherPendingTitle(event.target.value)}
                 />
                 <Textarea
-                  placeholder="Descreva a pendÇ¦ncia"
+                  placeholder="Descreva a pendência"
                   value={otherPendingDescription}
                   onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setOtherPendingDescription(event.target.value)}
                   rows={3}
@@ -636,8 +636,8 @@ export function ArchivedProtocolView({
               onClick={() => {
                 if (!canSubmitPending) {
                   toast({
-                    title: 'Selecione ao menos uma pendÇ¦ncia',
-                    description: 'Escolha documentos, dados ou descreva uma pendÇ¦ncia.',
+                    title: 'Selecione ao menos uma pendência',
+                    description: 'Escolha documentos, dados ou descreva uma pendência.',
                     variant: 'destructive'
                   })
                   return
