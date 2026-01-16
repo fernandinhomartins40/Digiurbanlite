@@ -227,6 +227,42 @@ export default function ProtocolDetailsPage() {
     setActiveTab('pendings');
   };
 
+  // Callbacks para ações de documentos
+  const handleViewDocument = (doc: CitizenDocument) => {
+    // TODO: Implementar visualização de documento
+    toast.info(`Visualizando: ${doc.fileName}`);
+    // Futuramente: abrir modal ou nova aba com visualizador
+  };
+
+  const handleDownloadDocument = (doc: CitizenDocument) => {
+    // TODO: Implementar download de documento
+    toast.success(`Download iniciado: ${doc.fileName}`);
+    // Futuramente: fazer download real do arquivo
+    // window.open(doc.fileUrl, '_blank');
+  };
+
+  const handleUploadDocument = (type: string) => {
+    // TODO: Implementar upload de documento
+    toast.info(`Upload de documento tipo: ${type}`);
+    // Futuramente: abrir modal de upload
+  };
+
+  // Callbacks para documentos gerados
+  const handleViewGeneratedDocument = (doc: CitizenGeneratedDocument) => {
+    toast.info(`Visualizando: ${doc.name}`);
+    // TODO: Implementar visualização
+  };
+
+  const handleDownloadGeneratedDocument = (doc: CitizenGeneratedDocument) => {
+    toast.success(`Download iniciado: ${doc.name}`);
+    // TODO: Implementar download real
+  };
+
+  const handlePrintGeneratedDocument = (doc: CitizenGeneratedDocument) => {
+    toast.info(`Imprimindo: ${doc.name}`);
+    // TODO: Implementar impressão
+  };
+
   const canCancelProtocol = () => {
     if (!protocol) return false;
     return protocol.status === 'VINCULADO' || protocol.status === 'EM_ANDAMENTO';
@@ -353,6 +389,9 @@ export default function ProtocolDetailsPage() {
                   <CitizenDocumentsTab
                     protocolId={protocol.id}
                     documents={documents}
+                    onViewDocument={handleViewDocument}
+                    onDownloadDocument={handleDownloadDocument}
+                    onUploadDocument={handleUploadDocument}
                   />
                 </TabsContent>
               )}
@@ -362,6 +401,9 @@ export default function ProtocolDetailsPage() {
                 <TabsContent value="generated">
                   <CitizenGeneratedDocumentsTab
                     generatedDocuments={generatedDocuments}
+                    onView={handleViewGeneratedDocument}
+                    onDownload={handleDownloadGeneratedDocument}
+                    onPrint={handlePrintGeneratedDocument}
                   />
                 </TabsContent>
               )}
