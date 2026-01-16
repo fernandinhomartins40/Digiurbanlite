@@ -74,6 +74,10 @@ model User {
   // Categorias de cidadãos atribuídas por este usuário
   categoryAssignments CitizenCategoryAssignment[] @relation("CategoryAssignedBy")
 
+  // Auditoria de campos de dados
+  fieldApprovals FieldApproval[] @relation("FieldApprovals")
+  fieldChanges   FieldChange[]   @relation("FieldChanges")
+
   @@map("users")
 }
 
@@ -735,6 +739,10 @@ model ProtocolDataField {
 
   protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
 
+  // Relações com auditoria
+  approvals FieldApproval[] @relation("FieldApprovals")
+  changes   FieldChange[]   @relation("FieldChanges")
+
   @@unique([protocolId, fieldKey]) // Apenas 1 registro por campo
   @@index([protocolId, status])
   @@index([status])
@@ -747,6 +755,61 @@ enum DataFieldStatus {
   APPROVED      // Aprovado
   REJECTED      // Rejeitado, precisa correção
   CORRECTED     // Corrigido pelo cidadão, aguarda revalidação
+}
+
+// ========================================
+// AUDITORIA DE CAMPOS (FieldApproval e FieldChange)
+// ========================================
+
+// Histórico de aprovações/rejeições de campos
+model FieldApproval {
+  id       String   @id @default(cuid())
+  fieldId  String
+
+  // Ação realizada
+  action   String   // "approve", "reject", "request_correction", "corrected"
+  timestamp DateTime @default(now())
+
+  // Responsável pela ação
+  approvedBy String  // userId
+  approvedByUser User @relation("FieldApprovals", fields: [approvedBy], references: [id], onDelete: Cascade)
+
+  // Detalhes
+  reason     String?  // Motivo da rejeição ou comentário
+
+  // Valores envolvidos
+  previousValue String?
+  newValue      String?
+
+  field ProtocolDataField @relation("FieldApprovals", fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId, timestamp])
+  @@index([approvedBy, timestamp])
+  @@map("field_approvals")
+}
+
+// Rastreamento de mudanças de campos
+model FieldChange {
+  id       String   @id @default(cuid())
+  fieldId  String
+
+  // Tipo de mudança
+  changeType String  // "value_changed", "status_changed", "version_increment"
+  timestamp  DateTime @default(now())
+
+  // Valores
+  oldValue   String?
+  newValue   String?
+
+  // Responsável pela mudança
+  actor      String  // userId
+  actorUser  User @relation("FieldChanges", fields: [actor], references: [id], onDelete: Cascade)
+
+  field ProtocolDataField @relation("FieldChanges", fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId, timestamp])
+  @@index([actor, timestamp])
+  @@map("field_changes")
 }
 
 // ========================================
@@ -2153,56 +2216,8 @@ enum HousingAttendanceStatus {
 }
 
 // Tabela customizada (metadados)
-model CustomDataTable {
-  id          String  @id @default(cuid())
-  tableName   String // Nome único da tabela
-  displayName String // Nome amigável
-  description String?
-
-  // Estrutura da tabela (schema)
-  fields Json // Array de definições de campos
-
-  // Configurações
-  allowCreate Boolean @default(true)
-  allowUpdate Boolean @default(true)
-  allowDelete Boolean @default(true)
-
-  // Audit
-  moduleType String? // Campo adicionado
-  schema     Json? // Campo adicionado
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Relações
-  records CustomDataRecord[]
-
-  @@unique([tableName])
-  @@map("custom_data_tables")
-}
-
-// Registro de dados customizados
-model CustomDataRecord {
-  id      String          @id @default(cuid())
-  tableId String
-  table   CustomDataTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
-
-  // Dados (JSON flexível)
-  data Json
-
-  // Vínculo com protocolo
-  protocol  String?
-  serviceId String?
-
-  // Audit
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  createdBy String? // userId
-
-  @@index([tableId])
-  @@index([protocol])
-  @@index([serviceId])
-  @@map("custom_data_records")
-}
+// REMOVED: CustomDataTable e CustomDataRecord (código morto de micro-sistemas abandonados)
+// Substituído por ProtocolSimplified.customData + ProtocolDataField para serviços COM_DADOS
 
 // ========================================
 // TABELAS DE APOIO PARA SELECTS DINÂMICOS

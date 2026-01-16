@@ -8,16 +8,21 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/progress'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   CheckCircle2,
   XCircle,
   AlertCircle,
   Clock,
   Info,
-  Loader2
+  Loader2,
+  History,
+  Filter
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
+import { FieldHistoryDialog } from './FieldHistoryDialog'
 
 interface DataField {
   id: string
@@ -70,6 +75,9 @@ export function ProtocolDataTab({
   const [editingFieldId, setEditingFieldId] = useState<string | null>(null)
   const [editedValue, setEditedValue] = useState('')
   const [processingFieldId, setProcessingFieldId] = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState<string>('all') // all, pending, approved, rejected
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false)
+  const [selectedField, setSelectedField] = useState<{ key: string; label: string } | null>(null)
 
   const getFullApiUrl = (path: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3060/api'
@@ -485,17 +493,26 @@ export function ProtocolDataTab({
     )
   }
 
-  const requiredFields = fields.filter(f => f.isRequired)
-  const optionalFields = fields.filter(f => !f.isRequired)
+  // Filtrar campos baseado no filtro selecionado
+  const filteredFields = fields.filter(field => {
+    if (filterStatus === 'all') return true
+    if (filterStatus === 'pending') return field.status === 'PENDING' || field.status === 'UNDER_REVIEW' || field.status === 'CORRECTED'
+    if (filterStatus === 'approved') return field.status === 'APPROVED'
+    if (filterStatus === 'rejected') return field.status === 'REJECTED'
+    return true
+  })
+
+  const requiredFields = filteredFields.filter(f => f.isRequired)
+  const optionalFields = filteredFields.filter(f => !f.isRequired)
 
   return (
     <div className="space-y-4">
-      {/* Estatísticas */}
+      {/* Estatísticas com Barra de Progresso */}
       {stats && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center justify-between">
-              <span>Resumo de Validação</span>
+              <span>Progresso de Validação</span>
               {stats.pending > 0 && (
                 <Button size="sm" variant="outline" onClick={handleApproveAll}>
                   Aprovar Todos ({stats.pending})
@@ -503,8 +520,26 @@ export function ProtocolDataTab({
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <CardContent className="space-y-4">
+            {/* Barra de Progresso */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Aprovação Geral</span>
+                <span className="font-semibold text-gray-900">{stats.percentageApproved}%</span>
+              </div>
+              <Progress value={stats.percentageApproved} className="h-2" />
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>{stats.approved} de {stats.total} campos aprovados</span>
+                {stats.required > 0 && (
+                  <span className={stats.allRequiredApproved ? 'text-green-600 font-medium' : ''}>
+                    {stats.allRequiredApproved ? '✓ ' : ''}{fields.filter(f => f.isRequired && f.status === 'APPROVED').length}/{stats.required} obrigatórios
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Grid de Estatísticas */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t">
               <div className="text-center">
                 <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
                 <div className="text-xs text-gray-500">Total de Campos</div>
@@ -518,22 +553,50 @@ export function ProtocolDataTab({
                 <div className="text-xs text-gray-500">Rejeitados</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+                <div className="text-2xl font-bold text-yellow-600">{stats.pending + stats.underReview + stats.corrected}</div>
                 <div className="text-xs text-gray-500">Pendentes</div>
               </div>
             </div>
 
             {stats.allRequiredApproved && stats.required > 0 && (
-              <Alert className="mt-4 bg-green-50 border-green-200">
+              <Alert className="bg-green-50 border-green-200">
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
                 <AlertDescription className="text-green-800">
-                  Todos os {stats.required} campos obrigatórios foram aprovados!
+                  ✓ Todos os {stats.required} campos obrigatórios foram aprovados!
                 </AlertDescription>
               </Alert>
             )}
           </CardContent>
         </Card>
       )}
+
+      {/* Filtros */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Filtrar Campos
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={filterStatus} onValueChange={setFilterStatus}>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="all" className="text-xs">
+                Todos ({fields.length})
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs">
+                Pendentes ({fields.filter(f => ['PENDING', 'UNDER_REVIEW', 'CORRECTED'].includes(f.status)).length})
+              </TabsTrigger>
+              <TabsTrigger value="approved" className="text-xs">
+                Aprovados ({fields.filter(f => f.status === 'APPROVED').length})
+              </TabsTrigger>
+              <TabsTrigger value="rejected" className="text-xs">
+                Rejeitados ({fields.filter(f => f.status === 'REJECTED').length})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Campos Obrigatórios */}
       {requiredFields.length > 0 && (
@@ -561,6 +624,20 @@ export function ProtocolDataTab({
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(field.status)}
+                      {field.version > 1 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7"
+                          onClick={() => {
+                            setSelectedField({ key: field.fieldKey, label: field.fieldLabel })
+                            setHistoryDialogOpen(true)
+                          }}
+                        >
+                          <History className="h-3 w-3 mr-1" />
+                          Histórico
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2">
@@ -603,6 +680,20 @@ export function ProtocolDataTab({
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(field.status)}
+                      {field.version > 1 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7"
+                          onClick={() => {
+                            setSelectedField({ key: field.fieldKey, label: field.fieldLabel })
+                            setHistoryDialogOpen(true)
+                          }}
+                        >
+                          <History className="h-3 w-3 mr-1" />
+                          Histórico
+                        </Button>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2">
@@ -618,6 +709,17 @@ export function ProtocolDataTab({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Dialog de Histórico */}
+      {selectedField && (
+        <FieldHistoryDialog
+          protocolId={protocolId}
+          fieldKey={selectedField.key}
+          fieldLabel={selectedField.label}
+          open={historyDialogOpen}
+          onOpenChange={setHistoryDialogOpen}
+        />
       )}
     </div>
   )

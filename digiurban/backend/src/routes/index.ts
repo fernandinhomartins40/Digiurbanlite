@@ -55,6 +55,8 @@ export const loadProtocolRoutes = () => {
   const serviceWorkflowsRoutes = require('./service-workflows.routes').default;
   console.log('    - protocol-citizen-links');
   const protocolCitizenLinksRoutes = require('./protocol-citizen-links.routes').default;
+  console.log('    - unified-protocols (novo)');
+  const unifiedProtocolsRoutes = require('./unified-protocols.routes').default;
 
   console.log('    - Montando rotas...');
   router.use('/protocols', protocolsSimplifiedRoutes);
@@ -64,6 +66,7 @@ export const loadProtocolRoutes = () => {
   router.use('/protocols', protocolStagesRoutes);
   router.use('/protocols', protocolSLARoutes);
   router.use('/protocols', protocolCitizenLinksRoutes);
+  router.use('/protocols', unifiedProtocolsRoutes); // Rotas unificadas
   router.use('/workflows', moduleWorkflowsRoutes); // Legado - mantido para compatibilidade
   router.use('/service-workflows', serviceWorkflowsRoutes); // Novo - workflows por serviço
   router.use('/sla', protocolSLARoutes);
@@ -113,7 +116,7 @@ export const loadAdminRoutes = () => {
   const adminGabineteRoutes = require('./admin-gabinete').default;
   const adminGabinetePainelRoutes = require('./admin-gabinete-painel').default;
   const serviceTemplatesRoutes = require('./service-templates').default;
-  const customModulesRoutes = require('./custom-modules').default;
+  // REMOVED: customModulesRoutes - código morto de micro-sistemas abandonados
   // DIA 3: REMOVED - admin-transfer era específico para multi-tenant
   const citizensRoutes = require('./citizens').default;
   const adminCitizensRoutes = require('./admin-citizens').default;
@@ -129,7 +132,7 @@ export const loadAdminRoutes = () => {
   router.use('/admin/gabinete', adminGabineteRoutes);
   router.use('/admin/gabinete/painel-prefeito', adminGabinetePainelRoutes);
   router.use('/admin/templates', serviceTemplatesRoutes);
-  router.use('/admin/custom-modules', customModulesRoutes);
+  // REMOVED: custom-modules route - código morto
   // DIA 3: REMOVED - admin-transfer route
   router.use('/citizens', citizensRoutes);
   router.use('/admin/citizens', adminCitizensRoutes);
