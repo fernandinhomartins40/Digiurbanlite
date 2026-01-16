@@ -259,7 +259,6 @@ export async function applyWorkflowToProtocol(protocolId: string) {
 
             // Requisitos
             requiredDocumentTypes: stage.requiredDocumentTypes || [],
-            requiredFormFields: stage.requiredFormFields || [],
             requiredFormFieldIds: stage.requiredFormFieldIds || [],
 
             // Ações e regras
@@ -356,18 +355,38 @@ export async function validateStageConditions(
     }
   }
 
-  // ===== VALIDAR CAMPOS DO FORMULÁRIO =====
+  // ===== VALIDAR CAMPOS DO FORMULÁRIO (usando ProtocolDataField.status) =====
   const requiredFieldIds = metadata?.requiredFormFieldIds || [];
 
-  if (requiredFieldIds.length > 0 && stage.protocol.customData) {
-    const customData = stage.protocol.customData as any;
-
-    const missingFields = requiredFieldIds.filter((fieldId: string) => {
-      const value = customData[fieldId];
-      return value === null || value === undefined || value === '';
+  if (requiredFieldIds.length > 0) {
+    // ✅ CORREÇÃO: Buscar status dos ProtocolDataField ao invés de verificar customData
+    const dataFields = await prisma.protocolDataField.findMany({
+      where: {
+        protocolId,
+        fieldKey: { in: requiredFieldIds }
+      }
     });
 
-    if (missingFields.length > 0) {
+    // Campos aprovados
+    const approvedFields = dataFields.filter(f => f.status === 'APPROVED');
+    const approvedFieldKeys = approvedFields.map(f => f.fieldKey);
+
+    // Campos pendentes (não aprovados ou rejeitados)
+    const pendingOrRejectedFields = dataFields.filter(f => f.status !== 'APPROVED');
+
+    // Campos que não existem no ProtocolDataField (ainda não enviados)
+    const missingFields = requiredFieldIds.filter(
+      (fieldId: string) => !dataFields.find(f => f.fieldKey === fieldId)
+    );
+
+    // Se há campos não aprovados
+    const unapprovedFieldIds = [
+      ...pendingOrRejectedFields.map(f => f.fieldKey),
+      ...missingFields
+    ];
+
+    if (unapprovedFieldIds.length > 0) {
+      // Buscar labels do formSchema para exibição amigável
       let formSchemaRaw = service?.formSchema as any;
       if (typeof formSchemaRaw === 'string') {
         try {
@@ -377,13 +396,13 @@ export async function validateStageConditions(
         }
       }
 
-      const missingFieldLabels = missingFields.map((fieldId: string) => {
+      const fieldLabels = unapprovedFieldIds.map((fieldId: string) => {
         const field = formSchemaRaw?.properties?.[fieldId];
         return field?.title || fieldId;
       });
 
-      missingFormFields.push(...missingFieldLabels);
-      blockers.push(`Campos obrigatórios não preenchidos: ${missingFieldLabels.join(', ')}`);
+      missingFormFields.push(...fieldLabels);
+      blockers.push(`Campos não aprovados: ${fieldLabels.join(', ')}`);
     }
   }
 

@@ -312,19 +312,54 @@ export class ProtocolModuleService {
       const workflow = await workflowService.getWorkflowByModuleType(moduleType);
 
       if (!workflow) {
-        // Se não tem workflow específico, tentar genérico
-        const genericWorkflow = await workflowService.getWorkflowByModuleType('GENERICO');
-        if (genericWorkflow) {
-          await workflowService.applyWorkflowToProtocol(protocolId, 'GENERICO');
+        // ✅ CORREÇÃO: Se não tem workflow, criar workflow default automaticamente
+        console.warn(`⚠️ Workflow não encontrado para ${moduleType}. Criando workflow padrão...`);
 
-          // Criar SLA baseado no workflow genérico
-          if (genericWorkflow.defaultSLA) {
-            await slaService.createSLA({
-              protocolId,
-              workingDays: genericWorkflow.defaultSLA
-            });
-          }
+        const protocol = await prisma.protocolSimplified.findUnique({
+          where: { id: protocolId },
+          include: { service: true }
+        });
+
+        if (!protocol || !protocol.service) {
+          throw new Error('Protocolo ou serviço não encontrado');
         }
+
+        // Importar template service para gerar workflow default
+        const templateService = await import('./workflow-template.service');
+
+        // Gerar workflow minimalista (Recepção → Atendimento → Conclusão)
+        const defaultWorkflow = templateService.generateMinimalWorkflowForSemDados(
+          protocol.service.name,
+          protocol.service.description,
+          protocol.service.estimatedDays
+        );
+
+        // Criar workflow no banco
+        await prisma.moduleWorkflow.create({
+          data: {
+            moduleType: moduleType,
+            name: defaultWorkflow.name,
+            description: defaultWorkflow.description,
+            stages: defaultWorkflow.stages as any,
+            defaultSLA: defaultWorkflow.defaultSLA,
+            rules: defaultWorkflow.rules
+          }
+        });
+
+        console.log(`✅ Workflow default criado para ${moduleType}`);
+
+        // Aplicar workflow recém-criado
+        await workflowService.applyWorkflowToProtocol(protocolId, moduleType);
+
+        // Criar SLA
+        if (defaultWorkflow.defaultSLA) {
+          await slaService.createSLA({
+            protocolId,
+            workingDays: defaultWorkflow.defaultSLA
+          });
+        }
+
+        console.log(`✅ Workflow default aplicado ao protocolo ${protocolId}`);
         return;
       }
 

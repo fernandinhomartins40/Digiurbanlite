@@ -846,6 +846,7 @@ model ProtocolStage {
 enum StageStatus {
   PENDING
   IN_PROGRESS
+  PAUSED      // ✅ NOVO: Stage pausada (aguardando correção do cidadão)
   COMPLETED
   SKIPPED
   FAILED
@@ -4622,6 +4623,9 @@ model DocumentTemplate {
   // Associação com serviços
   serviceIds    Json     @default("[]")     // Array de IDs de serviços
   isGlobal      Boolean  @default(false)    // Se true, disponível para todos os serviços
+
+  // ✅ NOVO: Controle de quando o template pode ser usado no workflow
+  allowedStageTypes Json?  @default("[]")   // Array de stageTypes permitidos (ex: ["CONCLUSION", "APPROVAL"])
 
   // Template Handlebars
   htmlTemplate  String   @db.Text           // HTML com variáveis {{protocolNumber}}, {{citizenName}}

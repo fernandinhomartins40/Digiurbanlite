@@ -1183,7 +1183,7 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
 
 /**
  * POST /api/protocols/:id/reopen
- * Reabre um protocolo concluÇðdo/cancelado
+ * Reabre um protocolo concluï¿½ï¿½do/cancelado
  * mode: 'restart' | 'append'
  */
 router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
@@ -1229,7 +1229,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     if (mode === 'append' && normalizedDocuments.length === 0 && selectedDataFieldIds.length === 0 && customDataFieldItems.length === 0 && !normalizedOtherDescription) {
       return res.status(400).json({
         success: false,
-        error: 'Selecione ao menos uma pendência para reabrir como pendência'
+        error: 'Selecione ao menos uma pendï¿½ncia para reabrir como pendï¿½ncia'
       });
     }
 
@@ -1251,7 +1251,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     if (protocol.status !== ProtocolStatus.CONCLUIDO && protocol.status !== ProtocolStatus.CANCELADO) {
       return res.status(400).json({
         success: false,
-        error: 'Apenas protocolos concluÇðdos ou cancelados podem ser reabertos'
+        error: 'Apenas protocolos concluï¿½ï¿½dos ou cancelados podem ser reabertos'
       });
     }
 
@@ -1262,7 +1262,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     if (mode === 'restart' && (!workflow || !workflow.isActive || sortedWorkflowStages.length === 0)) {
       return res.status(400).json({
         success: false,
-        error: 'ServiÇõo sem workflow ativo configurado para reiniciar'
+        error: 'Serviï¿½ï¿½o sem workflow ativo configurado para reiniciar'
       });
     }
 
@@ -1278,7 +1278,6 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
       availableTabs: stage.availableTabs || ['resumo', 'comunicacao'],
       primaryTab: stage.primaryTab || 'resumo',
       requiredDocumentTypes: stage.requiredDocumentTypes || [],
-      requiredFormFields: stage.requiredFormFields || [],
       requiredFormFieldIds: stage.requiredFormFieldIds || [],
       allowedActions: stage.allowedActions || [],
       canSkip: stage.canSkip || false,
@@ -1441,7 +1440,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         await pendingService.createPending({
           protocolId: id,
           type: PendingType.INFORMATION,
-          title: normalizedOtherTitle || 'Pendência adicional',
+          title: normalizedOtherTitle || 'Pendï¿½ncia adicional',
           description: normalizedOtherDescription,
           blocksProgress: true,
           metadata: { source: 'reopen' },

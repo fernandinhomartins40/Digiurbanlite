@@ -782,7 +782,17 @@ export class ProtocolWorkflowOrchestrator {
   async onDataFieldApproved(fieldId: string, approvedBy: string) {
     const field = await prisma.protocolDataField.findUnique({
       where: { id: fieldId },
-      select: { protocolId: true, fieldLabel: true }
+      include: {
+        protocol: {
+          include: {
+            stages: {
+              where: {
+                status: 'IN_PROGRESS'
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!field) return;
@@ -805,14 +815,63 @@ export class ProtocolWorkflowOrchestrator {
     if (requiredCount === approvedCount && requiredCount > 0) {
       console.log(`🎉 [Orchestrator] Todos os ${requiredCount} campos obrigatórios aprovados!`);
 
-      // Criar interação
+      // ✅ CORREÇÃO: Completar stage automaticamente (como documentos)
+      const currentStage = field.protocol.stages.find((s: any) => s.status === 'IN_PROGRESS');
+
+      if (currentStage) {
+        const metadata = currentStage.metadata as any;
+        const requiredFormFieldIds = metadata?.requiredFormFieldIds || [];
+
+        // Verificar se a stage atual exige validação de campos
+        if (requiredFormFieldIds.length > 0) {
+          // Verificar se TODOS os campos da stage foram aprovados
+          const stageFields = await prisma.protocolDataField.findMany({
+            where: {
+              protocolId: field.protocolId,
+              fieldKey: { in: requiredFormFieldIds }
+            }
+          });
+
+          const allStageFieldsApproved = requiredFormFieldIds.every((fieldId: string) =>
+            stageFields.find(f => f.fieldKey === fieldId && f.status === 'APPROVED')
+          );
+
+          if (allStageFieldsApproved) {
+            console.log(`🚀 [Orchestrator] Todos os campos da stage "${currentStage.stageName}" aprovados! Completando automaticamente...`);
+
+            // Completar stage automaticamente
+            await stageService.completeStage(
+              currentStage.id,
+              approvedBy,
+              'APPROVED',
+              'Todos os campos obrigatórios foram aprovados automaticamente'
+            );
+
+            // Criar interação
+            await interactionService.createInteraction({
+              protocolId: field.protocolId,
+              type: 'STATUS_CHANGED',
+              authorType: 'SERVER',
+              authorId: approvedBy,
+              authorName: 'Sistema',
+              message: `✅ Etapa "${currentStage.stageName}" completada automaticamente! Todos os campos obrigatórios foram aprovados.`,
+              isInternal: false
+            });
+
+            // O onStageCompleted será chamado automaticamente e avançará para próxima stage
+            return;
+          }
+        }
+      }
+
+      // Se não completou automaticamente, apenas criar interação
       await interactionService.createInteraction({
         protocolId: field.protocolId,
-        type: 'STATUS_CHANGED',
+        type: 'NOTE',
         authorType: 'SERVER',
         authorId: approvedBy,
         authorName: 'Sistema',
-        message: `✅ Todos os campos obrigatórios foram aprovados! O protocolo pode avançar no fluxo.`,
+        message: `✅ Todos os campos obrigatórios foram aprovados!`,
         isInternal: false
       });
     }
