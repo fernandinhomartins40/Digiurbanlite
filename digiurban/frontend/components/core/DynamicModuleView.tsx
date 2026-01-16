@@ -1,7 +1,9 @@
 // ============================================================
-// DYNAMIC MODULE VIEW - VERSÃO MODERNIZADA E INTELIGENTE
+// DYNAMIC MODULE VIEW - VERSÃO MODERNIZADA COM DADOS CONSOLIDADOS
 // ============================================================
-// Sistema adaptativo com abas contextuais baseadas no serviço
+// Sistema inteligente com 2 abas principais:
+// 1. Protocolos (todos os protocolos)
+// 2. Dados Consolidados (base de dados dos protocolos aprovados)
 
 'use client';
 
@@ -9,15 +11,11 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useService } from '@/hooks/useService';
 import { useProtocols } from '@/hooks/useProtocols';
-import { useModuleCapabilities } from '@/hooks/useModuleCapabilities';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 // Componentes Modernos
 import { ModuleProtocolsList } from '@/components/admin/module/ModuleProtocolsList';
-import { ModuleDataAnalysisTab } from '@/components/admin/module/ModuleDataAnalysisTab';
-import { SmartDataVisualization } from '@/components/admin/module/SmartDataVisualization';
-import { ModuleExportTab } from '@/components/admin/module/ModuleExportTab';
-import { ModuleAnalyticsTab } from '@/components/admin/module/ModuleAnalyticsTab';
+import { ConsolidatedDataTab } from '@/components/admin/module/ConsolidatedDataTab';
 import { DynamicForm } from '@/components/forms/DynamicForm';
 
 // UI Components
@@ -30,15 +28,7 @@ import {
   Plus,
   RefreshCw,
   List,
-  BarChart3,
-  Eye,
-  Download,
-  PieChart,
-  Map,
-  Calendar,
-  Images,
-  Network,
-  AlertCircle
+  Database
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -58,15 +48,13 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
   const { service, loading: serviceLoading, error: serviceError } = useService(department, module);
   const { protocols, loading: protocolsLoading, refetch } = useProtocols(service?.id);
 
-  // Sistema Inteligente - Detecta capacidades do módulo
-  const { capabilities, tabs } = useModuleCapabilities(service);
-
   // Estatísticas rápidas
   const stats = useMemo(() => ({
     total: protocols.length,
     pendentes: protocols.filter(p => p.status === 'VINCULADO').length,
     progresso: protocols.filter(p => p.status === 'PROGRESSO').length,
     concluidos: protocols.filter(p => p.status === 'CONCLUIDO').length,
+    aprovados: protocols.filter(p => p.status === 'CONCLUIDO').length, // Base de dados consolidada
   }), [protocols]);
 
   // Criar novo protocolo
@@ -156,9 +144,6 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
             {service.moduleType && (
               <Badge variant="secondary" className="text-xs sm:text-sm">{service.moduleType}</Badge>
             )}
-            <Badge variant="outline" className="text-xs sm:text-sm">
-              Modo: {capabilities.mode}
-            </Badge>
           </div>
         </div>
 
@@ -196,69 +181,22 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
         </Card>
       </div>
 
-      {/* Abas Inteligentes e Contextuais */}
+      {/* Abas Principais: Protocolos e Dados Consolidados */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 gap-1">
-          {/* ABA 1: Protocolos (sempre visível) */}
-          <TabsTrigger value="protocolos" className="flex items-center gap-1">
+        <TabsList className="grid w-full grid-cols-2 gap-1">
+          {/* ABA 1: Protocolos (todos os protocolos) */}
+          <TabsTrigger value="protocolos" className="flex items-center gap-2">
             <List className="h-4 w-4" />
-            <span className="hidden sm:inline">Protocolos</span>
-            <span className="sm:hidden">Lista</span>
+            <span>Protocolos</span>
+            <Badge variant="secondary" className="ml-1">{stats.total}</Badge>
           </TabsTrigger>
 
-          {/* ABA 2: Análise de Dados (sempre visível) */}
-          <TabsTrigger value="analise" className="flex items-center gap-1">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Análise</span>
-            <span className="sm:hidden">Anál.</span>
+          {/* ABA 2: Dados Consolidados (base de dados aprovados) */}
+          <TabsTrigger value="consolidados" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            <span>Dados Consolidados</span>
+            <Badge variant="secondary" className="ml-1">{stats.aprovados}</Badge>
           </TabsTrigger>
-
-          {/* ABA 3: Visualização (sempre visível) */}
-          <TabsTrigger value="visualizacao" className="flex items-center gap-1">
-            <Eye className="h-4 w-4" />
-            <span className="hidden sm:inline">Visualizar</span>
-            <span className="sm:hidden">Ver</span>
-          </TabsTrigger>
-
-          {/* ABA 4: Exportação (sempre visível) */}
-          <TabsTrigger value="exportacao" className="flex items-center gap-1">
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Exportar</span>
-            <span className="sm:hidden">Exp.</span>
-          </TabsTrigger>
-
-          {/* ABA 5: Analytics (sempre visível) */}
-          <TabsTrigger value="analytics" className="flex items-center gap-1">
-            <PieChart className="h-4 w-4" />
-            <span className="hidden sm:inline">Analytics</span>
-            <span className="sm:hidden">Stats</span>
-          </TabsTrigger>
-
-          {/* ABAS CONTEXTUAIS - Aparecem dinamicamente */}
-          {tabs.showMap && (
-            <TabsTrigger value="mapa" className="flex items-center gap-1">
-              <Map className="h-4 w-4" />
-              <span className="hidden sm:inline">Mapa</span>
-            </TabsTrigger>
-          )}
-          {tabs.showCalendar && (
-            <TabsTrigger value="agenda" className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Agenda</span>
-            </TabsTrigger>
-          )}
-          {tabs.showGallery && (
-            <TabsTrigger value="galeria" className="flex items-center gap-1">
-              <Images className="h-4 w-4" />
-              <span className="hidden sm:inline">Galeria</span>
-            </TabsTrigger>
-          )}
-          {tabs.showLinkedCitizens && (
-            <TabsTrigger value="vinculos" className="flex items-center gap-1">
-              <Network className="h-4 w-4" />
-              <span className="hidden sm:inline">Vínculos</span>
-            </TabsTrigger>
-          )}
         </TabsList>
 
         {/* CONTEÚDO DAS ABAS */}
@@ -272,53 +210,13 @@ export function DynamicModuleView({ department, module }: DynamicModuleViewProps
           />
         </TabsContent>
 
-        {/* ABA 2: Análise de Dados (aprovação granular) */}
-        <TabsContent value="analise">
-          <ModuleDataAnalysisTab
+        {/* ABA 2: Dados Consolidados (inteligente e adaptativo) */}
+        <TabsContent value="consolidados">
+          <ConsolidatedDataTab
             protocols={protocols}
             service={service}
           />
         </TabsContent>
-
-        {/* ABA 3: Visualização Inteligente */}
-        <TabsContent value="visualizacao">
-          <SmartDataVisualization
-            protocols={protocols}
-            service={service}
-          />
-        </TabsContent>
-
-        {/* ABA 4: Exportação */}
-        <TabsContent value="exportacao">
-          <ModuleExportTab
-            protocols={protocols}
-            service={service}
-          />
-        </TabsContent>
-
-        {/* ABA 5: Analytics */}
-        <TabsContent value="analytics">
-          <ModuleAnalyticsTab
-            protocols={protocols}
-            service={service}
-          />
-        </TabsContent>
-
-        {/* ABAS CONTEXTUAIS */}
-        {tabs.showMap && (
-          <TabsContent value="mapa">
-            <Card>
-              <CardHeader>
-                <CardTitle>Mapa de Localiz ações</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-96 bg-muted rounded flex items-center justify-center">
-                  <p className="text-muted-foreground">Mapa interativo será renderizado aqui</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
       </Tabs>
 
       {/* Modal de Criação */}
