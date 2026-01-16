@@ -283,12 +283,29 @@ export function protocolToConsolidatedRecord(protocol: any, config: Consolidated
     status = protocol.status === 'CONCLUIDO' ? 'APROVADO' : 'AGUARDANDO';
   }
 
+  // Extrair nome do cidadão (buscar em múltiplos lugares)
+  const citizenName =
+    protocol.citizen?.nome ||
+    protocol.citizen?.name ||
+    data.nome ||
+    data.nome_completo ||
+    data.name ||
+    data.razao_social ||
+    'Não informado';
+
+  // Extrair CPF do cidadão (buscar em múltiplos lugares)
+  const citizenCpf =
+    protocol.citizen?.cpf ||
+    data.cpf ||
+    data.cnpj ||
+    undefined;
+
   return {
     id: protocol.id,
     protocolNumber: protocol.number,
     approvedAt: new Date(protocol.updatedAt || protocol.createdAt),
-    citizenName: protocol.citizen?.nome || 'Não informado',
-    citizenCpf: protocol.citizen?.cpf,
+    citizenName,
+    citizenCpf,
     data,
     status,
     metadata: {
