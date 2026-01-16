@@ -219,7 +219,7 @@ export default function ProtocolDetailsPage() {
     setActiveTab('messages');
   };
 
-  const handleDownloadDocument = () => {
+  const handleGoToGenerated = () => {
     setActiveTab('generated');
   };
 
