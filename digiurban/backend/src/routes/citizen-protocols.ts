@@ -1161,4 +1161,535 @@ router.get('/:id/citizen-links', async (req, res) => {
   }
 });
 
+// ========================================
+// PROTOCOL DOCUMENTS
+// ========================================
+
+/**
+ * POST /api/citizen/protocols/:id/documents/upload
+ * Upload de documento adicional pelo cidadão
+ */
+router.post('/:id/documents/upload', upload.single('document'), async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId } = req.params;
+    const file = req.file;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    if (!file) {
+      return res.status(400).json({ error: 'Documento é obrigatório' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Mover arquivo para diretório do protocolo
+    const protocolDir = ensureProtocolDir(protocolId);
+    const newPath = path.join(protocolDir, file.filename);
+    fs.renameSync(file.path, newPath);
+
+    // Criar documento no banco
+    const document = await prisma.protocolDocument.create({
+      data: {
+        protocolId,
+        documentType: 'DOCUMENTO_ADICIONAL',
+        isRequired: false,
+        status: DocumentStatus.UPLOADED,
+        fileName: file.originalname,
+        fileUrl: getProtocolFileUrl(protocolId, file.filename),
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        uploadedAt: new Date(),
+        uploadedBy: citizenId
+      }
+    });
+
+    // Criar histórico
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId,
+        action: 'DOCUMENTO_ENVIADO',
+        comment: `Documento adicional enviado: ${file.originalname}`,
+        timestamp: new Date()
+      }
+    });
+
+    return res.json({
+      success: true,
+      document
+    });
+  } catch (error: any) {
+    console.error('Error uploading document:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao enviar documento'
+    });
+  }
+});
+
+/**
+ * GET /api/citizen/protocols/:id/documents
+ * Listar documentos enviados pelo cidadão para o protocolo
+ */
+router.get('/:id/documents', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId } = req.params;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Buscar documentos do protocolo
+    const documents = await prisma.protocolDocument.findMany({
+      where: { protocolId },
+      orderBy: { uploadedAt: 'desc' }
+    });
+
+    // Mapear para formato esperado pelo frontend
+    const mappedDocuments = documents.map(doc => ({
+      id: doc.id,
+      type: doc.documentType,
+      fileName: doc.fileName || 'Documento',
+      status: doc.status,
+      uploadedAt: doc.uploadedAt?.toISOString() || new Date().toISOString(),
+      reviewedAt: doc.validatedAt?.toISOString() || null,
+      rejectionReason: doc.rejectionReason || null,
+      fileUrl: doc.fileUrl || null,
+      fileSize: doc.fileSize || null,
+      mimeType: doc.mimeType || null
+    }));
+
+    return res.json({
+      success: true,
+      documents: mappedDocuments
+    });
+  } catch (error: any) {
+    console.error('Error fetching protocol documents:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao buscar documentos do protocolo'
+    });
+  }
+});
+
+/**
+ * GET /api/citizen/protocols/:id/documents/:documentId/download
+ * Download ou visualização de um documento
+ */
+router.get('/:id/documents/:documentId/download', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId, documentId } = req.params;
+    const inline = req.query.inline === 'true';
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Buscar documento
+    const document = await prisma.protocolDocument.findFirst({
+      where: {
+        id: documentId,
+        protocolId
+      }
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: 'Documento não encontrado'
+      });
+    }
+
+    if (!document.fileUrl) {
+      return res.status(404).json({
+        success: false,
+        error: 'Arquivo não disponível'
+      });
+    }
+
+    // Se fileUrl é uma URL externa
+    if (document.fileUrl.startsWith('http')) {
+      return res.redirect(document.fileUrl);
+    }
+
+    // Arquivo local - buscar e enviar
+    const { getProtocolFilePath, extractFilename } = await import('../config/upload');
+    const filename = extractFilename(document.fileUrl);
+    const filePath = getProtocolFilePath(protocolId, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Arquivo não encontrado no servidor'
+      });
+    }
+
+    // Detectar MIME type
+    const guessMimeFromExtension = (fileName?: string): string => {
+      if (!fileName) return 'application/octet-stream';
+      const lower = fileName.toLowerCase();
+      if (lower.endsWith('.pdf')) return 'application/pdf';
+      if (lower.match(/\.(jpg|jpeg)$/)) return 'image/jpeg';
+      if (lower.endsWith('.png')) return 'image/png';
+      if (lower.endsWith('.gif')) return 'image/gif';
+      if (lower.endsWith('.webp')) return 'image/webp';
+      return 'application/octet-stream';
+    };
+
+    const mimeType = document.mimeType || guessMimeFromExtension(document.fileName || undefined);
+
+    // Configurar headers
+    const disposition = inline ? 'inline' : 'attachment';
+    res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'}"`);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    // Stream do arquivo
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error: any) {
+    console.error('Error downloading document:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao fazer download do documento'
+    });
+  }
+});
+
+// ========================================
+// GET GENERATED DOCUMENTS (READ-ONLY)
+// ========================================
+
+/**
+ * GET /api/citizen/protocols/:id/generated-documents
+ * Listar documentos gerados pelo sistema para o protocolo
+ */
+router.get('/:id/generated-documents', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId } = req.params;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Buscar documentos gerados - usar tabela GeneratedDocument se existir
+    // Por enquanto, retornar baseado em documentos do tipo GENERATED ou protocolo concluído
+    const generatedDocuments: any[] = [];
+
+    // Se protocolo está concluído, gerar documentos automaticamente
+    if (protocol.status === 'CONCLUIDO') {
+      // Buscar documentos do tipo certificado/certidão
+      const docs = await prisma.protocolDocument.findMany({
+        where: {
+          protocolId,
+          documentType: {
+            in: ['CERTIDAO', 'CERTIFICADO', 'COMPROVANTE', 'DOCUMENTO_GERADO']
+          }
+        },
+        orderBy: { uploadedAt: 'desc' }
+      });
+
+      for (const doc of docs) {
+        generatedDocuments.push({
+          id: doc.id,
+          type: doc.documentType,
+          name: doc.fileName || `${doc.documentType} - Protocolo ${protocol.number}`,
+          generatedAt: doc.uploadedAt?.toISOString() || protocol.updatedAt.toISOString(),
+          expiresAt: null,
+          validationCode: `VAL-2026-${protocol.number.replace(/[^0-9]/g, '')}`,
+          fileUrl: doc.fileUrl,
+          metadata: {
+            emitente: 'Sistema',
+            validade: 'Indeterminada',
+            protocolo: protocol.number
+          }
+        });
+      }
+    }
+
+    return res.json({
+      success: true,
+      documents: generatedDocuments
+    });
+  } catch (error: any) {
+    console.error('Error fetching generated documents:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao buscar documentos gerados'
+    });
+  }
+});
+
+/**
+ * GET /api/citizen/protocols/:id/generated-documents/:documentId/download
+ * Download de documento gerado
+ */
+router.get('/:id/generated-documents/:documentId/download', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId, documentId } = req.params;
+    const inline = req.query.inline === 'true';
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Redirecionar para o endpoint de download de documentos normais
+    // pois documentos gerados também são armazenados na mesma tabela
+    const document = await prisma.protocolDocument.findFirst({
+      where: {
+        id: documentId,
+        protocolId
+      }
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: 'Documento não encontrado'
+      });
+    }
+
+    if (!document.fileUrl) {
+      return res.status(404).json({
+        success: false,
+        error: 'Arquivo não disponível'
+      });
+    }
+
+    // Se fileUrl é uma URL externa
+    if (document.fileUrl.startsWith('http')) {
+      return res.redirect(document.fileUrl);
+    }
+
+    // Arquivo local
+    const { getProtocolFilePath, extractFilename } = await import('../config/upload');
+    const filename = extractFilename(document.fileUrl);
+    const filePath = getProtocolFilePath(protocolId, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Arquivo não encontrado no servidor'
+      });
+    }
+
+    const guessMimeFromExtension = (fileName?: string): string => {
+      if (!fileName) return 'application/pdf';
+      const lower = fileName.toLowerCase();
+      if (lower.endsWith('.pdf')) return 'application/pdf';
+      if (lower.match(/\.(jpg|jpeg)$/)) return 'image/jpeg';
+      if (lower.endsWith('.png')) return 'image/png';
+      return 'application/pdf';
+    };
+
+    const mimeType = document.mimeType || guessMimeFromExtension(document.fileName || undefined);
+
+    const disposition = inline ? 'inline' : 'attachment';
+    res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'}"`);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error: any) {
+    console.error('Error downloading generated document:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao fazer download do documento'
+    });
+  }
+});
+
+// ========================================
+// GET UNREAD MESSAGES COUNT
+// ========================================
+
+/**
+ * GET /api/citizen/protocols/:id/interactions/unread-count
+ * Contar mensagens não lidas do protocolo
+ */
+router.get('/:id/interactions/unread-count', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId } = req.params;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Contar mensagens não lidas (mensagens do servidor/sistema para o cidadão)
+    const unreadCount = await prisma.protocolInteraction.count({
+      where: {
+        protocolId,
+        isInternal: false,
+        isRead: false,
+        authorType: {
+          in: ['SERVER', 'SYSTEM']
+        }
+      }
+    });
+
+    return res.json({
+      success: true,
+      unreadCount
+    });
+  } catch (error: any) {
+    console.error('Error counting unread messages:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao contar mensagens não lidas'
+    });
+  }
+});
+
+/**
+ * PATCH /api/citizen/protocols/:id/interactions/mark-read
+ * Marcar todas as mensagens como lidas
+ */
+router.patch('/:id/interactions/mark-read', async (req, res) => {
+  try {
+    const citizenId = (req as any).citizen?.id;
+    const { id: protocolId } = req.params;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Marcar todas as mensagens como lidas
+    await prisma.protocolInteraction.updateMany({
+      where: {
+        protocolId,
+        isInternal: false,
+        isRead: false,
+        authorType: {
+          in: ['SERVER', 'SYSTEM']
+        }
+      },
+      data: {
+        isRead: true
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: 'Mensagens marcadas como lidas'
+    });
+  } catch (error: any) {
+    console.error('Error marking messages as read:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao marcar mensagens como lidas'
+    });
+  }
+});
+
 export default router;

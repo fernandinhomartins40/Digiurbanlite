@@ -25,6 +25,8 @@ import { CitizenWorkflowProgress } from '@/components/citizen/CitizenWorkflowPro
 import { CitizenPendingsTab } from '@/components/citizen/CitizenPendingsTab';
 import { CitizenProtocolInteractionsTab } from '@/components/citizen/CitizenProtocolInteractionsTab';
 import { CitizenLinksDisplay } from '@/components/protocol/CitizenLinksDisplay';
+import { CitizenDocumentUploadModal } from '@/components/citizen/CitizenDocumentUploadModal';
+import { CitizenDocumentViewer } from '@/components/citizen/CitizenDocumentViewer';
 
 // Tipos
 import {
@@ -47,9 +49,14 @@ export default function ProtocolDetailsPage() {
   const [documents, setDocuments] = useState<CitizenDocument[]>([]);
   const [generatedDocuments, setGeneratedDocuments] = useState<CitizenGeneratedDocument[]>([]);
   const [interactions, setInteractions] = useState<any[]>([]);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('resumo');
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadDocumentType, setUploadDocumentType] = useState<string>('');
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState<CitizenDocument | null>(null);
 
   // Carregar dados do protocolo
   useEffect(() => {
@@ -79,56 +86,10 @@ export default function ProtocolDetailsPage() {
         };
         setProtocol(protocolWithHistory);
 
-        // TEMPORÁRIO: Dados mockados até endpoints serem implementados
-        // Documentos enviados pelo cidadão
-        setDocuments([
-          {
-            id: '1',
-            type: 'COMPROVANTE_RESIDENCIA',
-            fileName: 'comprovante_luz.pdf',
-            status: 'APPROVED' as const,
-            uploadedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 dias atrás
-            reviewedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 dias atrás
-            rejectionReason: null,
-            fileUrl: '#'
-          },
-          {
-            id: '2',
-            type: 'DOCUMENTO_IDENTIDADE',
-            fileName: 'rg_cpf.pdf',
-            status: 'PENDING' as const,
-            uploadedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 dias atrás
-            reviewedAt: null,
-            rejectionReason: null,
-            fileUrl: '#'
-          }
-        ]);
-
-        // Documentos gerados pelo sistema (se protocolo concluído)
-        if (protocolWithHistory.status === 'CONCLUIDO') {
-          setGeneratedDocuments([
-            {
-              id: '1',
-              type: 'CERTIDAO',
-              name: 'Certidão de Regularidade',
-              generatedAt: protocolWithHistory.updatedAt,
-              expiresAt: null,
-              validationCode: 'VAL-2026-' + protocolWithHistory.number.replace(/[^0-9]/g, ''),
-              fileUrl: '#',
-              metadata: {
-                emitente: protocolWithHistory.department.name,
-                validade: 'Indeterminada'
-              }
-            }
-          ]);
-        } else {
-          setGeneratedDocuments([]);
-        }
-
         // Buscar stages do workflow
         try {
           const stagesData = await apiRequest(`/citizen/protocols/${params.id}/stages`);
-          setStages(stagesData.stages || []);
+          setStages(stagesData.stages || stagesData.data || []);
         } catch (err) {
           console.warn('[ProtocolDetails] Erro ao buscar stages:', err);
           setStages([]);
@@ -137,30 +98,47 @@ export default function ProtocolDetailsPage() {
         // Buscar pendências
         try {
           const pendingsData = await apiRequest(`/citizen/protocols/${params.id}/pendings`);
-          setPendings(pendingsData.pendings || []);
+          setPendings(pendingsData.pendings || pendingsData.data || []);
         } catch (err) {
           console.warn('[ProtocolDetails] Erro ao buscar pendings:', err);
           setPendings([]);
         }
 
-        // TEMPORÁRIO: Endpoints de documentos comentados pois não existem ainda
-        // Buscar documentos
-        // try {
-        //   const docsData = await apiRequest(`/citizen/protocols/${params.id}/documents`);
-        //   setDocuments(docsData.documents || []);
-        // } catch (err) {
-        //   console.warn('[ProtocolDetails] Erro ao buscar documentos:', err);
-        //   setDocuments([]);
-        // }
+        // Buscar documentos enviados
+        try {
+          const docsData = await apiRequest(`/citizen/protocols/${params.id}/documents`);
+          setDocuments(docsData.documents || []);
+        } catch (err) {
+          console.warn('[ProtocolDetails] Erro ao buscar documentos:', err);
+          setDocuments([]);
+        }
 
         // Buscar documentos gerados
-        // try {
-        //   const genDocsData = await apiRequest(`/citizen/protocols/${params.id}/generated-documents`);
-        //   setGeneratedDocuments(genDocsData.documents || []);
-        // } catch (err) {
-        //   console.warn('[ProtocolDetails] Erro ao buscar documentos gerados:', err);
-        //   setGeneratedDocuments([]);
-        // }
+        try {
+          const genDocsData = await apiRequest(`/citizen/protocols/${params.id}/generated-documents`);
+          setGeneratedDocuments(genDocsData.documents || []);
+        } catch (err) {
+          console.warn('[ProtocolDetails] Erro ao buscar documentos gerados:', err);
+          setGeneratedDocuments([]);
+        }
+
+        // Buscar interações
+        try {
+          const interactionsData = await apiRequest(`/citizen/protocols/${params.id}/interactions`);
+          setInteractions(interactionsData.interactions || []);
+        } catch (err) {
+          console.warn('[ProtocolDetails] Erro ao buscar interações:', err);
+          setInteractions([]);
+        }
+
+        // Buscar contagem de mensagens não lidas
+        try {
+          const unreadData = await apiRequest(`/citizen/protocols/${params.id}/interactions/unread-count`);
+          setUnreadMessagesCount(unreadData.unreadCount || 0);
+        } catch (err) {
+          console.warn('[ProtocolDetails] Erro ao buscar mensagens não lidas:', err);
+          setUnreadMessagesCount(0);
+        }
       } else {
         throw new Error('Protocolo não encontrado');
       }
@@ -229,38 +207,77 @@ export default function ProtocolDetailsPage() {
 
   // Callbacks para ações de documentos
   const handleViewDocument = (doc: CitizenDocument) => {
-    // TODO: Implementar visualização de documento
-    toast.info(`Visualizando: ${doc.fileName}`);
-    // Futuramente: abrir modal ou nova aba com visualizador
+    if (!protocol) return;
+
+    // Abrir visualizador de documento
+    setViewingDocument(doc);
+    setViewerOpen(true);
   };
 
   const handleDownloadDocument = (doc: CitizenDocument) => {
-    // TODO: Implementar download de documento
+    if (!protocol) return;
+
+    // Fazer download do documento
+    const downloadUrl = `/api/citizen/protocols/${protocol.id}/documents/${doc.id}/download`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = doc.fileName || 'documento';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     toast.success(`Download iniciado: ${doc.fileName}`);
-    // Futuramente: fazer download real do arquivo
-    // window.open(doc.fileUrl, '_blank');
   };
 
   const handleUploadDocument = (type: string) => {
-    // TODO: Implementar upload de documento
-    toast.info(`Upload de documento tipo: ${type}`);
-    // Futuramente: abrir modal de upload
+    setUploadDocumentType(type);
+    setUploadModalOpen(true);
+  };
+
+  const handleUploadSuccess = () => {
+    // Recarregar documentos após upload bem-sucedido
+    fetchProtocolDetails();
+    toast.success('Documento enviado com sucesso!');
   };
 
   // Callbacks para documentos gerados
   const handleViewGeneratedDocument = (doc: CitizenGeneratedDocument) => {
-    toast.info(`Visualizando: ${doc.name}`);
-    // TODO: Implementar visualização
+    if (!protocol) return;
+
+    // Abrir documento gerado em nova aba
+    const viewUrl = `/api/citizen/protocols/${protocol.id}/generated-documents/${doc.id}/download?inline=true`;
+    window.open(viewUrl, '_blank');
+    toast.info(`Abrindo: ${doc.name}`);
   };
 
   const handleDownloadGeneratedDocument = (doc: CitizenGeneratedDocument) => {
+    if (!protocol) return;
+
+    // Fazer download do documento gerado
+    const downloadUrl = `/api/citizen/protocols/${protocol.id}/generated-documents/${doc.id}/download`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = doc.name || 'documento';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     toast.success(`Download iniciado: ${doc.name}`);
-    // TODO: Implementar download real
   };
 
   const handlePrintGeneratedDocument = (doc: CitizenGeneratedDocument) => {
-    toast.info(`Imprimindo: ${doc.name}`);
-    // TODO: Implementar impressão
+    if (!protocol) return;
+
+    // Abrir documento em nova janela e acionar impressão
+    const printUrl = `/api/citizen/protocols/${protocol.id}/generated-documents/${doc.id}/download?inline=true`;
+    const printWindow = window.open(printUrl, '_blank');
+
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+      toast.info(`Preparando impressão: ${doc.name}`);
+    } else {
+      toast.error('Não foi possível abrir janela de impressão');
+    }
   };
 
   const canCancelProtocol = () => {
@@ -273,7 +290,6 @@ export default function ProtocolDetailsPage() {
     p => p.status === 'OPEN' && p.requiresCitizenAction === true
   ).length;
 
-  const unreadMessagesCount = 0; // TODO: Implementar contagem de mensagens não lidas
   const messagesCount = interactions.length;
 
   // Estados de loading e erro
@@ -327,7 +343,7 @@ export default function ProtocolDetailsPage() {
           onBack={handleBack}
           onUploadDocuments={handleUploadDocuments}
           onViewMessages={handleViewMessages}
-          onDownloadDocument={handleDownloadDocument}
+          onDownloadDocument={handleGoToGenerated}
           onRefresh={fetchProtocolDetails}
         />
 
@@ -350,7 +366,7 @@ export default function ProtocolDetailsPage() {
           estimatedDays={protocol.service.estimatedDays || undefined}
           completedAt={protocol.status === 'CONCLUIDO' ? protocol.updatedAt : undefined}
           onGoToPendings={handleGoToPendings}
-          onDownloadDocument={handleDownloadDocument}
+          onDownloadDocument={handleGoToGenerated}
         />
 
         {/* Layout Principal: Tabs (70%) + Sidebar (30%) */}
@@ -480,6 +496,34 @@ export default function ProtocolDetailsPage() {
             />
           </div>
         </div>
+
+        {/* Modal de Upload de Documentos */}
+        {protocol && (
+          <CitizenDocumentUploadModal
+            isOpen={uploadModalOpen}
+            onClose={() => setUploadModalOpen(false)}
+            protocolId={protocol.id}
+            documentType={uploadDocumentType}
+            onUploadSuccess={handleUploadSuccess}
+            apiRequest={apiRequest}
+          />
+        )}
+
+        {/* Visualizador de Documentos */}
+        {protocol && viewingDocument && (
+          <CitizenDocumentViewer
+            isOpen={viewerOpen}
+            onClose={() => {
+              setViewerOpen(false);
+              setViewingDocument(null);
+            }}
+            documentUrl={viewingDocument.fileUrl || ''}
+            documentName={viewingDocument.fileName}
+            mimeType={viewingDocument.mimeType || undefined}
+            protocolId={protocol.id}
+            documentId={viewingDocument.id}
+          />
+        )}
       </div>
     </CitizenLayout>
   );

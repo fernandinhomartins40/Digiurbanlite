@@ -20,11 +20,13 @@ interface Document {
   id: string
   type: string
   fileName: string
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'UPLOADED'
   uploadedAt: string
   reviewedAt?: string | null
   rejectionReason?: string | null
   fileUrl?: string
+  fileSize?: number | null
+  mimeType?: string | null
 }
 
 interface CitizenDocumentsTabProps {
@@ -56,6 +58,13 @@ export function CitizenDocumentsTab({
           <Badge className="bg-red-50 text-red-700 border-red-200">
             <XCircle className="h-3 w-3 mr-1" />
             Rejeitado
+          </Badge>
+        )
+      case 'UPLOADED':
+        return (
+          <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Enviado
           </Badge>
         )
       case 'PENDING':

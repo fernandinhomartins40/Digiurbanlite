@@ -65,11 +65,13 @@ export interface CitizenDocument {
   id: string;
   type: string;
   fileName: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'UPLOADED';
   uploadedAt: string;
   reviewedAt?: string | null;
   rejectionReason?: string | null;
   fileUrl?: string;
+  fileSize?: number | null;
+  mimeType?: string | null;
 }
 
 export interface CitizenGeneratedDocument {
