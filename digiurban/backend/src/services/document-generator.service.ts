@@ -10,6 +10,10 @@ import { PrismaClient } from '@prisma/client';
 import Handlebars from 'handlebars';
 import fs from 'fs/promises';
 import path from 'path';
+import {
+  generateUniqueValidationCode,
+  generateDocumentHash
+} from '../utils/validation-code.utils';
 
 const prisma = new PrismaClient();
 
@@ -378,7 +382,25 @@ export async function generateDocument(input: GenerateDocumentInput) {
     // 6. Obter tamanho do arquivo
     const stats = await fs.stat(filePath);
 
-    // 7. Salvar registro no banco
+    // 7. Gerar código de validação e hash do documento
+    console.log('   → Gerando código de validação...');
+    const validationCode = await generateUniqueValidationCode(prisma);
+    console.log(`   ✓ Código de validação: ${validationCode}`);
+
+    console.log('   → Calculando hash SHA-256 do documento...');
+    const documentHash = await generateDocumentHash(filePath);
+    console.log(`   ✓ Hash: ${documentHash.substring(0, 16)}...`);
+
+    // 8. Calcular data de expiração (se o template tiver)
+    let expiresAt: Date | null = null;
+    if ((template as any).expirationDays) {
+      const days = (template as any).expirationDays;
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + days);
+      console.log(`   ✓ Data de expiração: ${expiresAt.toISOString()} (${days} dias)`);
+    }
+
+    // 9. Salvar registro no banco com validação
     const generatedDoc = await prisma.generatedDocument.create({
       data: {
         protocolId,
@@ -389,11 +411,17 @@ export async function generateDocument(input: GenerateDocumentInput) {
         mimeType: 'application/pdf',
         generatedBy,
         templateVersion: template.version,
-        variablesUsed: variables as any
+        variablesUsed: variables as any,
+        // SISTEMA DE VALIDAÇÃO
+        validationCode,
+        documentHash,
+        expiresAt,
+        validatedCount: 0
       }
     });
 
     console.log(`✅ Documento gerado: ${fileName} (${(stats.size / 1024).toFixed(2)} KB)`);
+    console.log(`   🔐 Código de validação: ${validationCode}`);
 
     return generatedDoc;
 

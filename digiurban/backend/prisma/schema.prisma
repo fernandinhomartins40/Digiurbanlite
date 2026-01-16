@@ -78,6 +78,12 @@ model User {
   fieldApprovals FieldApproval[] @relation("FieldApprovals")
   fieldChanges   FieldChange[]   @relation("FieldChanges")
 
+  // Certificados digitais
+  certificates DigitalCertificate[] @relation("UserCertificates")
+
+  // Revogações de certificados
+  revokedCertificates CertificateRevocationList[] @relation("CRLRevokedBy")
+
   @@map("users")
 }
 
@@ -4722,13 +4728,23 @@ model GeneratedDocument {
   isActive        Boolean  @default(true)   // Soft delete
   deletedAt       DateTime?
 
+  // SISTEMA DE VALIDAÇÃO DE DOCUMENTOS
+  validationCode  String?  @unique          // Código único de validação (VAL-YYYY-XXXXXX-CCCC)
+  documentHash    String?                   // Hash SHA-256 do documento para verificação de integridade
+  expiresAt       DateTime?                 // Data de expiração (opcional)
+  validatedCount  Int      @default(0)      // Contador de validações públicas
+  lastValidatedAt DateTime?                 // Última validação pública
+
   // Relacionamentos
   protocol        ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
   template        DocumentTemplate   @relation(fields: [templateId], references: [id])
+  signatures      Signature[]
 
   @@index([protocolId])
   @@index([templateId])
   @@index([generatedAt])
+  @@index([validationCode])
+  @@index([documentHash])
   @@map("generated_documents")
 }
 
@@ -4793,3 +4809,140 @@ model CitizenCategoryAssignment {
   @@map("citizen_category_assignments")
 }
 
+
+
+// ========================================
+// SISTEMA DE ASSINATURA DIGITAL MUNICIPAL
+// ========================================
+
+enum CertificateType {
+  SERVER    // Servidores públicos municipais
+  CITIZEN   // Cidadãos
+  SYSTEM    // Sistemas/APIs
+}
+
+enum CertStatus {
+  ACTIVE    // Certificado ativo
+  REVOKED   // Certificado revogado
+  EXPIRED   // Certificado expirado
+  SUSPENDED // Certificado suspenso temporariamente
+}
+
+enum RevocationReason {
+  UNSPECIFIED          // Não especificado
+  KEY_COMPROMISE       // Chave privada comprometida
+  CA_COMPROMISE        // Autoridade certificadora comprometida
+  AFFILIATION_CHANGED  // Mudança de lotação/desligamento
+  SUPERSEDED           // Substituído por novo certificado
+  CESSATION            // Cessação de operação
+  CERTIFICATE_HOLD     // Suspensão temporária
+}
+
+// Certificados Digitais
+model DigitalCertificate {
+  id              String          @id @default(cuid())
+  userId          String          // FK para User (servidor ou cidadão)
+  certificateType CertificateType // Tipo de certificado
+
+  // Informações do Certificado X.509
+  serialNumber    String          @unique // Número de série único
+  commonName      String                  // Nome do titular (CN)
+  email           String                  // Email do titular
+  organization    String          @default("Prefeitura Municipal") // O=
+  department      String?                 // OU=
+
+  // Chaves Criptográficas (RSA)
+  publicKey       String          @db.Text // Chave pública (formato PEM)
+  privateKeyHash  String                   // Hash SHA-256 da chave privada (NUNCA armazenar a chave!)
+  keySize         Int             @default(2048) // Tamanho da chave em bits (2048, 3072, 4096)
+
+  // Validade
+  issuedAt        DateTime        @default(now())
+  expiresAt       DateTime                         // Geralmente 1-2 anos
+  revokedAt       DateTime?
+  revocationReason RevocationReason?
+
+  // Status
+  status          CertStatus      @default(ACTIVE)
+  isActive        Boolean         @default(true)
+
+  // Metadados da CA
+  issuerCA        String          @default("CA-MUNICIPAL-001") // Identificador da CA emissora
+  certificateChain String         @db.Text // Cadeia completa de certificação (PEM)
+  thumbprint      String                   // SHA-256 fingerprint do certificado
+
+  // Auditoria
+  createdBy       String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relacionamentos
+  user            User            @relation("UserCertificates", fields: [userId], references: [id], onDelete: Cascade)
+  signatures      Signature[]
+
+  @@index([userId])
+  @@index([serialNumber])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([thumbprint])
+  @@map("digital_certificates")
+}
+
+// Assinaturas Digitais em Documentos
+model Signature {
+  id              String    @id @default(cuid())
+  documentId      String    // FK para GeneratedDocument
+  certificateId   String    // FK para DigitalCertificate
+
+  // Dados da Assinatura Criptográfica
+  signatureValue  String    @db.Text // Assinatura RSA em base64
+  signatureHash   String             // SHA-256 do documento no momento da assinatura
+  signatureAlgo   String    @default("SHA256withRSA") // Algoritmo usado
+
+  // Metadados da Assinatura
+  signedAt        DateTime  @default(now())
+  ipAddress       String                      // IP do assinante
+  userAgent       String?                     // User agent do navegador
+  geolocation     Json?                       // Lat/Long opcional para auditoria
+
+  // Validação
+  isValid         Boolean   @default(true)    // Flag de validade
+  validatedAt     DateTime?                   // Última vez que foi validada
+  validationCount Int       @default(0)       // Quantas vezes foi validada
+
+  // Auditoria
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relacionamentos
+  document        GeneratedDocument    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  certificate     DigitalCertificate   @relation(fields: [certificateId], references: [id], onDelete: Restrict)
+
+  @@index([documentId])
+  @@index([certificateId])
+  @@index([signedAt])
+  @@index([isValid])
+  @@map("signatures")
+}
+
+// Lista de Revogação de Certificados (CRL - Certificate Revocation List)
+model CertificateRevocationList {
+  id              String           @id @default(cuid())
+  serialNumber    String                      // Número de série do certificado revogado
+  certificateId   String?                     // FK opcional para DigitalCertificate
+  reason          RevocationReason             // Motivo da revogação
+  revokedAt       DateTime         @default(now())
+  revokedBy       String                       // userId de quem revogou
+  publishedAt     DateTime         @default(now())
+
+  // Metadados
+  comments        String?          @db.Text    // Comentários sobre a revogação
+
+  // Relacionamentos
+  revokedByUser   User             @relation("CRLRevokedBy", fields: [revokedBy], references: [id])
+
+  @@index([serialNumber])
+  @@index([revokedAt])
+  @@index([publishedAt])
+  @@map("certificate_revocation_list")
+}

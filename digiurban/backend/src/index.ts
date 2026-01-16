@@ -107,6 +107,32 @@ console.log('   ✅ citizen-auth importado');
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/citizen/auth', citizenAuthRoutes);
 
+// ============================================================
+// ROTAS PÚBLICAS (SEM AUTENTICAÇÃO)
+// ============================================================
+console.log('🌐 Carregando rotas públicas...');
+try {
+  console.log('   → public-validation...');
+  const publicValidationRoutes = require('./routes/public-validation.routes').default;
+  app.use('/api/public/validate', publicValidationRoutes);
+  console.log('   ✓ public-validation carregado');
+} catch (e) {
+  console.error('❌ public-validation:', e);
+}
+
+// ============================================================
+// ROTAS DE CERTIFICADOS E ASSINATURAS DIGITAIS
+// ============================================================
+console.log('🔐 Carregando rotas de certificados...');
+try {
+  console.log('   → certificates...');
+  const certificatesRoutes = require('./routes/certificates.routes').default;
+  app.use('/api/certificates', certificatesRoutes);
+  console.log('   ✓ certificates carregado');
+} catch (e) {
+  console.error('❌ certificates:', e);
+}
+
 // Rota Super Admin (gerenciamento do município single tenant)
 console.log('   Carregando super-admin...');
 const superAdminRoutes = require('./routes/super-admin').default;
