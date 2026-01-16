@@ -40,7 +40,7 @@ export async function issueServerCertificate(input: IssueCertificateInput) {
     { name: 'extKeyUsage', clientAuth: true, emailProtection: true },
   ]);
 
-  cert.sign(caPrivateKey, forge.md.sha256.create());
+  cert.sign(caPrivateKey as any, forge.md.sha256.create());
 
   const publicKeyPem = forge.pki.publicKeyToPem(keys.publicKey);
   const privateKeyPem = forge.pki.privateKeyToPem(keys.privateKey);
@@ -120,7 +120,7 @@ function generateDefaultCACert(): string {
   cert.setSubject(attrs);
   cert.setIssuer(attrs);
   cert.setExtensions([{ name: 'basicConstraints', cA: true }]);
-  cert.sign(keys.privateKey, forge.md.sha256.create());
+  cert.sign(keys.privateKey as any, forge.md.sha256.create());
 
   return forge.pki.certificateToPem(cert);
 }
