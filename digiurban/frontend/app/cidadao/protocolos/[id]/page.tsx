@@ -79,6 +79,52 @@ export default function ProtocolDetailsPage() {
         };
         setProtocol(protocolWithHistory);
 
+        // TEMPORÁRIO: Dados mockados até endpoints serem implementados
+        // Documentos enviados pelo cidadão
+        setDocuments([
+          {
+            id: '1',
+            type: 'COMPROVANTE_RESIDENCIA',
+            fileName: 'comprovante_luz.pdf',
+            status: 'APPROVED' as const,
+            uploadedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 dias atrás
+            reviewedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 dias atrás
+            rejectionReason: null,
+            fileUrl: '#'
+          },
+          {
+            id: '2',
+            type: 'DOCUMENTO_IDENTIDADE',
+            fileName: 'rg_cpf.pdf',
+            status: 'PENDING' as const,
+            uploadedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 dias atrás
+            reviewedAt: null,
+            rejectionReason: null,
+            fileUrl: '#'
+          }
+        ]);
+
+        // Documentos gerados pelo sistema (se protocolo concluído)
+        if (protocolWithHistory.status === 'CONCLUIDO') {
+          setGeneratedDocuments([
+            {
+              id: '1',
+              type: 'CERTIDAO',
+              name: 'Certidão de Regularidade',
+              generatedAt: protocolWithHistory.updatedAt,
+              expiresAt: null,
+              validationCode: 'VAL-2026-' + protocolWithHistory.number.replace(/[^0-9]/g, ''),
+              fileUrl: '#',
+              metadata: {
+                emitente: protocolWithHistory.department.name,
+                validade: 'Indeterminada'
+              }
+            }
+          ]);
+        } else {
+          setGeneratedDocuments([]);
+        }
+
         // Buscar stages do workflow
         try {
           const stagesData = await apiRequest(`/citizen/protocols/${params.id}/stages`);
@@ -97,23 +143,24 @@ export default function ProtocolDetailsPage() {
           setPendings([]);
         }
 
+        // TEMPORÁRIO: Endpoints de documentos comentados pois não existem ainda
         // Buscar documentos
-        try {
-          const docsData = await apiRequest(`/citizen/protocols/${params.id}/documents`);
-          setDocuments(docsData.documents || []);
-        } catch (err) {
-          console.warn('[ProtocolDetails] Erro ao buscar documentos:', err);
-          setDocuments([]);
-        }
+        // try {
+        //   const docsData = await apiRequest(`/citizen/protocols/${params.id}/documents`);
+        //   setDocuments(docsData.documents || []);
+        // } catch (err) {
+        //   console.warn('[ProtocolDetails] Erro ao buscar documentos:', err);
+        //   setDocuments([]);
+        // }
 
         // Buscar documentos gerados
-        try {
-          const genDocsData = await apiRequest(`/citizen/protocols/${params.id}/generated-documents`);
-          setGeneratedDocuments(genDocsData.documents || []);
-        } catch (err) {
-          console.warn('[ProtocolDetails] Erro ao buscar documentos gerados:', err);
-          setGeneratedDocuments([]);
-        }
+        // try {
+        //   const genDocsData = await apiRequest(`/citizen/protocols/${params.id}/generated-documents`);
+        //   setGeneratedDocuments(genDocsData.documents || []);
+        // } catch (err) {
+        //   console.warn('[ProtocolDetails] Erro ao buscar documentos gerados:', err);
+        //   setGeneratedDocuments([]);
+        // }
       } else {
         throw new Error('Protocolo não encontrado');
       }
