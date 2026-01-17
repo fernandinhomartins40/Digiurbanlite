@@ -129,13 +129,7 @@ export default function CitizenDashboard() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Auto-selecionar DigiBot em mobile na primeira carga
-  useEffect(() => {
-    if (isMobileView && !selectedConversation && citizen) {
-      setSelectedConversation(BOT_CONVERSATION);
-      setShowConversationsList(false);
-    }
-  }, [isMobileView, selectedConversation, citizen]);
+  // Não auto-selecionar mais - usuário escolhe da lista
 
   // Carregar mensagens quando uma conversa é selecionada
   useEffect(() => {
@@ -404,7 +398,7 @@ export default function CitizenDashboard() {
   }
 
   return (
-    <div className="h-screen flex bg-gray-50 overflow-hidden pb-0 lg:pb-0">
+    <div className="h-screen flex bg-gray-50 overflow-hidden">
       {/* Sidebar Menu Lateral */}
       {showSidebar && (
         <>
@@ -695,10 +689,7 @@ export default function CitizenDashboard() {
             </div>
 
             {/* Mensagens */}
-            <ScrollArea className={cn(
-              "flex-1 p-4 bg-gray-50",
-              isMobileView && "pb-36"
-            )}>
+            <ScrollArea className="flex-1 p-4 bg-gray-50">
               {isLoadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -771,10 +762,7 @@ export default function CitizenDashboard() {
             </ScrollArea>
 
             {/* Input de Mensagem */}
-            <form onSubmit={handleSendMessage} className={cn(
-              "p-4 border-t bg-white",
-              isMobileView ? "fixed bottom-[72px] left-0 right-0 z-30 shadow-[0_-2px_8px_rgba(0,0,0,0.08)]" : ""
-            )}>
+            <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
               <div className="flex items-center gap-2 max-w-4xl mx-auto">
                 <Button type="button" variant="ghost" size="icon" className="text-gray-500">
                   <Smile className="w-5 h-5" />
@@ -825,8 +813,10 @@ export default function CitizenDashboard() {
         )}
       </div>
 
-      {/* Bottom Navigation - Mobile */}
-      <BottomNavigation />
+      {/* Bottom Navigation - Mobile - Mostrar apenas na lista de conversas */}
+      {(!isMobileView || showConversationsList || !selectedConversation) && (
+        <BottomNavigation />
+      )}
     </div>
   );
 }
