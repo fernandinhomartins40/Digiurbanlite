@@ -119,6 +119,14 @@ jobs:
             # Adicionar BUILD_TIMESTAMP ao .env
             echo "BUILD_TIMESTAMP=$(date +%s)" >> .env
 
+            # Adicionar configurações Ollama ao .env
+            echo "" >> .env
+            echo "# Ollama AI (DigiBot Enhanced)" >> .env
+            echo "USE_OLLAMA=true" >> .env
+            echo "OLLAMA_BASE_URL=http://ollama:11434" >> .env
+            echo "OLLAMA_MODEL=digibot-phi4" >> .env
+            echo "OLLAMA_TIMEOUT=5000" >> .env
+
             # Remover arquivos .db SQLite antigos (não usamos mais)
             echo "Removendo arquivos .db do código-fonte..."
             find . -name "*.db" -type f ! -path "*/node_modules/*" -delete || true
@@ -192,6 +200,57 @@ jobs:
             echo "=== Executando seeds dos Micro Sistemas ==="
             docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed" || echo "⚠️ Seed falhou mas continuando deploy"
             echo "✅ Seeds executados"
+
+            # ===== CONFIGURAR OLLAMA (PHI-4) =====
+            echo "=== Configurando Ollama com Phi-4 ==="
+
+            # Aguardar Ollama ficar disponível
+            echo "Aguardando Ollama iniciar..."
+            for i in {1..30}; do
+              if docker exec digiurban-ollama curl -f http://localhost:11434/api/tags 2>/dev/null; then
+                echo "✅ Ollama está disponível!"
+                break
+              fi
+              echo "Tentativa $i/30, aguardando 5s..."
+              sleep 5
+            done
+
+            # Verificar se modelo Phi-4 já está instalado
+            if docker exec digiurban-ollama ollama list | grep -q "phi4"; then
+              echo "✅ Modelo Phi-4 já instalado"
+            else
+              echo "📥 Baixando modelo Phi-4 (14B - ~8GB, pode levar alguns minutos)..."
+              docker exec digiurban-ollama ollama pull phi4 || echo "⚠️ Falha ao baixar Phi-4, tentando SmolLM3..."
+
+              # Fallback para SmolLM3 se Phi-4 falhar (RAM insuficiente)
+              if ! docker exec digiurban-ollama ollama list | grep -q "phi4"; then
+                echo "📥 Baixando modelo SmolLM3 (3B - mais leve)..."
+                docker exec digiurban-ollama ollama pull smollm3
+                # Atualizar .env para usar SmolLM3
+                sed -i 's/OLLAMA_MODEL=digibot-phi4/OLLAMA_MODEL=digibot-smollm3/' .env
+                MODEL_NAME="smollm3"
+              else
+                MODEL_NAME="phi4"
+              fi
+            fi
+
+            # Copiar Modelfile para container e criar modelo customizado
+            echo "🤖 Criando modelo customizado DigiBot..."
+            docker cp Modelfile digiurban-ollama:/tmp/Modelfile 2>/dev/null || echo "⚠️ Modelfile não encontrado, usando configuração padrão"
+
+            # Criar ou atualizar modelo
+            MODEL_NAME="${MODEL_NAME:-phi4}"
+            docker exec digiurban-ollama ollama create digibot-${MODEL_NAME} -f /tmp/Modelfile 2>/dev/null || echo "⚠️ Usando modelo base sem customização"
+
+            # Testar modelo
+            echo "🧪 Testando modelo DigiBot..."
+            docker exec digiurban-ollama ollama run digibot-${MODEL_NAME} "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo falhou, mas continuando..."
+
+            # Reiniciar backend para aplicar configurações Ollama
+            echo "🔄 Reiniciando backend para aplicar configurações Ollama..."
+            docker-compose -f docker-compose.vps.yml restart digiurban
+
+            echo "✅ Ollama configurado com sucesso!"
 
             # ===== VERIFICAR MIGRATIONS DO ULTRAZEND MESSAGES =====
             echo "=== Verificando migrations do UltraZend Messages ==="
