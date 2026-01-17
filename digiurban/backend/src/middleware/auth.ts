@@ -57,6 +57,50 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
       return;
     }
 
+    // Se for token de cidadão, tratar de forma diferente
+    if (decoded.type === 'citizen') {
+      if (!decoded.citizenId) {
+        res.status(401).json({
+          error: 'Access denied',
+          message: 'Token inválido: citizenId ausente'
+          });
+        return;
+      }
+
+      // Buscar cidadão no banco
+      const citizen = await prisma.citizen.findUnique({
+        where: {
+          id: decoded.citizenId,
+          isActive: true
+        }
+      });
+
+      if (!citizen) {
+        res.status(401).json({
+          error: 'Access denied',
+          message: 'Cidadão não encontrado ou inativo'
+          });
+        return;
+      }
+
+      // Anexar informações do cidadão à requisição
+      (req as any).citizenId = citizen.id;
+      (req as any).citizen = citizen;
+      (req as any).userType = 'citizen';
+
+      next();
+      return;
+    }
+
+    // Para outros tipos de usuário (admin, super_admin, user)
+    if (!decoded.userId) {
+      res.status(401).json({
+        error: 'Access denied',
+        message: 'Token inválido: userId ausente'
+        });
+      return;
+    }
+
     // Buscar usuário no banco para verificar se ainda está ativo
     const user = await prisma.user.findUnique({
       where: {
