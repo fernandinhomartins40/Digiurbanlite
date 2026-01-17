@@ -153,15 +153,67 @@ export class BotServiceEnhanced {
         );
       }
 
-      // 7. Reconhece intenção
+      // 7. Busca serviços relevantes para contexto do Ollama
+      const relevantServices = await this.knowledgeBase.searchServices(message, 10);
+
+      // 8. Reconhece intenção (com Ollama/Phi-4, OpenAI ou Keywords)
       const intent = await this.intentRecognition.recognizeIntent(
         message,
-        context
+        context,
+        relevantServices
       );
 
       console.log(
         `🤖 Intent: ${intent.name} (confiança: ${intent.confidence})`
       );
+
+      // 9. Se Ollama retornou cards sugeridos, usá-los diretamente
+      if (intent.suggestedCards && intent.suggestedCards.length > 0) {
+        const response = this.generateResponseTextForIntent(intent.name);
+
+        const botResponse: BotResponse = {
+          response,
+          messageType: 'card',
+          cards: intent.suggestedCards.map((card, index) => ({
+            id: `ollama-card-${Date.now()}-${index}`,
+            title: card.title,
+            description: card.description,
+            action: {
+              type: 'custom' as const,
+              label: card.actionLabel,
+              url: intent.entities?.serviceId ? `/services/${intent.entities.serviceId}` : undefined,
+            },
+          })),
+          metadata: {
+            intent: intent.name,
+            confidence: intent.confidence,
+            source: 'ollama_generated'
+          },
+        };
+
+        // Salva resposta do bot
+        await prisma.botMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: 'bot',
+            content: botResponse.response,
+            messageType: botResponse.messageType,
+            metadata: botResponse.metadata,
+          },
+        });
+
+        // Registra analytics
+        await this.registerAnalytics(
+          intent.name,
+          true,
+          intent.confidence,
+          Date.now() - startTime,
+          citizenId,
+          false
+        );
+
+        return botResponse;
+      }
 
       // 8. Valida confiança baixa
       if (intent.confidence < 0.5) {
@@ -647,6 +699,27 @@ export class BotServiceEnhanced {
         'Falar com atendente',
       ],
     };
+  }
+
+  /**
+   * Gera texto de resposta baseado na intenção
+   */
+  private generateResponseTextForIntent(intentName: string): string {
+    const responses: Record<string, string> = {
+      AGENDAR_CONSULTA: '📅 Ótimo! Vou te ajudar a agendar uma consulta. Aqui estão as opções disponíveis:',
+      SOLICITAR_SERVICO: '📋 Aqui estão os serviços que encontrei para você:',
+      CONSULTAR_PROTOCOLO: '🔍 Vou consultar o status do seu protocolo:',
+      ENVIAR_DOCUMENTO: '📎 Pronto para receber seu documento:',
+      INFORMACAO_SERVICO: 'ℹ️ Aqui estão as informações sobre o serviço:',
+      RECLAMACAO: '📢 Entendi, vou registrar sua reclamação:',
+      ELOGIO: '😊 Que bom ouvir isso! Obrigado pelo feedback:',
+      SAUDACAO: '👋 Olá! Como posso ajudar você hoje?',
+      DESPEDIDA: '👋 Até logo! Qualquer coisa, estou aqui.',
+      AJUDA: '❓ Aqui estão algumas coisas que posso fazer por você:',
+      OUTROS: '🤔 Aqui estão algumas sugestões do que posso ajudar:',
+    };
+
+    return responses[intentName] || '✨ Aqui está o que encontrei para você:';
   }
 
   /**

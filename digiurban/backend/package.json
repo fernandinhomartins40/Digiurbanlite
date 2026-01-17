@@ -47,7 +47,13 @@
     "diagnose:full": "npm run diagnose && npm run diagnose:server",
     "clean": "rm -rf dist node_modules/.cache",
     "clean:full": "rm -rf dist node_modules && npm install",
-    "kill:node": "taskkill /F /IM node.exe /T || true"
+    "kill:node": "taskkill /F /IM node.exe /T || true",
+    "ollama:setup": "bash ../../scripts/setup-ollama.sh",
+    "ollama:deploy": "bash ../../scripts/deploy-ollama.sh",
+    "train-phi4": "tsx ../../scripts/train-phi4.ts",
+    "train-phi4:generate": "tsx ../../scripts/train-phi4.ts generate",
+    "train-phi4:test": "tsx ../../scripts/train-phi4.ts test",
+    "train-phi4:all": "tsx ../../scripts/train-phi4.ts all"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

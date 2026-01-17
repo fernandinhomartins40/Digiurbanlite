@@ -1,31 +1,44 @@
 import OpenAI from 'openai';
+import { OllamaService } from './OllamaService';
 
 export interface Intent {
   name: string;
   confidence: number;
   entities?: Record<string, any>;
+  suggestedCards?: Array<{
+    title: string;
+    description: string;
+    actionLabel: string;
+  }>;
 }
 
 export interface Context {
   lastIntent?: string;
   lastMessage?: string;
   conversationHistory?: Array<{ role: string; content: string }>;
+  messages?: Array<{ sender: string; content: string }>;
 }
 
 /**
- * Serviço de reconhecimento de intenções usando OpenAI GPT-4
+ * Serviço de reconhecimento de intenções usando Ollama/Phi-4, OpenAI GPT-4 e Keywords
  */
 export class IntentRecognitionService {
   private openai: OpenAI | null = null;
+  private ollamaService: OllamaService;
+  private useOllama: boolean;
   private intents: Map<string, string[]>;
 
   constructor() {
+    // Inicializar Ollama
+    this.ollamaService = new OllamaService();
+    this.useOllama = process.env.USE_OLLAMA !== 'false'; // Ativado por padrão
+
     // Inicializar OpenAI se a API key estiver disponível
     const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey) {
       this.openai = new OpenAI({ apiKey });
     } else {
-      console.warn('⚠️  OPENAI_API_KEY não configurada. Usando reconhecimento de intents baseado em keywords.');
+      console.warn('⚠️  OPENAI_API_KEY não configurada. Usando Ollama/Phi-4 ou reconhecimento baseado em keywords.');
     }
 
     // Mapa de intents e keywords associadas
@@ -87,14 +100,53 @@ export class IntentRecognitionService {
   /**
    * Reconhece a intenção da mensagem do usuário
    */
-  async recognizeIntent(message: string, context?: Context): Promise<Intent> {
-    // Se OpenAI estiver disponível, usar GPT-4
-    if (this.openai) {
-      return await this.recognizeWithOpenAI(message, context);
+  async recognizeIntent(message: string, context?: Context, servicesMetadata?: any[]): Promise<Intent> {
+    // 1. TENTAR OLLAMA/PHI-4 PRIMEIRO (se habilitado)
+    if (this.useOllama) {
+      try {
+        const services = servicesMetadata || [];
+        const ollamaResult = await this.ollamaService.recognizeIntent(
+          message,
+          context || {},
+          services
+        );
+
+        // Se confiança suficiente, usar resultado do Ollama
+        if (ollamaResult.confidence >= 0.6) {
+          console.log(`✅ Ollama reconheceu intent: ${ollamaResult.intent} (confiança: ${ollamaResult.confidence})`);
+          return {
+            name: ollamaResult.intent,
+            confidence: ollamaResult.confidence,
+            entities: ollamaResult.parameters,
+            suggestedCards: ollamaResult.suggestedCards,
+          };
+        }
+      } catch (error: any) {
+        if (error.message !== 'OLLAMA_UNAVAILABLE') {
+          console.error('❌ Ollama error:', error.message);
+        }
+        // Continua para próximo método (fallback)
+      }
     }
 
-    // Caso contrário, usar keyword matching
-    return this.recognizeWithKeywords(message);
+    // 2. FALLBACK PARA OPENAI (se configurado)
+    if (this.openai) {
+      try {
+        const openaiResult = await this.recognizeWithOpenAI(message, context);
+        if (openaiResult.confidence >= 0.5) {
+          console.log(`✅ OpenAI reconheceu intent: ${openaiResult.name} (confiança: ${openaiResult.confidence})`);
+          return openaiResult;
+        }
+      } catch (error) {
+        console.error('❌ OpenAI error:', error);
+        // Continua para keyword matching
+      }
+    }
+
+    // 3. FALLBACK PARA KEYWORD MATCHING (sempre disponível)
+    const keywordResult = this.recognizeWithKeywords(message);
+    console.log(`⚠️ Usando keyword matching: ${keywordResult.name} (confiança: ${keywordResult.confidence})`);
+    return keywordResult;
   }
 
   /**

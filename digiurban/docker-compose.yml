@@ -44,6 +44,10 @@ services:
       - LOGS_DIR=/app/logs
       - BACKUPS_DIR=/app/backups
       - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      - USE_OLLAMA=true
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=digibot-phi4
+      - OLLAMA_TIMEOUT=5000
     volumes:
       - backend_data:/app/data
       - backend_uploads:/app/uploads
@@ -85,6 +89,32 @@ services:
     networks:
       - digiurban
 
+  # Ollama AI Service (Phi-4 para DigiBot)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: digiurban-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - digiurban
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+        reservations:
+          memory: 8G
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
@@ -115,6 +145,8 @@ volumes:
   backend_backups:
     driver: local
   nginx_logs:
+    driver: local
+  ollama_data:
     driver: local
 
 networks:
