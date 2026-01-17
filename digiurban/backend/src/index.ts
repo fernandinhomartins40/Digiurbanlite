@@ -108,6 +108,18 @@ app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/citizen/auth', citizenAuthRoutes);
 
 // ============================================================
+// ROTAS DO BOT (DIGIBOT AI)
+// ============================================================
+console.log('🤖 Carregando rotas do bot...');
+try {
+  const botRoutes = require('./routes/bot').default;
+  app.use('/api/bot', botRoutes);
+  console.log('✅ Rotas do bot carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas do bot:', error);
+}
+
+// ============================================================
 // ROTAS PÚBLICAS (SEM AUTENTICAÇÃO)
 // ============================================================
 console.log('🌐 Carregando rotas públicas...');
