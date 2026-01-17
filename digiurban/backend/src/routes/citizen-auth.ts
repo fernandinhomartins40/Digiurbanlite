@@ -12,6 +12,7 @@ import { accountLockoutMiddleware, recordFailedLogin, resetFailedAttempts } from
 import { logLoginSuccess, logLoginFailed, AUDIT_EVENTS, logAuditEvent } from '../utils/audit-logger';
 import { sanitizeForLog } from '../utils/logger';
 import { transactionalEmailService } from '../lib/email/TransactionalEmailService';
+import messageNotificationService from '../lib/messages/MessageNotificationService';
 
 const router = Router();
 
@@ -205,6 +206,15 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
     } catch (error) {
       console.error('Erro ao processar email de boas-vindas:', error);
       // Não falhamos o cadastro por erro de email
+    }
+
+    // ✅ FASE 1: Enviar mensagem de boas-vindas via mensageiro
+    try {
+      await messageNotificationService.sendWelcomeMessage(citizen.id);
+      console.log('✅ Mensagem de boas-vindas enviada via mensageiro');
+    } catch (msgError) {
+      console.error('Erro ao enviar mensagem de boas-vindas:', msgError);
+      // Não falhamos o cadastro por erro de mensagem
     }
 
     // ✅ Mensagem diferenciada para cidadãos não atribuídos

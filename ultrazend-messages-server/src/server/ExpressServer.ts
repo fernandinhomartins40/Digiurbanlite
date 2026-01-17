@@ -77,6 +77,8 @@ export class ExpressServer {
     this.app.use('/api/channels', this.authMiddleware.bind(this), this.channelRoutes());
     this.app.use('/api/uploads', this.authMiddleware.bind(this), this.uploadRoutes());
     this.app.use('/api/reports', this.authMiddleware.bind(this), this.reportRoutes());
+    this.app.use('/api/contacts', this.authMiddleware.bind(this), this.contactRoutes());
+    this.app.use('/api/users', this.authMiddleware.bind(this), this.userRoutes());
 
     // Admin routes
     this.app.use('/api/admin', this.authMiddleware.bind(this), this.adminRoutes());
@@ -503,6 +505,156 @@ export class ExpressServer {
         res.json(channel);
       } catch (error) {
         logger.error('Error in POST /admin/channels', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    return router;
+  }
+
+  private contactRoutes() {
+    const router = express.Router();
+
+    // Buscar todos os cidadãos (para criar conversa P2P)
+    router.get('/citizens', async (req: AuthRequest, res: Response) => {
+      try {
+        const { search, limit = 50, offset = 0 } = req.query;
+
+        // Buscar cidadãos do banco digiurban
+        const where: any = {
+          isActive: true,
+        };
+
+        if (search && typeof search === 'string') {
+          where.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+            { cpf: { contains: search } },
+          ];
+        }
+
+        const citizens = await prisma.citizen.findMany({
+          where,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            cpf: true,
+            phone: true,
+            avatar: true,
+          },
+          take: parseInt(limit as string, 10),
+          skip: parseInt(offset as string, 10),
+          orderBy: { name: 'asc' },
+        });
+
+        res.json(citizens);
+      } catch (error) {
+        logger.error('Error in GET /contacts/citizens', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // Buscar todos os servidores (para criar conversa com servidor)
+    router.get('/servers', async (req: AuthRequest, res: Response) => {
+      try {
+        const { search, limit = 50, offset = 0 } = req.query;
+
+        const where: any = {
+          isActive: true,
+        };
+
+        if (search && typeof search === 'string') {
+          where.OR = [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+          ];
+        }
+
+        const users = await prisma.user.findMany({
+          where,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            department: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          take: parseInt(limit as string, 10),
+          skip: parseInt(offset as string, 10),
+          orderBy: { name: 'asc' },
+        });
+
+        res.json(users);
+      } catch (error) {
+        logger.error('Error in GET /contacts/servers', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    return router;
+  }
+
+  private userRoutes() {
+    const router = express.Router();
+
+    // Buscar informações de um usuário (Cidadão ou Servidor)
+    router.get('/:userId/:userType', async (req: AuthRequest, res: Response) => {
+      try {
+        const { userId, userType } = req.params;
+
+        if (userType === 'CITIZEN') {
+          const citizen = await prisma.citizen.findUnique({
+            where: { id: userId },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              cpf: true,
+              phone: true,
+              avatar: true,
+            },
+          });
+
+          if (!citizen) {
+            res.status(404).json({ error: 'Citizen not found' });
+            return;
+          }
+
+          res.json(citizen);
+        } else if (userType === 'SERVER') {
+          const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              department: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          });
+
+          if (!user) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+          }
+
+          res.json(user);
+        } else {
+          res.status(400).json({ error: 'Invalid userType. Must be CITIZEN or SERVER' });
+        }
+      } catch (error) {
+        logger.error('Error in GET /users/:userId/:userType', { error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });

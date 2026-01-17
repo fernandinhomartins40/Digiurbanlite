@@ -25,6 +25,7 @@ import {
   getDefaultComment,
   SERVICE_TYPE_VALIDATIONS
 } from '../config/protocol-status.config';
+import messageNotificationService from '../lib/messages/MessageNotificationService';
 
 /**
  * ============================================================================
@@ -330,16 +331,26 @@ export class ProtocolStatusEngine {
     oldStatus: ProtocolStatus,
     newStatus: ProtocolStatus
   ): Promise<void> {
-    // TODO: Implementar sistema de notificações
-    // - Email para cidadão
-    // - Notificação in-app
-    // - SMS (opcional)
-
     console.log(`📧 [Notificação] Protocolo ${protocol.number}: ${oldStatus} → ${newStatus}`);
     console.log(`   Cidadão: ${protocol.citizen?.name || 'N/A'}`);
     console.log(`   Departamento: ${protocol.department?.name || 'N/A'}`);
 
-    // Aqui você pode integrar com serviço de email, SMS, etc.
+    // ✅ FASE 1: Enviar notificação via mensageiro
+    try {
+      await messageNotificationService.notifyProtocolStatusChanged(
+        protocol.id,
+        oldStatus,
+        newStatus
+      );
+      console.log('   ✓ Notificação enviada via mensageiro');
+    } catch (error) {
+      console.error('   ✗ Erro ao enviar notificação via mensageiro:', error);
+      // Não falha a transação se notificação falhar
+    }
+
+    // TODO: Implementar sistema de notificações adicionais
+    // - Email para cidadão
+    // - SMS (opcional)
   }
 
   /**

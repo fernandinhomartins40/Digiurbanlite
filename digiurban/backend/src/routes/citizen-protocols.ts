@@ -15,6 +15,7 @@ import { DocumentStatus } from '@prisma/client';
 import { applyWorkflowToProtocol } from '../services/module-workflow.service';
 import { createProtocolSLA } from '../services/protocol-sla.service';
 import { sanitizeDocumentId, matchDocumentType, mapUploadedFilesToDocuments } from '../utils/document-mapping';
+import messageNotificationService from '../lib/messages/MessageNotificationService';
 import fs from 'fs';
 import path from 'path';
 
@@ -343,6 +344,16 @@ router.post('/', upload.any(), async (req, res) => {
     console.log('   ✓ SLA criado com sucesso');
 
     console.log('✅ Protocolo criado:', protocol.number);
+
+    // ✅ FASE 1: Enviar notificação via mensageiro
+    try {
+      await messageNotificationService.notifyProtocolCreated(protocol.id);
+      console.log('   ✓ Notificação de criação enviada via mensageiro');
+    } catch (notifError) {
+      console.error('   ⚠️  Erro ao enviar notificação:', notifError);
+      // Não falhar a criação do protocolo se notificação falhar
+    }
+
     console.log('========== FIM POST /protocols ==========\n');
 
     return res.status(201).json({
@@ -580,6 +591,17 @@ router.post('/:id/interactions', async (req, res) => {
         isRead: false
         }
         });
+
+    // ✅ FASE 1: Notificar servidor sobre novo comentário do cidadão
+    try {
+      await messageNotificationService.notifyNewComment(
+        id,
+        message.trim(),
+        citizenName || 'Cidadão'
+      );
+    } catch (notifError) {
+      console.error('Erro ao enviar notificação de comentário:', notifError);
+    }
 
     return res.status(201).json({
       interaction
@@ -1228,6 +1250,16 @@ router.post('/:id/documents/upload', upload.single('document'), async (req, res)
         timestamp: new Date()
       }
     });
+
+    // ✅ FASE 1: Notificar servidor sobre documento enviado
+    try {
+      await messageNotificationService.notifyDocumentUploaded(
+        protocolId,
+        file.originalname
+      );
+    } catch (notifError) {
+      console.error('Erro ao enviar notificação de documento:', notifError);
+    }
 
     return res.json({
       success: true,

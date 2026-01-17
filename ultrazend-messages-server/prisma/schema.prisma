@@ -353,11 +353,67 @@ model MessageTemplate {
   @@map("message_templates")
 }
 
+// ============================================
+// SHARED MODELS FROM DIGIURBAN
+// ============================================
+// Models compartilhados com o backend DigiUrban
+// Apenas os campos necessários para o sistema de mensagens
+
+model Citizen {
+  id       String   @id @default(cuid())
+  cpf      String   @unique
+  name     String
+  email    String   @unique
+  phone    String?
+  avatar   String?
+  isActive Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("citizens")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  role         UserRole?
+  departmentId String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@map("users")
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String
+  code      String?  @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+
+  @@map("departments")
+}
+
 // Enums compartilhados
 enum ParticipantType {
   CITIZEN
   SERVER
   SYSTEM
+}
+
+enum UserRole {
+  ADMIN
+  SUPER_ADMIN
+  MANAGER
+  OPERATOR
+  VIEWER
 }
 
 enum ConversationType {
