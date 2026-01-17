@@ -120,6 +120,18 @@ try {
 }
 
 // ============================================================
+// ROTAS DE MENSAGENS (CONVERSAS)
+// ============================================================
+console.log('💬 Carregando rotas de mensagens...');
+try {
+  const messagesRoutes = require('./routes/messages').default;
+  app.use('/api/messages', messagesRoutes);
+  console.log('✅ Rotas de mensagens carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas de mensagens:', error);
+}
+
+// ============================================================
 // ROTAS PÚBLICAS (SEM AUTENTICAÇÃO)
 // ============================================================
 console.log('🌐 Carregando rotas públicas...');
