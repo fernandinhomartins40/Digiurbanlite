@@ -28,117 +28,27 @@ export class FlowManager {
 
   /**
    * Registra os fluxos padrão do sistema
+   *
+   * NOTA: Fluxos AGENDAR_CONSULTA e SOLICITAR_SERVICO foram REMOVIDOS
+   * Agora usamos fluxo UNIVERSAL baseado em formSchema (startDynamicServiceFlow)
    */
   private registerDefaultFlows(): void {
-    // Fluxo: Agendar Consulta
-    this.registerFlow({
-      name: 'AGENDAR_CONSULTA',
-      steps: [
-        {
-          id: 'select_specialty',
-          type: 'selection',
-          message: 'Qual tipo de consulta você precisa?',
-          options: [
-            { value: 'clinico_geral', label: 'Clínico Geral' },
-            { value: 'pediatria', label: 'Pediatria' },
-            { value: 'ginecologia', label: 'Ginecologia' },
-            { value: 'cardiologia', label: 'Cardiologia' },
-            { value: 'dermatologia', label: 'Dermatologia' },
-            { value: 'oftalmologia', label: 'Oftalmologia' },
-          ],
-          required: true,
-          saveAs: 'specialty',
-        },
-        {
-          id: 'select_health_unit',
-          type: 'selection',
-          message: 'Qual unidade de saúde você prefere?',
-          options: [], // Será populado dinamicamente
-          required: true,
-          saveAs: 'healthUnitId',
-          dynamicOptions: true,
-        },
-        {
-          id: 'select_date',
-          type: 'date',
-          message: 'Escolha uma data disponível:',
-          required: true,
-          saveAs: 'appointmentDate',
-          validation: {
-            minDate: 'today',
-            maxDate: '+30days',
-          },
-        },
-        {
-          id: 'select_time',
-          type: 'time',
-          message: 'Escolha o horário:',
-          required: true,
-          saveAs: 'appointmentTime',
-          dynamicOptions: true, // Horários disponíveis baseados na data
-        },
-        {
-          id: 'confirmation',
-          type: 'confirmation',
-          message: 'Confirme os dados da sua consulta:',
-          required: true,
-        },
-      ],
-      onComplete: 'createAppointmentProtocol',
-    });
-
-    // Fluxo: Solicitar Serviço
-    this.registerFlow({
-      name: 'SOLICITAR_SERVICO',
-      steps: [
-        {
-          id: 'search_service',
-          type: 'searchable_select',
-          message: 'Qual serviço você precisa?',
-          required: true,
-          saveAs: 'serviceId',
-          placeholder: 'Digite para buscar...',
-        },
-        {
-          id: 'select_location',
-          type: 'location',
-          message: 'Onde está localizado o problema ou onde deseja o serviço?',
-          required: true,
-          saveAs: 'location',
-          allowCurrentLocation: true,
-          allowManualAddress: true,
-          allowMapPicker: true,
-        },
-        {
-          id: 'describe_issue',
-          type: 'text',
-          message: 'Descreva brevemente o motivo da solicitação:',
-          required: true,
-          saveAs: 'description',
-          validation: {
-            minLength: 10,
-            maxLength: 500,
-          },
-        },
-        {
-          id: 'upload_photos',
-          type: 'file_upload',
-          message: 'Você pode enviar fotos da situação? Isso acelera a análise.',
-          required: false,
-          saveAs: 'attachments',
-          accept: 'image/*',
-          maxFiles: 3,
-          maxSize: 5242880, // 5MB
-        },
-        {
-          id: 'confirmation',
-          type: 'confirmation',
-          message: 'Revise sua solicitação antes de enviar:',
-          required: true,
-        },
-      ],
-      onComplete: 'createServiceProtocol',
-    });
+    // ========================================================================
+    // FLUXOS HARDCODED REMOVIDOS - Substituídos por fluxo dinâmico universal
+    // ========================================================================
+    //
+    // Os fluxos AGENDAR_CONSULTA e SOLICITAR_SERVICO foram removidos porque:
+    // 1. Não respeitavam o formSchema real dos serviços no banco de dados
+    // 2. Admin pode criar novos serviços que não eram reconhecidos
+    // 3. Pediam dados desnecessários que não estavam no formSchema
+    // 4. Não pré-preenchiam campos citizen_* automaticamente
+    //
+    // SUBSTITUIÇÃO: Agora usamos startDynamicServiceFlow() que:
+    // - Lê formSchema do serviço do banco de dados
+    // - Pré-preenche campos citizen_* automaticamente
+    // - Adapta-se a novos serviços sem reprogramação
+    // - Respeita exatamente os campos e documentos definidos pelo admin
+    // ========================================================================
 
     // Fluxo: Enviar Documento
     this.registerFlow({
@@ -294,6 +204,54 @@ export class FlowManager {
 
     // Retorna primeira etapa
     return this.getStepResponse(conversation.id, flow, 0, {});
+  }
+
+  /**
+   * Inicia um novo fluxo com dados pré-preenchidos (citizen_*)
+   */
+  private async startFlowWithPrefilledData(
+    citizenId: string,
+    flowName: string,
+    prefilledData: Record<string, any>
+  ): Promise<BotResponse> {
+    const flow = this.flows.get(flowName);
+    if (!flow) {
+      throw new Error(`Flow ${flowName} not found`);
+    }
+
+    // Busca ou cria conversação ativa
+    let conversation = await prisma.botConversation.findFirst({
+      where: {
+        citizenId,
+        isActive: true,
+      },
+    });
+
+    if (!conversation) {
+      conversation = await prisma.botConversation.create({
+        data: {
+          citizenId,
+          currentFlow: flowName,
+          flowStep: 0,
+          flowData: prefilledData, // NOVO: Inicializa com dados pré-preenchidos
+        },
+      });
+    } else {
+      // Atualiza conversação existente
+      conversation = await prisma.botConversation.update({
+        where: { id: conversation.id },
+        data: {
+          currentFlow: flowName,
+          flowStep: 0,
+          flowData: prefilledData, // NOVO: Inicializa com dados pré-preenchidos
+        },
+      });
+    }
+
+    console.log(`🔄 Fluxo iniciado com ${Object.keys(prefilledData).length} campos pré-preenchidos`);
+
+    // Retorna primeira etapa (com dados pré-preenchidos)
+    return this.getStepResponse(conversation.id, flow, 0, prefilledData);
   }
 
   /**
@@ -845,7 +803,8 @@ export class FlowManager {
    */
 
   /**
-   * Inicia fluxo dinâmico baseado no formSchema do serviço
+   * Inicia fluxo dinâmico UNIVERSAL baseado no formSchema do serviço
+   * PRÉ-PREENCHE campos citizen_* automaticamente
    */
   public async startDynamicServiceFlow(
     citizenId: string,
@@ -866,10 +825,36 @@ export class FlowManager {
         };
       }
 
-      // 2. Converter formSchema em etapas de fluxo
+      // 2. Buscar dados do cidadão para pré-preenchimento
+      const citizen = await prisma.citizen.findUnique({
+        where: { id: citizenId },
+        select: {
+          name: true,
+          cpf: true,
+          email: true,
+          phone: true,
+          phoneSecondary: true,
+          birthDate: true,
+          address: true,
+          rg: true,
+          motherName: true,
+          maritalStatus: true,
+          occupation: true
+        }
+      });
+
+      if (!citizen) {
+        return {
+          response: 'Erro ao buscar seus dados. Por favor, atualize seu perfil.',
+          messageType: 'text',
+          quickReplies: ['Atualizar perfil', 'Falar com atendente']
+        };
+      }
+
+      // 3. Separar campos: citizen_* (pré-preenchidos) vs customizados (perguntar)
+      const prefilledData: Record<string, any> = {};
       const steps: FlowStep[] = [];
 
-      // Adicionar campos customizados do formSchema
       const formFields = (service.formFieldsConfig as any[]) ||
                         (service.formSchema as any)?.fields ||
                         [];
@@ -877,6 +862,18 @@ export class FlowManager {
       for (const field of formFields) {
         if (field.enabled === false) continue;
 
+        // LÓGICA DE PRÉ-PREENCHIMENTO: campos citizen_*
+        if (field.id.startsWith('citizen_')) {
+          const citizenKey = field.id.replace('citizen_', '') as keyof typeof citizen;
+
+          if (citizen[citizenKey] !== null && citizen[citizenKey] !== undefined) {
+            prefilledData[field.id] = citizen[citizenKey];
+            console.log(`✅ Pré-preenchido: ${field.id} = ${citizen[citizenKey]}`);
+            continue; // NÃO perguntar este campo
+          }
+        }
+
+        // Campos customizados: adicionar ao fluxo
         steps.push({
           id: field.id,
           type: this.mapFieldTypeToStepType(field.type),
@@ -936,7 +933,7 @@ export class FlowManager {
         required: true
       });
 
-      // 3. Criar fluxo dinâmico
+      // 4. Criar fluxo dinâmico com dados pré-preenchidos
       const flowDefinition: FlowDefinition = {
         name: `SERVICE_${serviceId}`,
         steps,
@@ -945,15 +942,16 @@ export class FlowManager {
           serviceId,
           serviceName: service.name,
           departmentId: service.departmentId,
-          departmentName: service.department?.name
+          departmentName: service.department?.name,
+          prefilledData // NOVO: Dados pré-preenchidos do cidadão
         }
       };
 
-      // 4. Registrar e iniciar fluxo
+      // 5. Registrar fluxo dinâmico
       this.registerFlow(flowDefinition);
 
-      // Iniciar fluxo
-      return this.startFlow(citizenId, flowDefinition.name);
+      // 6. Iniciar fluxo com dados pré-preenchidos
+      return this.startFlowWithPrefilledData(citizenId, flowDefinition.name, prefilledData);
 
     } catch (error) {
       console.error('Erro ao criar fluxo dinâmico:', error);
@@ -989,6 +987,7 @@ export class FlowManager {
 
   /**
    * Cria protocolo dinâmico baseado em formSchema
+   * MESCLA dados pré-preenchidos + dados coletados
    */
   private async createDynamicServiceProtocol(
     citizenId: string,
@@ -1010,6 +1009,15 @@ export class FlowManager {
         throw new Error('Serviço não encontrado');
       }
 
+      // NOVO: Mesclar dados pré-preenchidos com dados coletados
+      const prefilledData = metadata?.prefilledData || {};
+      const completeData = {
+        ...prefilledData, // Dados citizen_* pré-preenchidos
+        ...flowData // Dados coletados no fluxo
+      };
+
+      console.log(`📊 Protocolo com ${Object.keys(prefilledData).length} campos pré-preenchidos + ${Object.keys(flowData).length} coletados`);
+
       // Gerar número único de protocolo
       const protocolNumber = await this.generateProtocolNumber();
 
@@ -1022,7 +1030,7 @@ export class FlowManager {
           number: protocolNumber,
           title: service.name,
           description: flowData.description || `Solicitação de ${service.name}`,
-          customData: flowData, // Todos os campos coletados
+          customData: completeData, // NOVO: Dados completos (pré-preenchidos + coletados)
           status: 'VINCULADO' as any,
           moduleType: service.moduleType || 'GERAL',
           priority: 3

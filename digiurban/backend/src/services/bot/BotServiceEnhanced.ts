@@ -352,7 +352,17 @@ export class BotServiceEnhanced {
     // Roteamento de intents
     switch (intent.name) {
       case 'AGENDAR_CONSULTA':
-        return this.flowManager.startFlow(citizenId, 'AGENDAR_CONSULTA');
+        // NOVO: Buscar serviço de consulta no banco e usar fluxo dinâmico
+        const consultaService = await this.findConsultaService();
+        if (consultaService) {
+          console.log(`🏥 Iniciando fluxo dinâmico para consulta: ${consultaService.id}`);
+          return this.flowManager.startDynamicServiceFlow(citizenId, consultaService.id);
+        }
+        return {
+          response: 'Desculpe, não encontrei o serviço de agendamento de consultas. Por favor, fale com um atendente.',
+          messageType: 'text',
+          quickReplies: ['Falar com atendente', 'Menu principal']
+        };
 
       case 'SOLICITAR_SERVICO':
         // Se IA identificou serviceId, usar fluxo dinâmico
@@ -361,8 +371,8 @@ export class BotServiceEnhanced {
           console.log(`📝 IA identificou serviço: ${serviceId}, iniciando fluxo dinâmico`);
           return this.flowManager.startDynamicServiceFlow(citizenId, serviceId);
         }
-        // Senão, usar fluxo padrão de busca de serviço
-        return this.flowManager.startFlow(citizenId, 'SOLICITAR_SERVICO');
+        // Senão, buscar serviços e oferecer opções
+        return this.handleSearchServices(citizenId, intent.entities?.searchTerm || '');
 
       case 'ENVIAR_DOCUMENTO':
         return this.flowManager.startFlow(citizenId, 'ENVIAR_DOCUMENTO');
@@ -806,6 +816,96 @@ export class BotServiceEnhanced {
       }
     } catch (error) {
       console.error('Erro ao registrar analytics:', error);
+    }
+  }
+
+  /**
+   * Busca serviço de consulta médica no banco de dados
+   */
+  private async findConsultaService() {
+    try {
+      const service = await prisma.serviceSimplified.findFirst({
+        where: {
+          OR: [
+            { name: { contains: 'consulta', mode: 'insensitive' } },
+            { name: { contains: 'agendamento', mode: 'insensitive' } },
+            { moduleType: 'SAUDE' }
+          ],
+          isActive: true
+        },
+        orderBy: { name: 'asc' }
+      });
+
+      return service;
+    } catch (error) {
+      console.error('Erro ao buscar serviço de consulta:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Busca serviços e oferece opções interativas
+   */
+  private async handleSearchServices(citizenId: string, searchTerm: string): Promise<BotResponse> {
+    try {
+      const services = await prisma.serviceSimplified.findMany({
+        where: {
+          isActive: true,
+          OR: searchTerm ? [
+            { name: { contains: searchTerm, mode: 'insensitive' } },
+            { description: { contains: searchTerm, mode: 'insensitive' } },
+            { category: { contains: searchTerm, mode: 'insensitive' } }
+          ] : undefined
+        },
+        take: 10,
+        orderBy: { name: 'asc' },
+        include: { department: true }
+      });
+
+      if (services.length === 0) {
+        return {
+          response: searchTerm
+            ? `Não encontrei serviços relacionados a "${searchTerm}". Tente outro termo ou fale com um atendente.`
+            : 'Não encontrei serviços disponíveis. Por favor, fale com um atendente.',
+          messageType: 'text',
+          quickReplies: ['Falar com atendente', 'Menu principal']
+        };
+      }
+
+      // Se encontrou apenas 1 serviço, iniciar fluxo direto
+      if (services.length === 1) {
+        console.log(`🎯 Único serviço encontrado: ${services[0].id}, iniciando fluxo`);
+        return this.flowManager.startDynamicServiceFlow(citizenId, services[0].id);
+      }
+
+      // Se encontrou múltiplos, oferecer cards
+      return {
+        response: searchTerm
+          ? `Encontrei ${services.length} serviços relacionados a "${searchTerm}":`
+          : `Aqui estão os serviços disponíveis:`,
+        messageType: 'card',
+        cards: services.map(service => ({
+          id: service.id,
+          title: service.name,
+          description: service.description?.substring(0, 100) || 'Sem descrição',
+          department: service.department?.name,
+          estimatedDays: service.estimatedDays || undefined,
+          action: {
+            type: 'open_service' as const,
+            label: 'Solicitar',
+            serviceId: service.id
+          }
+        })),
+        quickReplies: ['Buscar outro serviço', 'Menu principal']
+      };
+
+    } catch (error) {
+      console.error('Erro ao buscar serviços:', error);
+      return {
+        response: 'Erro ao buscar serviços. Por favor, tente novamente ou fale com um atendente.',
+        messageType: 'text',
+        quickReplies: ['Tentar novamente', 'Falar com atendente']
+      };
     }
   }
 }
