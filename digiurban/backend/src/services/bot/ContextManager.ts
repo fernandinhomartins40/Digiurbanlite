@@ -26,7 +26,10 @@ export class ContextManager {
   private readonly TTL = 60 * 60 * 24; // 24 horas
 
   constructor() {
-    this.initializeRedis();
+    // Inicializar Redis sem bloquear (fire and forget)
+    this.initializeRedis().catch(err => {
+      console.error('⚠️  Erro ao inicializar Redis:', err);
+    });
   }
 
   /**
@@ -42,32 +45,34 @@ export class ContextManager {
           reconnectStrategy: (retries) => {
             if (retries > 10) {
               console.error('❌ Redis: Máximo de tentativas de reconexão atingido');
-              return new Error('Máximo de tentativas atingido');
+              return false; // Retornar false para parar tentativas
             }
             return Math.min(retries * 100, 3000);
-          }
+          },
+          connectTimeout: 5000 // Timeout de 5 segundos
         }
       });
 
       this.redis.on('error', (err) => {
-        console.error('❌ Redis Error:', err);
+        console.error('❌ Redis Error:', err.message);
         this.isConnected = false;
       });
 
       this.redis.on('connect', () => {
-        console.log('✅ Redis conectado');
+        console.log('✅ Redis conectado para bot context');
         this.isConnected = true;
       });
 
       this.redis.on('disconnect', () => {
-        console.log('⚠️  Redis desconectado');
+        console.log('⚠️  Redis desconectado - usando fallback em memória');
         this.isConnected = false;
       });
 
       await this.redis.connect();
-    } catch (error) {
-      console.error('⚠️  Não foi possível conectar ao Redis. Usando fallback em memória.', error);
+    } catch (error: any) {
+      console.log('⚠️  Redis não disponível - usando fallback em memória');
       this.isConnected = false;
+      this.redis = null;
     }
   }
 

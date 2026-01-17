@@ -25,7 +25,10 @@ export class ServiceKnowledgeBase {
   private readonly CACHE_TTL = 1000 * 60 * 30; // 30 minutos
 
   constructor() {
-    this.loadServicesCache();
+    // Carregar cache sem bloquear (fire and forget)
+    this.loadServicesCache().catch(err => {
+      console.error('⚠️  Erro ao carregar cache de serviços:', err.message);
+    });
   }
 
   /**
@@ -63,8 +66,8 @@ export class ServiceKnowledgeBase {
 
       this.lastCacheUpdate = new Date();
       console.log(`✅ Knowledge Base carregada: ${this.servicesCache.length} serviços`);
-    } catch (error) {
-      console.error('Erro ao carregar cache de serviços:', error);
+    } catch (error: any) {
+      console.error('❌ Erro ao carregar cache de serviços:', error.message);
       this.servicesCache = [];
     }
   }
