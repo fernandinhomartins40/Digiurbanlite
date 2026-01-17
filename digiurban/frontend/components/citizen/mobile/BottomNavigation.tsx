@@ -3,12 +3,11 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-  Home,
   Folder,
   FileText,
   User,
-  Menu,
   MessageCircle,
+  FileCheck,
 } from 'lucide-react';
 
 interface NavItem {
@@ -21,23 +20,10 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
-    id: 'home',
-    label: 'Início',
-    icon: Home,
-    href: '/cidadao',
-  },
-  {
-    id: 'messages',
-    label: 'Mensagens',
-    icon: MessageCircle,
-    href: '/cidadao/mensagens',
-  },
-  {
     id: 'services',
     label: 'Serviços',
     icon: FileText,
     href: '/cidadao/servicos',
-    isFAB: true,
   },
   {
     id: 'protocols',
@@ -46,10 +32,23 @@ const navItems: NavItem[] = [
     href: '/cidadao/protocolos',
   },
   {
-    id: 'more',
-    label: 'Mais',
-    icon: Menu,
-    href: '/cidadao/mais',
+    id: 'chat',
+    label: 'Chat',
+    icon: MessageCircle,
+    href: '/cidadao',
+    isFAB: true,
+  },
+  {
+    id: 'documents',
+    label: 'Docs',
+    icon: FileCheck,
+    href: '/cidadao/documentos',
+  },
+  {
+    id: 'profile',
+    label: 'Perfil',
+    icon: User,
+    href: '/cidadao/perfil',
   },
 ];
 
@@ -71,7 +70,7 @@ export function BottomNavigation() {
           const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
           const Icon = item.icon;
 
-          // Renderizar FAB Central
+          // Renderizar FAB Central (Chat no centro)
           if (item.isFAB) {
             return (
               <div key={item.id} className="relative flex flex-col items-center mx-4">
@@ -82,7 +81,7 @@ export function BottomNavigation() {
                   isActive ? "opacity-100 animate-pulse" : "opacity-60"
                 )} />
 
-                {/* FAB Button */}
+                {/* FAB Button com badge verde */}
                 <button
                   onClick={() => handleNavigation(item.href)}
                   className={cn(
@@ -97,6 +96,8 @@ export function BottomNavigation() {
                   )}
                 >
                   <Icon className="w-7 h-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]" />
+                  {/* Badge verde de status online */}
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                 </button>
 
                 {/* Label */}
