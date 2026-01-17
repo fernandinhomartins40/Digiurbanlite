@@ -1,364 +1,855 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { CitizenLayout } from '@/components/citizen/CitizenLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect, useRef } from 'react';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
-import { useCitizenServices } from '@/hooks/useCitizenServices';
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
-  FileText,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
+  MessageCircle,
+  Send,
+  Phone,
+  Video,
+  MoreVertical,
+  Search,
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Paperclip,
+  Smile,
+  Mic,
+  Plus,
+  X,
+  Hash,
   Users,
-  Bell,
-  ArrowRight,
-  Activity,
-  Loader2,
-  FileCheck
+  User,
+  Bot,
+  Menu,
+  LayoutDashboard,
+  FileText,
+  Folder,
+  FileCheck,
+  LogOut,
+  Settings,
+  Sparkles
 } from 'lucide-react';
-import { InstallPWABanner } from '@/components/citizen/InstallPWABanner';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { io, Socket } from 'socket.io-client';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+
+interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  senderType: 'CITIZEN' | 'SERVER' | 'BOT';
+  createdAt: string;
+  status: 'SENT' | 'DELIVERED' | 'READ';
+  messageType?: 'text' | 'card' | 'form' | 'quick_reply';
+  metadata?: any;
+}
+
+interface Conversation {
+  id: string;
+  type: 'BOT' | 'DIRECT' | 'GROUP' | 'OFFICIAL';
+  title: string;
+  subtitle?: string;
+  lastMessage?: {
+    content: string;
+    createdAt: string;
+    senderId: string;
+  };
+  unreadCount: number;
+  participants?: any[];
+  avatar?: string;
+  isPinned?: boolean;
+  isBot?: boolean;
+}
 
 export default function CitizenDashboard() {
-  const { citizen } = useCitizenAuth();
-  const { services, loading: servicesLoading } = useCitizenServices();
+  const { citizen, isLoading: authLoading } = useCitizenAuth();
+  const { logout } = useCitizenAuth();
+  const router = useRouter();
+  const { toast } = useToast();
 
-  const stats = [
-    {
-      title: 'Protocolos Ativos',
-      value: '0',
-      icon: Clock,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200'
-    },
-    {
-      title: 'Protocolos Concluídos',
-      value: '0',
-      icon: CheckCircle2,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200'
-    },
-    {
-      title: 'Notificações',
-      value: '0',
-      icon: Bell,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200'
-    },
-    {
-      title: 'Família',
-      value: citizen ? '1 pessoa' : '-',
-      icon: Users,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200'
-    }
-  ];
+  // Estados
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [showConversationsList, setShowConversationsList] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showBottomSheet, setShowBottomSheet] = useState(false);
 
-  const quickActions = [
-    {
-      title: 'Nova Solicitação',
-      description: 'Solicitar um novo serviço público',
-      href: '/cidadao/servicos',
-      icon: FileText,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      available: true
-    },
-    {
-      title: 'Acompanhar Protocolos',
-      description: 'Ver status das suas solicitações',
-      href: '/cidadao/protocolos',
-      icon: Activity,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      available: true
-    },
-    {
-      title: 'Meus Documentos',
-      description: 'Digitalizar e gerenciar documentos',
-      href: '/cidadao/documentos',
-      icon: FileCheck,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      available: true
-    },
-    {
-      title: 'Meus Dados',
-      description: 'Gerenciar informações pessoais',
-      href: '/cidadao/perfil',
-      icon: Users,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      available: true
-    }
-  ];
+  const socketRef = useRef<Socket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Serviços populares: pegar os primeiros 8 serviços com maior prioridade
-  const popularServices = services
-    .sort((a, b) => b.priority - a.priority)
-    .slice(0, 8);
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
+  // Conversa do Bot (sempre fixa no topo)
+  const BOT_CONVERSATION: Conversation = {
+    id: 'bot-digiurban',
+    type: 'BOT',
+    title: 'DigiBot',
+    subtitle: 'Assistente Virtual',
+    lastMessage: {
+      content: 'Olá! Como posso ajudar você hoje?',
+      createdAt: new Date().toISOString(),
+      senderId: 'bot'
+    },
+    unreadCount: 0,
+    avatar: '/bot-avatar.png',
+    isPinned: true,
+    isBot: true
   };
 
+  // Itens do menu lateral
+  const menuItems = [
+    { name: 'Chat', href: '/cidadao', icon: MessageCircle },
+    { name: 'Serviços', href: '/cidadao/servicos', icon: FileText },
+    { name: 'Protocolos', href: '/cidadao/protocolos', icon: Folder },
+    { name: 'Documentos', href: '/cidadao/documentos', icon: FileCheck },
+    { name: 'Perfil', href: '/cidadao/perfil', icon: User },
+    { name: 'Configurações', href: '/cidadao/mais', icon: Settings }
+  ];
+
+  // Detectar mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobileView(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Redirect se não autenticado
+  useEffect(() => {
+    if (!authLoading && !citizen) {
+      router.push('/cidadao/login');
+    }
+  }, [citizen, authLoading, router]);
+
+  // Conectar WebSocket
+  useEffect(() => {
+    if (!citizen) return;
+
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:9001';
+
+    socketRef.current = io(wsUrl, {
+      auth: {
+        userId: citizen.id,
+        userType: 'CITIZEN',
+      },
+      transports: ['websocket', 'polling'],
+    });
+
+    socketRef.current.on('connect', () => {
+      console.log('✅ Conectado ao servidor de mensagens');
+    });
+
+    socketRef.current.on('message:new', (message: Message) => {
+      if (selectedConversation && message.senderId !== citizen.id) {
+        setMessages(prev => [...prev, message]);
+        scrollToBottom();
+      }
+      fetchConversations();
+    });
+
+    socketRef.current.on('bot:response', (message: Message) => {
+      setMessages(prev => [...prev, message]);
+      scrollToBottom();
+    });
+
+    socketRef.current.on('disconnect', () => {
+      console.log('❌ Desconectado do servidor de mensagens');
+    });
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, [citizen, selectedConversation]);
+
+  // Carregar conversas
+  const fetchConversations = async () => {
+    if (!citizen) return;
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/messages/conversations`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Adicionar bot no topo
+        setConversations([BOT_CONVERSATION, ...(data.conversations || [])]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar conversas:', error);
+      // Mesmo com erro, garantir que o bot apareça
+      setConversations([BOT_CONVERSATION]);
+    }
+  };
+
+  // Carregar mensagens
+  const loadMessages = async (conversationId: string) => {
+    setIsLoadingMessages(true);
+
+    // Se for o bot, carregar histórico do bot
+    if (conversationId === 'bot-digiurban') {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(
+          `${apiUrl}/bot/history`,
+          { credentials: 'include' }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setMessages(data.messages || []);
+        } else {
+          // Mensagem inicial do bot
+          setMessages([
+            {
+              id: '1',
+              content: 'Olá! Sou o DigiBot, seu assistente virtual! 🤖\n\nPosso te ajudar com:\n\n📋 Agendar consultas e serviços\n📄 Acompanhar protocolos\n📁 Gerenciar documentos\n👤 Atualizar seu perfil\n💬 Conversar com atendentes\n\nO que você precisa hoje?',
+              senderId: 'bot',
+              senderType: 'BOT',
+              createdAt: new Date().toISOString(),
+              status: 'READ',
+              messageType: 'text'
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar histórico do bot:', error);
+      }
+      setIsLoadingMessages(false);
+      scrollToBottom();
+      return;
+    }
+
+    // Conversa normal
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(
+        `${apiUrl}/messages/conversations/${conversationId}/messages`,
+        { credentials: 'include' }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data.messages || []);
+        scrollToBottom();
+      }
+    } catch (error) {
+      console.error('Erro ao carregar mensagens:', error);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  // Selecionar conversa
+  const handleSelectConversation = (conversation: Conversation) => {
+    setSelectedConversation(conversation);
+    loadMessages(conversation.id);
+
+    if (isMobileView) {
+      setShowConversationsList(false);
+    }
+  };
+
+  // Enviar mensagem
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!newMessage.trim() || !selectedConversation || !citizen) return;
+
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      content: newMessage.trim(),
+      senderId: citizen.id,
+      senderType: 'CITIZEN',
+      createdAt: new Date().toISOString(),
+      status: 'SENT',
+      messageType: 'text'
+    };
+
+    setMessages(prev => [...prev, tempMessage]);
+    const messageContent = newMessage.trim();
+    setNewMessage('');
+    scrollToBottom();
+
+    try {
+      // Se for mensagem para o bot
+      if (selectedConversation.id === 'bot-digiurban') {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${apiUrl}/bot/message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ message: messageContent })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setMessages(prev => [...prev, {
+            id: data.messageId || `bot-${Date.now()}`,
+            content: data.response,
+            senderId: 'bot',
+            senderType: 'BOT',
+            createdAt: new Date().toISOString(),
+            status: 'READ',
+            messageType: data.messageType || 'text',
+            metadata: data.metadata
+          }]);
+          scrollToBottom();
+        }
+      } else {
+        // Mensagem normal via WebSocket
+        socketRef.current?.emit('message:send', {
+          conversationId: selectedConversation.id,
+          content: messageContent,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao enviar mensagem:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível enviar a mensagem',
+      });
+    }
+  };
+
+  // Scroll para o final
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  // Voltar para lista (mobile)
+  const handleBackToList = () => {
+    setShowConversationsList(true);
+    setSelectedConversation(null);
+    setMessages([]);
+  };
+
+  // Formatar hora
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Formatar data da conversa
+  const formatConversationDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return formatTime(dateString);
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Ontem';
+    } else {
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    }
+  };
+
+  // Carregar conversas iniciais
+  useEffect(() => {
+    if (citizen) {
+      fetchConversations();
+      // Auto-selecionar o bot na primeira vez
+      handleSelectConversation(BOT_CONVERSATION);
+    }
+  }, [citizen]);
+
+  // Auto-scroll quando novas mensagens chegam
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <p className="text-sm text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <CitizenLayout>
-      <div className="space-y-4 sm:space-y-6 animate-fade-in">
-        {/* Header de boas-vindas */}
-        <div className="bg-gradient-to-br from-blue-600 to-blue-700 lg:bg-white lg:from-transparent lg:to-transparent rounded-lg border-0 lg:border lg:border-gray-200 p-4 sm:p-6 shadow-lg lg:shadow-none">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-white lg:text-gray-900">
-                {getGreeting()}, {citizen?.name?.split(' ')[0]}
-              </h1>
-              <p className="text-sm sm:text-base text-blue-100 lg:text-gray-600 mt-1">
-                Bem-vindo ao Portal do Cidadão
-              </p>
-            </div>
-            <div className="flex items-center gap-3 self-end sm:self-auto">
-              <div className="text-right lg:block hidden">
-                <p className="text-xs sm:text-sm text-gray-500">CPF</p>
-                <p className="text-xs sm:text-sm font-medium text-gray-900">
-                  {citizen?.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')}
-                </p>
+    <div className="h-screen flex bg-gray-50 overflow-hidden">
+      {/* Sidebar Menu Lateral */}
+      {showSidebar && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => setShowSidebar(false)}
+          />
+          <div className="fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl flex flex-col">
+            {/* Header Sidebar */}
+            <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-12 h-12 border-2 border-white">
+                  <AvatarFallback className="bg-white text-blue-600 font-bold">
+                    {citizen?.name?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-white">
+                  <p className="font-semibold">{citizen?.name?.split(' ')[0]}</p>
+                  <p className="text-xs text-blue-100">Online</p>
+                </div>
               </div>
-              <div className="h-10 w-10 bg-white lg:bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 shadow-md lg:shadow-none">
-                <span className="text-blue-600 font-semibold text-lg">
-                  {citizen?.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSidebar(false)}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-5 h-5" />
+              </Button>
             </div>
+
+            {/* Menu Items */}
+            <ScrollArea className="flex-1 p-3">
+              <div className="space-y-1">
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setShowSidebar(false)}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
+                    >
+                      <Icon className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
+                      <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600">
+                        {item.name}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+
+            {/* Logout */}
+            <div className="p-4 border-t">
+              <button
+                onClick={logout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 transition-colors text-red-600"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-sm font-medium">Sair</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Lista de Conversas */}
+      <div
+        className={`${
+          isMobileView
+            ? showConversationsList ? 'w-full' : 'hidden'
+            : 'w-96 border-r'
+        } bg-white flex flex-col`}
+      >
+        {/* Header da Lista */}
+        <div className="p-4 border-b bg-gradient-to-r from-blue-600 to-blue-700">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSidebar(true)}
+                className="text-white hover:bg-white/20"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                DigiUrban
+              </h2>
+            </div>
+
+            <Button
+              size="icon"
+              variant="ghost"
+              className="text-white hover:bg-white/20"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Busca */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Buscar conversas..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 bg-white/90 border-0"
+            />
           </div>
         </div>
 
-        {/* Estatísticas */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.title} className={`border ${stat.borderColor}`}>
-                <CardContent className="p-3 sm:p-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-                    <div className="flex-1">
-                      <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
-                        {stat.title}
-                      </p>
-                      <p className="text-lg sm:text-2xl font-bold text-gray-900">
-                        {stat.value}
-                      </p>
-                    </div>
-                    <div className={`${stat.bgColor} p-2 sm:p-3 rounded-lg self-end sm:self-auto`}>
-                      <Icon className={`h-4 w-4 sm:h-6 sm:w-6 ${stat.color}`} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Ações Rápidas */}
-        <div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">🎯 Acesso Rápido</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              const isServicos = action.href === '/cidadao/servicos';
-              return (
+        {/* Lista de Conversas */}
+        <ScrollArea className="flex-1">
+          {conversations.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="font-medium">Nenhuma conversa</p>
+            </div>
+          ) : (
+            conversations
+              .filter(conv =>
+                conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((conversation) => (
                 <div
-                  key={action.title}
+                  key={conversation.id}
+                  onClick={() => handleSelectConversation(conversation)}
                   className={cn(
-                    "rounded-lg p-4 sm:p-6 transition-all active:scale-98",
-                    isServicos
-                      ? "bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-lg hover:shadow-xl"
-                      : "bg-white border border-gray-200 hover:border-gray-300"
+                    "p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors",
+                    selectedConversation?.id === conversation.id && "bg-blue-50",
+                    conversation.isBot && "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-l-blue-600"
                   )}
                 >
-                  <div className="flex items-start justify-between mb-3 sm:mb-4">
-                    <div className={cn(
-                      "p-2 sm:p-3 rounded-lg",
-                      isServicos ? "bg-white/20" : action.bgColor
-                    )}>
-                      <Icon className={cn(
-                        "h-5 w-5 sm:h-6 sm:w-6",
-                        isServicos ? "text-white" : action.color
-                      )} />
+                  <div className="flex items-start gap-3">
+                    <div className="relative">
+                      <Avatar className={cn(
+                        "w-12 h-12",
+                        conversation.isBot && "ring-2 ring-blue-600"
+                      )}>
+                        {conversation.isBot ? (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                            <Sparkles className="w-6 h-6 text-white" />
+                          </div>
+                        ) : (
+                          <>
+                            <AvatarImage src={conversation.avatar} />
+                            <AvatarFallback className="bg-blue-100 text-blue-600">
+                              {conversation.title.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </>
+                        )}
+                      </Avatar>
+                      {conversation.isBot && (
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                      )}
                     </div>
-                    {!action.available && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                        Em breve
-                      </span>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className={cn(
+                            "font-medium truncate",
+                            conversation.isBot && "text-blue-700 font-bold"
+                          )}>
+                            {conversation.title}
+                          </h3>
+                          {conversation.isBot && (
+                            <Badge className="bg-blue-600 text-white text-xs">
+                              IA
+                            </Badge>
+                          )}
+                        </div>
+                        {conversation.lastMessage && (
+                          <span className="text-xs text-gray-500">
+                            {formatConversationDate(conversation.lastMessage.createdAt)}
+                          </span>
+                        )}
+                      </div>
+
+                      {conversation.subtitle && (
+                        <p className="text-xs text-gray-500 mb-1">{conversation.subtitle}</p>
+                      )}
+
+                      {conversation.lastMessage && (
+                        <p className={cn(
+                          "text-sm truncate",
+                          conversation.isBot ? "text-blue-600" : "text-gray-600"
+                        )}>
+                          {conversation.lastMessage.content}
+                        </p>
+                      )}
+                    </div>
+
+                    {conversation.unreadCount > 0 && (
+                      <Badge className="bg-blue-600 text-white">
+                        {conversation.unreadCount}
+                      </Badge>
                     )}
                   </div>
-                  <h3 className={cn(
-                    "text-base font-semibold mb-2",
-                    isServicos ? "text-white" : "text-gray-900"
-                  )}>
-                    {action.title}
-                  </h3>
-                  <p className={cn(
-                    "text-sm mb-3 sm:mb-4",
-                    isServicos ? "text-blue-100" : "text-gray-600"
-                  )}>
-                    {action.description}
-                  </p>
-                  {action.available ? (
-                    <Link href={action.href}>
-                      <Button
-                        variant={isServicos ? "secondary" : "outline"}
-                        className={cn(
-                          "w-full group",
-                          isServicos && "bg-white text-blue-600 hover:bg-blue-50 font-semibold"
-                        )}
-                      >
-                        {isServicos ? "Solicitar Serviço" : "Acessar"}
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Button variant="outline" className="w-full" disabled>
-                      Em desenvolvimento
-                    </Button>
-                  )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Serviços Populares */}
-        <div>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Serviços Disponíveis</h2>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">Serviços oferecidos pelo município</p>
-            </div>
-            <Link href="/cidadao/servicos" className="sm:flex-shrink-0">
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                Ver todos
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-
-          {servicesLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-              <span className="ml-2 text-gray-600">Carregando serviços...</span>
-            </div>
+              ))
           )}
-
-          {!servicesLoading && popularServices.length === 0 && (
-            <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 font-medium">Nenhum serviço disponível</p>
-              <p className="text-sm text-gray-500 mt-1">Os serviços municipais ainda não foram configurados</p>
-            </div>
-          )}
-
-          {!servicesLoading && popularServices.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {popularServices.map((service) => (
-                <Card key={service.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4 sm:p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="bg-blue-50 p-2 sm:p-2.5 rounded-lg">
-                        <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                      </div>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full whitespace-nowrap">
-                        Disponível
-                      </span>
-                    </div>
-
-                    <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
-                      {service.name}
-                    </h3>
-
-                    <p className="text-xs text-gray-500 mb-2 sm:mb-3 truncate">
-                      {service.department?.name || 'Sem departamento'}
-                    </p>
-
-                    <p className="text-xs text-gray-600 mb-3 sm:mb-4 line-clamp-2">
-                      {service.description || 'Sem descrição'}
-                    </p>
-
-                    <div className="flex items-center justify-between text-xs text-gray-500 pt-2 sm:pt-3 border-t border-gray-100">
-                      <div className="flex items-center gap-1">
-                        <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-                        <span className="truncate">Prior. {service.priority}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-                        <span className="whitespace-nowrap">{service.estimatedDays ? `${service.estimatedDays}d` : 'A definir'}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Informações Importantes */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="text-sm sm:text-base font-semibold text-blue-900 mb-2">
-                Sistema em Desenvolvimento
-              </h3>
-              <p className="text-xs sm:text-sm text-blue-700">
-                Este portal está sendo desenvolvido para melhor atendê-lo.
-                Em breve você poderá acessar todos os serviços municipais,
-                acompanhar protocolos e muito mais.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Informações do Perfil */}
-        <Card>
-          <CardHeader className="p-4 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Meus Dados</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">Nome Completo</p>
-                <p className="text-xs sm:text-sm text-gray-900 mt-1 break-words">{citizen?.name || '-'}</p>
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">CPF</p>
-                <p className="text-xs sm:text-sm text-gray-900 mt-1">
-                  {citizen?.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') || '-'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">E-mail</p>
-                <p className="text-xs sm:text-sm text-gray-900 mt-1 break-all">{citizen?.email || '-'}</p>
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">Telefone</p>
-                <p className="text-xs sm:text-sm text-gray-900 mt-1">{citizen?.phone || '-'}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        </ScrollArea>
       </div>
 
-      {/* Banner PWA */}
-      <InstallPWABanner />
-    </CitizenLayout>
+      {/* Área de Chat */}
+      <div
+        className={`${
+          isMobileView
+            ? showConversationsList ? 'hidden' : 'w-full'
+            : 'flex-1'
+        } flex flex-col bg-white`}
+      >
+        {selectedConversation ? (
+          <>
+            {/* Header do Chat */}
+            <div className={cn(
+              "p-4 border-b flex items-center justify-between",
+              selectedConversation.isBot && "bg-gradient-to-r from-blue-600 to-purple-600"
+            )}>
+              <div className="flex items-center gap-3">
+                {isMobileView && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleBackToList}
+                    className={selectedConversation.isBot ? "text-white hover:bg-white/20" : ""}
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </Button>
+                )}
+
+                <Avatar className={cn(
+                  "w-10 h-10",
+                  selectedConversation.isBot && "ring-2 ring-white"
+                )}>
+                  {selectedConversation.isBot ? (
+                    <div className="w-full h-full bg-white flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-blue-600" />
+                    </div>
+                  ) : (
+                    <>
+                      <AvatarImage src={selectedConversation.avatar} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {selectedConversation.title.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </>
+                  )}
+                </Avatar>
+
+                <div>
+                  <h3 className={cn(
+                    "font-medium flex items-center gap-2",
+                    selectedConversation.isBot && "text-white"
+                  )}>
+                    {selectedConversation.title}
+                    {selectedConversation.isBot && (
+                      <Badge className="bg-white text-blue-600 text-xs">IA</Badge>
+                    )}
+                  </h3>
+                  <p className={cn(
+                    "text-xs",
+                    selectedConversation.isBot ? "text-blue-100" : "text-gray-500"
+                  )}>
+                    {selectedConversation.isBot ? 'Sempre disponível' : 'Online'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {!selectedConversation.isBot && (
+                  <>
+                    <Button variant="ghost" size="icon" className={selectedConversation.isBot ? "text-white hover:bg-white/20" : ""}>
+                      <Phone className="w-5 h-5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className={selectedConversation.isBot ? "text-white hover:bg-white/20" : ""}>
+                      <Video className="w-5 h-5" />
+                    </Button>
+                  </>
+                )}
+                <Button variant="ghost" size="icon" className={selectedConversation.isBot ? "text-white hover:bg-white/20" : ""}>
+                  <MoreVertical className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Mensagens */}
+            <ScrollArea className="flex-1 p-4 bg-gray-50">
+              {isLoadingMessages ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <div className="space-y-4 max-w-4xl mx-auto">
+                  {messages.map((message, index) => {
+                    const isOwnMessage = message.senderId === citizen?.id;
+                    const isBot = message.senderType === 'BOT';
+                    const showDate = index === 0 ||
+                      new Date(messages[index - 1].createdAt).toDateString() !==
+                      new Date(message.createdAt).toDateString();
+
+                    return (
+                      <div key={message.id}>
+                        {showDate && (
+                          <div className="flex justify-center my-4">
+                            <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">
+                              {new Date(message.createdAt).toLocaleDateString('pt-BR', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                        )}
+
+                        <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+                          <div
+                            className={cn(
+                              "max-w-[70%] rounded-lg px-4 py-2 shadow-sm",
+                              isOwnMessage
+                                ? 'bg-blue-600 text-white'
+                                : isBot
+                                ? 'bg-gradient-to-br from-blue-50 to-purple-50 text-gray-900 border border-blue-200'
+                                : 'bg-white text-gray-900'
+                            )}
+                          >
+                            {isBot && !isOwnMessage && (
+                              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-blue-200">
+                                <Sparkles className="w-4 h-4 text-blue-600" />
+                                <span className="text-xs font-semibold text-blue-700">DigiBot</span>
+                              </div>
+                            )}
+                            <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
+                            <div className={`flex items-center justify-end gap-1 mt-1 ${
+                              isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                            }`}>
+                              <span className="text-xs">
+                                {formatTime(message.createdAt)}
+                              </span>
+                              {isOwnMessage && (
+                                message.status === 'READ' ? (
+                                  <CheckCheck className="w-3 h-3 text-blue-200" />
+                                ) : message.status === 'DELIVERED' ? (
+                                  <CheckCheck className="w-3 h-3" />
+                                ) : (
+                                  <Check className="w-3 h-3" />
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
+                </div>
+              )}
+            </ScrollArea>
+
+            {/* Input de Mensagem */}
+            <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
+              <div className="flex items-center gap-2 max-w-4xl mx-auto">
+                <Button type="button" variant="ghost" size="icon" className="text-gray-500">
+                  <Smile className="w-5 h-5" />
+                </Button>
+                <Button type="button" variant="ghost" size="icon" className="text-gray-500">
+                  <Paperclip className="w-5 h-5" />
+                </Button>
+
+                <Input
+                  type="text"
+                  placeholder={selectedConversation.isBot ? "Pergunte ao DigiBot..." : "Digite uma mensagem..."}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  className="flex-1"
+                />
+
+                {newMessage.trim() ? (
+                  <Button type="submit" size="icon" className="bg-blue-600 hover:bg-blue-700">
+                    <Send className="w-5 h-5" />
+                  </Button>
+                ) : (
+                  <Button type="button" variant="ghost" size="icon" className="text-gray-500">
+                    <Mic className="w-5 h-5" />
+                  </Button>
+                )}
+              </div>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500 bg-gradient-to-br from-blue-50 to-purple-50">
+            <div className="text-center">
+              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                <Sparkles className="w-12 h-12 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Bem-vindo ao DigiUrban!</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Converse com o DigiBot ou selecione uma conversa
+              </p>
+              <Button
+                onClick={() => handleSelectConversation(BOT_CONVERSATION)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Conversar com DigiBot
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Navigation - Mobile */}
+      {isMobileView && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
+          <div className="flex items-center justify-around p-2">
+            <button
+              onClick={() => handleSelectConversation(BOT_CONVERSATION)}
+              className="flex flex-col items-center gap-1 px-4 py-2 text-blue-600"
+            >
+              <div className="relative">
+                <MessageCircle className="w-5 h-5 fill-current" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></div>
+              </div>
+              <span className="text-xs font-semibold">Chat</span>
+            </button>
+            <Link
+              href="/cidadao/servicos"
+              className="flex flex-col items-center gap-1 px-4 py-2 text-gray-600 hover:text-blue-600"
+            >
+              <FileText className="w-5 h-5" />
+              <span className="text-xs">Serviços</span>
+            </Link>
+            <Link
+              href="/cidadao/protocolos"
+              className="flex flex-col items-center gap-1 px-4 py-2 text-gray-600 hover:text-blue-600"
+            >
+              <Folder className="w-5 h-5" />
+              <span className="text-xs">Protocolos</span>
+            </Link>
+            <Link
+              href="/cidadao/documentos"
+              className="flex flex-col items-center gap-1 px-4 py-2 text-gray-600 hover:text-blue-600"
+            >
+              <FileCheck className="w-5 h-5" />
+              <span className="text-xs">Docs</span>
+            </Link>
+            <Link
+              href="/cidadao/perfil"
+              className="flex flex-col items-center gap-1 px-4 py-2 text-gray-600 hover:text-blue-600"
+            >
+              <User className="w-5 h-5" />
+              <span className="text-xs">Perfil</span>
+            </Link>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
