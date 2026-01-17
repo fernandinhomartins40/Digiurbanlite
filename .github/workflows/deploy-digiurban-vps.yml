@@ -98,6 +98,9 @@ jobs:
             # Database URL (PostgreSQL)
             DATABASE_URL=postgresql://digiurban:digiurban2024@postgres:5432/digiurban
 
+            # Redis
+            REDIS_URL=redis://redis:6379
+
             # JWT (gerado automaticamente para produção)
             JWT_SECRET=digiurban-production-secret-$(date +%s)-$(openssl rand -hex 16)
             JWT_EXPIRES_IN=7d

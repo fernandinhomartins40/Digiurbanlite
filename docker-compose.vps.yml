@@ -163,6 +163,9 @@ services:
       # Database PostgreSQL
       - DATABASE_URL=${DATABASE_URL}
 
+      # Redis
+      - REDIS_URL=redis://redis:6379
+
       # JWT
       - JWT_SECRET=${JWT_SECRET:-digiurban-super-secret-change-in-production}
       - JWT_EXPIRES_IN=7d
