@@ -124,7 +124,7 @@ jobs:
             echo "# Ollama AI (DigiBot Enhanced)" >> .env
             echo "USE_OLLAMA=true" >> .env
             echo "OLLAMA_BASE_URL=http://ollama:11434" >> .env
-            echo "OLLAMA_MODEL=digibot-phi4" >> .env
+            echo "OLLAMA_MODEL=digibot-qwen2.5" >> .env
             echo "OLLAMA_TIMEOUT=5000" >> .env
 
             # Remover arquivos .db SQLite antigos (não usamos mais)
@@ -201,8 +201,8 @@ jobs:
             docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed" || echo "⚠️ Seed falhou mas continuando deploy"
             echo "✅ Seeds executados"
 
-            # ===== CONFIGURAR OLLAMA (PHI-4) =====
-            echo "=== Configurando Ollama com Phi-4 ==="
+            # ===== CONFIGURAR OLLAMA (QWEN2.5-3B) =====
+            echo "=== Configurando Ollama com Qwen2.5-3B ==="
 
             # Aguardar Ollama ficar disponível
             echo "Aguardando Ollama iniciar..."
@@ -215,22 +215,23 @@ jobs:
               sleep 5
             done
 
-            # Verificar se modelo Phi-4 já está instalado
-            if docker exec digiurban-ollama ollama list | grep -q "phi4"; then
-              echo "✅ Modelo Phi-4 já instalado"
+            # Verificar se modelo Qwen2.5:3b já está instalado
+            if docker exec digiurban-ollama ollama list | grep -q "qwen2.5:3b"; then
+              echo "✅ Modelo Qwen2.5:3b já instalado"
+              MODEL_NAME="qwen2.5"
             else
-              echo "📥 Baixando modelo Phi-4 (14B - ~8GB, pode levar alguns minutos)..."
-              docker exec digiurban-ollama ollama pull phi4 || echo "⚠️ Falha ao baixar Phi-4, tentando SmolLM3..."
+              echo "📥 Baixando modelo Qwen2.5:3b (3B - ~2.5GB, pode levar alguns minutos)..."
+              docker exec digiurban-ollama ollama pull qwen2.5:3b || echo "⚠️ Falha ao baixar Qwen2.5:3b, tentando SmolLM2:1.7b..."
 
-              # Fallback para SmolLM3 se Phi-4 falhar (RAM insuficiente)
-              if ! docker exec digiurban-ollama ollama list | grep -q "phi4"; then
-                echo "📥 Baixando modelo SmolLM3 (3B - mais leve)..."
-                docker exec digiurban-ollama ollama pull smollm3
-                # Atualizar .env para usar SmolLM3
-                sed -i 's/OLLAMA_MODEL=digibot-phi4/OLLAMA_MODEL=digibot-smollm3/' .env
-                MODEL_NAME="smollm3"
+              # Fallback para SmolLM2:1.7b se Qwen2.5 falhar
+              if ! docker exec digiurban-ollama ollama list | grep -q "qwen2.5:3b"; then
+                echo "📥 Baixando modelo SmolLM2:1.7b (1.7B - ~1.5GB)..."
+                docker exec digiurban-ollama ollama pull smollm2:1.7b
+                # Atualizar .env para usar SmolLM2
+                sed -i 's/OLLAMA_MODEL=digibot-qwen2.5/OLLAMA_MODEL=digibot-smollm2/' .env
+                MODEL_NAME="smollm2"
               else
-                MODEL_NAME="phi4"
+                MODEL_NAME="qwen2.5"
               fi
             fi
 
@@ -239,7 +240,7 @@ jobs:
             docker cp Modelfile digiurban-ollama:/tmp/Modelfile 2>/dev/null || echo "⚠️ Modelfile não encontrado, usando configuração padrão"
 
             # Criar ou atualizar modelo
-            MODEL_NAME="${MODEL_NAME:-phi4}"
+            MODEL_NAME="${MODEL_NAME:-qwen2.5}"
             docker exec digiurban-ollama ollama create digibot-${MODEL_NAME} -f /tmp/Modelfile 2>/dev/null || echo "⚠️ Usando modelo base sem customização"
 
             # Testar modelo
