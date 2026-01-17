@@ -15,7 +15,8 @@ import {
   Bell,
   ChevronRight,
   MapPin,
-  FileCheck
+  FileCheck,
+  MessageCircle
 } from 'lucide-react';
 import { useCitizenAuth, useCitizenProtectedRoute } from '@/contexts/CitizenAuthContext';
 import { RegistrationLevelBadge } from './RegistrationLevelBadge';
@@ -45,9 +46,9 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
 
   const navigationItems: Array<{ name: string; href: string; icon: any; badge?: string | number }> = [
     {
-      name: 'Início',
+      name: 'Chat',
       href: '/cidadao',
-      icon: LayoutDashboard
+      icon: MessageCircle
     },
     {
       name: 'Serviços',
