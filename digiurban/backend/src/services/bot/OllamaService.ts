@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { SemanticSearchService } from './SemanticSearchService';
 
 export interface OllamaResponse {
   intent: string;
@@ -11,48 +12,75 @@ export interface OllamaResponse {
   }>;
 }
 
+/**
+ * OllamaService - Serviço de IA com arquitetura RAG em 2 estágios
+ *
+ * ESTÁGIO 1: Intent Classification (prompt mínimo, sem contexto)
+ * ESTÁGIO 2: RAG - Retrieval Augmented Generation (busca semântica + contexto relevante)
+ *
+ * Referências:
+ * - https://arxiv.org/html/2506.00210 (REIC: RAG-Enhanced Intent Classification)
+ * - https://www.pinecone.io/learn/retrieval-augmented-generation/
+ * - https://ragflow.io/blog/rag-review-2025-from-rag-to-context
+ */
 export class OllamaService {
   private baseUrl: string;
   private model: string;
   private timeout: number;
+  private semanticSearch: SemanticSearchService;
 
   constructor(
     baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
     model = process.env.OLLAMA_MODEL || 'digibot-qwen2.5',
-    timeout = parseInt(process.env.OLLAMA_TIMEOUT || '20000')
+    timeout = parseInt(process.env.OLLAMA_TIMEOUT || '15000') // Reduzido para 15s (Stage 1)
   ) {
     this.baseUrl = baseUrl;
     this.model = model;
     this.timeout = timeout;
+    this.semanticSearch = SemanticSearchService.getInstance();
   }
 
   /**
-   * Reconhece intenção usando Phi-4 fine-tuned
+   * ESTÁGIO 1 + 2: Intent Classification + RAG
    */
   async recognizeIntent(
     message: string,
     context: any,
-    servicesMetadata: any[]
+    _servicesMetadata?: any[] // Não usado (RAG busca dinamicamente)
   ): Promise<OllamaResponse> {
-    const prompt = this.buildPrompt(message, context, servicesMetadata);
-
     try {
-      const response = await axios.post(
-        `${this.baseUrl}/api/generate`,
-        {
-          model: this.model,
-          prompt,
-          stream: false,
-          options: {
-            temperature: 0.3, // Baixa temperatura = mais determinístico
-            top_p: 0.9,
-            num_predict: 200,
-          },
-        },
-        { timeout: this.timeout }
-      );
+      // ===================================================================
+      // ESTÁGIO 1: Intent Classification LEVE (sem contexto de serviços)
+      // ===================================================================
+      const stage1Result = await this.stage1_IntentClassification(message, context);
 
-      return this.parseOllamaResponse(response.data.response);
+      // Se é saudação, despedida, ajuda → Não precisa de RAG
+      const simpleIntents = ['SAUDACAO', 'DESPEDIDA', 'AJUDA', 'CHAT_HUMANO', 'VER_PROTOCOLOS'];
+      if (simpleIntents.includes(stage1Result.intent)) {
+        console.log(`✅ Stage 1 only: ${stage1Result.intent} (${stage1Result.confidence})`);
+        return stage1Result;
+      }
+
+      // ===================================================================
+      // ESTÁGIO 2: RAG - Retrieval Augmented Generation
+      // ===================================================================
+      // Se precisa de contexto de serviços → Busca semântica + regeneração
+      const needsServiceContext = [
+        'SOLICITAR_SERVICO',
+        'INFORMACAO_SERVICO',
+        'PESQUISAR_SERVICO',
+        'AGENDAR_CONSULTA'
+      ];
+
+      if (needsServiceContext.includes(stage1Result.intent)) {
+        console.log(`🔍 Stage 2: RAG for ${stage1Result.intent}`);
+        return await this.stage2_RAG(message, context, stage1Result);
+      }
+
+      // Outros casos: retorna Stage 1
+      console.log(`✅ Stage 1 result: ${stage1Result.intent}`);
+      return stage1Result;
+
     } catch (error: any) {
       console.error('Ollama error:', error.message);
       throw new Error('OLLAMA_UNAVAILABLE');
@@ -60,109 +88,204 @@ export class OllamaService {
   }
 
   /**
-   * Constrói prompt APRIMORADO com formSchema completo
+   * ESTÁGIO 1: Classificação de Intent RÁPIDA (prompt mínimo)
    */
-  private buildPrompt(
+  private async stage1_IntentClassification(
+    message: string,
+    context: any
+  ): Promise<OllamaResponse> {
+    const prompt = this.buildStage1Prompt(message, context);
+
+    const response = await axios.post(
+      `${this.baseUrl}/api/generate`,
+      {
+        model: this.model,
+        prompt,
+        stream: false,
+        options: {
+          temperature: 0.2, // Muito determinístico para classificação
+          top_p: 0.8,
+          num_predict: 100, // Resposta curta
+        },
+      },
+      { timeout: this.timeout }
+    );
+
+    return this.parseOllamaResponse(response.data.response);
+  }
+
+  /**
+   * ESTÁGIO 2: RAG - Busca semântica + Geração contextual
+   */
+  private async stage2_RAG(
     message: string,
     context: any,
-    servicesMetadata: any[]
-  ): string {
-    // NOVO: Incluir formSchema e documentos obrigatórios
-    const servicesContext = servicesMetadata
-      .slice(0, 15) // Top 15 (antes: 10)
-      .map((s, i) => {
-        const fields = s.formSchema?.fields || s.formFieldsConfig || [];
-        const requiredDocs = s.requiredDocuments || [];
+    stage1Result: OllamaResponse
+  ): Promise<OllamaResponse> {
+    // 1. Busca semântica: TOP 3 serviços mais relevantes
+    const relevantServices = await this.semanticSearch.searchRelevantServices(message, 3);
 
-        const fieldsList = Array.isArray(fields)
-          ? fields.filter((f: any) => f.enabled !== false).map((f: any) => f.label || f.id).join(', ')
-          : 'Campos customizados';
+    if (relevantServices.length === 0) {
+      console.log('⚠️ RAG: Nenhum serviço relevante encontrado');
+      return stage1Result; // Retorna Stage 1
+    }
 
-        const docsList = Array.isArray(requiredDocs)
-          ? requiredDocs.filter((d: any) => d.required).map((d: any) => d.name).join(', ')
-          : 'Sem documentos obrigatórios';
+    // 2. Buscar detalhes completos dos serviços encontrados
+    const { prisma } = await import('../../lib/prisma');
+    const servicesWithDetails = await prisma.serviceSimplified.findMany({
+      where: {
+        id: { in: relevantServices.map(s => s.id) }
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: true,
+        formSchema: true,
+        formFieldsConfig: true,
+        requiredDocuments: true
+      }
+    });
 
-        return `${i + 1}. ${s.name} (${s.category || 'Geral'})
-   ID: ${s.id}
-   Descrição: ${s.description?.substring(0, 100) || 'Sem descrição'}
-   Campos: ${fieldsList || 'Nenhum'}
-   Documentos: ${docsList || 'Não requer'}`;
-      })
-      .join('\n\n');
+    // 3. Prompt com contexto MÍNIMO mas RELEVANTE
+    const prompt = this.buildStage2RAGPrompt(message, context, servicesWithDetails, stage1Result);
 
-    // NOVO: Histórico de 5 mensagens (antes: 3)
+    // 4. Regenerar com contexto
+    const response = await axios.post(
+      `${this.baseUrl}/api/generate`,
+      {
+        model: this.model,
+        prompt,
+        stream: false,
+        options: {
+          temperature: 0.3,
+          top_p: 0.9,
+          num_predict: 200,
+        },
+      },
+      { timeout: this.timeout + 10000 } // Timeout maior para RAG
+    );
+
+    const result = this.parseOllamaResponse(response.data.response);
+    console.log(`✅ RAG result: ${result.intent} com ${servicesWithDetails.length} serviços`);
+    return result;
+  }
+
+  /**
+   * STAGE 1 PROMPT: Minimalista, apenas classificação
+   */
+  private buildStage1Prompt(message: string, context: any): string {
     const conversationContext = context.messages
-      ?.slice(-5)
+      ?.slice(-3)
       .map((m: any) => `${m.sender}: ${m.content}`)
       .join('\n') || 'Início da conversa';
 
-    return `Você é o DigiBot, assistente virtual da prefeitura municipal brasileira.
+    return `Você é DigiBot da prefeitura. Classifique a INTENÇÃO:
 
-SERVIÇOS DISPONÍVEIS (com campos e documentos):
-${servicesContext}
+INTENÇÕES:
+- AGENDAR_CONSULTA: consulta médica/exame
+- SOLICITAR_SERVICO: serviço municipal (IPTU, alvará, licença)
+- CONSULTAR_PROTOCOLO: consultar protocolo
+- VER_PROTOCOLOS: ver meus protocolos
+- ENVIAR_DOCUMENTO: enviar documento
+- INFORMACAO_SERVICO: informações sobre serviço
+- PESQUISAR_SERVICO: buscar serviços
+- RECLAMACAO: reclamação/denúncia
+- ELOGIO: elogio
+- SAUDACAO: olá, oi, bom dia
+- DESPEDIDA: tchau, obrigado
+- AJUDA: ajuda, menu
+- CHAT_HUMANO: falar com humano
+- OUTROS: não se encaixa
 
-INTENÇÕES POSSÍVEIS:
-- AGENDAR_CONSULTA: Agendar consulta médica ou exame
-- SOLICITAR_SERVICO: Solicitar serviço municipal (IPTU, alvará, licença, etc)
-- CONSULTAR_PROTOCOLO: Consultar andamento de protocolo
-- VER_PROTOCOLOS: Ver lista de protocolos do cidadão
-- ENVIAR_DOCUMENTO: Enviar documentação/anexo
-- INFORMACAO_SERVICO: Obter informações sobre serviços
-- PESQUISAR_SERVICO: Buscar/procurar serviços disponíveis
-- RECLAMACAO: Registrar reclamação/denúncia
-- ELOGIO: Elogiar atendimento
-- SAUDACAO: Cumprimentar (oi, olá, bom dia)
-- DESPEDIDA: Finalizar conversa (tchau, obrigado)
-- AJUDA: Pedir ajuda ou menu
-- CHAT_HUMANO: Falar com atendente humano
-- OUTROS: Não se encaixa nas anteriores
-
-CONTEXTO DA CONVERSA (últimas 5 mensagens):
+CONTEXTO (últimas 3 msgs):
 ${conversationContext}
 
-MENSAGEM DO CIDADÃO:
-"${message}"
+MENSAGEM: "${message}"
+
+RESPONDA JSON (sem texto):
+{
+  "intent": "NOME_INTENCAO",
+  "confidence": 0.85,
+  "parameters": {}
+}`;
+  }
+
+  /**
+   * STAGE 2 RAG PROMPT: Com serviços relevantes recuperados
+   */
+  private buildStage2RAGPrompt(
+    message: string,
+    context: any,
+    relevantServices: any[],
+    stage1Result: OllamaResponse
+  ): string {
+    // Serviços ULTRA-COMPACTOS
+    const servicesContext = relevantServices
+      .slice(0, 3)
+      .map((s, i) => {
+        const fields = s.formSchema?.fields || s.formFieldsConfig || [];
+        const fieldsList = Array.isArray(fields)
+          ? fields.filter((f: any) => f.enabled !== false).slice(0, 5).map((f: any) => f.label || f.id).join(', ')
+          : '';
+
+        return `${i + 1}. ${s.name}
+   ID: ${s.id}
+   Categoria: ${s.category || 'Geral'}
+   Descrição: ${s.description?.substring(0, 80) || ''}
+   Campos: ${fieldsList || 'Ver detalhes'}`;
+      })
+      .join('\n\n');
+
+    const conversationContext = context.messages
+      ?.slice(-3)
+      .map((m: any) => `${m.sender}: ${m.content}`)
+      .join('\n') || 'Início';
+
+    return `DigiBot - Prefeitura
+
+SERVIÇOS RELEVANTES (busca semântica):
+${servicesContext}
+
+INTENT DETECTADA: ${stage1Result.intent}
+CONTEXTO: ${conversationContext}
+MENSAGEM: "${message}"
 
 INSTRUÇÕES:
-1. Identifique a intenção com precisão
-2. Se mencionar um serviço, identifique qual pelo nome/descrição e retorne o ID
-3. Gere de 1 a 3 cards interativos ÚTEIS (não genéricos)
-4. Use confidence >= 0.6 se tiver certeza, >= 0.4 se provável, < 0.4 se incerto
+1. Identifique qual serviço (se mencionado) e retorne o ID
+2. Confidence >= 0.6 se certeza, >= 0.4 provável, < 0.4 incerto
+3. Gere 1-2 cards ÚTEIS
 
-RESPONDA APENAS EM JSON VÁLIDO (sem texto adicional):
+JSON:
 {
-  "intent": "NOME_DA_INTENCAO",
+  "intent": "${stage1Result.intent}",
   "confidence": 0.85,
   "parameters": {
-    "serviceId": "id-do-servico-se-identificado",
-    "serviceName": "nome-do-servico",
-    "protocolNumber": "numero-se-mencionado",
-    "searchTerm": "termo-de-busca"
+    "serviceId": "id-se-identificado",
+    "serviceName": "nome"
   },
   "suggestedCards": [
     {
-      "title": "Título Claro e Útil",
-      "description": "Descrição específica e relevante",
-      "actionLabel": "Ação Clara"
+      "title": "Título",
+      "description": "Descrição",
+      "actionLabel": "Ação"
     }
   ]
 }`;
   }
 
   /**
-   * Parseia resposta do Ollama e valida
+   * Parseia resposta do Ollama
    */
   private parseOllamaResponse(rawResponse: string): OllamaResponse {
     try {
-      // Extrai JSON da resposta (Phi-4 pode retornar texto + JSON)
       const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+        throw new Error('No JSON found');
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
 
-      // Validação e normalização
       return {
         intent: parsed.intent || 'OUTROS',
         confidence: Math.min(Math.max(parsed.confidence || 0, 0), 1),
@@ -171,7 +294,6 @@ RESPONDA APENAS EM JSON VÁLIDO (sem texto adicional):
       };
     } catch (error) {
       console.error('Parse error:', error);
-      // Fallback para análise básica
       return {
         intent: 'OUTROS',
         confidence: 0.3,
@@ -181,45 +303,7 @@ RESPONDA APENAS EM JSON VÁLIDO (sem texto adicional):
   }
 
   /**
-   * Fine-tuning: Cria dataset de treinamento
-   */
-  async generateTrainingDataset(services: any[]): Promise<string> {
-    const examples: string[] = [];
-
-    for (const service of services) {
-      // Exemplo positivo - solicitação direta
-      examples.push(`Mensagem: "Preciso de ${service.name.toLowerCase()}"
-Resposta: {"intent":"SOLICITAR_SERVICO","confidence":0.9,"parameters":{"serviceId":"${service.id}"},"suggestedCards":[{"title":"${service.name}","description":"${service.description.substring(0, 60)}...","actionLabel":"Solicitar Agora"}]}`);
-
-      // Exemplo de informação
-      examples.push(`Mensagem: "Como faço para ${service.name.toLowerCase()}?"
-Resposta: {"intent":"INFORMACAO_SERVICO","confidence":0.85,"parameters":{"serviceId":"${service.id}"},"suggestedCards":[{"title":"Informações - ${service.name}","description":"Documentos necessários e prazos","actionLabel":"Ver Detalhes"}]}`);
-
-      // Exemplo de dúvida sobre documentos
-      if (service.requiredDocuments && service.requiredDocuments.length > 0) {
-        examples.push(`Mensagem: "Quais documentos preciso para ${service.name.toLowerCase()}?"
-Resposta: {"intent":"INFORMACAO_SERVICO","confidence":0.88,"parameters":{"serviceId":"${service.id}"},"suggestedCards":[{"title":"Documentos - ${service.name}","description":"${service.requiredDocuments.join(', ')}","actionLabel":"Iniciar Solicitação"}]}`);
-      }
-    }
-
-    // Adiciona exemplos de outras intenções
-    examples.push(`Mensagem: "Quero consultar meu protocolo 2025001234"
-Resposta: {"intent":"CONSULTAR_PROTOCOLO","confidence":0.95,"parameters":{"protocolNumber":"2025001234"},"suggestedCards":[{"title":"Protocolo #2025001234","description":"Consultar status do seu protocolo","actionLabel":"Ver Andamento"}]}`);
-
-    examples.push(`Mensagem: "Olá, bom dia"
-Resposta: {"intent":"SAUDACAO","confidence":0.98,"parameters":{},"suggestedCards":[{"title":"Como posso ajudar?","description":"Estou aqui para auxiliar com serviços municipais","actionLabel":"Ver Serviços"}]}`);
-
-    examples.push(`Mensagem: "Obrigado, até logo"
-Resposta: {"intent":"DESPEDIDA","confidence":0.97,"parameters":{},"suggestedCards":[]}`);
-
-    examples.push(`Mensagem: "Preciso fazer uma reclamação sobre buraco na rua"
-Resposta: {"intent":"RECLAMACAO","confidence":0.92,"parameters":{},"suggestedCards":[{"title":"Registrar Reclamação","description":"Envie sua reclamação sobre infraestrutura","actionLabel":"Registrar Agora"}]}`);
-
-    return examples.join('\n---\n');
-  }
-
-  /**
-   * Verifica se Ollama está disponível
+   * Health check
    */
   async healthCheck(): Promise<boolean> {
     try {
@@ -233,7 +317,7 @@ Resposta: {"intent":"RECLAMACAO","confidence":0.92,"parameters":{},"suggestedCar
   }
 
   /**
-   * Lista modelos disponíveis
+   * Lista modelos
    */
   async listModels(): Promise<string[]> {
     try {
