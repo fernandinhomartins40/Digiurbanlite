@@ -176,6 +176,11 @@ model Citizen {
   // Categorias do cidadão
   categories          CitizenCategoryAssignment[] @relation("CitizenCategories")
 
+  // Bot e conversações
+  botConversations    BotConversation[]
+  proactiveNotifications ProactiveNotification[]
+  botUploads          BotUpload[]
+
   @@unique([cpf])
   @@map("citizens")
 }
@@ -4945,4 +4950,121 @@ model CertificateRevocationList {
   @@index([revokedAt])
   @@index([publishedAt])
   @@map("certificate_revocation_list")
+}
+
+// ============================================
+// SISTEMA DE BOT E CONVERSAÇÕES
+// ============================================
+
+// Conversação com o DigiBot
+model BotConversation {
+  id           String   @id @default(cuid())
+  citizenId    String
+  intent       String?
+  confidence   Float?
+  currentFlow  String?   // Fluxo atual (AGENDAR_CONSULTA, SOLICITAR_SERVICO, etc)
+  flowStep     Int       @default(0) // Passo atual do fluxo
+  flowData     Json?     // Dados coletados durante o fluxo
+  isActive     Boolean   @default(true)
+  closedAt     DateTime?
+  rating       Int?      // 1-5 estrelas
+  ratingComment String?  @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relacionamentos
+  citizen      Citizen       @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  messages     BotMessage[]
+
+  @@index([citizenId])
+  @@index([currentFlow])
+  @@index([isActive])
+  @@index([createdAt])
+  @@map("bot_conversations")
+}
+
+// Mensagens da conversa com o bot
+model BotMessage {
+  id              String   @id @default(cuid())
+  conversationId  String
+  role            String   // 'user' | 'bot' | 'system'
+  content         String   @db.Text
+  messageType     String   @default("text") // 'text' | 'card' | 'form' | 'quick_reply' | 'interactive'
+  metadata        Json?    // Dados adicionais (cards, formulários, etc)
+  intent          String?  // Intent reconhecida (apenas para mensagens do usuário)
+  confidence      Float?   // Confiança do reconhecimento
+  wasTransferred  Boolean  @default(false) // Foi transferido para humano?
+  createdAt       DateTime @default(now())
+
+  // Relacionamentos
+  conversation    BotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([role])
+  @@index([intent])
+  @@index([createdAt])
+  @@map("bot_messages")
+}
+
+// Analytics do Bot
+model BotAnalytics {
+  id                String   @id @default(cuid())
+  date              DateTime @default(now()) @db.Date
+  intent            String
+  totalCount        Int      @default(0)
+  successCount      Int      @default(0)  // Resolvido sem transferência
+  transferCount     Int      @default(0)  // Transferido para humano
+  avgConfidence     Float?
+  avgResponseTime   Float?   // Tempo médio de resposta (ms)
+  uniqueCitizens    Int      @default(0)
+
+  @@unique([date, intent])
+  @@index([date])
+  @@index([intent])
+  @@map("bot_analytics")
+}
+
+// Notificações proativas do sistema
+model ProactiveNotification {
+  id           String   @id @default(cuid())
+  citizenId    String
+  type         String   // 'protocol_expiring' | 'protocol_approved' | 'appointment_reminder' | 'suggestion'
+  title        String
+  message      String   @db.Text
+  metadata     Json?    // Dados adicionais
+  scheduledFor DateTime // Quando deve ser enviada
+  sentAt       DateTime?
+  isRead       Boolean  @default(false)
+  readAt       DateTime?
+  createdAt    DateTime @default(now())
+
+  // Relacionamentos
+  citizen      Citizen  @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([type])
+  @@index([scheduledFor])
+  @@index([sentAt])
+  @@map("proactive_notifications")
+}
+
+// Uploads de arquivos durante conversas com o bot
+model BotUpload {
+  id             String   @id @default(cuid())
+  citizenId      String
+  conversationId String?
+  fileName       String
+  fileSize       Int
+  mimeType       String
+  fileUrl        String   // URL do arquivo armazenado
+  uploadedAt     DateTime @default(now())
+  expiresAt      DateTime? // Opcional: expiração do arquivo temporário
+
+  // Relacionamentos
+  citizen        Citizen  @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([conversationId])
+  @@index([uploadedAt])
+  @@map("bot_uploads")
 }
