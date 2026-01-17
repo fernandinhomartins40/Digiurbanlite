@@ -108,13 +108,13 @@ app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/citizen/auth', citizenAuthRoutes);
 
 // ============================================================
-// ROTAS DO BOT (DIGIBOT AI)
+// ROTAS DO BOT (DIGIBOT AI) - Enhanced com RAG
 // ============================================================
-console.log('🤖 Carregando rotas do bot...');
+console.log('🤖 Carregando rotas do bot (Enhanced com RAG)...');
 try {
-  const botRoutes = require('./routes/bot').default;
+  const botRoutes = require('./routes/botEnhanced').default;
   app.use('/api/bot', botRoutes);
-  console.log('✅ Rotas do bot carregadas!');
+  console.log('✅ Rotas do bot Enhanced carregadas!');
 } catch (error) {
   console.error('❌ Erro ao carregar rotas do bot:', error);
 }
