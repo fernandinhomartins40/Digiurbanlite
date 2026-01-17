@@ -215,26 +215,48 @@ export class BotServiceEnhanced {
         return botResponse;
       }
 
-      // 8. Valida confiança baixa
-      if (intent.confidence < 0.5) {
-        // Incrementa contador de baixa confiança
-        const metadata = (context.metadata as any) || {};
-        metadata.lowConfidenceCount = (metadata.lowConfidenceCount || 0) + 1;
+      // 8. Tratamento de intents especiais (IA indisponível ou clarificação)
+      if (intent.name === 'AI_UNAVAILABLE') {
+        console.log('🔀 IA indisponível, transferindo para humano');
+        return await this.transferToHuman(
+          citizenId,
+          conversation.id,
+          'AI_ERROR',
+          sentiment
+        );
+      }
 
-        await this.contextManager.updateContext(citizenId, { metadata });
+      if (intent.name === 'CLARIFICATION_NEEDED') {
+        console.log('❓ Clarificação necessária');
 
-        // Após 3 tentativas com baixa confiança, oferece alternativas
-        if (metadata.lowConfidenceCount >= 3) {
-          return await this.transferToHuman(
-            citizenId,
-            conversation.id,
-            'LOW_CONFIDENCE',
-            sentiment
-          );
-        }
+        const botResponse: BotResponse = {
+          response: 'Não entendi muito bem. Você pode reformular ou escolher uma das opções abaixo?',
+          messageType: 'quick_reply',
+          quickReplies: [
+            'Quero agendar consulta médica',
+            'Preciso solicitar um serviço',
+            'Ver meus protocolos',
+            'Falar com atendente'
+          ],
+          metadata: {
+            needsClarification: true,
+            originalIntent: intent.entities?.originalIntent,
+            confidence: intent.confidence
+          }
+        };
 
-        // Detecta contexto ambíguo - oferece sugestões
-        return this.handleAmbiguousContext(intent, message);
+        // Salva resposta do bot
+        await prisma.botMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: 'bot',
+            content: botResponse.response,
+            messageType: botResponse.messageType,
+            metadata: botResponse.metadata,
+          },
+        });
+
+        return botResponse;
       }
 
       // Reset contadores em caso de sucesso
@@ -333,6 +355,13 @@ export class BotServiceEnhanced {
         return this.flowManager.startFlow(citizenId, 'AGENDAR_CONSULTA');
 
       case 'SOLICITAR_SERVICO':
+        // Se IA identificou serviceId, usar fluxo dinâmico
+        const serviceId = intent.entities?.serviceId;
+        if (serviceId) {
+          console.log(`📝 IA identificou serviço: ${serviceId}, iniciando fluxo dinâmico`);
+          return this.flowManager.startDynamicServiceFlow(citizenId, serviceId);
+        }
+        // Senão, usar fluxo padrão de busca de serviço
         return this.flowManager.startFlow(citizenId, 'SOLICITAR_SERVICO');
 
       case 'ENVIAR_DOCUMENTO':

@@ -125,7 +125,7 @@ jobs:
             echo "USE_OLLAMA=true" >> .env
             echo "OLLAMA_BASE_URL=http://ollama:11434" >> .env
             echo "OLLAMA_MODEL=digibot-qwen2.5" >> .env
-            echo "OLLAMA_TIMEOUT=5000" >> .env
+            echo "OLLAMA_TIMEOUT=20000" >> .env
 
             # Remover arquivos .db SQLite antigos (não usamos mais)
             echo "Removendo arquivos .db do código-fonte..."

@@ -99,54 +99,60 @@ export class IntentRecognitionService {
 
   /**
    * Reconhece a intenção da mensagem do usuário
+   * VERSÃO 100% IA - SEM FALLBACKS
    */
   async recognizeIntent(message: string, context?: Context, servicesMetadata?: any[]): Promise<Intent> {
-    // 1. TENTAR OLLAMA/PHI-4 PRIMEIRO (se habilitado)
-    if (this.useOllama) {
-      try {
-        const services = servicesMetadata || [];
-        const ollamaResult = await this.ollamaService.recognizeIntent(
-          message,
-          context || {},
-          services
-        );
-
-        // Se confiança suficiente, usar resultado do Ollama
-        if (ollamaResult.confidence >= 0.6) {
-          console.log(`✅ Ollama reconheceu intent: ${ollamaResult.intent} (confiança: ${ollamaResult.confidence})`);
-          return {
-            name: ollamaResult.intent,
-            confidence: ollamaResult.confidence,
-            entities: ollamaResult.parameters,
-            suggestedCards: ollamaResult.suggestedCards,
-          };
-        }
-      } catch (error: any) {
-        if (error.message !== 'OLLAMA_UNAVAILABLE') {
-          console.error('❌ Ollama error:', error.message);
-        }
-        // Continua para próximo método (fallback)
-      }
+    // Validação: IA deve estar habilitada
+    if (!this.useOllama) {
+      console.error('❌ IA desabilitada. Configure USE_OLLAMA=true');
+      return {
+        name: 'AI_UNAVAILABLE',
+        confidence: 0,
+        entities: { error: 'IA desabilitada. Configure USE_OLLAMA=true' }
+      };
     }
 
-    // 2. FALLBACK PARA OPENAI (se configurado)
-    if (this.openai) {
-      try {
-        const openaiResult = await this.recognizeWithOpenAI(message, context);
-        if (openaiResult.confidence >= 0.5) {
-          console.log(`✅ OpenAI reconheceu intent: ${openaiResult.name} (confiança: ${openaiResult.confidence})`);
-          return openaiResult;
-        }
-      } catch (error) {
-        console.error('❌ OpenAI error:', error);
-        // Continua para keyword matching
-      }
-    }
+    try {
+      const services = servicesMetadata || [];
+      const ollamaResult = await this.ollamaService.recognizeIntent(
+        message,
+        context || {},
+        services
+      );
 
-    // 3. FALLBACK PARA KEYWORD MATCHING (sempre disponível)
-    const keywordResult = this.recognizeWithKeywords(message);
-    console.log(`⚠️ Usando keyword matching: ${keywordResult.name} (confiança: ${keywordResult.confidence})`);
-    return keywordResult;
+      // NOVO: Aceitar confiança >= 0.4 (IA é mais confiável que keywords)
+      if (ollamaResult.confidence >= 0.4) {
+        console.log(`✅ Ollama: ${ollamaResult.intent} (confiança: ${ollamaResult.confidence.toFixed(2)})`);
+        return {
+          name: ollamaResult.intent,
+          confidence: ollamaResult.confidence,
+          entities: ollamaResult.parameters,
+          suggestedCards: ollamaResult.suggestedCards,
+        };
+      }
+
+      // Se confiança muito baixa, pedir clarificação
+      console.log(`⚠️ Baixa confiança (${ollamaResult.confidence.toFixed(2)}), pedindo clarificação`);
+      return {
+        name: 'CLARIFICATION_NEEDED',
+        confidence: ollamaResult.confidence,
+        entities: {
+          originalIntent: ollamaResult.intent,
+          originalParameters: ollamaResult.parameters
+        },
+        suggestedCards: ollamaResult.suggestedCards || []
+      };
+
+    } catch (error: any) {
+      console.error('❌ Ollama indisponível:', error.message);
+
+      // SEM FALLBACK - Transferir para humano
+      return {
+        name: 'AI_UNAVAILABLE',
+        confidence: 0,
+        entities: { error: error.message }
+      };
+    }
   }
 
   /**

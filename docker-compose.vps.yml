@@ -194,7 +194,7 @@ services:
       - USE_OLLAMA=true
       - OLLAMA_BASE_URL=http://ollama:11434
       - OLLAMA_MODEL=digibot-qwen2.5
-      - OLLAMA_TIMEOUT=5000
+      - OLLAMA_TIMEOUT=20000
 
     volumes:
       - digiurban_uploads:/app/uploads

@@ -18,8 +18,8 @@ export class OllamaService {
 
   constructor(
     baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-    model = process.env.OLLAMA_MODEL || 'phi4',
-    timeout = parseInt(process.env.OLLAMA_TIMEOUT || '5000')
+    model = process.env.OLLAMA_MODEL || 'digibot-qwen2.5',
+    timeout = parseInt(process.env.OLLAMA_TIMEOUT || '20000')
   ) {
     this.baseUrl = baseUrl;
     this.model = model;
@@ -60,63 +60,90 @@ export class OllamaService {
   }
 
   /**
-   * Constrói prompt otimizado para Phi-4
+   * Constrói prompt APRIMORADO com formSchema completo
    */
   private buildPrompt(
     message: string,
     context: any,
     servicesMetadata: any[]
   ): string {
+    // NOVO: Incluir formSchema e documentos obrigatórios
     const servicesContext = servicesMetadata
-      .slice(0, 10) // Top 10 serviços mais relevantes
-      .map(
-        (s, i) =>
-          `${i + 1}. ${s.name} (${s.category}) - ${s.description.substring(0, 80)}...`
-      )
-      .join('\n');
+      .slice(0, 15) // Top 15 (antes: 10)
+      .map((s, i) => {
+        const fields = s.formSchema?.fields || s.formFieldsConfig || [];
+        const requiredDocs = s.requiredDocuments || [];
 
+        const fieldsList = Array.isArray(fields)
+          ? fields.filter((f: any) => f.enabled !== false).map((f: any) => f.label || f.id).join(', ')
+          : 'Campos customizados';
+
+        const docsList = Array.isArray(requiredDocs)
+          ? requiredDocs.filter((d: any) => d.required).map((d: any) => d.name).join(', ')
+          : 'Sem documentos obrigatórios';
+
+        return `${i + 1}. ${s.name} (${s.category || 'Geral'})
+   ID: ${s.id}
+   Descrição: ${s.description?.substring(0, 100) || 'Sem descrição'}
+   Campos: ${fieldsList || 'Nenhum'}
+   Documentos: ${docsList || 'Não requer'}`;
+      })
+      .join('\n\n');
+
+    // NOVO: Histórico de 5 mensagens (antes: 3)
     const conversationContext = context.messages
-      ?.slice(-3)
+      ?.slice(-5)
       .map((m: any) => `${m.sender}: ${m.content}`)
       .join('\n') || 'Início da conversa';
 
-    return `Você é o DigiBot, assistente virtual da prefeitura municipal. Analise a mensagem do cidadão e identifique a intenção.
+    return `Você é o DigiBot, assistente virtual da prefeitura municipal brasileira.
 
-SERVIÇOS DISPONÍVEIS:
+SERVIÇOS DISPONÍVEIS (com campos e documentos):
 ${servicesContext}
 
 INTENÇÕES POSSÍVEIS:
-- AGENDAR_CONSULTA: Agendar consulta médica
-- SOLICITAR_SERVICO: Solicitar serviço municipal (IPTU, alvará, etc)
+- AGENDAR_CONSULTA: Agendar consulta médica ou exame
+- SOLICITAR_SERVICO: Solicitar serviço municipal (IPTU, alvará, licença, etc)
 - CONSULTAR_PROTOCOLO: Consultar andamento de protocolo
-- ENVIAR_DOCUMENTO: Enviar documentação
+- VER_PROTOCOLOS: Ver lista de protocolos do cidadão
+- ENVIAR_DOCUMENTO: Enviar documentação/anexo
 - INFORMACAO_SERVICO: Obter informações sobre serviços
+- PESQUISAR_SERVICO: Buscar/procurar serviços disponíveis
 - RECLAMACAO: Registrar reclamação/denúncia
 - ELOGIO: Elogiar atendimento
-- SAUDACAO: Cumprimentar
-- DESPEDIDA: Finalizar conversa
-- AJUDA: Pedir ajuda
+- SAUDACAO: Cumprimentar (oi, olá, bom dia)
+- DESPEDIDA: Finalizar conversa (tchau, obrigado)
+- AJUDA: Pedir ajuda ou menu
+- CHAT_HUMANO: Falar com atendente humano
 - OUTROS: Não se encaixa nas anteriores
 
-CONTEXTO DA CONVERSA:
+CONTEXTO DA CONVERSA (últimas 5 mensagens):
 ${conversationContext}
 
 MENSAGEM DO CIDADÃO:
 "${message}"
 
-RESPONDA EM JSON VÁLIDO:
+INSTRUÇÕES:
+1. Identifique a intenção com precisão
+2. Se mencionar um serviço, identifique qual pelo nome/descrição e retorne o ID
+3. Gere de 1 a 3 cards interativos ÚTEIS (não genéricos)
+4. Use confidence >= 0.6 se tiver certeza, >= 0.4 se provável, < 0.4 se incerto
+
+RESPONDA APENAS EM JSON VÁLIDO (sem texto adicional):
 {
   "intent": "NOME_DA_INTENCAO",
   "confidence": 0.85,
   "parameters": {
-    "serviceId": "opcional-id-servico",
-    "protocolNumber": "opcional-numero"
+    "serviceId": "id-do-servico-se-identificado",
+    "serviceName": "nome-do-servico",
+    "protocolNumber": "numero-se-mencionado",
+    "searchTerm": "termo-de-busca"
   },
   "suggestedCards": [
     {
-      "title": "Título do Card",
-      "description": "Descrição breve",
-      "actionLabel": "Botão de Ação"
+      "title": "Título Claro e Útil",
+      "description": "Descrição específica e relevante",
+      "actionLabel": "Ação Clara"
     }
   ]
 }`;

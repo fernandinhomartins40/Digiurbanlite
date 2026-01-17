@@ -47,6 +47,7 @@ export interface FlowDefinition {
   name: string;
   steps: FlowStep[];
   onComplete: string; // Nome da função a executar ao completar
+  metadata?: any; // Metadados adicionais do fluxo
 }
 
 export interface FlowStep {
@@ -94,6 +95,8 @@ export interface FlowValidation {
   maxDate?: string | Date;
   minValue?: number;
   maxValue?: number;
+  min?: number; // Valor mínimo (compatível com formSchema)
+  max?: number; // Valor máximo (compatível com formSchema)
 }
 
 // ============================================

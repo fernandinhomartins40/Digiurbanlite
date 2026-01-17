@@ -1,5 +1,5 @@
 import { prisma } from '../../lib/prisma';
-import { BotResponse, FlowStep, FlowDefinition } from './types';
+import { BotResponse, FlowStep, FlowDefinition, FlowStepType } from './types';
 
 /**
  * FlowManager - Gerencia fluxos conversacionais multi-step
@@ -571,6 +571,11 @@ export class FlowManager {
       case 'createServiceProtocol':
         return this.createServiceProtocol(conversation.citizenId, flowData);
 
+      case 'createDynamicServiceProtocol':
+        // Buscar metadata do fluxo para obter serviceId
+        const flow = this.flows.get(conversation.currentFlow || '');
+        return this.createDynamicServiceProtocol(conversation.citizenId, flowData, flow?.metadata);
+
       case 'uploadCitizenDocument':
         return this.uploadCitizenDocument(conversation.citizenId, flowData);
 
@@ -611,6 +616,9 @@ export class FlowManager {
       };
     }
 
+    // Gerar número único de protocolo
+    const protocolNumber = await this.generateProtocolNumber();
+
     // Cria protocolo
     const protocol = await prisma.protocolSimplified.create({
       // @ts-ignore - Prisma typing issue with customData
@@ -618,11 +626,24 @@ export class FlowManager {
         citizenId,
         serviceId: service.id,
         departmentId: service.departmentId,
+        number: protocolNumber,
         title: 'Agendamento de Consulta',
         description: `Consulta - ${flowData.specialty} - ${flowData.appointmentDate} às ${flowData.appointmentTime}`,
-        status: 'PENDENCIA' as any,
+        status: 'VINCULADO' as any,
+        moduleType: 'SAUDE',
+        priority: 3,
         customData: flowData,
       },
+    });
+
+    // Criar histórico
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId: protocol.id,
+        action: 'Protocolo criado via DigiBot',
+        comment: `Agendamento de ${flowData.specialty} para ${flowData.appointmentDate} às ${flowData.appointmentTime}`,
+        userId: null
+      }
     });
 
     return {
@@ -815,6 +836,267 @@ export class FlowManager {
     });
 
     return conversation?.currentFlow || null;
+  }
+
+  /**
+   * ============================================================
+   * NOVOS MÉTODOS: FLUXO DINÂMICO BASEADO EM formSchema
+   * ============================================================
+   */
+
+  /**
+   * Inicia fluxo dinâmico baseado no formSchema do serviço
+   */
+  public async startDynamicServiceFlow(
+    citizenId: string,
+    serviceId: string
+  ): Promise<BotResponse> {
+    try {
+      // 1. Buscar serviço com formSchema
+      const service = await prisma.serviceSimplified.findUnique({
+        where: { id: serviceId },
+        include: { department: true }
+      });
+
+      if (!service) {
+        return {
+          response: 'Serviço não encontrado. Tente buscar novamente.',
+          messageType: 'text',
+          quickReplies: ['Buscar serviços', 'Falar com atendente']
+        };
+      }
+
+      // 2. Converter formSchema em etapas de fluxo
+      const steps: FlowStep[] = [];
+
+      // Adicionar campos customizados do formSchema
+      const formFields = (service.formFieldsConfig as any[]) ||
+                        (service.formSchema as any)?.fields ||
+                        [];
+
+      for (const field of formFields) {
+        if (field.enabled === false) continue;
+
+        steps.push({
+          id: field.id,
+          type: this.mapFieldTypeToStepType(field.type),
+          message: field.label || field.placeholder || field.id,
+          required: field.required || false,
+          saveAs: field.id,
+          validation: {
+            minLength: field.minLength,
+            maxLength: field.maxLength,
+            pattern: field.pattern,
+            min: field.min,
+            max: field.max
+          },
+          options: field.options?.map((opt: string) => ({
+            value: opt,
+            label: opt
+          })),
+          placeholder: field.placeholder
+        });
+      }
+
+      // Adicionar etapa de descrição (sempre obrigatória)
+      steps.push({
+        id: 'description',
+        type: 'text',
+        message: `Descreva o motivo da solicitação de "${service.name}":`,
+        required: true,
+        saveAs: 'description',
+        validation: {
+          minLength: 10,
+          maxLength: 500
+        }
+      });
+
+      // Adicionar upload de documentos se necessário
+      if (service.requiresDocuments && service.requiredDocuments) {
+        const docs = service.requiredDocuments as any[];
+        if (Array.isArray(docs) && docs.length > 0) {
+          steps.push({
+            id: 'upload_documents',
+            type: 'file_upload',
+            message: `Envie os seguintes documentos:\n${docs.map(d => `- ${d.name}`).join('\n')}`,
+            required: docs.some(d => d.required),
+            saveAs: 'documents',
+            accept: 'image/*,.pdf',
+            maxFiles: docs.length,
+            maxSize: 10485760 // 10MB
+          });
+        }
+      }
+
+      // Adicionar confirmação final
+      steps.push({
+        id: 'confirmation',
+        type: 'confirmation',
+        message: `Revise sua solicitação de "${service.name}":`,
+        required: true
+      });
+
+      // 3. Criar fluxo dinâmico
+      const flowDefinition: FlowDefinition = {
+        name: `SERVICE_${serviceId}`,
+        steps,
+        onComplete: 'createDynamicServiceProtocol',
+        metadata: {
+          serviceId,
+          serviceName: service.name,
+          departmentId: service.departmentId,
+          departmentName: service.department?.name
+        }
+      };
+
+      // 4. Registrar e iniciar fluxo
+      this.registerFlow(flowDefinition);
+
+      // Iniciar fluxo
+      return this.startFlow(citizenId, flowDefinition.name);
+
+    } catch (error) {
+      console.error('Erro ao criar fluxo dinâmico:', error);
+      return {
+        response: 'Erro ao iniciar solicitação. Tente novamente ou fale com um atendente.',
+        messageType: 'text',
+        quickReplies: ['Tentar novamente', 'Falar com atendente']
+      };
+    }
+  }
+
+  /**
+   * Mapeia tipo de campo do formSchema para tipo de etapa do fluxo
+   */
+  private mapFieldTypeToStepType(fieldType: string): FlowStepType {
+    const mapping: Record<string, FlowStepType> = {
+      'text': 'text',
+      'textarea': 'text',
+      'number': 'text',
+      'email': 'text',
+      'phone': 'phone',
+      'date': 'date',
+      'time': 'time',
+      'select': 'selection',
+      'radio': 'selection',
+      'checkbox': 'multiple_choice',
+      'file': 'file_upload',
+      'location': 'location'
+    };
+
+    return mapping[fieldType] || 'text';
+  }
+
+  /**
+   * Cria protocolo dinâmico baseado em formSchema
+   */
+  private async createDynamicServiceProtocol(
+    citizenId: string,
+    flowData: any,
+    metadata?: any
+  ): Promise<BotResponse> {
+    try {
+      const serviceId = metadata?.serviceId;
+      if (!serviceId) {
+        throw new Error('serviceId não encontrado no metadata');
+      }
+
+      const service = await prisma.serviceSimplified.findUnique({
+        where: { id: serviceId },
+        include: { department: true }
+      });
+
+      if (!service) {
+        throw new Error('Serviço não encontrado');
+      }
+
+      // Gerar número único de protocolo
+      const protocolNumber = await this.generateProtocolNumber();
+
+      // Criar protocolo
+      const protocol = await prisma.protocolSimplified.create({
+        data: {
+          citizenId,
+          serviceId: service.id,
+          departmentId: service.departmentId,
+          number: protocolNumber,
+          title: service.name,
+          description: flowData.description || `Solicitação de ${service.name}`,
+          customData: flowData, // Todos os campos coletados
+          status: 'VINCULADO' as any,
+          moduleType: service.moduleType || 'GERAL',
+          priority: 3
+        }
+      });
+
+      // Upload de documentos se houver
+      if (flowData.documents && Array.isArray(flowData.documents) && flowData.documents.length > 0) {
+        for (const file of flowData.documents) {
+          await prisma.protocolDocument.create({
+            data: {
+              protocolId: protocol.id,
+              documentType: file.documentType || 'ANEXO',
+              fileName: file.filename || file.name,
+              fileUrl: file.path || file.url,
+              fileSize: file.size,
+              mimeType: file.mimetype || file.type,
+              status: 'UPLOADED' as any,
+              uploadedAt: new Date(),
+              isRequired: true
+            }
+          });
+        }
+      }
+
+      // Criar histórico
+      await prisma.protocolHistorySimplified.create({
+        data: {
+          protocolId: protocol.id,
+          action: 'Protocolo criado via DigiBot',
+          comment: `Solicitação de ${service.name} - ${flowData.description || 'Via chat'}`,
+          userId: null // Sistema
+        }
+      });
+
+      console.log(`✅ Protocolo ${protocolNumber} criado com sucesso via fluxo dinâmico`);
+
+      return {
+        response: `✅ Solicitação de "${service.name}" enviada com sucesso!\n\n📋 Protocolo: #${protocolNumber}\n🏛️ Departamento: ${service.department?.name || 'N/A'}\n⏱️ Prazo estimado: ${service.estimatedDays || 'A definir'} dias\n\nVocê pode acompanhar pelo menu "Meus Protocolos".`,
+        messageType: 'text',
+        metadata: {
+          protocolId: protocol.id,
+          protocolNumber: protocolNumber,
+          serviceId: service.id
+        }
+      };
+
+    } catch (error) {
+      console.error('Erro ao criar protocolo dinâmico:', error);
+      return {
+        response: 'Erro ao processar solicitação. Por favor, tente novamente ou fale com um atendente.',
+        messageType: 'text',
+        quickReplies: ['Tentar novamente', 'Falar com atendente']
+      };
+    }
+  }
+
+  /**
+   * Gera número único de protocolo no formato YYYY-NNNNNNN
+   */
+  private async generateProtocolNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+
+    // Contar protocolos do ano atual
+    const count = await prisma.protocolSimplified.count({
+      where: {
+        number: {
+          startsWith: `${year}-`
+        }
+      }
+    });
+
+    const nextNumber = (count + 1).toString().padStart(7, '0');
+    return `${year}-${nextNumber}`;
   }
 }
 
