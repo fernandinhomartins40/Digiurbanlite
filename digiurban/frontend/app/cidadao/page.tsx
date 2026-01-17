@@ -368,8 +368,7 @@ export default function CitizenDashboard() {
   useEffect(() => {
     if (citizen) {
       fetchConversations();
-      // Auto-selecionar o bot na primeira vez
-      handleSelectConversation(BOT_CONVERSATION);
+      // NÃO auto-selecionar - mostrar lista de conversas
     }
   }, [citizen]);
 
@@ -785,13 +784,13 @@ export default function CitizenDashboard() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500 bg-gradient-to-br from-blue-50 to-purple-50">
-            <div className="text-center">
+            <div className="text-center p-8">
               <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
                 <Sparkles className="w-12 h-12 text-white" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Bem-vindo ao DigiUrban!</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Converse com o DigiBot ou selecione uma conversa
+              <p className="text-sm text-gray-600 mb-6">
+                Selecione uma conversa à esquerda ou clique no botão abaixo para conversar com o DigiBot
               </p>
               <Button
                 onClick={() => handleSelectConversation(BOT_CONVERSATION)}
@@ -809,40 +808,43 @@ export default function CitizenDashboard() {
       {isMobileView && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
           <div className="flex items-center justify-around p-2">
-            <button
-              onClick={() => handleSelectConversation(BOT_CONVERSATION)}
-              className="flex flex-col items-center gap-1 px-4 py-2 text-blue-600"
-            >
-              <div className="relative">
-                <MessageCircle className="w-5 h-5 fill-current" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></div>
-              </div>
-              <span className="text-xs font-semibold">Chat</span>
-            </button>
             <Link
               href="/cidadao/servicos"
-              className="flex flex-col items-center gap-1 px-4 py-2 text-gray-600 hover:text-blue-600"
+              className="flex flex-col items-center gap-1 px-3 py-2 text-gray-600 hover:text-blue-600"
             >
               <FileText className="w-5 h-5" />
               <span className="text-xs">Serviços</span>
             </Link>
             <Link
               href="/cidadao/protocolos"
-              className="flex flex-col items-center gap-1 px-4 py-2 text-gray-600 hover:text-blue-600"
+              className="flex flex-col items-center gap-1 px-3 py-2 text-gray-600 hover:text-blue-600"
             >
               <Folder className="w-5 h-5" />
               <span className="text-xs">Protocolos</span>
             </Link>
+            <button
+              onClick={() => {
+                setShowConversationsList(true);
+                setSelectedConversation(null);
+              }}
+              className="flex flex-col items-center gap-1 px-3 py-2 text-blue-600 -mt-4"
+            >
+              <div className="relative bg-blue-600 rounded-full p-3 shadow-lg">
+                <MessageCircle className="w-6 h-6 text-white fill-current" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+              </div>
+              <span className="text-xs font-semibold mt-1">Chat</span>
+            </button>
             <Link
               href="/cidadao/documentos"
-              className="flex flex-col items-center gap-1 px-4 py-2 text-gray-600 hover:text-blue-600"
+              className="flex flex-col items-center gap-1 px-3 py-2 text-gray-600 hover:text-blue-600"
             >
               <FileCheck className="w-5 h-5" />
               <span className="text-xs">Docs</span>
             </Link>
             <Link
               href="/cidadao/perfil"
-              className="flex flex-col items-center gap-1 px-4 py-2 text-gray-600 hover:text-blue-600"
+              className="flex flex-col items-center gap-1 px-3 py-2 text-gray-600 hover:text-blue-600"
             >
               <User className="w-5 h-5" />
               <span className="text-xs">Perfil</span>
