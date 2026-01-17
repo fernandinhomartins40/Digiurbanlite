@@ -41,6 +41,7 @@ import { useToast } from '@/hooks/use-toast';
 import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { BottomNavigation } from '@/components/citizen/mobile/BottomNavigation';
 
 interface Message {
   id: string;
@@ -76,22 +77,7 @@ export default function CitizenDashboard() {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Estados
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [isMobileView, setIsMobileView] = useState(false);
-  const [showConversationsList, setShowConversationsList] = useState(true);
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [showBottomSheet, setShowBottomSheet] = useState(false);
-
-  const socketRef = useRef<Socket | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Conversa do Bot (sempre fixa no topo)
+  // Conversa do Bot (sempre fixa no topo) - DEFINIR ANTES DOS ESTADOS
   const BOT_CONVERSATION: Conversation = {
     id: 'bot-digiurban',
     type: 'BOT',
@@ -107,6 +93,21 @@ export default function CitizenDashboard() {
     isPinned: true,
     isBot: true
   };
+
+  // Estados - Inicializar conversas COM O BOT
+  const [conversations, setConversations] = useState<Conversation[]>([BOT_CONVERSATION]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [showConversationsList, setShowConversationsList] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showBottomSheet, setShowBottomSheet] = useState(false);
+
+  const socketRef = useRef<Socket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Itens do menu lateral
   const menuItems = [
@@ -805,53 +806,7 @@ export default function CitizenDashboard() {
       </div>
 
       {/* Bottom Navigation - Mobile */}
-      {isMobileView && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
-          <div className="flex items-center justify-around p-2">
-            <Link
-              href="/cidadao/servicos"
-              className="flex flex-col items-center gap-1 px-3 py-2 text-gray-600 hover:text-blue-600"
-            >
-              <FileText className="w-5 h-5" />
-              <span className="text-xs">Serviços</span>
-            </Link>
-            <Link
-              href="/cidadao/protocolos"
-              className="flex flex-col items-center gap-1 px-3 py-2 text-gray-600 hover:text-blue-600"
-            >
-              <Folder className="w-5 h-5" />
-              <span className="text-xs">Protocolos</span>
-            </Link>
-            <button
-              onClick={() => {
-                setShowConversationsList(true);
-                setSelectedConversation(null);
-              }}
-              className="flex flex-col items-center gap-1 px-3 py-2 text-blue-600 -mt-4"
-            >
-              <div className="relative bg-blue-600 rounded-full p-3 shadow-lg">
-                <MessageCircle className="w-6 h-6 text-white fill-current" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-              </div>
-              <span className="text-xs font-semibold mt-1">Chat</span>
-            </button>
-            <Link
-              href="/cidadao/documentos"
-              className="flex flex-col items-center gap-1 px-3 py-2 text-gray-600 hover:text-blue-600"
-            >
-              <FileCheck className="w-5 h-5" />
-              <span className="text-xs">Docs</span>
-            </Link>
-            <Link
-              href="/cidadao/perfil"
-              className="flex flex-col items-center gap-1 px-3 py-2 text-gray-600 hover:text-blue-600"
-            >
-              <User className="w-5 h-5" />
-              <span className="text-xs">Perfil</span>
-            </Link>
-          </div>
-        </div>
-      )}
+      <BottomNavigation />
     </div>
   );
 }
