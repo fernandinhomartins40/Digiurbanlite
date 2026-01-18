@@ -6,19 +6,20 @@ import FlowManager from './FlowManager';
 import InputValidator from './InputValidator';
 import SentimentAnalysisService from './SentimentAnalysisService';
 import ProactiveNotificationService from './ProactiveNotificationService';
+import { ConversationFlowManager, FlowType } from './ConversationFlowManager';
 import { BotResponse } from './types';
 import { prisma } from '../../lib/prisma';
+import { OllamaService } from './OllamaService';
 
 /**
  * BotServiceEnhanced - Versão melhorada do serviço de bot
  *
- * Novas funcionalidades:
- * - Fluxos conversacionais multi-step
- * - Validação inteligente de entradas
- * - Detecção de frustração e sentimento
- * - Transferência automática para humano
- * - Persistência em banco de dados
- * - Detecção de contexto ambíguo
+ * NOVA ARQUITETURA:
+ * - Sistema de fluxos conversacionais estruturados
+ * - Menu principal com 5 opções clicáveis
+ * - IA usada estrategicamente para busca e Q&A
+ * - Navegação por botões e quick replies
+ * - Zero transferência para atendente humano
  */
 export class BotServiceEnhanced {
   private static instance: BotServiceEnhanced;
@@ -30,6 +31,8 @@ export class BotServiceEnhanced {
   private flowManager: FlowManager;
   private sentimentAnalysis: SentimentAnalysisService;
   private proactiveNotifications: ProactiveNotificationService;
+  private conversationFlowManager: ConversationFlowManager;
+  private ollamaService: OllamaService;
 
   private constructor() {
     this.intentRecognition = new IntentRecognitionService();
@@ -39,6 +42,8 @@ export class BotServiceEnhanced {
     this.flowManager = FlowManager.getInstance();
     this.sentimentAnalysis = SentimentAnalysisService.getInstance();
     this.proactiveNotifications = ProactiveNotificationService.getInstance();
+    this.conversationFlowManager = new ConversationFlowManager();
+    this.ollamaService = new OllamaService();
   }
 
   public static getInstance(): BotServiceEnhanced {
@@ -80,6 +85,7 @@ export class BotServiceEnhanced {
 
   /**
    * Processa uma mensagem do cidadão
+   * NOVA ARQUITETURA: Menu-first com fluxos estruturados
    */
   public async processMessage(
     citizenId: string,
@@ -104,16 +110,6 @@ export class BotServiceEnhanced {
           data: { citizenId },
           include: { messages: true },
         });
-
-        // Verifica se é primeiro acesso - iniciar onboarding
-        const citizenProtocolsCount = await prisma.protocolSimplified.count({
-          where: { citizenId },
-        });
-
-        if (citizenProtocolsCount === 0) {
-          // Cidadão novo - iniciar onboarding
-          return await this.flowManager.startFlow(citizenId, 'ONBOARDING');
-        }
       }
 
       // 2. Salva mensagem do usuário
@@ -126,221 +122,101 @@ export class BotServiceEnhanced {
         },
       });
 
-      // 3. Verifica se há fluxo ativo
+      // 3. Busca informações do cidadão
+      const citizen = await prisma.citizen.findUnique({
+        where: { id: citizenId }
+      });
+      const firstName = citizen?.name?.split(' ')[0];
+
+      // 4. PRIMEIRA MENSAGEM: Sempre mostra menu principal
+      if (conversation.messages.length === 0 || !conversation.currentFlow) {
+        // Detecta se é saudação ou pedido de menu
+        const isGreeting = /^(oi|olá|ola|hey|opa|bom dia|boa tarde|boa noite|menu|início|start)/i.test(message.trim());
+
+        if (isGreeting || conversation.messages.length === 0) {
+          const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
+
+          await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
+          return response;
+        }
+      }
+
+      // 5. VERIFICA SE HÁ FLUXO ATIVO
       if (conversation.currentFlow) {
-        // Processa etapa do fluxo
-        const flowResponse = await this.flowManager.processFlowStep(
-          citizenId,
-          message
+        // Verifica se o usuário quer voltar ao menu
+        if (/^(menu|voltar|início|cancelar)/i.test(message.trim())) {
+          await prisma.botConversation.update({
+            where: { id: conversation.id },
+            data: {
+              currentFlow: null,
+              flowStep: 0,
+              flowData: {}
+            }
+          });
+
+          const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
+          await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
+          return response;
+        }
+
+        // Processa o fluxo ativo
+        const flowResponse = await this.conversationFlowManager.processFlowMessage(
+          conversation,
+          message,
+          citizenId
         );
 
-        // Salva resposta do bot
-        await prisma.botMessage.create({
-          data: {
-            conversationId: conversation.id,
-            role: 'bot',
-            content: flowResponse.response,
-            messageType: flowResponse.messageType,
-            metadata: flowResponse.metadata,
-          },
-        });
+        // Se o fluxo retornou flag para usar IA (Outras Dúvidas)
+        if (flowResponse.metadata?.useAI) {
+          const aiResponse = await this.handleAIQuestion(
+            message,
+            citizenId,
+            conversation.id
+          );
 
-        // Registra analytics
-        await this.registerAnalytics(
-          'FLOW_STEP',
-          true,
-          1.0,
-          Date.now() - startTime,
-          citizenId,
-          false
-        );
+          await this.saveAndReturn(conversation.id, aiResponse, 'AI_QUESTION', 0.8, startTime, citizenId);
+          return aiResponse;
+        }
 
+        await this.saveAndReturn(conversation.id, flowResponse, conversation.currentFlow, 1.0, startTime, citizenId);
         return flowResponse;
       }
 
-      // 4. Obtém contexto
-      const context = await this.contextManager.getContext(citizenId);
-      const previousMessages = conversation.messages
-        .map((m: any) => m.content)
-        .reverse();
+      // 6. SEM FLUXO ATIVO: Detecta intenção da mensagem e inicia fluxo apropriado
+      const detectedFlow = this.conversationFlowManager.detectFlowFromMessage(message);
 
-      // 5. Análise de sentimento
-      const sentiment = this.sentimentAnalysis.analyzeSentiment(message, {
-        previousMessages,
-        failedAttempts: (context.metadata as any)?.failedAttempts || 0,
-        lowConfidenceCount: (context.metadata as any)?.lowConfidenceCount || 0,
-      });
+      if (detectedFlow) {
+        if (detectedFlow === FlowType.MENU_PRINCIPAL) {
+          const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
+          await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
+          return response;
+        }
 
-      console.log(`😊 Sentimento: ${sentiment.label} (score: ${sentiment.score})`);
-
-      // 6. Verifica se deve transferir para humano
-      if (sentiment.shouldTransferToHuman) {
-        return await this.transferToHuman(
+        const response = await this.conversationFlowManager.startFlow(
           citizenId,
           conversation.id,
-          'FRUSTRATION_DETECTED',
-          sentiment
-        );
-      }
-
-      // 7. Busca serviços relevantes para contexto do Ollama
-      const relevantServices = await this.knowledgeBase.searchServices(message, 10);
-
-      // 8. Reconhece intenção (com Ollama/Phi-4, OpenAI ou Keywords)
-      const intent = await this.intentRecognition.recognizeIntent(
-        message,
-        context,
-        relevantServices
-      );
-
-      console.log(
-        `🤖 Intent: ${intent.name} (confiança: ${intent.confidence})`
-      );
-
-      // 9. Se Ollama retornou cards sugeridos, usá-los diretamente
-      if (intent.suggestedCards && intent.suggestedCards.length > 0) {
-        const response = this.generateResponseTextForIntent(intent.name);
-
-        const botResponse: BotResponse = {
-          response,
-          messageType: 'card',
-          metadata: {
-            cards: intent.suggestedCards.map((card, index) => ({
-              id: `ollama-card-${Date.now()}-${index}`,
-              title: card.title,
-              description: card.description,
-              action: {
-                type: 'custom' as const,
-                label: card.actionLabel,
-                url: intent.entities?.serviceId ? `/services/${intent.entities.serviceId}` : undefined,
-              },
-            })),
-            intent: intent.name,
-            confidence: intent.confidence,
-            source: 'ollama_generated'
-          },
-        };
-
-        // Salva resposta do bot
-        await prisma.botMessage.create({
-          data: {
-            conversationId: conversation.id,
-            role: 'bot',
-            content: botResponse.response,
-            messageType: botResponse.messageType,
-            metadata: botResponse.metadata,
-          },
-        });
-
-        // Registra analytics
-        await this.registerAnalytics(
-          intent.name,
-          true,
-          intent.confidence,
-          Date.now() - startTime,
-          citizenId,
-          false
+          detectedFlow
         );
 
-        return botResponse;
+        await this.saveAndReturn(conversation.id, response, detectedFlow, 1.0, startTime, citizenId);
+        return response;
       }
 
-      // 8. Tratamento de intents especiais (IA indisponível ou clarificação)
-      if (intent.name === 'AI_UNAVAILABLE') {
-        console.log('🔀 IA indisponível, transferindo para humano');
-        return await this.transferToHuman(
-          citizenId,
-          conversation.id,
-          'AI_ERROR',
-          sentiment
-        );
-      }
-
-      if (intent.name === 'CLARIFICATION_NEEDED') {
-        console.log('❓ Clarificação necessária');
-
-        const botResponse: BotResponse = {
-          response: 'Não entendi muito bem. Você pode reformular ou escolher uma das opções abaixo?',
-          messageType: 'quick_reply',
-          metadata: {
-            quickReplies: [
-              'Quero agendar consulta médica',
-              'Preciso solicitar um serviço',
-              'Ver meus protocolos',
-              'Falar com atendente'
-            ],
-            needsClarification: true,
-            originalIntent: intent.entities?.originalIntent,
-            confidence: intent.confidence
-          }
-        };
-
-        // Salva resposta do bot
-        await prisma.botMessage.create({
-          data: {
-            conversationId: conversation.id,
-            role: 'bot',
-            content: botResponse.response,
-            messageType: botResponse.messageType,
-            metadata: botResponse.metadata,
-          },
-        });
-
-        return botResponse;
-      }
-
-      // Reset contadores em caso de sucesso
-      await this.contextManager.updateContext(citizenId, {
-        metadata: { failedAttempts: 0, lowConfidenceCount: 0 },
-      });
-
-      // 9. Atualiza contexto
-      await this.contextManager.updateContext(citizenId, {
-        lastIntent: intent.name,
-        lastMessage: message,
-        timestamp: new Date(),
-      });
-
-      await prisma.botConversation.update({
-        where: { id: conversation.id },
-        data: {
-          intent: intent.name,
-          confidence: intent.confidence,
-        },
-      });
-
-      // 10. Processa intent
-      const response = await this.handleIntent(
-        citizenId,
-        intent,
-        message,
-        context,
-        sentiment
+      // 7. Mensagem não reconhecida: Oferece menu
+      const response = this.createResponse(
+        'Não entendi muito bem. Escolha uma das opções abaixo ou digite "menu" para ver todas as opções:',
+        'quick_reply',
+        {
+          quickReplies: [
+            '📋 Solicitar Serviço',
+            '🔍 Consultar Protocolo',
+            '❓ Outras Dúvidas',
+            '🏠 Menu Principal'
+          ]
+        }
       );
 
-      // 11. Salva resposta do bot
-      await prisma.botMessage.create({
-        data: {
-          conversationId: conversation.id,
-          role: 'bot',
-          content: response.response,
-          messageType: response.messageType,
-          metadata: response.metadata,
-          intent: intent.name,
-          confidence: intent.confidence,
-        },
-      });
-
-      // 12. Registra analytics
-      await this.registerAnalytics(
-        intent.name,
-        true,
-        intent.confidence,
-        Date.now() - startTime,
-        citizenId,
-        false
-      );
-
+      await this.saveAndReturn(conversation.id, response, 'CLARIFICATION', 0.5, startTime, citizenId);
       return response;
     } catch (error) {
       console.error('❌ Erro ao processar mensagem:', error);
@@ -356,15 +232,109 @@ export class BotServiceEnhanced {
       );
 
       return this.createResponse(
-        'Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente ou fale com um atendente.',
-        'text',
-        { quickReplies: ['Falar com atendente', 'Tentar novamente'] }
+        'Desculpe, ocorreu um erro. Por favor, tente novamente ou digite "menu" para ver as opções.',
+        'quick_reply',
+        { quickReplies: ['🏠 Menu Principal', '🔄 Tentar novamente'] }
       );
     }
   }
 
   /**
-   * Processa a intenção reconhecida
+   * Helper para salvar resposta do bot e retornar
+   */
+  private async saveAndReturn(
+    conversationId: string,
+    response: BotResponse,
+    intent: string,
+    confidence: number,
+    startTime: number,
+    citizenId: string
+  ): Promise<BotResponse> {
+    // Salva resposta do bot
+    await prisma.botMessage.create({
+      data: {
+        conversationId,
+        role: 'bot',
+        content: response.response,
+        messageType: response.messageType,
+        metadata: response.metadata,
+        intent,
+        confidence
+      },
+    });
+
+    // Registra analytics
+    await this.registerAnalytics(
+      intent,
+      true,
+      confidence,
+      Date.now() - startTime,
+      citizenId,
+      false
+    );
+
+    return response;
+  }
+
+  /**
+   * Processa pergunta livre usando IA (Ollama)
+   * Usado no fluxo "Outras Dúvidas"
+   */
+  private async handleAIQuestion(
+    message: string,
+    citizenId: string,
+    conversationId: string
+  ): Promise<BotResponse> {
+    try {
+      // Busca contexto da conversa
+      const context = await this.contextManager.getContext(citizenId);
+
+      // Busca serviços relevantes para dar contexto à IA
+      const relevantServices = await this.knowledgeBase.searchServices(message, 5);
+
+      // Formata contexto para a IA
+      const contextText = relevantServices.length > 0
+        ? `Serviços disponíveis: ${relevantServices.map(s => s.name).join(', ')}`
+        : 'Sistema de serviços municipais';
+
+      // Chama Ollama para responder - usa o método generate direto
+      const response = await this.ollamaService.recognizeIntent(
+        `Pergunta: ${message}\n\nContexto: ${contextText}\n\nResponda de forma clara e amigável em 2-3 parágrafos.`,
+        context
+      );
+
+      const aiResponse = response.parameters?.answer || 'Desculpe, não consegui gerar uma resposta adequada.';
+
+      return this.createResponse(
+        aiResponse,
+        'text',
+        {
+          quickReplies: [
+            '📋 Solicitar Serviço',
+            '❓ Outra pergunta',
+            '🏠 Menu Principal'
+          ]
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao processar pergunta com IA:', error);
+
+      return this.createResponse(
+        'Desculpe, tive dificuldade em responder sua pergunta. Você pode reformular ou escolher uma opção do menu:',
+        'quick_reply',
+        {
+          quickReplies: [
+            '📋 Solicitar Serviço',
+            '🔍 Consultar Protocolo',
+            '🏠 Menu Principal'
+          ]
+        }
+      );
+    }
+  }
+
+  /**
+   * Processa a intenção reconhecida (LEGADO - mantido para compatibilidade)
    */
   private async handleIntent(
     citizenId: string,
@@ -417,14 +387,18 @@ export class BotServiceEnhanced {
         );
 
       case 'CHAT_HUMANO':
-        const conversation = await prisma.botConversation.findFirst({
-          where: { citizenId, isActive: true },
-        });
-        return this.transferToHuman(
-          citizenId,
-          conversation!.id,
-          'USER_REQUEST',
-          sentiment
+        // Não há mais atendentes humanos - redireciona para o menu
+        return this.createResponse(
+          'No momento, não temos atendentes disponíveis, mas posso te ajudar com várias coisas! Escolha uma opção:',
+          'quick_reply',
+          {
+            quickReplies: [
+              '📋 Solicitar Serviço',
+              '🔍 Consultar Protocolo',
+              '❓ Fazer uma pergunta',
+              '🏠 Menu Principal'
+            ]
+          }
         );
 
       case 'SAUDACAO':
@@ -445,98 +419,6 @@ export class BotServiceEnhanced {
     }
   }
 
-  /**
-   * Lida com contexto ambíguo - oferece opções
-   */
-  private async handleAmbiguousContext(intent: any, message: string): Promise<BotResponse> {
-    // Usa InputValidator para detectar possíveis tipos
-    const detected = InputValidator.autoDetect(message);
-
-    if (detected.possibleTypes.length > 0) {
-      return this.createResponse(
-        `Não tenho certeza do que você quis dizer. Você se refere a:`,
-        'quick_reply',
-        {
-          quickReplies: [
-            ...detected.possibleTypes.map(t => t.label),
-            'Falar com atendente',
-          ],
-          ambiguous: true,
-          detectedTypes: detected.possibleTypes,
-        }
-      );
-    }
-
-    // Busca serviços para ofertar
-    const services = await prisma.serviceSimplified.findMany({
-      orderBy: { id: 'asc' },
-      take: 3,
-      select: { name: true }
-    });
-
-    return this.createResponse(
-      'Desculpe, não entendi muito bem. Você quer:',
-      'quick_reply',
-      {
-        quickReplies: services.map((s: any) => s.name)
-      }
-    );
-  }
-
-  /**
-   * Transfere para atendente humano
-   */
-  private async transferToHuman(
-    citizenId: string,
-    conversationId: string,
-    reason: any,
-    sentiment: any
-  ): Promise<BotResponse> {
-    // Atualiza conversação
-    await prisma.botConversation.update({
-      where: { id: conversationId },
-      data: { isActive: false, closedAt: new Date() },
-    });
-
-    // Cancela fluxo ativo se houver
-    await this.flowManager.cancelFlow(citizenId);
-
-    // Registra analytics
-    await this.registerAnalytics(
-      reason,
-      false,
-      0,
-      0,
-      citizenId,
-      true
-    );
-
-    const priority = this.sentimentAnalysis.getTransferPriority(sentiment);
-
-    // TODO: Integrar com sistema de fila de atendimento
-    console.log(`🔀 Transferindo para humano - Razão: ${reason} - Prioridade: ${priority}`);
-
-    let message = '';
-    if (reason === 'FRUSTRATION_DETECTED') {
-      message =
-        'Entendo sua frustração. Vou te conectar com um atendente humano agora mesmo. Por favor, aguarde um momento.';
-    } else if (reason === 'LOW_CONFIDENCE') {
-      message =
-        'Parece que estou tendo dificuldade em te ajudar. Vou transferir você para um atendente que poderá ajudar melhor.';
-    } else {
-      message = 'Transferindo você para um atendente humano. Aguarde um momento, por favor.';
-    }
-
-    return {
-      response: message,
-      messageType: 'text',
-      metadata: {
-        transferred: true,
-        reason,
-        priority,
-      },
-    };
-  }
 
   /**
    * Handler para ver protocolos
