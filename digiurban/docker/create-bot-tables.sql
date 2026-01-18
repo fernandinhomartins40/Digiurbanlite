@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS bot_messages (
     "conversationId" TEXT NOT NULL,
     role TEXT NOT NULL,
     content TEXT NOT NULL,
+    "messageType" TEXT,
     intent TEXT,
     confidence DOUBLE PRECISION,
     sentiment TEXT,
@@ -56,6 +57,7 @@ CREATE TABLE IF NOT EXISTS bot_analytics (
     "transferCount" INTEGER NOT NULL DEFAULT 0,
     "avgConfidence" DOUBLE PRECISION,
     "avgResponseTime" DOUBLE PRECISION,
+    "uniqueCitizens" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -85,9 +87,27 @@ CREATE INDEX IF NOT EXISTS "bot_uploads_citizenId_idx" ON bot_uploads("citizenId
 CREATE INDEX IF NOT EXISTS "bot_uploads_conversationId_idx" ON bot_uploads("conversationId");
 CREATE INDEX IF NOT EXISTS "bot_uploads_uploadedAt_idx" ON bot_uploads("uploadedAt");
 
--- Mensagem de sucesso
+-- Adicionar colunas que podem estar faltando (se tabelas já existiam)
 DO $$
 BEGIN
-    RAISE NOTICE '✅ Tabelas do DigiBot criadas com sucesso!';
+    -- Adicionar messageType em bot_messages se não existir
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'bot_messages' AND column_name = 'messageType'
+    ) THEN
+        ALTER TABLE bot_messages ADD COLUMN "messageType" TEXT;
+        RAISE NOTICE '✅ Coluna messageType adicionada em bot_messages';
+    END IF;
+
+    -- Adicionar uniqueCitizens em bot_analytics se não existir
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'bot_analytics' AND column_name = 'uniqueCitizens'
+    ) THEN
+        ALTER TABLE bot_analytics ADD COLUMN "uniqueCitizens" INTEGER NOT NULL DEFAULT 0;
+        RAISE NOTICE '✅ Coluna uniqueCitizens adicionada em bot_analytics';
+    END IF;
+
+    RAISE NOTICE '✅ Tabelas do DigiBot criadas/atualizadas com sucesso!';
 END
 $$;
