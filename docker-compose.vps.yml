@@ -78,6 +78,9 @@ services:
       - ollama_data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=-1  # Mantém modelo sempre em memória
+      - OLLAMA_NUM_PARALLEL=2  # Permite 2 requisições simultâneas
+      - OLLAMA_MAX_LOADED_MODELS=1  # Mantém apenas 1 modelo carregado
     healthcheck:
       test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 30s
