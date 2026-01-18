@@ -607,22 +607,24 @@ export class FlowManager {
     return {
       response: `✅ Consulta agendada com sucesso!\n\nSeu protocolo é: #${protocol.number}`,
       messageType: 'card',
-      cards: [
-        {
-          id: protocol.id,
-          title: `Protocolo #${protocol.number}`,
-          description: `Consulta - ${flowData.specialty}`,
-          department: service.department.name,
-          date: `${flowData.appointmentDate} às ${flowData.appointmentTime}`,
-          status: 'PENDENCIA',
-          action: {
-            type: 'open_protocol',
-            label: 'Ver detalhes',
-            protocolId: protocol.id,
+      metadata: {
+        cards: [
+          {
+            id: protocol.id,
+            title: `Protocolo #${protocol.number}`,
+            description: `Consulta - ${flowData.specialty}`,
+            department: service.department.name,
+            date: `${flowData.appointmentDate} às ${flowData.appointmentTime}`,
+            status: 'PENDENCIA',
+            action: {
+              type: 'open_protocol',
+              label: 'Ver detalhes',
+              protocolId: protocol.id,
+            },
           },
-        },
-      ],
-      quickReplies: ['Ver meus protocolos', 'Solicitar outro serviço', 'Menu principal'],
+        ],
+        quickReplies: ['Ver meus protocolos', 'Solicitar outro serviço'],
+      }
     };
   }
 
@@ -665,22 +667,24 @@ export class FlowManager {
     return {
       response: `✅ Solicitação criada com sucesso!\n\nSeu protocolo é: #${protocol.number}\n\n⏱️ Prazo estimado: ${service.estimatedDays} dias úteis`,
       messageType: 'card',
-      cards: [
-        {
-          id: protocol.id,
-          title: `Protocolo #${protocol.number}`,
-          description: service.name,
-          department: service.department.name,
-          estimatedDays: service.estimatedDays || undefined,
-          status: 'PENDENCIA',
-          action: {
-            type: 'open_protocol',
-            label: 'Acompanhar protocolo',
-            protocolId: protocol.id,
+      metadata: {
+        cards: [
+          {
+            id: protocol.id,
+            title: `Protocolo #${protocol.number}`,
+            description: service.name,
+            department: service.department.name,
+            estimatedDays: service.estimatedDays || undefined,
+            status: 'PENDENCIA',
+            action: {
+              type: 'open_protocol',
+              label: 'Acompanhar protocolo',
+              protocolId: protocol.id,
+            },
           },
-        },
-      ],
-      quickReplies: ['Ver meus protocolos', 'Solicitar outro serviço', 'Falar com atendente'],
+        ],
+        quickReplies: ['Ver meus protocolos', 'Solicitar outro serviço'],
+      }
     };
   }
 
@@ -708,15 +712,17 @@ export class FlowManager {
     return {
       response: '✅ Documento enviado com sucesso!\n\nEle será analisado em breve e você receberá uma notificação.',
       messageType: 'card',
-      cards: [
-        {
-          id: document.id,
-          title: flowData.documentType.replace(/_/g, ' ').toUpperCase(),
-          description: 'Documento em análise',
-          status: 'EM ANÁLISE',
-        },
-      ],
-      quickReplies: ['Ver meus documentos', 'Enviar outro documento', 'Menu principal'],
+      metadata: {
+        cards: [
+          {
+            id: document.id,
+            title: flowData.documentType.replace(/_/g, ' ').toUpperCase(),
+            description: 'Documento em análise',
+            status: 'EM ANÁLISE',
+          },
+        ],
+        quickReplies: ['Ver meus documentos', 'Enviar outro documento'],
+      }
     };
   }
 
@@ -739,12 +745,14 @@ export class FlowManager {
     return {
       response: '🎉 Bem-vindo(a) ao DigiBot!\n\nAgora você pode aproveitar todos os nossos serviços.',
       messageType: 'text',
-      quickReplies: [
-        'Agendar consulta',
-        'Solicitar serviço',
-        'Ver protocolos',
-        'Enviar documento',
-      ],
+      metadata: {
+        quickReplies: [
+          'Agendar consulta',
+          'Solicitar serviço',
+          'Ver protocolos',
+          'Enviar documento',
+        ],
+      }
     };
   }
 
@@ -821,7 +829,9 @@ export class FlowManager {
         return {
           response: 'Serviço não encontrado. Tente buscar novamente.',
           messageType: 'text',
-          quickReplies: ['Buscar serviços', 'Falar com atendente']
+          metadata: {
+            quickReplies: ['Buscar serviços']
+          }
         };
       }
 
@@ -847,7 +857,9 @@ export class FlowManager {
         return {
           response: 'Erro ao buscar seus dados. Por favor, atualize seu perfil.',
           messageType: 'text',
-          quickReplies: ['Atualizar perfil', 'Falar com atendente']
+          metadata: {
+            quickReplies: ['Atualizar perfil']
+          }
         };
       }
 
@@ -956,9 +968,11 @@ export class FlowManager {
     } catch (error) {
       console.error('Erro ao criar fluxo dinâmico:', error);
       return {
-        response: 'Erro ao iniciar solicitação. Tente novamente ou fale com um atendente.',
+        response: 'Erro ao iniciar solicitação. Tente novamente.',
         messageType: 'text',
-        quickReplies: ['Tentar novamente', 'Falar com atendente']
+        metadata: {
+          quickReplies: ['Tentar novamente']
+        }
       };
     }
   }
@@ -1081,9 +1095,11 @@ export class FlowManager {
     } catch (error) {
       console.error('Erro ao criar protocolo dinâmico:', error);
       return {
-        response: 'Erro ao processar solicitação. Por favor, tente novamente ou fale com um atendente.',
+        response: 'Erro ao processar solicitação. Por favor, tente novamente.',
         messageType: 'text',
-        quickReplies: ['Tentar novamente', 'Falar com atendente']
+        metadata: {
+          quickReplies: ['Tentar novamente']
+        }
       };
     }
   }

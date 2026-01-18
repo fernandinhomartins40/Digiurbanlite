@@ -453,33 +453,34 @@ export class BotServiceEnhanced {
     const detected = InputValidator.autoDetect(message);
 
     if (detected.possibleTypes.length > 0) {
-      return {
-        response: `Não tenho certeza do que você quis dizer. Você se refere a:`,
-        messageType: 'quick_reply',
-        quickReplies: [
-          ...detected.possibleTypes.map(t => t.label),
-          'Falar com atendente',
-        ],
-        metadata: {
+      return this.createResponse(
+        `Não tenho certeza do que você quis dizer. Você se refere a:`,
+        'quick_reply',
+        {
+          quickReplies: [
+            ...detected.possibleTypes.map(t => t.label),
+            'Falar com atendente',
+          ],
           ambiguous: true,
           detectedTypes: detected.possibleTypes,
-        },
-      };
+        }
+      );
     }
 
-    // Oferece intents mais prováveis
-    return {
-      response:
-        'Desculpe, não entendi muito bem. Você quer:',
-      messageType: 'quick_reply',
-      quickReplies: [
-        'Agendar consulta',
-        'Solicitar serviço',
-        'Ver meus protocolos',
-        'Enviar documento',
-        'Falar com atendente',
-      ],
-    };
+    // Busca serviços para ofertar
+    const services = await prisma.serviceSimplified.findMany({
+      orderBy: { id: 'asc' },
+      take: 3,
+      select: { name: true }
+    });
+
+    return this.createResponse(
+      'Desculpe, não entendi muito bem. Você quer:',
+      'quick_reply',
+      {
+        quickReplies: services.map((s: any) => s.name)
+      }
+    );
   }
 
   /**
@@ -938,13 +939,13 @@ export class BotServiceEnhanced {
       });
 
       if (services.length === 0) {
-        return {
-          response: searchTerm
-            ? `Não encontrei serviços relacionados a "${searchTerm}". Tente outro termo ou fale com um atendente.`
-            : 'Não encontrei serviços disponíveis. Por favor, fale com um atendente.',
-          messageType: 'text',
-          quickReplies: ['Falar com atendente', 'Menu principal']
-        };
+        return this.createResponse(
+          searchTerm
+            ? `Não encontrei serviços relacionados a "${searchTerm}". Tente outro termo.`
+            : 'Não encontrei serviços disponíveis.',
+          'text',
+          { quickReplies: ['Ver todos os serviços'] }
+        );
       }
 
       // Se encontrou apenas 1 serviço, iniciar fluxo direto
@@ -954,33 +955,35 @@ export class BotServiceEnhanced {
       }
 
       // Se encontrou múltiplos, oferecer cards
-      return {
-        response: searchTerm
+      return this.createResponse(
+        searchTerm
           ? `Encontrei ${services.length} serviços relacionados a "${searchTerm}":`
           : `Aqui estão os serviços disponíveis:`,
-        messageType: 'card',
-        cards: services.map(service => ({
-          id: service.id,
-          title: service.name,
-          description: service.description?.substring(0, 100) || 'Sem descrição',
-          department: service.department?.name,
-          estimatedDays: service.estimatedDays || undefined,
-          action: {
-            type: 'open_service' as const,
-            label: 'Solicitar',
-            serviceId: service.id
-          }
-        })),
-        quickReplies: ['Buscar outro serviço', 'Menu principal']
-      };
+        'card',
+        {
+          cards: services.map(service => ({
+            id: service.id,
+            title: service.name,
+            description: service.description?.substring(0, 100) || 'Sem descrição',
+            department: service.department?.name,
+            estimatedDays: service.estimatedDays || undefined,
+            action: {
+              type: 'open_service' as const,
+              label: 'Solicitar',
+              serviceId: service.id
+            }
+          })),
+          quickReplies: ['Buscar outro serviço']
+        }
+      );
 
     } catch (error) {
       console.error('Erro ao buscar serviços:', error);
-      return {
-        response: 'Erro ao buscar serviços. Por favor, tente novamente ou fale com um atendente.',
-        messageType: 'text',
-        quickReplies: ['Tentar novamente', 'Falar com atendente']
-      };
+      return this.createResponse(
+        'Erro ao buscar serviços. Por favor, tente novamente.',
+        'text',
+        { quickReplies: ['Tentar novamente'] }
+      );
     }
   }
 }
