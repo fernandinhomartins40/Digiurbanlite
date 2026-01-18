@@ -649,14 +649,26 @@ export class BotServiceEnhanced {
       'greeting'
     );
 
-    const quickReplies = recommendations.length > 0
-      ? recommendations.slice(0, 3).map((r: any) => r.service.name)
-      : ['Agendar consulta', 'Solicitar serviço', 'Ver protocolos'];
+    let quickReplies: string[] = [];
+    if (recommendations.length > 0) {
+      quickReplies = recommendations.slice(0, 3).map((r: any) => r.service?.name || r.text).filter(Boolean);
+    }
+
+    // Se não houver recomendações, busca os 3 serviços mais populares
+    if (quickReplies.length === 0) {
+      const popularServices = await prisma.service.findMany({
+        where: { isActive: true },
+        orderBy: { id: 'asc' },
+        take: 3,
+        select: { name: true }
+      });
+      quickReplies = popularServices.map(s => s.name);
+    }
 
     return {
       response: `${prefix || ''}${greeting}, ${firstName}! 👋\n\nSou o DigiBot, seu assistente virtual. Como posso ajudar você hoje?`,
       messageType: 'text',
-      quickReplies,
+      quickReplies: quickReplies.length > 0 ? quickReplies : undefined,
     };
   }
 
@@ -682,16 +694,21 @@ export class BotServiceEnhanced {
   /**
    * Handler para ajuda
    */
-  private handleHelp(prefix?: string | null): BotResponse {
+  private async handleHelp(prefix?: string | null): Promise<BotResponse> {
+    // Busca alguns serviços disponíveis
+    const services = await prisma.service.findMany({
+      where: { isActive: true },
+      orderBy: { id: 'asc' },
+      take: 4,
+      select: { name: true }
+    });
+
+    const quickReplies = services.map(s => s.name);
+
     return {
-      response: `${prefix || ''}Posso te ajudar com:\n\n• 🏥 Agendar consultas\n• 📋 Solicitar serviços municipais\n• 📄 Enviar documentos\n• 🔍 Consultar protocolos\n• 💬 Falar com um atendente\n\nÉ só me dizer o que você precisa!`,
+      response: `${prefix || ''}Posso te ajudar com:\n\n• 📋 Solicitar serviços municipais\n• 📄 Enviar documentos\n• 🔍 Consultar protocolos\n• 💬 Falar com um atendente\n\nÉ só me dizer o que você precisa!`,
       messageType: 'text',
-      quickReplies: [
-        'Agendar consulta',
-        'Solicitar serviço',
-        'Ver protocolos',
-        'Falar com atendente',
-      ],
+      quickReplies: quickReplies.length > 0 ? quickReplies : undefined,
     };
   }
 
@@ -720,11 +737,22 @@ export class BotServiceEnhanced {
         },
       }));
 
+      // Busca quick replies baseado em outros serviços
+      const otherServices = await prisma.service.findMany({
+        where: {
+          isActive: true,
+          id: { notIn: services.map(s => s.id) }
+        },
+        orderBy: { id: 'asc' },
+        take: 2,
+        select: { name: true }
+      });
+
       return {
         response: `${prefix || ''}Encontrei estes serviços relacionados:`,
         messageType: 'card',
         cards,
-        quickReplies: ['Ver todos os serviços', 'Menu principal'],
+        quickReplies: otherServices.length > 0 ? otherServices.map(s => s.name) : undefined,
       };
     }
 
