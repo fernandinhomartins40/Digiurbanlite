@@ -32,7 +32,7 @@ export class OllamaService {
   constructor(
     baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
     model = process.env.OLLAMA_MODEL || 'digibot-qwen2.5',
-    timeout = parseInt(process.env.OLLAMA_TIMEOUT || '15000') // Reduzido para 15s (Stage 1)
+    timeout = parseInt(process.env.OLLAMA_TIMEOUT || '30000') // 30s para Stage 1
   ) {
     this.baseUrl = baseUrl;
     this.model = model;
