@@ -656,13 +656,12 @@ export class BotServiceEnhanced {
 
     // Se não houver recomendações, busca os 3 serviços mais populares
     if (quickReplies.length === 0) {
-      const popularServices = await prisma.service.findMany({
-        where: { isActive: true },
+      const popularServices = await prisma.serviceSimplified.findMany({
         orderBy: { id: 'asc' },
         take: 3,
         select: { name: true }
       });
-      quickReplies = popularServices.map(s => s.name);
+      quickReplies = popularServices.map((s: any) => s.name);
     }
 
     return {
@@ -696,14 +695,13 @@ export class BotServiceEnhanced {
    */
   private async handleHelp(prefix?: string | null): Promise<BotResponse> {
     // Busca alguns serviços disponíveis
-    const services = await prisma.service.findMany({
-      where: { isActive: true },
+    const services = await prisma.serviceSimplified.findMany({
       orderBy: { id: 'asc' },
       take: 4,
       select: { name: true }
     });
 
-    const quickReplies = services.map(s => s.name);
+    const quickReplies = services.map((s: any) => s.name);
 
     return {
       response: `${prefix || ''}Posso te ajudar com:\n\n• 📋 Solicitar serviços municipais\n• 📄 Enviar documentos\n• 🔍 Consultar protocolos\n• 💬 Falar com um atendente\n\nÉ só me dizer o que você precisa!`,
@@ -738,10 +736,9 @@ export class BotServiceEnhanced {
       }));
 
       // Busca quick replies baseado em outros serviços
-      const otherServices = await prisma.service.findMany({
+      const otherServices = await prisma.serviceSimplified.findMany({
         where: {
-          isActive: true,
-          id: { notIn: services.map(s => s.id) }
+          id: { notIn: services.map((s: any) => s.id) }
         },
         orderBy: { id: 'asc' },
         take: 2,
@@ -752,7 +749,7 @@ export class BotServiceEnhanced {
         response: `${prefix || ''}Encontrei estes serviços relacionados:`,
         messageType: 'card',
         cards,
-        quickReplies: otherServices.length > 0 ? otherServices.map(s => s.name) : undefined,
+        quickReplies: otherServices.length > 0 ? otherServices.map((s: any) => s.name) : undefined,
       };
     }
 
