@@ -735,6 +735,32 @@ export default function CitizenDashboard() {
                               </div>
                             )}
                             <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
+
+                            {/* Quick Replies - Botões clicáveis */}
+                            {message.metadata?.quickReplies && message.metadata.quickReplies.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {message.metadata.quickReplies.map((reply: string, idx: number) => (
+                                  <Button
+                                    key={idx}
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setNewMessage(reply);
+                                      // Auto-enviar a mensagem ao clicar
+                                      setTimeout(() => {
+                                        const form = document.querySelector('form');
+                                        form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                                      }, 100);
+                                    }}
+                                    className="text-xs bg-white hover:bg-blue-50 border-blue-300 text-blue-700 hover:text-blue-800 hover:border-blue-400 transition-all shadow-sm"
+                                  >
+                                    <Sparkles className="w-3 h-3 mr-1.5" />
+                                    {reply}
+                                  </Button>
+                                ))}
+                              </div>
+                            )}
+
                             <div className={`flex items-center justify-end gap-1 mt-1 ${
                               isOwnMessage ? 'text-blue-100' : 'text-gray-500'
                             }`}>
