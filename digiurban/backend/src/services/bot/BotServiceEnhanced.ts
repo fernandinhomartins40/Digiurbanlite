@@ -204,17 +204,17 @@ export class BotServiceEnhanced {
         const botResponse: BotResponse = {
           response,
           messageType: 'card',
-          cards: intent.suggestedCards.map((card, index) => ({
-            id: `ollama-card-${Date.now()}-${index}`,
-            title: card.title,
-            description: card.description,
-            action: {
-              type: 'custom' as const,
-              label: card.actionLabel,
-              url: intent.entities?.serviceId ? `/services/${intent.entities.serviceId}` : undefined,
-            },
-          })),
           metadata: {
+            cards: intent.suggestedCards.map((card, index) => ({
+              id: `ollama-card-${Date.now()}-${index}`,
+              title: card.title,
+              description: card.description,
+              action: {
+                type: 'custom' as const,
+                label: card.actionLabel,
+                url: intent.entities?.serviceId ? `/services/${intent.entities.serviceId}` : undefined,
+              },
+            })),
             intent: intent.name,
             confidence: intent.confidence,
             source: 'ollama_generated'
@@ -262,13 +262,13 @@ export class BotServiceEnhanced {
         const botResponse: BotResponse = {
           response: 'Não entendi muito bem. Você pode reformular ou escolher uma das opções abaixo?',
           messageType: 'quick_reply',
-          quickReplies: [
-            'Quero agendar consulta médica',
-            'Preciso solicitar um serviço',
-            'Ver meus protocolos',
-            'Falar com atendente'
-          ],
           metadata: {
+            quickReplies: [
+              'Quero agendar consulta médica',
+              'Preciso solicitar um serviço',
+              'Ver meus protocolos',
+              'Falar com atendente'
+            ],
             needsClarification: true,
             originalIntent: intent.entities?.originalIntent,
             confidence: intent.confidence
@@ -387,11 +387,11 @@ export class BotServiceEnhanced {
           console.log(`🏥 Iniciando fluxo dinâmico para consulta: ${consultaService.id}`);
           return this.flowManager.startDynamicServiceFlow(citizenId, consultaService.id);
         }
-        return {
-          response: 'Desculpe, não encontrei o serviço de agendamento de consultas. Por favor, fale com um atendente.',
-          messageType: 'text',
-          quickReplies: ['Falar com atendente', 'Menu principal']
-        };
+        return this.createResponse(
+          'Desculpe, não encontrei o serviço de agendamento de consultas.',
+          'text',
+          { quickReplies: ['Ver serviços disponíveis'] }
+        );
 
       case 'SOLICITAR_SERVICO':
         // Se IA identificou serviceId, usar fluxo dinâmico
@@ -448,7 +448,7 @@ export class BotServiceEnhanced {
   /**
    * Lida com contexto ambíguo - oferece opções
    */
-  private handleAmbiguousContext(intent: any, message: string): BotResponse {
+  private async handleAmbiguousContext(intent: any, message: string): Promise<BotResponse> {
     // Usa InputValidator para detectar possíveis tipos
     const detected = InputValidator.autoDetect(message);
 
