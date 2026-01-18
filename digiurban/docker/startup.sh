@@ -42,6 +42,12 @@ PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_US
   echo "⚠️ Aviso: Erro ao corrigir enum SubscriptionStatus"
 }
 
+# Criar tabelas do DigiBot
+echo "🤖 Criando tabelas do DigiBot..."
+PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -f /app/create-bot-tables.sql || {
+  echo "⚠️ Aviso: Erro ao criar tabelas do bot (talvez já existam)"
+}
+
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
 npx prisma migrate deploy || {

@@ -170,6 +170,7 @@ COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/startup.sh /app/startup.sh
 COPY docker/create-enums.sql /app/create-enums.sql
 COPY docker/fix-subscription-status-enum.sql /app/fix-subscription-status-enum.sql
+COPY digiurban/docker/create-bot-tables.sql /app/create-bot-tables.sql
 RUN chmod +x /app/startup.sh
 
 # Expor portas
