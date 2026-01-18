@@ -137,59 +137,77 @@ export class ConversationFlowManager {
   detectFlowFromMessage(message: string): FlowType | null {
     const normalized = message.toLowerCase().trim();
 
+    console.log('🔍 [detectFlowFromMessage] Mensagem recebida:', message);
+    console.log('🔍 [detectFlowFromMessage] Normalizada:', normalized);
+
     // Menu principal
-    if (normalized.includes('menu') || normalized.includes('voltar') || normalized.includes('início')) {
+    if (normalized.includes('menu') || normalized.includes('voltar') || normalized.includes('início') || normalized.includes('inicio')) {
+      console.log('✅ Detectado: MENU_PRINCIPAL');
       return FlowType.MENU_PRINCIPAL;
     }
 
-    // Solicitar serviço
+    // Solicitar serviço - MELHORADO com mais variações
     if (
       normalized.includes('solicitar') ||
       normalized.includes('serviço') ||
-      normalized.includes('📋')
+      normalized.includes('servico') ||
+      normalized.includes('📋') ||
+      normalized.match(/solicitar\s+servi[çc]o/i)
     ) {
+      console.log('✅ Detectado: SOLICITAR_SERVICO');
       return FlowType.SOLICITAR_SERVICO;
     }
 
-    // Consultar protocolo
+    // Consultar protocolo - MELHORADO
     if (
       normalized.includes('protocolo') ||
       normalized.includes('consultar') ||
       normalized.includes('acompanhar') ||
-      normalized.includes('🔍')
+      normalized.includes('🔍') ||
+      normalized.match(/consultar\s+protocolo/i)
     ) {
+      console.log('✅ Detectado: CONSULTAR_PROTOCOLO');
       return FlowType.CONSULTAR_PROTOCOLO;
     }
 
-    // Enviar documentos
+    // Enviar documentos - MELHORADO
     if (
       normalized.includes('enviar') ||
       normalized.includes('documento') ||
       normalized.includes('anexar') ||
-      normalized.includes('📄')
+      normalized.includes('📄') ||
+      normalized.match(/enviar\s+documento/i)
     ) {
+      console.log('✅ Detectado: ENVIAR_DOCUMENTOS');
       return FlowType.ENVIAR_DOCUMENTOS;
     }
 
-    // Atualizar perfil
+    // Atualizar perfil - MELHORADO
     if (
       normalized.includes('perfil') ||
       normalized.includes('atualizar') ||
       normalized.includes('dados') ||
-      normalized.includes('👤')
+      normalized.includes('👤') ||
+      normalized.match(/atualizar\s+perfil/i)
     ) {
+      console.log('✅ Detectado: ATUALIZAR_PERFIL');
       return FlowType.ATUALIZAR_PERFIL;
     }
 
-    // Outras dúvidas
+    // Outras dúvidas - MELHORADO
     if (
       normalized.includes('dúvida') ||
+      normalized.includes('duvida') ||
       normalized.includes('ajuda') ||
-      normalized.includes('❓')
+      normalized.includes('outras') ||
+      normalized.includes('❓') ||
+      normalized.match(/outras\s+d[úu]vidas/i)
     ) {
+      console.log('✅ Detectado: OUTRAS_DUVIDAS');
       return FlowType.OUTRAS_DUVIDAS;
     }
 
+    console.log('❌ Nenhum fluxo detectado');
     return null;
   }
 
