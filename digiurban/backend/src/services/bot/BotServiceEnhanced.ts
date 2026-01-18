@@ -112,7 +112,33 @@ export class BotServiceEnhanced {
         });
       }
 
-      // 2. Salva mensagem do usuário
+      // 2. Busca informações do cidadão
+      const citizen = await prisma.citizen.findUnique({
+        where: { id: citizenId }
+      });
+      const firstName = citizen?.name?.split(' ')[0];
+
+      // 3. PRIMEIRA MENSAGEM: Sempre mostra menu principal
+      const isFirstMessage = conversation.messages.length === 0;
+      const isGreeting = /^(oi|olá|ola|hey|opa|bom dia|boa tarde|boa noite|menu|início|start)/i.test(message.trim());
+
+      if (isFirstMessage || (isGreeting && !conversation.currentFlow)) {
+        // Salva mensagem do usuário
+        await prisma.botMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: 'user',
+            content: message,
+            messageType: 'text',
+          },
+        });
+
+        const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
+        await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
+        return response;
+      }
+
+      // 4. Salva mensagem do usuário (para demais casos)
       await prisma.botMessage.create({
         data: {
           conversationId: conversation.id,
@@ -121,25 +147,6 @@ export class BotServiceEnhanced {
           messageType: 'text',
         },
       });
-
-      // 3. Busca informações do cidadão
-      const citizen = await prisma.citizen.findUnique({
-        where: { id: citizenId }
-      });
-      const firstName = citizen?.name?.split(' ')[0];
-
-      // 4. PRIMEIRA MENSAGEM: Sempre mostra menu principal
-      if (conversation.messages.length === 0 || !conversation.currentFlow) {
-        // Detecta se é saudação ou pedido de menu
-        const isGreeting = /^(oi|olá|ola|hey|opa|bom dia|boa tarde|boa noite|menu|início|start)/i.test(message.trim());
-
-        if (isGreeting || conversation.messages.length === 0) {
-          const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
-
-          await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
-          return response;
-        }
-      }
 
       // 5. VERIFICA SE HÁ FLUXO ATIVO
       if (conversation.currentFlow) {
