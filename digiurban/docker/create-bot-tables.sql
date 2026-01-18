@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS bot_messages (
     sentiment TEXT,
     "sentimentScore" DOUBLE PRECISION,
     metadata JSONB,
+    "wasTransferred" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "bot_messages_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES bot_conversations(id) ON DELETE CASCADE
 );
@@ -97,6 +98,15 @@ BEGIN
     ) THEN
         ALTER TABLE bot_messages ADD COLUMN "messageType" TEXT;
         RAISE NOTICE '✅ Coluna messageType adicionada em bot_messages';
+    END IF;
+
+    -- Adicionar wasTransferred em bot_messages se não existir
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'bot_messages' AND column_name = 'wasTransferred'
+    ) THEN
+        ALTER TABLE bot_messages ADD COLUMN "wasTransferred" BOOLEAN NOT NULL DEFAULT false;
+        RAISE NOTICE '✅ Coluna wasTransferred adicionada em bot_messages';
     END IF;
 
     -- Adicionar uniqueCitizens em bot_analytics se não existir
