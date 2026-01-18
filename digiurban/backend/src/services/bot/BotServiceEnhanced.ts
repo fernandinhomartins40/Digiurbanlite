@@ -134,6 +134,7 @@ export class BotServiceEnhanced {
         });
 
         const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
+        console.log('🎯 [BotServiceEnhanced] Menu principal gerado:', JSON.stringify(response, null, 2));
         await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
         return response;
       }

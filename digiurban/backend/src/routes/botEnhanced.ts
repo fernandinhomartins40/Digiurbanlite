@@ -56,6 +56,7 @@ router.post('/message', citizenAuthMiddleware, async (req, res) => {
 
     const response = await botService.processMessage(citizenId, message);
 
+    console.log('📤 [botEnhanced route] Resposta sendo enviada:', JSON.stringify(response, null, 2));
     res.json(response);
   } catch (error) {
     console.error('Erro ao processar mensagem do bot:', error);
