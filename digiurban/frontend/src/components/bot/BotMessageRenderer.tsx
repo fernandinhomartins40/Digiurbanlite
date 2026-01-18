@@ -21,6 +21,14 @@ interface BotMessageRendererProps {
 export function BotMessageRenderer({ message, onInteraction }: BotMessageRendererProps) {
   const { messageType, metadata } = message;
 
+  // DEBUG: Log para verificar o que está chegando
+  console.log('🔍 [BotMessageRenderer] Mensagem recebida:', {
+    messageType,
+    metadata,
+    hasQuickReplies: !!metadata?.quickReplies,
+    quickReplies: metadata?.quickReplies
+  });
+
   // Renderiza barra de progresso se houver
   const renderProgress = () => {
     if (metadata?.progress && metadata?.totalSteps) {

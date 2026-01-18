@@ -33,6 +33,9 @@ export function useBotEnhanced() {
 
       const data = await response.json();
 
+      // DEBUG: Log da resposta do backend
+      console.log('📥 [useBotEnhanced] Resposta do backend:', data);
+
       // Adiciona mensagem do usuário
       const userMsg: Message = {
         id: Date.now().toString(),
