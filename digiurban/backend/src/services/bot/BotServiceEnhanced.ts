@@ -49,6 +49,36 @@ export class BotServiceEnhanced {
   }
 
   /**
+   * Helper para criar BotResponse com estrutura padronizada
+   */
+  private createResponse(
+    response: string,
+    messageType: 'text' | 'card' | 'interactive' | 'quick_reply' = 'text',
+    options: {
+      cards?: any[];
+      quickReplies?: string[];
+      stepType?: string;
+      formOptions?: any[];
+      confirmationData?: any;
+      progress?: number;
+      totalSteps?: number;
+      [key: string]: any;
+    } = {}
+  ): BotResponse {
+    const { cards, quickReplies, ...otherMetadata } = options;
+
+    return {
+      response,
+      messageType,
+      metadata: {
+        cards,
+        quickReplies,
+        ...otherMetadata
+      }
+    };
+  }
+
+  /**
    * Processa uma mensagem do cidadão
    */
   public async processMessage(
@@ -325,12 +355,11 @@ export class BotServiceEnhanced {
         false
       );
 
-      return {
-        response:
-          'Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente ou fale com um atendente.',
-        messageType: 'text',
-        quickReplies: ['Falar com atendente', 'Tentar novamente'],
-      };
+      return this.createResponse(
+        'Desculpe, ocorreu um erro ao processar sua mensagem. Por favor, tente novamente ou fale com um atendente.',
+        'text',
+        { quickReplies: ['Falar com atendente', 'Tentar novamente'] }
+      );
     }
   }
 
@@ -523,11 +552,17 @@ export class BotServiceEnhanced {
     });
 
     if (protocols.length === 0) {
-      return {
-        response: `${prefix || ''}Você ainda não possui nenhum protocolo.\n\nQue tal solicitar um serviço agora?`,
-        messageType: 'text',
-        quickReplies: ['Solicitar serviço', 'Agendar consulta'],
-      };
+      const services = await prisma.serviceSimplified.findMany({
+        orderBy: { id: 'asc' },
+        take: 2,
+        select: { name: true }
+      });
+
+      return this.createResponse(
+        `${prefix || ''}Você ainda não possui nenhum protocolo.\n\nQue tal solicitar um serviço agora?`,
+        'text',
+        { quickReplies: services.map((s: any) => s.name) }
+      );
     }
 
     const cards = protocols.map((p: any) => ({
@@ -544,12 +579,20 @@ export class BotServiceEnhanced {
       },
     }));
 
-    return {
-      response: `${prefix || ''}Aqui estão seus últimos protocolos:`,
-      messageType: 'card',
-      cards,
-      quickReplies: ['Solicitar outro serviço', 'Menu principal'],
-    };
+    const otherServices = await prisma.serviceSimplified.findMany({
+      orderBy: { id: 'asc' },
+      take: 2,
+      select: { name: true }
+    });
+
+    return this.createResponse(
+      `${prefix || ''}Aqui estão seus últimos protocolos:`,
+      'card',
+      {
+        cards,
+        quickReplies: otherServices.map((s: any) => s.name)
+      }
+    );
   }
 
   /**
@@ -564,19 +607,19 @@ export class BotServiceEnhanced {
     let number = entities?.number;
 
     if (!number) {
-      return {
-        response: `${prefix || ''}Qual o número do protocolo que você quer consultar?`,
-        messageType: 'text',
-      };
+      return this.createResponse(
+        `${prefix || ''}Qual o número do protocolo que você quer consultar?`,
+        'text'
+      );
     }
 
     // Valida número do protocolo
     const validation = InputValidator.validateProtocolNumber(number);
     if (!validation.isValid) {
-      return {
-        response: validation.error || 'Número de protocolo inválido.',
-        messageType: 'text',
-      };
+      return this.createResponse(
+        validation.error || 'Número de protocolo inválido.',
+        'text'
+      );
     }
 
     if (validation.suggestion) {
@@ -595,17 +638,17 @@ export class BotServiceEnhanced {
     });
 
     if (!protocol) {
-      return {
-        response: `${prefix || ''}Não encontrei nenhum protocolo com o número ${number}.\n\nDeseja ver todos os seus protocolos?`,
-        messageType: 'text',
-        quickReplies: ['Ver meus protocolos', 'Menu principal'],
-      };
+      return this.createResponse(
+        `${prefix || ''}Não encontrei nenhum protocolo com o número ${number}.\n\nDeseja ver todos os seus protocolos?`,
+        'text',
+        { quickReplies: ['Ver meus protocolos'] }
+      );
     }
 
-    return {
-      response: `${prefix || ''}Aqui está o status do seu protocolo:`,
-      messageType: 'card',
-      cards: [
+    return this.createResponse(
+      `${prefix || ''}Aqui está o status do seu protocolo:`,
+      'card',
+      { cards: [
         {
           id: protocol.id,
           title: `Protocolo #${protocol.number}`,
@@ -620,8 +663,9 @@ export class BotServiceEnhanced {
           },
         },
       ],
-      quickReplies: ['Ver outros protocolos', 'Solicitar outro serviço'],
-    };
+        quickReplies: ['Ver outros protocolos']
+      }
+    );
   }
 
   /**
@@ -664,11 +708,11 @@ export class BotServiceEnhanced {
       quickReplies = popularServices.map((s: any) => s.name);
     }
 
-    return {
-      response: `${prefix || ''}${greeting}, ${firstName}! 👋\n\nSou o DigiBot, seu assistente virtual. Como posso ajudar você hoje?`,
-      messageType: 'text',
-      quickReplies: quickReplies.length > 0 ? quickReplies : undefined,
-    };
+    return this.createResponse(
+      `${prefix || ''}${greeting}, ${firstName}! 👋\n\nSou o DigiBot, seu assistente virtual. Como posso ajudar você hoje?`,
+      'text',
+      { quickReplies: quickReplies.length > 0 ? quickReplies : undefined }
+    );
   }
 
   /**
@@ -684,10 +728,10 @@ export class BotServiceEnhanced {
       data: { isActive: false, closedAt: new Date() },
     });
 
-    return {
-      response: `${prefix || ''}Até logo! Foi um prazer ajudar você. 😊\n\nSempre que precisar, é só me chamar!`,
-      messageType: 'text',
-    };
+    return this.createResponse(
+      `${prefix || ''}Até logo! Foi um prazer ajudar você. 😊\n\nSempre que precisar, é só me chamar!`,
+      'text'
+    );
   }
 
   /**
@@ -703,11 +747,11 @@ export class BotServiceEnhanced {
 
     const quickReplies = services.map((s: any) => s.name);
 
-    return {
-      response: `${prefix || ''}Posso te ajudar com:\n\n• 📋 Solicitar serviços municipais\n• 📄 Enviar documentos\n• 🔍 Consultar protocolos\n• 💬 Falar com um atendente\n\nÉ só me dizer o que você precisa!`,
-      messageType: 'text',
-      quickReplies: quickReplies.length > 0 ? quickReplies : undefined,
-    };
+    return this.createResponse(
+      `${prefix || ''}Posso te ajudar com:\n\n• 📋 Solicitar serviços municipais\n• 📄 Enviar documentos\n• 🔍 Consultar protocolos\n• 💬 Falar com um atendente\n\nÉ só me dizer o que você precisa!`,
+      'text',
+      { quickReplies: quickReplies.length > 0 ? quickReplies : undefined }
+    );
   }
 
   /**
@@ -745,24 +789,30 @@ export class BotServiceEnhanced {
         select: { name: true }
       });
 
-      return {
-        response: `${prefix || ''}Encontrei estes serviços relacionados:`,
-        messageType: 'card',
-        cards,
-        quickReplies: otherServices.length > 0 ? otherServices.map((s: any) => s.name) : undefined,
-      };
+      return this.createResponse(
+        `${prefix || ''}Encontrei estes serviços relacionados:`,
+        'card',
+        {
+          cards,
+          quickReplies: otherServices.length > 0 ? otherServices.map((s: any) => s.name) : undefined
+        }
+      );
     }
 
-    return {
-      response: `${prefix || ''}Desculpe, não tenho certeza de como ajudar com isso.\n\nVocê pode me dizer de outra forma ou escolher uma das opções:`,
-      messageType: 'text',
-      quickReplies: [
-        'Agendar consulta',
-        'Solicitar serviço',
-        'Ver protocolos',
-        'Falar com atendente',
-      ],
-    };
+    // Busca serviços para quick replies
+    const fallbackServices = await prisma.serviceSimplified.findMany({
+      orderBy: { id: 'asc' },
+      take: 3,
+      select: { name: true }
+    });
+
+    return this.createResponse(
+      `${prefix || ''}Desculpe, não tenho certeza de como ajudar com isso.\n\nVocê pode me dizer de outra forma ou escolher uma das opções:`,
+      'text',
+      {
+        quickReplies: fallbackServices.map((s: any) => s.name)
+      }
+    );
   }
 
   /**

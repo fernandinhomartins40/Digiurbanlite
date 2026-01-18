@@ -15,10 +15,18 @@ export interface BotMessage {
 export interface BotResponse {
   response: string;
   messageType: 'text' | 'card' | 'form' | 'quick_reply' | 'interactive';
-  metadata?: any;
-  quickReplies?: string[];
-  cards?: MessageCardData[];
-  form?: any;
+  metadata?: {
+    cards?: MessageCardData[];
+    quickReplies?: string[];
+    form?: any;
+    stepType?: string;
+    options?: any[];
+    progress?: number;
+    totalSteps?: number;
+    currentStepNumber?: number;
+    confirmationData?: any;
+    [key: string]: any; // Permite outros metadados
+  };
 }
 
 export interface MessageCardData {
