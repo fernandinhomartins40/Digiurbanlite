@@ -160,6 +160,9 @@ model Citizen {
   maritalStatus       String?
   occupation          String?
   familyIncome        String?
+
+  // Avatar/Foto de perfil
+  avatar              String?  // URL da foto ou null para usar iniciais+cor
   auditLogs           AuditLog[]
   transferRequests    CitizenTransferRequest[]
   familyAsMember      FamilyComposition[]      @relation("FamilyMember")

@@ -132,6 +132,18 @@ try {
 }
 
 // ============================================================
+// ROTAS DE AVATAR
+// ============================================================
+console.log('🖼️  Carregando rotas de avatar...');
+try {
+  const avatarRoutes = require('./routes/avatar.routes').default;
+  app.use('/api/avatar', avatarRoutes);
+  console.log('✅ Rotas de avatar carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas de avatar:', error);
+}
+
+// ============================================================
 // ROTAS PÚBLICAS (SEM AUTENTICAÇÃO)
 // ============================================================
 console.log('🌐 Carregando rotas públicas...');
