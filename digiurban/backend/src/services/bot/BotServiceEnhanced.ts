@@ -190,15 +190,19 @@ export class BotServiceEnhanced {
       }
 
       // 6. SEM FLUXO ATIVO: Detecta intenção da mensagem e inicia fluxo apropriado
+      console.log('🔍 [BotServiceEnhanced] Tentando detectar fluxo para mensagem:', message);
       const detectedFlow = this.conversationFlowManager.detectFlowFromMessage(message);
+      console.log('🔍 [BotServiceEnhanced] Fluxo detectado:', detectedFlow);
 
       if (detectedFlow) {
         if (detectedFlow === FlowType.MENU_PRINCIPAL) {
+          console.log('✅ [BotServiceEnhanced] Mostrando menu principal');
           const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
           await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
           return response;
         }
 
+        console.log('✅ [BotServiceEnhanced] Iniciando fluxo:', detectedFlow);
         const response = await this.conversationFlowManager.startFlow(
           citizenId,
           conversation.id,
@@ -208,6 +212,8 @@ export class BotServiceEnhanced {
         await this.saveAndReturn(conversation.id, response, detectedFlow, 1.0, startTime, citizenId);
         return response;
       }
+
+      console.log('❌ [BotServiceEnhanced] Nenhum fluxo detectado, mostrando menu de fallback');
 
       // 7. Mensagem não reconhecida: Oferece menu
       const response = this.createResponse(
