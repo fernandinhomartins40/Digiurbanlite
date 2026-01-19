@@ -328,6 +328,12 @@ export default function CitizenDashboard() {
 
         if (response.ok) {
           const data = await response.json();
+
+          // DEBUG: Log completo da resposta do bot
+          console.log('📥 [page.tsx] Resposta completa do bot:', JSON.stringify(data, null, 2));
+          console.log('📥 [page.tsx] metadata:', data.metadata);
+          console.log('📥 [page.tsx] quickReplies:', data.metadata?.quickReplies);
+
           setMessages(prev => [...prev, {
             id: data.messageId || `bot-${Date.now()}`,
             content: data.response,
@@ -765,9 +771,11 @@ export default function CitizenDashboard() {
                                     variant="outline"
                                     size="sm"
                                     onClick={() => {
+                                      console.log('🔘 [page.tsx] Botão clicado:', reply);
                                       setNewMessage(reply);
                                       // Auto-enviar a mensagem ao clicar
                                       setTimeout(() => {
+                                        console.log('📤 [page.tsx] Auto-enviando mensagem:', reply);
                                         const form = document.querySelector('form');
                                         form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
                                       }, 100);
