@@ -541,7 +541,7 @@ export class ExpressServer {
             email: true,
             cpf: true,
             phone: true,
-            avatar: true,
+            
           },
           take: parseInt(limit as string, 10),
           skip: parseInt(offset as string, 10),
@@ -617,7 +617,7 @@ export class ExpressServer {
               email: true,
               cpf: true,
               phone: true,
-              avatar: true,
+              
             },
           });
 
