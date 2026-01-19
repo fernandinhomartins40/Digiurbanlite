@@ -352,6 +352,7 @@ export default function ProtocolDetailsPage() {
           <CitizenWorkflowProgress
             protocolId={protocol.id}
             apiRequest={apiRequest}
+            protocolStatus={protocol.status}
           />
         )}
 

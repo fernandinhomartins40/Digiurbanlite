@@ -26,9 +26,10 @@ interface WorkflowStage {
 interface CitizenWorkflowProgressProps {
   protocolId: string
   apiRequest: (url: string) => Promise<any>
+  protocolStatus?: string // Status do protocolo para verificar se está concluído
 }
 
-export function CitizenWorkflowProgress({ protocolId, apiRequest }: CitizenWorkflowProgressProps) {
+export function CitizenWorkflowProgress({ protocolId, apiRequest, protocolStatus }: CitizenWorkflowProgressProps) {
   const [stages, setStages] = useState<WorkflowStage[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -42,7 +43,18 @@ export function CitizenWorkflowProgress({ protocolId, apiRequest }: CitizenWorkf
       const response = await apiRequest(`/citizen/protocols/${protocolId}/stages`)
 
       if (response.success) {
-        setStages(response.data || [])
+        let loadedStages = response.data || []
+
+        // Se o protocolo está CONCLUIDO, marcar todas as etapas como COMPLETED
+        if (protocolStatus === 'CONCLUIDO') {
+          loadedStages = loadedStages.map((stage: WorkflowStage) => ({
+            ...stage,
+            status: StageStatus.COMPLETED,
+            completedAt: stage.completedAt || new Date().toISOString()
+          }))
+        }
+
+        setStages(loadedStages)
       }
     } catch (error) {
       console.error('Erro ao carregar workflow:', error)
@@ -95,6 +107,11 @@ export function CitizenWorkflowProgress({ protocolId, apiRequest }: CitizenWorkf
   const totalCount = sortedStages.length
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
+  // Se protocolo concluído, progresso deve ser 100%
+  const isProtocolCompleted = protocolStatus === 'CONCLUIDO'
+  const displayProgress = isProtocolCompleted ? 100 : progressPercentage
+  const displayCompleted = isProtocolCompleted ? totalCount : completedCount
+
   return (
     <Card>
       <CardHeader>
@@ -107,17 +124,17 @@ export function CitizenWorkflowProgress({ protocolId, apiRequest }: CitizenWorkf
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-medium text-gray-900">Progresso do Workflow</h3>
               <Badge variant="outline" className="text-xs">
-                {completedCount}/{totalCount}
+                {displayCompleted}/{totalCount}
               </Badge>
             </div>
             <span className="text-sm text-gray-600">
-              {Math.round(progressPercentage)}% concluído
+              {Math.round(displayProgress)}% concluído
             </span>
           </div>
 
           {/* Barra de Progresso */}
           <Progress
-            value={progressPercentage}
+            value={displayProgress}
             className="h-3"
           />
 
@@ -128,8 +145,9 @@ export function CitizenWorkflowProgress({ protocolId, apiRequest }: CitizenWorkf
 
             <div className="relative flex items-start justify-between gap-2">
               {sortedStages.map((stage, index) => {
-                const isCurrentStage = stage.status === StageStatus.IN_PROGRESS
-                const isCompleted = stage.status === StageStatus.COMPLETED
+                // Se protocolo concluído, não mostrar etapa atual
+                const isCurrentStage = !isProtocolCompleted && stage.status === StageStatus.IN_PROGRESS
+                const isCompleted = stage.status === StageStatus.COMPLETED || isProtocolCompleted
 
                 return (
                   <div
@@ -153,7 +171,7 @@ export function CitizenWorkflowProgress({ protocolId, apiRequest }: CitizenWorkf
                           isCompleted ? 'border-green-500' : 'border-gray-300'}
                       `}
                     >
-                      {getStatusIcon(stage.status, 'sm')}
+                      {isProtocolCompleted ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : getStatusIcon(stage.status, 'sm')}
                     </div>
 
                     {/* Nome da Etapa */}

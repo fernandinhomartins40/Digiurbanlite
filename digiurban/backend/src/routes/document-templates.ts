@@ -200,15 +200,24 @@ router.delete('/document-templates/:id', authenticateToken, requireSuperAdmin, a
  */
 router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, requireMinRole(UserRole.USER), async (req, res) => {
   try {
+    console.log('=== DEBUG GENERATE DOCUMENT ===');
+    console.log('Params:', req.params);
+    console.log('Body:', req.body);
+    console.log('User:', req.user?.id);
+    console.log('Headers:', req.headers);
+
     const { protocolId } = req.params;
     const { templateId, additionalData } = req.body;
 
     if (!templateId) {
+      console.log('❌ templateId ausente no body');
       return res.status(400).json({
         success: false,
         error: 'templateId é obrigatório'
       });
     }
+
+    console.log(`✅ Iniciando geração: templateId=${templateId}, protocolId=${protocolId}`);
 
     const document = await documentGenerator.generateDocument({
       templateId,
@@ -223,7 +232,8 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
       message: 'Documento gerado com sucesso'
     });
   } catch (error: any) {
-    console.error('Error generating document:', error);
+    console.error('❌ Error generating document:', error);
+    console.error('Stack:', error.stack);
     res.status(400).json({
       success: false,
       error: error.message || 'Erro ao gerar documento'
@@ -399,3 +409,4 @@ router.get('/document-stats', authenticateToken, requireAdmin, async (req, res) 
 });
 
 export default router;
+
