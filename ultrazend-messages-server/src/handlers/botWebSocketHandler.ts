@@ -29,7 +29,7 @@ interface BotFilesData {
 /**
  * Registra os handlers de eventos do bot para um socket
  */
-export function registerBotHandlers(socket: Socket, userId: string, userType: string) {
+export function registerBotHandlers(socket: Socket, userId: string) {
   console.log(`[BotWSHandler] Registrando handlers do bot para socket ${socket.id} (user: ${userId})`);
 
   /**
