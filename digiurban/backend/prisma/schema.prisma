@@ -4090,6 +4090,14 @@ model Conversation {
   updatedAt        DateTime @updatedAt
   closedAt         DateTime?
 
+  // Bot-specific fields
+  isBotConversation Boolean  @default(false)
+  botFlowType       String?
+  botFlowStep       Int      @default(0)
+  botFlowData       Json?
+  botContext        Json?
+  botLastInteractionAt DateTime?
+
   // Relacionamentos
   messageServer MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
   messages      Message[]
@@ -4099,6 +4107,7 @@ model Conversation {
   @@index([participant2Id, participant2Type, status])
   @@index([protocolId])
   @@index([status, lastMessageAt])
+  @@index([isBotConversation, status])
   @@map("conversations")
 }
 
