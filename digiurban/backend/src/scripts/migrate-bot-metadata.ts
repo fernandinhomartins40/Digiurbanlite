@@ -16,18 +16,7 @@ async function migrateBotMessageMetadata() {
     // 1. Buscar todas as mensagens do bot sem metadata ou com metadata vazio
     const messages = await prisma.botMessage.findMany({
       where: {
-        role: 'bot',
-        OR: [
-          { metadata: null },
-          { metadata: {} },
-        ]
-      },
-      include: {
-        conversation: {
-          include: {
-            citizen: true
-          }
-        }
+        role: 'bot'
       }
     });
 
@@ -63,7 +52,7 @@ async function migrateBotMessageMetadata() {
         });
 
         updated++;
-        console.log(`✅ Atualizada mensagem ${message.id} - ${message.conversation.citizen?.name || 'Unknown'}`);
+        console.log(`✅ Atualizada mensagem ${message.id}`);
       }
     }
 
