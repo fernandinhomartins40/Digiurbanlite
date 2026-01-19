@@ -222,7 +222,27 @@ export default function CitizenDashboard() {
 
         if (response.ok) {
           const data = await response.json();
-          setMessages(data.messages || []);
+          const messages = data.messages || [];
+
+          // CORREÇÃO: Adiciona quickReplies na última mensagem do bot se não tiver
+          if (messages.length > 0) {
+            const lastBotMessage = messages.reverse().find((m: any) => m.senderType === 'BOT');
+            if (lastBotMessage && !lastBotMessage.metadata?.quickReplies) {
+              lastBotMessage.metadata = {
+                ...lastBotMessage.metadata,
+                quickReplies: [
+                  '📋 Solicitar Serviço',
+                  '🔍 Consultar Protocolo',
+                  '📄 Enviar Documentos',
+                  '👤 Atualizar Perfil',
+                  '❓ Outras Dúvidas'
+                ]
+              };
+            }
+            messages.reverse();
+          }
+
+          setMessages(messages);
         } else {
           // Mensagem inicial do bot
           setMessages([
