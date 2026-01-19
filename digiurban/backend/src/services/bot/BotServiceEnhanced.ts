@@ -116,7 +116,7 @@ export class BotServiceEnhanced {
       const citizen = await prisma.citizen.findUnique({
         where: { id: citizenId }
       });
-      const firstName = citizen?.name?.split(' ')[0];
+      const firstName = citizen?.name?.split(' ')[0] || 'Cidadão';
 
       // 3. PRIMEIRA MENSAGEM: Sempre mostra menu principal
       const isFirstMessage = conversation.messages.length === 0;
@@ -132,7 +132,7 @@ export class BotServiceEnhanced {
           },
         });
 
-        const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
+        const response = await this.conversationFlowManager.showMainMenu(citizenId, conversation.id);
         console.log('🎯 [BotServiceEnhanced] Menu principal gerado:', JSON.stringify(response, null, 2));
         await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
         return response;
@@ -161,14 +161,24 @@ export class BotServiceEnhanced {
             }
           });
 
-          const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
+          const response = await this.conversationFlowManager.showMainMenu(citizenId, conversation.id);
           await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
           return response;
         }
 
         // Processa o fluxo ativo
+        // Converte BotConversation para formato esperado pelo ConversationFlowManager
+        const conversationForFlow = {
+          id: conversation.id,
+          botFlowType: conversation.currentFlow,
+          botFlowStep: conversation.flowStep,
+          botFlowData: conversation.flowData as any,
+          botContext: {},
+          botLastInteractionAt: null
+        };
+
         const flowResponse = await this.conversationFlowManager.processFlowMessage(
-          conversation,
+          conversationForFlow as any,
           message,
           citizenId
         );
@@ -197,7 +207,7 @@ export class BotServiceEnhanced {
       if (detectedFlow) {
         if (detectedFlow === FlowType.MENU_PRINCIPAL) {
           console.log('✅ [BotServiceEnhanced] Mostrando menu principal');
-          const response = await this.conversationFlowManager.showMainMenu(citizenId, firstName);
+          const response = await this.conversationFlowManager.showMainMenu(citizenId, conversation.id);
           await this.saveAndReturn(conversation.id, response, 'MENU_PRINCIPAL', 1.0, startTime, citizenId);
           return response;
         }

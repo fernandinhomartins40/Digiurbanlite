@@ -105,7 +105,7 @@ router.post('/message', async (req, res) => {
         // Mensagem não reconhecida - mostra menu
         botResponse = {
           response: '🤔 Desculpe, não entendi.\n\nEscolha uma das opções abaixo:',
-          messageType: 'interactive',
+          messageType: 'interactive' as const,
           metadata: {
             quickReplies: [
               '📋 Solicitar Serviço',

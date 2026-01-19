@@ -45,7 +45,7 @@ export class ConversationFlowManager {
     this.integrationService = BotIntegrationService.getInstance();
     this.adapter = UltraZendMessagesAdapter.getInstance();
     this.semanticSearch = SemanticSearchService.getInstance();
-    this.ollama = OllamaService.getInstance();
+    this.ollama = new OllamaService();
   }
 
   /**
@@ -933,13 +933,20 @@ export class ConversationFlowManager {
   ): Promise<BotResponse> {
     // Usa Ollama para responder
     try {
-      const response = await this.ollama.chat(message, flowData.history || []);
+      const ollamaResponse = await this.ollama.recognizeIntent(message, {
+        citizenId,
+        conversationHistory: flowData.history || []
+      });
+
+      const responseText = ollamaResponse.parameters?.answer ||
+                          ollamaResponse.parameters?.response ||
+                          'Desculpe, não consegui gerar uma resposta adequada.';
 
       // Atualiza histórico
       const history = [
         ...(flowData.history || []),
         { role: 'user', content: message },
-        { role: 'assistant', content: response }
+        { role: 'assistant', content: responseText }
       ].slice(-10); // Mantém últimas 10 mensagens
 
       await this.adapter.updateBotFlow(conversationId, FlowType.OUTRAS_DUVIDAS, 0, {
@@ -948,7 +955,7 @@ export class ConversationFlowManager {
       });
 
       return {
-        response: response,
+        response: responseText,
         messageType: 'text',
         metadata: {
           quickReplies: ['❓ Outra pergunta', '🏠 Menu Principal']

@@ -108,6 +108,10 @@ export class UltraZendMessagesAdapter {
   ): Promise<Message> {
     try {
       // Criar a mensagem no banco
+      const metadata = botResponse.metadata
+        ? { messageType: botResponse.messageType, ...botResponse.metadata }
+        : { messageType: botResponse.messageType };
+
       const message = await this.prisma.message.create({
         data: {
           conversationId,
@@ -117,10 +121,7 @@ export class UltraZendMessagesAdapter {
           contentType: 'TEXT',
           status: 'SENT',
           sentAt: new Date(),
-          metadata: {
-            messageType: botResponse.messageType,
-            ...botResponse.metadata
-          }
+          metadata: metadata as any
         }
       });
 

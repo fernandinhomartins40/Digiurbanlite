@@ -38,7 +38,7 @@ export interface MessageCardData {
   date?: string;
   status?: string;
   action?: {
-    type: 'open_service' | 'open_protocol' | 'open_document' | 'custom';
+    type: 'open_service' | 'open_protocol' | 'open_document' | 'custom' | 'select_service' | 'select_protocol' | 'rate_service';
     label: string;
     serviceId?: string;
     protocolId?: string;
