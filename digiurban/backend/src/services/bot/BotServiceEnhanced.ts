@@ -120,9 +120,8 @@ export class BotServiceEnhanced {
 
       // 3. PRIMEIRA MENSAGEM: Sempre mostra menu principal
       const isFirstMessage = conversation.messages.length === 0;
-      const isGreeting = /^(oi|olá|ola|hey|opa|bom dia|boa tarde|boa noite|menu|início|start)/i.test(message.trim());
 
-      if (isFirstMessage || (isGreeting && !conversation.currentFlow)) {
+      if (isFirstMessage) {
         // Salva mensagem do usuário
         await prisma.botMessage.create({
           data: {
