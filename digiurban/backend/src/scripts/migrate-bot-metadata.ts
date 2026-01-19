@@ -9,7 +9,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-async function migrateBot MessageMetadata() {
+async function migrateBotMessageMetadata() {
   console.log('🔧 Iniciando migração de metadata do bot...\n');
 
   try {
@@ -81,7 +81,7 @@ async function migrateBot MessageMetadata() {
 }
 
 // Executar migração
-migrateBot MessageMetadata()
+migrateBotMessageMetadata()
   .catch((error) => {
     console.error(error);
     process.exit(1);
