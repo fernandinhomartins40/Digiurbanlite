@@ -108,13 +108,13 @@ app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/citizen/auth', citizenAuthRoutes);
 
 // ============================================================
-// ROTAS DO BOT (DIGIBOT AI) - Enhanced com RAG
+// ROTAS DO BOT (DIGIBOT AI) - Integrado com UltraZend Messages
 // ============================================================
-console.log('🤖 Carregando rotas do bot (Enhanced com RAG)...');
+console.log('🤖 Carregando rotas do bot (Integrado com UltraZend)...');
 try {
-  const botRoutes = require('./routes/botEnhanced').default;
-  app.use('/api/bot', botRoutes);
-  console.log('✅ Rotas do bot Enhanced carregadas!');
+  const botIntegratedRoutes = require('./routes/botIntegrated.routes').default;
+  app.use('/api/bot', botIntegratedRoutes);
+  console.log('✅ Rotas do bot integradas carregadas!');
 } catch (error) {
   console.error('❌ Erro ao carregar rotas do bot:', error);
 }

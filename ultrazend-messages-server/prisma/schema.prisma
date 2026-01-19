@@ -1,7 +1,3 @@
-// UltraZend Messages Server - Prisma Schema
-// ALIGNED WITH DigiUrban Backend Schema
-// Uses the same database and tables as DigiUrban
-
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
@@ -12,100 +8,82 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// MESSAGE MODELS (from DigiUrban Backend)
-// ============================================
-// Todos os models abaixo estão definidos no schema principal
-// do backend DigiUrban e são compartilhados por este serviço
-
 model MessageServer {
-  id                String   @id @default(cuid())
-  name              String
-  hostname          String
-  wsPort            Int      @default(9001)
-  isActive          Boolean  @default(false)
-  maxDailyMessages  Int      @default(100000)
-  enableEncryption  Boolean  @default(false)
-  enableP2P         Boolean  @default(false)
-  enableBroadcast   Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  conversations Conversation[]
-  channels      OfficialChannel[]
-  logs          MessageLog[]
-  stats         MessageStats[]
+  id               String            @id @default(cuid())
+  name             String
+  hostname         String
+  wsPort           Int               @default(9001)
+  isActive         Boolean           @default(false)
+  maxDailyMessages Int               @default(100000)
+  enableEncryption Boolean           @default(false)
+  enableP2P        Boolean           @default(false)
+  enableBroadcast  Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  conversations    Conversation[]
+  logs             MessageLog[]
+  stats            MessageStats[]
+  channels         OfficialChannel[]
 
   @@map("message_servers")
 }
 
 model Conversation {
-  id              String             @id @default(cuid())
-  messageServerId String
-  participant1Id   String
-  participant1Type ParticipantType
-  participant2Id   String
-  participant2Type ParticipantType
-  protocolId       String?
-  departmentId     String?
-  type             ConversationType @default(SUPPORT)
-  status           ConversationStatus @default(ACTIVE)
-  lastMessageAt    DateTime?
+  id                 String             @id @default(cuid())
+  messageServerId    String
+  participant1Id     String
+  participant1Type   ParticipantType
+  participant2Id     String
+  participant2Type   ParticipantType
+  protocolId         String?
+  departmentId       String?
+  type               ConversationType   @default(SUPPORT)
+  status             ConversationStatus @default(ACTIVE)
+  lastMessageAt      DateTime?
   lastMessagePreview String?
-  totalMessages    Int      @default(0)
-  unreadCount1     Int      @default(0)
-  unreadCount2     Int      @default(0)
-  metadata         Json?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  closedAt         DateTime?
-
-  // Bot-specific fields
-  isBotConversation Boolean  @default(false)
-  botFlowType       String?
-  botFlowStep       Int      @default(0)
-  botFlowData       Json?
-  botContext        Json?
-  botLastInteractionAt DateTime?
-
-  messageServer MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
-  messages      Message[]
+  totalMessages      Int                @default(0)
+  unreadCount1       Int                @default(0)
+  unreadCount2       Int                @default(0)
+  metadata           Json?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  closedAt           DateTime?
+  messageServer      MessageServer      @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
+  messages           Message[]
 
   @@unique([participant1Id, participant1Type, participant2Id, participant2Type, protocolId])
   @@index([participant1Id, participant1Type, status])
   @@index([participant2Id, participant2Type, status])
   @@index([protocolId])
   @@index([status, lastMessageAt])
-  @@index([isBotConversation, status])
   @@map("conversations")
 }
 
 model Message {
-  id             String   @id @default(cuid())
+  id             String             @id @default(cuid())
   conversationId String
   senderId       String
   senderType     ParticipantType
-  content        String   @db.Text
+  content        String
   contentType    MessageContentType @default(TEXT)
   attachments    Json?
   replyToId      String?
-  status         MessageStatus @default(SENT)
-  sentAt         DateTime @default(now())
+  status         MessageStatus      @default(SENT)
+  sentAt         DateTime           @default(now())
   deliveredAt    DateTime?
   readAt         DateTime?
-  isEdited       Boolean  @default(false)
+  isEdited       Boolean            @default(false)
   editedAt       DateTime?
-  isDeleted      Boolean  @default(false)
+  isDeleted      Boolean            @default(false)
   deletedAt      DateTime?
   deletedBy      String?
   metadata       Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  replyTo        Message?     @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
-  replies        Message[]    @relation("MessageReplies")
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
   reports        MessageReport[]
+  conversation   Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replyTo        Message?           @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies        Message[]          @relation("MessageReplies")
 
   @@index([conversationId, sentAt])
   @@index([senderId, senderType])
@@ -115,28 +93,27 @@ model Message {
 }
 
 model OfficialChannel {
-  id              String   @id @default(cuid())
-  messageServerId String
-  name            String
-  slug            String   @unique
-  description     String?  @db.Text
-  iconUrl         String?
-  bannerUrl       String?
-  color           String?
-  departmentId    String?
-  managedBy       Json
-  isPublic        Boolean  @default(true)
-  requiresApproval Boolean @default(false)
-  isActive        Boolean  @default(true)
-  allowComments   Boolean  @default(false)
-  subscriberCount Int      @default(0)
-  messageCount    Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  messageServer   MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
-  subscriptions   ChannelSubscription[]
-  messages        ChannelMessage[]
+  id               String                @id @default(cuid())
+  messageServerId  String
+  name             String
+  slug             String                @unique
+  description      String?
+  iconUrl          String?
+  bannerUrl        String?
+  color            String?
+  departmentId     String?
+  managedBy        Json
+  isPublic         Boolean               @default(true)
+  requiresApproval Boolean               @default(false)
+  isActive         Boolean               @default(true)
+  allowComments    Boolean               @default(false)
+  subscriberCount  Int                   @default(0)
+  messageCount     Int                   @default(0)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  messages         ChannelMessage[]
+  subscriptions    ChannelSubscription[]
+  messageServer    MessageServer         @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
 
   @@index([isActive, isPublic])
   @@index([slug])
@@ -144,23 +121,22 @@ model OfficialChannel {
 }
 
 model ChannelSubscription {
-  id         String   @id @default(cuid())
-  channelId  String
-  citizenId  String
-  status     ChannelSubscriptionStatus @default(PENDING)
-  subscribedAt DateTime @default(now())
+  id           String                    @id @default(cuid())
+  channelId    String
+  citizenId    String
+  status       ChannelSubscriptionStatus @default(PENDING)
+  subscribedAt DateTime                  @default(now())
   approvedAt   DateTime?
   approvedBy   String?
-  notifyInApp   Boolean @default(true)
-  notifyEmail   Boolean @default(false)
-  notifySMS     Boolean @default(false)
-  notifyPush    Boolean @default(true)
-  metadata      Json?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  channel       OfficialChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  deliveries    ChannelDelivery[]
+  notifyInApp  Boolean                   @default(true)
+  notifyEmail  Boolean                   @default(false)
+  notifySMS    Boolean                   @default(false)
+  notifyPush   Boolean                   @default(true)
+  metadata     Json?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+  deliveries   ChannelDelivery[]
+  channel      OfficialChannel           @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@unique([channelId, citizenId])
   @@index([citizenId, status])
@@ -169,27 +145,26 @@ model ChannelSubscription {
 }
 
 model ChannelMessage {
-  id         String   @id @default(cuid())
-  channelId  String
-  authorId   String
-  title      String?
-  content    String   @db.Text
-  contentType MessageContentType @default(TEXT)
-  attachments Json?
-  scheduledFor DateTime?
-  publishedAt  DateTime?
-  status       BroadcastStatus @default(DRAFT)
-  deliveredCount Int @default(0)
-  readCount      Int @default(0)
-  failedCount    Int @default(0)
-  priority       Int @default(3)
+  id             String             @id @default(cuid())
+  channelId      String
+  authorId       String
+  title          String?
+  content        String
+  contentType    MessageContentType @default(TEXT)
+  attachments    Json?
+  scheduledFor   DateTime?
+  publishedAt    DateTime?
+  status         BroadcastStatus    @default(DRAFT)
+  deliveredCount Int                @default(0)
+  readCount      Int                @default(0)
+  failedCount    Int                @default(0)
+  priority       Int                @default(3)
   metadata       Json?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
   sentAt         DateTime?
-
-  channel        OfficialChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   deliveries     ChannelDelivery[]
+  channel        OfficialChannel    @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@index([channelId, publishedAt])
   @@index([status, scheduledFor])
@@ -198,24 +173,23 @@ model ChannelMessage {
 }
 
 model ChannelDelivery {
-  id        String   @id @default(cuid())
-  messageId String
+  id             String              @id @default(cuid())
+  messageId      String
   subscriptionId String
-  citizenId String
-  status    MessageStatus @default(QUEUED)
-  queuedAt  DateTime @default(now())
-  sentAt    DateTime?
-  deliveredAt DateTime?
-  readAt      DateTime?
-  failedAt    DateTime?
-  errorMessage String?
-  retryCount   Int @default(0)
-  metadata     Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  message      ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  subscription ChannelSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  citizenId      String
+  status         MessageStatus       @default(QUEUED)
+  queuedAt       DateTime            @default(now())
+  sentAt         DateTime?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  failedAt       DateTime?
+  errorMessage   String?
+  retryCount     Int                 @default(0)
+  metadata       Json?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  message        ChannelMessage      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  subscription   ChannelSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, citizenId])
   @@index([messageId, status])
@@ -225,41 +199,40 @@ model ChannelDelivery {
 }
 
 model CitizenPrivacySettings {
-  citizenId            String   @id
-  allowMessagesFromAll Boolean  @default(false)
-  allowMessagesFromServers Boolean @default(true)
-  blockedCitizens      Json     @default("[]")
-  blockedServers       Json     @default("[]")
-  notifyNewMessage     Boolean  @default(true)
-  notifySound          Boolean  @default(true)
-  notifyVibrate        Boolean  @default(true)
-  showOnlineStatus     Boolean  @default(true)
-  showLastSeen         Boolean  @default(true)
-  showReadReceipts     Boolean  @default(true)
-  autoBackup           Boolean  @default(false)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  citizenId                String   @id
+  allowMessagesFromAll     Boolean  @default(false)
+  allowMessagesFromServers Boolean  @default(true)
+  blockedCitizens          Json     @default("[]")
+  blockedServers           Json     @default("[]")
+  notifyNewMessage         Boolean  @default(true)
+  notifySound              Boolean  @default(true)
+  notifyVibrate            Boolean  @default(true)
+  showOnlineStatus         Boolean  @default(true)
+  showLastSeen             Boolean  @default(true)
+  showReadReceipts         Boolean  @default(true)
+  autoBackup               Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   @@map("citizen_privacy_settings")
 }
 
 model MessageReport {
-  id          String   @id @default(cuid())
-  messageId   String
-  reportedBy  String
+  id           String            @id @default(cuid())
+  messageId    String
+  reportedBy   String
   reporterType ParticipantType
-  reason      ReportReason
-  description String?  @db.Text
-  status      ReportStatus @default(PENDING)
-  screenshots Json?
-  reviewedAt  DateTime?
-  reviewedBy  String?
-  reviewNotes String?  @db.Text
-  action      ModerationAction?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  message     Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  reason       ReportReason
+  description  String?
+  status       ReportStatus      @default(PENDING)
+  screenshots  Json?
+  reviewedAt   DateTime?
+  reviewedBy   String?
+  reviewNotes  String?
+  action       ModerationAction?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  message      Message           @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
   @@index([reportedBy, reporterType])
@@ -268,22 +241,21 @@ model MessageReport {
 }
 
 model MessageLog {
-  id              String   @id @default(cuid())
+  id              String         @id @default(cuid())
   messageServerId String?
-  level           LogLevel @default(INFO)
+  level           LogLevel       @default(INFO)
   event           String
   userId          String?
   citizenId       String?
   conversationId  String?
   messageId       String?
   channelId       String?
-  message         String   @db.Text
+  message         String
   data            Json?
   ipAddress       String?
   userAgent       String?
-  timestamp       DateTime @default(now())
-
-  messageServer   MessageServer? @relation(fields: [messageServerId], references: [id], onDelete: SetNull)
+  timestamp       DateTime       @default(now())
+  messageServer   MessageServer? @relation(fields: [messageServerId], references: [id])
 
   @@index([messageServerId, timestamp])
   @@index([event, timestamp])
@@ -294,31 +266,30 @@ model MessageLog {
 }
 
 model MessageStats {
-  id              String   @id @default(cuid())
-  messageServerId String
-  date            DateTime @db.Date
-  hour            Int?
-  totalMessages        Int @default(0)
-  textMessages         Int @default(0)
-  mediaMessages        Int @default(0)
-  deletedMessages      Int @default(0)
-  totalConversations   Int @default(0)
-  newConversations     Int @default(0)
-  closedConversations  Int @default(0)
-  activeUsers          Int @default(0)
-  activeCitizens       Int @default(0)
-  onlineUsers          Int @default(0)
-  channelMessages      Int @default(0)
-  channelSubscriptions Int @default(0)
-  channelDeliveries    Int @default(0)
+  id                   String        @id @default(cuid())
+  messageServerId      String
+  date                 DateTime      @db.Date
+  hour                 Int?
+  totalMessages        Int           @default(0)
+  textMessages         Int           @default(0)
+  mediaMessages        Int           @default(0)
+  deletedMessages      Int           @default(0)
+  totalConversations   Int           @default(0)
+  newConversations     Int           @default(0)
+  closedConversations  Int           @default(0)
+  activeUsers          Int           @default(0)
+  activeCitizens       Int           @default(0)
+  onlineUsers          Int           @default(0)
+  channelMessages      Int           @default(0)
+  channelSubscriptions Int           @default(0)
+  channelDeliveries    Int           @default(0)
   avgResponseTime      Float?
   avgMessageLength     Float?
-  reportsCreated       Int @default(0)
-  reportsResolved      Int @default(0)
-  usersBlocked         Int @default(0)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
+  reportsCreated       Int           @default(0)
+  reportsResolved      Int           @default(0)
+  usersBlocked         Int           @default(0)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
   messageServer        MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
 
   @@unique([messageServerId, date, hour])
@@ -327,16 +298,16 @@ model MessageStats {
 }
 
 model WebSocketSession {
-  id          String   @id @default(cuid())
-  socketId    String   @unique
-  userId      String?
-  userType    ParticipantType
-  ipAddress   String
-  userAgent   String?
-  connectedAt DateTime @default(now())
-  lastPingAt  DateTime @default(now())
-  isOnline    Boolean  @default(true)
-  metadata    Json?
+  id             String          @id @default(cuid())
+  socketId       String          @unique
+  userId         String?
+  userType       ParticipantType
+  ipAddress      String
+  userAgent      String?
+  connectedAt    DateTime        @default(now())
+  lastPingAt     DateTime        @default(now())
+  isOnline       Boolean         @default(true)
+  metadata       Json?
   disconnectedAt DateTime?
 
   @@index([userId, userType, isOnline])
@@ -345,72 +316,2956 @@ model WebSocketSession {
 }
 
 model MessageTemplate {
-  id          String   @id @default(cuid())
-  name        String   @unique
+  id          String             @id @default(cuid())
+  name        String             @unique
   category    TemplateCategory
   title       String?
-  content     String   @db.Text
+  content     String
   contentType MessageContentType @default(TEXT)
-  variables   Json     @default("[]")
-  isActive    Boolean  @default(true)
-  isSystem    Boolean  @default(false)
+  variables   Json               @default("[]")
+  isActive    Boolean            @default(true)
+  isSystem    Boolean            @default(false)
   description String?
   metadata    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
   @@map("message_templates")
 }
 
-// ============================================
-// SHARED MODELS FROM DIGIURBAN
-// ============================================
-// Models compartilhados com o backend DigiUrban
-// Apenas os campos necessários para o sistema de mensagens
-
 model Citizen {
-  id       String   @id @default(cuid())
-  cpf      String   @unique
-  name     String
-  email    String   @unique
-  phone    String?
-  avatar   String?
-  isActive Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                                                         String                         @id @default(cuid())
+  cpf                                                        String                         @unique
+  name                                                       String
+  email                                                      String
+  phone                                                      String?
+  birthDate                                                  DateTime?
+  address                                                    Json?
+  municipioId                                                String?
+  isActive                                                   Boolean                        @default(true)
+  password                                                   String
+  failedLoginAttempts                                        Int                            @default(0)
+  lockedUntil                                                DateTime?
+  verificationStatus                                         VerificationStatus             @default(PENDING)
+  verifiedAt                                                 DateTime?
+  verifiedBy                                                 String?
+  verificationNotes                                          String?
+  registrationSource                                         String                         @default("SELF")
+  createdAt                                                  DateTime                       @default(now())
+  updatedAt                                                  DateTime                       @updatedAt
+  lastLogin                                                  DateTime?
+  rg                                                         String?
+  phoneSecondary                                             String?
+  motherName                                                 String?
+  maritalStatus                                              String?
+  occupation                                                 String?
+  familyIncome                                               String?
+  admin_tickets                                              admin_tickets[]
+  audit_logs                                                 audit_logs[]
+  bot_conversations                                          bot_conversations[]
+  bot_uploads                                                bot_uploads[]
+  citizen_category_assignments                               citizen_category_assignments[]
+  citizen_documents                                          citizen_documents[]
+  citizen_transfer_requests                                  citizen_transfer_requests[]
+  family_compositions_family_compositions_headIdTocitizens   family_compositions[]          @relation("family_compositions_headIdTocitizens")
+  family_compositions_family_compositions_memberIdTocitizens family_compositions[]          @relation("family_compositions_memberIdTocitizens")
+  notifications                                              notifications[]
+  password_reset_tokens                                      password_reset_tokens[]
+  proactive_notifications                                    proactive_notifications[]
+  protocol_citizen_links                                     protocol_citizen_links[]
+  protocols_simplified                                       protocols_simplified[]
 
   @@map("citizens")
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String
-  role         UserRole?
-  departmentId String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  id                                                              String                         @id @default(cuid())
+  email                                                           String                         @unique
+  name                                                            String
+  password                                                        String
+  role                                                            UserRole                       @default(USER)
+  isActive                                                        Boolean                        @default(true)
+  departmentId                                                    String?
+  failedLoginAttempts                                             Int                            @default(0)
+  lockedUntil                                                     DateTime?
+  mustChangePassword                                              Boolean                        @default(false)
+  createdAt                                                       DateTime                       @default(now())
+  updatedAt                                                       DateTime                       @updatedAt
+  lastLogin                                                       DateTime?
+  admin_tickets_admin_tickets_assignedUserIdTousers               admin_tickets[]                @relation("admin_tickets_assignedUserIdTousers")
+  admin_tickets_admin_tickets_requestedByIdTousers                admin_tickets[]                @relation("admin_tickets_requestedByIdTousers")
+  agenda_events                                                   agenda_events[]
+  audit_logs                                                      audit_logs[]
+  certificate_revocation_list                                     certificate_revocation_list[]
+  citizen_category_assignments                                    citizen_category_assignments[]
+  citizen_transfer_requests                                       citizen_transfer_requests[]
+  digital_certificates                                            digital_certificates[]
+  email_drafts                                                    email_drafts[]
+  field_approvals                                                 field_approvals[]
+  field_changes                                                   field_changes[]
+  password_reset_tokens                                           password_reset_tokens[]
+  protocols_simplified_protocols_simplified_assignedUserIdTousers protocols_simplified[]         @relation("protocols_simplified_assignedUserIdTousers")
+  protocols_simplified_protocols_simplified_createdByIdTousers    protocols_simplified[]         @relation("protocols_simplified_createdByIdTousers")
+  user_departments                                                user_departments[]
+  department                                                      Department?                    @relation(fields: [departmentId], references: [id])
 
   @@map("users")
 }
 
 model Department {
-  id        String   @id @default(cuid())
-  name      String
-  code      String?  @unique
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users     User[]
+  id                   String                 @id @default(cuid())
+  name                 String                 @unique
+  code                 String?                @unique
+  description          String?
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  admin_tickets        admin_tickets[]
+  protocols_simplified protocols_simplified[]
+  services_simplified  services_simplified[]
+  user_departments     user_departments[]
+  users                User[]
 
   @@map("departments")
 }
 
-// Enums compartilhados
+model acompanhamentos_beneficio {
+  id                           String                       @id
+  inscricaoId                  String
+  tipo                         TipoAcompanhamento
+  assistenteSocialId           String?
+  responsavelId                String
+  data                         DateTime                     @default(now())
+  dataVisita                   DateTime?
+  descricao                    String
+  observacoes                  String?
+  proximoAcompanhamento        DateTime?
+  inscricoes_programas_sociais inscricoes_programas_sociais @relation(fields: [inscricaoId], references: [id])
+
+  @@index([inscricaoId])
+}
+
+model admin_tickets {
+  id                                        String                @id
+  number                                    String                @unique
+  title                                     String
+  description                               String
+  priority                                  Int                   @default(3)
+  requestedById                             String
+  citizenId                                 String
+  serviceId                                 String
+  departmentId                              String
+  status                                    TicketStatus          @default(PENDING)
+  protocolId                                String?               @unique
+  assignedUserId                            String?
+  createdAt                                 DateTime              @default(now())
+  updatedAt                                 DateTime
+  acceptedAt                                DateTime?
+  rejectedAt                                DateTime?
+  protocolCreatedAt                         DateTime?
+  observations                              String?
+  rejectionReason                           String?
+  acceptedBy                                String?
+  rejectedBy                                String?
+  users_admin_tickets_assignedUserIdTousers User?                 @relation("admin_tickets_assignedUserIdTousers", fields: [assignedUserId], references: [id])
+  citizens                                  Citizen               @relation(fields: [citizenId], references: [id])
+  departments                               Department            @relation(fields: [departmentId], references: [id])
+  protocols_simplified                      protocols_simplified? @relation(fields: [protocolId], references: [id])
+  users_admin_tickets_requestedByIdTousers  User                  @relation("admin_tickets_requestedByIdTousers", fields: [requestedById], references: [id])
+  services_simplified                       services_simplified   @relation(fields: [serviceId], references: [id])
+
+  @@index([createdAt])
+  @@index([departmentId, status])
+  @@index([requestedById])
+  @@index([status])
+}
+
+model agenda_events {
+  id             String   @id
+  tipo           String
+  titulo         String
+  descricao      String?
+  dataHoraInicio DateTime
+  dataHoraFim    DateTime
+  local          String?
+  participantes  String?
+  status         String   @default("AGENDADO")
+  observacoes    String?
+  anexos         String?
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+  users          User     @relation(fields: [createdById], references: [id])
+
+  @@index([dataHoraInicio])
+  @@index([status])
+}
+
+model agendas_medicas {
+  id                  String                @id
+  profissionalId      String
+  unidadeId           String
+  diaSemana           Int
+  horaInicio          String
+  horaFim             String
+  tempoPorConsulta    Int
+  vagasDisponiveis    Int
+  isActive            Boolean               @default(true)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  consultas_agendadas consultas_agendadas[]
+
+  @@index([profissionalId, diaSemana])
+  @@index([unidadeId, isActive])
+}
+
+model alert_triggers {
+  id          String    @id
+  alertId     String
+  value       Float
+  message     String
+  data        Json?
+  isResolved  Boolean   @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  triggeredAt DateTime  @default(now())
+  alerts      alerts    @relation(fields: [alertId], references: [id], onDelete: Cascade)
+
+  @@index([alertId, triggeredAt])
+  @@index([isResolved, triggeredAt])
+}
+
+model alerts {
+  id             String           @id
+  name           String
+  description    String?
+  type           AlertType
+  metric         String
+  condition      String
+  threshold      Float
+  threshold2     Float?
+  frequency      AlertFrequency
+  isActive       Boolean          @default(true)
+  cooldown       Int              @default(3600)
+  recipients     Json?
+  channels       Json?
+  lastTriggered  DateTime?
+  triggerCount   Int              @default(0)
+  createdBy      String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  alert_triggers alert_triggers[]
+
+  @@index([metric, isActive])
+  @@index([type, isActive])
+}
+
+model alunos_rotas {
+  id            String   @id
+  alunoId       String
+  rotaId        String
+  pontoEmbarque String
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+
+  @@unique([alunoId, rotaId])
+}
+
+model analytics {
+  id         String   @id
+  type       String
+  entityId   String
+  metric     String
+  value      Float
+  dimension  String?
+  period     String
+  periodType String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+
+  @@index([entityId, metric])
+  @@index([periodType, createdAt])
+  @@index([type, metric, period])
+}
+
+model atendimentos_medicos {
+  id                 String              @id
+  workflowId         String              @unique
+  protocolId         String?             @unique
+  consultaAgendadaId String?             @unique
+  citizenId          String
+  unidadeId          String
+  dataAtendimento    DateTime            @default(now())
+  tipo               TipoAtendimento
+  status             AtendimentoStatus
+  prioridade         Int                 @default(0)
+  recepcaoId         String?
+  horarioCheckin     DateTime?
+  triagemId          String?
+  horarioTriagem     DateTime?
+  consultaId         String?
+  profissionalId     String?
+  horarioConsulta    DateTime?
+  farmaciaId         String?
+  horarioFarmacia    DateTime?
+  tempoTotalMinutos  Int?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime
+  consultas_medicas  consultas_medicas?
+  triagem_enfermagem triagem_enfermagem?
+
+  @@index([citizenId])
+  @@index([status])
+  @@index([unidadeId, dataAtendimento])
+  @@index([workflowId])
+}
+
+model atestados {
+  id                String            @id
+  consultaId        String
+  tipo              TipoAtestado
+  cid10             String?
+  diasAfastamento   Int
+  dataInicio        DateTime
+  dataFim           DateTime
+  observacoes       String?
+  dataHora          DateTime          @default(now())
+  consultas_medicas consultas_medicas @relation(fields: [consultaId], references: [id])
+
+  @@index([consultaId])
+}
+
+model audit_logs {
+  id           String   @id
+  userId       String?
+  citizenId    String?
+  action       String
+  resource     String?
+  method       String?
+  details      Json?
+  ip           String?
+  userAgent    String?
+  success      Boolean  @default(true)
+  errorMessage String?
+  createdAt    DateTime @default(now())
+  citizens     Citizen? @relation(fields: [citizenId], references: [id])
+  users        User?    @relation(fields: [userId], references: [id])
+
+  @@index([action])
+  @@index([citizenId])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model benchmarks {
+  id         String   @id
+  metric     String
+  category   String
+  region     String
+  population String
+  p25        Float?
+  p50        Float?
+  p75        Float?
+  average    Float?
+  sampleSize Int
+  period     String
+  year       Int
+  source     String?
+  updatedAt  DateTime
+
+  @@index([category, year])
+  @@index([metric, region, population])
+}
+
+model bot_analytics {
+  id              String   @id
+  date            DateTime @default(now()) @db.Date
+  intent          String
+  totalCount      Int      @default(0)
+  successCount    Int      @default(0)
+  transferCount   Int      @default(0)
+  avgConfidence   Float?
+  avgResponseTime Float?
+  uniqueCitizens  Int      @default(0)
+
+  @@unique([date, intent])
+  @@index([date])
+  @@index([intent])
+}
+
+model bot_conversations {
+  id            String         @id
+  citizenId     String
+  intent        String?
+  confidence    Float?
+  currentFlow   String?
+  flowStep      Int            @default(0)
+  flowData      Json?
+  isActive      Boolean        @default(true)
+  closedAt      DateTime?
+  rating        Int?
+  ratingComment String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+  citizens      Citizen        @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  bot_messages  bot_messages[]
+
+  @@index([citizenId])
+  @@index([createdAt])
+  @@index([currentFlow])
+  @@index([isActive])
+}
+
+model bot_messages {
+  id                String            @id
+  conversationId    String
+  role              String
+  content           String
+  messageType       String            @default("text")
+  metadata          Json?
+  intent            String?
+  confidence        Float?
+  wasTransferred    Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  bot_conversations bot_conversations @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@index([intent])
+  @@index([role])
+}
+
+model bot_uploads {
+  id             String    @id
+  citizenId      String
+  conversationId String?
+  fileName       String
+  fileSize       Int
+  mimeType       String
+  fileUrl        String
+  uploadedAt     DateTime  @default(now())
+  expiresAt      DateTime?
+  citizens       Citizen   @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([conversationId])
+  @@index([uploadedAt])
+}
+
+model cache_entries {
+  id        String   @id
+  key       String   @unique
+  value     Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@index([expiresAt])
+}
+
+model cadunico_familias {
+  id                    String            @id
+  workflowId            String            @unique
+  responsavelFamiliarId String
+  nisResponsavel        String?           @unique
+  crasId                String?
+  dataAgendamento       DateTime?
+  horarioAgendamento    String?
+  agendadoPor           String?
+  entrevistadoPor       String?
+  entrevistadorId       String?
+  dataEntrevista        DateTime?
+  localEntrevista       String?
+  rendaTotalFamiliar    Float             @default(0)
+  rendaPerCapita        Float             @default(0)
+  fontesRenda           Json?
+  despesaMoradia        Float?
+  despesaAlimentacao    Float?
+  despesaSaude          Float?
+  despesaEducacao       Float?
+  despesaOutros         Float?
+  tipoMoradia           TipoMoradia
+  situacaoMoradia       SituacaoMoradia
+  aguaEncanada          Boolean           @default(false)
+  energiaEletrica       Boolean           @default(false)
+  esgoto                Boolean           @default(false)
+  coletaLixo            Boolean           @default(false)
+  endereco              Json?
+  documentos            Json
+  validadoPor           String?
+  dataValidacao         DateTime?
+  analisadoPor          String?
+  dataAnalise           DateTime?
+  parecerSocial         String?
+  motivoIndeferimento   String?
+  nisFamilia            String?           @unique
+  numeroCadUnico        String?           @unique
+  dataCadastro          DateTime?
+  dataUltimaAtualizacao DateTime?
+  proximaAtualizacao    DateTime?
+  status                CadUnicoStatus
+  programasVinculados   Json?
+  observacoes           String?
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime
+  membros_familia       membros_familia[]
+
+  @@index([nisFamilia])
+  @@index([numeroCadUnico])
+  @@index([proximaAtualizacao])
+  @@index([responsavelFamiliarId])
+  @@index([status])
+  @@index([workflowId])
+}
+
+model certificate_revocation_list {
+  id            String           @id
+  serialNumber  String
+  certificateId String?
+  reason        RevocationReason
+  revokedAt     DateTime         @default(now())
+  revokedBy     String
+  publishedAt   DateTime         @default(now())
+  comments      String?
+  users         User             @relation(fields: [revokedBy], references: [id])
+
+  @@index([publishedAt])
+  @@index([revokedAt])
+  @@index([serialNumber])
+}
+
+model citizen_categories {
+  id                           String                         @id
+  code                         String                         @unique
+  name                         String
+  description                  String?
+  department                   String
+  icon                         String?
+  color                        String?
+  active                       Boolean                        @default(true)
+  triggerServices              String[]
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime
+  citizen_category_assignments citizen_category_assignments[]
+
+  @@index([active])
+  @@index([code])
+}
+
+model citizen_category_assignments {
+  id                   String                @id
+  citizenId            String
+  categoryId           String
+  protocolId           String?
+  assignedAt           DateTime              @default(now())
+  assignedBy           String?
+  active               Boolean               @default(true)
+  deactivatedAt        DateTime?
+  deactivatedBy        String?
+  deactivationReason   String?
+  metadata             Json?
+  users                User?                 @relation(fields: [assignedBy], references: [id])
+  citizen_categories   citizen_categories    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  citizens             Citizen               @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  protocols_simplified protocols_simplified? @relation(fields: [protocolId], references: [id])
+
+  @@unique([citizenId, categoryId])
+  @@index([active])
+  @@index([categoryId])
+  @@index([citizenId])
+  @@index([protocolId])
+}
+
+model citizen_documents {
+  id              String         @id
+  citizenId       String
+  documentType    String
+  fileName        String
+  filePath        String
+  fileSize        Int
+  mimeType        String
+  status          DocumentStatus @default(PENDING)
+  notes           String?
+  uploadedAt      DateTime       @default(now())
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime
+  citizens        Citizen        @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([status])
+}
+
+model citizen_transfer_requests {
+  id           String    @id
+  citizenId    String
+  status       String    @default("PENDING")
+  reason       String
+  documents    Json?
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNotes  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime
+  citizens     Citizen   @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  users        User?     @relation(fields: [reviewedById], references: [id])
+}
+
+model conjuntos_habitacionais {
+  id                  String   @id
+  nome                String
+  endereco            String?
+  bairro              String?
+  totalUnidades       Int?
+  unidadesOcupadas    Int      @default(0)
+  unidadesDisponiveis Int      @default(0)
+  tipologias          Json?
+  programaOrigem      String?
+  latitude            Float?
+  longitude           Float?
+  infraestrutura      Json?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime
+
+  @@index([isActive])
+}
+
+model consultas_agendadas {
+  id              String          @id
+  agendaId        String
+  citizenId       String
+  dataHora        DateTime
+  status          ConsultaStatus
+  motivoConsulta  String?
+  observacoes     String?
+  canceladoPor    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime
+  agendas_medicas agendas_medicas @relation(fields: [agendaId], references: [id])
+
+  @@index([agendaId, dataHora])
+  @@index([citizenId])
+  @@index([status])
+}
+
+model consultas_medicas {
+  id                   String               @id
+  atendimentoId        String               @unique
+  medicoId             String
+  profissionalSaudeId  String?
+  queixaPrincipal      String
+  historiaDoenca       String?
+  historicoFamiliar    String?
+  antecedentesPessoais String?
+  exameFisico          String?
+  hipoteseDiagnostica  String?
+  diagnosticos         Json
+  conduta              String?
+  orientacoes          String?
+  retornoNecessario    Boolean              @default(false)
+  prazoRetornoDias     Int?
+  observacoes          String?
+  dataHora             DateTime             @default(now())
+  atestados            atestados[]
+  atendimentos_medicos atendimentos_medicos @relation(fields: [atendimentoId], references: [id])
+  encaminhamentos      encaminhamentos[]
+  exames_solicitados   exames_solicitados[]
+  prescricoes          prescricoes[]
+}
+
+model cursos_profissionalizantes {
+  id                   String    @id
+  nome                 String    @unique
+  categoria            String?
+  area                 String?
+  cargaHoraria         Int?
+  duracao              Int?
+  requisitos           String?
+  certificacao         String?
+  conteudoProgramatico Json?
+  vagas                Int       @default(0)
+  vagasOcupadas        Int       @default(0)
+  instrutorId          String?
+  localCurso           String?
+  horario              String?
+  dataInicio           DateTime?
+  dataFim              DateTime?
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+}
+
+model dashboards {
+  id          String   @id
+  name        String
+  description String?
+  layout      Json
+  userLevel   Int
+  department  String?
+  isDefault   Boolean  @default(false)
+  refreshRate Int      @default(300)
+  isActive    Boolean  @default(true)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  @@index([createdBy])
+  @@index([userLevel, isActive])
+}
+
+model department_metrics {
+  id                 String   @id
+  departmentId       String
+  periodType         String
+  periodDate         DateTime
+  totalProtocols     Int      @default(0)
+  activeProtocols    Int      @default(0)
+  completedProtocols Int      @default(0)
+  avgCompletionTime  Float?
+  slaComplianceRate  Float?
+  satisfactionScore  Float?
+  protocolsPerServer Float?
+  avgWorkload        Float?
+  metadata           Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime
+
+  @@unique([departmentId, periodType, periodDate])
+  @@index([departmentId, periodType])
+}
+
+model destinos_tfd {
+  id             String   @id
+  cidade         String
+  estado         String
+  hospital       String?
+  especialidades Json?
+  distanciaKm    Int?
+  tempoViagem    String?
+  observacoes    String?
+  ativo          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+
+  @@unique([cidade, estado, hospital])
+  @@index([ativo])
+  @@index([cidade])
+}
+
+model digital_certificates {
+  id               String            @id
+  userId           String
+  certificateType  CertificateType
+  serialNumber     String            @unique
+  commonName       String
+  email            String
+  organization     String            @default("Prefeitura Municipal")
+  department       String?
+  publicKey        String
+  privateKeyHash   String
+  keySize          Int               @default(2048)
+  issuedAt         DateTime          @default(now())
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  revocationReason RevocationReason?
+  status           CertStatus        @default(ACTIVE)
+  isActive         Boolean           @default(true)
+  issuerCA         String            @default("CA-MUNICIPAL-001")
+  certificateChain String
+  thumbprint       String
+  createdBy        String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime
+  users            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signatures       signatures[]
+
+  @@index([expiresAt])
+  @@index([serialNumber])
+  @@index([status])
+  @@index([thumbprint])
+  @@index([userId])
+}
+
+model dispensacao_medicamentos {
+  id            String             @id
+  prescricaoId  String?
+  medicamentoId String
+  estoqueId     String?
+  citizenId     String
+  atendimentoId String?
+  quantidade    Int
+  data          DateTime           @default(now())
+  dispensadoEm  DateTime           @default(now())
+  dispensadoPor String
+  status        StatusDispensacao?
+  observacoes   String?
+
+  @@index([citizenId])
+  @@index([data])
+}
+
+model document_templates {
+  id                  String                @id
+  name                String
+  code                String                @unique
+  description         String?
+  documentType        DocumentTemplateType
+  outputFormat        OutputFormat
+  serviceIds          Json                  @default("[]")
+  isGlobal            Boolean               @default(false)
+  htmlTemplate        String
+  headerHtml          String?
+  footerHtml          String?
+  cssStyles           String?
+  availableVariables  Json?                 @default("[]")
+  pageSize            String                @default("A4")
+  orientation         String                @default("portrait")
+  margins             Json?
+  requiresSignature   Boolean               @default(false)
+  signatureFields     Json?                 @default("[]")
+  isActive            Boolean               @default(true)
+  version             Int                   @default(1)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  createdBy           String
+  allowedStageTypes   Json?                 @default("[]")
+  generated_documents generated_documents[]
+
+  @@index([documentType])
+  @@index([isActive])
+}
+
+model email_addons {
+  id                  String              @id
+  subscriptionId      String
+  addonType           EmailAddonType
+  quantity            Int                 @default(1)
+  price               Decimal
+  description         String
+  isActive            Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime
+  email_subscriptions email_subscriptions @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+}
+
+model email_auth_attempts {
+  id          String       @id
+  userId      String?
+  email       String
+  ipAddress   String
+  userAgent   String?
+  success     Boolean      @default(false)
+  reason      String?
+  timestamp   DateTime     @default(now())
+  email_users email_users? @relation(fields: [userId], references: [id])
+}
+
+model email_domains {
+  id                         String                       @id
+  emailServerId              String
+  domainName                 String
+  isVerified                 Boolean                      @default(false)
+  verificationToken          String?
+  dkimEnabled                Boolean                      @default(true)
+  dkimSelector               String                       @default("default")
+  dkimPrivateKey             String?
+  dkimPublicKey              String?
+  spfEnabled                 Boolean                      @default(true)
+  spfRecord                  String?
+  dmarcEnabled               Boolean                      @default(false)
+  dmarcPolicy                String?
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime
+  email_servers              email_servers                @relation(fields: [emailServerId], references: [id])
+  email_plan_allowed_domains email_plan_allowed_domains[]
+  emails                     emails[]
+
+  @@unique([emailServerId, domainName])
+}
+
+model email_drafts {
+  id           String   @id
+  user_id      String
+  account_id   String?
+  to           String?
+  cc           String?
+  bcc          String?
+  subject      String?
+  text_content String?
+  html_content String?
+  priority     Int      @default(3)
+  created_at   DateTime @default(now())
+  updated_at   DateTime
+  users        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([created_at])
+  @@index([user_id])
+}
+
+model email_events {
+  id        String         @id
+  emailId   String
+  type      EmailEventType
+  data      Json?
+  userAgent String?
+  ipAddress String?
+  timestamp DateTime       @default(now())
+  emails    emails         @relation(fields: [emailId], references: [id])
+}
+
+model email_invoices {
+  id                  String              @id
+  subscriptionId      String
+  invoiceNumber       String              @unique
+  amount              Decimal
+  description         String
+  status              InvoiceStatus       @default(PENDING)
+  dueDate             DateTime
+  paidAt              DateTime?
+  paymentMethod       String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime
+  email_subscriptions email_subscriptions @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([dueDate])
+  @@index([status])
+  @@index([subscriptionId])
+}
+
+model email_logs {
+  id            String         @id
+  emailServerId String?
+  from          String?
+  to            String?
+  subject       String?
+  status        String?
+  type          String?
+  level         LogLevel       @default(INFO)
+  message       String
+  metadata      Json?
+  data          Json?
+  timestamp     DateTime       @default(now())
+  email_servers email_servers? @relation(fields: [emailServerId], references: [id])
+}
+
+model email_plan_allowed_domains {
+  id                 String             @id
+  plan_id            String
+  domain_id          String
+  created_at         DateTime           @default(now())
+  email_domains      email_domains      @relation(fields: [domain_id], references: [id], onDelete: Cascade)
+  email_plan_configs email_plan_configs @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+
+  @@unique([plan_id, domain_id])
+  @@index([domain_id])
+  @@index([plan_id])
+}
+
+model email_plan_configs {
+  id                         String                       @id
+  name                       String
+  code                       String                       @unique
+  monthly_price              Decimal
+  max_emails_per_month       Int
+  max_accounts               Int
+  features                   Json
+  is_active                  Boolean                      @default(true)
+  created_at                 DateTime                     @default(now())
+  updated_at                 DateTime
+  email_plan_allowed_domains email_plan_allowed_domains[]
+  email_subscriptions        email_subscriptions[]
+}
+
+model email_servers {
+  id                  String               @id
+  hostname            String
+  mxPort              Int                  @default(25)
+  submissionPort      Int                  @default(587)
+  isActive            Boolean              @default(false)
+  isPremiumService    Boolean              @default(true)
+  monthlyPrice        Decimal              @default(99.00)
+  tlsEnabled          Boolean              @default(true)
+  certPath            String?
+  keyPath             String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime
+  email_domains       email_domains[]
+  email_logs          email_logs[]
+  email_stats         email_stats[]
+  email_subscriptions email_subscriptions?
+  email_users         email_users[]
+  emails              emails[]
+  received_emails     received_emails[]
+}
+
+model email_stats {
+  id              String        @id
+  emailServerId   String
+  date            DateTime
+  totalSent       Int           @default(0)
+  totalDelivered  Int           @default(0)
+  totalFailed     Int           @default(0)
+  totalBounced    Int           @default(0)
+  totalComplained Int           @default(0)
+  totalOpens      Int           @default(0)
+  totalClicks     Int           @default(0)
+  uniqueOpens     Int           @default(0)
+  uniqueClicks    Int           @default(0)
+  email_servers   email_servers @relation(fields: [emailServerId], references: [id])
+
+  @@unique([emailServerId, date])
+}
+
+model email_subscriptions {
+  id                   String              @id
+  email_server_id      String              @unique
+  plan                 EmailPlan
+  plan_config_id       String?
+  status               SubscriptionStatus  @default(ACTIVE)
+  monthly_price        Decimal
+  current_period_start DateTime
+  current_period_end   DateTime
+  trial_ends_at        DateTime?
+  canceled_at          DateTime?
+  created_at           DateTime            @default(now())
+  updated_at           DateTime
+  email_addons         email_addons[]
+  email_invoices       email_invoices[]
+  email_servers        email_servers       @relation(fields: [email_server_id], references: [id], onDelete: Cascade)
+  email_plan_configs   email_plan_configs? @relation(fields: [plan_config_id], references: [id])
+
+  @@index([current_period_end])
+  @@index([plan_config_id])
+  @@index([status])
+}
+
+model email_templates {
+  id          String   @id
+  name        String   @unique
+  subject     String
+  htmlContent String
+  textContent String?
+  variables   Json?
+  category    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model email_users {
+  id                  String                @id
+  emailServerId       String
+  email               String
+  passwordHash        String
+  name                String
+  isActive            Boolean               @default(true)
+  isAdmin             Boolean               @default(false)
+  dailyLimit          Int                   @default(1000)
+  monthlyLimit        Int                   @default(10000)
+  sentToday           Int                   @default(0)
+  sentThisMonth       Int                   @default(0)
+  lastLoginAt         DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  email_auth_attempts email_auth_attempts[]
+  email_servers       email_servers         @relation(fields: [emailServerId], references: [id])
+  emails              emails[]
+  received_emails     received_emails[]
+
+  @@unique([emailServerId, email])
+}
+
+model emails {
+  id            String         @id
+  emailServerId String?
+  domainId      String?
+  userId        String?
+  messageId     String         @unique
+  fromEmail     String
+  toEmail       String
+  ccEmails      Json?
+  bccEmails     Json?
+  subject       String
+  textContent   String?
+  htmlContent   String?
+  headers       Json?
+  attachments   Json?
+  status        EmailStatus    @default(QUEUED)
+  priority      Int            @default(3)
+  retryCount    Int            @default(0)
+  maxRetries    Int            @default(3)
+  scheduledFor  DateTime?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  failedAt      DateTime?
+  errorMessage  String?
+  opens         Int            @default(0)
+  clicks        Int            @default(0)
+  unsubscribed  Boolean        @default(false)
+  complained    Boolean        @default(false)
+  bounced       Boolean        @default(false)
+  dkimSigned    Boolean        @default(false)
+  dkimSignature String?
+  campaignId    String?
+  tags          Json?
+  metadata      Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime
+  email_events  email_events[]
+  email_domains email_domains? @relation(fields: [domainId], references: [id])
+  email_servers email_servers? @relation(fields: [emailServerId], references: [id])
+  email_users   email_users?   @relation(fields: [userId], references: [id])
+}
+
+model encaminhamentos {
+  id                String                   @id
+  consultaId        String
+  especialidade     String
+  motivo            String
+  prioridade        PrioridadeEncaminhamento
+  status            StatusEncaminhamento
+  dataAgendamento   DateTime?
+  dataHora          DateTime                 @default(now())
+  consultas_medicas consultas_medicas        @relation(fields: [consultaId], references: [id])
+
+  @@index([consultaId])
+}
+
+model espacos_publicos {
+  id          String   @id
+  nome        String
+  tipo        String
+  categoria   String?
+  endereco    String?
+  bairro      String?
+  telefone    String?
+  capacidade  Int?
+  comodidades Json?
+  horario     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model especialidades_medicas {
+  id                  String   @id
+  nome                String   @unique
+  descricao           String?
+  area                String?
+  tempoMedioConsulta  Int?
+  requisitosPaciente  String?
+  examesComuns        Json?
+  unidadesQueOferecem Json?
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime
+
+  @@index([area, isActive])
+  @@index([isActive])
+}
+
+model especialidades_tfd {
+  id        String   @id
+  nome      String   @unique
+  descricao String?
+  ativo     Boolean  @default(true)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@index([ativo])
+  @@index([ordem])
+}
+
+model especies_arvore {
+  id                   String   @id
+  nomeComum            String   @unique
+  nomeCientifico       String?
+  familia              String?
+  origem               String?
+  porte                String?
+  tipoRaiz             String?
+  crescimento          String?
+  adequadaCalcada      Boolean  @default(false)
+  adequadaParque       Boolean  @default(true)
+  flores               String?
+  frutificacao         String?
+  cuidadosEspeciais    String?
+  disponibilidadeMudas Int      @default(0)
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
+
+  @@index([isActive])
+  @@index([origem, isActive])
+}
+
+model estabelecimentos_turisticos {
+  id         String   @id
+  nome       String
+  tipo       String
+  endereco   String?
+  bairro     String?
+  telefone   String?
+  email      String?
+  site       String?
+  categoria  String?
+  latitude   Float?
+  longitude  Float?
+  capacidade Int?
+  servicos   Json?
+  horario    String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model estoque_medicamentos {
+  id               String         @id
+  medicamentoId    String
+  unidadeId        String
+  quantidade       Int
+  quantidadeAtual  Int?
+  quantidadeMinima Int?
+  lote             String
+  validade         DateTime
+  dataValidade     DateTime?
+  estoqueMinimo    Int
+  status           StatusEstoque?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime
+  medicamentos     medicamentos   @relation(fields: [medicamentoId], references: [id])
+
+  @@index([medicamentoId, unidadeId])
+  @@index([validade])
+}
+
+model exames_solicitados {
+  id                String            @id
+  consultaId        String
+  tipoExame         String
+  justificativa     String?
+  prioridade        PrioridadeExame
+  status            StatusExame
+  resultado         String?
+  dataResultado     DateTime?
+  dataHora          DateTime          @default(now())
+  consultas_medicas consultas_medicas @relation(fields: [consultaId], references: [id])
+
+  @@index([consultaId])
+}
+
+model family_compositions {
+  id                                              String             @id
+  headId                                          String
+  memberId                                        String
+  relationship                                    FamilyRelationship
+  isDependent                                     Boolean            @default(false)
+  monthlyIncome                                   Decimal?
+  occupation                                      String?
+  education                                       String?
+  hasDisability                                   Boolean?
+  createdAt                                       DateTime           @default(now())
+  updatedAt                                       DateTime
+  citizens_family_compositions_headIdTocitizens   Citizen            @relation("family_compositions_headIdTocitizens", fields: [headId], references: [id], onDelete: Cascade)
+  citizens_family_compositions_memberIdTocitizens Citizen            @relation("family_compositions_memberIdTocitizens", fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([headId, memberId])
+}
+
+model field_approvals {
+  id                   String               @id
+  fieldId              String
+  action               String
+  timestamp            DateTime             @default(now())
+  approvedBy           String
+  reason               String?
+  previousValue        String?
+  newValue             String?
+  users                User                 @relation(fields: [approvedBy], references: [id], onDelete: Cascade)
+  protocol_data_fields protocol_data_fields @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([approvedBy, timestamp])
+  @@index([fieldId, timestamp])
+}
+
+model field_changes {
+  id                   String               @id
+  fieldId              String
+  changeType           String
+  timestamp            DateTime             @default(now())
+  oldValue             String?
+  newValue             String?
+  actor                String
+  users                User                 @relation(fields: [actor], references: [id], onDelete: Cascade)
+  protocol_data_fields protocol_data_fields @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([actor, timestamp])
+  @@index([fieldId, timestamp])
+}
+
+model generated_documents {
+  id                   String               @id
+  protocolId           String
+  templateId           String
+  fileName             String
+  filePath             String
+  fileUrl              String?
+  fileSize             Int
+  mimeType             String
+  generatedAt          DateTime             @default(now())
+  generatedBy          String
+  templateVersion      Int
+  variablesUsed        Json
+  wasSent              Boolean              @default(false)
+  sentAt               DateTime?
+  sentBy               String?
+  sentTo               String?
+  isActive             Boolean              @default(true)
+  deletedAt            DateTime?
+  documentHash         String?
+  expiresAt            DateTime?
+  lastValidatedAt      DateTime?
+  validatedCount       Int                  @default(0)
+  validationCode       String?              @unique
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  document_templates   document_templates   @relation(fields: [templateId], references: [id])
+  signatures           signatures[]
+
+  @@index([documentHash])
+  @@index([generatedAt])
+  @@index([protocolId])
+  @@index([templateId])
+  @@index([validationCode])
+}
+
+model guias_turisticos {
+  id              String   @id
+  nome            String
+  cpf             String   @unique
+  cadastur        String?  @unique
+  idiomas         Json?
+  especialidades  Json?
+  certificacoes   Json?
+  disponibilidade Json?
+  valorDiaria     Float?
+  avaliacaoMedia  Float?
+  totalTours      Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+
+  @@index([isActive])
+}
+
+model inscricoes_matricula {
+  id                      String           @id
+  workflowId              String           @unique
+  alunoId                 String
+  responsavelId           String
+  anoLetivo               Int
+  serie                   String
+  turno                   TurnoPreferencia
+  endereco                Json
+  escolaPreferencia1      String?
+  escolaPreferencia2      String?
+  escolaPreferencia3      String?
+  documentos              Json
+  necessidadeEspecial     Boolean          @default(false)
+  descricaoNecessidade    String?
+  isTransferencia         Boolean          @default(false)
+  escolaOrigem            String?
+  motivoTransferencia     String?
+  validadoPor             String?
+  dataValidacao           DateTime?
+  motivoRecusa            String?
+  escolaAtribuida         String?
+  turmaAtribuida          String?
+  dataDistribuicao        DateTime?
+  criterioDesempate       String?
+  confirmadoEm            DateTime?
+  recusadoEm              DateTime?
+  motivoRecusaResponsavel String?
+  status                  MatriculaStatus
+  posicaoFilaEspera       Int?
+  matriculaId             String?          @unique
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime
+  matriculas              matriculas?
+
+  @@index([escolaAtribuida, status])
+  @@index([serie, turno, status])
+  @@index([workflowId])
+}
+
+model inscricoes_programas_sociais {
+  id                        String                      @id
+  workflowId                String                      @unique
+  programaId                String
+  programaSocialId          String?
+  familiaId                 String
+  beneficiarioId            String
+  cadUnicoValidado          Boolean                     @default(false)
+  rendaPerCapita            Float?
+  atendeCriterios           Boolean                     @default(false)
+  motivoNaoElegibilidade    String?
+  analisadoPor              String?
+  dataAnalise               DateTime?
+  parecerSocial             String?
+  visitaDomiciliar          Boolean                     @default(false)
+  dataVisita                DateTime?
+  relatorioVisita           String?
+  psicologoId               String?
+  dataParecer               DateTime?
+  parecerPsicologico        String?
+  aprovadoPor               String?
+  dataAprovacao             DateTime?
+  motivoIndeferimento       String?
+  dataConcessao             DateTime?
+  numeroBeneficio           String?                     @unique
+  valorMensal               Float?
+  diaVencimento             Int?
+  contaBancaria             Json?
+  status                    ProgramaSocialStatus
+  dataUltimaRenovacao       DateTime?
+  proximaRenovacao          DateTime?
+  suspenso                  Boolean                     @default(false)
+  motivoSuspensao           String?
+  dataSuspensao             DateTime?
+  motivoCancelamento        String?
+  dataInicio                DateTime?
+  observacoes               String?
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime
+  acompanhamentos_beneficio acompanhamentos_beneficio[]
+  pagamentos_beneficio      pagamentos_beneficio[]
+
+  @@index([beneficiarioId])
+  @@index([numeroBeneficio])
+  @@index([programaId, status])
+  @@index([programaSocialId])
+  @@index([workflowId])
+}
+
+model integration_logs {
+  id            String       @id
+  integrationId String
+  entityType    String
+  entityId      String
+  action        String
+  status        String
+  request       Json?
+  response      Json?
+  error         String?
+  createdAt     DateTime     @default(now())
+  integrations  integrations @relation(fields: [integrationId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([integrationId, status])
+}
+
+model integrations {
+  id               String             @id
+  name             String
+  type             String
+  provider         String             @unique
+  config           Json
+  credentials      Json
+  isActive         Boolean            @default(true)
+  status           String             @default("active")
+  lastSync         DateTime?
+  createdAt        DateTime           @default(now())
+  integration_logs integration_logs[]
+}
+
+model invoices {
+  id          String        @id
+  number      String        @unique
+  amount      Float
+  plan        Plan
+  period      String
+  status      InvoiceStatus @default(PENDING)
+  dueDate     DateTime
+  paidAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+  description String?
+  paymentUrl  String?
+  metadata    Json?
+}
+
+model kpis {
+  id              String    @id
+  name            String
+  description     String?
+  category        String
+  formula         String
+  unit            String
+  target          Float?
+  warning         Float?
+  critical        Float?
+  currentValue    Float?
+  lastCalculated  DateTime?
+  isActive        Boolean   @default(true)
+  updateFrequency String    @default("daily")
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+
+  @@index([category, isActive])
+  @@index([updateFrequency])
+}
+
+model leads {
+  id        String     @id
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  position  String?
+  source    LeadSource
+  status    String     @default("NEW")
+  message   String?
+  metadata  Json?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+}
+
+model maquinas_agricolas {
+  id                    String    @id
+  tipo                  String
+  modelo                String?
+  identificacao         String    @unique
+  status                String    @default("Disponível")
+  capacidade            String?
+  potencia              String?
+  horasUso              Int       @default(0)
+  ultimaManutencao      DateTime?
+  proximaManutencao     DateTime?
+  valorHoraUso          Float?
+  documentosNecessarios Json?
+  isActive              Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime
+
+  @@index([isActive])
+  @@index([status, isActive])
+}
+
+model matriculas {
+  id                   String               @id
+  inscricaoId          String               @unique
+  alunoId              String
+  responsavelId        String
+  unidadeEducacaoId    String
+  turmaId              String
+  anoLetivo            Int
+  numeroMatricula      String               @unique
+  dataMatricula        DateTime             @default(now())
+  dataInicio           DateTime?
+  situacao             SituacaoMatricula
+  dataTransferencia    DateTime?
+  motivoTransferencia  String?
+  observacoes          String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  inscricoes_matricula inscricoes_matricula @relation(fields: [inscricaoId], references: [id])
+  turmas               turmas               @relation(fields: [turmaId], references: [id])
+
+  @@index([alunoId, anoLetivo])
+  @@index([turmaId, situacao])
+}
+
+model medicamentos {
+  id                   String                 @id
+  nome                 String
+  principioAtivo       String
+  apresentacao         String
+  catmat               String?
+  tipo                 TipoMedicamento?
+  unidadeMedida        UnidadeMedida?
+  concentracao         String?
+  fabricante           String?
+  codigoBarras         String?
+  isControlado         Boolean                @default(false)
+  isRename             Boolean                @default(false)
+  isActive             Boolean                @default(true)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  estoque_medicamentos estoque_medicamentos[]
+
+  @@index([isRename])
+  @@index([nome])
+}
+
+model membros_familia {
+  id                String            @id
+  familiaId         String
+  citizenId         String?
+  nome              String
+  cpf               String?
+  dataNascimento    DateTime
+  parentesco        Parentesco
+  sexo              Sexo
+  raca              Raca
+  escolaridade      Escolaridade
+  trabalha          Boolean           @default(false)
+  rendaMensal       Float             @default(0)
+  fonteRenda        String?
+  deficiencia       Boolean           @default(false)
+  tipoDeficiencia   String?
+  frequentaEscola   Boolean           @default(false)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime
+  cadunico_familias cadunico_familias @relation(fields: [familiaId], references: [id])
+
+  @@index([cpf])
+  @@index([familiaId])
+}
+
+model metric_cache {
+  id        String   @id
+  cacheKey  String   @unique
+  data      Json
+  metadata  Json?
+  expiresAt DateTime
+  hitCount  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@index([expiresAt])
+}
+
+model modalidades_esportivas {
+  id                       String   @id
+  nome                     String   @unique
+  categoria                String
+  tipo                     String?
+  faixasEtarias            Json?
+  equipamentosNecessarios  Json?
+  profissionaisNecessarios Json?
+  espacosDisponiveis       Json?
+  isActive                 Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+}
+
+model module_workflows {
+  id          String   @id
+  moduleType  String   @unique
+  name        String
+  description String?
+  stages      Json
+  defaultSLA  Int?
+  rules       Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model motoristas_tfd {
+  id           String             @id
+  userId       String             @unique
+  nome         String
+  cpf          String             @unique
+  cnh          String             @unique
+  categoriaCNH String
+  validadeCNH  DateTime
+  telefone     String
+  status       StatusMotoristaTFD
+  observacoes  String?
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime
+  viagens_tfd  viagens_tfd[]
+
+  @@index([status])
+}
+
+model municipio_config {
+  id               String    @id @default("singleton")
+  nome             String
+  cnpj             String    @unique
+  codigoIbge       String?
+  nomeMunicipio    String
+  ufMunicipio      String
+  brasao           String?
+  corPrimaria      String?
+  configuracoes    Json?
+  isActive         Boolean   @default(true)
+  isSuspended      Boolean   @default(false)
+  suspensionReason String?
+  paymentStatus    String    @default("active")
+  subscriptionPlan String    @default("basic")
+  subscriptionEnds DateTime?
+  maxUsers         Int       @default(10)
+  maxCitizens      Int       @default(10000)
+  features         Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+}
+
+model notifications {
+  id         String    @id
+  citizenId  String
+  title      String
+  message    String
+  type       String    @default("INFO")
+  channel    String    @default("WEB")
+  isRead     Boolean   @default(false)
+  sentAt     DateTime?
+  readAt     DateTime?
+  protocolId String?
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+  citizens   Citizen   @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+}
+
+model pagamentos_beneficio {
+  id                           String                       @id
+  inscricaoId                  String
+  competencia                  String
+  valor                        Float
+  dataPagamento                DateTime?
+  createdAt                    DateTime                     @default(now())
+  status                       StatusPagamento
+  comprovante                  String?
+  observacoes                  String?
+  inscricoes_programas_sociais inscricoes_programas_sociais @relation(fields: [inscricaoId], references: [id])
+
+  @@index([inscricaoId, competencia])
+}
+
+model page_configurations {
+  id                String            @id
+  pageId            String
+  key               String
+  value             Json
+  type              String
+  category          String?
+  description       String?
+  isRequired        Boolean           @default(false)
+  isActive          Boolean           @default(true)
+  priority          Int               @default(0)
+  conditions        Json?
+  schedule          Json?
+  version           String            @default("1.0")
+  createdBy         String
+  modifiedBy        String?
+  approvedBy        String?
+  approvalDate      DateTime?
+  rollbackData      Json?
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime
+  specialized_pages specialized_pages @relation(fields: [pageId], references: [id])
+
+  @@unique([pageId, key])
+}
+
+model page_metrics {
+  id                String            @id
+  pageId            String
+  pageKey           String?
+  date              DateTime
+  metricDate        DateTime
+  pageViews         Int               @default(0)
+  uniqueVisitors    Int               @default(0)
+  averageTime       Float?
+  bounceRate        Float?
+  downloads         Int               @default(0)
+  formSubmissions   Int               @default(0)
+  clickEvents       Json?
+  searchTerms       Json?
+  referrers         Json?
+  devices           Json?
+  browsers          Json?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime
+  specialized_pages specialized_pages @relation(fields: [pageId], references: [id])
+
+  @@unique([pageId, date])
+}
+
+model parques_pracas {
+  id                   String    @id
+  nome                 String
+  tipo                 String
+  endereco             String?
+  bairro               String?
+  latitude             Float?
+  longitude            Float?
+  area                 Float?
+  equipamentos         Json?
+  horarioFuncionamento String?
+  permiteEventos       Boolean   @default(true)
+  capacidadeEventos    Int?
+  ultimaManutencao     DateTime?
+  proximaManutencao    DateTime?
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime
+
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model password_reset_tokens {
+  id        String    @id
+  token     String    @unique
+  userId    String?
+  citizenId String?
+  userType  String
+  email     String
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  citizens  Citizen?  @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  users     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([email])
+  @@index([expiresAt])
+  @@index([token])
+  @@index([userId])
+}
+
+model predictions {
+  id          String    @id
+  model       String
+  version     String
+  algorithm   String
+  input       Json
+  prediction  Json
+  confidence  Float
+  entityType  String
+  entityId    String?
+  horizon     String
+  actualValue Float?
+  accuracy    Float?
+  createdAt   DateTime  @default(now())
+  validatedAt DateTime?
+
+  @@index([createdAt])
+  @@index([model, entityType])
+}
+
+model prescricoes {
+  id                String            @id
+  consultaId        String
+  medicamentos      Json
+  observacoes       String?
+  validade          DateTime
+  dispensada        Boolean           @default(false)
+  dataHora          DateTime          @default(now())
+  consultas_medicas consultas_medicas @relation(fields: [consultaId], references: [id])
+
+  @@index([consultaId])
+}
+
+model proactive_notifications {
+  id           String    @id
+  citizenId    String
+  type         String
+  title        String
+  message      String
+  metadata     Json?
+  scheduledFor DateTime
+  sentAt       DateTime?
+  isRead       Boolean   @default(false)
+  readAt       DateTime?
+  createdAt    DateTime  @default(now())
+  citizens     Citizen   @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([scheduledFor])
+  @@index([sentAt])
+  @@index([type])
+}
+
+model professores {
+  id              String   @id
+  nome            String
+  cpf             String   @unique
+  formacao        String?
+  especializacoes Json?
+  areasAtuacao    Json?
+  vinculo         String?
+  cargaHoraria    Int?
+  disponibilidade Json?
+  avaliacaoMedia  Float?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+
+  @@index([isActive])
+  @@index([vinculo, isActive])
+}
+
+model profissionais_saude {
+  id                   String   @id
+  nome                 String
+  cpf                  String   @unique
+  registroProfissional String   @unique
+  especialidade        String?
+  categoria            String
+  unidadesAtendimento  Json?
+  horarioAtendimento   Json?
+  diasSemana           Json?
+  tempoMedioConsulta   Int?
+  aceitaAgendamento    Boolean  @default(true)
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
+
+  @@index([categoria, isActive])
+  @@index([especialidade, isActive])
+  @@index([isActive])
+}
+
+model programas_ambientais {
+  id                       String    @id
+  nome                     String    @unique
+  descricao                String?
+  tipo                     String?
+  objetivos                String?
+  metasAnuais              Json?
+  publicoAlvo              String?
+  parcerias                Json?
+  recursosNecessarios      String?
+  indicadoresMonitoramento Json?
+  dataInicio               DateTime?
+  dataFim                  DateTime?
+  isActive                 Boolean   @default(true)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime
+
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model programas_habitacionais {
+  id                     String    @id
+  nome                   String    @unique
+  descricao              String?
+  tipo                   String
+  criteriosElegibilidade Json?
+  rendaMaxima            Float?
+  rendaMinima            Float?
+  documentosNecessarios  Json?
+  beneficiosOferecidos   String?
+  prazoAtendimento       Int?
+  orgaoGestor            String?
+  legislacao             String?
+  dataInicioInscricoes   DateTime?
+  dataFimInscricoes      DateTime?
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime
+
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model programas_sociais {
+  id                     String    @id
+  nome                   String    @unique
+  descricao              String?
+  tipo                   String?
+  criteriosElegibilidade Json?
+  valorBeneficio         Float?
+  periodicidade          String?
+  documentosNecessarios  Json?
+  orgaoResponsavel       String?
+  legislacao             String?
+  dataInicio             DateTime?
+  dataFim                DateTime?
+  isActive               Boolean   @default(true)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime
+
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model protocol_bottlenecks {
+  id                String   @id
+  bottleneckType    String
+  entityId          String
+  entityName        String
+  periodType        String
+  periodDate        DateTime
+  affectedProtocols Int      @default(0)
+  avgStuckTime      Float
+  maxStuckTime      Float
+  totalDelayHours   Float
+  impactScore       Float
+  priority          String   @default("MEDIUM")
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime
+
+  @@unique([bottleneckType, entityId, periodType, periodDate])
+  @@index([periodType, impactScore])
+}
+
+model protocol_citizen_links {
+  id                   String               @id
+  protocolId           String
+  linkedCitizenId      String
+  linkType             CitizenLinkType
+  relationship         String?
+  role                 ServiceRole
+  contextData          Json?
+  isVerified           Boolean              @default(false)
+  verifiedAt           DateTime?
+  verifiedBy           String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  citizens             Citizen              @relation(fields: [linkedCitizenId], references: [id], onDelete: Cascade)
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@index([isVerified, verifiedAt])
+  @@index([linkType])
+  @@index([linkedCitizenId])
+  @@index([linkedCitizenId, isVerified])
+  @@index([protocolId])
+  @@index([protocolId, isVerified])
+  @@index([protocolId, linkType])
+}
+
+model protocol_data_fields {
+  id                   String               @id
+  protocolId           String
+  fieldKey             String
+  fieldLabel           String
+  fieldValue           String
+  isRequired           Boolean              @default(false)
+  fieldType            String?
+  status               DataFieldStatus      @default(PENDING)
+  validatedBy          String?
+  validatedAt          DateTime?
+  rejectedAt           DateTime?
+  rejectionReason      String?
+  version              Int                  @default(1)
+  previousValue        String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  field_approvals      field_approvals[]
+  field_changes        field_changes[]
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@unique([protocolId, fieldKey])
+  @@index([protocolId, status])
+  @@index([status])
+}
+
+model protocol_documents {
+  id                   String               @id
+  protocolId           String
+  documentType         String
+  isRequired           Boolean
+  status               DocumentStatus       @default(PENDING)
+  fileName             String?
+  fileUrl              String?
+  fileSize             Int?
+  mimeType             String?
+  uploadedAt           DateTime?
+  uploadedBy           String?
+  validatedAt          DateTime?
+  validatedBy          String?
+  rejectedAt           DateTime?
+  rejectionReason      String?
+  version              Int                  @default(1)
+  previousDocId        String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@index([protocolId, documentType])
+  @@index([protocolId])
+}
+
+model protocol_evaluations_simplified {
+  id                   String               @id
+  protocolId           String
+  rating               Int
+  comment              String?
+  wouldRecommend       Boolean              @default(true)
+  createdAt            DateTime             @default(now())
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+}
+
+model protocol_history_simplified {
+  id                   String               @id
+  action               String
+  comment              String?
+  oldStatus            String?
+  newStatus            String?
+  metadata             Json?
+  timestamp            DateTime             @default(now())
+  userId               String?
+  protocolId           String
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+}
+
+model protocol_interactions {
+  id                   String               @id
+  protocolId           String
+  type                 InteractionType
+  authorType           String
+  authorId             String?
+  authorName           String
+  message              String?
+  metadata             Json?
+  isInternal           Boolean              @default(false)
+  isRead               Boolean              @default(false)
+  readAt               DateTime?
+  attachments          Json?
+  createdAt            DateTime             @default(now())
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@index([protocolId, createdAt])
+  @@index([protocolId])
+}
+
+model protocol_metrics {
+  id                   String   @id
+  periodType           String
+  periodDate           DateTime
+  totalProtocols       Int      @default(0)
+  newProtocols         Int      @default(0)
+  closedProtocols      Int      @default(0)
+  cancelledProtocols   Int      @default(0)
+  overdueProtocols     Int      @default(0)
+  avgCompletionTime    Float?
+  avgFirstResponse     Float?
+  avgResolutionTime    Float?
+  approvalRate         Float?
+  rejectionRate        Float?
+  satisfactionScore    Float?
+  slaComplianceRate    Float?
+  avgSlaDeviation      Float?
+  totalPendings        Int      @default(0)
+  resolvedPendings     Int      @default(0)
+  avgPendingTime       Float?
+  totalDocuments       Int      @default(0)
+  approvedDocuments    Int      @default(0)
+  rejectedDocuments    Int      @default(0)
+  documentApprovalRate Float?
+  metadata             Json?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime
+
+  @@unique([periodType, periodDate])
+  @@index([periodType, periodDate])
+}
+
+model protocol_pendings {
+  id                   String               @id
+  protocolId           String
+  type                 PendingType
+  title                String
+  description          String
+  dueDate              DateTime?
+  status               PendingStatus        @default(OPEN)
+  resolvedAt           DateTime?
+  resolvedBy           String?
+  resolution           String?
+  blocksProgress       Boolean              @default(true)
+  metadata             Json?
+  createdBy            String
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+
+  @@index([protocolId])
+  @@index([protocolId, status])
+}
+
+model protocol_sla {
+  id                   String               @id
+  protocolId           String               @unique
+  startDate            DateTime
+  expectedEndDate      DateTime
+  actualEndDate        DateTime?
+  isPaused             Boolean              @default(false)
+  pausedAt             DateTime?
+  pausedReason         String?
+  totalPausedDays      Int                  @default(0)
+  isOverdue            Boolean              @default(false)
+  daysOverdue          Int                  @default(0)
+  workingDays          Int
+  calendarDays         Int
+  updatedAt            DateTime
+  protocols_simplified protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+}
+
+model protocol_stages {
+  id                                                                        String                 @id
+  protocolId                                                                String
+  stageName                                                                 String
+  stageOrder                                                                Int
+  status                                                                    StageStatus            @default(PENDING)
+  startedAt                                                                 DateTime?
+  completedAt                                                               DateTime?
+  dueDate                                                                   DateTime?
+  assignedTo                                                                String?
+  completedBy                                                               String?
+  result                                                                    String?
+  notes                                                                     String?
+  metadata                                                                  Json?
+  protocols_simplified_protocol_stages_protocolIdToprotocols_simplified     protocols_simplified   @relation("protocol_stages_protocolIdToprotocols_simplified", fields: [protocolId], references: [id], onDelete: Cascade)
+  protocols_simplified_protocols_simplified_currentStageIdToprotocol_stages protocols_simplified[] @relation("protocols_simplified_currentStageIdToprotocol_stages")
+
+  @@index([protocolId])
+  @@index([protocolId, stageOrder])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model protocols_simplified {
+  id                                                                   String                            @id
+  number                                                               String                            @unique
+  title                                                                String
+  description                                                          String?
+  status                                                               ProtocolStatus                    @default(VINCULADO)
+  priority                                                             Int                               @default(3)
+  citizenId                                                            String
+  serviceId                                                            String
+  departmentId                                                         String
+  customData                                                           Json?
+  moduleType                                                           String?
+  latitude                                                             Float?
+  longitude                                                            Float?
+  address                                                              String?
+  locationType                                                         String?
+  geocodingProvider                                                    String?
+  specificLocation                                                     String?
+  assignedUserId                                                       String?
+  createdById                                                          String?
+  createdAt                                                            DateTime                          @default(now())
+  updatedAt                                                            DateTime
+  dueDate                                                              DateTime?
+  concludedAt                                                          DateTime?
+  currentStageId                                                       String?
+  admin_tickets                                                        admin_tickets?
+  citizen_category_assignments                                         citizen_category_assignments[]
+  generated_documents                                                  generated_documents[]
+  protocol_citizen_links                                               protocol_citizen_links[]
+  protocol_data_fields                                                 protocol_data_fields[]
+  protocol_documents                                                   protocol_documents[]
+  protocol_evaluations_simplified                                      protocol_evaluations_simplified[]
+  protocol_history_simplified                                          protocol_history_simplified[]
+  protocol_interactions                                                protocol_interactions[]
+  protocol_pendings                                                    protocol_pendings[]
+  protocol_sla                                                         protocol_sla?
+  protocol_stages_protocol_stages_protocolIdToprotocols_simplified     protocol_stages[]                 @relation("protocol_stages_protocolIdToprotocols_simplified")
+  users_protocols_simplified_assignedUserIdTousers                     User?                             @relation("protocols_simplified_assignedUserIdTousers", fields: [assignedUserId], references: [id])
+  citizens                                                             Citizen                           @relation(fields: [citizenId], references: [id])
+  users_protocols_simplified_createdByIdTousers                        User?                             @relation("protocols_simplified_createdByIdTousers", fields: [createdById], references: [id])
+  protocol_stages_protocols_simplified_currentStageIdToprotocol_stages protocol_stages?                  @relation("protocols_simplified_currentStageIdToprotocol_stages", fields: [currentStageId], references: [id])
+  departments                                                          Department                        @relation(fields: [departmentId], references: [id])
+  services_simplified                                                  services_simplified               @relation(fields: [serviceId], references: [id])
+  solicitacoes_tfd                                                     solicitacoes_tfd?
+
+  @@index([citizenId])
+  @@index([createdAt])
+  @@index([currentStageId])
+  @@index([departmentId, status])
+  @@index([moduleType, status])
+  @@index([status])
+}
+
+model received_emails {
+  id              String        @id
+  message_id      String        @unique
+  from_email      String
+  from_name       String?
+  to_email        String
+  cc_emails       Json?
+  bcc_emails      Json?
+  reply_to        String?
+  subject         String
+  text_content    String?
+  html_content    String?
+  headers         Json?
+  attachments     Json?
+  size            Int           @default(0)
+  received_at     DateTime
+  is_read         Boolean       @default(false)
+  is_starred      Boolean       @default(false)
+  is_archived     Boolean       @default(false)
+  is_trash        Boolean       @default(false)
+  is_spam         Boolean       @default(false)
+  folder          String        @default("inbox")
+  labels          Json?
+  email_server_id String
+  email_user_id   String?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime
+  email_servers   email_servers @relation(fields: [email_server_id], references: [id], onDelete: Cascade)
+  email_users     email_users?  @relation(fields: [email_user_id], references: [id])
+
+  @@index([email_server_id])
+  @@index([email_user_id])
+  @@index([folder])
+  @@index([from_email])
+  @@index([is_read])
+  @@index([is_spam])
+  @@index([is_trash])
+  @@index([received_at])
+  @@index([to_email])
+}
+
+model report_executions {
+  id            String                @id
+  reportId      String
+  parameters    Json?
+  filters       Json?
+  data          Json?
+  format        ReportFormat
+  fileUrl       String?
+  fileSize      Int?
+  status        ReportExecutionStatus
+  startedAt     DateTime              @default(now())
+  completedAt   DateTime?
+  errorMessage  String?
+  executedBy    String?
+  expiresAt     DateTime?
+  downloadCount Int                   @default(0)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime
+  reports       reports               @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([executedBy, startedAt])
+  @@index([reportId, status])
+}
+
+model reports {
+  id                String              @id
+  name              String
+  description       String?
+  type              ReportType
+  category          String
+  config            Json
+  template          String?
+  schedule          Json?
+  accessLevel       Int
+  departments       Json?
+  isActive          Boolean             @default(true)
+  isPublic          Boolean             @default(false)
+  createdBy         String
+  lastRun           DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  report_executions report_executions[]
+
+  @@index([createdBy])
+  @@index([type, isActive])
+}
+
+model rotas_escolares {
+  id             String   @id
+  nome           String
+  veiculoId      String
+  motoristaId    String
+  turno          Turno
+  horarioSaida   String
+  horarioRetorno String
+  pontos         Json
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+
+  @@index([turno])
+}
+
+model server_performance {
+  id                         String   @id
+  userId                     String
+  periodType                 String
+  periodDate                 DateTime
+  protocolsAssigned          Int      @default(0)
+  protocolsCompleted         Int      @default(0)
+  protocolsOnTime            Int      @default(0)
+  protocolsOverdue           Int      @default(0)
+  avgCompletionTime          Float?
+  avgResponseTime            Float?
+  totalWorkingHours          Float?
+  satisfactionScore          Float?
+  approvalRate               Float?
+  pendingResolution          Float?
+  totalInteractions          Int      @default(0)
+  avgInteractionsPerProtocol Float?
+  metadata                   Json?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime
+
+  @@unique([userId, periodType, periodDate])
+  @@index([userId, periodType])
+}
+
+model service_metrics {
+  id                String   @id
+  serviceId         String
+  periodType        String
+  periodDate        DateTime
+  totalRequests     Int      @default(0)
+  completedRequests Int      @default(0)
+  avgCompletionTime Float?
+  approvalRate      Float?
+  rejectionRate     Float?
+  satisfactionScore Float?
+  complaintRate     Float?
+  avgDocumentTime   Float?
+  avgPendingTime    Float?
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime
+
+  @@unique([serviceId, periodType, periodDate])
+  @@index([serviceId, periodType])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model service_workflows {
+  id                  String              @id
+  serviceId           String              @unique
+  name                String
+  description         String?
+  stages              Json
+  defaultSLA          Int?
+  rules               Json?
+  isActive            Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime
+  services_simplified services_simplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([isActive])
+}
+
+model services_simplified {
+  id                       String                 @id
+  name                     String
+  description              String?
+  departmentId             String
+  serviceType              ServiceType
+  moduleType               String?                @unique
+  formSchema               Json?
+  linkedCitizensConfig     Json?
+  formFieldsConfig         Json?
+  enabledFields            Json?
+  isActive                 Boolean                @default(true)
+  requiresDocuments        Boolean                @default(false)
+  requiredDocuments        Json?
+  estimatedDays            Int?
+  priority                 Int                    @default(1)
+  category                 String?
+  icon                     String?
+  color                    String?
+  requiresSpecificLocation Boolean                @default(false)
+  locationLabel            String?
+  enableMapSelection       Boolean                @default(false)
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime
+  admin_tickets            admin_tickets[]
+  protocols_simplified     protocols_simplified[]
+  service_workflows        service_workflows?
+  departments              Department             @relation(fields: [departmentId], references: [id])
+}
+
+model signatures {
+  id                   String               @id
+  documentId           String
+  certificateId        String
+  signatureValue       String
+  signatureHash        String
+  signatureAlgo        String               @default("SHA256withRSA")
+  signedAt             DateTime             @default(now())
+  ipAddress            String
+  userAgent            String?
+  geolocation          Json?
+  isValid              Boolean              @default(true)
+  validatedAt          DateTime?
+  validationCount      Int                  @default(0)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  digital_certificates digital_certificates @relation(fields: [certificateId], references: [id])
+  generated_documents  generated_documents  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([certificateId])
+  @@index([documentId])
+  @@index([isValid])
+  @@index([signedAt])
+}
+
+model solicitacoes_tfd {
+  id                      String               @id
+  workflowId              String               @unique
+  protocolId              String               @unique
+  citizenId               String
+  acompanhanteId          String?
+  especialidade           String
+  procedimento            String
+  cid10                   String?
+  justificativa           String
+  encaminhamentoMedicoUrl String
+  examesUrls              Json?
+  prioridade              PrioridadeTFD
+  classificacaoRisco      String?
+  prazoMaximoDias         Int?
+  cidadeDestino           String
+  estadoDestino           String
+  hospitalDestino         String?
+  status                  TFDStatus
+  posicaoFila             Int?
+  analisadoPor            String?
+  dataAnalise             DateTime?
+  motivoRecusa            String?
+  reguladoPor             String?
+  dataRegulacao           DateTime?
+  parecerRegulador        String?
+  aprovadoPor             String?
+  dataAprovacao           DateTime?
+  valorEstimado           Float?
+  agendadoPor             String?
+  dataConsulta            DateTime?
+  horarioConsulta         String?
+  confirmado              Boolean              @default(false)
+  observacoes             String?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime
+  protocols_simplified    protocols_simplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  viagens_tfd             viagens_tfd[]
+
+  @@index([citizenId])
+  @@index([protocolId])
+  @@index([status])
+  @@index([workflowId])
+}
+
+model specialized_pages {
+  id                  String                @id
+  pageKey             String                @unique
+  code                String                @unique
+  name                String
+  secretaria          String
+  pageType            String
+  title               String
+  description         String?
+  content             Json
+  sections            Json
+  services            Json?
+  contacts            Json?
+  documents           Json?
+  links               Json?
+  images              Json?
+  isPublished         Boolean               @default(false)
+  isActive            Boolean               @default(true)
+  departmentId        String?
+  functions           Json?
+  publishDate         DateTime?
+  lastModified        DateTime              @default(now())
+  modifiedBy          String
+  version             Int                   @default(1)
+  template            String?
+  metadata            Json?
+  analytics           Json?
+  customCss           String?
+  customJs            String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  page_configurations page_configurations[]
+  page_metrics        page_metrics[]
+}
+
+model tipos_atividade_cultural {
+  id                       String   @id
+  nome                     String   @unique
+  categoria                String?
+  materialNecessario       Json?
+  faixasEtarias            Json?
+  duracaoMedia             Int?
+  espacosAdequados         Json?
+  profissionaisNecessarios String?
+  isActive                 Boolean  @default(true)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+}
+
+model tipos_documento {
+  id                String   @id
+  nome              String   @unique
+  descricao         String?
+  categoria         String
+  formatosAceitos   Json?
+  tamanhoMaximo     Int?
+  requisitosPadrao  String?
+  validadeDocumento Int?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+}
+
+model tipos_estabelecimento_turistico {
+  id                    String   @id
+  nome                  String   @unique
+  categoria             String?
+  requisitosLegais      Json?
+  documentosNecessarios Json?
+  classificacao         String?
+  inspectionRequired    Boolean  @default(false)
+  isActive              Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+}
+
+model tipos_obra_servico {
+  id                      String   @id
+  nome                    String   @unique
+  categoria               String
+  descricao               String?
+  tempoMedioExecucao      Int?
+  requisitosPrevios       Json?
+  equipamentosNecessarios Json?
+  materiaisComuns         Json?
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+}
+
+model tipos_ocorrencia {
+  id                        String   @id
+  nome                      String   @unique
+  categoria                 String
+  gravidade                 Int      @default(3)
+  requererBoletimOcorrencia Boolean  @default(false)
+  tempoRespostaPadrao       Int?
+  equipesCompetentes        Json?
+  procedimentosPadrao       String?
+  isActive                  Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime
+
+  @@index([categoria, gravidade, isActive])
+  @@index([isActive])
+}
+
+model tipos_producao_agricola {
+  id                           String   @id
+  nome                         String   @unique
+  categoria                    String
+  subcategoria                 String?
+  sazonalidade                 Json?
+  assistenciaTecnicaDisponivel Boolean  @default(false)
+  programasApoio               Json?
+  isActive                     Boolean  @default(true)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime
+
+  @@index([categoria, isActive])
+  @@index([isActive])
+}
+
+model triagem_enfermagem {
+  id                     String               @id
+  atendimentoId          String               @unique
+  enfermeiroId           String
+  pressaoArterial        String?
+  temperatura            Float?
+  frequenciaCardiaca     Int?
+  frequenciaRespiratoria Int?
+  saturacaoO2            Int?
+  peso                   Float?
+  altura                 Float?
+  glicemia               Float?
+  classificacaoRisco     ClassificacaoRisco
+  corProtocolo           String
+  queixaPrincipal        String
+  historiaAtual          String?
+  alergias               String?
+  medicamentosUso        String?
+  comorbidades           String?
+  observacoes            String?
+  dataHora               DateTime             @default(now())
+  atendimentos_medicos   atendimentos_medicos @relation(fields: [atendimentoId], references: [id])
+}
+
+model turmas {
+  id                String       @id
+  unidadeEducacaoId String
+  codigo            String       @unique
+  nome              String?
+  serie             String
+  turno             Turno
+  ano               Int
+  professorId       String?
+  sala              String?
+  capacidade        Int
+  vagasOcupadas     Int          @default(0)
+  vagasDisponiveis  Int
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime
+  matriculas        matriculas[]
+
+  @@index([unidadeEducacaoId, serie, turno, ano])
+}
+
+model unidades_cras {
+  id        String   @id
+  nome      String
+  tipo      String
+  endereco  String?
+  bairro    String?
+  telefone  String?
+  email     String?
+  horario   String?
+  programas Json?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model unidades_educacao {
+  id           String   @id
+  nome         String
+  tipo         String
+  endereco     String?
+  bairro       String?
+  telefone     String?
+  email        String?
+  niveisEnsino Json?
+  turnos       Json?
+  vagas        Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model unidades_saude {
+  id             String   @id
+  nome           String
+  tipo           String
+  endereco       String?
+  bairro         String?
+  telefone       String?
+  horario        String?
+  especialidades Json?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+
+  @@index([isActive])
+  @@index([tipo, isActive])
+}
+
+model user_departments {
+  id           String     @id
+  userId       String
+  departmentId String
+  isPrimary    Boolean    @default(false)
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime
+  departments  Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  users        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departmentId])
+  @@index([departmentId])
+  @@index([userId])
+  @@index([userId, isPrimary])
+}
+
+model veiculos_escolares {
+  id             String        @id
+  placa          String        @unique
+  modelo         String
+  capacidade     Int
+  acessibilidade Boolean       @default(false)
+  status         VeiculoStatus
+  km             Int           @default(0)
+  ultimaRevisao  DateTime?
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime
+
+  @@index([status])
+}
+
+model veiculos_tfd {
+  id             String           @id
+  placa          String           @unique
+  modelo         String
+  ano            Int
+  capacidade     Int
+  acessibilidade Boolean          @default(false)
+  status         StatusVeiculoTFD
+  km             Int              @default(0)
+  ultimaRevisao  DateTime?
+  proximaRevisao DateTime?
+  observacoes    String?
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  viagens_tfd    viagens_tfd[]
+
+  @@index([status])
+}
+
+model viagens_tfd {
+  id                 String           @id
+  solicitacaoTFDId   String
+  tipo               TipoViagemTFD
+  dataViagem         DateTime
+  dataRetornoReal    DateTime?
+  horarioSaida       String
+  horarioChegada     String?
+  veiculoId          String?
+  motoristaId        String?
+  passageiros        Json
+  kmInicial          Int?
+  kmFinal            Int?
+  kmTotal            Int?
+  combustivel        Float?
+  pedagios           Float?
+  hospedagem         Float?
+  alimentacao        Float?
+  outros             Float?
+  valorDespesas      Float?
+  totalGasto         Float?
+  mecanismoPagamento MeioPagamento?
+  comprovantes       Json?
+  status             StatusViagemTFD
+  observacoes        String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime
+  motoristas_tfd     motoristas_tfd?  @relation(fields: [motoristaId], references: [id])
+  solicitacoes_tfd   solicitacoes_tfd @relation(fields: [solicitacaoTFDId], references: [id])
+  veiculos_tfd       veiculos_tfd?    @relation(fields: [veiculoId], references: [id])
+
+  @@index([motoristaId])
+  @@index([solicitacaoTFDId])
+  @@index([veiculoId])
+}
+
+model viaturas_seguranca {
+  id                String    @id
+  codigo            String    @unique
+  tipo              String
+  placa             String?
+  modelo            String?
+  ano               Int?
+  status            String    @default("Ativa")
+  equipamentos      Json?
+  baseOperacional   String?
+  horasUso          Int       @default(0)
+  kmRodados         Int       @default(0)
+  proximaManutencao DateTime?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime
+
+  @@index([isActive])
+  @@index([status, isActive])
+}
+
+model workflow_definitions {
+  id                 String               @id
+  name               String
+  description        String?
+  module             String
+  version            Int                  @default(1)
+  isActive           Boolean              @default(true)
+  stages             Json
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  workflow_instances workflow_instances[]
+
+  @@index([isActive])
+  @@index([module, isActive])
+}
+
+model workflow_history {
+  id                 String             @id
+  instanceId         String
+  fromStage          String?
+  toStage            String
+  action             String
+  userId             String
+  userName           String?
+  notes              String?
+  attachments        Json?
+  timestamp          DateTime           @default(now())
+  duration           Int?
+  workflow_instances workflow_instances @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@index([instanceId])
+  @@index([timestamp])
+  @@index([userId])
+}
+
+model workflow_instances {
+  id                   String               @id
+  definitionId         String
+  entityType           String
+  entityId             String
+  citizenId            String?
+  currentStage         String
+  status               String
+  priority             Int                  @default(0)
+  metadata             Json?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  completedAt          DateTime?
+  workflow_history     workflow_history[]
+  workflow_definitions workflow_definitions @relation(fields: [definitionId], references: [id])
+
+  @@index([citizenId])
+  @@index([currentStage, status])
+  @@index([definitionId, status])
+  @@index([entityType, entityId])
+  @@index([status, priority])
+}
+
 enum ParticipantType {
   CITIZEN
   SERVER
@@ -418,11 +3273,12 @@ enum ParticipantType {
 }
 
 enum UserRole {
+  GUEST
+  USER
+  COORDINATOR
+  MANAGER
   ADMIN
   SUPER_ADMIN
-  MANAGER
-  OPERATOR
-  VIEWER
 }
 
 enum ConversationType {
@@ -507,7 +3363,6 @@ enum LogLevel {
   INFO
   WARN
   ERROR
-  CRITICAL
 }
 
 enum TemplateCategory {
@@ -518,4 +3373,731 @@ enum TemplateCategory {
   CONFIRMATION
   ALERT
   SYSTEM
+}
+
+enum AlertFrequency {
+  REALTIME
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum AlertType {
+  DEADLINE_OVERDUE
+  LOW_PERFORMANCE
+  HIGH_DEMAND
+  LOW_SATISFACTION
+  SYSTEM_OVERLOAD
+  BUDGET_ALERT
+}
+
+enum AtendimentoStatus {
+  AGUARDANDO_CHECKIN
+  CHECKIN_REALIZADO
+  AGUARDANDO_TRIAGEM
+  EM_TRIAGEM
+  TRIAGEM_CONCLUIDA
+  AGUARDANDO_MEDICO
+  EM_CONSULTA
+  CONSULTA_CONCLUIDA
+  AGUARDANDO_FARMACIA
+  EM_FARMACIA
+  FINALIZADO
+  CANCELADO
+}
+
+enum CadUnicoStatus {
+  AGENDADO
+  AGUARDANDO_ENTREVISTA
+  EM_ENTREVISTA
+  ENTREVISTA_CONCLUIDA
+  DOCUMENTACAO_PENDENTE
+  DOCUMENTOS_VALIDADOS
+  AGUARDANDO_ANALISE
+  AGUARDANDO_COMPLEMENTACAO
+  APROVADO
+  INDEFERIDO
+  CADASTRADO
+  ATIVO
+  DESATUALIZADO
+  SUSPENSO
+  CANCELADO
+}
+
+enum CertStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+  SUSPENDED
+}
+
+enum CertificateType {
+  SERVER
+  CITIZEN
+  SYSTEM
+}
+
+enum CitizenLinkType {
+  STUDENT
+  GUARDIAN
+  PATIENT
+  COMPANION
+  DEPENDENT
+  FAMILY_MEMBER
+  AUTHORIZED_PERSON
+  BENEFICIARY
+  WITNESS
+  OTHER
+}
+
+enum ClassificacaoRisco {
+  EMERGENCIA
+  MUITO_URGENTE
+  URGENTE
+  POUCO_URGENTE
+  NAO_URGENTE
+}
+
+enum ConsultaStatus {
+  AGENDADA
+  CONFIRMADA
+  REALIZADA
+  FALTOU
+  CANCELADA
+}
+
+enum CulturalAttendanceStatus {
+  PENDING
+  UNDER_ANALYSIS
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+  OPEN
+}
+
+enum CulturalAttendanceType {
+  AUTHORIZATION_EVENT
+  ARTIST_REGISTRATION
+  PUBLIC_NOTICE_REGISTRATION
+  CULTURAL_SPACE_USE
+  PROJECT_SUPPORT
+  ARTISTIC_SUPPORT
+  INFORMATION
+  GENERAL_INFORMATION
+  OTHERS
+  inscricao_projeto
+  reserva_espaco
+  informacoes
+  cadastro_grupo
+  apoio_cultural
+  denuncia
+  inscricao_oficina
+}
+
+enum DataFieldStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CORRECTED
+}
+
+enum DocumentStatus {
+  PENDING
+  UPLOADED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum DocumentTemplateType {
+  PROTOCOL_CERTIFICATE
+  COMPLETION_REPORT
+  RECEIPT
+  AUTHORIZATION
+  NOTIFICATION
+  CUSTOM
+}
+
+enum EmailAddonType {
+  EXTRA_ACCOUNTS
+  EXTRA_EMAILS
+  DEDICATED_IP
+  PRIORITY_SUPPORT
+  API_ACCESS
+  CUSTOM_REPORTS
+}
+
+enum EmailEventType {
+  SENT
+  DELIVERED
+  OPENED
+  CLICKED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+  FAILED
+}
+
+enum EmailPlan {
+  NONE
+  BASIC
+  STANDARD
+  PREMIUM
+  ENTERPRISE
+}
+
+enum EmailStatus {
+  QUEUED
+  PROCESSING
+  SENT
+  DELIVERED
+  FAILED
+  BOUNCED
+  COMPLAINED
+  UNSUBSCRIBED
+}
+
+enum Escolaridade {
+  SEM_INSTRUCAO
+  FUNDAMENTAL_INCOMPLETO
+  FUNDAMENTAL_COMPLETO
+  MEDIO_INCOMPLETO
+  MEDIO_COMPLETO
+  SUPERIOR_INCOMPLETO
+  SUPERIOR_COMPLETO
+}
+
+enum FamilyRelationship {
+  SPOUSE
+  SON
+  DAUGHTER
+  FATHER
+  MOTHER
+  BROTHER
+  SISTER
+  GRANDFATHER
+  GRANDMOTHER
+  GRANDSON
+  GRANDDAUGHTER
+  OTHER
+}
+
+enum GrauParentesco {
+  RESPONSAVEL_FAMILIAR
+  CONJUGE_COMPANHEIRO
+  FILHO_ENTEADO
+  PAI_MAE
+  SOGRO_SOGRA
+  NETO_BISNETO
+  IRMAO_IRMA
+  GENRO_NORA
+  OUTRO
+}
+
+enum HealthAttendanceStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  REFERRED
+}
+
+enum HealthAttendanceType {
+  APPOINTMENT_REQUEST
+  EXAM_REQUEST
+  MEDICATION_REQUEST
+  HOME_VISIT
+  VACCINATION
+  HEALTH_CERTIFICATE
+  COMPLAINT
+  GENERAL_INFORMATION
+  OTHERS
+}
+
+enum HousingAttendanceStatus {
+  PENDING
+  UNDER_ANALYSIS
+  APPROVED
+  REJECTED
+  COMPLETED
+  WAITING_DOCUMENTATION
+}
+
+enum HousingAttendanceType {
+  PROGRAM_REGISTRATION
+  LOT_REQUEST
+  HOUSING_REFORM
+  DOCUMENTATION
+  COMPLAINT
+  CONSULTATION
+  GENERAL_INFORMATION
+  OTHERS
+}
+
+enum InteractionType {
+  MESSAGE
+  DOCUMENT_REQUEST
+  DOCUMENT_UPLOAD
+  PENDING_CREATED
+  PENDING_RESOLVED
+  STATUS_CHANGED
+  ASSIGNED
+  INSPECTION_SCHEDULED
+  INSPECTION_COMPLETED
+  APPROVAL
+  REJECTION
+  CANCELLATION
+  NOTE
+  URGENCY_REQUEST
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  FAILED
+}
+
+enum LeadSource {
+  DEMO_REQUEST
+  TRIAL_SIGNUP
+  NEWSLETTER
+  CONTACT_FORM
+}
+
+enum MatriculaStatus {
+  INSCRITO_AGUARDANDO_VALIDACAO
+  DOCUMENTACAO_PENDENTE
+  DOCUMENTOS_VALIDADOS
+  AGUARDANDO_DISTRIBUICAO
+  VAGA_ATRIBUIDA
+  LISTA_ESPERA
+  CONFIRMADA
+  RECUSADA
+  EXPIRADA
+  MATRICULADO
+  INDEFERIDA
+  CANCELADA
+}
+
+enum MeioPagamento {
+  DINHEIRO
+  PIX
+  TRANSFERENCIA
+  CARTAO_DEBITO
+  CARTAO_CREDITO
+  BOLETO
+  OUTRO
+}
+
+enum OutputFormat {
+  PDF
+  DOCX
+  HTML
+}
+
+enum Parentesco {
+  RESPONSAVEL_FAMILIAR
+  CONJUGE_COMPANHEIRO
+  FILHO_ENTEADO
+  PAI_MAE
+  SOGRO_SOGRA
+  NETO_BISNETO
+  IRMAO_IRMA
+  GENRO_NORA
+  OUTRO
+}
+
+enum PendingStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  EXPIRED
+  CANCELLED
+}
+
+enum PendingType {
+  DOCUMENT
+  INFORMATION
+  CORRECTION
+  VALIDATION
+  PAYMENT
+  INSPECTION
+  APPROVAL
+  OTHER
+}
+
+enum Plan {
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum PrioridadeEncaminhamento {
+  ROTINA
+  PRIORIDADE
+  URGENCIA
+}
+
+enum PrioridadeExame {
+  ROTINA
+  URGENTE
+  EMERGENCIA
+}
+
+enum PrioridadeTFD {
+  EMERGENCIA
+  ALTA
+  MEDIA
+  ROTINA
+}
+
+enum ProgramaSocialStatus {
+  INSCRITO
+  VERIFICACAO_CADUNICO
+  NAO_ELEGIVEL
+  VERIFICACAO_APROVADA
+  AGUARDANDO_ANALISE
+  AGUARDANDO_VISITA
+  PARECER_FAVORAVEL
+  PARECER_DESFAVORAVEL
+  AGUARDANDO_PARECER_PSICOLOGICO
+  PARECER_PSICOLOGICO_CONCLUIDO
+  AGUARDANDO_APROVACAO
+  APROVADO
+  INDEFERIDO
+  CONCEDIDO
+  ATIVO
+  ATIVA
+  SUSPENSO
+  CANCELADO
+}
+
+enum ProtocolStatus {
+  VINCULADO
+  PROGRESSO
+  ATUALIZACAO
+  CONCLUIDO
+  PENDENCIA
+  CANCELADO
+}
+
+enum Raca {
+  BRANCA
+  PRETA
+  PARDA
+  AMARELA
+  INDIGENA
+}
+
+enum ReportExecutionStatus {
+  PENDING
+  GENERATING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ReportFormat {
+  PDF
+  EXCEL
+  CSV
+  JSON
+}
+
+enum ReportType {
+  OPERATIONAL
+  MANAGERIAL
+  EXECUTIVE
+  CUSTOM
+}
+
+enum RevocationReason {
+  UNSPECIFIED
+  KEY_COMPROMISE
+  CA_COMPROMISE
+  AFFILIATION_CHANGED
+  SUPERSEDED
+  CESSATION
+  CERTIFICATE_HOLD
+}
+
+enum ServiceRole {
+  BENEFICIARY
+  RESPONSIBLE
+  AUTHORIZED
+  COMPANION
+  WITNESS
+  OTHER
+}
+
+enum ServiceType {
+  COM_DADOS
+  SEM_DADOS
+}
+
+enum Sexo {
+  MASCULINO
+  FEMININO
+  OUTRO
+}
+
+enum SituacaoMatricula {
+  ATIVA
+  TRANSFERIDA
+  CANCELADA
+  CONCLUIDA
+}
+
+enum SituacaoMoradia {
+  PROPRIA_QUITADA
+  PROPRIA_FINANCIADA
+  ADEQUADA
+  ALUGADA
+  CEDIDA
+  OCUPACAO
+  OUTRO
+}
+
+enum SituacaoTrabalho {
+  EMPREGADO_FORMAL
+  EMPREGADO_INFORMAL
+  AUTONOMO
+  DESEMPREGADO
+  APOSENTADO
+  PENSIONISTA
+  NAO_TRABALHA
+}
+
+enum SportsAttendanceStatus {
+  PENDING
+  UNDER_ANALYSIS
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum SportsAttendanceType {
+  EVENT_AUTHORIZATION
+  CLUB_REGISTRATION
+  ATHLETE_REGISTRATION
+  FACILITY_USE
+  PROJECT_SUPPORT
+  EQUIPMENT_REQUEST
+  TOURNAMENT_REQUEST
+  GENERAL_INFORMATION
+  OTHERS
+}
+
+enum StageStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  FAILED
+  PAUSED
+}
+
+enum StatusDispensacao {
+  AGUARDANDO
+  DISPENSADO
+  PENDENTE
+  CANCELADO
+}
+
+enum StatusEncaminhamento {
+  PENDENTE
+  AGENDADO
+  REALIZADO
+  CANCELADO
+}
+
+enum StatusEstoque {
+  DISPONIVEL
+  CRITICO
+  VENCIDO
+  BLOQUEADO
+}
+
+enum StatusExame {
+  SOLICITADO
+  AGENDADO
+  COLETADO
+  PROCESSANDO
+  CONCLUIDO
+  CANCELADO
+}
+
+enum StatusMotoristaTFD {
+  DISPONIVEL
+  EM_VIAGEM
+  FOLGA
+  INATIVO
+}
+
+enum StatusPagamento {
+  AGUARDANDO
+  PENDENTE
+  PROCESSANDO
+  PAGO
+  FALHA
+  ESTORNADO
+}
+
+enum StatusVeiculoTFD {
+  DISPONIVEL
+  EM_VIAGEM
+  MANUTENCAO
+  INATIVO
+}
+
+enum StatusViagemTFD {
+  PLANEJADA
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIAL
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+}
+
+enum TFDStatus {
+  AGUARDANDO_ANALISE_DOCUMENTAL
+  DOCUMENTACAO_PENDENTE
+  AGUARDANDO_REGULACAO_MEDICA
+  AGUARDANDO_COMPLEMENTACAO
+  INDEFERIDO
+  APROVADO_REGULACAO
+  AGUARDANDO_APROVACAO_GESTAO
+  SUSPENSO
+  APROVADO_PARA_AGENDAMENTO
+  AGENDANDO
+  AGENDADO
+  AGUARDANDO_VIAGEM
+  EM_VIAGEM
+  REALIZADO
+  CANCELADO
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TRIAL
+  EXPIRED
+  CANCELLED
+}
+
+enum TicketStatus {
+  PENDING
+  ACCEPTED
+  PROTOCOL_CREATED
+  REJECTED
+  CANCELLED
+}
+
+enum TipoAcompanhamento {
+  VISITA_DOMICILIAR
+  ATENDIMENTO_PSICOSSOCIAL
+  VERIFICACAO_CONDICIONALIDADES
+  RENOVACAO
+  OUTRO
+}
+
+enum TipoAtendimento {
+  AGENDADO
+  DEMANDA_ESPONTANEA
+  URGENCIA
+  RETORNO
+}
+
+enum TipoAtestado {
+  MEDICO
+  COMPARECIMENTO
+  ACOMPANHANTE
+}
+
+enum TipoMedicamento {
+  COMPRIMIDO
+  CAPSULA
+  SOLUCAO_ORAL
+  SUSPENSAO
+  POMADA
+  CREME
+  GEL
+  INJETAVEL
+  XAROPE
+  OUTRO
+}
+
+enum TipoMoradia {
+  CASA
+  CASA_PROPRIA
+  APARTAMENTO
+  COMODO
+  BARRACO
+  OUTRO
+}
+
+enum TipoTurma {
+  REGULAR
+  INTEGRAL
+  EJA
+  ESPECIAL
+}
+
+enum TipoViagemTFD {
+  IDA
+  RETORNO
+  IDA_E_VOLTA
+}
+
+enum Turno {
+  MATUTINO
+  VESPERTINO
+  INTEGRAL
+  NOTURNO
+}
+
+enum TurnoPreferencia {
+  MATUTINO
+  VESPERTINO
+  INTEGRAL
+  INDIFERENTE
+}
+
+enum UnidadeMedida {
+  MG
+  G
+  ML
+  L
+  UNIDADE
+  FRASCO
+  AMPOLA
+  OUTRO
+}
+
+enum VeiculoStatus {
+  DISPONIVEL
+  EM_USO
+  MANUTENCAO
+  INATIVO
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  GOLD
+  REJECTED
 }

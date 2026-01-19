@@ -11,7 +11,7 @@
  * - Remove TODA a duplicação e código legado
  */
 
-import { PrismaClient, Conversation } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { BotResponse, MessageCardData } from './types';
 import { BotIntegrationService } from './BotIntegrationService';
 import { UltraZendMessagesAdapter } from './UltraZendMessagesAdapter';
@@ -19,6 +19,15 @@ import { SemanticSearchService } from './SemanticSearchService';
 import { OllamaService } from './OllamaService';
 
 const prisma = new PrismaClient();
+
+// Tipo genérico para Conversation com campos do bot (pode vir de qualquer schema)
+interface ConversationWithBot {
+  id: string;
+  botFlowType?: string | null;
+  botFlowStep?: number;
+  botFlowData?: any;
+  [key: string]: any;
+}
 
 /**
  * Tipos de fluxos conversacionais disponíveis
@@ -82,12 +91,12 @@ export class ConversationFlowManager {
    * Processa mensagem dentro de um fluxo ativo
    */
   async processFlowMessage(
-    conversation: Conversation,
+    conversation: ConversationWithBot,
     message: string,
     citizenId: string
   ): Promise<BotResponse> {
     const flowType = conversation.botFlowType as FlowType | null;
-    const flowStep = conversation.botFlowStep;
+    const flowStep = conversation.botFlowStep ?? 0;
     const flowData = (conversation.botFlowData as any) || {};
 
     if (!flowType) {

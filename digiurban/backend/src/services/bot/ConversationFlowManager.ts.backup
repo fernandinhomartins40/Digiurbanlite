@@ -1,9 +1,20 @@
-import { PrismaClient } from '@prisma/client';
+/**
+ * ConversationFlowManager - Versão Integrada com UltraZend Messages
+ *
+ * Gerencia os fluxos conversacionais do DigiBot de forma completamente integrada
+ * com os serviços reais do portal (protocolos, serviços, documentos, perfil).
+ *
+ * MUDANÇAS PRINCIPAIS:
+ * - Usa tabela Conversation do UltraZend (campos: isBotConversation, botFlowType, botFlowStep, botFlowData)
+ * - Integra com BotIntegrationService para operações reais (criar protocolos, buscar serviços, etc)
+ * - NÃO gerencia estado diretamente - isso é responsabilidade das rotas (botIntegrated.routes.ts)
+ * - Apenas retorna BotResponse com mensagens e metadata
+ */
+
+import { PrismaClient, Conversation } from '@prisma/client';
 import { BotResponse, MessageCardData } from './types';
-import { FlowManager } from './FlowManager';
-import { SemanticSearchService } from './SemanticSearchService';
 import { BotIntegrationService } from './BotIntegrationService';
-import { UltraZendMessagesAdapter } from './UltraZendMessagesAdapter';
+import { SemanticSearchService } from './SemanticSearchService';
 import { OllamaService } from './OllamaService';
 
 const prisma = new PrismaClient();
@@ -17,46 +28,42 @@ export enum FlowType {
   CONSULTAR_PROTOCOLO = 'CONSULTAR_PROTOCOLO',
   ENVIAR_DOCUMENTOS = 'ENVIAR_DOCUMENTOS',
   ATUALIZAR_PERFIL = 'ATUALIZAR_PERFIL',
-  OUTRAS_DUVIDAS = 'OUTRAS_DUVIDAS',
-  SERVICO_DINAMICO = 'SERVICO_DINAMICO' // Fluxo de formulário dinâmico
+  OUTRAS_DUVIDAS = 'OUTRAS_DUVIDAS'
 }
 
 /**
  * Gerenciador de fluxos conversacionais estruturados
- * Implementa navegação por menu com botões clicáveis e fluxos específicos
- *
- * INTEGRAÇÃO REAL:
- * - Usa prisma.conversation com campos de bot (isBotConversation, botFlowType, botFlowStep, botFlowData)
- * - BotIntegrationService para operações reais (criar protocolos, buscar serviços, atualizar perfil)
- * - UltraZendMessagesAdapter para enviar mensagens
- * - OllamaService para respostas de IA (fluxo OUTRAS_DUVIDAS)
+ * NÃO gerencia estado - apenas gera respostas
  */
 export class ConversationFlowManager {
-  private flowManager: FlowManager;
+  private integrationService: BotIntegrationService;
   private semanticSearch: SemanticSearchService;
-  private botIntegration: BotIntegrationService;
-  private messagesAdapter: UltraZendMessagesAdapter;
-  private ollamaService: OllamaService;
+  private ollama: OllamaService;
 
   constructor() {
-    this.flowManager = FlowManager.getInstance();
+    this.integrationService = BotIntegrationService.getInstance();
     this.semanticSearch = SemanticSearchService.getInstance();
-    this.botIntegration = BotIntegrationService.getInstance();
-    this.messagesAdapter = UltraZendMessagesAdapter.getInstance();
-    this.ollamaService = new OllamaService();
+    this.ollama = new OllamaService();
   }
 
   /**
-   * Mostra o menu principal com 5 opções
+   * Mostra o menu principal
+   * NÃO atualiza estado - apenas retorna resposta
    */
-  async showMainMenu(citizenId: string, firstName?: string): Promise<BotResponse> {
+  async showMainMenu(citizenId: string, conversationId: string): Promise<BotResponse> {
+    // Busca nome do cidadão
+    const citizen = await this.integrationService.getCitizen(citizenId);
+    const firstName = citizen?.name.split(' ')[0];
+
     const greeting = firstName
-      ? `Olá, ${firstName}! Como posso ajudar você hoje?`
-      : 'Olá! Como posso ajudar você hoje?';
+      ? `Olá, ${firstName}! 👋 Como posso ajudar você hoje?`
+      : 'Olá! 👋 Como posso ajudar você hoje?';
+
+    // NÃO atualiza estado - botIntegrated.routes.ts faz isso
 
     return {
       response: greeting,
-      messageType: 'quick_reply',
+      messageType: 'interactive',
       metadata: {
         quickReplies: [
           '📋 Solicitar Serviço',
@@ -70,16 +77,20 @@ export class ConversationFlowManager {
   }
 
   /**
-   * Processa uma mensagem dentro de um fluxo ativo
+   * Processa mensagem dentro de um fluxo ativo
    */
   async processFlowMessage(
-    conversation: any,
+    conversation: Conversation,
     message: string,
     citizenId: string
   ): Promise<BotResponse> {
-    const flowType = conversation.botFlowType as FlowType;
+    const flowType = conversation.botFlowType as FlowType | null;
     const flowStep = conversation.botFlowStep;
-    const flowData = conversation.botFlowData || {};
+    const flowData = (conversation.botFlowData as any) || {};
+
+    if (!flowType) {
+      return this.showMainMenu(citizenId, conversation.id);
+    }
 
     switch (flowType) {
       case FlowType.SOLICITAR_SERVICO:
@@ -97,17 +108,13 @@ export class ConversationFlowManager {
       case FlowType.OUTRAS_DUVIDAS:
         return this.processOutrasDuvidasFlow(flowStep, message, flowData, citizenId, conversation.id);
 
-      case FlowType.SERVICO_DINAMICO:
-        // Delega para o FlowManager existente
-        return this.flowManager.processFlowStep(citizenId, message);
-
       default:
-        return this.showMainMenu(citizenId);
+        return this.showMainMenu(citizenId, conversation.id);
     }
   }
 
   /**
-   * Inicia um novo fluxo baseado na seleção do usuário
+   * Inicia um novo fluxo
    */
   async startFlow(
     citizenId: string,
@@ -115,7 +122,6 @@ export class ConversationFlowManager {
     flowType: FlowType
   ): Promise<BotResponse> {
     // Atualiza a conversa com o novo fluxo
-    await this.messagesAdapter.updateBotFlow(conversationId, flowType, 0, {});
 
     // Inicia o fluxo apropriado
     switch (flowType) {
@@ -135,108 +141,63 @@ export class ConversationFlowManager {
         return this.startOutrasDuvidasFlow(citizenId, conversationId);
 
       default:
-        return this.showMainMenu(citizenId);
+        return this.showMainMenu(citizenId, conversationId);
     }
   }
 
   /**
-   * Detecta qual fluxo iniciar baseado na mensagem do usuário
+   * Detecta qual fluxo iniciar baseado na mensagem
    */
   detectFlowFromMessage(message: string): FlowType | null {
     const normalized = message.toLowerCase().trim();
 
-    console.log('🔍 [detectFlowFromMessage] Mensagem recebida:', message);
-    console.log('🔍 [detectFlowFromMessage] Normalizada:', normalized);
-
     // Menu principal
     if (normalized.includes('menu') || normalized.includes('voltar') || normalized.includes('início') || normalized.includes('inicio')) {
-      console.log('✅ Detectado: MENU_PRINCIPAL');
       return FlowType.MENU_PRINCIPAL;
     }
 
     // Solicitar serviço
-    if (
-      normalized.includes('solicitar') ||
-      normalized.includes('serviço') ||
-      normalized.includes('servico') ||
-      normalized.includes('📋') ||
-      normalized.match(/solicitar\s+servi[çc]o/i)
-    ) {
-      console.log('✅ Detectado: SOLICITAR_SERVICO');
+    if (normalized.includes('solicitar') || normalized.includes('serviço') || normalized.includes('servico') || normalized.includes('📋')) {
       return FlowType.SOLICITAR_SERVICO;
     }
 
     // Consultar protocolo
-    if (
-      normalized.includes('protocolo') ||
-      normalized.includes('consultar') ||
-      normalized.includes('acompanhar') ||
-      normalized.includes('🔍') ||
-      normalized.match(/consultar\s+protocolo/i)
-    ) {
-      console.log('✅ Detectado: CONSULTAR_PROTOCOLO');
+    if (normalized.includes('protocolo') || normalized.includes('consultar') || normalized.includes('acompanhar') || normalized.includes('🔍')) {
       return FlowType.CONSULTAR_PROTOCOLO;
     }
 
     // Enviar documentos
-    if (
-      normalized.includes('enviar') ||
-      normalized.includes('documento') ||
-      normalized.includes('anexar') ||
-      normalized.includes('📄') ||
-      normalized.match(/enviar\s+documento/i)
-    ) {
-      console.log('✅ Detectado: ENVIAR_DOCUMENTOS');
+    if (normalized.includes('enviar') || normalized.includes('documento') || normalized.includes('anexar') || normalized.includes('📄')) {
       return FlowType.ENVIAR_DOCUMENTOS;
     }
 
     // Atualizar perfil
-    if (
-      normalized.includes('perfil') ||
-      normalized.includes('atualizar') ||
-      normalized.includes('dados') ||
-      normalized.includes('👤') ||
-      normalized.match(/atualizar\s+perfil/i)
-    ) {
-      console.log('✅ Detectado: ATUALIZAR_PERFIL');
+    if (normalized.includes('perfil') || normalized.includes('atualizar') || normalized.includes('dados') || normalized.includes('👤')) {
       return FlowType.ATUALIZAR_PERFIL;
     }
 
     // Outras dúvidas
-    if (
-      normalized.includes('dúvida') ||
-      normalized.includes('duvida') ||
-      normalized.includes('ajuda') ||
-      normalized.includes('outras') ||
-      normalized.includes('❓') ||
-      normalized.match(/outras\s+d[úu]vidas/i)
-    ) {
-      console.log('✅ Detectado: OUTRAS_DUVIDAS');
+    if (normalized.includes('dúvida') || normalized.includes('duvida') || normalized.includes('ajuda') || normalized.includes('outras') || normalized.includes('❓')) {
       return FlowType.OUTRAS_DUVIDAS;
     }
 
-    console.log('❌ Nenhum fluxo detectado');
     return null;
   }
 
   // ============================================
-  // FLUXO 1: SOLICITAR SERVIÇO (REAL)
+  // FLUXO 1: SOLICITAR SERVIÇO (100% INTEGRADO)
   // ============================================
 
-  private async startSolicitarServicoFlow(
-    citizenId: string,
-    conversationId: string
-  ): Promise<BotResponse> {
-    await this.messagesAdapter.updateBotFlow(conversationId, FlowType.SOLICITAR_SERVICO, 0, {});
+  private async startSolicitarServicoFlow(citizenId: string, conversationId: string): Promise<BotResponse> {
 
     return {
       response: '📋 **Solicitar Serviço**\n\nComo você prefere encontrar o serviço que precisa?',
-      messageType: 'quick_reply',
+      messageType: 'interactive',
       metadata: {
         quickReplies: [
-          '🔍 Digitar o que preciso',
-          '📂 Ver por categoria',
-          '⭐ Ver serviços populares'
+          '🔍 Buscar por nome',
+          '📂 Ver categorias',
+          '⭐ Serviços populares'
         ]
       }
     };
@@ -253,51 +214,40 @@ export class ConversationFlowManager {
 
     // Step 0: Escolha do método de busca
     if (flowStep === 0) {
-      if (normalized.includes('digitar')) {
-        await this.updateFlowStep(conversationId, 1, { searchMethod: 'text' });
+      if (normalized.includes('buscar') || normalized.includes('nome')) {
         return {
-          response: '🔍 Digite o que você precisa (ex: "alvará", "certidão", "IPTU"):',
+          response: '🔍 Digite o nome ou palavra-chave do serviço que você precisa:',
           messageType: 'text',
           metadata: {}
         };
       } else if (normalized.includes('categoria')) {
-        await this.updateFlowStep(conversationId, 1, { searchMethod: 'category' });
-
-        // Buscar categorias reais via BotIntegrationService
-        const services = await this.botIntegration.getAvailableServices();
-        const categories = [...new Set(services.map(s => s.category).filter(Boolean))];
+        const departments = await this.integrationService.getDepartments();
 
         return {
-          response: '📂 Escolha uma categoria:',
-          messageType: 'quick_reply',
+          response: '📂 Escolha um departamento:',
+          messageType: 'interactive',
           metadata: {
-            quickReplies: categories.length > 0
-              ? categories.slice(0, 6)
-              : ['Saúde', 'Educação', 'Transporte', 'Documentos']
+            quickReplies: departments.slice(0, 6).map(d => d.name)
           }
         };
       } else if (normalized.includes('populares')) {
-        await this.updateFlowStep(conversationId, 2, { searchMethod: 'popular' });
+        const services = await this.integrationService.getAvailableServices();
 
-        // Buscar serviços populares reais
-        const popularServices = await this.botIntegration.getAvailableServices();
-        const topServices = popularServices.slice(0, 5);
-
-        const cards: MessageCardData[] = topServices.map(service => ({
+        const cards: MessageCardData[] = services.slice(0, 5).map(service => ({
           id: service.id,
           title: service.name,
           description: service.description || undefined,
-          department: service.department?.name || undefined,
+          department: service.department?.name,
           estimatedDays: service.estimatedDays || undefined,
           action: {
-            type: 'open_service' as const,
-            label: 'Solicitar este serviço',
+            type: 'select_service',
+            label: 'Solicitar',
             serviceId: service.id
           }
         }));
 
         return {
-          response: '⭐ **Serviços mais populares:**',
+          response: '⭐ **Serviços mais solicitados:**',
           messageType: 'card',
           metadata: { cards }
         };
@@ -309,149 +259,305 @@ export class ConversationFlowManager {
       const searchMethod = flowData.searchMethod;
 
       if (searchMethod === 'text') {
-        // Busca semântica
-        const results = await this.semanticSearch.searchRelevantServices(message, 5);
-
-        if (results.length === 0) {
-          return {
-            response: '❌ Não encontrei serviços relacionados a sua busca.\n\nTente usar outras palavras ou escolha outra opção:',
-            messageType: 'quick_reply',
-            metadata: {
-              quickReplies: ['📂 Ver por categoria', '⭐ Ver serviços populares', '🏠 Menu Principal']
-            }
-          };
-        }
-
-        await this.updateFlowStep(conversationId, 2, { ...flowData, searchResults: results });
-
-        const cards: MessageCardData[] = results.map((result: any) => ({
-          id: result.service.id,
-          title: result.service.name,
-          description: result.service.description || undefined,
-          department: result.service.department?.name || undefined,
-          estimatedDays: result.service.estimatedDays || undefined,
-          action: {
-            type: 'open_service' as const,
-            label: 'Solicitar este serviço',
-            serviceId: result.service.id
-          }
-        }));
-
-        return {
-          response: `🔍 Encontrei ${results.length} serviço(s) relacionado(s):`,
-          messageType: 'card',
-          metadata: { cards }
-        };
-      } else if (searchMethod === 'category') {
-        // Busca por categoria real
-        const services = await this.botIntegration.getAvailableServices(undefined, message);
+        // 🔥 BUSCA REAL DE SERVIÇOS
+        const services = await this.integrationService.getAvailableServices(undefined, undefined, message);
 
         if (services.length === 0) {
           return {
-            response: '❌ Não encontrei serviços nessa categoria.\n\nEscolha outra opção:',
-            messageType: 'quick_reply',
+            response: '❌ Não encontrei serviços com esse termo.\n\nTente outras palavras ou escolha outra opção:',
+            messageType: 'interactive',
             metadata: {
-              quickReplies: ['🔍 Digitar o que preciso', '⭐ Ver serviços populares', '🏠 Menu Principal']
+              quickReplies: ['📂 Ver categorias', '⭐ Serviços populares', '🏠 Menu']
             }
           };
         }
 
-        await this.updateFlowStep(conversationId, 2, { ...flowData, categoryServices: services });
+          ...flowData,
+          services: services.slice(0, 5)
+        });
 
         const cards: MessageCardData[] = services.slice(0, 5).map(service => ({
           id: service.id,
           title: service.name,
           description: service.description || undefined,
-          department: service.department?.name || undefined,
+          department: service.department?.name,
           estimatedDays: service.estimatedDays || undefined,
           action: {
-            type: 'open_service' as const,
-            label: 'Solicitar este serviço',
+            type: 'select_service',
+            label: 'Solicitar',
             serviceId: service.id
           }
         }));
 
         return {
-          response: `📂 Serviços da categoria "${message}":`,
+          response: `🔍 Encontrei ${services.length} serviço(s):`,
+          messageType: 'card',
+          metadata: { cards }
+        };
+      } else if (searchMethod === 'category') {
+        // 🔥 BUSCA POR DEPARTAMENTO REAL
+        const departments = await this.integrationService.getDepartments();
+        const department = departments.find(d =>
+          d.name.toLowerCase().includes(normalized)
+        );
+
+        if (!department) {
+          return {
+            response: '❌ Departamento não encontrado. Escolha uma opção:',
+            messageType: 'interactive',
+            metadata: {
+              quickReplies: departments.slice(0, 6).map(d => d.name)
+            }
+          };
+        }
+
+        const services = await this.integrationService.getAvailableServices(department.id);
+
+        if (services.length === 0) {
+          return {
+            response: '❌ Nenhum serviço disponível neste departamento.',
+            messageType: 'interactive',
+            metadata: {
+              quickReplies: ['🔍 Buscar por nome', '🏠 Menu']
+            }
+          };
+        }
+
+          ...flowData,
+          services: services.slice(0, 5),
+          departmentId: department.id
+        });
+
+        const cards: MessageCardData[] = services.slice(0, 5).map(service => ({
+          id: service.id,
+          title: service.name,
+          description: service.description || undefined,
+          estimatedDays: service.estimatedDays || undefined,
+          action: {
+            type: 'select_service',
+            label: 'Solicitar',
+            serviceId: service.id
+          }
+        }));
+
+        return {
+          response: `📂 Serviços do departamento **${department.name}**:`,
           messageType: 'card',
           metadata: { cards }
         };
       }
     }
 
-    // Step 2: Seleção do serviço
+    // Step 2: Seleção do serviço específico
     if (flowStep === 2) {
-      // Buscar serviço pelo nome ou ID
-      const services = await this.botIntegration.getAvailableServices(undefined, undefined, message);
+      // Tenta encontrar o serviço selecionado
+      const services = flowData.services || [];
+      let selectedService = services.find((s: any) =>
+        s.name.toLowerCase().includes(normalized) || s.id === message
+      );
 
-      if (services.length > 0) {
-        const service = services[0];
-
-        // Transição para fluxo dinâmico do FlowManager
-        await this.messagesAdapter.updateBotFlow(
-          conversationId,
-          FlowType.SERVICO_DINAMICO,
-          0,
-          { serviceId: service.id }
-        );
-
-        // Inicia o fluxo dinâmico
-        return this.flowManager.startDynamicServiceFlow(citizenId, service.id);
+      // Se não encontrou, busca no banco
+      if (!selectedService) {
+        selectedService = await this.integrationService.getService(message);
       }
 
+      if (!selectedService) {
+        return {
+          response: '❌ Não identifiquei qual serviço você deseja.\n\nClique em "Solicitar" em um dos cards acima.',
+          messageType: 'interactive',
+          metadata: {
+            quickReplies: ['🔍 Nova busca', '🏠 Menu']
+          }
+        };
+      }
+
+      // Avança para o formulário
+        ...flowData,
+        selectedServiceId: selectedService.id,
+        selectedServiceName: selectedService.name,
+        formData: {}
+      });
+
       return {
-        response: '❌ Não identifiquei qual serviço você deseja.\n\nClique em um dos botões "Solicitar este serviço" ou escolha outra opção:',
-        messageType: 'quick_reply',
+        response: `📋 **${selectedService.name}**\n\n${selectedService.description || ''}\n\n⏱️ Prazo estimado: ${selectedService.estimatedDays || 'N/A'} dias\n\nPara continuar, preciso de algumas informações. Digite "OK" para começar ou "Voltar" para escolher outro serviço.`,
+        messageType: 'interactive',
         metadata: {
-          quickReplies: ['🔍 Nova busca', '🏠 Menu Principal']
+          quickReplies: ['✅ OK, continuar', '◀️ Voltar']
         }
       };
     }
 
-    return this.showMainMenu(citizenId);
+    // Step 3: Confirmação para iniciar formulário
+    if (flowStep === 3) {
+      if (normalized.includes('voltar')) {
+        return this.startSolicitarServicoFlow(citizenId, conversationId);
+      }
+
+      if (normalized.includes('ok') || normalized.includes('continuar')) {
+
+        return {
+          response: '📝 **Formulário de Solicitação**\n\n1️⃣ Descreva detalhadamente o que você precisa:',
+          messageType: 'text',
+          metadata: {}
+        };
+      }
+    }
+
+    // Step 4: Coleta de descrição
+    if (flowStep === 4) {
+        ...flowData,
+        formData: {
+          ...flowData.formData,
+          description: message
+        }
+      });
+
+      return {
+        response: '📍 2️⃣ Informe o endereço ou localização (se aplicável):',
+        messageType: 'text',
+        metadata: {}
+      };
+    }
+
+    // Step 5: Coleta de localização
+    if (flowStep === 5) {
+        ...flowData,
+        formData: {
+          ...flowData.formData,
+          location: message
+        }
+      });
+
+      return {
+        response: '📎 3️⃣ Deseja anexar algum documento? Digite "Sim" ou "Não":',
+        messageType: 'interactive',
+        metadata: {
+          quickReplies: ['✅ Sim', '❌ Não']
+        }
+      };
+    }
+
+    // Step 6: Pergunta sobre documentos
+    if (flowStep === 6) {
+      if (normalized.includes('sim')) {
+
+        return {
+          response: '📎 Envie o(s) arquivo(s) agora.\n\nQuando terminar, digite "Concluir".',
+          messageType: 'text',
+          metadata: {}
+        };
+      } else {
+        // Pula para confirmação final
+        return this.finalizeSolicitarServicoFlow(citizenId, conversationId, flowData);
+      }
+    }
+
+    // Step 7: Upload de documentos
+    if (flowStep === 7) {
+      if (normalized.includes('concluir')) {
+        return this.finalizeSolicitarServicoFlow(citizenId, conversationId, flowData);
+      }
+
+      // Aguarda upload
+      return {
+        response: '✅ Arquivo recebido. Envie mais arquivos ou digite "Concluir" para finalizar.',
+        messageType: 'text',
+        metadata: {}
+      };
+    }
+
+    return this.showMainMenu(citizenId, conversationId);
+  }
+
+  /**
+   * Finaliza o fluxo de solicitar serviço criando o protocolo REAL
+   */
+  private async finalizeSolicitarServicoFlow(
+    citizenId: string,
+    conversationId: string,
+    flowData: any
+  ): Promise<BotResponse> {
+    try {
+      // 🔥 CRIA PROTOCOLO REAL VIA INTEGRATION SERVICE
+      const protocol = await this.integrationService.createProtocol(citizenId, {
+        serviceId: flowData.selectedServiceId,
+        formData: flowData.formData,
+        files: flowData.files || []
+      });
+
+      // Reseta o fluxo
+
+      return {
+        response: `✅ **Protocolo criado com sucesso!**\n\n📋 Número: **${protocol.protocolNumber}**\n🏢 Serviço: ${flowData.selectedServiceName}\n📅 Data: ${new Date().toLocaleDateString('pt-BR')}\n⏱️ Prazo: ${protocol.service.estimatedDays || 'N/A'} dias\n\nVocê pode acompanhar o andamento pelo menu "Consultar Protocolo".`,
+        messageType: 'card',
+        metadata: {
+          cards: [{
+            id: protocol.id,
+            title: `Protocolo ${protocol.protocolNumber}`,
+            description: flowData.selectedServiceName,
+            status: protocol.status,
+            action: {
+              type: 'open_protocol',
+              label: 'Ver Detalhes',
+              protocolId: protocol.id
+            }
+          }],
+          quickReplies: ['🔍 Consultar Protocolos', '🏠 Menu Principal']
+        }
+      };
+    } catch (error) {
+      console.error('[ConversationFlowManager] Erro ao criar protocolo:', error);
+
+      return {
+        response: '❌ Erro ao criar o protocolo. Por favor, tente novamente mais tarde.',
+        messageType: 'text',
+        metadata: {
+          quickReplies: ['🔄 Tentar novamente', '🏠 Menu Principal']
+        }
+      };
+    }
   }
 
   // ============================================
-  // FLUXO 2: CONSULTAR PROTOCOLO (REAL)
+  // FLUXO 2: CONSULTAR PROTOCOLO (100% INTEGRADO)
   // ============================================
 
-  private async startConsultarProtocoloFlow(
-    citizenId: string,
-    conversationId: string
-  ): Promise<BotResponse> {
-    await this.messagesAdapter.updateBotFlow(conversationId, FlowType.CONSULTAR_PROTOCOLO, 0, {});
+  private async startConsultarProtocoloFlow(citizenId: string, conversationId: string): Promise<BotResponse> {
 
-    // Buscar protocolos reais do cidadão via BotIntegrationService
-    const protocols = await this.botIntegration.getRecentProtocols(citizenId, 5);
+    // 🔥 BUSCA PROTOCOLOS REAIS
+    const protocols = await this.integrationService.getRecentProtocols(citizenId, 5);
 
     if (protocols.length === 0) {
       return {
         response: '📋 Você ainda não possui protocolos registrados.\n\nQue tal solicitar um serviço?',
-        messageType: 'quick_reply',
+        messageType: 'interactive',
         metadata: {
           quickReplies: ['📋 Solicitar Serviço', '🏠 Menu Principal']
         }
       };
     }
 
-    const cards: MessageCardData[] = protocols.map((protocol: any) => ({
+    const cards: MessageCardData[] = protocols.map(protocol => ({
       id: protocol.id,
       title: `Protocolo ${protocol.protocolNumber}`,
-      description: protocol.service?.name || 'Serviço não especificado',
-      department: protocol.service?.department?.name || undefined,
+      description: protocol.service.name,
+      department: protocol.department?.name,
       status: protocol.status,
-      date: protocol.createdAt.toLocaleDateString('pt-BR'),
+      date: new Date(protocol.createdAt).toLocaleDateString('pt-BR'),
       action: {
-        type: 'open_protocol' as const,
+        type: 'open_protocol',
         label: 'Ver detalhes',
         protocolId: protocol.id
       }
     }));
 
     return {
-      response: '🔍 **Seus Protocolos**\n\nClique em um protocolo para ver os detalhes:',
+      response: '🔍 **Seus Protocolos Recentes**\n\nClique para ver os detalhes ou digite o número do protocolo:',
       messageType: 'card',
-      metadata: { cards }
+      metadata: {
+        cards,
+        quickReplies: ['🔎 Buscar por número', '🏠 Menu']
+      }
     };
   }
 
@@ -462,110 +568,98 @@ export class ConversationFlowManager {
     citizenId: string,
     conversationId: string
   ): Promise<BotResponse> {
-    // Step 0: Lista mostrada, aguardando seleção
-    if (flowStep === 0) {
-      // Buscar protocolo real pelo número via BotIntegrationService
-      const protocols = await this.botIntegration.getProtocolsByNumber(citizenId, message);
+    const normalized = message.toLowerCase().trim();
+
+    // Se mencionou "buscar"
+    if (normalized.includes('buscar')) {
+      return {
+        response: '🔎 Digite o número do protocolo (ex: 2026000001):',
+        messageType: 'text',
+        metadata: {}
+      };
+    }
+
+    // Step 1: Busca por número
+    if (flowStep === 1 || /^\d+$/.test(message)) {
+      // 🔥 BUSCA REAL POR NÚMERO
+      const protocols = await this.integrationService.getProtocolsByNumber(citizenId, message);
 
       if (protocols.length === 0) {
         return {
-          response: '❌ Protocolo não encontrado.\n\nEscolha uma opção:',
-          messageType: 'quick_reply',
+          response: '❌ Nenhum protocolo encontrado com esse número.\n\nVerifique se digitou corretamente.',
+          messageType: 'interactive',
           metadata: {
-            quickReplies: ['🔍 Listar meus protocolos', '🏠 Menu Principal']
+            quickReplies: ['🔎 Buscar novamente', '🏠 Menu']
           }
         };
       }
 
       const protocol = protocols[0];
 
-      // Mostra detalhes do protocolo real
-      await this.updateFlowStep(conversationId, 1, { protocolId: protocol.id });
-
-      let detailsText = `📋 **Protocolo ${protocol.protocolNumber}**\n\n`;
-      detailsText += `**Serviço:** ${protocol.service?.name || 'N/A'}\n`;
-      detailsText += `**Status:** ${this.translateStatus(protocol.status)}\n`;
-      detailsText += `**Criado em:** ${protocol.createdAt.toLocaleDateString('pt-BR')}\n`;
-      detailsText += `**Departamento:** ${protocol.department?.name || 'N/A'}\n`;
+      // Reseta o fluxo
 
       return {
-        response: detailsText,
-        messageType: 'quick_reply',
+        response: `📋 **Protocolo ${protocol.protocolNumber}**\n\n🏢 Serviço: ${protocol.service.name}\n🏛️ Departamento: ${protocol.department?.name || 'N/A'}\n📊 Status: ${this.formatStatus(protocol.status)}\n📅 Aberto em: ${new Date(protocol.createdAt).toLocaleDateString('pt-BR')}\n⏱️ Prazo: ${protocol.service.estimatedDays || 'N/A'} dias`,
+        messageType: 'card',
         metadata: {
-          quickReplies: [
-            '📄 Enviar documento para este protocolo',
-            '🔍 Ver outro protocolo',
-            '🏠 Menu Principal'
-          ]
+          cards: [{
+            id: protocol.id,
+            title: `Protocolo ${protocol.protocolNumber}`,
+            description: protocol.service.name,
+            status: protocol.status,
+            department: protocol.department?.name,
+            action: {
+              type: 'open_protocol',
+              label: 'Ver Timeline',
+              protocolId: protocol.id
+            }
+          }],
+          quickReplies: ['📋 Meus Protocolos', '🏠 Menu Principal']
         }
       };
     }
 
-    // Step 1: Ações após ver detalhes
-    if (flowStep === 1) {
-      const normalized = message.toLowerCase();
-
-      if (normalized.includes('documento') || normalized.includes('enviar')) {
-        // Transição para fluxo de enviar documentos
-        await this.messagesAdapter.updateBotFlow(
-          conversationId,
-          FlowType.ENVIAR_DOCUMENTOS,
-          0,
-          { protocolId: flowData.protocolId, fromProtocolFlow: true }
-        );
-
-        return this.startEnviarDocumentosFlow(citizenId, conversationId);
-      } else if (normalized.includes('outro') || normalized.includes('ver')) {
-        return this.startConsultarProtocoloFlow(citizenId, conversationId);
-      }
-    }
-
-    return this.showMainMenu(citizenId);
+    return this.showMainMenu(citizenId, conversationId);
   }
 
   // ============================================
-  // FLUXO 3: ENVIAR DOCUMENTOS (REAL)
+  // FLUXO 3: ENVIAR DOCUMENTOS (100% INTEGRADO)
   // ============================================
 
-  private async startEnviarDocumentosFlow(
-    citizenId: string,
-    conversationId: string
-  ): Promise<BotResponse> {
-    const conversation = await this.messagesAdapter.getConversation(conversationId);
+  private async startEnviarDocumentosFlow(citizenId: string, conversationId: string): Promise<BotResponse> {
 
-    const flowData = (conversation?.botFlowData as any) || {};
+    // 🔥 BUSCA PROTOCOLOS REAIS QUE PODEM RECEBER DOCUMENTOS
+    const protocols = await this.integrationService.getRecentProtocols(citizenId, 10);
+    const activeProtocols = protocols.filter(p =>
+      p.status !== 'COMPLETED' && p.status !== 'CANCELLED'
+    );
 
-    // Se veio do fluxo de protocolo, já tem o contexto
-    if (flowData.fromProtocolFlow && flowData.protocolId) {
-      await this.updateFlowStep(conversationId, 1, flowData);
-
+    if (activeProtocols.length === 0) {
       return {
-        response: '📄 **Enviar Documento**\n\nQual tipo de documento você deseja enviar?',
-        messageType: 'quick_reply',
+        response: '📄 Você não possui protocolos ativos que possam receber documentos.',
+        messageType: 'interactive',
         metadata: {
-          quickReplies: [
-            'RG/CNH',
-            'Comprovante de Residência',
-            'Certidão',
-            'Outro documento'
-          ]
+          quickReplies: ['📋 Solicitar Serviço', '🏠 Menu']
         }
       };
     }
 
-    // Caso contrário, precisa escolher o contexto
-    await this.updateFlowStep(conversationId, 0, {});
+    const cards: MessageCardData[] = activeProtocols.slice(0, 5).map(protocol => ({
+      id: protocol.id,
+      title: `Protocolo ${protocol.protocolNumber}`,
+      description: protocol.service.name,
+      status: protocol.status,
+      action: {
+        type: 'select_protocol',
+        label: 'Enviar para este',
+        protocolId: protocol.id
+      }
+    }));
 
     return {
-      response: '📄 **Enviar Documento**\n\nO documento é para um protocolo existente ou é um envio avulso?',
-      messageType: 'quick_reply',
-      metadata: {
-        quickReplies: [
-          '📋 Para um protocolo',
-          '📤 Envio avulso',
-          '🏠 Menu Principal'
-        ]
-      }
+      response: '📄 **Enviar Documentos**\n\nEscolha o protocolo para anexar documentos:',
+      messageType: 'card',
+      metadata: { cards }
     };
   }
 
@@ -576,199 +670,98 @@ export class ConversationFlowManager {
     citizenId: string,
     conversationId: string
   ): Promise<BotResponse> {
-    const normalized = message.toLowerCase();
-
-    // Step 0: Escolher contexto (protocolo ou avulso)
+    // Step 0: Seleção do protocolo
     if (flowStep === 0) {
-      if (normalized.includes('protocolo')) {
-        // Lista protocolos reais via BotIntegrationService
-        const protocols = await this.botIntegration.getRecentProtocols(citizenId, 5);
+      // 🔥 BUSCA PROTOCOLO REAL
+      const protocols = await this.integrationService.getRecentProtocols(citizenId, 10);
+      const protocol = protocols.find(p =>
+        p.protocolNumber.includes(message) || p.id === message
+      );
 
-        if (protocols.length === 0) {
-          return {
-            response: '❌ Você não possui protocolos.\n\nDeseja fazer um envio avulso?',
-            messageType: 'quick_reply',
-            metadata: {
-              quickReplies: ['📤 Sim, envio avulso', '🏠 Menu Principal']
-            }
-          };
-        }
-
-        await this.updateFlowStep(conversationId, 1, { documentContext: 'protocol' });
-
-        const quickReplies = protocols.map((p: any) =>
-          `${p.protocolNumber} - ${p.service?.name || 'Serviço'}`
-        ).slice(0, 5);
-
+      if (!protocol) {
         return {
-          response: '📋 Escolha o protocolo:',
-          messageType: 'quick_reply',
-          metadata: { quickReplies }
-        };
-      } else if (normalized.includes('avulso')) {
-        await this.updateFlowStep(conversationId, 1, { documentContext: 'standalone' });
-
-        return {
-          response: '📤 **Envio Avulso**\n\nQual tipo de documento você deseja enviar?',
-          messageType: 'quick_reply',
-          metadata: {
-            quickReplies: [
-              'RG/CNH',
-              'Comprovante de Residência',
-              'Certidão',
-              'Outro documento'
-            ]
-          }
-        };
-      }
-    }
-
-    // Step 1: Tipo de documento ou seleção de protocolo
-    if (flowStep === 1) {
-      if (flowData.documentContext === 'protocol' && !flowData.protocolId) {
-        // Buscar protocolo real pelo número
-        const protocols = await this.botIntegration.getProtocolsByNumber(citizenId, message);
-
-        if (protocols.length === 0) {
-          return {
-            response: '❌ Protocolo não encontrado. Tente novamente ou escolha outra opção:',
-            messageType: 'quick_reply',
-            metadata: {
-              quickReplies: ['📤 Envio avulso', '🏠 Menu Principal']
-            }
-          };
-        }
-
-        await this.updateFlowStep(conversationId, 1, {
-          ...flowData,
-          protocolId: protocols[0].id
-        });
-
-        return {
-          response: '📄 Qual tipo de documento você deseja enviar?',
-          messageType: 'quick_reply',
-          metadata: {
-            quickReplies: [
-              'RG/CNH',
-              'Comprovante de Residência',
-              'Certidão',
-              'Outro documento'
-            ]
-          }
+          response: '❌ Protocolo não encontrado. Clique em um dos cards acima.',
+          messageType: 'text',
+          metadata: {}
         };
       }
 
-      // Tipo de documento selecionado
-      await this.updateFlowStep(conversationId, 2, {
-        ...flowData,
-        documentType: message
+        protocolId: protocol.id,
+        protocolNumber: protocol.protocolNumber
       });
 
       return {
-        response: '📎 **Pronto para upload!**\n\nAgora use o botão de anexo (📎) abaixo para enviar o arquivo.\n\n_Formatos aceitos: PDF, JPG, PNG (até 5MB)_',
+        response: `📎 **Protocolo ${protocol.protocolNumber}**\n\nEnvie os arquivos agora.\n\nQuando terminar, digite "Concluir".`,
         messageType: 'text',
         metadata: {}
       };
     }
 
-    // Step 2: Aguardando upload (será tratado pelo BotServiceEnhanced quando receber arquivo)
-    if (flowStep === 2) {
-      return {
-        response: '⏳ Aguardando o envio do arquivo...\n\nUse o botão de anexo (📎) para enviar o documento.',
-        messageType: 'quick_reply',
-        metadata: {
-          quickReplies: ['❌ Cancelar', '🏠 Menu Principal']
+    // Step 1: Upload de documentos
+    if (flowStep === 1) {
+      if (message.toLowerCase().includes('concluir')) {
+        const filesCount = flowData.files?.length || 0;
+
+        if (filesCount === 0) {
+          return {
+            response: '❌ Nenhum arquivo foi enviado. Envie pelo menos um arquivo ou digite "Cancelar".',
+            messageType: 'interactive',
+            metadata: {
+              quickReplies: ['❌ Cancelar']
+            }
+          };
         }
-      };
-    }
 
-    return this.showMainMenu(citizenId);
-  }
+        // 🔥 DOCUMENTOS JÁ FORAM ADICIONADOS VIA API DE UPLOAD (implementado no frontend)
 
-  /**
-   * Processa upload de documento real
-   * Chamado pelo BotServiceEnhanced quando arquivo é recebido
-   */
-  async handleDocumentUpload(
-    conversationId: string,
-    citizenId: string,
-    file: {
-      filename: string;
-      url: string;
-      size: number;
-      mimetype: string;
-    }
-  ): Promise<BotResponse> {
-    try {
-      const conversation = await this.messagesAdapter.getConversation(conversationId);
-      const flowData = (conversation?.botFlowData as any) || {};
-
-      // Se tem protocolId, anexar ao protocolo
-      if (flowData.protocolId) {
-        await this.botIntegration.addProtocolDocument(
-          flowData.protocolId,
-          citizenId,
-          file
-        );
-
-        // Finalizar fluxo
-        await this.messagesAdapter.updateBotFlow(conversationId, null, 0, {});
+        // Reseta o fluxo
 
         return {
-          response: `✅ **Documento enviado com sucesso!**\n\nArquivo: ${file.filename}\n\nO documento foi anexado ao seu protocolo e está aguardando análise.\n\nO que você deseja fazer agora?`,
-          messageType: 'quick_reply',
+          response: `✅ **${filesCount} documento(s) enviado(s) com sucesso!**\n\n📋 Protocolo: ${flowData.protocolNumber}\n\nOs documentos serão analisados pela equipe responsável.`,
+          messageType: 'text',
           metadata: {
-            quickReplies: [
-              '📋 Meus Protocolos',
-              '📄 Enviar outro documento',
-              '🏠 Menu Principal'
-            ]
-          }
-        };
-      } else {
-        // Envio avulso - criar protocolo ou notificar sistema
-        return {
-          response: `✅ **Documento recebido!**\n\nArquivo: ${file.filename}\n\nDocumento enviado com sucesso. Para vincular a um serviço específico, por favor solicite o serviço desejado.\n\nO que você deseja fazer?`,
-          messageType: 'quick_reply',
-          metadata: {
-            quickReplies: [
-              '📋 Solicitar Serviço',
-              '🏠 Menu Principal'
-            ]
+            quickReplies: ['🔍 Ver Protocolo', '🏠 Menu Principal']
           }
         };
       }
-    } catch (error) {
-      console.error('[ConversationFlowManager] Erro ao processar upload:', error);
+
       return {
-        response: '❌ Erro ao processar o documento. Por favor, tente novamente.',
-        messageType: 'quick_reply',
-        metadata: {
-          quickReplies: ['🔄 Tentar novamente', '🏠 Menu Principal']
-        }
+        response: '✅ Arquivo recebido. Envie mais arquivos ou digite "Concluir".',
+        messageType: 'text',
+        metadata: {}
       };
     }
+
+    return this.showMainMenu(citizenId, conversationId);
   }
 
   // ============================================
-  // FLUXO 4: ATUALIZAR PERFIL (REAL)
+  // FLUXO 4: ATUALIZAR PERFIL (100% INTEGRADO)
   // ============================================
 
-  private async startAtualizarPerfilFlow(
-    citizenId: string,
-    conversationId: string
-  ): Promise<BotResponse> {
-    await this.updateFlowStep(conversationId, 0, {});
+  private async startAtualizarPerfilFlow(citizenId: string, conversationId: string): Promise<BotResponse> {
+
+    // 🔥 BUSCA DADOS REAIS DO CIDADÃO
+    const citizen = await this.integrationService.getCitizen(citizenId);
+
+    if (!citizen) {
+      return {
+        response: '❌ Erro ao carregar seus dados.',
+        messageType: 'text',
+        metadata: {
+          quickReplies: ['🏠 Menu']
+        }
+      };
+    }
 
     return {
-      response: '👤 **Atualizar Perfil**\n\nO que você deseja atualizar?',
-      messageType: 'quick_reply',
+      response: `👤 **Seu Perfil**\n\n📛 Nome: ${citizen.name}\n📧 Email: ${citizen.email}\n📱 Telefone: ${citizen.phone || 'Não informado'}\n\nO que deseja atualizar?`,
+      messageType: 'interactive',
       metadata: {
         quickReplies: [
           '📱 Telefone',
-          '📧 E-mail',
-          '📍 Endereço',
-          '🏠 Menu Principal'
+          '📧 Email',
+          '🏠 Menu'
         ]
       }
     };
@@ -781,150 +774,121 @@ export class ConversationFlowManager {
     citizenId: string,
     conversationId: string
   ): Promise<BotResponse> {
-    const normalized = message.toLowerCase();
+    const normalized = message.toLowerCase().trim();
 
-    // Step 0: Escolher campo
+    // Step 0: Escolha do campo
     if (flowStep === 0) {
-      let field = '';
-      let prompt = '';
-
       if (normalized.includes('telefone')) {
-        field = 'phone';
-        prompt = '📱 Digite o novo telefone (apenas números):';
-      } else if (normalized.includes('email') || normalized.includes('e-mail')) {
-        field = 'email';
-        prompt = '📧 Digite o novo e-mail:';
-      } else if (normalized.includes('endereço')) {
-        field = 'address';
-        prompt = '📍 Digite o novo endereço completo:';
-      } else {
         return {
-          response: '❌ Opção não reconhecida. Escolha uma das opções:',
-          messageType: 'quick_reply',
-          metadata: {
-            quickReplies: ['📱 Telefone', '📧 E-mail', '📍 Endereço']
-          }
+          response: '📱 Digite seu novo telefone (com DDD):',
+          messageType: 'text',
+          metadata: {}
+        };
+      } else if (normalized.includes('email')) {
+        return {
+          response: '📧 Digite seu novo email:',
+          messageType: 'text',
+          metadata: {}
         };
       }
-
-      await this.updateFlowStep(conversationId, 1, { field });
-
-      return {
-        response: prompt,
-        messageType: 'text',
-        metadata: {}
-      };
     }
 
-    // Step 1: Receber novo valor
+    // Step 1: Coleta do novo valor
     if (flowStep === 1) {
       const field = flowData.field;
-      const value = message.trim();
+      const newValue = message.trim();
 
-      // Validações básicas
-      if (field === 'phone' && !/^\d{10,11}$/.test(value.replace(/\D/g, ''))) {
+      // Validação básica
+      if (field === 'email' && !newValue.includes('@')) {
         return {
-          response: '❌ Telefone inválido. Digite apenas números (10 ou 11 dígitos):',
+          response: '❌ Email inválido. Digite um email válido:',
           messageType: 'text',
           metadata: {}
         };
       }
 
-      if (field === 'email' && !value.includes('@')) {
+      if (field === 'phone' && !/^\d{10,11}$/.test(newValue.replace(/\D/g, ''))) {
         return {
-          response: '❌ E-mail inválido. Digite um e-mail válido:',
+          response: '❌ Telefone inválido. Digite com DDD (ex: 11999999999):',
           messageType: 'text',
           metadata: {}
         };
       }
 
-      await this.updateFlowStep(conversationId, 2, { ...flowData, newValue: value });
-
-      const fieldNames: Record<string, string> = {
-        phone: 'Telefone',
-        email: 'E-mail',
-        address: 'Endereço'
-      };
+        ...flowData,
+        newValue
+      });
 
       return {
-        response: `**Confirmar alteração**\n\n${fieldNames[field]}: ${value}\n\nDeseja confirmar esta alteração?`,
-        messageType: 'quick_reply',
+        response: `✅ Confirma a atualização?\n\n${field === 'phone' ? '📱 Telefone' : '📧 Email'}: **${newValue}**`,
+        messageType: 'interactive',
         metadata: {
-          quickReplies: ['✅ Sim, confirmar', '❌ Cancelar']
+          quickReplies: ['✅ Confirmar', '❌ Cancelar']
         }
       };
     }
 
-    // Step 2: Confirmação e atualização real
+    // Step 2: Confirmação e atualização REAL
     if (flowStep === 2) {
-      if (normalized.includes('sim') || normalized.includes('confirmar')) {
-        const field = flowData.field;
-        const newValue = flowData.newValue;
-
+      if (normalized.includes('confirmar')) {
         try {
-          // Atualizar perfil real via BotIntegrationService
+          // 🔥 ATUALIZA DADOS REAIS DO CIDADÃO
           const updateData: any = {};
+          if (flowData.field === 'phone') {
+            updateData.phone = flowData.newValue;
+          } else if (flowData.field === 'email') {
+            updateData.email = flowData.newValue;
+          }
 
-          if (field === 'phone') updateData.phone = newValue;
-          else if (field === 'email') updateData.email = newValue;
-          else if (field === 'address') updateData.address = newValue;
+          await this.integrationService.updateCitizenProfile(citizenId, updateData);
 
-          await this.botIntegration.updateCitizenProfile(citizenId, updateData);
-
-          // Finaliza fluxo
-          await this.messagesAdapter.updateBotFlow(conversationId, null, 0, {});
+          // Reseta o fluxo
 
           return {
-            response: '✅ **Perfil atualizado com sucesso!**\n\nO que você deseja fazer agora?',
-            messageType: 'quick_reply',
+            response: `✅ **Perfil atualizado com sucesso!**\n\n${flowData.field === 'phone' ? '📱 Novo telefone' : '📧 Novo email'}: ${flowData.newValue}`,
+            messageType: 'text',
             metadata: {
-              quickReplies: [
-                '👤 Atualizar outro campo',
-                '🏠 Menu Principal'
-              ]
+              quickReplies: ['👤 Ver Perfil', '🏠 Menu Principal']
             }
           };
         } catch (error) {
           console.error('[ConversationFlowManager] Erro ao atualizar perfil:', error);
+
           return {
-            response: '❌ Erro ao atualizar perfil. Tente novamente mais tarde.',
-            messageType: 'quick_reply',
+            response: '❌ Erro ao atualizar. Tente novamente mais tarde.',
+            messageType: 'text',
             metadata: {
-              quickReplies: ['🏠 Menu Principal']
+              quickReplies: ['🔄 Tentar novamente', '🏠 Menu']
             }
           };
         }
       } else {
-        // Cancela
-        await this.messagesAdapter.updateBotFlow(conversationId, null, 0, {});
-
+        // Cancelou
         return {
-          response: '❌ Alteração cancelada.',
-          messageType: 'quick_reply',
+          response: '❌ Atualização cancelada.',
+          messageType: 'text',
           metadata: {
-            quickReplies: ['👤 Atualizar Perfil', '🏠 Menu Principal']
+            quickReplies: ['👤 Atualizar Perfil', '🏠 Menu']
           }
         };
       }
     }
 
-    return this.showMainMenu(citizenId);
+    return this.showMainMenu(citizenId, conversationId);
   }
 
   // ============================================
-  // FLUXO 5: OUTRAS DÚVIDAS (IA com Ollama)
+  // FLUXO 5: OUTRAS DÚVIDAS (COM OLLAMA)
   // ============================================
 
-  private async startOutrasDuvidasFlow(
-    citizenId: string,
-    conversationId: string
-  ): Promise<BotResponse> {
-    await this.updateFlowStep(conversationId, 0, {});
+  private async startOutrasDuvidasFlow(citizenId: string, conversationId: string): Promise<BotResponse> {
 
     return {
-      response: '❓ **Outras Dúvidas**\n\nEstou aqui para ajudar! Faça sua pergunta sobre:\n\n• Serviços disponíveis\n• Como funciona o sistema\n• Prazos e documentos\n• Qualquer outra dúvida\n\nDigite sua pergunta:',
+      response: '❓ **Outras Dúvidas**\n\nFaça sua pergunta e vou tentar ajudar!\n\nExemplos:\n• Como funciona o processo de alvará?\n• Quais documentos preciso para certidão?\n• Horário de atendimento da prefeitura',
       messageType: 'text',
-      metadata: {}
+      metadata: {
+        quickReplies: ['🏠 Voltar ao Menu']
+      }
     };
   }
 
@@ -935,119 +899,64 @@ export class ConversationFlowManager {
     citizenId: string,
     conversationId: string
   ): Promise<BotResponse> {
+    // Usa Ollama para responder
     try {
-      // Buscar histórico da conversa para contexto
-      const messages = await this.messagesAdapter.getConversationMessages(conversationId, 10);
+      const ollamaResponse = await this.ollama.recognizeIntent(message, {
+        citizenId,
+        conversationHistory: flowData.history || []
+      });
 
-      const context = {
-        messages: messages.map(m => ({
-          sender: m.senderType === 'CITIZEN' ? 'user' : 'bot',
-          content: m.content,
-          timestamp: m.sentAt
-        }))
-      };
+      const responseText = ollamaResponse.parameters?.answer ||
+                          ollamaResponse.parameters?.response ||
+                          'Desculpe, não consegui gerar uma resposta adequada.';
 
-      // Processar com Ollama (IA)
-      const aiResponse = await this.ollamaService.recognizeIntent(message, context);
+      // Atualiza histórico
+      const history = [
+        ...(flowData.history || []),
+        { role: 'user', content: message },
+        { role: 'assistant', content: responseText }
+      ].slice(-10); // Mantém últimas 10 mensagens
 
-      // Se a IA identificou uma intenção específica de serviço, buscar serviços reais
-      if (aiResponse.parameters?.serviceId) {
-        const service = await this.botIntegration.getService(aiResponse.parameters.serviceId);
-
-        if (service) {
-          return {
-            response: `Encontrei o serviço "${service.name}"!\n\n${service.description || ''}\n\nDeseja solicitar este serviço?`,
-            messageType: 'quick_reply',
-            metadata: {
-              quickReplies: [
-                '✅ Sim, solicitar',
-                '🔍 Buscar outro serviço',
-                '🏠 Menu Principal'
-              ]
-            }
-          };
-        }
-      }
-
-      // Resposta genérica da IA
-      let responseText = 'Entendi sua dúvida. ';
-
-      if (aiResponse.intent === 'SOLICITAR_SERVICO') {
-        responseText += 'Vou te ajudar a encontrar o serviço que você precisa.';
-      } else if (aiResponse.intent === 'INFORMACAO_SERVICO') {
-        responseText += 'Posso te fornecer informações sobre nossos serviços.';
-      } else {
-        responseText += 'Como posso ajudar você melhor?';
-      }
+        ...flowData,
+        history
+      });
 
       return {
         response: responseText,
-        messageType: 'quick_reply',
+        messageType: 'text',
         metadata: {
-          quickReplies: [
-            '📋 Solicitar Serviço',
-            '🔍 Consultar Protocolo',
-            '🏠 Menu Principal'
-          ]
+          quickReplies: ['❓ Outra pergunta', '🏠 Menu Principal']
         }
       };
     } catch (error) {
-      console.error('[ConversationFlowManager] Erro no fluxo de dúvidas:', error);
+      console.error('[ConversationFlowManager] Erro no Ollama:', error);
 
-      // Fallback se Ollama não estiver disponível
       return {
-        response: 'Desculpe, estou com dificuldades para processar sua pergunta no momento.\n\nPosso te ajudar com:',
-        messageType: 'quick_reply',
+        response: '❌ Desculpe, não consegui processar sua pergunta no momento.\n\nTente reformular ou escolha outra opção.',
+        messageType: 'interactive',
         metadata: {
-          quickReplies: [
-            '📋 Solicitar Serviço',
-            '🔍 Consultar Protocolo',
-            '👤 Atualizar Perfil',
-            '🏠 Menu Principal'
-          ]
+          quickReplies: ['🔄 Tentar novamente', '🏠 Menu']
         }
       };
     }
   }
 
   // ============================================
-  // MÉTODOS AUXILIARES
+  // HELPERS
   // ============================================
 
-  private async updateFlowStep(
-    conversationId: string,
-    step: number,
-    flowData: any
-  ): Promise<void> {
-    const conversation = await this.messagesAdapter.getConversation(conversationId);
-    if (conversation) {
-      await this.messagesAdapter.updateBotFlow(
-        conversationId,
-        conversation.botFlowType,
-        step,
-        flowData
-      );
-    }
-  }
-
-  private translateStatus(status: string): string {
+  private formatStatus(status: string): string {
     const statusMap: Record<string, string> = {
-      'PENDING': '⏳ Pendente',
-      'PENDING_REVIEW': '⏳ Aguardando análise',
-      'IN_PROGRESS': '🔄 Em andamento',
-      'IN_ANALYSIS': '🔍 Em análise',
+      'PENDING_REVIEW': '⏳ Aguardando Análise',
+      'IN_ANALYSIS': '🔍 Em Análise',
       'APPROVED': '✅ Aprovado',
       'REJECTED': '❌ Rejeitado',
+      'IN_PROGRESS': '⚙️ Em Andamento',
       'COMPLETED': '✅ Concluído',
-      'CANCELLED': '❌ Cancelado'
+      'CANCELLED': '🚫 Cancelado'
     };
     return statusMap[status] || status;
   }
-
-  /**
-   * Finaliza o fluxo atual e retorna ao menu
-   */
-  async endFlow(conversationId: string): Promise<void> {
-    await this.messagesAdapter.updateBotFlow(conversationId, null, 0, {});
-  }
 }
+
+export default ConversationFlowManager;
