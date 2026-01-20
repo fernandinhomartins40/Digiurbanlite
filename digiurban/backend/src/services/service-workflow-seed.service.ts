@@ -11,6 +11,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import * as serviceWorkflowService from './service-workflow.service';
 import { getTemplateForModuleType } from './workflow-templates';
+import { generateCompleteWorkflowBySubtype } from './workflow-template.service';
 
 /**
  * Lista de todos os moduleTypes do sistema antigo
@@ -669,12 +670,15 @@ const genericWorkflowStages = [
 
 /**
  * Criar workflows para todos os serviços sem workflow
+ * ✅ SISTEMA UNIFICADO: Usa generateCompleteWorkflowBySubtype() baseado em 4 subtipos
  */
 export async function seedAllServiceWorkflows() {
-  console.log('🌱 Criando workflows para serviços sem workflow...');
+  console.log('🌱 [UNIFICADO] Criando workflows para serviços sem workflow...');
+  console.log('   → Usando geração por SUBTIPO (🔵🟢🔴🟡)');
 
   let created = 0;
   let skipped = 0;
+  let errors = 0;
 
   // Buscar todos os serviços ativos
   const services = await prisma.serviceSimplified.findMany({
@@ -702,57 +706,34 @@ export async function seedAllServiceWorkflows() {
         continue;
       }
 
-      // Determinar qual workflow usar
-      let workflowData: {
-        serviceId: string;
-        name: string;
-        description: string;
-        stages: any[];
-        defaultSLA: number;
+      // ✅ SISTEMA UNIFICADO: Gerar workflow baseado no subtipo
+      const workflowData = generateCompleteWorkflowBySubtype(service as any);
+
+      // Adicionar serviceId ao workflowData
+      const completeWorkflowData = {
+        serviceId: service.id,
+        ...workflowData
       };
 
-      if (service.moduleType && specificWorkflows[service.moduleType]) {
-        // Serviço COM_DADOS com workflow específico
-        const specificWorkflow = specificWorkflows[service.moduleType];
-        workflowData = {
-          serviceId: service.id,
-          name: specificWorkflow.name,
-          description: specificWorkflow.description,
-          stages: specificWorkflow.stages,
-          defaultSLA: specificWorkflow.defaultSLA
-        };
-        console.log(`   ✅ ${service.name} - workflow ESPECÍFICO (${service.moduleType})`);
-      } else if (service.serviceType === 'SEM_DADOS' || !service.moduleType) {
-        // Serviço SEM_DADOS - usa workflow genérico
-        workflowData = {
-          serviceId: service.id,
-          name: `Workflow - ${service.name}`,
-          description: `Workflow genérico para ${service.name}`,
-          stages: genericWorkflowStages,
-          defaultSLA: service.estimatedDays || 13
-        };
-        console.log(`   ✅ ${service.name} - workflow GENÉRICO (SEM_DADOS)`);
-      } else {
-        // Serviço COM_DADOS sem workflow específico ainda - usa genérico
-        workflowData = {
-          serviceId: service.id,
-          name: `Workflow - ${service.name}`,
-          description: `Workflow genérico para ${service.name} (aguardando workflow específico)`,
-          stages: genericWorkflowStages,
-          defaultSLA: service.estimatedDays || 13
-        };
-        console.log(`   ⚠️  ${service.name} - workflow GENÉRICO TEMPORÁRIO (COM_DADOS sem workflow específico)`);
-      }
-
       // Criar o workflow usando o service
-      await serviceWorkflowService.createServiceWorkflow(workflowData);
+      await serviceWorkflowService.createServiceWorkflow(completeWorkflowData);
 
+      const subtype = service.serviceSubtype || 'CONSULTIVO';
+      const subtypeIcon = {
+        'CAPTURA_COMPLETA': '🔵',
+        'SOLICITACAO_SIMPLES': '🟢',
+        'PAGAMENTO': '🔴',
+        'CONSULTIVO': '🟡'
+      }[subtype] || '⚪';
+
+      console.log(`   ✅ ${service.name} - workflow ${subtypeIcon} ${subtype} (${workflowData.stages.length} etapas)`);
       created++;
     } catch (error) {
       console.error(`   ❌ Erro ao processar ${service.name}:`, error);
+      errors++;
     }
   }
 
-  console.log(`\n✅ ServiceWorkflows: ${created} criados, ${skipped} já existiam`);
-  return { created, skipped };
+  console.log(`\n✅ ServiceWorkflows UNIFICADOS: ${created} criados, ${skipped} já existiam, ${errors} erros`);
+  return { created, skipped, errors };
 }

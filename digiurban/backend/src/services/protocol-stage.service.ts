@@ -124,8 +124,8 @@ export async function completeStage(
 
   // ✅ VALIDAÇÃO ALINHADA: Verificar condições da etapa baseado no workflow
   if (result === 'APPROVED') {
-    const workflowService = await import('./module-workflow.service');
-    const validation = await workflowService.validateStageConditions(
+    const serviceWorkflowService = await import('./service-workflow.service');
+    const validation = await serviceWorkflowService.validateStageConditions(
       stage.protocolId,
       stage.stageOrder
     );

@@ -16,6 +16,8 @@ import {
   getRoleLevel,
   isTeamRole
 } from '../types/roles';
+import { generateCompleteWorkflowBySubtype } from '../services/workflow-template.service';
+import { createServiceWorkflow } from '../services/service-workflow.service';
 // COMENTADO TEMPORARIAMENTE - arquivo não existe
 // import {
 //   getUserDepartments,
@@ -556,6 +558,20 @@ router.post(
       }
         }
         });
+
+    // ✅ AUTO-GERAÇÃO DE WORKFLOW: Gerar workflow automaticamente
+    try {
+      const workflowData = generateCompleteWorkflowBySubtype(service as any);
+      await createServiceWorkflow({
+        serviceId: service.id,
+        ...workflowData
+      });
+      console.log(`✅ Workflow gerado automaticamente para serviço: ${service.name}`);
+    } catch (workflowError) {
+      console.error(`⚠️  Erro ao gerar workflow para serviço ${service.name}:`, workflowError);
+      // Não falhar a criação do serviço se workflow falhar
+      // O workflow pode ser criado manualmente depois
+    }
 
     // ✅ NORMALIZAÇÃO: Garantir que requiredDocuments seja sempre array
     const normalizedService = normalizeServiceData(service);

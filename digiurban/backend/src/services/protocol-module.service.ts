@@ -301,70 +301,52 @@ export class ProtocolModuleService {
 
   /**
    * Aplicar workflow ao protocolo
+   * ✅ SISTEMA UNIFICADO: Usa service-workflow.service (por serviceId, não moduleType)
    */
   private async applyWorkflowToProtocol(protocolId: string, moduleType: string) {
     try {
-      // Importar serviços de workflow
-      const workflowService = await import('./module-workflow.service');
+      // Importar serviços (NOVO SISTEMA)
+      const serviceWorkflowService = await import('./service-workflow.service');
       const slaService = await import('./protocol-sla.service');
 
-      // 1. Buscar workflow do módulo
-      const workflow = await workflowService.getWorkflowByModuleType(moduleType);
+      // Buscar protocolo para obter serviceId
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: protocolId },
+        include: { service: true }
+      });
+
+      if (!protocol || !protocol.service) {
+        throw new Error('Protocolo ou serviço não encontrado');
+      }
+
+      // 1. Buscar workflow do SERVIÇO (não mais por moduleType)
+      const workflow = await serviceWorkflowService.getWorkflowByServiceId(protocol.serviceId);
 
       if (!workflow) {
-        // ✅ CORREÇÃO: Se não tem workflow, criar workflow default automaticamente
-        console.warn(`⚠️ Workflow não encontrado para ${moduleType}. Criando workflow padrão...`);
+        // ✅ AUTO-GERAÇÃO: Se não tem workflow, gerar automaticamente usando subtipo
+        console.warn(`⚠️ Workflow não encontrado para serviço "${protocol.service.name}". Gerando workflow automático...`);
 
-        const protocol = await prisma.protocolSimplified.findUnique({
-          where: { id: protocolId },
-          include: { service: true }
-        });
-
-        if (!protocol || !protocol.service) {
-          throw new Error('Protocolo ou serviço não encontrado');
-        }
-
-        // Importar template service para gerar workflow default
         const templateService = await import('./workflow-template.service');
 
-        // Gerar workflow minimalista (Recepção → Atendimento → Conclusão)
-        const defaultWorkflow = templateService.generateMinimalWorkflowForSemDados(
-          protocol.service.name,
-          protocol.service.description,
-          protocol.service.estimatedDays
-        );
+        // Gerar workflow UNIFICADO baseado em subtipo
+        const generatedWorkflow = templateService.generateCompleteWorkflowBySubtype(protocol.service as any);
 
-        // Criar workflow no banco
-        await prisma.moduleWorkflow.create({
-          data: {
-            moduleType: moduleType,
-            name: defaultWorkflow.name,
-            description: defaultWorkflow.description,
-            stages: defaultWorkflow.stages as any,
-            defaultSLA: defaultWorkflow.defaultSLA,
-            rules: defaultWorkflow.rules
-          }
+        // Criar workflow no banco usando ServiceWorkflow
+        await serviceWorkflowService.createServiceWorkflow({
+          serviceId: protocol.serviceId,
+          ...generatedWorkflow
         });
 
-        console.log(`✅ Workflow default criado para ${moduleType}`);
+        const subtype = protocol.service.serviceSubtype || 'CONSULTIVO';
+        console.log(`✅ Workflow UNIFICADO criado automaticamente (${subtype}) para "${protocol.service.name}"`);
 
-        // Aplicar workflow recém-criado
-        await workflowService.applyWorkflowToProtocol(protocolId, moduleType);
-
-        // Criar SLA
-        if (defaultWorkflow.defaultSLA) {
-          await slaService.createSLA({
-            protocolId,
-            workingDays: defaultWorkflow.defaultSLA
-          });
-        }
-
-        console.log(`✅ Workflow default aplicado ao protocolo ${protocolId}`);
+        // Aplicar workflow recém-criado (recursão segura - não entra em loop pois workflow agora existe)
+        await this.applyWorkflowToProtocol(protocolId, moduleType);
         return;
       }
 
-      // 2. Aplicar workflow (criar etapas)
-      await workflowService.applyWorkflowToProtocol(protocolId, moduleType);
+      // 2. Aplicar workflow (criar etapas baseado no ServiceWorkflow)
+      await serviceWorkflowService.applyWorkflowToProtocol(protocolId);
 
       // 3. Criar SLA se definido
       if (workflow.defaultSLA) {

@@ -748,6 +748,372 @@ export function generateSpecializedWorkflow(input: {
   };
 }
 
+/**
+ * ============================================================================
+ * SISTEMA UNIFICADO - GERAÇÃO COMPLETA POR SUBTIPO
+ * ============================================================================
+ *
+ * Função ÚNICA e DEFINITIVA para gerar workflows com metadata completa.
+ * Baseada nos 4 subtipos de serviço (🔵🟢🔴🟡) e mantém estrutura validada.
+ */
+
+/**
+ * Helpers para classificação de documentos
+ */
+function isIdentityDocument(doc: { type: string }): boolean {
+  const type = doc.type.toUpperCase();
+  return type.includes('RG') ||
+         type.includes('CPF') ||
+         type.includes('IDENTIDADE') ||
+         type.includes('CERTIDAO') ||
+         type.includes('CNH');
+}
+
+function isAddressDocument(doc: { type: string }): boolean {
+  const type = doc.type.toUpperCase();
+  return (type.includes('COMPROVANTE') || type.includes('COMPROVA')) &&
+         (type.includes('RESIDENCIA') || type.includes('ENDERECO'));
+}
+
+/**
+ * Parse documentos do serviço
+ */
+function parseServiceDocuments(requiredDocuments: any): Array<{ type: string; name: string }> {
+  if (!requiredDocuments) return [];
+
+  // Se for string JSON, fazer parse
+  let docs = requiredDocuments;
+  if (typeof docs === 'string') {
+    try {
+      docs = JSON.parse(docs);
+    } catch (e) {
+      console.error('Erro ao fazer parse de requiredDocuments:', e);
+      return [];
+    }
+  }
+
+  // Se for array de strings, converter para objetos
+  if (Array.isArray(docs)) {
+    return docs.map(doc => {
+      if (typeof doc === 'string') {
+        return { type: doc, name: doc };
+      }
+      return { type: doc.type || doc.name || '', name: doc.name || doc.type || '' };
+    });
+  }
+
+  return [];
+}
+
+/**
+ * Extrai campos do formSchema
+ */
+function extractFieldsFromSchema(formSchema: any): Array<{ id: string; label: string; required: boolean }> {
+  if (!formSchema) return [];
+
+  // Se for string JSON, fazer parse
+  let schema = formSchema;
+  if (typeof schema === 'string') {
+    try {
+      schema = JSON.parse(schema);
+    } catch (e) {
+      console.error('Erro ao fazer parse de formSchema:', e);
+      return [];
+    }
+  }
+
+  if (!schema.properties) return [];
+
+  const requiredFields = schema.required || [];
+  const fields: Array<{ id: string; label: string; required: boolean }> = [];
+
+  Object.keys(schema.properties).forEach(fieldId => {
+    const field = schema.properties[fieldId];
+    fields.push({
+      id: fieldId,
+      label: field.title || fieldId,
+      required: requiredFields.includes(fieldId)
+    });
+  });
+
+  return fields;
+}
+
+/**
+ * FUNÇÃO PRINCIPAL: Gera workflow completo baseado em subtipo
+ *
+ * @param service - Serviço do Prisma com todos os dados
+ * @returns Workflow com metadata completa e estrutura validada
+ */
+export function generateCompleteWorkflowBySubtype(service: ServiceSimplified): CreateWorkflowData {
+  const subtype = service.serviceSubtype || 'CONSULTIVO';
+  const totalSLA = service.estimatedDays || 10;
+
+  // Extrair e processar documentos
+  const docs = parseServiceDocuments(service.requiredDocuments);
+  const identityDocs = docs.filter(isIdentityDocument);
+  const addressDocs = docs.filter(isAddressDocument);
+  const specificDocs = docs.filter(d => !isIdentityDocument(d) && !isAddressDocument(d));
+
+  // Extrair campos do formulário
+  const fields = extractFieldsFromSchema(service.formSchema);
+  const requiredFieldIds = fields.filter(f => f.required).map(f => f.id);
+  const allFieldIds = fields.map(f => f.id);
+
+  const stages: Omit<WorkflowStage, 'id'>[] = [];
+  let currentOrder = 1;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ETAPA 1: RECEPÇÃO (SEMPRE PRESENTE)
+  // ═══════════════════════════════════════════════════════════════════
+  stages.push({
+    name: 'Recepção',
+    order: currentOrder++,
+    description: 'Recebimento e registro inicial da solicitação',
+    slaDays: 1,
+    availableTabs: ['resumo', 'comunicacao'],
+    primaryTab: 'resumo',
+    requiredDocumentTypes: [],
+    requiredFormFieldIds: [],
+    allowedActions: ['APPROVE'],
+    canSkip: false,
+    requiresApproval: true,
+    stageType: 'RECEPTION',
+    actionLabels: { APPROVE: 'Iniciar protocolo' }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ETAPAS INTERMEDIÁRIAS - BASEADAS NO SUBTIPO
+  // ═══════════════════════════════════════════════════════════════════
+
+  switch (subtype) {
+    case 'CAPTURA_COMPLETA': // 🔵 Workflow COMPLETO (5-7 etapas)
+      // Análise Documental
+      if (identityDocs.length > 0 || addressDocs.length > 0) {
+        stages.push({
+          name: 'Análise Documental',
+          order: currentOrder++,
+          description: 'Verificação de documentos de identificação e comprovantes',
+          slaDays: Math.ceil(totalSLA * 0.25),
+          availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+          primaryTab: 'documentos',
+          requiredDocumentTypes: [...identityDocs.map(d => d.type), ...addressDocs.map(d => d.type)],
+          requiredFormFieldIds: [],
+          allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING'],
+          canSkip: false,
+          requiresApproval: true,
+          actionLabels: {
+            APPROVE: 'Aprovar documentos',
+            REJECT: 'Rejeitar por documentação',
+            CREATE_PENDING: 'Solicitar correção de documentos'
+          }
+        });
+      }
+
+      // Validação de Dados
+      if (fields.length > 0) {
+        stages.push({
+          name: 'Validação de Dados',
+          order: currentOrder++,
+          description: 'Verificação e validação dos dados do formulário',
+          slaDays: Math.ceil(totalSLA * 0.2),
+          availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
+          primaryTab: 'dados',
+          requiredDocumentTypes: [],
+          requiredFormFieldIds: requiredFieldIds,
+          allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING', 'REQUEST_INFO'],
+          canSkip: false,
+          requiresApproval: true,
+          actionLabels: {
+            APPROVE: 'Aprovar dados informados',
+            REJECT: 'Rejeitar por dados incorretos',
+            CREATE_PENDING: 'Solicitar correção de dados',
+            REQUEST_INFO: 'Solicitar informações adicionais'
+          }
+        });
+      }
+
+      // Análise Técnica (se houver documentos específicos)
+      if (specificDocs.length > 0) {
+        stages.push({
+          name: 'Análise Técnica',
+          order: currentOrder++,
+          description: 'Avaliação técnica de documentos específicos',
+          slaDays: Math.ceil(totalSLA * 0.25),
+          availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
+          primaryTab: 'documentos',
+          requiredDocumentTypes: specificDocs.map(d => d.type),
+          requiredFormFieldIds: allFieldIds,
+          allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING', 'REQUEST_INFO'],
+          canSkip: false,
+          requiresApproval: true,
+          actionLabels: {
+            APPROVE: 'Aprovar análise técnica',
+            REJECT: 'Reprovar por questões técnicas',
+            CREATE_PENDING: 'Solicitar documentação adicional',
+            REQUEST_INFO: 'Solicitar esclarecimentos'
+          }
+        });
+      }
+
+      // Aprovação Final
+      stages.push({
+        name: 'Aprovação Final',
+        order: currentOrder++,
+        description: 'Aprovação final pela coordenação',
+        slaDays: Math.ceil(totalSLA * 0.2),
+        availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: docs.map(d => d.type),
+        requiredFormFieldIds: allFieldIds,
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false,
+        requiresApproval: true,
+        actionLabels: {
+          APPROVE: 'Aprovar solicitação',
+          REJECT: 'Reprovar solicitação'
+        }
+      });
+      break;
+
+    case 'SOLICITACAO_SIMPLES': // 🟢 Workflow MÉDIO (3-4 etapas)
+      stages.push({
+        name: 'Análise',
+        order: currentOrder++,
+        description: 'Análise da solicitação e documentos',
+        slaDays: Math.ceil(totalSLA * 0.5),
+        availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
+        primaryTab: 'dados',
+        requiredDocumentTypes: docs.map(d => d.type),
+        requiredFormFieldIds: requiredFieldIds,
+        allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING'],
+        canSkip: false,
+        requiresApproval: true,
+        actionLabels: {
+          APPROVE: 'Aprovar solicitação',
+          REJECT: 'Rejeitar solicitação',
+          CREATE_PENDING: 'Solicitar correções'
+        }
+      });
+
+      stages.push({
+        name: 'Aprovação',
+        order: currentOrder++,
+        description: 'Aprovação final',
+        slaDays: Math.ceil(totalSLA * 0.3),
+        availableTabs: ['resumo', 'pendencias', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFieldIds: [],
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false,
+        requiresApproval: true,
+        actionLabels: {
+          APPROVE: 'Aprovar',
+          REJECT: 'Reprovar'
+        }
+      });
+      break;
+
+    case 'PAGAMENTO': // 🔴 Workflow PAGAMENTO (4 etapas)
+      stages.push({
+        name: 'Validação de Débitos',
+        order: currentOrder++,
+        description: 'Verificação de débitos e valores',
+        slaDays: 1,
+        availableTabs: ['resumo', 'dados', 'payment', 'comunicacao'],
+        primaryTab: 'payment',
+        requiredDocumentTypes: [],
+        requiredFormFieldIds: requiredFieldIds,
+        allowedActions: ['APPROVE', 'REJECT'],
+        canSkip: false,
+        requiresApproval: true,
+        actionLabels: {
+          APPROVE: 'Validar débitos',
+          REJECT: 'Rejeitar por inconsistência'
+        }
+      });
+
+      stages.push({
+        name: 'Processamento Pagamento',
+        order: currentOrder++,
+        description: 'Processamento do pagamento',
+        slaDays: Math.ceil(totalSLA * 0.6),
+        availableTabs: ['resumo', 'payment', 'comunicacao'],
+        primaryTab: 'payment',
+        requiredDocumentTypes: [],
+        requiredFormFieldIds: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false,
+        requiresApproval: false,
+        actionLabels: {
+          APPROVE: 'Confirmar pagamento'
+        }
+      });
+      break;
+
+    case 'CONSULTIVO': // 🟡 Workflow MÍNIMO (3 etapas)
+    default:
+      stages.push({
+        name: 'Processamento',
+        order: currentOrder++,
+        description: 'Processamento da consulta',
+        slaDays: Math.ceil(totalSLA * 0.8),
+        availableTabs: ['resumo', 'comunicacao'],
+        primaryTab: 'resumo',
+        requiredDocumentTypes: [],
+        requiredFormFieldIds: [],
+        allowedActions: ['APPROVE'],
+        canSkip: false,
+        requiresApproval: false,
+        actionLabels: {
+          APPROVE: 'Processar consulta'
+        }
+      });
+      break;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ETAPA FINAL: CONCLUSÃO (SEMPRE PRESENTE)
+  // ═══════════════════════════════════════════════════════════════════
+  stages.push({
+    name: 'Conclusão',
+    order: currentOrder++,
+    description: 'Finalização e encerramento do protocolo',
+    slaDays: 1,
+    availableTabs: ['summary-final', 'document-generation', 'send', 'communication'],
+    primaryTab: 'summary-final',
+    requiredDocumentTypes: [],
+    requiredFormFieldIds: [],
+    allowedActions: ['APPROVE'],
+    canSkip: false,
+    requiresApproval: false,
+    stageType: 'CONCLUSION',
+    actionLabels: {
+      APPROVE: 'Concluir protocolo'
+    }
+  });
+
+  // Recalcular SLA total baseado nas etapas
+  const calculatedSLA = stages.reduce((sum, s) => sum + (s.slaDays || 0), 0);
+
+  return {
+    moduleType: service.moduleType || `SERVICE_${service.id}`,
+    name: `Workflow - ${service.name}`,
+    description: `Workflow ${subtype} para ${service.name}`,
+    defaultSLA: calculatedSLA,
+    stages,
+    rules: {
+      autoGenerated: true,
+      generatedAt: new Date().toISOString(),
+      source: 'unified_complete_generation',
+      subtype: subtype,
+      version: '3.0',
+      alignment: 'UNIFIED_SUBTYPE_BASED'
+    }
+  };
+}
+
 
 
 

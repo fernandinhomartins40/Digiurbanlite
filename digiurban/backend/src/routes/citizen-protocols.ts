@@ -12,7 +12,7 @@ import { upload, getProtocolFileUrl, ensureProtocolDir } from '../config/upload'
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
 import { DocumentStatus } from '@prisma/client';
-import { applyWorkflowToProtocol } from '../services/module-workflow.service';
+import { applyWorkflowToProtocol } from '../services/service-workflow.service';
 import { createProtocolSLA } from '../services/protocol-sla.service';
 import { sanitizeDocumentId, matchDocumentType, mapUploadedFilesToDocuments } from '../utils/document-mapping';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
@@ -325,7 +325,7 @@ router.post('/', upload.any(), async (req, res) => {
 
     // ✅ INICIALIZAR WORKFLOW OBRIGATORIAMENTE (FALHA SE NÃO CONSEGUIR)
     console.log(`📋 Inicializando workflow para protocolo ${protocol.id}`);
-    const stages = await applyWorkflowToProtocol(protocol.id, protocol.moduleType || undefined);
+    const stages = await applyWorkflowToProtocol(protocol.id);
 
     if (!stages || stages.length === 0) {
       // ❌ Serviço não tem workflow configurado - FALHA CRIAÇÃO

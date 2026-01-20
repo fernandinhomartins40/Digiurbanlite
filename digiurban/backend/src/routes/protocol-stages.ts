@@ -219,9 +219,9 @@ router.get(
       }
 
       // Importar dynamically para evitar circular dependency
-      const workflowService = await import('../services/module-workflow.service');
+      const serviceWorkflowService = await import('../services/service-workflow.service');
 
-      const validation = await workflowService.validateStageConditions(
+      const validation = await serviceWorkflowService.validateStageConditions(
         protocolId,
         stage.stageOrder
       );

@@ -3,7 +3,7 @@ import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { requireRole } from '../middleware/auth';
 import { UserRole } from '@prisma/client';
 import * as slaService from '../services/protocol-sla.service';
-import * as workflowService from '../services/module-workflow.service';
+import * as serviceWorkflowService from '../services/service-workflow.service';
 import { prisma } from '../lib/prisma';
 
 const router = express.Router();
@@ -356,15 +356,9 @@ router.post(
         try {
           console.log(`📋 Criando workflow para protocolo ${protocolId}`);
 
-          if (protocol.moduleType) {
-            // COM_DADOS: usar workflow do módulo
-            console.log(`   → Módulo: ${protocol.moduleType}`);
-            await workflowService.applyWorkflowToProtocol(protocolId, protocol.moduleType);
-          } else {
-            // SEM_DADOS: usar workflow genérico do serviço
-            console.log(`   → Serviço SEM_DADOS, usando ServiceWorkflow`);
-            await workflowService.applyWorkflowToProtocol(protocolId);
-          }
+          // ✅ SISTEMA UNIFICADO: Sempre usa ServiceWorkflow (por serviceId)
+          console.log(`   → Usando ServiceWorkflow unificado`);
+          await serviceWorkflowService.applyWorkflowToProtocol(protocolId);
 
           console.log('   ✓ Workflow criado com primeira etapa IN_PROGRESS');
         } catch (error) {
@@ -428,16 +422,15 @@ router.post(
  * Tenta criar SLA automaticamente a partir do workflow do módulo do protocolo.
  */
 async function ensureSLAFromWorkflow(protocolId: string) {
+  // ✅ SISTEMA UNIFICADO: Buscar workflow por serviceId
   const protocol = await prisma.protocolSimplified.findUnique({
     where: { id: protocolId },
-    select: { moduleType: true }
+    select: { serviceId: true }
   });
 
-  if (!protocol?.moduleType) return null;
+  if (!protocol?.serviceId) return null;
 
-  const workflow =
-    (await workflowService.getWorkflowByModuleType(protocol.moduleType)) ||
-    (await workflowService.getWorkflowByModuleType('GENERICO'));
+  const workflow = await serviceWorkflowService.getWorkflowByServiceId(protocol.serviceId);
 
   if (workflow?.defaultSLA) {
     return slaService.createSLA({
