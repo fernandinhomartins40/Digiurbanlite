@@ -177,7 +177,7 @@ export function useBotEnhanced() {
     files.forEach(file => formData.append('files', file));
     formData.append('conversationId', conversationIdRef.current);
 
-    const response = await fetch('/api/bot/upload', {
+    const response = await fetch('/api/bot-flow/upload', {
       method: 'POST',
       body: formData,
       credentials: 'include',
@@ -201,7 +201,7 @@ export function useBotEnhanced() {
    */
   const loadHistory = useCallback(async () => {
     try {
-      const response = await fetch('/api/bot/history', {
+      const response = await fetch('/api/bot-flow/active-execution', {
         credentials: 'include',
       });
 
@@ -212,12 +212,12 @@ export function useBotEnhanced() {
 
       const data = await response.json();
 
-      if (data.messages && data.messages.length > 0) {
-        setMessages(data.messages);
-        conversationIdRef.current = data.conversationId;
+      if (data.execution) {
+        conversationIdRef.current = data.execution.id;
+        // O histórico virá via WebSocket
       }
 
-      return data.messages || [];
+      return [];
     } catch (error) {
       console.error('[useBotEnhanced] Erro ao carregar histórico:', error);
       return [];

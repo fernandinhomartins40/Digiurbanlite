@@ -39,14 +39,29 @@ export function BotAnalyticsDashboard() {
 
   const loadAnalytics = async () => {
     try {
-      const response = await fetch(`/api/bot/analytics?days=${period}`, {
+      const response = await fetch(`/api/admin/flows/stats/overview`, {
         credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Erro ao carregar analytics');
 
       const data = await response.json();
-      setStats(data);
+
+      // Adapta formato para o novo sistema de fluxos
+      const adaptedStats = {
+        totalConversations: data.stats?.executions?.total || 0,
+        activeConversations: data.stats?.executions?.active || 0,
+        avgRating: 4.5, // Placeholder - implementar sistema de rating
+        analytics: data.stats?.topFlows?.map((flow: any) => ({
+          intent: flow.flowName,
+          totalCount: flow.executionCount,
+          successCount: flow.executionCount,
+          transferCount: 0,
+          date: new Date().toISOString()
+        })) || []
+      };
+
+      setStats(adaptedStats);
     } catch (error) {
       console.error('Erro:', error);
     } finally {
