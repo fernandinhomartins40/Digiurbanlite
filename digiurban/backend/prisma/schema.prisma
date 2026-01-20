@@ -183,6 +183,7 @@ model Citizen {
   botConversations    BotConversation[]
   proactiveNotifications ProactiveNotification[]
   botUploads          BotUpload[]
+  flowExecutions      FlowExecution[]
 
   @@unique([cpf])
   @@map("citizens")
@@ -5079,4 +5080,59 @@ model BotUpload {
   @@index([conversationId])
   @@index([uploadedAt])
   @@map("bot_uploads")
+}
+
+// ========================================
+// SISTEMA DE FLUXOS PROGRAMADOS DO BOT
+// ========================================
+
+// Definições de fluxos conversacionais
+model FlowDefinition {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  version     String   @default("1.0.0")
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false) // Fluxo padrão do sistema
+  municipioId String?  // Fluxo customizado por município
+  nodes       Json     // Array de nodos do fluxo
+  metadata    Json?    // Tags, categorias, ícones, etc
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?  // ID do usuário que criou
+
+  // Relacionamentos
+  executions  FlowExecution[]
+
+  @@index([municipioId])
+  @@index([isActive])
+  @@index([isDefault])
+  @@map("flow_definitions")
+}
+
+// Execuções de fluxos (estado de conversação)
+model FlowExecution {
+  id              String   @id @default(cuid())
+  citizenId       String
+  flowId          String
+  conversationId  String?  // Vincula com UltraZend Messages
+  currentNodeId   String   // ID do nodo atual
+  state           Json     // Estado completo: dados coletados, variáveis, etc
+  history         Json     // Histórico de navegação (array de node IDs)
+  status          String   // ACTIVE, COMPLETED, CANCELLED, ERROR
+  errorMessage    String?  @db.Text
+  startedAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+
+  // Relacionamentos
+  citizen         Citizen         @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  flow            FlowDefinition  @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@index([citizenId])
+  @@index([flowId])
+  @@index([conversationId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("flow_executions")
 }

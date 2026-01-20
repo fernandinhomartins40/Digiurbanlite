@@ -1,0 +1,226 @@
+{
+  "name": "meu_perfil",
+  "description": "Fluxo para visualizar e editar perfil do cidadão",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "👤",
+    "color": "#9C27B0",
+    "category": "profile"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "👤 **Meu Perfil**\n\nAqui você pode visualizar e atualizar seus dados pessoais."
+      },
+      "transitions": [
+        { "to": "profile_menu" }
+      ]
+    },
+    {
+      "id": "profile_menu",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer?",
+        "options": [
+          {
+            "id": "ver",
+            "label": "👁️ Ver meus dados",
+            "description": "Visualizar perfil completo"
+          },
+          {
+            "id": "atualizar",
+            "label": "✏️ Atualizar dados",
+            "description": "Editar informações"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar ao menu principal",
+            "description": "Cancelar"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "ver", "to": "load_profile" },
+        { "when": "atualizar", "to": "update_menu" },
+        { "when": "voltar", "to": "end" }
+      ]
+    },
+    {
+      "id": "load_profile",
+      "type": "action",
+      "config": {
+        "action": "getCitizenProfile",
+        "saveResultAs": "profile"
+      },
+      "transitions": [
+        { "to": "show_profile" }
+      ]
+    },
+    {
+      "id": "show_profile",
+      "type": "message",
+      "config": {
+        "text": "👤 **Seus Dados:**\n\n**Nome:** {{profile.profile.name}}\n**CPF:** {{profile.profile.cpf}}\n**Email:** {{profile.profile.email}}\n**Telefone:** {{profile.profile.phone}}\n**Telefone Secundário:** {{profile.profile.phoneSecondary}}\n**Data de Nascimento:** {{profile.profile.birthDate}}\n\n**Endereço:**\n{{profile.profile.address.logradouro}}, {{profile.profile.address.numero}}\n{{profile.profile.address.bairro}}\n{{profile.profile.address.cidade}} - {{profile.profile.address.uf}}\nCEP: {{profile.profile.address.cep}}"
+      },
+      "transitions": [
+        { "to": "profile_menu" }
+      ]
+    },
+    {
+      "id": "update_menu",
+      "type": "menu",
+      "config": {
+        "text": "✏️ O que você deseja atualizar?",
+        "options": [
+          {
+            "id": "nome",
+            "label": "📝 Nome",
+            "description": "Atualizar nome completo"
+          },
+          {
+            "id": "email",
+            "label": "📧 Email",
+            "description": "Atualizar email"
+          },
+          {
+            "id": "telefone",
+            "label": "📱 Telefone",
+            "description": "Atualizar telefone principal"
+          },
+          {
+            "id": "telefone_secundario",
+            "label": "📞 Telefone secundário",
+            "description": "Atualizar telefone alternativo"
+          },
+          {
+            "id": "cancelar",
+            "label": "🔙 Voltar",
+            "description": "Cancelar edição"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "nome", "to": "ask_name" },
+        { "when": "email", "to": "ask_email" },
+        { "when": "telefone", "to": "ask_phone" },
+        { "when": "telefone_secundario", "to": "ask_phone_secondary" },
+        { "when": "cancelar", "to": "profile_menu" }
+      ]
+    },
+    {
+      "id": "ask_name",
+      "type": "question",
+      "config": {
+        "text": "📝 Digite seu nome completo:",
+        "validation": {
+          "type": "text",
+          "minLength": 3,
+          "maxLength": 100,
+          "errorMessage": "Nome deve ter entre 3 e 100 caracteres"
+        },
+        "saveAs": "updateData.name"
+      },
+      "transitions": [
+        { "to": "update_profile" }
+      ]
+    },
+    {
+      "id": "ask_email",
+      "type": "question",
+      "config": {
+        "text": "📧 Digite seu novo email:",
+        "validation": {
+          "type": "email",
+          "errorMessage": "Email inválido"
+        },
+        "saveAs": "updateData.email"
+      },
+      "transitions": [
+        { "to": "update_profile" }
+      ]
+    },
+    {
+      "id": "ask_phone",
+      "type": "question",
+      "config": {
+        "text": "📱 Digite seu telefone principal:\n\n(Ex: (11) 98765-4321)",
+        "validation": {
+          "type": "phone",
+          "errorMessage": "Telefone inválido"
+        },
+        "saveAs": "updateData.phone"
+      },
+      "transitions": [
+        { "to": "update_profile" }
+      ]
+    },
+    {
+      "id": "ask_phone_secondary",
+      "type": "question",
+      "config": {
+        "text": "📞 Digite seu telefone secundário:\n\n(Ex: (11) 98765-4321 ou deixe em branco para remover)",
+        "validation": {
+          "type": "phone"
+        },
+        "saveAs": "updateData.phoneSecondary"
+      },
+      "transitions": [
+        { "to": "update_profile" }
+      ]
+    },
+    {
+      "id": "update_profile",
+      "type": "action",
+      "config": {
+        "action": "updateCitizenProfile",
+        "params": "{{updateData}}"
+      },
+      "transitions": [
+        { "to": "update_success" }
+      ]
+    },
+    {
+      "id": "update_success",
+      "type": "message",
+      "config": {
+        "text": "✅ **Dados atualizados com sucesso!**\n\nSuas informações foram salvas."
+      },
+      "transitions": [
+        { "to": "ask_continue" }
+      ]
+    },
+    {
+      "id": "ask_continue",
+      "type": "menu",
+      "config": {
+        "text": "Deseja atualizar mais algum dado?",
+        "options": [
+          {
+            "id": "sim",
+            "label": "✏️ Sim, continuar editando",
+            "description": "Atualizar outros dados"
+          },
+          {
+            "id": "nao",
+            "label": "✅ Não, finalizar",
+            "description": "Voltar ao menu"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "sim", "to": "update_menu" },
+        { "when": "nao", "to": "profile_menu" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "message": "Voltando ao menu principal...",
+        "returnToMain": true
+      }
+    }
+  ]
+}

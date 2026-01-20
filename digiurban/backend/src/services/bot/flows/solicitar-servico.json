@@ -1,0 +1,423 @@
+{
+  "name": "solicitar_servico",
+  "description": "Fluxo completo para solicitar um serviço municipal",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "📝",
+    "color": "#2196F3",
+    "category": "service"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "📝 **Solicitar Serviço**\n\nVou te ajudar a solicitar um serviço da prefeitura.\n\nPrimeiro, vamos encontrar o serviço que você precisa."
+      },
+      "transitions": [
+        { "to": "search_method" }
+      ]
+    },
+    {
+      "id": "search_method",
+      "type": "menu",
+      "config": {
+        "text": "Como você quer encontrar o serviço?",
+        "options": [
+          {
+            "id": "buscar",
+            "label": "🔍 Buscar por nome",
+            "description": "Digite palavras-chave"
+          },
+          {
+            "id": "listar",
+            "label": "📋 Ver todos os serviços",
+            "description": "Lista completa"
+          },
+          {
+            "id": "categorias",
+            "label": "📁 Buscar por categoria",
+            "description": "Filtrar por área"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar ao menu principal",
+            "description": "Cancelar"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "buscar", "to": "search_input" },
+        { "when": "listar", "to": "list_services" },
+        { "when": "categorias", "to": "list_categories" },
+        { "when": "voltar", "to": "end" }
+      ]
+    },
+    {
+      "id": "search_input",
+      "type": "question",
+      "config": {
+        "text": "🔍 Digite o nome ou palavras-chave do serviço que você procura:",
+        "placeholder": "Ex: alvará, licença, certidão...",
+        "validation": {
+          "type": "text",
+          "minLength": 3,
+          "errorMessage": "Digite pelo menos 3 caracteres"
+        },
+        "saveAs": "searchQuery"
+      },
+      "transitions": [
+        { "to": "search_services_action" }
+      ]
+    },
+    {
+      "id": "search_services_action",
+      "type": "action",
+      "config": {
+        "action": "searchServices",
+        "params": {
+          "query": "{{searchQuery}}",
+          "limit": 10
+        },
+        "saveResultAs": "searchResult"
+      },
+      "transitions": [
+        { "to": "check_search_results" }
+      ]
+    },
+    {
+      "id": "check_search_results",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "searchResult.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_search_results"
+          }
+        ],
+        "defaultGoto": "no_results"
+      }
+    },
+    {
+      "id": "no_results",
+      "type": "message",
+      "config": {
+        "text": "😕 Não encontrei serviços com essa busca.\n\nTente usar outras palavras-chave ou veja todos os serviços disponíveis."
+      },
+      "transitions": [
+        { "to": "search_method" }
+      ]
+    },
+    {
+      "id": "show_search_results",
+      "type": "menu",
+      "config": {
+        "text": "📋 Encontrei estes serviços:",
+        "options": "{{searchResult.services}}",
+        "saveAs": "selectedServiceId"
+      },
+      "transitions": [
+        { "to": "load_service_details" }
+      ]
+    },
+    {
+      "id": "list_categories",
+      "type": "action",
+      "config": {
+        "action": "listServiceCategories",
+        "saveResultAs": "categoriesResult"
+      },
+      "transitions": [
+        { "to": "show_categories" }
+      ]
+    },
+    {
+      "id": "show_categories",
+      "type": "menu",
+      "config": {
+        "text": "📁 Escolha uma categoria:",
+        "options": "{{categoriesResult.categories}}",
+        "saveAs": "selectedCategory"
+      },
+      "transitions": [
+        { "to": "list_services_by_category" }
+      ]
+    },
+    {
+      "id": "list_services_by_category",
+      "type": "action",
+      "config": {
+        "action": "searchServices",
+        "params": {
+          "category": "{{selectedCategory}}",
+          "limit": 20
+        },
+        "saveResultAs": "searchResult"
+      },
+      "transitions": [
+        { "to": "show_search_results" }
+      ]
+    },
+    {
+      "id": "list_services",
+      "type": "action",
+      "config": {
+        "action": "listServices",
+        "params": {
+          "limit": 20
+        },
+        "saveResultAs": "searchResult"
+      },
+      "transitions": [
+        { "to": "show_search_results" }
+      ]
+    },
+    {
+      "id": "load_service_details",
+      "type": "action",
+      "config": {
+        "action": "getService",
+        "params": {
+          "serviceId": "{{selectedServiceId}}"
+        },
+        "saveResultAs": "selectedService"
+      },
+      "transitions": [
+        { "to": "show_service_details" }
+      ]
+    },
+    {
+      "id": "show_service_details",
+      "type": "message",
+      "config": {
+        "text": "📋 **{{selectedService.service.name}}**\n\n{{selectedService.service.description}}\n\n⏱️ **Prazo estimado:** {{selectedService.service.estimatedDays}} dias úteis\n🏢 **Departamento:** {{selectedService.service.department.name}}"
+      },
+      "transitions": [
+        { "to": "confirm_service" }
+      ]
+    },
+    {
+      "id": "confirm_service",
+      "type": "menu",
+      "config": {
+        "text": "Deseja solicitar este serviço?",
+        "options": [
+          {
+            "id": "sim",
+            "label": "✅ Sim, prosseguir",
+            "description": "Continuar com a solicitação"
+          },
+          {
+            "id": "nao",
+            "label": "🔙 Buscar outro serviço",
+            "description": "Voltar à busca"
+          },
+          {
+            "id": "cancelar",
+            "label": "❌ Cancelar",
+            "description": "Voltar ao menu principal"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "sim", "to": "check_form_schema" },
+        { "when": "nao", "to": "search_method" },
+        { "when": "cancelar", "to": "end" }
+      ]
+    },
+    {
+      "id": "check_form_schema",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "selectedService.service.formSchema",
+            "operator": "exists",
+            "goto": "load_form"
+          }
+        ],
+        "defaultGoto": "ask_description"
+      }
+    },
+    {
+      "id": "load_form",
+      "type": "form",
+      "config": {
+        "text": "📝 Por favor, preencha os dados necessários:",
+        "fields": "{{selectedService.service.formSchema}}",
+        "dynamicFields": true,
+        "saveAs": "formData"
+      },
+      "transitions": [
+        { "to": "ask_documents" }
+      ]
+    },
+    {
+      "id": "ask_description",
+      "type": "question",
+      "config": {
+        "text": "📝 Descreva sua solicitação:\n\n(Explique detalhadamente o que você precisa)",
+        "validation": {
+          "type": "text",
+          "minLength": 10,
+          "maxLength": 1000,
+          "errorMessage": "A descrição deve ter entre 10 e 1000 caracteres"
+        },
+        "saveAs": "formData.description"
+      },
+      "transitions": [
+        { "to": "ask_documents" }
+      ]
+    },
+    {
+      "id": "ask_documents",
+      "type": "message",
+      "config": {
+        "text": "📎 Agora você pode enviar documentos necessários para sua solicitação."
+      },
+      "transitions": [
+        { "to": "upload_documents" }
+      ]
+    },
+    {
+      "id": "upload_documents",
+      "type": "upload",
+      "config": {
+        "text": "📤 Envie os documentos (opcional):\n\nVocê pode enviar até 5 arquivos.\nFormatos aceitos: PDF, imagens, documentos Office.",
+        "multiple": true,
+        "maxFiles": 5,
+        "maxFileSize": 10,
+        "allowedTypes": ["application/pdf", "image/*", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+        "allowSkip": true,
+        "saveAs": "uploadedDocuments"
+      },
+      "transitions": [
+        { "to": "format_review" }
+      ]
+    },
+    {
+      "id": "format_review",
+      "type": "action",
+      "config": {
+        "action": "formatProtocolReview",
+        "params": {
+          "serviceId": "{{selectedServiceId}}",
+          "formData": "{{formData}}",
+          "documents": "{{uploadedDocuments}}"
+        },
+        "saveResultAs": "reviewData"
+      },
+      "transitions": [
+        { "to": "review_data" }
+      ]
+    },
+    {
+      "id": "review_data",
+      "type": "message",
+      "config": {
+        "text": "📋 **Revise seus dados:**\n\n{{reviewData.reviewText}}"
+      },
+      "transitions": [
+        { "to": "confirm_submit" }
+      ]
+    },
+    {
+      "id": "confirm_submit",
+      "type": "menu",
+      "config": {
+        "text": "Confirma o envio da solicitação?",
+        "options": [
+          {
+            "id": "confirmar",
+            "label": "✅ Confirmar e enviar",
+            "description": "Criar protocolo"
+          },
+          {
+            "id": "corrigir",
+            "label": "✏️ Corrigir dados",
+            "description": "Voltar ao formulário"
+          },
+          {
+            "id": "cancelar",
+            "label": "❌ Cancelar",
+            "description": "Descartar solicitação"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "confirmar", "to": "create_protocol" },
+        { "when": "corrigir", "to": "check_form_schema" },
+        { "when": "cancelar", "to": "cancelled" }
+      ]
+    },
+    {
+      "id": "create_protocol",
+      "type": "action",
+      "config": {
+        "action": "createProtocol",
+        "params": {
+          "serviceId": "{{selectedServiceId}}",
+          "formData": "{{formData}}",
+          "documents": "{{uploadedDocuments}}"
+        },
+        "saveResultAs": "createdProtocol"
+      },
+      "transitions": [
+        { "to": "success" }
+      ]
+    },
+    {
+      "id": "success",
+      "type": "message",
+      "config": {
+        "text": "✅ **Protocolo criado com sucesso!**\n\n📋 **Número:** {{createdProtocol.protocol.number}}\n📅 **Data:** {{createdProtocol.protocol.createdAt}}\n⏱️ **Prazo estimado:** {{createdProtocol.protocol.estimatedDays}} dias úteis\n\nVocê pode acompanhar seu protocolo pelo menu **\"Consultar Protocolo\"**.\n\nGuarde o número do seu protocolo para futuras consultas."
+      },
+      "transitions": [
+        { "to": "ask_new_request" }
+      ]
+    },
+    {
+      "id": "ask_new_request",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer agora?",
+        "options": [
+          {
+            "id": "nova",
+            "label": "📝 Nova solicitação",
+            "description": "Solicitar outro serviço"
+          },
+          {
+            "id": "menu",
+            "label": "🏠 Menu principal",
+            "description": "Voltar ao início"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "nova", "to": "search_method" },
+        { "when": "menu", "to": "end" }
+      ]
+    },
+    {
+      "id": "cancelled",
+      "type": "message",
+      "config": {
+        "text": "❌ Solicitação cancelada.\n\nVocê pode iniciar uma nova solicitação a qualquer momento pelo menu principal."
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "message": "Voltando ao menu principal...",
+        "returnToMain": true
+      }
+    }
+  ]
+}

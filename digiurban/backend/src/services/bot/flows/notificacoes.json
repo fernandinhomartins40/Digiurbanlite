@@ -1,0 +1,227 @@
+{
+  "name": "notificacoes",
+  "description": "Fluxo para visualizar e gerenciar notificações",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "🔔",
+    "color": "#F44336",
+    "category": "notifications"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "🔔 **Notificações**\n\nAqui você pode visualizar seus avisos e mensagens."
+      },
+      "transitions": [
+        { "to": "notifications_menu" }
+      ]
+    },
+    {
+      "id": "notifications_menu",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer?",
+        "options": [
+          {
+            "id": "nao_lidas",
+            "label": "🔔 Ver não lidas",
+            "description": "Notificações pendentes"
+          },
+          {
+            "id": "todas",
+            "label": "📋 Ver todas",
+            "description": "Todas as notificações"
+          },
+          {
+            "id": "marcar_lidas",
+            "label": "✅ Marcar todas como lidas",
+            "description": "Limpar pendências"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar ao menu principal",
+            "description": "Cancelar"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "nao_lidas", "to": "load_unread_notifications" },
+        { "when": "todas", "to": "load_all_notifications" },
+        { "when": "marcar_lidas", "to": "mark_all_read" },
+        { "when": "voltar", "to": "end" }
+      ]
+    },
+    {
+      "id": "load_unread_notifications",
+      "type": "action",
+      "config": {
+        "action": "getNotifications",
+        "params": {
+          "unreadOnly": true,
+          "limit": 20
+        },
+        "saveResultAs": "notificationsData"
+      },
+      "transitions": [
+        { "to": "check_has_unread" }
+      ]
+    },
+    {
+      "id": "check_has_unread",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "notificationsData.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_notifications"
+          }
+        ],
+        "defaultGoto": "no_unread"
+      }
+    },
+    {
+      "id": "no_unread",
+      "type": "message",
+      "config": {
+        "text": "✅ Você não tem notificações não lidas.\n\nTodas as suas notificações foram visualizadas!"
+      },
+      "transitions": [
+        { "to": "notifications_menu" }
+      ]
+    },
+    {
+      "id": "load_all_notifications",
+      "type": "action",
+      "config": {
+        "action": "getNotifications",
+        "params": {
+          "unreadOnly": false,
+          "limit": 20
+        },
+        "saveResultAs": "notificationsData"
+      },
+      "transitions": [
+        { "to": "check_has_notifications" }
+      ]
+    },
+    {
+      "id": "check_has_notifications",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "notificationsData.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_notifications"
+          }
+        ],
+        "defaultGoto": "no_notifications"
+      }
+    },
+    {
+      "id": "no_notifications",
+      "type": "message",
+      "config": {
+        "text": "📭 Você não possui notificações.\n\nQuando houver novidades, você será notificado aqui!"
+      },
+      "transitions": [
+        { "to": "notifications_menu" }
+      ]
+    },
+    {
+      "id": "show_notifications",
+      "type": "message",
+      "config": {
+        "text": "📋 **Suas Notificações ({{notificationsData.count}}):**\n\nListando suas notificações mais recentes..."
+      },
+      "transitions": [
+        { "to": "show_notifications_list" }
+      ]
+    },
+    {
+      "id": "show_notifications_list",
+      "type": "menu",
+      "config": {
+        "text": "Selecione para ver detalhes:",
+        "options": "{{notificationsData.notifications}}",
+        "saveAs": "selectedNotification"
+      },
+      "transitions": [
+        { "to": "show_notification_details" }
+      ]
+    },
+    {
+      "id": "show_notification_details",
+      "type": "message",
+      "config": {
+        "text": "📬 **{{selectedNotification_data.title}}**\n\n{{selectedNotification_data.message}}\n\n📅 {{selectedNotification_data.createdAt}}\n🏷️ Tipo: {{selectedNotification_data.type}}\n✅ Lida: {{selectedNotification_data.isRead}}"
+      },
+      "transitions": [
+        { "to": "notification_actions" }
+      ]
+    },
+    {
+      "id": "notification_actions",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer?",
+        "options": [
+          {
+            "id": "ver_outra",
+            "label": "📋 Ver outra notificação",
+            "description": "Voltar à lista"
+          },
+          {
+            "id": "menu_notificacoes",
+            "label": "🔔 Menu notificações",
+            "description": "Voltar ao menu"
+          },
+          {
+            "id": "menu_principal",
+            "label": "🏠 Menu principal",
+            "description": "Ir ao início"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "ver_outra", "to": "show_notifications_list" },
+        { "when": "menu_notificacoes", "to": "notifications_menu" },
+        { "when": "menu_principal", "to": "end" }
+      ]
+    },
+    {
+      "id": "mark_all_read",
+      "type": "action",
+      "config": {
+        "action": "markNotificationsAsRead",
+        "params": {}
+      },
+      "transitions": [
+        { "to": "mark_read_success" }
+      ]
+    },
+    {
+      "id": "mark_read_success",
+      "type": "message",
+      "config": {
+        "text": "✅ **Todas as notificações foram marcadas como lidas!**\n\nVocê está em dia com suas notificações."
+      },
+      "transitions": [
+        { "to": "notifications_menu" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "message": "Voltando ao menu principal...",
+        "returnToMain": true
+      }
+    }
+  ]
+}

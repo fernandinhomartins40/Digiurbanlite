@@ -108,15 +108,39 @@ app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/citizen/auth', citizenAuthRoutes);
 
 // ============================================================
-// ROTAS DO BOT (DIGIBOT AI) - Integrado com UltraZend Messages
+// ROTAS DO BOT (SISTEMA DE FLUXOS PROGRAMADOS) - NOVO
 // ============================================================
-console.log('🤖 Carregando rotas do bot (Integrado com UltraZend)...');
+console.log('🤖 Carregando rotas do bot (Sistema de Fluxos)...');
 try {
-  const botIntegratedRoutes = require('./routes/botIntegrated.routes').default;
-  app.use('/api/bot', botIntegratedRoutes);
-  console.log('✅ Rotas do bot integradas carregadas!');
+  const botFlowRoutes = require('./routes/bot-flow.routes').default;
+  app.use('/api/bot-flow', botFlowRoutes);
+  console.log('✅ Rotas do bot com fluxos programados carregadas!');
 } catch (error) {
   console.error('❌ Erro ao carregar rotas do bot:', error);
+}
+
+// ============================================================
+// ROTAS DE ADMINISTRAÇÃO DE FLUXOS - NOVO
+// ============================================================
+console.log('⚙️  Carregando rotas de administração de fluxos...');
+try {
+  const adminFlowsRoutes = require('./routes/admin-flows.routes').default;
+  app.use('/api/admin/flows', adminFlowsRoutes);
+  console.log('✅ Rotas de administração de fluxos carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas de admin flows:', error);
+}
+
+// ============================================================
+// ROTAS DO BOT LEGADO (MANTIDO PARA MIGRAÇÃO GRADUAL)
+// ============================================================
+console.log('🤖 [LEGADO] Carregando rotas antigas do bot...');
+try {
+  const botIntegratedRoutes = require('./routes/botIntegrated.routes').default;
+  app.use('/api/bot-legacy', botIntegratedRoutes); // Mudou para /bot-legacy
+  console.log('⚠️  Rotas do bot legado carregadas em /api/bot-legacy (deprecated)');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas do bot legado:', error);
 }
 
 // ============================================================

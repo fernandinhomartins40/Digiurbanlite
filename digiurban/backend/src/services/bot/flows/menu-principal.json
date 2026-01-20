@@ -1,0 +1,154 @@
+{
+  "name": "menu_principal",
+  "description": "Menu principal do DigiBot",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "🏠",
+    "color": "#4CAF50",
+    "category": "main"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "👋 Olá! Sou o DigiBot, seu assistente virtual.\n\nEstou aqui para te ajudar com os serviços da prefeitura."
+      },
+      "transitions": [
+        { "to": "main_menu" }
+      ]
+    },
+    {
+      "id": "main_menu",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer?",
+        "options": [
+          {
+            "id": "solicitar_servico",
+            "label": "📝 Solicitar Serviço",
+            "description": "Abrir nova solicitação"
+          },
+          {
+            "id": "consultar_protocolo",
+            "label": "🔍 Consultar Protocolo",
+            "description": "Acompanhar solicitações"
+          },
+          {
+            "id": "meu_perfil",
+            "label": "👤 Meu Perfil",
+            "description": "Ver e editar dados pessoais"
+          },
+          {
+            "id": "minha_familia",
+            "label": "👨‍👩‍👧‍👦 Minha Família",
+            "description": "Gerenciar composição familiar"
+          },
+          {
+            "id": "notificacoes",
+            "label": "🔔 Notificações",
+            "description": "Ver avisos e mensagens"
+          },
+          {
+            "id": "ajuda",
+            "label": "❓ Ajuda",
+            "description": "Dúvidas e suporte"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "solicitar_servico", "to": "redirect_solicitar_servico" },
+        { "when": "consultar_protocolo", "to": "redirect_consultar_protocolo" },
+        { "when": "meu_perfil", "to": "redirect_perfil" },
+        { "when": "minha_familia", "to": "redirect_familia" },
+        { "when": "notificacoes", "to": "redirect_notificacoes" },
+        { "when": "ajuda", "to": "redirect_ajuda" }
+      ]
+    },
+    {
+      "id": "redirect_solicitar_servico",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "solicitar_servico"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "redirect_consultar_protocolo",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "consultar_protocolo"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "redirect_perfil",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "meu_perfil"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "redirect_familia",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "minha_familia"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "redirect_notificacoes",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "notificacoes"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "redirect_ajuda",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "ajuda"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "returnToMain": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,270 @@
+{
+  "name": "consultar_protocolo",
+  "description": "Fluxo para consultar e gerenciar protocolos",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "🔍",
+    "color": "#FF9800",
+    "category": "protocol"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "🔍 **Consultar Protocolo**\n\nAqui você pode acompanhar suas solicitações."
+      },
+      "transitions": [
+        { "to": "search_method" }
+      ]
+    },
+    {
+      "id": "search_method",
+      "type": "menu",
+      "config": {
+        "text": "Como você quer consultar?",
+        "options": [
+          {
+            "id": "numero",
+            "label": "🔢 Por número do protocolo",
+            "description": "Buscar protocolo específico"
+          },
+          {
+            "id": "listar",
+            "label": "📋 Listar meus protocolos",
+            "description": "Ver todas as solicitações"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar ao menu principal",
+            "description": "Cancelar"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "numero", "to": "ask_protocol_number" },
+        { "when": "listar", "to": "list_protocols" },
+        { "when": "voltar", "to": "end" }
+      ]
+    },
+    {
+      "id": "ask_protocol_number",
+      "type": "question",
+      "config": {
+        "text": "🔢 Digite o número do protocolo:\n\n(Ex: 2024-000123)",
+        "placeholder": "AAAA-NNNNNN",
+        "validation": {
+          "type": "protocol",
+          "errorMessage": "Número de protocolo inválido"
+        },
+        "saveAs": "protocolNumber"
+      },
+      "transitions": [
+        { "to": "get_protocol_by_number" }
+      ]
+    },
+    {
+      "id": "get_protocol_by_number",
+      "type": "action",
+      "config": {
+        "action": "getProtocolByNumber",
+        "params": {
+          "protocolNumber": "{{protocolNumber}}"
+        },
+        "saveResultAs": "protocolDetails"
+      },
+      "transitions": [
+        { "to": "show_protocol_details" }
+      ]
+    },
+    {
+      "id": "list_protocols",
+      "type": "action",
+      "config": {
+        "action": "getProtocols",
+        "params": {
+          "limit": 20
+        },
+        "saveResultAs": "protocolsList"
+      },
+      "transitions": [
+        { "to": "check_protocols_found" }
+      ]
+    },
+    {
+      "id": "check_protocols_found",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "protocolsList.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_protocols_list"
+          }
+        ],
+        "defaultGoto": "no_protocols"
+      }
+    },
+    {
+      "id": "no_protocols",
+      "type": "message",
+      "config": {
+        "text": "📭 Você ainda não possui protocolos cadastrados.\n\nQue tal solicitar um serviço agora?"
+      },
+      "transitions": [
+        { "to": "ask_request_service" }
+      ]
+    },
+    {
+      "id": "ask_request_service",
+      "type": "menu",
+      "config": {
+        "text": "Gostaria de solicitar um serviço?",
+        "options": [
+          {
+            "id": "sim",
+            "label": "✅ Sim, solicitar serviço",
+            "description": "Ir para solicitação"
+          },
+          {
+            "id": "nao",
+            "label": "🔙 Voltar ao menu",
+            "description": "Menu principal"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "sim", "to": "redirect_solicitar" },
+        { "when": "nao", "to": "end" }
+      ]
+    },
+    {
+      "id": "redirect_solicitar",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "solicitar_servico"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "show_protocols_list",
+      "type": "menu",
+      "config": {
+        "text": "📋 **Seus protocolos:**",
+        "options": "{{protocolsList.protocols}}",
+        "saveAs": "selectedProtocolId"
+      },
+      "transitions": [
+        { "to": "load_protocol_details" }
+      ]
+    },
+    {
+      "id": "load_protocol_details",
+      "type": "action",
+      "config": {
+        "action": "getProtocolByNumber",
+        "params": {
+          "protocolNumber": "{{selectedProtocolId_data.metadata.number}}"
+        },
+        "saveResultAs": "protocolDetails"
+      },
+      "transitions": [
+        { "to": "show_protocol_details" }
+      ]
+    },
+    {
+      "id": "show_protocol_details",
+      "type": "message",
+      "config": {
+        "text": "📋 **Detalhes do Protocolo**\n\n**Número:** {{protocolDetails.protocol.number}}\n**Título:** {{protocolDetails.protocol.title}}\n**Status:** {{protocolDetails.protocol.status}}\n**Prioridade:** {{protocolDetails.protocol.priority}}\n\n**Serviço:** {{protocolDetails.protocol.service.name}}\n**Departamento:** {{protocolDetails.protocol.department.name}}\n\n**Criado em:** {{protocolDetails.protocol.createdAt}}\n**Atualizado em:** {{protocolDetails.protocol.updatedAt}}\n\n**Prazo estimado:** {{protocolDetails.protocol.service.estimatedDays}} dias úteis"
+      },
+      "transitions": [
+        { "to": "protocol_actions_menu" }
+      ]
+    },
+    {
+      "id": "protocol_actions_menu",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer?",
+        "options": [
+          {
+            "id": "comentar",
+            "label": "💬 Adicionar comentário",
+            "description": "Enviar mensagem"
+          },
+          {
+            "id": "consultar_outro",
+            "label": "🔍 Consultar outro protocolo",
+            "description": "Nova consulta"
+          },
+          {
+            "id": "menu",
+            "label": "🏠 Menu principal",
+            "description": "Voltar ao início"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "comentar", "to": "ask_comment" },
+        { "when": "consultar_outro", "to": "search_method" },
+        { "when": "menu", "to": "end" }
+      ]
+    },
+    {
+      "id": "ask_comment",
+      "type": "question",
+      "config": {
+        "text": "💬 Digite seu comentário ou dúvida sobre este protocolo:",
+        "validation": {
+          "type": "text",
+          "minLength": 5,
+          "maxLength": 1000,
+          "errorMessage": "O comentário deve ter entre 5 e 1000 caracteres"
+        },
+        "saveAs": "comment"
+      },
+      "transitions": [
+        { "to": "add_comment" }
+      ]
+    },
+    {
+      "id": "add_comment",
+      "type": "action",
+      "config": {
+        "action": "addProtocolComment",
+        "params": {
+          "protocolId": "{{protocolDetails.protocol.id}}",
+          "message": "{{comment}}"
+        }
+      },
+      "transitions": [
+        { "to": "comment_success" }
+      ]
+    },
+    {
+      "id": "comment_success",
+      "type": "message",
+      "config": {
+        "text": "✅ Comentário adicionado com sucesso!\n\nO servidor responsável será notificado e responderá em breve."
+      },
+      "transitions": [
+        { "to": "protocol_actions_menu" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "message": "Voltando ao menu principal...",
+        "returnToMain": true
+      }
+    }
+  ]
+}

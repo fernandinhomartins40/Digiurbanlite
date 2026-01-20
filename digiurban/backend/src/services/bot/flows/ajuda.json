@@ -1,0 +1,182 @@
+{
+  "name": "ajuda",
+  "description": "Fluxo de ajuda e suporte ao cidadão",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "❓",
+    "color": "#607D8B",
+    "category": "help"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "❓ **Central de Ajuda**\n\nComo posso te ajudar?"
+      },
+      "transitions": [
+        { "to": "help_menu" }
+      ]
+    },
+    {
+      "id": "help_menu",
+      "type": "menu",
+      "config": {
+        "text": "Escolha uma opção:",
+        "options": [
+          {
+            "id": "como_funciona",
+            "label": "📖 Como funciona?",
+            "description": "Tutorial do sistema"
+          },
+          {
+            "id": "faq",
+            "label": "💬 Perguntas frequentes",
+            "description": "Dúvidas comuns"
+          },
+          {
+            "id": "contato",
+            "label": "📞 Falar com atendente",
+            "description": "Suporte humano"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar ao menu principal",
+            "description": "Cancelar"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "como_funciona", "to": "tutorial" },
+        { "when": "faq", "to": "faq_menu" },
+        { "when": "contato", "to": "contact_info" },
+        { "when": "voltar", "to": "end" }
+      ]
+    },
+    {
+      "id": "tutorial",
+      "type": "message",
+      "config": {
+        "text": "📖 **Como Usar o DigiBot**\n\n1️⃣ **Solicitar Serviço**\n   - Busque ou navegue pelos serviços\n   - Preencha o formulário\n   - Envie documentos (se necessário)\n   - Receba o número do protocolo\n\n2️⃣ **Consultar Protocolo**\n   - Veja o status das suas solicitações\n   - Adicione comentários\n   - Acompanhe o andamento\n\n3️⃣ **Gerenciar Perfil**\n   - Atualize seus dados pessoais\n   - Mantenha suas informações corretas\n\n4️⃣ **Notificações**\n   - Receba avisos importantes\n   - Fique por dentro das atualizações\n\n💡 **Dica:** Você pode voltar ao menu principal a qualquer momento!"
+      },
+      "transitions": [
+        { "to": "help_menu" }
+      ]
+    },
+    {
+      "id": "faq_menu",
+      "type": "menu",
+      "config": {
+        "text": "💬 **Perguntas Frequentes**\n\nSelecione sua dúvida:",
+        "options": [
+          {
+            "id": "protocolo",
+            "label": "Quanto tempo leva um protocolo?",
+            "description": "Prazos de atendimento"
+          },
+          {
+            "id": "documentos",
+            "label": "Quais documentos preciso enviar?",
+            "description": "Documentação necessária"
+          },
+          {
+            "id": "acompanhar",
+            "label": "Como acompanho meu protocolo?",
+            "description": "Consulta de status"
+          },
+          {
+            "id": "cancelar",
+            "label": "Posso cancelar uma solicitação?",
+            "description": "Cancelamento"
+          },
+          {
+            "id": "atualizar",
+            "label": "Como atualizo meus dados?",
+            "description": "Edição de perfil"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar",
+            "description": "Menu ajuda"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "protocolo", "to": "faq_protocolo" },
+        { "when": "documentos", "to": "faq_documentos" },
+        { "when": "acompanhar", "to": "faq_acompanhar" },
+        { "when": "cancelar", "to": "faq_cancelar" },
+        { "when": "atualizar", "to": "faq_atualizar" },
+        { "when": "voltar", "to": "help_menu" }
+      ]
+    },
+    {
+      "id": "faq_protocolo",
+      "type": "message",
+      "config": {
+        "text": "⏱️ **Quanto tempo leva um protocolo?**\n\nO prazo depende do tipo de serviço solicitado:\n\n• Cada serviço tem um prazo estimado em dias úteis\n• Você pode ver o prazo ao solicitar o serviço\n• O prazo aparece também nos detalhes do protocolo\n\n💡 **Dica:** Protocolos com documentação completa são processados mais rapidamente!"
+      },
+      "transitions": [
+        { "to": "faq_menu" }
+      ]
+    },
+    {
+      "id": "faq_documentos",
+      "type": "message",
+      "config": {
+        "text": "📎 **Quais documentos preciso enviar?**\n\nOs documentos necessários variam por serviço:\n\n• Ao solicitar um serviço, você verá os documentos necessários\n• Alguns serviços não exigem documentos\n• Você pode enviar até 5 arquivos por protocolo\n• Formatos aceitos: PDF, imagens, documentos Office\n• Tamanho máximo: 10MB por arquivo\n\n💡 **Dica:** Tire fotos claras dos documentos!"
+      },
+      "transitions": [
+        { "to": "faq_menu" }
+      ]
+    },
+    {
+      "id": "faq_acompanhar",
+      "type": "message",
+      "config": {
+        "text": "🔍 **Como acompanho meu protocolo?**\n\nÉ muito fácil:\n\n1. Acesse o menu **\"Consultar Protocolo\"**\n2. Escolha:\n   • **Por número:** Digite o número do protocolo\n   • **Listar meus:** Veja todos os seus protocolos\n3. Veja os detalhes:\n   • Status atual\n   • Histórico de atualizações\n   • Comentários\n   • Prazo estimado\n\n💡 **Dica:** Guarde o número do protocolo para consultas futuras!"
+      },
+      "transitions": [
+        { "to": "faq_menu" }
+      ]
+    },
+    {
+      "id": "faq_cancelar",
+      "type": "message",
+      "config": {
+        "text": "❌ **Posso cancelar uma solicitação?**\n\nDepende da situação:\n\n✅ **Pode cancelar quando:**\n• O protocolo ainda não foi processado\n• Não há interações do servidor\n• Não há pendências registradas\n\n❌ **Não pode cancelar quando:**\n• O protocolo já está em análise\n• Já foi concluído\n• Há interações ou pendências\n\n💡 **Como cancelar:**\nAcesse \"Consultar Protocolo\" e verifique se a opção de cancelamento está disponível.\n\nSe não puder cancelar pelo bot, entre em contato com a prefeitura."
+      },
+      "transitions": [
+        { "to": "faq_menu" }
+      ]
+    },
+    {
+      "id": "faq_atualizar",
+      "type": "message",
+      "config": {
+        "text": "✏️ **Como atualizo meus dados?**\n\nÉ simples:\n\n1. Acesse o menu **\"Meu Perfil\"**\n2. Escolha **\"Atualizar dados\"**\n3. Selecione o que deseja atualizar:\n   • Nome\n   • Email\n   • Telefone\n   • Telefone secundário\n4. Digite a nova informação\n5. Confirme a alteração\n\n💡 **Importante:** Mantenha seus dados sempre atualizados para receber notificações corretamente!"
+      },
+      "transitions": [
+        { "to": "faq_menu" }
+      ]
+    },
+    {
+      "id": "contact_info",
+      "type": "message",
+      "config": {
+        "text": "📞 **Falar com Atendente**\n\nSe você precisa de suporte personalizado, entre em contato:\n\n🏢 **Prefeitura Municipal**\n📞 Telefone: [Ver no painel web]\n📧 Email: [Ver no painel web]\n🕒 Horário de atendimento: Segunda a Sexta, 8h às 17h\n\n💡 **Você também pode:**\n• Adicionar comentários em seus protocolos\n• Enviar mensagens através do sistema\n• O servidor responsável será notificado\n\n⚠️ **Nota:** O DigiBot não substitui o atendimento humano. Para casos complexos, sempre entre em contato direto com a prefeitura."
+      },
+      "transitions": [
+        { "to": "help_menu" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "message": "Voltando ao menu principal...",
+        "returnToMain": true
+      }
+    }
+  ]
+}

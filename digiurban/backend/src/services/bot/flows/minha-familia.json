@@ -1,0 +1,150 @@
+{
+  "name": "minha_familia",
+  "description": "Fluxo para gerenciar composição familiar",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "👨‍👩‍👧‍👦",
+    "color": "#4CAF50",
+    "category": "family"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "👨‍👩‍👧‍👦 **Minha Família**\n\nAqui você pode gerenciar a composição do seu núcleo familiar."
+      },
+      "transitions": [
+        { "to": "family_menu" }
+      ]
+    },
+    {
+      "id": "family_menu",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer?",
+        "options": [
+          {
+            "id": "listar",
+            "label": "👥 Ver membros da família",
+            "description": "Listar composição familiar"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar ao menu principal",
+            "description": "Cancelar"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "listar", "to": "load_family" },
+        { "when": "voltar", "to": "end" }
+      ]
+    },
+    {
+      "id": "load_family",
+      "type": "action",
+      "config": {
+        "action": "getFamilyMembers",
+        "saveResultAs": "familyData"
+      },
+      "transitions": [
+        { "to": "check_has_members" }
+      ]
+    },
+    {
+      "id": "check_has_members",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "familyData.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_family_list"
+          }
+        ],
+        "defaultGoto": "no_members"
+      }
+    },
+    {
+      "id": "no_members",
+      "type": "message",
+      "config": {
+        "text": "👨‍👩‍👧‍👦 Você ainda não possui membros cadastrados na sua família.\n\nPara adicionar membros da família, acesse o painel web ou entre em contato com a prefeitura."
+      },
+      "transitions": [
+        { "to": "family_menu" }
+      ]
+    },
+    {
+      "id": "show_family_list",
+      "type": "message",
+      "config": {
+        "text": "👥 **Membros da sua família:**\n\nTotal: {{familyData.count}} membro(s)\n\n📝 Para gerenciar a composição familiar (adicionar, editar ou remover membros), acesse o painel web em 'Minha Família'."
+      },
+      "transitions": [
+        { "to": "show_members_details" }
+      ]
+    },
+    {
+      "id": "show_members_details",
+      "type": "menu",
+      "config": {
+        "text": "Seus membros cadastrados:",
+        "options": "{{familyData.members}}",
+        "saveAs": "selectedMember"
+      },
+      "transitions": [
+        { "to": "show_member_details" }
+      ]
+    },
+    {
+      "id": "show_member_details",
+      "type": "message",
+      "config": {
+        "text": "👤 **Detalhes do Membro:**\n\n**Nome:** {{selectedMember_data.label}}\n**Relação:** {{selectedMember_data.metadata.relationship}}\n**CPF:** {{selectedMember_data.metadata.cpf}}\n**Data de Nascimento:** {{selectedMember_data.metadata.birthDate}}\n**Dependente:** {{selectedMember_data.metadata.isDependent}}"
+      },
+      "transitions": [
+        { "to": "member_actions" }
+      ]
+    },
+    {
+      "id": "member_actions",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer?",
+        "options": [
+          {
+            "id": "ver_outro",
+            "label": "👥 Ver outro membro",
+            "description": "Voltar à lista"
+          },
+          {
+            "id": "menu_familia",
+            "label": "🔙 Menu família",
+            "description": "Voltar ao menu"
+          },
+          {
+            "id": "menu_principal",
+            "label": "🏠 Menu principal",
+            "description": "Ir ao início"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "ver_outro", "to": "show_members_details" },
+        { "when": "menu_familia", "to": "family_menu" },
+        { "when": "menu_principal", "to": "end" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "message": "Voltando ao menu principal...",
+        "returnToMain": true
+      }
+    }
+  ]
+}
