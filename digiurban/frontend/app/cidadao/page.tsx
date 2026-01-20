@@ -211,6 +211,8 @@ export default function CitizenDashboard() {
   const startBotFlow = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      console.log('🚀 [startBotFlow] Iniciando fluxo menu_principal...');
+
       const response = await fetch(`${apiUrl}/bot-flow/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -218,9 +220,13 @@ export default function CitizenDashboard() {
         body: JSON.stringify({ flowName: 'menu_principal' })
       });
 
+      console.log('📡 [startBotFlow] Status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('📦 [startBotFlow] Resposta completa:', data);
         const botResponse = data.response;
+        console.log('🤖 [startBotFlow] Bot response:', botResponse);
 
         setMessages([
           {
@@ -265,18 +271,24 @@ export default function CitizenDashboard() {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+        console.log('🔍 [loadMessages] Buscando execução ativa...');
+
         // Tenta buscar execução ativa
         const response = await fetch(
           `${apiUrl}/bot-flow/active-execution`,
           { credentials: 'include' }
         );
 
+        console.log('📡 [loadMessages] Status da resposta:', response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log('📦 [loadMessages] Dados recebidos:', data);
 
           // Se há execução ativa, mostrar mensagem do fluxo
           if (data.execution && data.execution.currentState) {
             const state = data.execution.currentState;
+            console.log('✅ [loadMessages] Execução ativa encontrada:', state);
 
             setMessages([
               {
@@ -296,10 +308,12 @@ export default function CitizenDashboard() {
             ]);
           } else {
             // Iniciar novo fluxo
+            console.log('ℹ️ [loadMessages] Nenhuma execução ativa, iniciando novo fluxo...');
             await startBotFlow();
           }
         } else {
           // Iniciar novo fluxo
+          console.log('⚠️ [loadMessages] Erro ao buscar execução, iniciando novo fluxo...');
           await startBotFlow();
         }
       } catch (error) {
