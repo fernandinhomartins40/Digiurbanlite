@@ -26,6 +26,7 @@ import { ProtocolCommunicationTab } from '@/components/admin/protocol/ProtocolCo
 import { ProtocolDocumentGenerationTab } from '@/components/admin/protocol/ProtocolDocumentGenerationTab'
 import { ProtocolGeneratedDocumentsTab } from '@/components/admin/protocol/ProtocolGeneratedDocumentsTab'
 import { ProtocolSendGeneratedDocumentTab } from '@/components/admin/protocol/ProtocolSendGeneratedDocumentTab'
+import { ProtocolPaymentTab } from '@/components/admin/protocol/ProtocolPaymentTab'
 import { TabsContent } from '@/components/ui/tabs'
 
 // Services
@@ -427,6 +428,19 @@ export default function ProtocolDetailPage() {
                     protocolId={protocolId}
                     stages={stages}
                     interactions={interactions}
+                    onRefresh={loadProtocolData}
+                  />
+                </TabsContent>
+              )}
+
+              {/* Tab: Pagamento */}
+              {availableTabs.includes('payment') && (
+                <TabsContent value="payment" className="mt-0">
+                  <ProtocolPaymentTab
+                    protocolId={protocolId}
+                    protocolNumber={protocol.number || protocol.protocolNumber}
+                    citizenEmail={protocol.citizen?.email}
+                    citizenName={protocol.citizen?.name}
                     onRefresh={loadProtocolData}
                   />
                 </TabsContent>

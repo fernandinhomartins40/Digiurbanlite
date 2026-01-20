@@ -231,6 +231,7 @@ export const TAB_LABELS: Record<string, { label: string; icon: string }> = {
   dados: { label: 'Dados', icon: 'FormInput' },
   pendencias: { label: 'Pendências', icon: 'AlertCircle' },
   comunicacao: { label: 'Comunicação', icon: 'MessageSquare' },
+  payment: { label: 'Pagamento', icon: 'CreditCard' },
 
   // Modo Completing
   'summary-final': { label: 'Resumo Final', icon: 'CheckCircle' },

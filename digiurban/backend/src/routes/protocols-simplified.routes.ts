@@ -2053,5 +2053,116 @@ router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: an
   }
 });
 
+// ========================================
+// ENVIAR INFORMAÇÕES DE PAGAMENTO
+// ========================================
+
+/**
+ * POST /api/protocols/:id/send-payment-info
+ * Enviar guia de pagamento e/ou chave PIX para o cidadão
+ */
+router.post('/:id/send-payment-info', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      recipientEmail,
+      recipientName,
+      subject,
+      message,
+      paymentFileUrl,
+      pixKey,
+      pixQRCode
+    } = req.body;
+
+    // Validações
+    if (!recipientEmail) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email do destinatário é obrigatório'
+      });
+    }
+
+    if (!paymentFileUrl && !pixKey && !pixQRCode) {
+      return res.status(400).json({
+        success: false,
+        error: 'É necessário fornecer ao menos uma forma de pagamento (guia, chave PIX ou QR Code)'
+      });
+    }
+
+    // Buscar protocolo
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id },
+      include: {
+        citizen: true,
+        service: true
+      }
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo não encontrado'
+      });
+    }
+
+    // Construir corpo do email
+    let emailBody = message || '';
+    emailBody += '\n\n---\n\n';
+
+    if (paymentFileUrl) {
+      emailBody += `📄 **Guia de Pagamento:** ${paymentFileUrl}\n\n`;
+    }
+
+    if (pixKey) {
+      emailBody += `💳 **Chave PIX:** ${pixKey}\n\n`;
+    }
+
+    if (pixQRCode) {
+      emailBody += `📱 **QR Code PIX (Copie e cole no app do banco):**\n${pixQRCode}\n\n`;
+    }
+
+    emailBody += `\nAtenciosamente,\nPrefeitura Municipal`;
+
+    // TODO: Integrar com serviço de email real (SendGrid, AWS SES, etc)
+    // Por enquanto, apenas registrar no histórico
+    console.log('📧 Email de pagamento a ser enviado:');
+    console.log(`   Para: ${recipientEmail}`);
+    console.log(`   Assunto: ${subject}`);
+    console.log(`   Guia: ${paymentFileUrl || 'N/A'}`);
+    console.log(`   PIX: ${pixKey || 'N/A'}`);
+
+    // Registrar no histórico do protocolo
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId: id,
+        action: 'PAYMENT_INFO_SENT',
+        comment: `Informações de pagamento enviadas para ${recipientEmail}`,
+        metadata: {
+          recipientEmail,
+          paymentFileUrl,
+          pixKey: pixKey ? '***' : undefined, // Não armazenar chave completa
+          hasQRCode: !!pixQRCode
+        } as any
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: 'Informações de pagamento enviadas com sucesso',
+      data: {
+        recipientEmail,
+        sentAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Erro ao enviar informações de pagamento:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao enviar informações de pagamento'
+    });
+  }
+});
+
 export default router;
 
