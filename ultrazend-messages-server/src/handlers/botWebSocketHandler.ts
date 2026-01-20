@@ -40,9 +40,13 @@ export function registerBotHandlers(socket: Socket, userId: string) {
     try {
       console.log(`[BotWSHandler] bot:get_conversation - Cidadão: ${userId}`);
 
+      // Inicia o fluxo padrão (menu_principal) ou obtém execução ativa
       const response = await axios.post(
-        `${DIGIURBAN_API_URL}/api/bot/conversation`,
-        { citizenId: userId },
+        `${DIGIURBAN_API_URL}/api/bot-flow/start`,
+        {
+          flowName: 'menu_principal',
+          citizenId: userId
+        },
         {
           headers: {
             'Authorization': `Bearer ${MESSAGES_SERVICE_TOKEN}`,
@@ -52,7 +56,7 @@ export function registerBotHandlers(socket: Socket, userId: string) {
         }
       );
 
-      const conversationId = response.data.conversationId;
+      const conversationId = response.data.response?.executionId || userId;
 
       // Entra na sala da conversa
       socket.join(`conversation:${conversationId}`);
@@ -88,27 +92,50 @@ export function registerBotHandlers(socket: Socket, userId: string) {
 
       console.log(`[BotWSHandler] bot:send_message - Conversa: ${conversationId}`);
 
-      // Envia para o backend DigiUrban processar
+      // Envia para o backend DigiUrban processar via sistema de fluxos
       const response = await axios.post(
-        `${DIGIURBAN_API_URL}/api/bot/message`,
+        `${DIGIURBAN_API_URL}/api/bot-flow/message`,
         {
           conversationId,
-          citizenId: userId,
           message: content
         },
         {
           headers: {
             'Authorization': `Bearer ${MESSAGES_SERVICE_TOKEN}`,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-Citizen-Id': userId
           },
           timeout: 15000
         }
       );
 
-      // As mensagens (cidadão + bot) já foram salvas no banco pelo backend
-      // Agora precisamos notificar via WebSocket
+      // O sistema de fluxos retorna a resposta do bot
+      const botResponse = response.data.response;
 
-      const { userMessage, botMessage } = response.data;
+      // Cria mensagem do usuário
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        content,
+        senderId: userId,
+        senderType: 'CITIZEN',
+        createdAt: new Date().toISOString(),
+        messageType: 'text'
+      };
+
+      // Cria mensagem do bot a partir da resposta do fluxo
+      const botMessage = {
+        id: `bot-${Date.now()}`,
+        content: botResponse.message,
+        senderId: 'bot',
+        senderType: 'SYSTEM',
+        createdAt: new Date().toISOString(),
+        messageType: botResponse.options ? 'menu' : 'text',
+        metadata: {
+          options: botResponse.options,
+          quickReplies: botResponse.quickReplies,
+          needsInput: botResponse.needsInput
+        }
+      };
 
       // Emite mensagem do cidadão
       socket.emit('message:sent', userMessage);
@@ -149,22 +176,9 @@ export function registerBotHandlers(socket: Socket, userId: string) {
 
       console.log(`[BotWSHandler] bot:files_uploaded - Conversa: ${conversationId}, ${files.length} arquivo(s)`);
 
-      // Notifica o backend sobre os arquivos
-      await axios.post(
-        `${DIGIURBAN_API_URL}/api/bot/files`,
-        {
-          conversationId,
-          citizenId: userId,
-          files
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${MESSAGES_SERVICE_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 10000
-        }
-      );
+      // No sistema de fluxos, o upload já foi feito via /api/bot-flow/upload
+      // Aqui só confirmamos o processamento
+      console.log(`[BotWSHandler] Arquivos já processados pelo sistema de fluxos`);
 
       socket.emit('bot:files_uploaded_success', {
         conversationId,
@@ -195,21 +209,9 @@ export function registerBotHandlers(socket: Socket, userId: string) {
 
       console.log(`[BotWSHandler] bot:mark_read - Conversa: ${conversationId}`);
 
-      // Marca mensagens como lidas
-      await axios.post(
-        `${DIGIURBAN_API_URL}/api/bot/mark-read`,
-        {
-          conversationId,
-          citizenId: userId
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${MESSAGES_SERVICE_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 5000
-        }
-      );
+      // Sistema de fluxos não precisa de mark-read específico
+      // As execuções são atualizadas automaticamente
+      console.log(`[BotWSHandler] Mensagens do fluxo não precisam de mark-read`);
 
       console.log(`[BotWSHandler] Mensagens marcadas como lidas`);
     } catch (error: any) {

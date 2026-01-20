@@ -63,10 +63,32 @@ const upload = multer({
 const flowEngine = new FlowEngine(actionHandlers);
 
 /**
+ * Middleware híbrido: aceita JWT do cidadão OU header X-Citizen-Id do UltraZend
+ */
+const hybridAuthMiddleware = async (req: AuthenticatedRequest, res: Response, next: any) => {
+  // Se tem X-Citizen-Id no header (vindo do UltraZend Messages)
+  const citizenIdHeader = req.headers['x-citizen-id'] as string;
+
+  if (citizenIdHeader) {
+    // Valida token do serviço UltraZend
+    const serviceToken = req.headers['authorization']?.replace('Bearer ', '');
+    const expectedToken = process.env.MESSAGES_SERVICE_TOKEN || 'ultrazend-messages-service-token-change-in-production';
+
+    if (serviceToken === expectedToken) {
+      req.citizenId = citizenIdHeader;
+      return next();
+    }
+  }
+
+  // Caso contrário, usa autenticação normal do cidadão
+  return citizenAuthMiddleware(req, res, next);
+};
+
+/**
  * POST /api/bot-flow/message
  * Processa mensagem do usuário no fluxo
  */
-router.post('/message', citizenAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/message', hybridAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const citizenId = req.citizenId!;
     const { message, conversationId } = req.body;
@@ -97,7 +119,7 @@ router.post('/message', citizenAuthMiddleware, async (req: AuthenticatedRequest,
  * POST /api/bot-flow/start
  * Inicia um fluxo específico
  */
-router.post('/start', citizenAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+router.post('/start', hybridAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const citizenId = req.citizenId!;
     const { flowName, conversationId } = req.body;
