@@ -9,7 +9,7 @@ import { FlowEngine } from '../services/bot/flow/FlowEngine';
 import { actionHandlers } from '../services/bot/flow/ActionHandlers';
 import multer from 'multer';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import fs from 'fs';
 
 const router = express.Router();
@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}-${file.originalname}`;
+    const uniqueName = `${randomUUID()}-${file.originalname}`;
     cb(null, uniqueName);
   },
 });
