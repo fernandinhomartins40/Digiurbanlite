@@ -57,12 +57,34 @@ export function registerBotHandlers(socket: Socket, userId: string) {
       );
 
       const conversationId = response.data.response?.executionId || userId;
+      const botResponse = response.data.response;
 
       // Entra na sala da conversa
       socket.join(`conversation:${conversationId}`);
 
       // Notifica o cliente
       socket.emit('bot:conversation_ready', { conversationId });
+
+      // Envia a mensagem inicial do fluxo (menu principal)
+      if (botResponse && botResponse.message) {
+        const initialBotMessage = {
+          id: `bot-${Date.now()}`,
+          content: botResponse.message,
+          senderId: 'bot',
+          senderType: 'SYSTEM',
+          createdAt: new Date().toISOString(),
+          messageType: botResponse.options ? 'menu' : 'text',
+          metadata: {
+            options: botResponse.options,
+            quickReplies: botResponse.quickReplies,
+            needsInput: botResponse.needsInput
+          }
+        };
+
+        // Emite a mensagem inicial do bot
+        socket.emit('message:new', initialBotMessage);
+        console.log(`[BotWSHandler] Mensagem inicial do fluxo enviada`);
+      }
 
       console.log(`[BotWSHandler] Conversa do bot criada/encontrada: ${conversationId}`);
     } catch (error: any) {

@@ -113,7 +113,7 @@ export function EnhancedChatArea() {
               message.senderType === 'CITIZEN' ? 'justify-end' : 'justify-start'
             }`}
           >
-            {message.senderType === 'BOT' ? (
+            {message.senderType === 'SYSTEM' || message.senderType === 'BOT' ? (
               <div className="max-w-[80%]">
                 <BotMessageRenderer
                   message={message}

@@ -206,7 +206,13 @@ export function useBotEnhanced() {
       });
 
       if (!response.ok) {
-        console.warn('[useBotEnhanced] Erro ao carregar histórico');
+        console.warn('[useBotEnhanced] Nenhuma execução ativa, iniciando conversa...');
+
+        // Se não tem execução ativa, solicita conversa inicial via WebSocket
+        if (socketRef.current && socketRef.current.connected) {
+          socketRef.current.emit('bot:get_conversation');
+        }
+
         return [];
       }
 
@@ -214,12 +220,23 @@ export function useBotEnhanced() {
 
       if (data.execution) {
         conversationIdRef.current = data.execution.id;
-        // O histórico virá via WebSocket
+        // O histórico virá via WebSocket ou já está em execução
+
+        // Se não tem conversationId mas socket conectado, solicita conversa
+        if (!conversationIdRef.current && socketRef.current && socketRef.current.connected) {
+          socketRef.current.emit('bot:get_conversation');
+        }
       }
 
       return [];
     } catch (error) {
       console.error('[useBotEnhanced] Erro ao carregar histórico:', error);
+
+      // Em caso de erro, tenta iniciar conversa via WebSocket
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('bot:get_conversation');
+      }
+
       return [];
     }
   }, []);
