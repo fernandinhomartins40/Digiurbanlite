@@ -939,9 +939,15 @@ export default function CitizenDashboard() {
                 const lastMessage = messages[messages.length - 1];
                 const hasActiveMenu = lastMessage &&
                                      lastMessage.senderType === 'BOT' &&
-                                     lastMessage.metadata?.quickReplies &&
-                                     lastMessage.metadata.quickReplies.length > 0;
+                                     lastMessage.metadata?.options &&
+                                     lastMessage.metadata.options.length > 0;
 
+                const needsTextInput = lastMessage &&
+                                      lastMessage.senderType === 'BOT' &&
+                                      lastMessage.metadata?.needsInput &&
+                                      (!lastMessage.metadata?.options || lastMessage.metadata.options.length === 0);
+
+                // Se tem menu ativo, mostrar apenas mensagem indicativa
                 if (hasActiveMenu) {
                   return (
                     <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto py-2">
@@ -952,6 +958,7 @@ export default function CitizenDashboard() {
                   );
                 }
 
+                // Caso contrário, mostrar input normal (habilitado para texto livre)
                 return (
                   <div className="flex items-center gap-2 max-w-4xl mx-auto">
                     <Button type="button" variant="ghost" size="icon" className="text-gray-500">
@@ -963,11 +970,16 @@ export default function CitizenDashboard() {
 
                     <Input
                       type="text"
-                      placeholder={selectedConversation.isBot ? "Clique nas opções acima..." : "Digite uma mensagem..."}
+                      placeholder={
+                        selectedConversation.isBot && needsTextInput
+                          ? "Digite sua resposta..."
+                          : selectedConversation.isBot
+                          ? "Aguarde o DigiBot..."
+                          : "Digite uma mensagem..."
+                      }
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       className="flex-1"
-                      disabled={selectedConversation.isBot}
                     />
 
                     {newMessage.trim() ? (
