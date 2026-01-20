@@ -103,7 +103,9 @@
       "Bash(git diff:*)",
       "Bash(ping:*)",
       "Bash(if not exist .env copy .env.example .env)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(for dir in financas administracao defesa-civil politicas-mulheres tecnologia-inovacao transportes-transito desenvolvimento-economico mobilidade-urbana)",
+      "Bash(do mkdir -p \"$dir/sugestoes\")"
     ],
     "deny": [],
     "ask": []

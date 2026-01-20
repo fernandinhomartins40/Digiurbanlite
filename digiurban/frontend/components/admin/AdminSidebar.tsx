@@ -42,7 +42,12 @@ import {
   MailOpen,
   Trash2,
   ScrollText,
-  X
+  X,
+  DollarSign,
+  ShieldAlert,
+  Cpu,
+  Car,
+  Bus
 } from 'lucide-react'
 
 interface NavItem {
@@ -328,6 +333,54 @@ export function AdminSidebar() {
         title: 'Turismo',
         href: '/admin/secretarias/turismo',
         icon: Camera,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Administração',
+        href: '/admin/secretarias/administracao',
+        icon: Building2,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Defesa Civil',
+        href: '/admin/secretarias/defesa-civil',
+        icon: ShieldAlert,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Desenvolvimento Econômico',
+        href: '/admin/secretarias/desenvolvimento-economico',
+        icon: TrendingUp,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Finanças',
+        href: '/admin/secretarias/financas',
+        icon: DollarSign,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Mobilidade Urbana',
+        href: '/admin/secretarias/mobilidade-urbana',
+        icon: Bus,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Políticas para Mulheres',
+        href: '/admin/secretarias/politicas-mulheres',
+        icon: Users,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Tecnologia e Inovação',
+        href: '/admin/secretarias/tecnologia-inovacao',
+        icon: Cpu,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Transportes e Trânsito',
+        href: '/admin/secretarias/transportes-transito',
+        icon: Car,
         minRole: 'COORDINATOR'
       }
     ]
