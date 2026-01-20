@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { X, ChevronRight, AlertCircle, Lightbulb, BookOpen, Video, ExternalLink, Search } from 'lucide-react'
-import type { HelpContent, HelpSection, HelpStep } from '@/src/types/help-system'
+import type { HelpContent, HelpSection, HelpStep, HelpFAQ, HelpTroubleshooting } from '@/src/types/help-system'
 
 interface HelpModalProps {
   isOpen: boolean
@@ -19,10 +19,10 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
   if (!isOpen) return null
 
   // Filtrar conteúdo pela busca
-  const filteredSections = content.sections.filter(section =>
+  const filteredSections = content.sections.filter((section: HelpSection) =>
     section.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     section.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    section.steps.some(step =>
+    section.steps.some((step: HelpStep) =>
       step.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       step.description.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -41,7 +41,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
 
       {/* Steps */}
       <div className="space-y-4">
-        {section.steps.map((step, index) => (
+        {section.steps.map((step: HelpStep, index: number) => (
           <div
             key={step.id}
             className={`border rounded-lg overflow-hidden transition-all ${
@@ -101,7 +101,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
                       <h5 className="font-semibold text-green-900">Dicas Importantes</h5>
                     </div>
                     <ul className="space-y-1 ml-6">
-                      {step.tips.map((tip, i) => (
+                      {step.tips.map((tip: string, i: number) => (
                         <li key={i} className="text-green-800 text-sm list-disc">{tip}</li>
                       ))}
                     </ul>
@@ -116,7 +116,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
                       <h5 className="font-semibold text-amber-900">Atenção</h5>
                     </div>
                     <ul className="space-y-1 ml-6">
-                      {step.warnings.map((warning, i) => (
+                      {step.warnings.map((warning: string, i: number) => (
                         <li key={i} className="text-amber-800 text-sm list-disc">{warning}</li>
                       ))}
                     </ul>
@@ -126,7 +126,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
                 {/* Links relacionados */}
                 {step.relatedLinks && step.relatedLinks.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {step.relatedLinks.map((link, i) => (
+                    {step.relatedLinks.map((link: {label: string, url: string}, i: number) => (
                       <a
                         key={i}
                         href={link.url}
@@ -149,7 +149,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h4 className="font-semibold text-blue-900 mb-3">Perguntas Frequentes</h4>
           <div className="space-y-3">
-            {section.faqs.map((faq, i) => (
+            {section.faqs.map((faq: HelpFAQ, i: number) => (
               <details key={i} className="group">
                 <summary className="font-medium text-blue-800 cursor-pointer hover:text-blue-900 list-none flex items-center gap-2">
                   <ChevronRight size={16} className="group-open:rotate-90 transition-transform" />
@@ -214,7 +214,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
           >
             Visão Geral
           </button>
-          {content.sections.map((section) => (
+          {content.sections.map((section: HelpSection) => (
             <button
               key={section.id}
               onClick={() => {
@@ -260,7 +260,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
                     <h3 className="text-xl font-bold text-yellow-900">Dicas Rápidas</h3>
                   </div>
                   <ul className="space-y-2">
-                    {content.quickTips.map((tip, i) => (
+                    {content.quickTips.map((tip: string, i: number) => (
                       <li key={i} className="flex items-start gap-2 text-yellow-800">
                         <span className="text-yellow-600 mt-1">•</span>
                         <span>{tip}</span>
@@ -272,7 +272,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
 
               {/* Sections Overview */}
               <div className="grid md:grid-cols-2 gap-4">
-                {filteredSections.map((section) => (
+                {filteredSections.map((section: HelpSection) => (
                   <button
                     key={section.id}
                     onClick={() => setActiveSection(section.id)}
@@ -318,7 +318,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
                 Voltar para visão geral
               </button>
               {renderSectionDetail(
-                content.sections.find((s) => s.id === activeSection)!
+                content.sections.find((s: HelpSection) => s.id === activeSection)!
               )}
             </>
           )}
@@ -328,7 +328,7 @@ export function HelpModal({ isOpen, onClose, content }: HelpModalProps) {
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 Solução de Problemas Comuns
               </h3>
-              {content.troubleshooting.map((item, i) => (
+              {content.troubleshooting.map((item: HelpTroubleshooting, i: number) => (
                 <div
                   key={i}
                   className="border border-red-200 bg-red-50 rounded-lg p-5"

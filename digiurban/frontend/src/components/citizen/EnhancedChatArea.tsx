@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot } from 'lucide-react';
-import { BotMessageRenderer } from '@/components/bot';
-import { useBotEnhanced } from '@/hooks/useBotEnhanced';
-import { TypingIndicator } from '@/components/bot/TypingIndicator';
+import { BotMessageRenderer } from '@/src/components/bot';
+import { useBotEnhanced } from '@/src/hooks/useBotEnhanced';
+import { TypingIndicator } from '@/src/components/bot/TypingIndicator';
 
 export function EnhancedChatArea() {
   const [inputMessage, setInputMessage] = useState('');
@@ -106,7 +106,7 @@ export function EnhancedChatArea() {
           </div>
         )}
 
-        {messages.map((message) => (
+        {messages.map((message: any) => (
           <div
             key={message.id}
             className={`flex ${

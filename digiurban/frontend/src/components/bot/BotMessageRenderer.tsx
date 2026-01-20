@@ -96,7 +96,8 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
       case 'multiple_choice':
         return (
           <InteractiveCard
-            type={stepType === 'multiple_choice' ? 'multiple' : 'single'}
+            type={stepType === 'multiple_choice' ? 'multiple-choice' : 'single-choice'}
+            question={metadata.question || 'Selecione uma opção'}
             options={metadata.options || []}
             onSelect={selected => onInteraction(selected)}
           />
