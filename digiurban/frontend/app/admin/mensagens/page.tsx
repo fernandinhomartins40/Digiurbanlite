@@ -19,7 +19,9 @@ import {
   MessageSquare,
   Sparkles,
   PlayCircle,
-  PauseCircle
+  PauseCircle,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -30,23 +32,46 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { io, Socket } from 'socket.io-client';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 interface Conversation {
   id: string;
-  citizenName: string;
-  citizenId: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount: number;
-  status: 'bot' | 'human' | 'closed';
-  avatar?: string;
+  participant1Id: string;
+  participant2Id: string;
+  participant1Type: string;
+  participant2Type: string;
+  lastMessageAt?: string;
+  lastMessagePreview?: string;
+  unreadCount1: number;
+  unreadCount2: number;
+  status: string;
+  protocolId?: string;
+  metadata?: {
+    botStatus?: 'ACTIVE' | 'PAUSED' | 'HUMAN_TAKEOVER';
+    assignedTo?: string;
+    citizenName?: string;
+    serverName?: string;
+  };
+  // Campos computados no frontend
+  citizenName?: string;
+  unreadCount?: number;
+  conversationStatus?: 'bot' | 'human' | 'closed';
 }
 
 interface Message {
   id: string;
+  conversationId: string;
+  senderId: string;
+  senderType: 'CITIZEN' | 'SERVER' | 'BOT';
   content: string;
-  sender: 'citizen' | 'admin' | 'bot';
-  timestamp: string;
+  contentType: string;
+  attachments?: any[];
+  status: string;
+  sentAt: string;
+  readAt?: string;
+  isEdited: boolean;
+  isDeleted: boolean;
   senderName?: string;
 }
 
@@ -61,6 +86,7 @@ interface Stats {
 
 export default function AdminMessagesPage() {
   const { toast } = useToast();
+  const { user } = useAdminAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -69,55 +95,103 @@ export default function AdminMessagesPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'bot' | 'human' | 'closed'>('all');
   const [isMobileView, setIsMobileView] = useState(false);
   const [showConversationsList, setShowConversationsList] = useState(true);
-  const [botPaused, setBotPaused] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [stats, setStats] = useState<Stats>({
-    totalConversations: 127,
-    activeConversations: 23,
-    botConversations: 18,
-    humanConversations: 5,
-    averageResponseTime: '2m 15s',
-    satisfactionRate: 4.7
+    totalConversations: 0,
+    activeConversations: 0,
+    botConversations: 0,
+    humanConversations: 0,
+    averageResponseTime: '0s',
+    satisfactionRate: 0
   });
 
-  // Mock data
-  const mockConversations: Conversation[] = [
-    {
-      id: '1',
-      citizenName: 'João Silva',
-      citizenId: 'cit-1',
-      lastMessage: 'Preciso de ajuda com meu protocolo',
-      timestamp: new Date().toISOString(),
-      unreadCount: 2,
-      status: 'bot',
-      avatar: undefined
-    },
-    {
-      id: '2',
-      citizenName: 'Maria Santos',
-      citizenId: 'cit-2',
-      lastMessage: 'Gostaria de solicitar um serviço',
-      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      unreadCount: 0,
-      status: 'human',
-      avatar: undefined
-    },
-    {
-      id: '3',
-      citizenName: 'Pedro Oliveira',
-      citizenId: 'cit-3',
-      lastMessage: 'Obrigado pela ajuda!',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-      unreadCount: 0,
-      status: 'closed',
-      avatar: undefined
-    }
-  ];
+  const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
+  const MESSAGES_WS_URL = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+  // Conectar WebSocket
   useEffect(() => {
-    setConversations(mockConversations);
-  }, []);
+    const newSocket = io(MESSAGES_WS_URL, {
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+    });
+
+    newSocket.on('connect', () => {
+      setIsConnected(true);
+      console.log('[Admin] Conectado ao servidor de mensagens');
+    });
+
+    newSocket.on('disconnect', () => {
+      setIsConnected(false);
+      console.log('[Admin] Desconectado do servidor de mensagens');
+    });
+
+    // Receber nova mensagem
+    newSocket.on('message:new', (data: { conversationId: string; message: Message }) => {
+      console.log('[Admin] Nova mensagem recebida:', data);
+
+      // Atualizar lista de conversas
+      setConversations(prev => prev.map(conv =>
+        conv.id === data.conversationId
+          ? {
+              ...conv,
+              lastMessagePreview: data.message.content.substring(0, 100),
+              lastMessageAt: data.message.sentAt,
+              unreadCount: conv.unreadCount ? conv.unreadCount + 1 : 1
+            }
+          : conv
+      ));
+
+      // Se a conversa selecionada é a que recebeu mensagem, adicionar
+      if (selectedConversation?.id === data.conversationId) {
+        setMessages(prev => [...prev, data.message]);
+
+        // Marcar como lida automaticamente
+        newSocket.emit('message:read', {
+          messageId: data.message.id,
+          conversationId: data.conversationId
+        });
+      } else {
+        // Mostrar notificação
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Nova mensagem', {
+            body: data.message.content.substring(0, 100),
+            icon: '/logo.png'
+          });
+        }
+      }
+    });
+
+    // Mensagem lida
+    newSocket.on('message:read', (data: { messageId: string; conversationId: string }) => {
+      if (selectedConversation?.id === data.conversationId) {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === data.messageId
+              ? { ...msg, status: 'READ', readAt: new Date().toISOString() }
+              : msg
+          )
+        );
+      }
+    });
+
+    setSocket(newSocket);
+
+    // Solicitar permissão de notificação
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    return () => {
+      newSocket.close();
+    };
+  }, [MESSAGES_WS_URL, selectedConversation]);
 
   // Detectar mobile
   useEffect(() => {
@@ -129,25 +203,124 @@ export default function AdminMessagesPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const handleSelectConversation = (conversation: Conversation) => {
-    setSelectedConversation(conversation);
-    // Carregar mensagens
-    setMessages([
-      {
-        id: '1',
-        content: 'Olá! Como posso ajudar?',
-        sender: 'citizen',
-        timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-        senderName: conversation.citizenName
-      },
-      {
-        id: '2',
-        content: 'Olá! Vou te ajudar com isso.',
-        sender: conversation.status === 'bot' ? 'bot' : 'admin',
-        timestamp: new Date(Date.now() - 1000 * 60 * 4).toISOString(),
-        senderName: conversation.status === 'bot' ? 'DigiBot' : 'Atendente'
+  // Carregar conversas
+  useEffect(() => {
+    loadConversations();
+    loadStats();
+  }, []);
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const loadConversations = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao carregar conversas');
       }
-    ]);
+
+      const data = await response.json();
+
+      // Processar conversas para adicionar informações computadas
+      const processedConversations = data.map((conv: Conversation) => {
+        const botStatus = conv.metadata?.botStatus || 'ACTIVE';
+        let conversationStatus: 'bot' | 'human' | 'closed' = 'bot';
+
+        if (conv.status === 'CLOSED') {
+          conversationStatus = 'closed';
+        } else if (botStatus === 'HUMAN_TAKEOVER' || botStatus === 'PAUSED') {
+          conversationStatus = 'human';
+        }
+
+        return {
+          ...conv,
+          conversationStatus,
+          citizenName: conv.metadata?.citizenName || 'Cidadão',
+          unreadCount: conv.unreadCount2 || 0
+        };
+      });
+
+      setConversations(processedConversations);
+    } catch (err) {
+      console.error('Erro ao carregar conversas:', err);
+      setError('Não foi possível carregar as conversas. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/admin/stats`, {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          totalConversations: data.totalConversations || 0,
+          activeConversations: data.activeConversations || 0,
+          botConversations: data.botConversations || 0,
+          humanConversations: data.humanConversations || 0,
+          averageResponseTime: data.averageResponseTime || '0s',
+          satisfactionRate: data.satisfactionRate || 0
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas:', err);
+    }
+  };
+
+  const handleSelectConversation = async (conversation: Conversation) => {
+    setSelectedConversation(conversation);
+    setLoadingMessages(true);
+
+    try {
+      // Carregar mensagens
+      const response = await fetch(
+        `${MESSAGES_API_URL}/conversations/${conversation.id}/messages?limit=50`,
+        {
+          credentials: 'include'
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data);
+
+        // Entrar na sala do WebSocket
+        if (socket) {
+          socket.emit('conversation:join', { conversationId: conversation.id });
+        }
+
+        // Marcar mensagens não lidas como lidas
+        if (conversation.unreadCount && conversation.unreadCount > 0) {
+          // Atualizar contador local
+          setConversations(prev => prev.map(conv =>
+            conv.id === conversation.id
+              ? { ...conv, unreadCount: 0 }
+              : conv
+          ));
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao carregar mensagens:', err);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível carregar as mensagens.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingMessages(false);
+    }
 
     if (isMobileView) {
       setShowConversationsList(false);
@@ -156,50 +329,143 @@ export default function AdminMessagesPage() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConversation) return;
+    if (!newMessage.trim() || !selectedConversation || !socket) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      sender: 'admin',
-      timestamp: new Date().toISOString(),
-      senderName: 'Você'
-    };
-
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+    socket.emit(
+      'message:send',
+      {
+        conversationId: selectedConversation.id,
+        content: newMessage.trim(),
+      },
+      (response: any) => {
+        if (response?.error) {
+          console.error('Erro ao enviar mensagem:', response.error);
+          toast({
+            title: 'Erro',
+            description: 'Não foi possível enviar a mensagem.',
+            variant: 'destructive'
+          });
+        } else {
+          setNewMessage('');
+        }
+      }
+    );
   };
 
-  const handleTakeOver = () => {
+  const handleTakeOver = async () => {
     if (!selectedConversation) return;
 
-    setSelectedConversation({
-      ...selectedConversation,
-      status: 'human'
-    });
+    try {
+      // 1. Pausar o bot
+      await fetch(`${API_URL}/bot-flow/pause`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId: selectedConversation.id,
+          citizenId: selectedConversation.participant1Id
+        })
+      });
 
-    setBotPaused(true);
+      // 2. Atualizar conversa localmente
+      setSelectedConversation({
+        ...selectedConversation,
+        conversationStatus: 'human',
+        metadata: {
+          ...selectedConversation.metadata,
+          botStatus: 'HUMAN_TAKEOVER',
+          assignedTo: user?.id
+        }
+      });
 
-    toast({
-      title: 'Atendimento assumido',
-      description: 'Você assumiu a conversa. O bot foi pausado.',
-    });
+      setConversations(prev => prev.map(conv =>
+        conv.id === selectedConversation.id
+          ? {
+              ...conv,
+              conversationStatus: 'human',
+              metadata: {
+                ...conv.metadata,
+                botStatus: 'HUMAN_TAKEOVER',
+                assignedTo: user?.id
+              }
+            }
+          : conv
+      ));
+
+      // 3. Enviar mensagem automática
+      if (socket) {
+        socket.emit('message:send', {
+          conversationId: selectedConversation.id,
+          content: 'Um atendente assumiu a conversa. Como posso ajudar?',
+        });
+      }
+
+      toast({
+        title: 'Atendimento assumido',
+        description: 'Você assumiu a conversa. O bot foi pausado.',
+      });
+    } catch (err) {
+      console.error('Erro ao assumir conversa:', err);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível assumir a conversa.',
+        variant: 'destructive'
+      });
+    }
   };
 
-  const handleHandBackToBot = () => {
+  const handleHandBackToBot = async () => {
     if (!selectedConversation) return;
 
-    setSelectedConversation({
-      ...selectedConversation,
-      status: 'bot'
-    });
+    try {
+      // 1. Retomar o bot
+      await fetch(`${API_URL}/bot-flow/resume`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversationId: selectedConversation.id,
+          citizenId: selectedConversation.participant1Id
+        })
+      });
 
-    setBotPaused(false);
+      // 2. Atualizar conversa localmente
+      setSelectedConversation({
+        ...selectedConversation,
+        conversationStatus: 'bot',
+        metadata: {
+          ...selectedConversation.metadata,
+          botStatus: 'ACTIVE',
+          assignedTo: undefined
+        }
+      });
 
-    toast({
-      title: 'Conversa retornada ao bot',
-      description: 'O DigiBot voltou a atender esta conversa.',
-    });
+      setConversations(prev => prev.map(conv =>
+        conv.id === selectedConversation.id
+          ? {
+              ...conv,
+              conversationStatus: 'bot',
+              metadata: {
+                ...conv.metadata,
+                botStatus: 'ACTIVE',
+                assignedTo: undefined
+              }
+            }
+          : conv
+      ));
+
+      toast({
+        title: 'Conversa retornada ao bot',
+        description: 'O DigiBot voltou a atender esta conversa.',
+      });
+    } catch (err) {
+      console.error('Erro ao retornar ao bot:', err);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível retornar a conversa ao bot.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const formatTime = (dateString: string) => {
@@ -221,12 +487,12 @@ export default function AdminMessagesPage() {
   };
 
   const filteredConversations = conversations.filter(conv => {
-    const matchesSearch = conv.citizenName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (conv.citizenName || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab =
       activeTab === 'all' ||
-      (activeTab === 'bot' && conv.status === 'bot') ||
-      (activeTab === 'human' && conv.status === 'human') ||
-      (activeTab === 'closed' && conv.status === 'closed');
+      (activeTab === 'bot' && conv.conversationStatus === 'bot') ||
+      (activeTab === 'human' && conv.conversationStatus === 'human') ||
+      (activeTab === 'closed' && conv.conversationStatus === 'closed');
 
     return matchesSearch && matchesTab;
   });
@@ -239,12 +505,12 @@ export default function AdminMessagesPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Mensagens</h1>
             <p className="text-sm text-gray-600 mt-1">
-              Gerencie conversas e atendimentos
+              Gerencie conversas e atendimentos {isConnected && <span className="text-green-600">● Online</span>}
             </p>
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2" onClick={loadConversations}>
             <Filter className="w-4 h-4" />
-            Filtros
+            Atualizar
           </Button>
         </div>
 
@@ -279,7 +545,9 @@ export default function AdminMessagesPage() {
                 <Bot className="w-8 h-8 text-purple-600" />
               </div>
               <p className="text-xs text-gray-600 mt-1">
-                {Math.round((stats.botConversations / stats.activeConversations) * 100)}% do total ativo
+                {stats.activeConversations > 0
+                  ? Math.round((stats.botConversations / stats.activeConversations) * 100)
+                  : 0}% do total ativo
               </p>
             </CardContent>
           </Card>
@@ -313,11 +581,19 @@ export default function AdminMessagesPage() {
                 <TrendingUp className="w-8 h-8 text-green-600" />
               </div>
               <p className="text-xs text-green-600 mt-1">
-                +0.3 vs mês anterior
+                Avaliação média
               </p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Erro */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            {error}
+          </div>
+        )}
 
         {/* Chat Interface */}
         <div className="h-[600px] flex bg-white rounded-lg border shadow-sm overflow-hidden">
@@ -355,61 +631,74 @@ export default function AdminMessagesPage() {
 
             {/* Lista */}
             <ScrollArea className="flex-1">
-              {filteredConversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  onClick={() => handleSelectConversation(conv)}
-                  className={cn(
-                    "p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors",
-                    selectedConversation?.id === conv.id && "bg-blue-50"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <Avatar className="w-10 h-10">
-                      <AvatarFallback>
-                        {conv.citizenName.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                </div>
+              ) : filteredConversations.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">Nenhuma conversa encontrada</p>
+                </div>
+              ) : (
+                filteredConversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    onClick={() => handleSelectConversation(conv)}
+                    className={cn(
+                      "p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors",
+                      selectedConversation?.id === conv.id && "bg-blue-50"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback>
+                          {(conv.citizenName || 'C').charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-sm truncate">{conv.citizenName}</h4>
-                        <span className="text-xs text-gray-500">
-                          {formatRelativeTime(conv.timestamp)}
-                        </span>
-                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-medium text-sm truncate">{conv.citizenName}</h4>
+                          {conv.lastMessageAt && (
+                            <span className="text-xs text-gray-500">
+                              {formatRelativeTime(conv.lastMessageAt)}
+                            </span>
+                          )}
+                        </div>
 
-                      <p className="text-sm text-gray-600 truncate mb-1">
-                        {conv.lastMessage}
-                      </p>
+                        <p className="text-sm text-gray-600 truncate mb-1">
+                          {conv.lastMessagePreview || 'Sem mensagens'}
+                        </p>
 
-                      <div className="flex items-center gap-2">
-                        {conv.status === 'bot' ? (
-                          <Badge className="bg-purple-100 text-purple-700 text-xs">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            IA
-                          </Badge>
-                        ) : conv.status === 'human' ? (
-                          <Badge className="bg-orange-100 text-orange-700 text-xs">
-                            <UserCheck className="w-3 h-3 mr-1" />
-                            Humano
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-gray-100 text-gray-700 text-xs">
-                            Fechada
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {conv.conversationStatus === 'bot' ? (
+                            <Badge className="bg-purple-100 text-purple-700 text-xs">
+                              <Sparkles className="w-3 h-3 mr-1" />
+                              IA
+                            </Badge>
+                          ) : conv.conversationStatus === 'human' ? (
+                            <Badge className="bg-orange-100 text-orange-700 text-xs">
+                              <UserCheck className="w-3 h-3 mr-1" />
+                              Humano
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-gray-100 text-gray-700 text-xs">
+                              Fechada
+                            </Badge>
+                          )}
 
-                        {conv.unreadCount > 0 && (
-                          <Badge className="bg-blue-600 text-white text-xs">
-                            {conv.unreadCount}
-                          </Badge>
-                        )}
+                          {conv.unreadCount && conv.unreadCount > 0 && (
+                            <Badge className="bg-blue-600 text-white text-xs">
+                              {conv.unreadCount}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </ScrollArea>
           </div>
 
@@ -438,16 +727,16 @@ export default function AdminMessagesPage() {
 
                     <Avatar>
                       <AvatarFallback>
-                        {selectedConversation.citizenName.charAt(0).toUpperCase()}
+                        {(selectedConversation.citizenName || 'C').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
 
                     <div>
                       <h3 className="font-medium">{selectedConversation.citizenName}</h3>
                       <p className="text-xs text-gray-500">
-                        {selectedConversation.status === 'bot'
+                        {selectedConversation.conversationStatus === 'bot'
                           ? 'Atendido por DigiBot'
-                          : selectedConversation.status === 'human'
+                          : selectedConversation.conversationStatus === 'human'
                           ? 'Atendimento humano'
                           : 'Conversa encerrada'}
                       </p>
@@ -455,12 +744,12 @@ export default function AdminMessagesPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {selectedConversation.status === 'bot' ? (
+                    {selectedConversation.conversationStatus === 'bot' ? (
                       <Button size="sm" onClick={handleTakeOver} className="gap-2">
                         <UserCheck className="w-4 h-4" />
                         Assumir Conversa
                       </Button>
-                    ) : selectedConversation.status === 'human' ? (
+                    ) : selectedConversation.conversationStatus === 'human' ? (
                       <Button size="sm" variant="outline" onClick={handleHandBackToBot} className="gap-2">
                         <Bot className="w-4 h-4" />
                         Devolver ao Bot
@@ -475,45 +764,56 @@ export default function AdminMessagesPage() {
 
                 {/* Mensagens */}
                 <ScrollArea className="flex-1 p-4 bg-gray-50">
-                  <div className="space-y-4 max-w-4xl mx-auto">
-                    {messages.map((message) => {
-                      const isOwn = message.sender === 'admin';
-                      const isBot = message.sender === 'bot';
+                  {loadingMessages ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-w-4xl mx-auto">
+                      {messages.map((message) => {
+                        const isOwn = message.senderType === 'SERVER';
+                        const isBot = message.senderType === 'BOT';
 
-                      return (
-                        <div
-                          key={message.id}
-                          className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                        >
+                        return (
                           <div
-                            className={cn(
-                              "max-w-[70%] rounded-lg px-4 py-2 shadow-sm",
-                              isOwn
-                                ? 'bg-blue-600 text-white'
-                                : isBot
-                                ? 'bg-gradient-to-br from-purple-50 to-blue-50 text-gray-900 border border-purple-200'
-                                : 'bg-white text-gray-900'
-                            )}
+                            key={message.id}
+                            className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                           >
-                            {!isOwn && (
-                              <p className="text-xs font-semibold mb-1">
-                                {message.senderName}
-                              </p>
-                            )}
-                            <p className="text-sm">{message.content}</p>
-                            <div className={`flex items-center justify-end gap-1 mt-1 ${
-                              isOwn ? 'text-blue-100' : 'text-gray-500'
-                            }`}>
-                              <span className="text-xs">
-                                {formatTime(message.timestamp)}
-                              </span>
+                            <div
+                              className={cn(
+                                "max-w-[70%] rounded-lg px-4 py-2 shadow-sm",
+                                isOwn
+                                  ? 'bg-blue-600 text-white'
+                                  : isBot
+                                  ? 'bg-gradient-to-br from-purple-50 to-blue-50 text-gray-900 border border-purple-200'
+                                  : 'bg-white text-gray-900'
+                              )}
+                            >
+                              {!isOwn && (
+                                <p className={`text-xs font-semibold mb-1 ${isBot ? 'text-purple-700' : 'text-gray-700'}`}>
+                                  {isBot ? 'DigiBot' : selectedConversation.citizenName}
+                                </p>
+                              )}
+                              <p className="text-sm">{message.content}</p>
+                              <div className={`flex items-center justify-end gap-1 mt-1 ${
+                                isOwn ? 'text-blue-100' : 'text-gray-500'
+                              }`}>
+                                <span className="text-xs">
+                                  {formatTime(message.sentAt)}
+                                </span>
+                                {isOwn && (
+                                  <span className="text-xs">
+                                    {message.status === 'READ' ? '✓✓' : '✓'}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                    <div ref={messagesEndRef} />
-                  </div>
+                        );
+                      })}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  )}
                 </ScrollArea>
 
                 {/* Input de Mensagem */}
@@ -524,9 +824,14 @@ export default function AdminMessagesPage() {
                       placeholder="Digite uma mensagem..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
+                      disabled={!isConnected || selectedConversation.conversationStatus === 'closed'}
                       className="flex-1"
                     />
-                    <Button type="submit" size="icon">
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={!isConnected || !newMessage.trim() || selectedConversation.conversationStatus === 'closed'}
+                    >
                       <Send className="w-5 h-5" />
                     </Button>
                   </div>

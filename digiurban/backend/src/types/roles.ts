@@ -145,7 +145,9 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
   USER: [
     'protocols:read',
     'protocols:create',
-    'protocols:update_own'
+    'protocols:update_own',
+    'messages:read',
+    'messages:write'
   ],
   COORDINATOR: [
     'protocols:read',
@@ -153,7 +155,10 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'protocols:update',
     'protocols:assign',
     'team:read',
-    'departments:read'
+    'departments:read',
+    'messages:read',
+    'messages:write',
+    'messages:moderate'
   ],
   MANAGER: [
     'protocols:read',
@@ -166,7 +171,11 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'services:read',
     'services:create',
     'services:update',
-    'departments:read'
+    'departments:read',
+    'messages:read',
+    'messages:write',
+    'messages:moderate',
+    'messages:admin'
   ],
   ADMIN: [
     'protocols:*',
@@ -174,7 +183,8 @@ export const ROLE_PERMISSIONS: Record<string, readonly string[]> = {
     'services:*',
     'departments:*',
     'reports:*',
-    'analytics:*'
+    'analytics:*',
+    'messages:*'
   ],
   SUPER_ADMIN: ['*'] // Acesso total
 };

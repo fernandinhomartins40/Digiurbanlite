@@ -47,7 +47,8 @@ import {
   ShieldAlert,
   Cpu,
   Car,
-  Bus
+  Bus,
+  MessageCircle
 } from 'lucide-react'
 
 interface NavItem {
@@ -101,6 +102,13 @@ export function AdminSidebar() {
           icon: FileText,
           permissions: ['protocols:read'],
           badge: stats?.pendingProtocols?.toString()
+        },
+        {
+          title: 'Mensagens',
+          href: '/admin/mensagens',
+          icon: MessageCircle,
+          permissions: ['messages:read'],
+          badge: stats?.unreadMessages?.toString()
         }
       ]
     },

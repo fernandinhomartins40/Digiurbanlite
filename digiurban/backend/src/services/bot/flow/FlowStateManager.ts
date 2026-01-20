@@ -71,6 +71,7 @@ export class FlowStateManager {
       addToHistory?: string;
       status?: 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ERROR';
       errorMessage?: string;
+      metadata?: Record<string, any>;
     }
   ): Promise<FlowExecution> {
     const execution = await prisma.flowExecution.findUnique({
@@ -111,6 +112,10 @@ export class FlowStateManager {
 
     if (updates.errorMessage) {
       updateData.errorMessage = updates.errorMessage;
+    }
+
+    if (updates.metadata) {
+      updateData.metadata = updates.metadata;
     }
 
     const updated = await prisma.flowExecution.update({

@@ -42,6 +42,7 @@ import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { BottomNavigation } from '@/components/citizen/mobile/BottomNavigation';
+import { NewConversationDialog } from '@/src/components/Messages/NewConversationDialog';
 
 interface Message {
   id: string;
@@ -105,6 +106,7 @@ export default function CitizenDashboard() {
   const [showConversationsList, setShowConversationsList] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const [showNewConversation, setShowNewConversation] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -592,6 +594,8 @@ export default function CitizenDashboard() {
               size="icon"
               variant="ghost"
               className="text-white hover:bg-white/20"
+              onClick={() => setShowNewConversation(true)}
+              title="Nova conversa"
             >
               <Plus className="w-5 h-5" />
             </Button>
@@ -1021,6 +1025,40 @@ export default function CitizenDashboard() {
       {/* Bottom Navigation - Mobile - Mostrar apenas na lista de conversas */}
       {(!isMobileView || showConversationsList || !selectedConversation) && (
         <BottomNavigation />
+      )}
+
+      {/* Dialog de Nova Conversa */}
+      {citizen && (
+        <NewConversationDialog
+          isOpen={showNewConversation}
+          onClose={() => setShowNewConversation(false)}
+          currentUserId={citizen.id}
+          currentUserType="CITIZEN"
+          onConversationCreated={(conversation) => {
+            // Adicionar nova conversa à lista (mantendo o bot no topo)
+            setConversations(prev => {
+              const filtered = prev.filter(c => !c.isBot);
+              return [BOT_CONVERSATION, conversation, ...filtered];
+            });
+
+            // Selecionar a nova conversa
+            setSelectedConversation(conversation);
+
+            // Fechar o dialog
+            setShowNewConversation(false);
+
+            // Em mobile, esconder a lista de conversas
+            if (isMobileView) {
+              setShowConversationsList(false);
+            }
+
+            // Mostrar toast de sucesso
+            toast({
+              title: 'Conversa iniciada',
+              description: `Conversa com ${conversation.title} iniciada com sucesso!`,
+            });
+          }}
+        />
       )}
     </div>
   );

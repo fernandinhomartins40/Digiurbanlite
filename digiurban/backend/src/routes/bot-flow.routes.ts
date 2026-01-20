@@ -271,6 +271,83 @@ router.post('/reset', citizenAuthMiddleware, async (req: AuthenticatedRequest, r
 });
 
 /**
+ * POST /api/bot-flow/pause
+ * Pausa o bot para permitir atendimento humano
+ */
+router.post('/pause', hybridAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { conversationId, citizenId: requestCitizenId } = req.body;
+    const citizenId = requestCitizenId || req.citizenId!;
+
+    if (!conversationId) {
+      return res.status(400).json({
+        success: false,
+        error: 'conversationId é obrigatório',
+      });
+    }
+
+    // Pausar execução do fluxo
+    await flowEngine.pauseExecution(citizenId);
+
+    res.json({
+      success: true,
+      message: 'Bot pausado com sucesso. Atendimento humano assumiu.',
+      pausedAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('Erro ao pausar bot:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao pausar bot',
+    });
+  }
+});
+
+/**
+ * POST /api/bot-flow/resume
+ * Retoma o bot após atendimento humano
+ */
+router.post('/resume', hybridAuthMiddleware, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { conversationId, citizenId: requestCitizenId } = req.body;
+    const citizenId = requestCitizenId || req.citizenId!;
+
+    if (!conversationId) {
+      return res.status(400).json({
+        success: false,
+        error: 'conversationId é obrigatório',
+      });
+    }
+
+    // Retomar execução do fluxo
+    const execution = await flowEngine.resumeExecution(citizenId);
+
+    if (!execution) {
+      // Se não há execução para retomar, iniciar menu principal
+      const response = await flowEngine.startFlow(citizenId, 'menu_principal', conversationId);
+      return res.json({
+        success: true,
+        message: 'Bot retomado. Iniciando menu principal.',
+        response,
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Bot retomado com sucesso',
+      execution,
+      resumedAt: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('Erro ao retomar bot:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao retomar bot',
+    });
+  }
+});
+
+/**
  * GET /api/bot-flow/health
  * Health check do sistema de fluxos
  */

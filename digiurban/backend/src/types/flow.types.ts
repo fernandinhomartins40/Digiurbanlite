@@ -212,6 +212,7 @@ export interface FlowExecution {
   history: string[]; // Array de IDs de nodos visitados
   status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ERROR';
   errorMessage?: string;
+  metadata?: Record<string, any>; // Metadados adicionais (pause status, etc)
   startedAt: Date;
   updatedAt: Date;
   completedAt?: Date;

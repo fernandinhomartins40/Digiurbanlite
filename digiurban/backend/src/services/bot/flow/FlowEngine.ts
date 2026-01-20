@@ -391,4 +391,43 @@ export class FlowEngine {
   async getActiveExecution(citizenId: string): Promise<FlowExecution | null> {
     return this.stateManager.getActiveExecution(citizenId);
   }
+
+  /**
+   * Pausa execução do bot (atendimento humano assumindo)
+   */
+  async pauseExecution(citizenId: string): Promise<void> {
+    const execution = await this.stateManager.getActiveExecution(citizenId);
+
+    if (execution) {
+      await this.stateManager.updateExecution(execution.id, {
+        metadata: {
+          ...execution.metadata,
+          paused: true,
+          pausedAt: new Date().toISOString(),
+          pausedReason: 'HUMAN_TAKEOVER',
+        },
+      });
+    }
+  }
+
+  /**
+   * Retoma execução do bot (após atendimento humano)
+   */
+  async resumeExecution(citizenId: string): Promise<FlowExecution | null> {
+    const execution = await this.stateManager.getActiveExecution(citizenId);
+
+    if (execution && execution.metadata?.paused) {
+      await this.stateManager.updateExecution(execution.id, {
+        metadata: {
+          ...execution.metadata,
+          paused: false,
+          resumedAt: new Date().toISOString(),
+        },
+      });
+
+      return this.stateManager.getExecution(execution.id);
+    }
+
+    return null;
+  }
 }

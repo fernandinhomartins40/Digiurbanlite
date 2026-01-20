@@ -60,6 +60,7 @@ export interface AdminAuthStats {
   pendingProtocols: number
   completedProtocols: number
   pendingCitizens: number
+  unreadMessages?: number
   protocolsByStatus: Array<{
     status: string
     _count: { _all: number }
