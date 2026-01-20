@@ -67,6 +67,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone', // Necessário para Docker
   typescript: {
     // Permitir build com erros TypeScript (para deploy)
     ignoreBuildErrors: true,
@@ -79,6 +80,11 @@ const nextConfig = {
   // A variável deve vir do ambiente ou do build argument no Dockerfile
   // Em produção: /api (roteado pelo Nginx)
   // Em desenvolvimento: http://localhost:3001 (definido no .env local)
+
+  // Experimental: incluir arquivos do /src no bundle standalone
+  experimental: {
+    outputFileTracingRoot: undefined,
+  },
 }
 
 module.exports = withPWA(nextConfig)

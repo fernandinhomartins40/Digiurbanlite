@@ -69,9 +69,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ⚡ CACHE BUSTER
 RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
 
-# ✅ CRÍTICO: API URL para produção
+# ✅ CRÍTICO: URLs para produção
 ARG NEXT_PUBLIC_API_URL=/api
+ARG NEXT_PUBLIC_MESSAGES_API_URL=/messages-api
+ARG NEXT_PUBLIC_MESSAGES_WS_URL=ws://localhost:9001
+
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_MESSAGES_API_URL=$NEXT_PUBLIC_MESSAGES_API_URL
+ENV NEXT_PUBLIC_MESSAGES_WS_URL=$NEXT_PUBLIC_MESSAGES_WS_URL
 
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./
@@ -160,6 +165,9 @@ COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/.next ./.next
 COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/public ./public
 COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/node_modules ./node_modules
 COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/package.json ./package.json
+
+# IMPORTANTE: Copiar diretório src (necessário para componentes em /src)
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/src ./src
 
 # ===== Nginx =====
 COPY docker/nginx.conf /etc/nginx/nginx.conf

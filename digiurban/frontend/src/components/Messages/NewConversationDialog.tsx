@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, User, Users, X, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -162,6 +162,9 @@ export function NewConversationDialog({
             <Users className="w-5 h-5" />
             Nova Conversa
           </DialogTitle>
+          <DialogDescription>
+            Selecione um cidadão ou servidor para iniciar uma conversa
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 flex-1 min-h-0">

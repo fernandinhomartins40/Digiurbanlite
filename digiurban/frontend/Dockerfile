@@ -17,7 +17,12 @@ COPY . .
 
 # Build arguments for environment variables
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_MESSAGES_API_URL=http://localhost:9001/api
+ARG NEXT_PUBLIC_MESSAGES_WS_URL=http://localhost:9001
+
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_MESSAGES_API_URL=$NEXT_PUBLIC_MESSAGES_API_URL
+ENV NEXT_PUBLIC_MESSAGES_WS_URL=$NEXT_PUBLIC_MESSAGES_WS_URL
 
 RUN npm run build
 
@@ -40,6 +45,9 @@ RUN chown nextjs:nodejs .next
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# IMPORTANTE: Copiar diretório src para runtime (necessário para componentes em /src)
+COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 
 USER nextjs
 
