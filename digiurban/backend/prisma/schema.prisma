@@ -363,6 +363,9 @@ model ServiceSimplified {
   // SIMPLIFICAÇÃO: 1 enum ao invés de 8 flags
   serviceType ServiceType
 
+  // 🆕 NOVO: Subtipo para classificação adicional (visual/funcional)
+  serviceSubtype String? // "CAPTURA_COMPLETA", "SOLICITACAO_SIMPLES", "PAGAMENTO", "CONSULTIVO"
+
   // Para serviços COM_DADOS
   moduleType           String? @unique // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc - DEVE SER ÚNICO
   formSchema           Json? // Schema do formulário

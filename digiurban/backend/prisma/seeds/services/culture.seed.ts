@@ -1,20 +1,21 @@
 /**
  * SEED DE SERVIÇOS - SECRETARIA DE CULTURA
- * Total: 15 serviços
- * - 12 serviços COM_DADOS (com formulário)
- * - 3 serviços SEM_DADOS (apenas documentos)
+ * Total: 20 serviços
+ * - 15 serviços COM_DADOS (com formulário)
+ * - 5 serviços SEM_DADOS (apenas documentos)
  */
 
-import { ServiceDefinition } from './types';
+import { ServiceDefinition, ServiceSubtype } from './types';
 
 export const cultureServices: ServiceDefinition[] = [
-  // ========== SERVIÇOS COM_DADOS (12) ==========
+  // ========== SERVIÇOS COM_DADOS (15) ==========
 
   {
     name: 'Inscrição em Oficinas Culturais',
     description: 'Inscrição em oficinas de arte, música, teatro, dança e outras modalidades culturais',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'INSCRICAO_OFICINA',
     requiresDocuments: true,
     requiredDocuments: ['RG', 'CPF', 'Comprovante de Residência'],
@@ -71,6 +72,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Cadastro de artistas para participação em eventos culturais municipais',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'CADASTRO_ARTISTA',
     requiresDocuments: true,
     requiredDocuments: ['RG', 'CPF', 'Portfólio Artístico'],
@@ -117,6 +119,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Agendamento de teatros, centros culturais e auditórios municipais',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'RESERVA_ESPACO_CULTURAL',
     requiresDocuments: true,
     requiredDocuments: ['RG', 'CPF', 'Projeto do Evento'],
@@ -167,6 +170,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Cadastro de grupos culturais e artísticos do município',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'CADASTRO_GRUPO_ARTISTICO',
     requiresDocuments: true,
     requiredDocuments: ['Documentos dos Integrantes', 'Portfólio do Grupo', 'Estatuto (opcional)'],
@@ -215,6 +219,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Registro de solicitações e atendimentos gerais da Secretaria de Cultura',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'ATENDIMENTOS_CULTURA',
     requiresDocuments: false,
     estimatedDays: 5,
@@ -264,6 +269,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Registro de eventos culturais no município',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'CADASTRO_EVENTO_CULTURAL',
     requiresDocuments: true,
     requiredDocuments: ['Projeto do Evento', 'Autorizações Necessárias'],
@@ -313,6 +319,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Registro de patrimônio cultural imaterial do município',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL',
     requiresDocuments: true,
     requiredDocuments: ['Documentação Histórica', 'Fotos', 'Depoimentos'],
@@ -365,6 +372,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Submissão de projetos culturais (editais de fomento, Lei de Incentivo à Cultura, projetos gerais)',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'PROJETO_CULTURAL',
     requiresDocuments: true,
     requiredDocuments: ['CPF', 'RG', 'Projeto Detalhado', 'Orçamento', 'Plano de Divulgação (opcional)'],
@@ -418,6 +426,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Solicitação de apoio da prefeitura para eventos e atividades culturais',
     departmentCode: 'CULTURA',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
     moduleType: 'APOIO_CULTURAL',
     requiresDocuments: true,
     requiredDocuments: ['CPF', 'RG', 'Projeto ou Proposta'],
@@ -465,13 +474,387 @@ export const cultureServices: ServiceDefinition[] = [
     }
   },
 
-  // ========== SERVIÇOS SEM_DADOS (3) ==========
+  {
+    name: 'Cadastro Ponto Cultura',
+    description: 'Cadastro e reconhecimento de ponto de cultura comunitário',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    moduleType: 'CADASTRO_PONTO_CULTURA',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'CNPJ (se aplicável)', 'Plano de Ação Cultural', 'Fotos do Espaço'],
+    estimatedDays: 45,
+    priority: 4,
+    category: 'Cadastro',
+    icon: 'Home',
+    color: '#9333ea',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        nomePonto: {
+          type: 'string',
+          title: 'Nome do Ponto de Cultura',
+          maxLength: 200
+        },
+        tipoOrganizacao: {
+          type: 'string',
+          title: 'Tipo de Organização',
+          enum: ['Associação', 'Coletivo', 'ONG', 'Cooperativa', 'Pessoa Física', 'Outro']
+        },
+        areaAtuacao: {
+          type: 'string',
+          title: 'Área de Atuação Cultural',
+          maxLength: 300
+        },
+        publicoAtendido: {
+          type: 'integer',
+          title: 'Público Atendido (estimativa mensal)',
+          minimum: 1
+        },
+        descricaoAtividades: {
+          type: 'string',
+          title: 'Descrição das Atividades Culturais',
+          minLength: 50,
+          maxLength: 2000,
+          widget: 'textarea'
+        }
+      },
+      required: ['nomePonto', 'tipoOrganizacao', 'areaAtuacao', 'publicoAtendido', 'descricaoAtividades']
+    }
+  },
+
+  {
+    name: 'Credenciamento Professor Arte',
+    description: 'Credenciamento de professores de arte para oficinas municipais',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    moduleType: 'CREDENCIAMENTO_PROFESSOR_ARTE',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Currículo', 'Certificados', 'Portfólio'],
+    estimatedDays: 20,
+    priority: 4,
+    category: 'Credenciamento',
+    icon: 'GraduationCap',
+    color: '#7c3aed',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        areaEnsino: {
+          type: 'string',
+          title: 'Área de Ensino',
+          enum: ['Música', 'Teatro', 'Dança', 'Artes Visuais', 'Artesanato', 'Literatura', 'Fotografia', 'Audiovisual', 'Outra']
+        },
+        formacaoAcademica: {
+          type: 'string',
+          title: 'Formação Acadêmica',
+          maxLength: 300
+        },
+        experienciaDocente: {
+          type: 'integer',
+          title: 'Experiência como Docente (anos)',
+          minimum: 0
+        },
+        descricaoExperiencia: {
+          type: 'string',
+          title: 'Descrição da Experiência Profissional',
+          maxLength: 1000,
+          widget: 'textarea'
+        }
+      },
+      required: ['areaEnsino', 'formacaoAcademica', 'experienciaDocente', 'descricaoExperiencia']
+    }
+  },
+
+  {
+    name: 'Locação Equipamento Cultural',
+    description: 'Solicitação de locação de equipamentos culturais municipais',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    moduleType: 'LOCACAO_EQUIPAMENTO_CULTURAL',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Projeto do Evento'],
+    estimatedDays: 7,
+    priority: 3,
+    category: 'Locação',
+    icon: 'Music',
+    color: '#a855f7',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        tipoEquipamento: {
+          type: 'string',
+          title: 'Tipo de Equipamento',
+          enum: ['Som', 'Iluminação', 'Projetor', 'Tela', 'Palco', 'Instrumentos Musicais', 'Outro']
+        },
+        dataUso: {
+          type: 'string',
+          format: 'date',
+          title: 'Data de Uso'
+        },
+        periodoUso: {
+          type: 'string',
+          title: 'Período de Uso',
+          enum: ['Meio Período', 'Dia Inteiro', 'Fim de Semana', 'Outro']
+        },
+        finalidade: {
+          type: 'string',
+          title: 'Finalidade do Uso',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['tipoEquipamento', 'dataUso', 'periodoUso', 'finalidade']
+    }
+  },
+
+  {
+    name: 'Tombamento Patrimônio',
+    description: 'Solicitação de tombamento de patrimônio histórico e cultural',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    moduleType: 'TOMBAMENTO_PATRIMONIO',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Documentação Histórica', 'Fotos', 'Laudo Técnico'],
+    estimatedDays: 90,
+    priority: 5,
+    category: 'Patrimônio',
+    icon: 'Landmark',
+    color: '#86198f',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        tipoBem: {
+          type: 'string',
+          title: 'Tipo de Bem',
+          enum: ['Edificação', 'Conjunto Arquitetônico', 'Monumento', 'Sítio Arqueológico', 'Bem Móvel', 'Outro']
+        },
+        localizacao: {
+          type: 'string',
+          title: 'Localização do Bem',
+          maxLength: 300
+        },
+        epocaAproximada: {
+          type: 'string',
+          title: 'Época Aproximada',
+          maxLength: 100
+        },
+        relevanciaHistorica: {
+          type: 'string',
+          title: 'Relevância Histórica e Cultural',
+          minLength: 100,
+          maxLength: 2000,
+          widget: 'textarea'
+        },
+        estadoConservacao: {
+          type: 'string',
+          title: 'Estado de Conservação',
+          enum: ['Excelente', 'Bom', 'Regular', 'Ruim', 'Crítico']
+        }
+      },
+      required: ['tipoBem', 'localizacao', 'relevanciaHistorica', 'estadoConservacao']
+    }
+  },
+
+  {
+    name: 'Inscrição Curso Formação Cultural',
+    description: 'Inscrição em cursos de formação e capacitação cultural',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    moduleType: 'INSCRICAO_CURSO_FORMACAO',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Comprovante de Escolaridade'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Cursos',
+    icon: 'BookOpen',
+    color: '#7c3aed',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        nomeCurso: {
+          type: 'string',
+          title: 'Nome do Curso',
+          maxLength: 200
+        },
+        areaCurso: {
+          type: 'string',
+          title: 'Área do Curso',
+          enum: ['Gestão Cultural', 'Produção Cultural', 'Artes Cênicas', 'Música', 'Dança', 'Audiovisual', 'Patrimônio Cultural', 'Outra']
+        },
+        turno: {
+          type: 'string',
+          title: 'Turno Preferido',
+          enum: ['Manhã', 'Tarde', 'Noite', 'Qualquer']
+        },
+        motivoInscricao: {
+          type: 'string',
+          title: 'Motivo da Inscrição',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['nomeCurso', 'areaCurso', 'turno']
+    }
+  },
+
+  {
+    name: 'Certidão Bem Tombado',
+    description: 'Emissão de certidão de bem tombado',
+    departmentCode: 'CULTURA',
+    serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    moduleType: 'CERTIDAO_BEM_TOMBADO',
+    requiresDocuments: true,
+    requiredDocuments: ['CPF', 'RG', 'Endereço do Bem'],
+    estimatedDays: 10,
+    priority: 3,
+    category: 'Certidões',
+    icon: 'FileText',
+    color: '#f59e0b',
+    formSchema: {
+      type: 'object',
+      citizenFields: [
+        'citizen_name',
+        'citizen_cpf',
+        'citizen_rg',
+        'citizen_birthdate',
+        'citizen_email',
+        'citizen_phone',
+        'citizen_phonesecondary',
+        'citizen_zipcode',
+        'citizen_address',
+        'citizen_addressnumber',
+        'citizen_addresscomplement',
+        'citizen_neighborhood',
+        'citizen_mothername',
+        'citizen_maritalstatus',
+        'citizen_occupation',
+        'citizen_familyincome'
+      ],
+      properties: {
+        enderecoBem: {
+          type: 'string',
+          title: 'Endereço do Bem Tombado',
+          maxLength: 300
+        },
+        finalidade: {
+          type: 'string',
+          title: 'Finalidade da Certidão',
+          enum: ['Compra e Venda', 'Reforma', 'Financiamento', 'Consulta', 'Outro']
+        },
+        observacoes: {
+          type: 'string',
+          title: 'Observações',
+          maxLength: 500,
+          widget: 'textarea'
+        }
+      },
+      required: ['enderecoBem', 'finalidade']
+    }
+  },
+
+  // ========== SERVIÇOS SEM_DADOS (5) ==========
 
   {
     name: 'Certidão de Artista Local',
     description: 'Emissão de certidão comprovando registro como artista local (usa dados do perfil do cidadão)',
     departmentCode: 'CULTURA',
     serviceType: 'SEM_DADOS',
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],
@@ -487,6 +870,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Emissão de atestado de conclusão de oficina cultural (usa dados do perfil do cidadão)',
     departmentCode: 'CULTURA',
     serviceType: 'SEM_DADOS',
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],
@@ -502,6 +886,7 @@ export const cultureServices: ServiceDefinition[] = [
     description: 'Emissão de segunda via de cadastros culturais (usa dados do perfil do cidadão)',
     departmentCode: 'CULTURA',
     serviceType: 'SEM_DADOS',
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
     moduleType: null,
     requiresDocuments: false,
     requiredDocuments: [],
@@ -509,6 +894,38 @@ export const cultureServices: ServiceDefinition[] = [
     priority: 2,
     category: 'Documentos',
     icon: 'Copy',
+    color: '#6b7280'
+  },
+
+  {
+    name: 'Agenda Cultural Municipal',
+    description: 'Consulta à agenda de eventos culturais do município (usa dados do perfil do cidadão)',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    moduleType: null,
+    requiresDocuments: false,
+    requiredDocuments: [],
+    estimatedDays: null,
+    priority: 1,
+    category: 'Informativo',
+    icon: 'Calendar',
+    color: '#94a3b8'
+  },
+
+  {
+    name: 'Catálogo de Patrimônio Cultural',
+    description: 'Consulta ao catálogo de patrimônio histórico e cultural municipal (usa dados do perfil do cidadão)',
+    departmentCode: 'CULTURA',
+    serviceType: 'SEM_DADOS',
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    moduleType: null,
+    requiresDocuments: false,
+    requiredDocuments: [],
+    estimatedDays: null,
+    priority: 1,
+    category: 'Consultas',
+    icon: 'BookOpen',
     color: '#6b7280'
   }
 ];

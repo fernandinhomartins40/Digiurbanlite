@@ -1,9 +1,9 @@
 /**
  * SEED DE SERVIÇOS - SECRETARIA DE TURISMO
- * Total: 6 serviços (3 COM_DADOS + 3 SEM_DADOS)
+ * Total: 15 serviços (9 COM_DADOS + 6 SEM_DADOS)
  */
 
-import { ServiceDefinition } from './types';
+import { ServiceDefinition, ServiceSubtype } from './types';
 
 export const tourismServices: ServiceDefinition[] = [
   // ========== SERVIÇOS COM_DADOS (3) ==========
@@ -13,6 +13,7 @@ export const tourismServices: ServiceDefinition[] = [
     description: 'Cadastro de hotéis, pousadas, restaurantes e outros estabelecimentos turísticos',
     departmentCode: 'TURISMO',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO',
     requiresDocuments: true,
     requiredDocuments: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
@@ -41,6 +42,7 @@ export const tourismServices: ServiceDefinition[] = [
     description: 'Cadastro oficial de guias turísticos do município',
     departmentCode: 'TURISMO',
     serviceType: 'COM_DADOS',
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
     moduleType: 'CADASTRO_GUIA_TURISTICO',
     requiresDocuments: true,
     requiredDocuments: ['CPF', 'RG', 'Certificado de Guia Turístico', 'Foto 3x4'],

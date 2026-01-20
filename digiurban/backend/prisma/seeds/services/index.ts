@@ -7,6 +7,7 @@ import { PrismaClient } from '@prisma/client';
 import { ServiceDefinition } from './types';
 import { generateDefaultWorkflow } from '../../src/services/workflow-template.service';
 
+// Secretarias existentes (13)
 import { healthServices } from './health.seed';
 import { educationServices } from './education.seed';
 import { socialServices } from './social.seed';
@@ -21,25 +22,47 @@ import { publicSafetyServices } from './public-safety.seed';
 import { publicServices } from './public-services.seed';
 import { tourismServices } from './tourism.seed';
 
+// Novas secretarias (8)
+import { financeServices } from './finance.seed';
+import { administrationServices } from './administration.seed';
+import { civilDefenseServices } from './civil-defense.seed';
+import { womenPoliciesServices } from './women-policies.seed';
+import { technologyInnovationServices } from './technology-innovation.seed';
+import { transportTransitServices } from './transport-transit.seed';
+import { economicDevelopmentServices } from './economic-development.seed';
+import { urbanMobilityServices } from './urban-mobility.seed';
+
 const prisma = new PrismaClient();
 
 /**
  * Todos os serviços consolidados
+ * Total: 21 secretarias, ~400 serviços
  */
 export const allServices: ServiceDefinition[] = [
-  ...healthServices,
-  ...educationServices,
-  ...socialServices,
-  ...agricultureServices,
-  ...cultureServices,
-  ...sportsServices,
-  ...housingServices,
-  ...environmentServices,
-  ...publicWorksServices,
-  ...urbanPlanningServices,
-  ...publicSafetyServices,
-  ...publicServices,
-  ...tourismServices,
+  // Secretarias existentes atualizadas (13)
+  ...healthServices,           // 20 serviços
+  ...educationServices,         // 20 serviços
+  ...socialServices,            // 20 serviços
+  ...agricultureServices,       // 20 serviços
+  ...cultureServices,           // 20 serviços
+  ...sportsServices,            // 20 serviços
+  ...housingServices,           // 20 serviços
+  ...environmentServices,       // 20 serviços
+  ...publicWorksServices,       // 20 serviços
+  ...urbanPlanningServices,     // 20 serviços
+  ...publicSafetyServices,      // 20 serviços
+  ...publicServices,            // 20 serviços
+  ...tourismServices,           // 15 serviços
+
+  // Novas secretarias (8)
+  ...financeServices,           // 20 serviços
+  ...administrationServices,    // 20 serviços
+  ...civilDefenseServices,      // 15 serviços
+  ...womenPoliciesServices,     // 15 serviços
+  ...technologyInnovationServices, // 15 serviços
+  ...transportTransitServices,  // 20 serviços
+  ...economicDevelopmentServices, // 20 serviços
+  ...urbanMobilityServices,     // 15 serviços
 ];
 
 /**
@@ -81,6 +104,7 @@ export async function seedServices() {
           data: {
             description: serviceDef.description,
             serviceType: serviceDef.serviceType,
+            serviceSubtype: serviceDef.serviceSubtype || null, // 🆕 Novo campo
             moduleType: serviceDef.moduleType,
             formSchema: serviceDef.formSchema || undefined,
             linkedCitizensConfig: serviceDef.linkedCitizensConfig || undefined,
@@ -105,6 +129,7 @@ export async function seedServices() {
             description: serviceDef.description,
             departmentId,
             serviceType: serviceDef.serviceType,
+            serviceSubtype: serviceDef.serviceSubtype || null, // 🆕 Novo campo
             moduleType: serviceDef.moduleType,
             formSchema: serviceDef.formSchema || undefined,
             linkedCitizensConfig: serviceDef.linkedCitizensConfig || undefined,
