@@ -360,6 +360,7 @@ model Citizen {
   maritalStatus                                              String?
   occupation                                                 String?
   familyIncome                                               String?
+  avatar                                                     String?
   admin_tickets                                              admin_tickets[]
   audit_logs                                                 audit_logs[]
   bot_conversations                                          bot_conversations[]
