@@ -47,10 +47,10 @@ interface Message {
   id: string;
   content: string;
   senderId: string;
-  senderType: 'CITIZEN' | 'SERVER' | 'BOT';
+  senderType: 'CITIZEN' | 'SERVER' | 'BOT' | 'SYSTEM';
   createdAt: string;
   status: 'SENT' | 'DELIVERED' | 'READ';
-  messageType?: 'text' | 'card' | 'form' | 'quick_reply';
+  messageType?: 'text' | 'card' | 'form' | 'quick_reply' | 'menu';
   metadata?: any;
 }
 
@@ -207,58 +207,104 @@ export default function CitizenDashboard() {
     }
   };
 
+  // Iniciar fluxo do bot
+  const startBotFlow = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/bot-flow/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ flowName: 'menu_principal' })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const botResponse = data.response;
+
+        setMessages([
+          {
+            id: `bot-${Date.now()}`,
+            content: botResponse.message,
+            senderId: 'bot',
+            senderType: 'BOT',
+            createdAt: new Date().toISOString(),
+            status: 'READ',
+            messageType: botResponse.options ? 'menu' : 'text',
+            metadata: {
+              options: botResponse.options,
+              quickReplies: botResponse.options?.map((opt: any) => opt.label),
+              needsInput: botResponse.needsInput
+            }
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Erro ao iniciar fluxo do bot:', error);
+      // Mensagem de fallback
+      setMessages([
+        {
+          id: '1',
+          content: 'Olá! Sou o DigiBot, seu assistente virtual! 🤖\n\nEstou tendo dificuldades para conectar. Por favor, tente novamente em instantes.',
+          senderId: 'bot',
+          senderType: 'BOT',
+          createdAt: new Date().toISOString(),
+          status: 'READ',
+          messageType: 'text'
+        }
+      ]);
+    }
+  };
+
   // Carregar mensagens
   const loadMessages = async (conversationId: string) => {
     setIsLoadingMessages(true);
 
-    // Se for o bot, carregar histórico do bot
+    // Se for o bot, carregar histórico do bot via SISTEMA DE FLUXOS
     if (conversationId === 'bot-digiurban') {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+        // Tenta buscar execução ativa
         const response = await fetch(
-          `${apiUrl}/bot/history`,
+          `${apiUrl}/bot-flow/active-execution`,
           { credentials: 'include' }
         );
 
         if (response.ok) {
           const data = await response.json();
-          const messages = data.messages || [];
 
-          // CORREÇÃO: Adiciona quickReplies na última mensagem do bot se não tiver
-          if (messages.length > 0) {
-            const lastBotMessage = messages.reverse().find((m: any) => m.senderType === 'BOT');
-            if (lastBotMessage && !lastBotMessage.metadata?.quickReplies) {
-              lastBotMessage.metadata = {
-                ...lastBotMessage.metadata,
-                quickReplies: [
-                  '📋 Solicitar Serviço',
-                  '🔍 Consultar Protocolo',
-                  '📄 Enviar Documentos',
-                  '👤 Atualizar Perfil',
-                  '❓ Outras Dúvidas'
-                ]
-              };
-            }
-            messages.reverse();
+          // Se há execução ativa, mostrar mensagem do fluxo
+          if (data.execution && data.execution.currentState) {
+            const state = data.execution.currentState;
+
+            setMessages([
+              {
+                id: data.execution.id,
+                content: state.message || 'Olá! Como posso ajudar você?',
+                senderId: 'bot',
+                senderType: 'BOT',
+                createdAt: data.execution.updatedAt,
+                status: 'READ',
+                messageType: state.options ? 'menu' : 'text',
+                metadata: {
+                  options: state.options,
+                  quickReplies: state.options?.map((opt: any) => opt.label),
+                  needsInput: state.needsInput
+                }
+              }
+            ]);
+          } else {
+            // Iniciar novo fluxo
+            await startBotFlow();
           }
-
-          setMessages(messages);
         } else {
-          // Mensagem inicial do bot
-          setMessages([
-            {
-              id: '1',
-              content: 'Olá! Sou o DigiBot, seu assistente virtual! 🤖\n\nPosso te ajudar com:\n\n📋 Agendar consultas e serviços\n📄 Acompanhar protocolos\n📁 Gerenciar documentos\n👤 Atualizar seu perfil\n💬 Conversar com atendentes\n\nO que você precisa hoje?',
-              senderId: 'bot',
-              senderType: 'BOT',
-              createdAt: new Date().toISOString(),
-              status: 'READ',
-              messageType: 'text'
-            }
-          ]);
+          // Iniciar novo fluxo
+          await startBotFlow();
         }
       } catch (error) {
         console.error('Erro ao carregar histórico do bot:', error);
+        await startBotFlow();
       }
       setIsLoadingMessages(false);
       scrollToBottom();
@@ -316,10 +362,10 @@ export default function CitizenDashboard() {
     scrollToBottom();
 
     try {
-      // Se for mensagem para o bot
+      // Se for mensagem para o bot - USAR SISTEMA DE FLUXOS
       if (selectedConversation.id === 'bot-digiurban') {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${apiUrl}/bot/message`, {
+        const response = await fetch(`${apiUrl}/bot-flow/message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -328,21 +374,23 @@ export default function CitizenDashboard() {
 
         if (response.ok) {
           const data = await response.json();
+          const botResponse = data.response;
 
-          // DEBUG: Log completo da resposta do bot
-          console.log('📥 [page.tsx] Resposta completa do bot:', JSON.stringify(data, null, 2));
-          console.log('📥 [page.tsx] metadata:', data.metadata);
-          console.log('📥 [page.tsx] quickReplies:', data.metadata?.quickReplies);
+          console.log('📥 [page.tsx] Resposta do sistema de fluxos:', botResponse);
 
           setMessages(prev => [...prev, {
-            id: data.messageId || `bot-${Date.now()}`,
-            content: data.response,
+            id: `bot-${Date.now()}`,
+            content: botResponse.message,
             senderId: 'bot',
             senderType: 'BOT',
             createdAt: new Date().toISOString(),
             status: 'READ',
-            messageType: data.messageType || 'text',
-            metadata: data.metadata
+            messageType: botResponse.options ? 'menu' : 'text',
+            metadata: {
+              options: botResponse.options,
+              quickReplies: botResponse.options?.map((opt: any) => opt.label),
+              needsInput: botResponse.needsInput
+            }
           }]);
           scrollToBottom();
         }
