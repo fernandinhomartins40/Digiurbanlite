@@ -22,7 +22,7 @@
       "id": "main_menu",
       "type": "menu",
       "config": {
-        "text": "O que você gostaria de fazer?",
+        "text": "👋 Olá! Sou o DigiBot, seu assistente virtual.\n\nEstou aqui para te ajudar com os serviços da prefeitura.\n\nO que você gostaria de fazer?",
         "options": [
           {
             "id": "solicitar_servico",

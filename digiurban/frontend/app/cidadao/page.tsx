@@ -228,6 +228,9 @@ export default function CitizenDashboard() {
         const botResponse = data.response;
         console.log('🤖 [startBotFlow] Bot response:', botResponse);
 
+        const options = botResponse.data?.options || botResponse.options || [];
+        console.log('📋 [startBotFlow] Opções do menu:', options);
+
         setMessages([
           {
             id: `bot-${Date.now()}`,
@@ -236,11 +239,11 @@ export default function CitizenDashboard() {
             senderType: 'BOT',
             createdAt: new Date().toISOString(),
             status: 'READ',
-            messageType: botResponse.options ? 'menu' : 'text',
+            messageType: options.length > 0 ? 'menu' : 'text',
             metadata: {
-              options: botResponse.options,
-              quickReplies: botResponse.options?.map((opt: any) => opt.label),
-              needsInput: botResponse.needsInput
+              options: options,
+              quickReplies: options.map((opt: any) => opt.label),
+              needsInput: botResponse.metadata?.waitingForInput || false
             }
           }
         ]);
@@ -290,6 +293,9 @@ export default function CitizenDashboard() {
             const state = data.execution.currentState;
             console.log('✅ [loadMessages] Execução ativa encontrada:', state);
 
+            const options = state.data?.options || state.options || [];
+            console.log('📋 [loadMessages] Opções encontradas:', options);
+
             setMessages([
               {
                 id: data.execution.id,
@@ -298,11 +304,11 @@ export default function CitizenDashboard() {
                 senderType: 'BOT',
                 createdAt: data.execution.updatedAt,
                 status: 'READ',
-                messageType: state.options ? 'menu' : 'text',
+                messageType: options.length > 0 ? 'menu' : 'text',
                 metadata: {
-                  options: state.options,
-                  quickReplies: state.options?.map((opt: any) => opt.label),
-                  needsInput: state.needsInput
+                  options: options,
+                  quickReplies: options.map((opt: any) => opt.label),
+                  needsInput: state.metadata?.waitingForInput || false
                 }
               }
             ]);
@@ -392,6 +398,9 @@ export default function CitizenDashboard() {
 
           console.log('📥 [page.tsx] Resposta do sistema de fluxos:', botResponse);
 
+          const options = botResponse.data?.options || botResponse.options || [];
+          console.log('📋 [handleSendMessage] Opções do menu:', options);
+
           setMessages(prev => [...prev, {
             id: `bot-${Date.now()}`,
             content: botResponse.message,
@@ -399,11 +408,11 @@ export default function CitizenDashboard() {
             senderType: 'BOT',
             createdAt: new Date().toISOString(),
             status: 'READ',
-            messageType: botResponse.options ? 'menu' : 'text',
+            messageType: options.length > 0 ? 'menu' : 'text',
             metadata: {
-              options: botResponse.options,
-              quickReplies: botResponse.options?.map((opt: any) => opt.label),
-              needsInput: botResponse.needsInput
+              options: options,
+              quickReplies: options.map((opt: any) => opt.label),
+              needsInput: botResponse.metadata?.waitingForInput || false
             }
           }]);
           scrollToBottom();
@@ -825,27 +834,73 @@ export default function CitizenDashboard() {
                             <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
 
                             {/* Quick Replies - Botões clicáveis */}
-                            {message.metadata?.quickReplies && message.metadata.quickReplies.length > 0 && (
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {message.metadata.quickReplies.map((reply: string, idx: number) => (
+                            {message.metadata?.options && message.metadata.options.length > 0 && (
+                              <div className="mt-3 flex flex-col gap-2">
+                                {message.metadata.options.map((option: any) => (
                                   <Button
-                                    key={idx}
+                                    key={option.id}
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => {
-                                      console.log('🔘 [page.tsx] Botão clicado:', reply);
-                                      setNewMessage(reply);
-                                      // Auto-enviar a mensagem ao clicar
-                                      setTimeout(() => {
-                                        console.log('📤 [page.tsx] Auto-enviando mensagem:', reply);
-                                        const form = document.querySelector('form');
-                                        form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-                                      }, 100);
+                                    onClick={async () => {
+                                      console.log('🔘 [page.tsx] Opção selecionada:', option);
+
+                                      // Adiciona mensagem do usuário
+                                      const userMsg: Message = {
+                                        id: `temp-${Date.now()}`,
+                                        content: option.label,
+                                        senderId: citizen?.id || '',
+                                        senderType: 'CITIZEN',
+                                        createdAt: new Date().toISOString(),
+                                        status: 'SENT',
+                                        messageType: 'text'
+                                      };
+                                      setMessages(prev => [...prev, userMsg]);
+
+                                      // Envia ID da opção para o backend
+                                      try {
+                                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+                                        const response = await fetch(`${apiUrl}/bot-flow/message`, {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          credentials: 'include',
+                                          body: JSON.stringify({ message: option.id })
+                                        });
+
+                                        if (response.ok) {
+                                          const data = await response.json();
+                                          const botResponse = data.response;
+                                          const options = botResponse.data?.options || [];
+
+                                          setMessages(prev => [...prev, {
+                                            id: `bot-${Date.now()}`,
+                                            content: botResponse.message,
+                                            senderId: 'bot',
+                                            senderType: 'BOT',
+                                            createdAt: new Date().toISOString(),
+                                            status: 'READ',
+                                            messageType: options.length > 0 ? 'menu' : 'text',
+                                            metadata: {
+                                              options: options,
+                                              quickReplies: options.map((opt: any) => opt.label),
+                                              needsInput: botResponse.metadata?.waitingForInput || false
+                                            }
+                                          }]);
+                                          scrollToBottom();
+                                        }
+                                      } catch (error) {
+                                        console.error('Erro ao enviar opção:', error);
+                                      }
                                     }}
-                                    className="text-xs bg-white hover:bg-blue-50 border-blue-300 text-blue-700 hover:text-blue-800 hover:border-blue-400 transition-all shadow-sm"
+                                    className="text-sm bg-white hover:bg-blue-50 border-blue-300 text-blue-700 hover:text-blue-800 hover:border-blue-400 transition-all shadow-sm flex items-start justify-start text-left p-3"
                                   >
-                                    <Sparkles className="w-3 h-3 mr-1.5" />
-                                    {reply}
+                                    <div className="flex-1">
+                                      <div className="font-semibold flex items-center gap-2">
+                                        {option.label}
+                                      </div>
+                                      {option.description && (
+                                        <div className="text-xs text-gray-600 mt-1">{option.description}</div>
+                                      )}
+                                    </div>
                                   </Button>
                                 ))}
                               </div>
@@ -879,32 +934,54 @@ export default function CitizenDashboard() {
 
             {/* Input de Mensagem */}
             <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
-              <div className="flex items-center gap-2 max-w-4xl mx-auto">
-                <Button type="button" variant="ghost" size="icon" className="text-gray-500">
-                  <Smile className="w-5 h-5" />
-                </Button>
-                <Button type="button" variant="ghost" size="icon" className="text-gray-500">
-                  <Paperclip className="w-5 h-5" />
-                </Button>
+              {/* Verificar se última mensagem tem menu ativo */}
+              {(() => {
+                const lastMessage = messages[messages.length - 1];
+                const hasActiveMenu = lastMessage &&
+                                     lastMessage.senderType === 'BOT' &&
+                                     lastMessage.metadata?.quickReplies &&
+                                     lastMessage.metadata.quickReplies.length > 0;
 
-                <Input
-                  type="text"
-                  placeholder={selectedConversation.isBot ? "Pergunte ao DigiBot..." : "Digite uma mensagem..."}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  className="flex-1"
-                />
+                if (hasActiveMenu) {
+                  return (
+                    <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto py-2">
+                      <div className="text-center text-sm text-gray-500">
+                        👆 Selecione uma das opções acima para continuar
+                      </div>
+                    </div>
+                  );
+                }
 
-                {newMessage.trim() ? (
-                  <Button type="submit" size="icon" className="bg-blue-600 hover:bg-blue-700">
-                    <Send className="w-5 h-5" />
-                  </Button>
-                ) : (
-                  <Button type="button" variant="ghost" size="icon" className="text-gray-500">
-                    <Mic className="w-5 h-5" />
-                  </Button>
-                )}
-              </div>
+                return (
+                  <div className="flex items-center gap-2 max-w-4xl mx-auto">
+                    <Button type="button" variant="ghost" size="icon" className="text-gray-500">
+                      <Smile className="w-5 h-5" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon" className="text-gray-500">
+                      <Paperclip className="w-5 h-5" />
+                    </Button>
+
+                    <Input
+                      type="text"
+                      placeholder={selectedConversation.isBot ? "Clique nas opções acima..." : "Digite uma mensagem..."}
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      className="flex-1"
+                      disabled={selectedConversation.isBot}
+                    />
+
+                    {newMessage.trim() ? (
+                      <Button type="submit" size="icon" className="bg-blue-600 hover:bg-blue-700">
+                        <Send className="w-5 h-5" />
+                      </Button>
+                    ) : (
+                      <Button type="button" variant="ghost" size="icon" className="text-gray-500">
+                        <Mic className="w-5 h-5" />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })()}
             </form>
           </>
         ) : (
