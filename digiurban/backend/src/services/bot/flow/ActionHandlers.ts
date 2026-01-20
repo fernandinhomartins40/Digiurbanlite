@@ -22,7 +22,6 @@ export const searchServices: ActionHandler = async (params, context) => {
     where.OR = [
       { name: { contains: query, mode: 'insensitive' } },
       { description: { contains: query, mode: 'insensitive' } },
-      { keywords: { contains: query, mode: 'insensitive' } },
     ];
   }
 
