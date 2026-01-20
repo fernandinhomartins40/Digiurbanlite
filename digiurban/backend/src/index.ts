@@ -132,16 +132,10 @@ try {
 }
 
 // ============================================================
-// ROTAS DO BOT LEGADO (MANTIDO PARA MIGRAÇÃO GRADUAL)
+// ROTAS DO BOT LEGADO - REMOVIDAS
 // ============================================================
-console.log('🤖 [LEGADO] Carregando rotas antigas do bot...');
-try {
-  const botIntegratedRoutes = require('./routes/botIntegrated.routes').default;
-  app.use('/api/bot-legacy', botIntegratedRoutes); // Mudou para /bot-legacy
-  console.log('⚠️  Rotas do bot legado carregadas em /api/bot-legacy (deprecated)');
-} catch (error) {
-  console.error('❌ Erro ao carregar rotas do bot legado:', error);
-}
+// Sistema legado foi completamente substituído pelo sistema de fluxos (/api/bot-flow)
+// Rotas antigas (/api/bot e /api/bot-legacy) foram deprecadas e removidas
 
 // ============================================================
 // ROTAS DE MENSAGENS (CONVERSAS)
