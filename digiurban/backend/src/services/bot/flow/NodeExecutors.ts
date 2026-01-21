@@ -130,35 +130,75 @@ export class NodeExecutors {
 
     // Se há input do usuário, processa seleção
     if (context.userInput !== undefined) {
-      const selectedIds = Array.isArray(context.userInput)
-        ? context.userInput
-        : [context.userInput];
+      const userInputRaw = context.userInput;
 
-      // Valida seleções
-      const validOptions = options.filter((opt) => selectedIds.includes(opt.id));
+      // Normaliza o input do usuário para fazer matching inteligente
+      const normalizedInput = this.normalizeText(
+        Array.isArray(userInputRaw) ? userInputRaw[0] : String(userInputRaw)
+      );
 
-      if (validOptions.length === 0) {
+      console.log('[NodeExecutors.executeMenu] Input do usuário:', {
+        raw: userInputRaw,
+        normalized: normalizedInput,
+        options: options.map(o => ({ id: o.id, label: o.label }))
+      });
+
+      // Tenta fazer matching inteligente com as opções
+      let matchedOption: MenuOption | undefined;
+
+      // 1. Tenta match exato por ID
+      matchedOption = options.find((opt) => opt.id === normalizedInput);
+
+      // 2. Tenta match exato por label normalizado
+      if (!matchedOption) {
+        matchedOption = options.find((opt) =>
+          this.normalizeText(opt.label) === normalizedInput
+        );
+      }
+
+      // 3. Tenta match parcial por label (contém)
+      if (!matchedOption) {
+        matchedOption = options.find((opt) =>
+          this.normalizeText(opt.label).includes(normalizedInput) ||
+          normalizedInput.includes(this.normalizeText(opt.label))
+        );
+      }
+
+      // 4. Tenta match por keywords no input
+      if (!matchedOption) {
+        matchedOption = this.findOptionByKeywords(normalizedInput, options);
+      }
+
+      // 5. Se o input é um objeto com optionId (do frontend)
+      if (!matchedOption && typeof userInputRaw === 'object' && userInputRaw !== null) {
+        const inputObj = userInputRaw as any;
+        if (inputObj.optionId) {
+          matchedOption = options.find((opt) => opt.id === inputObj.optionId);
+        }
+      }
+
+      if (!matchedOption) {
+        const optionsList = options.map(o => `• ${o.label}`).join('\n');
         return {
           success: false,
-          message: 'Opção inválida. Por favor, escolha uma das opções disponíveis.',
+          message: `❌ Não entendi sua escolha. Por favor, selecione uma das opções abaixo:\n\n${optionsList}`,
           waitingForInput: true,
         };
       }
 
+      console.log('[NodeExecutors.executeMenu] Opção matched:', matchedOption);
+
       // Salva seleção no estado
       const stateUpdates: any = {};
       const saveAs = config.saveAs || node.id;
-      stateUpdates[saveAs] = config.multiSelect ? selectedIds : selectedIds[0];
-      stateUpdates[`${saveAs}_data`] = config.multiSelect
-        ? validOptions
-        : validOptions[0];
+      stateUpdates[saveAs] = matchedOption.id;
+      stateUpdates[`${saveAs}_data`] = matchedOption;
 
       // Determina próximo nodo baseado na seleção
       let nextNodeId: string | undefined;
 
       // Busca transição correspondente
-      const selectedId = selectedIds[0]; // Usa primeiro selecionado para routing
-      const transition = node.transitions.find((t) => t.when === selectedId);
+      const transition = node.transitions.find((t) => t.when === matchedOption!.id);
 
       if (transition) {
         nextNodeId = transition.to;
@@ -166,6 +206,8 @@ export class NodeExecutors {
         // Transição padrão (sem 'when')
         nextNodeId = node.transitions.find((t) => !t.when)?.to;
       }
+
+      console.log('[NodeExecutors.executeMenu] Próximo nodo:', nextNodeId);
 
       return {
         success: true,
@@ -185,6 +227,64 @@ export class NodeExecutors {
         multiSelect: config.multiSelect,
       },
     };
+  }
+
+  /**
+   * Normaliza texto para comparação (remove emojis, lowercase, trim)
+   */
+  private normalizeText(text: string): string {
+    return text
+      .toLowerCase()
+      .trim()
+      // Remove emojis
+      .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Emoticons
+      .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Symbols & Pictographs
+      .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Transport & Map
+      .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '') // Flags
+      .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Misc symbols
+      .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+      // Remove pontuação extra
+      .replace(/[^\w\s]/g, '')
+      .trim();
+  }
+
+  /**
+   * Busca opção por palavras-chave
+   */
+  private findOptionByKeywords(input: string, options: MenuOption[]): MenuOption | undefined {
+    const keywords: Record<string, string[]> = {
+      'buscar': ['buscar', 'busca', 'pesquisar', 'pesquisa', 'procurar', 'encontrar', 'nome'],
+      'listar': ['listar', 'lista', 'todos', 'ver', 'mostrar', 'exibir'],
+      'categorias': ['categoria', 'categorias', 'departamento', 'area', 'filtrar'],
+      'voltar': ['voltar', 'menu', 'inicio', 'principal', 'cancelar'],
+      'protocolo': ['protocolo', 'numero', 'acompanhar', 'consultar'],
+      'servico': ['servico', 'servicos', 'solicitar', 'pedir', 'requerer'],
+      'perfil': ['perfil', 'dados', 'cadastro', 'atualizar', 'editar'],
+      'familia': ['familia', 'membros', 'dependentes', 'composicao'],
+      'notificacoes': ['notificacao', 'notificacoes', 'avisos', 'alertas'],
+      'ajuda': ['ajuda', 'duvida', 'duvidas', 'suporte', 'faq'],
+      'documentos': ['documento', 'documentos', 'arquivo', 'arquivos', 'anexo'],
+      'sim': ['sim', 's', 'yes', 'ok', 'confirmar', 'confirmo'],
+      'nao': ['nao', 'não', 'n', 'no', 'cancelar', 'negar'],
+    };
+
+    for (const option of options) {
+      const optionId = this.normalizeText(option.id);
+      const optionLabel = this.normalizeText(option.label);
+
+      // Verifica se alguma keyword do optionId aparece no input
+      for (const [key, synonyms] of Object.entries(keywords)) {
+        if (optionId.includes(key) || optionLabel.includes(key)) {
+          for (const synonym of synonyms) {
+            if (input.includes(synonym)) {
+              return option;
+            }
+          }
+        }
+      }
+    }
+
+    return undefined;
   }
 
   /**

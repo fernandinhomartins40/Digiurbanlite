@@ -1,4 +1,19 @@
 /**
+ * ⚠️ DEPRECATED - NÃO USE MAIS ESTE ARQUIVO
+ *
+ * Este arquivo foi substituído pelo novo sistema FlowEngine.
+ *
+ * MIGRAÇÃO:
+ * - Use: flow/FlowEngine.ts
+ * - Defina fluxos em: flows/*.json
+ * - Execute seed: npx ts-node src/scripts/seed-flows.ts
+ *
+ * Veja DEPRECATED_README.md para mais informações.
+ *
+ * @deprecated desde 20/01/2025 - Use FlowEngine
+ *
+ * ---
+ *
  * ConversationFlowManager - Versão Integrada com UltraZend Messages
  *
  * Gerencia os fluxos conversacionais do DigiBot de forma completamente integrada

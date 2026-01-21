@@ -277,6 +277,9 @@ export interface BotResponse {
     executionId: string;
     nodeId: string;
     waitingForInput: boolean;
+    retryCount?: number;
+    resetToMain?: boolean;
+    [key: string]: any;
   };
 }
 

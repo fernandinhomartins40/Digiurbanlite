@@ -48,7 +48,8 @@ import {
   Cpu,
   Car,
   Bus,
-  MessageCircle
+  MessageCircle,
+  Bot
 } from 'lucide-react'
 
 interface NavItem {
@@ -162,6 +163,13 @@ export function AdminSidebar() {
           href: '/admin/workflows',
           icon: GitBranch,
           minRole: 'ADMIN'
+        },
+        {
+          title: 'Fluxos do Bot',
+          href: '/admin/bot-flows',
+          icon: Bot,
+          minRole: 'ADMIN',
+          badge: 'NOVO'
         },
         {
           title: 'Estatísticas',

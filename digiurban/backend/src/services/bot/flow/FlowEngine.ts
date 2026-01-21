@@ -71,13 +71,27 @@ export class FlowEngine {
     userInput: string | any,
     conversationId?: string
   ): Promise<BotResponse> {
+    console.log('[FlowEngine.processMessage] Iniciando processamento:', {
+      citizenId,
+      userInput,
+      conversationId,
+    });
+
     // Busca execução ativa
     let execution = await this.stateManager.getActiveExecution(citizenId);
 
     if (!execution) {
       // Não há fluxo ativo: inicia menu principal
+      console.log('[FlowEngine.processMessage] Nenhuma execução ativa, iniciando menu principal');
       return this.startFlow(citizenId, 'menu_principal', conversationId);
     }
+
+    console.log('[FlowEngine.processMessage] Execução ativa encontrada:', {
+      executionId: execution.id,
+      flowId: execution.flowId,
+      currentNodeId: execution.currentNodeId,
+      retryCount: execution.metadata?.retryCount || 0,
+    });
 
     // Busca definição do fluxo
     const flow = await this.getFlowById(execution.flowId);
@@ -91,6 +105,11 @@ export class FlowEngine {
       throw new Error(`Node ${execution.currentNodeId} not found in flow ${flow.name}`);
     }
 
+    console.log('[FlowEngine.processMessage] Nodo atual:', {
+      nodeId: currentNode.id,
+      nodeType: currentNode.type,
+    });
+
     // Cria contexto de execução
     const context: ExecutionContext = {
       execution,
@@ -103,18 +122,69 @@ export class FlowEngine {
     // Executa nodo com input do usuário
     const result = await this.executeNode(currentNode, context);
 
+    console.log('[FlowEngine.processMessage] Resultado da execução:', {
+      success: result.success,
+      nextNodeId: result.nextNodeId,
+      waitingForInput: result.waitingForInput,
+      error: result.error,
+    });
+
     if (!result.success) {
+      // Incrementa contador de retry
+      const retryCount = (execution.metadata?.retryCount || 0) + 1;
+      const maxRetries = 3;
+
+      console.log(`[FlowEngine.processMessage] Erro no nodo, tentativa ${retryCount}/${maxRetries}`);
+
+      await this.stateManager.updateExecution(execution.id, {
+        metadata: {
+          ...execution.metadata,
+          retryCount,
+          lastError: result.error || result.message,
+          lastErrorAt: new Date().toISOString(),
+        },
+      });
+
+      // Se excedeu limite de retries, volta ao menu principal
+      if (retryCount >= maxRetries) {
+        console.log('[FlowEngine.processMessage] Limite de retries excedido, voltando ao menu principal');
+        await this.stateManager.cancelActiveExecutions(citizenId);
+
+        return {
+          message: '❌ Houve muitas tentativas sem sucesso. Vamos voltar ao menu principal.\n\nO que você gostaria de fazer?',
+          messageType: 'text',
+          metadata: {
+            flowId: flow.id,
+            executionId: execution.id,
+            nodeId: currentNode.id,
+            waitingForInput: false,
+            resetToMain: true,
+          },
+        };
+      }
+
       // Erro: retorna mensagem de erro e mantém no mesmo nodo
       return {
         message: result.error || result.message || 'Erro ao processar',
-        messageType: 'error',
+        messageType: 'text',
         metadata: {
           flowId: flow.id,
           executionId: execution.id,
           nodeId: currentNode.id,
-          waitingForInput: result.waitingForInput || false,
+          waitingForInput: result.waitingForInput || true,
+          retryCount,
         },
       };
+    }
+
+    // Reseta contador de retry em caso de sucesso
+    if (execution.metadata?.retryCount) {
+      await this.stateManager.updateExecution(execution.id, {
+        metadata: {
+          ...execution.metadata,
+          retryCount: 0,
+        },
+      });
     }
 
     // Atualiza estado se houver

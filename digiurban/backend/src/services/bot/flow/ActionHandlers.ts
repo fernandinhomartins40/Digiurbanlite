@@ -12,6 +12,8 @@ const prisma = new PrismaClient();
  * Busca serviços disponíveis
  */
 export const searchServices: ActionHandler = async (params, context) => {
+  console.log('[ActionHandlers.searchServices] Iniciando busca:', params);
+
   const { query, category, limit = 10 } = params;
 
   const where: any = {
@@ -22,6 +24,7 @@ export const searchServices: ActionHandler = async (params, context) => {
     where.OR = [
       { name: { contains: query, mode: 'insensitive' } },
       { description: { contains: query, mode: 'insensitive' } },
+      { keywords: { contains: query, mode: 'insensitive' } },
     ];
   }
 
@@ -39,8 +42,17 @@ export const searchServices: ActionHandler = async (params, context) => {
       category: true,
       estimatedDays: true,
       formSchema: true,
+      department: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
+    orderBy: { name: 'asc' },
   });
+
+  console.log(`[ActionHandlers.searchServices] Encontrados ${services.length} serviços`);
 
   return {
     services: services.map((s) => ({
@@ -51,6 +63,7 @@ export const searchServices: ActionHandler = async (params, context) => {
         category: s.category,
         estimatedDays: s.estimatedDays,
         formSchema: s.formSchema,
+        department: s.department?.name,
       },
     })),
     count: services.length,
