@@ -86,11 +86,20 @@ RUN npm install --legacy-peer-deps
 COPY digiurban/frontend ./
 
 # Build Next.js com validação integrada
-RUN npm run build && \
-    ls -la .next && \
-    if [ ! -d ".next" ]; then echo "❌ ERRO: Build do Next.js falhou - diretório .next não existe!"; exit 1; fi && \
-    if [ ! -f ".next/BUILD_ID" ]; then echo "❌ ERRO: BUILD_ID não foi gerado!"; exit 1; fi && \
-    echo "✅ Build do Next.js concluído com sucesso"
+RUN set -e && \
+    npm run build && \
+    ls -la && \
+    echo "Verificando diretórios críticos..." && \
+    test -d ".next" || { echo "❌ ERRO: .next não existe!"; exit 1; } && \
+    test -f ".next/BUILD_ID" || { echo "❌ ERRO: BUILD_ID não gerado!"; exit 1; } && \
+    test -d "node_modules" || { echo "❌ ERRO: node_modules não existe!"; exit 1; } && \
+    test -d "public" || { echo "❌ ERRO: public não existe!"; exit 1; } && \
+    test -d "src" || { echo "❌ ERRO: src não existe!"; exit 1; } && \
+    test -f "package.json" || { echo "❌ ERRO: package.json não existe!"; exit 1; } && \
+    echo "✅ Build do Next.js concluído com sucesso - todos os arquivos presentes"
+
+# Criar arquivo marker para garantir que este stage foi concluído
+RUN touch /app/frontend/.build_complete && echo "Frontend builder stage completed successfully"
 
 # ========== STAGE 3: Production Image ==========
 FROM node:18-bookworm-slim AS runner
