@@ -138,17 +138,29 @@ export default function AdminMessagesPage() {
     newSocket.on('message:new', (data: { conversationId: string; message: Message }) => {
       console.log('[Admin] Nova mensagem recebida:', data);
 
-      // Atualizar lista de conversas
-      setConversations(prev => prev.map(conv =>
-        conv.id === data.conversationId
-          ? {
-              ...conv,
-              lastMessagePreview: data.message.content.substring(0, 100),
-              lastMessageAt: data.message.sentAt,
-              unreadCount: conv.unreadCount ? conv.unreadCount + 1 : 1
-            }
-          : conv
-      ));
+      // Verificar se a conversa já existe na lista
+      const conversationExists = conversations.some(conv => conv.id === data.conversationId);
+
+      if (!conversationExists) {
+        // NOVA CONVERSA: Recarregar lista completa (estilo WhatsApp)
+        console.log('[Admin] Nova conversa detectada, recarregando lista...');
+        loadConversations();
+
+        // Fazer socket entrar na sala da conversa
+        newSocket.emit('conversation:join', { conversationId: data.conversationId });
+      } else {
+        // Conversa existente: Atualizar na lista
+        setConversations(prev => prev.map(conv =>
+          conv.id === data.conversationId
+            ? {
+                ...conv,
+                lastMessagePreview: data.message.content.substring(0, 100),
+                lastMessageAt: data.message.sentAt,
+                unreadCount: conv.unreadCount ? conv.unreadCount + 1 : 1
+              }
+            : conv
+        ));
+      }
 
       // Se a conversa selecionada é a que recebeu mensagem, adicionar
       if (selectedConversation?.id === data.conversationId) {

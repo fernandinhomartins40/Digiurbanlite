@@ -165,12 +165,30 @@ export default function CitizenDashboard() {
       console.log('✅ Conectado ao servidor de mensagens');
     });
 
-    socketRef.current.on('message:new', (message: Message) => {
+    socketRef.current.on('message:new', (data: any) => {
+      console.log('[Cidadão] Nova mensagem recebida:', data);
+
+      // Suportar tanto formato antigo (message direto) quanto novo (data.message)
+      const message = data.message || data;
+      const conversationId = data.conversationId || message.conversationId;
+
+      // Verificar se a conversa já existe na lista
+      const conversationExists = conversations.some(conv => conv.id === conversationId);
+
+      if (!conversationExists) {
+        // NOVA CONVERSA: Recarregar lista (estilo WhatsApp)
+        console.log('[Cidadão] Nova conversa detectada, recarregando lista...');
+        fetchConversations();
+
+        // Fazer socket entrar na sala da conversa
+        socketRef.current?.emit('conversation:join', { conversationId });
+      }
+
+      // Se a conversa selecionada é a que recebeu mensagem, adicionar
       if (selectedConversation && message.senderId !== citizen.id) {
         setMessages(prev => [...prev, message]);
         scrollToBottom();
       }
-      fetchConversations();
     });
 
     socketRef.current.on('bot:response', (message: Message) => {
