@@ -149,7 +149,7 @@ services:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api}
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3001}
         - NEXT_PUBLIC_MESSAGES_API_URL=${NEXT_PUBLIC_MESSAGES_API_URL:-/messages-api}
-        - NEXT_PUBLIC_MESSAGES_WS_URL=${NEXT_PUBLIC_MESSAGES_WS_URL:-ws://localhost:9001}
+        - NEXT_PUBLIC_MESSAGES_WS_URL=${NEXT_PUBLIC_MESSAGES_WS_URL:-wss://digiurban.com.br}
     container_name: digiurban-vps
     ports:
       - "3060:80"   # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)
