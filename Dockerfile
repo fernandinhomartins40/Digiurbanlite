@@ -37,13 +37,13 @@ ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
 RUN npx prisma generate
 
-# Build TypeScript (limpar cache incremental primeiro)
-RUN rm -rf dist/.tsbuildinfo dist/* && npm run build
-
-# Validar que arquivos críticos foram compilados
-RUN test -f dist/index.js || (echo "❌ ERRO: index.js não foi compilado!" && exit 1)
-RUN test -f dist/routes/citizen-services.js || (echo "❌ ERRO: citizen-services.js não foi compilado!" && exit 1)
-RUN echo "✅ Build do TypeScript concluído com sucesso"
+# Build TypeScript com validação integrada
+RUN rm -rf dist/.tsbuildinfo dist/* && \
+    npm run build && \
+    ls -la dist && \
+    if [ ! -f "dist/index.js" ]; then echo "❌ ERRO: index.js não foi compilado!"; exit 1; fi && \
+    if [ ! -f "dist/routes/citizen-services.js" ]; then echo "❌ ERRO: citizen-services.js não foi compilado!"; exit 1; fi && \
+    echo "✅ Build do TypeScript concluído com sucesso"
 
 # ========== STAGE 2: Build Frontend ==========
 FROM node:18-bookworm-slim AS frontend-builder
@@ -85,13 +85,12 @@ RUN npm install --legacy-peer-deps
 # Copiar código do frontend
 COPY digiurban/frontend ./
 
-# Build Next.js
-RUN npm run build
-
-# Validar que o build do Next.js foi bem-sucedido
-RUN test -d .next || (echo "❌ ERRO: Build do Next.js falhou!" && exit 1)
-RUN test -f .next/BUILD_ID || (echo "❌ ERRO: BUILD_ID não foi gerado!" && exit 1)
-RUN echo "✅ Build do Next.js concluído com sucesso"
+# Build Next.js com validação integrada
+RUN npm run build && \
+    ls -la .next && \
+    if [ ! -d ".next" ]; then echo "❌ ERRO: Build do Next.js falhou - diretório .next não existe!"; exit 1; fi && \
+    if [ ! -f ".next/BUILD_ID" ]; then echo "❌ ERRO: BUILD_ID não foi gerado!"; exit 1; fi && \
+    echo "✅ Build do Next.js concluído com sucesso"
 
 # ========== STAGE 3: Production Image ==========
 FROM node:18-bookworm-slim AS runner
