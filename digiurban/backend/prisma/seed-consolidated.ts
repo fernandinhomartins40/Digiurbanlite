@@ -7,9 +7,9 @@
  *
  * 1. Configuração do Município (Singleton)
  * 2. Usuários do Sistema (Super Admin, Admin, Gerente, User)
- * 3. Departamentos (14 Secretarias)
+ * 3. Departamentos (21 Secretarias)
  * 4. Cidadão de Teste
- * 5. Serviços Simplificados (114 serviços com formSchemas)
+ * 5. Serviços Simplificados (~400 serviços com formSchemas)
  *
  * Execução: npm run db:seed
  */
@@ -183,7 +183,7 @@ async function main() {
     console.log(`   ✅ Usuário: ${userEmail}\n`);
 
     // ========================================================================
-    // 3. DEPARTAMENTOS (14 SECRETARIAS)
+    // 3. DEPARTAMENTOS (21 SECRETARIAS)
     // ========================================================================
     console.log('3️⃣  Departamentos (Secretarias)');
     console.log('   ─────────────────────────────');
@@ -202,7 +202,14 @@ async function main() {
       { name: 'Secretaria de Segurança Pública', code: 'SEGURANCA_PUBLICA', description: 'Guarda municipal, videomonitoramento e segurança pública' },
       { name: 'Secretaria de Serviços Públicos', code: 'SERVICOS_PUBLICOS', description: 'Limpeza urbana, iluminação pública e manutenção de vias' },
       { name: 'Secretaria de Turismo', code: 'TURISMO', description: 'Promoção turística, cadastro de guias e apoio a eventos' },
-      { name: 'Secretaria de Fazenda', code: 'FAZENDA', description: 'Arrecadação, IPTU, ISS, certidões e gestão fiscal' },
+      { name: 'Secretaria de Fazenda', code: 'FINANCAS', description: 'Arrecadação, IPTU, ISS, certidões e gestão fiscal' },
+      { name: 'Secretaria de Administração', code: 'ADMINISTRACAO', description: 'Gestão administrativa, protocolo, ouvidoria e serviços gerais' },
+      { name: 'Defesa Civil', code: 'DEFESA_CIVIL', description: 'Prevenção de riscos, gestão de emergências e proteção civil' },
+      { name: 'Secretaria de Políticas para Mulheres', code: 'POLITICAS_MULHERES', description: 'Políticas públicas para mulheres, combate à violência e empoderamento feminino' },
+      { name: 'Secretaria de Tecnologia e Inovação', code: 'TECNOLOGIA_INOVACAO', description: 'Tecnologia da informação, inovação, sistemas municipais e inclusão digital' },
+      { name: 'Secretaria de Transportes e Trânsito', code: 'TRANSPORTES_TRANSITO', description: 'Gestão de trânsito, credenciamento de veículos e sinalização viária' },
+      { name: 'Secretaria de Desenvolvimento Econômico', code: 'DESENVOLVIMENTO_ECONOMICO', description: 'Fomento econômico, empreendedorismo, qualificação profissional e emprego' },
+      { name: 'Secretaria de Mobilidade Urbana', code: 'MOBILIDADE_URBANA', description: 'Transporte público, acessibilidade e integração modal' },
     ];
 
     let deptCount = 0;
