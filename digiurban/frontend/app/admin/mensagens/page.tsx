@@ -252,9 +252,15 @@ export default function AdminMessagesPage() {
 
       // Processar conversas - sistema simplificado tipo WhatsApp (todas conversas sempre ativas)
       const processedConversations = data.map((conv: Conversation) => {
+        // Usar participantName (nome do outro participante) em vez de apenas citizenName
+        const participantName = conv.metadata?.participantName ||
+                               conv.metadata?.citizenName ||
+                               conv.metadata?.serverName ||
+                               'Usuário';
+
         return {
           ...conv,
-          citizenName: conv.metadata?.citizenName || 'Cidadão',
+          citizenName: participantName, // Renomear para consistência com código existente
           unreadCount: conv.unreadCount2 || 0
         };
       });

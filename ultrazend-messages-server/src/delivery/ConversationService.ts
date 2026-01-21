@@ -113,7 +113,48 @@ export class ConversationService {
         },
       });
 
-      return conversations;
+      // Enriquecer conversas com nomes dos participantes
+      const enrichedConversations = await Promise.all(
+        conversations.map(async (conv) => {
+          // Identificar o outro participante (não o usuário atual)
+          const isParticipant1 = conv.participant1Id === userId && conv.participant1Type === userType;
+          const otherParticipantId = isParticipant1 ? conv.participant2Id : conv.participant1Id;
+          const otherParticipantType = isParticipant1 ? conv.participant2Type : conv.participant1Type;
+
+          let participantName = 'Usuário';
+
+          // Buscar nome do outro participante no banco DigiUrban
+          try {
+            if (otherParticipantType === 'CITIZEN') {
+              const citizen = await prisma.citizen.findUnique({
+                where: { id: otherParticipantId },
+                select: { name: true },
+              });
+              participantName = citizen?.name || 'Cidadão';
+            } else if (otherParticipantType === 'SERVER') {
+              const admin = await prisma.admin.findUnique({
+                where: { id: otherParticipantId },
+                select: { name: true },
+              });
+              participantName = admin?.name || 'Servidor';
+            }
+          } catch (err) {
+            logger.warn('Error fetching participant name', { error: err, participantId: otherParticipantId });
+          }
+
+          return {
+            ...conv,
+            metadata: {
+              ...conv.metadata,
+              participantName,
+              citizenName: otherParticipantType === 'CITIZEN' ? participantName : undefined,
+              serverName: otherParticipantType === 'SERVER' ? participantName : undefined,
+            },
+          };
+        })
+      );
+
+      return enrichedConversations;
     } catch (error) {
       logger.error('Error getting conversations', { error, userId });
       throw error;
