@@ -7,6 +7,10 @@
 **Commits:**
 - `b6a0e9d` - feat: Implementar sistema completo de mensagens
 - `47b2ef9` - fix: Corrigir deploy do sistema de mensagens em Docker
+- `9636493` - fix: Adicionar permissões de mensagens em getRolePermissions
+- `da40e1c` - fix: Remover AdminLayout duplicado na página de mensagens
+- `5b97465` - fix: Consolidar validações de build em single RUN
+- `1bf4328` - fix: Adicionar configuração Nginx para ultrazend-messages
 
 ---
 
@@ -59,7 +63,7 @@ git pull origin main
 # 4. Criar arquivo .env com variáveis (se não existir)
 cat > .env << EOF
 NEXT_PUBLIC_MESSAGES_API_URL=/messages-api
-NEXT_PUBLIC_MESSAGES_WS_URL=wss://seu-dominio.com.br
+NEXT_PUBLIC_MESSAGES_WS_URL=wss://digiurban.com.br
 EOF
 
 # 5. Rebuild COMPLETO (forçar reconstrução)
