@@ -45,7 +45,21 @@ export class ConversationService {
 
       // Se não existe, criar nova
       if (!conversation) {
-        const messageServerId = process.env.MESSAGE_SERVER_ID || 'default-server';
+        // Buscar o primeiro servidor de mensagens ativo
+        let messageServerId = process.env.MESSAGE_SERVER_ID;
+
+        if (!messageServerId) {
+          const activeServer = await prisma.messageServer.findFirst({
+            where: { isActive: true },
+            orderBy: { createdAt: 'asc' }
+          });
+
+          if (!activeServer) {
+            throw new Error('No active message server found');
+          }
+
+          messageServerId = activeServer.id;
+        }
 
         conversation = await prisma.conversation.create({
           data: {
