@@ -886,5 +886,6 @@ export default function AdminMessagesPage() {
           }}
         />
       )}
+    </div>
   );
 }
