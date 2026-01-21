@@ -145,29 +145,34 @@ export default function AdminMessagesPage() {
     newSocket.on('message:new', (data: { conversationId: string; message: Message }) => {
       console.log('[Admin] Nova mensagem recebida:', data);
 
-      // Verificar se a conversa já existe na lista
-      const conversationExists = conversations.some(conv => conv.id === data.conversationId);
+      // CRÍTICO: Usar setState com função para ter acesso ao estado mais recente
+      setConversations(prev => {
+        const conversationExists = prev.some(conv => conv.id === data.conversationId);
 
-      if (!conversationExists) {
-        // NOVA CONVERSA: Recarregar lista completa (estilo WhatsApp)
-        console.log('[Admin] Nova conversa detectada, recarregando lista...');
-        loadConversations();
+        if (!conversationExists) {
+          // NOVA CONVERSA: Recarregar lista completa (estilo WhatsApp)
+          console.log('[Admin] Nova conversa detectada, recarregando lista...');
 
-        // Fazer socket entrar na sala da conversa
-        newSocket.emit('conversation:join', { conversationId: data.conversationId });
-      } else {
-        // Conversa existente: Atualizar na lista
-        setConversations(prev => prev.map(conv =>
-          conv.id === data.conversationId
-            ? {
-                ...conv,
-                lastMessagePreview: data.message.content.substring(0, 100),
-                lastMessageAt: data.message.sentAt,
-                unreadCount: conv.unreadCount ? conv.unreadCount + 1 : 1
-              }
-            : conv
-        ));
-      }
+          // Fazer socket entrar na sala da conversa IMEDIATAMENTE
+          newSocket.emit('conversation:join', { conversationId: data.conversationId });
+
+          // Trigger reload (mas retornar lista atual para evitar perda de estado)
+          loadConversations();
+          return prev;
+        } else {
+          // Conversa existente: Atualizar na lista
+          return prev.map(conv =>
+            conv.id === data.conversationId
+              ? {
+                  ...conv,
+                  lastMessagePreview: data.message.content.substring(0, 100),
+                  lastMessageAt: data.message.sentAt,
+                  unreadCount: conv.unreadCount ? conv.unreadCount + 1 : 1
+                }
+              : conv
+          );
+        }
+      });
 
       // Se a conversa selecionada é a que recebeu mensagem, adicionar
       if (selectedConversation?.id === data.conversationId) {
@@ -250,22 +255,48 @@ export default function AdminMessagesPage() {
 
       const data = await response.json();
 
-      // Processar conversas - sistema simplificado tipo WhatsApp (todas conversas sempre ativas)
-      const processedConversations = data.map((conv: Conversation) => {
-        // Usar participantName (nome do outro participante) em vez de apenas citizenName
-        const participantName = conv.metadata?.participantName ||
-                               conv.metadata?.citizenName ||
-                               conv.metadata?.serverName ||
-                               'Usuário';
+      // Enriquecer conversas com nomes reais dos participantes
+      const enrichedConversations = await Promise.all(
+        data.map(async (conv: Conversation) => {
+          let participantName = 'Usuário';
 
-        return {
-          ...conv,
-          citizenName: participantName, // Renomear para consistência com código existente
-          unreadCount: conv.unreadCount2 || 0
-        };
-      });
+          // Identificar o outro participante (não o admin atual)
+          const isParticipant1 = conv.participant1Id === user?.id && conv.participant1Type === 'SERVER';
+          const otherParticipantId = isParticipant1 ? conv.participant2Id : conv.participant1Id;
+          const otherParticipantType = isParticipant1 ? conv.participant2Type : conv.participant1Type;
 
-      setConversations(processedConversations);
+          try {
+            // Buscar nome do outro participante na API do DigiUrban
+            if (otherParticipantType === 'CITIZEN') {
+              const citizenRes = await fetch(`${API_URL}/citizens/${otherParticipantId}`, {
+                credentials: 'include'
+              });
+              if (citizenRes.ok) {
+                const citizen = await citizenRes.json();
+                participantName = citizen.name || 'Cidadão';
+              }
+            } else if (otherParticipantType === 'SERVER') {
+              const adminRes = await fetch(`${API_URL}/admin/users/${otherParticipantId}`, {
+                credentials: 'include'
+              });
+              if (adminRes.ok) {
+                const admin = await adminRes.json();
+                participantName = admin.name || 'Servidor';
+              }
+            }
+          } catch (err) {
+            console.warn('Erro ao buscar nome do participante:', err);
+          }
+
+          return {
+            ...conv,
+            citizenName: participantName,
+            unreadCount: conv.unreadCount2 || 0
+          };
+        })
+      );
+
+      setConversations(enrichedConversations);
     } catch (err) {
       console.error('Erro ao carregar conversas:', err);
       setError('Não foi possível carregar as conversas. Tente novamente.');

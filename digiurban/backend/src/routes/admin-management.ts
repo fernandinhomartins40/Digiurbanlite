@@ -765,6 +765,43 @@ router.get(
 );
 
 /**
+ * GET /api/admin/users/:id - Buscar usuário por ID
+ */
+router.get(
+  '/users/:id',
+  handleAsyncRoute(async (req, res) => {
+    const { id } = req.params;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        departmentId: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json(
+        createErrorResponse('USER_NOT_FOUND', 'Usuário não encontrado')
+      );
+    }
+
+    return res.json(createSuccessResponse({ user }));
+  })
+);
+
+/**
  * POST /api/admin/team - Adicionar membro à equipe
  */
 router.post(

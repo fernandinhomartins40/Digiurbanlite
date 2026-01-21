@@ -174,17 +174,23 @@ export default function CitizenDashboard() {
       const message = data.message || data;
       const conversationId = data.conversationId || message.conversationId;
 
-      // Verificar se a conversa já existe na lista
-      const conversationExists = conversations.some(conv => conv.id === conversationId);
+      // CRÍTICO: Usar setState com função para ter acesso ao estado mais recente
+      setConversations(prev => {
+        const conversationExists = prev.some(conv => conv.id === conversationId);
 
-      if (!conversationExists) {
-        // NOVA CONVERSA: Recarregar lista (estilo WhatsApp)
-        console.log('[Cidadão] Nova conversa detectada, recarregando lista...');
-        fetchConversations();
+        if (!conversationExists) {
+          // NOVA CONVERSA: Recarregar lista (estilo WhatsApp)
+          console.log('[Cidadão] Nova conversa detectada, recarregando lista...');
 
-        // Fazer socket entrar na sala da conversa
-        socketRef.current?.emit('conversation:join', { conversationId });
-      }
+          // Fazer socket entrar na sala da conversa IMEDIATAMENTE
+          socketRef.current?.emit('conversation:join', { conversationId });
+
+          // Trigger reload (mas retornar lista atual para evitar perda de estado)
+          fetchConversations();
+        }
+
+        return prev; // Retornar estado atual
+      });
 
       // Se a conversa selecionada é a que recebeu mensagem, adicionar
       if (selectedConversation && message.senderId !== citizen.id) {
