@@ -96,12 +96,12 @@ export default function AdminMessagesPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'bot' | 'human' | 'closed'>('all');
   const [isMobileView, setIsMobileView] = useState(false);
   const [showConversationsList, setShowConversationsList] = useState(true);
+  const [showNewConversation, setShowNewConversation] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showNewConversation, setShowNewConversation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [stats, setStats] = useState<Stats>({
@@ -501,8 +501,8 @@ export default function AdminMessagesPage() {
 
   return (
     <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Mensagens</h1>
             <p className="text-sm text-gray-600 mt-1">
@@ -862,7 +862,6 @@ export default function AdminMessagesPage() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Dialog para criar nova conversa */}
       {user && (
@@ -872,7 +871,6 @@ export default function AdminMessagesPage() {
           currentUserId={user.id}
           currentUserType="SERVER"
           onConversationCreated={(conversation) => {
-            // Adicionar a nova conversa à lista
             setConversations(prev => [conversation, ...prev]);
             setSelectedConversation(conversation);
             setShowNewConversation(false);
