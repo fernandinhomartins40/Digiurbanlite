@@ -106,7 +106,9 @@
       "Bash(awk:*)",
       "Bash(for dir in financas administracao defesa-civil politicas-mulheres tecnologia-inovacao transportes-transito desenvolvimento-economico mobilidade-urbana)",
       "Bash(do mkdir -p \"$dir/sugestoes\")",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(npm run db:generate:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
