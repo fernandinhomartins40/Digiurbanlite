@@ -27,6 +27,9 @@ export class ExpressServer {
   }
 
   private setupMiddlewares() {
+    // Trust proxy (CRÍTICO: para rate limiting funcionar corretamente atrás do Nginx)
+    this.app.set('trust proxy', true);
+
     // Security
     this.app.use(helmet());
     this.app.use(cors({

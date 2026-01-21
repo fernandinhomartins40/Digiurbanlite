@@ -147,11 +147,11 @@ export default function CitizenDashboard() {
     }
   }, [citizen, authLoading, router]);
 
-  // Conectar WebSocket
+  // Conectar WebSocket - UNIFICADO com admin (usar ultrazend-messages)
   useEffect(() => {
     if (!citizen) return;
 
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
+    const wsUrl = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001';
 
     socketRef.current = io(wsUrl, {
       auth: {
@@ -187,20 +187,20 @@ export default function CitizenDashboard() {
     };
   }, [citizen, selectedConversation]);
 
-  // Carregar conversas
+  // Carregar conversas - UNIFICADO com admin (usar ultrazend-messages)
   const fetchConversations = async () => {
     if (!citizen) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-      const response = await fetch(`${apiUrl}/messages/conversations`, {
+      const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
+      const response = await fetch(`${messagesApiUrl}/conversations`, {
         credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
-        // Adicionar bot no topo
-        setConversations([BOT_CONVERSATION, ...(data.conversations || [])]);
+        // Adicionar bot no topo + conversas reais do ultrazend-messages
+        setConversations([BOT_CONVERSATION, ...(Array.isArray(data) ? data : [])]);
       }
     } catch (error) {
       console.error('Erro ao carregar conversas:', error);
@@ -333,17 +333,17 @@ export default function CitizenDashboard() {
       return;
     }
 
-    // Conversa normal
+    // Conversa normal - UNIFICADO com admin (usar ultrazend-messages)
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
       const response = await fetch(
-        `${apiUrl}/messages/conversations/${conversationId}/messages`,
+        `${messagesApiUrl}/conversations/${conversationId}/messages`,
         { credentials: 'include' }
       );
 
       if (response.ok) {
         const data = await response.json();
-        setMessages(data.messages || []);
+        setMessages(Array.isArray(data) ? data : []);
         scrollToBottom();
       }
     } catch (error) {

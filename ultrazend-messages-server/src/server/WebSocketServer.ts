@@ -57,7 +57,27 @@ export class WebSocketServer {
   private setupAuthentication() {
     this.io.use(async (socket: Socket, next) => {
       try {
-        const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
+        // Tentar obter token de múltiplas fontes (mesmo comportamento do Express REST API)
+        let token = socket.handshake.auth.token; // 1. Auth object (cidadão)
+
+        if (!token) {
+          // 2. Authorization header (fallback)
+          token = socket.handshake.headers.authorization?.replace('Bearer ', '');
+        }
+
+        if (!token) {
+          // 3. Cookies (admin) - parsear manualmente do header Cookie
+          const cookieHeader = socket.handshake.headers.cookie;
+          if (cookieHeader) {
+            const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+              const [key, value] = cookie.trim().split('=');
+              acc[key] = value;
+              return acc;
+            }, {} as Record<string, string>);
+
+            token = cookies.digiurban_admin_token || cookies.digiurban_citizen_token;
+          }
+        }
 
         if (!token) {
           return next(new Error('Authentication token required'));
