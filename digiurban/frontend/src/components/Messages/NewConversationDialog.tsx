@@ -114,8 +114,6 @@ export function NewConversationDialog({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            participant1Id: currentUserId,
-            participant1Type: currentUserType,
             participant2Id: contact.id,
             participant2Type: activeTab === 'citizens' ? 'CITIZEN' : 'SERVER'
           })
