@@ -618,10 +618,8 @@ export default function AdminMessagesPage() {
 
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="all" className="text-xs">Todas</TabsTrigger>
-                  <TabsTrigger value="bot" className="text-xs">IA</TabsTrigger>
-                  <TabsTrigger value="human" className="text-xs">Humano</TabsTrigger>
                   <TabsTrigger value="closed" className="text-xs">Fechadas</TabsTrigger>
                 </TabsList>
               </Tabs>

@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
+import cookieParser from 'cookie-parser';
 import logger from '../utils/logger';
 import { verifyToken, JwtPayload } from '../utils/jwt';
 import conversationService from '../delivery/ConversationService';
@@ -32,6 +33,9 @@ export class ExpressServer {
       origin: process.env.CORS_ORIGIN || '*',
       credentials: true,
     }));
+
+    // Cookie parsing (IMPORTANTE: deve vir ANTES das rotas)
+    this.app.use(cookieParser());
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
@@ -91,7 +95,13 @@ export class ExpressServer {
 
   private authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
+      // Tentar obter token do cookie primeiro (DigiUrban usa cookies httpOnly)
+      let token = req.cookies?.digiurban_admin_token || req.cookies?.digiurban_citizen_token;
+
+      // Se não tiver no cookie, tentar o header Authorization (fallback)
+      if (!token) {
+        token = req.headers.authorization?.replace('Bearer ', '');
+      }
 
       if (!token) {
         res.status(401).json({ error: 'Authentication token required' });
