@@ -111,7 +111,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-digiurban-super-secret-change-in-production}
       - JWT_EXPIRES_IN=7d
-      - MESSAGE_SERVER_ID=${MESSAGE_SERVER_ID:-default-message-server}
+      # MESSAGE_SERVER_ID removido - busca dinâmica no código
       - MESSAGES_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - BASE_URL=https://digiurban.com.br
