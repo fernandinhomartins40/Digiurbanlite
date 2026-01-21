@@ -32,6 +32,7 @@ interface AdminJwtPayload extends jwt.JwtPayload {
   role: string;
   departmentId?: string;
   type: string;
+  userType?: 'SERVER' | 'CITIZEN'; // Para compatibilidade com ultrazend-messages
 }
 
 // Interface para permissões por role
@@ -171,7 +172,8 @@ router.post(
         userId: user.id,
         role: user.role,
         departmentId: user.departmentId || undefined,
-        type: 'admin'
+        type: 'admin',
+        userType: 'SERVER' // Para compatibilidade com ultrazend-messages
         };
 
       const jwtSecret = process.env.JWT_SECRET!;

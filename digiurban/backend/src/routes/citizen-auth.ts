@@ -139,7 +139,9 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
     const token = jwt.sign(
       {
         citizenId: citizen.id,
-        type: 'citizen'
+        userId: citizen.id, // Para compatibilidade com ultrazend-messages
+        type: 'citizen',
+        userType: 'CITIZEN' // Para compatibilidade com ultrazend-messages
       },
       process.env.JWT_SECRET!,
       { expiresIn: JWT_CONFIG.CITIZEN_EXPIRES_IN }
