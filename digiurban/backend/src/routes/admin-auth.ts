@@ -543,7 +543,9 @@ function getRolePermissions(role: string): string[] {
       'protocols:read',
       'protocols:update',
       'protocols:comment',
-      'department:read'
+      'department:read',
+      'messages:read',
+      'messages:write'
     ],
     COORDINATOR: [
       'protocols:read',
@@ -553,6 +555,9 @@ function getRolePermissions(role: string): string[] {
       'team:read',
       'team:metrics',
       'department:read',
+      'messages:read',
+      'messages:write',
+      'messages:moderate'
     ],
     MANAGER: [
       'protocols:read',
@@ -565,6 +570,10 @@ function getRolePermissions(role: string): string[] {
       'team:manage',
       'reports:department',
       'department:manage',
+      'messages:read',
+      'messages:write',
+      'messages:moderate',
+      'messages:admin'
     ],
     ADMIN: [
       'protocols:read',
@@ -583,6 +592,10 @@ function getRolePermissions(role: string): string[] {
       'reports:full',
       'departments:read',
       'analytics:full',
+      'messages:read',
+      'messages:write',
+      'messages:moderate',
+      'messages:admin'
     ]
         };
 
