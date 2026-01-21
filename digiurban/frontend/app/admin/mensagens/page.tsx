@@ -29,7 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// Tabs removido - sistema simplificado tipo WhatsApp
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { io, Socket } from 'socket.io-client';
@@ -93,7 +93,7 @@ export default function AdminMessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'bot' | 'human' | 'closed'>('all');
+  // Removido: sistema de tabs desnecessário para app tipo WhatsApp
   const [isMobileView, setIsMobileView] = useState(false);
   const [showConversationsList, setShowConversationsList] = useState(true);
   const [showNewConversation, setShowNewConversation] = useState(false);
@@ -231,20 +231,10 @@ export default function AdminMessagesPage() {
 
       const data = await response.json();
 
-      // Processar conversas para adicionar informações computadas
+      // Processar conversas - sistema simplificado tipo WhatsApp (todas conversas sempre ativas)
       const processedConversations = data.map((conv: Conversation) => {
-        const botStatus = conv.metadata?.botStatus || 'ACTIVE';
-        let conversationStatus: 'bot' | 'human' | 'closed' = 'bot';
-
-        if (conv.status === 'CLOSED') {
-          conversationStatus = 'closed';
-        } else if (botStatus === 'HUMAN_TAKEOVER' || botStatus === 'PAUSED') {
-          conversationStatus = 'human';
-        }
-
         return {
           ...conv,
-          conversationStatus,
           citizenName: conv.metadata?.citizenName || 'Cidadão',
           unreadCount: conv.unreadCount2 || 0
         };
@@ -488,15 +478,10 @@ export default function AdminMessagesPage() {
     return date.toLocaleDateString('pt-BR');
   };
 
+  // Filtrar apenas por busca - sistema simplificado tipo WhatsApp
   const filteredConversations = conversations.filter(conv => {
     const matchesSearch = (conv.citizenName || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab =
-      activeTab === 'all' ||
-      (activeTab === 'bot' && conv.conversationStatus === 'bot') ||
-      (activeTab === 'human' && conv.conversationStatus === 'human') ||
-      (activeTab === 'closed' && conv.conversationStatus === 'closed');
-
-    return matchesSearch && matchesTab;
+    return matchesSearch;
   });
 
   return (
@@ -629,14 +614,6 @@ export default function AdminMessagesPage() {
                   <Plus className="w-5 h-5" />
                 </Button>
               </div>
-
-              {/* Tabs */}
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="all" className="text-xs">Todas</TabsTrigger>
-                  <TabsTrigger value="closed" className="text-xs">Fechadas</TabsTrigger>
-                </TabsList>
-              </Tabs>
             </div>
 
             {/* Lista */}
