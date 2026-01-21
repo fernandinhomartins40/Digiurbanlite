@@ -154,7 +154,9 @@ export default function CitizenDashboard() {
     const wsUrl = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001';
 
     socketRef.current = io(wsUrl, {
+      withCredentials: true, // Envia cookies (redundância)
       auth: {
+        // Também envia via auth object (redundância segura)
         userId: citizen.id,
         userType: 'CITIZEN',
       },

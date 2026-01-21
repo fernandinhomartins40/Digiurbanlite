@@ -119,8 +119,15 @@ export default function AdminMessagesPage() {
 
   // Conectar WebSocket
   useEffect(() => {
+    if (!user) return;
+
     const newSocket = io(MESSAGES_WS_URL, {
-      withCredentials: true,
+      withCredentials: true, // Envia cookies (redundância)
+      auth: {
+        // Também envia via auth object (redundância segura)
+        userId: user.id,
+        userType: 'SERVER',
+      },
       transports: ['websocket', 'polling'],
     });
 
@@ -205,7 +212,7 @@ export default function AdminMessagesPage() {
     return () => {
       newSocket.close();
     };
-  }, [MESSAGES_WS_URL, selectedConversation]);
+  }, [MESSAGES_WS_URL, selectedConversation, user]);
 
   // Detectar mobile
   useEffect(() => {

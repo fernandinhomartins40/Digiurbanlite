@@ -72,7 +72,9 @@ RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
 # ✅ CRÍTICO: URLs para produção
 ARG NEXT_PUBLIC_API_URL=/api
 ARG NEXT_PUBLIC_MESSAGES_API_URL=/messages-api
-ARG NEXT_PUBLIC_MESSAGES_WS_URL=ws://localhost:9001
+# WebSocket: String vazia = mesma origem (Nginx faz proxy via /socket.io/)
+# Socket.IO detecta automaticamente http/https e wss/ws
+ARG NEXT_PUBLIC_MESSAGES_WS_URL=
 
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_MESSAGES_API_URL=$NEXT_PUBLIC_MESSAGES_API_URL

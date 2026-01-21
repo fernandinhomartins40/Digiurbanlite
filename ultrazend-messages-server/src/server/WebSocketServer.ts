@@ -135,22 +135,6 @@ export class WebSocketServer {
       // Entrar nas salas (rooms) do usuário
       await this.joinUserRooms(authSocket);
 
-      // Event: entrar em sala de conversa (quando conversa é criada)
-      socket.on('conversation:join', async (data, callback) => {
-        try {
-          const { conversationId } = data;
-          socket.join(`conversation:${conversationId}`);
-          logger.debug('User joined conversation room', {
-            userId: authSocket.userId,
-            conversationId,
-          });
-          callback?.({ success: true });
-        } catch (error) {
-          logger.error('Error joining conversation room', { error });
-          callback?.({ error: 'Failed to join conversation' });
-        }
-      });
-
       // Event: enviar mensagem
       socket.on('message:send', async (data, callback) => {
         await this.handleSendMessage(authSocket, data, callback);
@@ -333,18 +317,6 @@ export class WebSocketServer {
         conversationId,
         message,
       });
-
-      // Fazer ambos participantes entrarem na sala da conversa automaticamente
-      const sockets = await this.io.fetchSockets();
-      for (const s of sockets) {
-        const authS = s as any;
-        if (
-          authS.userId === conversation.participant1Id ||
-          authS.userId === conversation.participant2Id
-        ) {
-          s.join(`conversation:${conversationId}`);
-        }
-      }
 
       // Log
       await prisma.messageLog.create({
