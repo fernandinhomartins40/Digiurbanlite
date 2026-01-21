@@ -20,7 +20,8 @@ import {
   PlayCircle,
   PauseCircle,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { io, Socket } from 'socket.io-client';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { NewConversationDialog } from '@/src/components/Messages/NewConversationDialog';
 
 interface Conversation {
   id: string;
@@ -99,6 +101,7 @@ export default function AdminMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showNewConversation, setShowNewConversation] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [stats, setStats] = useState<Stats>({
@@ -605,15 +608,26 @@ export default function AdminMessagesPage() {
           >
             {/* Header da Lista */}
             <div className="p-4 border-b">
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Buscar conversas..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar conversas..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button
+                  size="icon"
+                  variant="default"
+                  onClick={() => setShowNewConversation(true)}
+                  title="Nova conversa"
+                  className="shrink-0"
+                >
+                  <Plus className="w-5 h-5" />
+                </Button>
               </div>
 
               {/* Tabs */}
@@ -849,5 +863,28 @@ export default function AdminMessagesPage() {
           </div>
         </div>
       </div>
+
+      {/* Dialog para criar nova conversa */}
+      {user && (
+        <NewConversationDialog
+          isOpen={showNewConversation}
+          onClose={() => setShowNewConversation(false)}
+          currentUserId={user.id}
+          currentUserType="SERVER"
+          onConversationCreated={(conversation) => {
+            // Adicionar a nova conversa à lista
+            setConversations(prev => [conversation, ...prev]);
+            setSelectedConversation(conversation);
+            setShowNewConversation(false);
+            if (isMobileView) {
+              setShowConversationsList(false);
+            }
+            toast({
+              title: 'Conversa iniciada',
+              description: `Conversa com ${conversation.title} iniciada com sucesso!`,
+            });
+          }}
+        />
+      )}
   );
 }
