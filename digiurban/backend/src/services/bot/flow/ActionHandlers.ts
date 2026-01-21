@@ -5,52 +5,62 @@
 
 import { PrismaClient } from '@prisma/client';
 import { ActionHandler, ExecutionContext } from '../../../types/flow.types';
+import serviceKnowledgeBase from '../ServiceKnowledgeBase';
 
 const prisma = new PrismaClient();
 
 /**
  * Busca serviços disponíveis
+ * Usa o ServiceKnowledgeBase que tem cache e sistema de keywords em runtime
  */
 export const searchServices: ActionHandler = async (params, context) => {
   console.log('[ActionHandlers.searchServices] Iniciando busca:', params);
 
   const { query, category, limit = 10 } = params;
 
-  const where: any = {
-    isActive: true,
-  };
+  let services;
 
   if (query) {
-    where.OR = [
-      { name: { contains: query, mode: 'insensitive' } },
-      { description: { contains: query, mode: 'insensitive' } },
-      { keywords: { contains: query, mode: 'insensitive' } },
-    ];
-  }
-
-  if (category) {
-    where.category = category;
-  }
-
-  const services = await prisma.serviceSimplified.findMany({
-    where,
-    take: limit,
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      category: true,
-      estimatedDays: true,
-      formSchema: true,
-      department: {
-        select: {
-          id: true,
-          name: true,
+    // Usar o knowledge base que tem keywords geradas em runtime
+    services = await serviceKnowledgeBase.searchServices(query, limit);
+  } else if (category) {
+    // Buscar por categoria no banco diretamente
+    const results = await prisma.serviceSimplified.findMany({
+      where: {
+        isActive: true,
+        category: category,
+      },
+      take: limit,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: true,
+        estimatedDays: true,
+        formSchema: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
-    },
-    orderBy: { name: 'asc' },
-  });
+      orderBy: { name: 'asc' },
+    });
+
+    services = results.map((s) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      department: s.department,
+      category: s.category,
+      estimatedDays: s.estimatedDays,
+      formSchema: s.formSchema,
+    }));
+  } else {
+    // Retornar serviços populares
+    services = await serviceKnowledgeBase.getPopularServices(limit);
+  }
 
   console.log(`[ActionHandlers.searchServices] Encontrados ${services.length} serviços`);
 
@@ -58,11 +68,11 @@ export const searchServices: ActionHandler = async (params, context) => {
     services: services.map((s) => ({
       id: s.id,
       label: s.name,
-      description: s.description,
+      description: s.description || '',
       metadata: {
-        category: s.category,
+        category: (s as any).category || null,
         estimatedDays: s.estimatedDays,
-        formSchema: s.formSchema,
+        formSchema: (s as any).formSchema || null,
         department: s.department?.name,
       },
     })),
