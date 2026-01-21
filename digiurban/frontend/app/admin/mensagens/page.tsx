@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import {
   MessageCircle,
   Send,
@@ -498,8 +497,7 @@ export default function AdminMessagesPage() {
   });
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -853,6 +851,5 @@ export default function AdminMessagesPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }
