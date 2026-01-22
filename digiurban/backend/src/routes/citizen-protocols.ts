@@ -1545,12 +1545,12 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
       });
     }
 
-    // Redirecionar para o endpoint de download de documentos normais
-    // pois documentos gerados também são armazenados na mesma tabela
-    const document = await prisma.protocolDocument.findFirst({
+    // ✅ CORREÇÃO: Buscar na tabela GeneratedDocument
+    const document = await prisma.generatedDocument.findFirst({
       where: {
         id: documentId,
-        protocolId
+        protocolId,
+        isActive: true
       }
     });
 
@@ -1561,46 +1561,36 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
       });
     }
 
-    if (!document.fileUrl) {
+    // Verificar se arquivo existe
+    const filePath = document.filePath;
+
+    if (!filePath) {
       return res.status(404).json({
         success: false,
-        error: 'Arquivo não disponível'
+        error: 'Caminho do arquivo não disponível'
       });
     }
 
-    // Se fileUrl é uma URL externa
-    if (document.fileUrl.startsWith('http')) {
-      return res.redirect(document.fileUrl);
-    }
-
-    // Arquivo local
-    const { getProtocolFilePath, extractFilename } = await import('../config/upload');
-    const filename = extractFilename(document.fileUrl);
-    const filePath = getProtocolFilePath(protocolId, filename);
-
+    // Verificar se arquivo existe no sistema de arquivos
     if (!fs.existsSync(filePath)) {
+      console.error(`[Download] Arquivo não encontrado: ${filePath}`);
       return res.status(404).json({
         success: false,
         error: 'Arquivo não encontrado no servidor'
       });
     }
 
-    const guessMimeFromExtension = (fileName?: string): string => {
-      if (!fileName) return 'application/pdf';
-      const lower = fileName.toLowerCase();
-      if (lower.endsWith('.pdf')) return 'application/pdf';
-      if (lower.match(/\.(jpg|jpeg)$/)) return 'image/jpeg';
-      if (lower.endsWith('.png')) return 'image/png';
-      return 'application/pdf';
-    };
+    // Usar mimeType do documento gerado
+    const mimeType = document.mimeType || 'application/pdf';
 
-    const mimeType = document.mimeType || guessMimeFromExtension(document.fileName || undefined);
-
+    // Configurar headers para download ou visualização
     const disposition = inline ? 'inline' : 'attachment';
-    res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'}"`);
+    res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName}"`);
     res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Length', document.fileSize.toString());
     res.setHeader('Access-Control-Allow-Origin', '*');
 
+    // Stream do arquivo
     const fileStream = fs.createReadStream(filePath);
     fileStream.pipe(res);
   } catch (error: any) {

@@ -143,22 +143,37 @@ export function CitizenGeneratedDocumentsTab({
                 </div>
               )}
 
-              {/* Metadados Adicionais */}
-              {doc.metadata && Object.keys(doc.metadata).length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-600">Informações Adicionais</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {Object.entries(doc.metadata).map(([key, value]) => (
-                      <div key={key} className="flex items-center gap-2 text-sm">
-                        <span className="text-gray-600 capitalize">
-                          {key.replace(/_/g, ' ')}:
-                        </span>
-                        <span className="text-gray-900 font-medium">{String(value)}</span>
-                      </div>
-                    ))}
+              {/* Metadados Adicionais - Filtrados */}
+              {doc.metadata && Object.keys(doc.metadata).length > 0 && (() => {
+                // Filtrar apenas campos relevantes e de valor simples
+                const relevantFields = ['template', 'templateVersion', 'protocolo'];
+                const filteredMetadata = Object.entries(doc.metadata)
+                  .filter(([key, value]) => {
+                    // Incluir apenas campos relevantes
+                    if (!relevantFields.includes(key)) return false;
+                    // Excluir valores complexos (arrays, objetos)
+                    if (typeof value === 'object') return false;
+                    return true;
+                  });
+
+                if (filteredMetadata.length === 0) return null;
+
+                return (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-600">Informações Adicionais</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {filteredMetadata.map(([key, value]) => (
+                        <div key={key} className="flex items-center gap-2 text-sm">
+                          <span className="text-gray-600 capitalize">
+                            {key.replace(/_/g, ' ')}:
+                          </span>
+                          <span className="text-gray-900 font-medium">{String(value)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Ações */}
               <div className="flex flex-wrap gap-2 pt-4 border-t">
