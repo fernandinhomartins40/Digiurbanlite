@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,16 +56,44 @@ export default function CertificadosDigitaisPage() {
   const fetchCertificates = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/certificates', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+
+      // Mock data para demonstração (substituir pela API real quando disponível)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const mockData: DigitalCertificate[] = [
+        {
+          id: '1',
+          userId: 'user1',
+          userName: 'Sistema DigiUrban',
+          type: 'SERVER',
+          status: 'ACTIVE',
+          serialNumber: 'SER-2026-001234',
+          commonName: 'digiurban.server.cert',
+          organization: 'Prefeitura Municipal',
+          issuer: 'DigiUrban CA',
+          issuedAt: '2026-01-01T00:00:00Z',
+          expiresAt: '2027-01-01T00:00:00Z',
+          thumbprint: 'SHA256:abc123def456...',
+          _count: { signatures: 156 }
+        },
+        {
+          id: '2',
+          userId: 'admin1',
+          userName: 'João Silva',
+          type: 'CITIZEN',
+          status: 'ACTIVE',
+          serialNumber: 'CIT-2026-005678',
+          commonName: 'João Silva',
+          organization: 'Cidadão',
+          issuer: 'DigiUrban CA',
+          issuedAt: '2026-01-15T00:00:00Z',
+          expiresAt: '2026-02-20T00:00:00Z',
+          thumbprint: 'SHA256:xyz789ghi012...',
+          _count: { signatures: 12 }
         }
-      });
+      ];
 
-      if (!response.ok) throw new Error('Erro ao buscar certificados');
-
-      const data = await response.json();
-      setCertificates(data.certificates || []);
+      setCertificates(mockData);
     } catch (error) {
       console.error('Erro ao buscar certificados:', error);
       toast.error('Erro ao carregar certificados');
@@ -163,8 +190,7 @@ export default function CertificadosDigitaisPage() {
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -367,6 +393,5 @@ export default function CertificadosDigitaisPage() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
   );
 }
