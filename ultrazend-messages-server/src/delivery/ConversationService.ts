@@ -92,6 +92,29 @@ export class ConversationService {
     }
   }
 
+  async getConversationById(conversationId: string) {
+    try {
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        include: {
+          messages: {
+            orderBy: { sentAt: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      if (!conversation) {
+        throw new Error('Conversation not found');
+      }
+
+      return conversation;
+    } catch (error) {
+      logger.error('Error getting conversation by id', { error, conversationId });
+      throw error;
+    }
+  }
+
   async getConversationsByUser(userId: string, userType: ParticipantType) {
     try {
       const conversations = await prisma.conversation.findMany({

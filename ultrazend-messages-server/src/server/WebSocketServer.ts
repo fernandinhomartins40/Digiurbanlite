@@ -14,7 +14,7 @@ export interface AuthenticatedSocket extends Socket {
 }
 
 export class WebSocketServer {
-  private io: SocketIOServer;
+  public io: SocketIOServer;
   private pubClient!: RedisClientType;
   private subClient!: RedisClientType;
 
@@ -193,9 +193,12 @@ export class WebSocketServer {
 
   private async joinUserRooms(socket: AuthenticatedSocket) {
     try {
-      // Sala pessoal do usuário
-      const userRoom = `user:${socket.userId}`;
+      // Sala pessoal do usuário (específica por tipo)
+      const userRoom = `user:${socket.userId}:${socket.userType}`;
       socket.join(userRoom);
+
+      // Também entrar na sala genérica (backward compatibility)
+      socket.join(`user:${socket.userId}`);
 
       // Buscar conversas do usuário
       const conversations = await prisma.conversation.findMany({
@@ -312,7 +315,16 @@ export class WebSocketServer {
         ? conversation.participant2Id
         : conversation.participant1Id;
 
-      // Emitir na sala pessoal do destinatário
+      const recipientType = conversation.participant1Id === socket.userId
+        ? conversation.participant2Type
+        : conversation.participant1Type;
+
+      // Emitir na sala pessoal do destinatário (específica e genérica)
+      this.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', {
+        conversationId,
+        message,
+      });
+
       this.io.to(`user:${recipientId}`).emit('message:new', {
         conversationId,
         message,
@@ -449,7 +461,10 @@ export class WebSocketServer {
   }
 
   // Métodos públicos para enviar mensagens externamente
-  public async sendMessageToUser(userId: string, _userType: ParticipantType, event: string, data: any) {
+  public async sendMessageToUser(userId: string, userType: ParticipantType, event: string, data: any) {
+    // Emitir para sala específica (com userType)
+    this.io.to(`user:${userId}:${userType}`).emit(event, data);
+    // Também emitir para sala genérica (backward compatibility)
     this.io.to(`user:${userId}`).emit(event, data);
   }
 

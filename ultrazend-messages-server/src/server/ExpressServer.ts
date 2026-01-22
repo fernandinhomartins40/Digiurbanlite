@@ -20,6 +20,7 @@ export interface AuthRequest extends Request {
 export class ExpressServer {
   private app: Application;
   private flowEngineService: FlowEngineService;
+  private wsServer: any;
 
   constructor() {
     this.app = express();
@@ -30,6 +31,7 @@ export class ExpressServer {
   }
 
   setWebSocketServer(wsServer: any) {
+    this.wsServer = wsServer;
     this.flowEngineService.setWebSocketServer(wsServer);
   }
 
@@ -291,6 +293,96 @@ export class ExpressServer {
         res.json(message);
       } catch (error) {
         logger.error('Error in POST /messages/send', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // NOVO: Enviar mensagem com criação automática de conversa
+    router.post('/send-auto', async (req: AuthRequest, res: Response) => {
+      try {
+        const { recipientId, recipientType, content, contentType = 'TEXT', attachments } = req.body;
+
+        if (!recipientId || !recipientType || !content) {
+          res.status(400).json({ error: 'recipientId, recipientType and content are required' });
+          return;
+        }
+
+        // 1. Buscar ou criar conversa automaticamente
+        const conversation = await conversationService.findOrCreateConversation({
+          participant1Id: req.user!.userId,
+          participant1Type: req.user!.userType,
+          participant2Id: recipientId,
+          participant2Type: recipientType,
+        });
+
+        logger.info('Conversation found or created', {
+          conversationId: conversation.id,
+          senderId: req.user!.userId,
+          recipientId,
+        });
+
+        // 2. Criar mensagem
+        const message = await prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            senderId: req.user!.userId,
+            senderType: req.user!.userType,
+            content,
+            contentType,
+            attachments: attachments || [],
+            status: 'SENT',
+            sentAt: new Date(),
+          },
+        });
+
+        // 3. Atualizar conversa
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: {
+            lastMessageAt: new Date(),
+            lastMessagePreview: content.substring(0, 100),
+            totalMessages: { increment: 1 },
+          },
+        });
+
+        // 4. Emitir via WebSocket GARANTINDO entrega
+        if (this.wsServer) {
+          const messagePayload = {
+            conversationId: conversation.id,
+            message,
+          };
+
+          // 4a. Emitir para sala da conversa
+          this.wsServer.io.to(`conversation:${conversation.id}`).emit('message:new', messagePayload);
+
+          // 4b. Emitir para sala pessoal do remetente
+          this.wsServer.io.to(`user:${req.user!.userId}:${req.user!.userType}`).emit('message:new', messagePayload);
+
+          // 4c. Emitir para sala pessoal do destinatário
+          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', messagePayload);
+
+          // 4d. Notificar nova conversa para o destinatário (se necessário)
+          // Buscar conversa completa com informações do remetente
+          const conversationWithDetails = await conversationService.getConversationById(conversation.id);
+
+          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('conversation:new', {
+            conversation: conversationWithDetails,
+          });
+
+          logger.info('WebSocket events emitted', {
+            conversationId: conversation.id,
+            messageId: message.id,
+            recipientId,
+          });
+        }
+
+        res.json({
+          success: true,
+          conversation,
+          message,
+        });
+      } catch (error) {
+        logger.error('Error in POST /messages/send-auto', { error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });

@@ -18,12 +18,8 @@ import {
   Mic,
   Plus,
   X,
-  Hash,
-  Users,
-  User,
-  Bot,
   Menu,
-  LayoutDashboard,
+  User,
   FileText,
   Folder,
   FileCheck,
@@ -31,72 +27,34 @@ import {
   Settings,
   Sparkles
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { BottomNavigation } from '@/components/citizen/mobile/BottomNavigation';
 import { NewConversationDialog } from '@/src/components/Messages/NewConversationDialog';
 
-interface Message {
-  id: string;
-  content: string;
-  senderId: string;
-  senderType: 'CITIZEN' | 'SERVER' | 'BOT' | 'SYSTEM';
-  createdAt: string;
-  status: 'SENT' | 'DELIVERED' | 'READ';
-  messageType?: 'text' | 'card' | 'form' | 'quick_reply' | 'menu';
-  metadata?: any;
-}
+// Hook unificado
+import { useConversations, Message, Conversation } from '@/src/hooks/useConversations';
 
-interface Conversation {
-  id: string;
-  type: 'BOT' | 'DIRECT' | 'GROUP' | 'OFFICIAL';
-  title: string;
-  subtitle?: string;
-  lastMessage?: {
-    content: string;
-    createdAt: string;
-    senderId: string;
-  };
-  unreadCount: number;
-  participants?: any[];
-  avatar?: string;
-  isPinned?: boolean;
-  isBot?: boolean;
-}
+// Helpers
+import {
+  formatTime,
+  formatRelativeTime,
+  getInitials,
+  filterConversations,
+} from '@/src/utils/conversationHelpers';
 
 export default function CitizenDashboard() {
-  const { citizen, isLoading: authLoading } = useCitizenAuth();
-  const { logout } = useCitizenAuth();
+  const { citizen, isLoading: authLoading, logout } = useCitizenAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  // Conversa do Bot (sempre fixa no topo) - DEFINIR ANTES DOS ESTADOS
-  const BOT_CONVERSATION: Conversation = {
-    id: 'bot-digiurban',
-    type: 'BOT',
-    title: 'DigiBot',
-    subtitle: 'Assistente Virtual',
-    lastMessage: {
-      content: 'Olá! Como posso ajudar você hoje?',
-      createdAt: new Date().toISOString(),
-      senderId: 'bot'
-    },
-    unreadCount: 0,
-    avatar: '/bot-avatar.png',
-    isPinned: true,
-    isBot: true
-  };
-
-  // Estados - Inicializar conversas COM O BOT
-  const [conversations, setConversations] = useState<Conversation[]>([BOT_CONVERSATION]);
+  // Estados
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -105,11 +63,31 @@ export default function CitizenDashboard() {
   const [isMobileView, setIsMobileView] = useState(false);
   const [showConversationsList, setShowConversationsList] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
-  const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
 
-  const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Hook unificado de conversas
+  const {
+    conversations,
+    setConversations,
+    socket,
+    isConnected,
+    loading,
+    loadConversations,
+    sendMessage,
+    findOrCreateConversation,
+  } = useConversations({
+    userId: citizen?.id || '',
+    userType: 'CITIZEN',
+    onNewMessage: (message, conversationId) => {
+      // Se é mensagem para conversa selecionada, adicionar à lista
+      if (selectedConversation?.id === conversationId) {
+        setMessages(prev => [...prev, message]);
+        scrollToBottom();
+      }
+    },
+  });
 
   // Itens do menu lateral
   const menuItems = [
@@ -131,7 +109,12 @@ export default function CitizenDashboard() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Não auto-selecionar mais - usuário escolhe da lista
+  // Redirect se não autenticado
+  useEffect(() => {
+    if (!authLoading && !citizen) {
+      router.push('/cidadao/login');
+    }
+  }, [citizen, authLoading, router]);
 
   // Carregar mensagens quando uma conversa é selecionada
   useEffect(() => {
@@ -140,102 +123,14 @@ export default function CitizenDashboard() {
     }
   }, [selectedConversation?.id]);
 
-  // Redirect se não autenticado
+  // Auto-scroll quando novas mensagens chegam
   useEffect(() => {
-    if (!authLoading && !citizen) {
-      router.push('/cidadao/login');
-    }
-  }, [citizen, authLoading, router]);
+    scrollToBottom();
+  }, [messages]);
 
-  // Conectar WebSocket - UNIFICADO com admin (usar ultrazend-messages)
-  useEffect(() => {
-    if (!citizen) return;
-
-    const wsUrl = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001';
-
-    socketRef.current = io(wsUrl, {
-      withCredentials: true, // Envia cookies (redundância)
-      auth: {
-        // Também envia via auth object (redundância segura)
-        userId: citizen.id,
-        userType: 'CITIZEN',
-      },
-      transports: ['websocket', 'polling'],
-    });
-
-    socketRef.current.on('connect', () => {
-      console.log('✅ Conectado ao servidor de mensagens');
-    });
-
-    socketRef.current.on('message:new', (data: any) => {
-      console.log('[Cidadão] Nova mensagem recebida:', data);
-
-      // Suportar tanto formato antigo (message direto) quanto novo (data.message)
-      const message = data.message || data;
-      const conversationId = data.conversationId || message.conversationId;
-
-      // CRÍTICO: Usar setState com função para ter acesso ao estado mais recente
-      setConversations(prev => {
-        const conversationExists = prev.some(conv => conv.id === conversationId);
-
-        if (!conversationExists) {
-          // NOVA CONVERSA: Recarregar lista (estilo WhatsApp)
-          console.log('[Cidadão] Nova conversa detectada, recarregando lista...');
-
-          // Fazer socket entrar na sala da conversa IMEDIATAMENTE
-          socketRef.current?.emit('conversation:join', { conversationId });
-
-          // Trigger reload (mas retornar lista atual para evitar perda de estado)
-          fetchConversations();
-        }
-
-        return prev; // Retornar estado atual
-      });
-
-      // Se a conversa selecionada é a que recebeu mensagem, adicionar
-      if (selectedConversation && message.senderId !== citizen.id) {
-        setMessages(prev => [...prev, message]);
-        scrollToBottom();
-      }
-    });
-
-    socketRef.current.on('bot:response', (message: Message) => {
-      setMessages(prev => [...prev, message]);
-      scrollToBottom();
-    });
-
-    socketRef.current.on('disconnect', () => {
-      console.log('❌ Desconectado do servidor de mensagens');
-    });
-
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, [citizen, selectedConversation]);
-
-  // Carregar conversas - UNIFICADO com admin (usar ultrazend-messages)
-  const fetchConversations = async () => {
-    if (!citizen) return;
-
-    try {
-      const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
-      const response = await fetch(`${messagesApiUrl}/conversations`, {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Adicionar bot no topo + conversas reais do ultrazend-messages
-        setConversations([BOT_CONVERSATION, ...(Array.isArray(data) ? data : [])]);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar conversas:', error);
-      // Mesmo com erro, garantir que o bot apareça
-      setConversations([BOT_CONVERSATION]);
-    }
-  };
-
-  // Iniciar fluxo do bot
+  /**
+   * Iniciar fluxo do bot
+   */
   const startBotFlow = async () => {
     try {
       const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
@@ -265,9 +160,12 @@ export default function CitizenDashboard() {
             content: botResponse.message,
             senderId: 'bot',
             senderType: 'BOT',
-            createdAt: new Date().toISOString(),
+            contentType: 'TEXT',
+            sentAt: new Date().toISOString(),
             status: 'READ',
-            messageType: options.length > 0 ? 'menu' : 'text',
+            isEdited: false,
+            isDeleted: false,
+            conversationId: selectedConversation?.id || '',
             metadata: {
               options: options,
               quickReplies: options.map((opt: any) => opt.label),
@@ -285,26 +183,32 @@ export default function CitizenDashboard() {
           content: 'Olá! Sou o DigiBot, seu assistente virtual! 🤖\n\nEstou tendo dificuldades para conectar. Por favor, tente novamente em instantes.',
           senderId: 'bot',
           senderType: 'BOT',
-          createdAt: new Date().toISOString(),
+          contentType: 'TEXT',
+          sentAt: new Date().toISOString(),
           status: 'READ',
-          messageType: 'text'
+          isEdited: false,
+          isDeleted: false,
+          conversationId: selectedConversation?.id || '',
         }
       ]);
     }
   };
 
-  // Carregar mensagens
+  /**
+   * Carregar mensagens de uma conversa
+   */
   const loadMessages = async (conversationId: string) => {
     setIsLoadingMessages(true);
 
+    const conv = conversations.find(c => c.id === conversationId);
+
     // Se for o bot, carregar histórico do bot via SISTEMA DE FLUXOS
-    if (conversationId === 'bot-digiurban') {
+    if (conv?.isBotConversation) {
       try {
         const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
         console.log('🔍 [loadMessages] Buscando execução ativa...');
 
-        // Tenta buscar execução ativa
         const response = await fetch(
           `${messagesApiUrl}/bot-flow/active-execution`,
           { credentials: 'include' }
@@ -316,7 +220,6 @@ export default function CitizenDashboard() {
           const data = await response.json();
           console.log('📦 [loadMessages] Dados recebidos:', data);
 
-          // Se há execução ativa, mostrar mensagem do fluxo
           if (data.execution && data.execution.currentState) {
             const state = data.execution.currentState;
             console.log('✅ [loadMessages] Execução ativa encontrada:', state);
@@ -330,9 +233,12 @@ export default function CitizenDashboard() {
                 content: state.message || 'Olá! Como posso ajudar você?',
                 senderId: 'bot',
                 senderType: 'BOT',
-                createdAt: data.execution.updatedAt,
+                contentType: 'TEXT',
+                sentAt: data.execution.updatedAt,
                 status: 'READ',
-                messageType: options.length > 0 ? 'menu' : 'text',
+                isEdited: false,
+                isDeleted: false,
+                conversationId,
                 metadata: {
                   options: options,
                   quickReplies: options.map((opt: any) => opt.label),
@@ -341,12 +247,10 @@ export default function CitizenDashboard() {
               }
             ]);
           } else {
-            // Iniciar novo fluxo
             console.log('ℹ️ [loadMessages] Nenhuma execução ativa, iniciando novo fluxo...');
             await startBotFlow();
           }
         } else {
-          // Iniciar novo fluxo
           console.log('⚠️ [loadMessages] Erro ao buscar execução, iniciando novo fluxo...');
           await startBotFlow();
         }
@@ -359,11 +263,11 @@ export default function CitizenDashboard() {
       return;
     }
 
-    // Conversa normal - UNIFICADO com admin (usar ultrazend-messages)
+    // Conversa normal - carregar via API
     try {
       const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
       const response = await fetch(
-        `${messagesApiUrl}/conversations/${conversationId}/messages`,
+        `${messagesApiUrl}/conversations/${conversationId}/messages?limit=50`,
         { credentials: 'include' }
       );
 
@@ -379,16 +283,25 @@ export default function CitizenDashboard() {
     }
   };
 
-  // Selecionar conversa
+  /**
+   * Selecionar conversa
+   */
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
 
     if (isMobileView) {
       setShowConversationsList(false);
     }
+
+    // Entrar na sala via socket
+    if (socket) {
+      socket.emit('conversation:join', { conversationId: conversation.id });
+    }
   };
 
-  // Enviar mensagem
+  /**
+   * Enviar mensagem
+   */
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -399,9 +312,12 @@ export default function CitizenDashboard() {
       content: newMessage.trim(),
       senderId: citizen.id,
       senderType: 'CITIZEN',
-      createdAt: new Date().toISOString(),
+      contentType: 'TEXT',
+      sentAt: new Date().toISOString(),
       status: 'SENT',
-      messageType: 'text'
+      isEdited: false,
+      isDeleted: false,
+      conversationId: selectedConversation.id,
     };
 
     setMessages(prev => [...prev, tempMessage]);
@@ -410,8 +326,10 @@ export default function CitizenDashboard() {
     scrollToBottom();
 
     try {
+      const conv = conversations.find(c => c.id === selectedConversation.id);
+
       // Se for mensagem para o bot - USAR SISTEMA DE FLUXOS
-      if (selectedConversation.id === 'bot-digiurban') {
+      if (conv?.isBotConversation) {
         const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
         const response = await fetch(`${messagesApiUrl}/bot-flow/message`, {
           method: 'POST',
@@ -434,9 +352,12 @@ export default function CitizenDashboard() {
             content: botResponse.message,
             senderId: 'bot',
             senderType: 'BOT',
-            createdAt: new Date().toISOString(),
+            contentType: 'TEXT',
+            sentAt: new Date().toISOString(),
             status: 'READ',
-            messageType: options.length > 0 ? 'menu' : 'text',
+            isEdited: false,
+            isDeleted: false,
+            conversationId: selectedConversation.id,
             metadata: {
               options: options,
               quickReplies: options.map((opt: any) => opt.label),
@@ -446,11 +367,8 @@ export default function CitizenDashboard() {
           scrollToBottom();
         }
       } else {
-        // Mensagem normal via WebSocket
-        socketRef.current?.emit('message:send', {
-          conversationId: selectedConversation.id,
-          content: messageContent,
-        });
+        // Mensagem normal via hook
+        await sendMessage(selectedConversation.id, messageContent);
       }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
@@ -462,54 +380,28 @@ export default function CitizenDashboard() {
     }
   };
 
-  // Scroll para o final
+  /**
+   * Scroll para o final
+   */
   const scrollToBottom = () => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
-  // Voltar para lista (mobile)
+  /**
+   * Voltar para lista (mobile)
+   */
   const handleBackToList = () => {
     setShowConversationsList(true);
     setSelectedConversation(null);
     setMessages([]);
   };
 
-  // Formatar hora
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  // Formatar data da conversa
-  const formatConversationDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return formatTime(dateString);
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Ontem';
-    } else {
-      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-    }
-  };
-
-  // Carregar conversas iniciais
-  useEffect(() => {
-    if (citizen) {
-      fetchConversations();
-      // NÃO auto-selecionar - mostrar lista de conversas
-    }
-  }, [citizen]);
-
-  // Auto-scroll quando novas mensagens chegam
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  /**
+   * Filtrar conversas
+   */
+  const filteredConversations = filterConversations(conversations, searchQuery);
 
   if (authLoading) {
     return (
@@ -537,12 +429,12 @@ export default function CitizenDashboard() {
               <div className="flex items-center gap-3">
                 <Avatar className="w-12 h-12 border-2 border-white">
                   <AvatarFallback className="bg-white text-blue-600 font-bold">
-                    {citizen?.name?.charAt(0).toUpperCase()}
+                    {getInitials(citizen?.name || '')}
                   </AvatarFallback>
                 </Avatar>
                 <div className="text-white">
                   <p className="font-semibold">{citizen?.name?.split(' ')[0]}</p>
-                  <p className="text-xs text-blue-100">Online</p>
+                  <p className="text-xs text-blue-100">{isConnected ? 'Online' : 'Offline'}</p>
                 </div>
               </div>
               <Button
@@ -642,94 +534,90 @@ export default function CitizenDashboard() {
 
         {/* Lista de Conversas */}
         <ScrollArea className="flex-1">
-          {conversations.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : filteredConversations.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="font-medium">Nenhuma conversa</p>
+              <p className="font-medium">Nenhuma conversa encontrada</p>
             </div>
           ) : (
-            conversations
-              .filter(conv =>
-                conv.title.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((conversation) => (
-                <div
-                  key={conversation.id}
-                  onClick={() => handleSelectConversation(conversation)}
-                  className={cn(
-                    "p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors",
-                    selectedConversation?.id === conversation.id && "bg-blue-50",
-                    conversation.isBot && "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-l-blue-600"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative">
-                      <Avatar className={cn(
-                        "w-12 h-12",
-                        conversation.isBot && "ring-2 ring-blue-600"
-                      )}>
-                        {conversation.isBot ? (
-                          <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                            <Sparkles className="w-6 h-6 text-white" />
-                          </div>
-                        ) : (
-                          <>
-                            <AvatarImage src={conversation.avatar} />
-                            <AvatarFallback className="bg-blue-100 text-blue-600">
-                              {conversation.title.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </>
-                        )}
-                      </Avatar>
-                      {conversation.isBot && (
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className={cn(
-                            "font-medium truncate",
-                            conversation.isBot && "text-blue-700 font-bold"
-                          )}>
-                            {conversation.title}
-                          </h3>
-                          {conversation.isBot && (
-                            <Badge className="bg-blue-600 text-white text-xs">
-                              IA
-                            </Badge>
-                          )}
+            filteredConversations.map((conversation) => (
+              <div
+                key={conversation.id}
+                onClick={() => handleSelectConversation(conversation)}
+                className={cn(
+                  "p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors",
+                  selectedConversation?.id === conversation.id && "bg-blue-50",
+                  conversation.isBotConversation && "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-l-blue-600"
+                )}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="relative">
+                    <Avatar className={cn(
+                      "w-12 h-12",
+                      conversation.isBotConversation && "ring-2 ring-blue-600"
+                    )}>
+                      {conversation.isBotConversation ? (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                          <Sparkles className="w-6 h-6 text-white" />
                         </div>
-                        {conversation.lastMessage && (
-                          <span className="text-xs text-gray-500">
-                            {formatConversationDate(conversation.lastMessage.createdAt)}
-                          </span>
-                        )}
-                      </div>
-
-                      {conversation.subtitle && (
-                        <p className="text-xs text-gray-500 mb-1">{conversation.subtitle}</p>
+                      ) : (
+                        <>
+                          <AvatarImage src={conversation.avatar} />
+                          <AvatarFallback className="bg-blue-100 text-blue-600">
+                            {getInitials(conversation.title || '')}
+                          </AvatarFallback>
+                        </>
                       )}
-
-                      {conversation.lastMessage && (
-                        <p className={cn(
-                          "text-sm truncate",
-                          conversation.isBot ? "text-blue-600" : "text-gray-600"
-                        )}>
-                          {conversation.lastMessage.content}
-                        </p>
-                      )}
-                    </div>
-
-                    {conversation.unreadCount > 0 && (
-                      <Badge className="bg-blue-600 text-white">
-                        {conversation.unreadCount}
-                      </Badge>
+                    </Avatar>
+                    {conversation.isBotConversation && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                     )}
                   </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className={cn(
+                          "font-medium truncate",
+                          conversation.isBotConversation && "text-blue-700 font-bold"
+                        )}>
+                          {conversation.title || conversation.citizenName || 'Conversa'}
+                        </h3>
+                        {conversation.isBotConversation && (
+                          <Badge className="bg-blue-600 text-white text-xs">
+                            IA
+                          </Badge>
+                        )}
+                      </div>
+                      {conversation.lastMessageAt && (
+                        <span className="text-xs text-gray-500">
+                          {formatRelativeTime(conversation.lastMessageAt)}
+                        </span>
+                      )}
+                    </div>
+
+                    {conversation.lastMessagePreview && (
+                      <p className={cn(
+                        "text-sm truncate",
+                        conversation.isBotConversation ? "text-blue-600" : "text-gray-600"
+                      )}>
+                        {conversation.lastMessagePreview}
+                      </p>
+                    )}
+                  </div>
+
+                  {(conversation.unreadCount || 0) > 0 && (
+                    <Badge className="bg-blue-600 text-white">
+                      {conversation.unreadCount}
+                    </Badge>
+                  )}
                 </div>
-              ))
+              </div>
+            ))
           )}
         </ScrollArea>
       </div>
@@ -747,7 +635,7 @@ export default function CitizenDashboard() {
             {/* Header do Chat */}
             <div className={cn(
               "p-4 border-b flex items-center justify-between",
-              selectedConversation.isBot && "bg-gradient-to-r from-blue-600 to-purple-600"
+              selectedConversation.isBotConversation && "bg-gradient-to-r from-blue-600 to-purple-600"
             )}>
               <div className="flex items-center gap-3">
                 {isMobileView && (
@@ -755,7 +643,7 @@ export default function CitizenDashboard() {
                     variant="ghost"
                     size="icon"
                     onClick={handleBackToList}
-                    className={selectedConversation.isBot ? "text-white hover:bg-white/20" : ""}
+                    className={selectedConversation.isBotConversation ? "text-white hover:bg-white/20" : ""}
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </Button>
@@ -763,9 +651,9 @@ export default function CitizenDashboard() {
 
                 <Avatar className={cn(
                   "w-10 h-10",
-                  selectedConversation.isBot && "ring-2 ring-white"
+                  selectedConversation.isBotConversation && "ring-2 ring-white"
                 )}>
-                  {selectedConversation.isBot ? (
+                  {selectedConversation.isBotConversation ? (
                     <div className="w-full h-full bg-white flex items-center justify-center">
                       <Sparkles className="w-5 h-5 text-blue-600" />
                     </div>
@@ -773,7 +661,7 @@ export default function CitizenDashboard() {
                     <>
                       <AvatarImage src={selectedConversation.avatar} />
                       <AvatarFallback className="bg-blue-100 text-blue-600">
-                        {selectedConversation.title.charAt(0).toUpperCase()}
+                        {getInitials(selectedConversation.title || '')}
                       </AvatarFallback>
                     </>
                   )}
@@ -782,34 +670,34 @@ export default function CitizenDashboard() {
                 <div>
                   <h3 className={cn(
                     "font-medium flex items-center gap-2",
-                    selectedConversation.isBot && "text-white"
+                    selectedConversation.isBotConversation && "text-white"
                   )}>
-                    {selectedConversation.title}
-                    {selectedConversation.isBot && (
+                    {selectedConversation.title || selectedConversation.citizenName}
+                    {selectedConversation.isBotConversation && (
                       <Badge className="bg-white text-blue-600 text-xs">IA</Badge>
                     )}
                   </h3>
                   <p className={cn(
                     "text-xs",
-                    selectedConversation.isBot ? "text-blue-100" : "text-gray-500"
+                    selectedConversation.isBotConversation ? "text-blue-100" : "text-gray-500"
                   )}>
-                    {selectedConversation.isBot ? 'Sempre disponível' : 'Online'}
+                    {selectedConversation.isBotConversation ? 'Sempre disponível' : (isConnected ? 'Online' : 'Offline')}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {!selectedConversation.isBot && (
+                {!selectedConversation.isBotConversation && (
                   <>
-                    <Button variant="ghost" size="icon" className={selectedConversation.isBot ? "text-white hover:bg-white/20" : ""}>
+                    <Button variant="ghost" size="icon">
                       <Phone className="w-5 h-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className={selectedConversation.isBot ? "text-white hover:bg-white/20" : ""}>
+                    <Button variant="ghost" size="icon">
                       <Video className="w-5 h-5" />
                     </Button>
                   </>
                 )}
-                <Button variant="ghost" size="icon" className={selectedConversation.isBot ? "text-white hover:bg-white/20" : ""}>
+                <Button variant="ghost" size="icon" className={selectedConversation.isBotConversation ? "text-white hover:bg-white/20" : ""}>
                   <MoreVertical className="w-5 h-5" />
                 </Button>
               </div>
@@ -827,15 +715,15 @@ export default function CitizenDashboard() {
                     const isOwnMessage = message.senderId === citizen?.id;
                     const isBot = message.senderType === 'BOT';
                     const showDate = index === 0 ||
-                      new Date(messages[index - 1].createdAt).toDateString() !==
-                      new Date(message.createdAt).toDateString();
+                      new Date(messages[index - 1].sentAt).toDateString() !==
+                      new Date(message.sentAt).toDateString();
 
                     return (
                       <div key={message.id}>
                         {showDate && (
                           <div className="flex justify-center my-4">
                             <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">
-                              {new Date(message.createdAt).toLocaleDateString('pt-BR', {
+                              {new Date(message.sentAt).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
                                 month: 'long',
                                 year: 'numeric'
@@ -864,9 +752,9 @@ export default function CitizenDashboard() {
                             <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
 
                             {/* Quick Replies - Botões clicáveis */}
-                            {message.metadata?.options && message.metadata.options.length > 0 && (
+                            {(message as any).metadata?.options && (message as any).metadata.options.length > 0 && (
                               <div className="mt-3 flex flex-col gap-2">
-                                {message.metadata.options.map((option: any) => (
+                                {(message as any).metadata.options.map((option: any) => (
                                   <Button
                                     key={option.id}
                                     variant="outline"
@@ -874,19 +762,20 @@ export default function CitizenDashboard() {
                                     onClick={async () => {
                                       console.log('🔘 [page.tsx] Opção selecionada:', option);
 
-                                      // Adiciona mensagem do usuário
                                       const userMsg: Message = {
                                         id: `temp-${Date.now()}`,
                                         content: option.label,
                                         senderId: citizen?.id || '',
                                         senderType: 'CITIZEN',
-                                        createdAt: new Date().toISOString(),
+                                        contentType: 'TEXT',
+                                        sentAt: new Date().toISOString(),
                                         status: 'SENT',
-                                        messageType: 'text'
+                                        isEdited: false,
+                                        isDeleted: false,
+                                        conversationId: selectedConversation.id,
                                       };
                                       setMessages(prev => [...prev, userMsg]);
 
-                                      // Envia ID da opção para o backend
                                       try {
                                         const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
                                         const response = await fetch(`${messagesApiUrl}/bot-flow/message`, {
@@ -906,15 +795,18 @@ export default function CitizenDashboard() {
                                             content: botResponse.message,
                                             senderId: 'bot',
                                             senderType: 'BOT',
-                                            createdAt: new Date().toISOString(),
+                                            contentType: 'TEXT',
+                                            sentAt: new Date().toISOString(),
                                             status: 'READ',
-                                            messageType: options.length > 0 ? 'menu' : 'text',
+                                            isEdited: false,
+                                            isDeleted: false,
+                                            conversationId: selectedConversation.id,
                                             metadata: {
                                               options: options,
                                               quickReplies: options.map((opt: any) => opt.label),
                                               needsInput: botResponse.metadata?.waitingForInput || false
                                             }
-                                          }]);
+                                          } as any]);
                                           scrollToBottom();
                                         }
                                       } catch (error) {
@@ -940,7 +832,7 @@ export default function CitizenDashboard() {
                               isOwnMessage ? 'text-blue-100' : 'text-gray-500'
                             }`}>
                               <span className="text-xs">
-                                {formatTime(message.createdAt)}
+                                {formatTime(message.sentAt)}
                               </span>
                               {isOwnMessage && (
                                 message.status === 'READ' ? (
@@ -964,20 +856,18 @@ export default function CitizenDashboard() {
 
             {/* Input de Mensagem */}
             <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
-              {/* Verificar se última mensagem tem menu ativo */}
               {(() => {
                 const lastMessage = messages[messages.length - 1];
                 const hasActiveMenu = lastMessage &&
                                      lastMessage.senderType === 'BOT' &&
-                                     lastMessage.metadata?.options &&
-                                     lastMessage.metadata.options.length > 0;
+                                     (lastMessage as any).metadata?.options &&
+                                     (lastMessage as any).metadata.options.length > 0;
 
                 const needsTextInput = lastMessage &&
                                       lastMessage.senderType === 'BOT' &&
-                                      lastMessage.metadata?.needsInput &&
-                                      (!lastMessage.metadata?.options || lastMessage.metadata.options.length === 0);
+                                      (lastMessage as any).metadata?.needsInput &&
+                                      (!(lastMessage as any).metadata?.options || (lastMessage as any).metadata.options.length === 0);
 
-                // Se tem menu ativo, mostrar apenas mensagem indicativa
                 if (hasActiveMenu) {
                   return (
                     <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto py-2">
@@ -988,7 +878,6 @@ export default function CitizenDashboard() {
                   );
                 }
 
-                // Caso contrário, mostrar input normal (habilitado para texto livre)
                 return (
                   <div className="flex items-center gap-2 max-w-4xl mx-auto">
                     <Button type="button" variant="ghost" size="icon" className="text-gray-500">
@@ -1001,19 +890,20 @@ export default function CitizenDashboard() {
                     <Input
                       type="text"
                       placeholder={
-                        selectedConversation.isBot && needsTextInput
+                        selectedConversation.isBotConversation && needsTextInput
                           ? "Digite sua resposta..."
-                          : selectedConversation.isBot
+                          : selectedConversation.isBotConversation
                           ? "Aguarde o DigiBot..."
                           : "Digite uma mensagem..."
                       }
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       className="flex-1"
+                      disabled={!isConnected}
                     />
 
                     {newMessage.trim() ? (
-                      <Button type="submit" size="icon" className="bg-blue-600 hover:bg-blue-700">
+                      <Button type="submit" size="icon" className="bg-blue-600 hover:bg-blue-700" disabled={!isConnected}>
                         <Send className="w-5 h-5" />
                       </Button>
                     ) : (
@@ -1034,21 +924,23 @@ export default function CitizenDashboard() {
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Bem-vindo ao DigiUrban!</h3>
               <p className="text-sm text-gray-600 mb-6">
-                Selecione uma conversa à esquerda ou clique no botão abaixo para conversar com o DigiBot
+                Selecione uma conversa à esquerda ou converse com o DigiBot
               </p>
-              <Button
-                onClick={() => handleSelectConversation(BOT_CONVERSATION)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Conversar com DigiBot
-              </Button>
+              {conversations.find(c => c.isBotConversation) && (
+                <Button
+                  onClick={() => handleSelectConversation(conversations.find(c => c.isBotConversation)!)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Conversar com DigiBot
+                </Button>
+              )}
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom Navigation - Mobile - Mostrar apenas na lista de conversas */}
+      {/* Bottom Navigation - Mobile */}
       {(!isMobileView || showConversationsList || !selectedConversation) && (
         <BottomNavigation />
       )}
@@ -1060,29 +952,26 @@ export default function CitizenDashboard() {
           onClose={() => setShowNewConversation(false)}
           currentUserId={citizen.id}
           currentUserType="CITIZEN"
-          onConversationCreated={(conversation) => {
-            // Adicionar nova conversa à lista (mantendo o bot no topo)
-            setConversations(prev => {
-              const filtered = prev.filter(c => !c.isBot);
-              return [BOT_CONVERSATION, conversation, ...filtered];
-            });
+          onConversationCreated={async (conversation) => {
+            // Buscar ou criar conversa via hook
+            const newConv = await findOrCreateConversation(
+              conversation.id,
+              conversation.type === 'SERVER' ? 'SERVER' : 'CITIZEN'
+            );
 
-            // Selecionar a nova conversa
-            setSelectedConversation(conversation);
+            if (newConv) {
+              setSelectedConversation(newConv);
+              setShowNewConversation(false);
 
-            // Fechar o dialog
-            setShowNewConversation(false);
+              if (isMobileView) {
+                setShowConversationsList(false);
+              }
 
-            // Em mobile, esconder a lista de conversas
-            if (isMobileView) {
-              setShowConversationsList(false);
+              toast({
+                title: 'Conversa iniciada',
+                description: `Conversa com ${newConv.title} iniciada com sucesso!`,
+              });
             }
-
-            // Mostrar toast de sucesso
-            toast({
-              title: 'Conversa iniciada',
-              description: `Conversa com ${conversation.title} iniciada com sucesso!`,
-            });
           }}
         />
       )}
