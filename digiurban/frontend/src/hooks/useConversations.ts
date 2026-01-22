@@ -87,6 +87,26 @@ export function useConversations({
   const reconnectAttemptsRef = useRef(0);
   const MAX_RECONNECT_ATTEMPTS = 5;
 
+  // Refs para callbacks e valores para evitar recriação do socket
+  const onNewMessageRef = useRef(onNewMessage);
+  const onNewConversationRef = useRef(onNewConversation);
+  const userIdRef = useRef(userId);
+  const userTypeRef = useRef(userType);
+
+  // Atualizar refs quando valores mudarem
+  useEffect(() => {
+    onNewMessageRef.current = onNewMessage;
+  }, [onNewMessage]);
+
+  useEffect(() => {
+    onNewConversationRef.current = onNewConversation;
+  }, [onNewConversation]);
+
+  useEffect(() => {
+    userIdRef.current = userId;
+    userTypeRef.current = userType;
+  }, [userId, userType]);
+
   // Estabilizar URLs usando useMemo
   const MESSAGES_API_URL = useMemo(() =>
     apiUrl || process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api',
@@ -108,8 +128,12 @@ export function useConversations({
    */
   const enrichConversation = useCallback(async (conv: Conversation): Promise<Conversation> => {
     try {
+      // Usar refs para evitar dependências
+      const currentUserId = userIdRef.current;
+      const currentUserType = userTypeRef.current;
+
       // Identificar o outro participante (não o usuário atual)
-      const isParticipant1 = conv.participant1Id === userId && conv.participant1Type === userType;
+      const isParticipant1 = conv.participant1Id === currentUserId && conv.participant1Type === currentUserType;
       const otherParticipantId = isParticipant1 ? conv.participant2Id : conv.participant1Id;
       const otherParticipantType = isParticipant1 ? conv.participant2Type : conv.participant1Type;
 
@@ -154,7 +178,7 @@ export function useConversations({
         unreadCount: 0,
       };
     }
-  }, [userId, userType]);
+  }, []); // Sem dependências - usa refs
 
   /**
    * Carregar conversas do backend
@@ -275,7 +299,7 @@ export function useConversations({
                 ...c,
                 lastMessagePreview: data.message.content.substring(0, 100),
                 lastMessageAt: data.message.sentAt,
-                unreadCount: data.message.senderId === userId ? 0 : (c.unreadCount || 0) + 1,
+                unreadCount: data.message.senderId === userIdRef.current ? 0 : (c.unreadCount || 0) + 1,
               }
             : c
         ).sort((a, b) => {
@@ -291,12 +315,12 @@ export function useConversations({
       });
 
       // Callback para componente pai processar mensagem
-      if (onNewMessage) {
-        onNewMessage(data.message, data.conversationId);
+      if (onNewMessageRef.current) {
+        onNewMessageRef.current(data.message, data.conversationId);
       }
 
       // Mostrar notificação se mensagem não é do próprio usuário
-      if (data.message.senderId !== userId) {
+      if (data.message.senderId !== userIdRef.current) {
         toast({
           title: 'Nova mensagem',
           description: data.message.content.substring(0, 100),
@@ -341,8 +365,8 @@ export function useConversations({
       newSocket.emit('conversation:join', { conversationId: data.conversation.id });
 
       // Callback para componente pai
-      if (onNewConversation) {
-        onNewConversation(enrichedConv);
+      if (onNewConversationRef.current) {
+        onNewConversationRef.current(enrichedConv);
       }
 
       toast({
@@ -377,7 +401,7 @@ export function useConversations({
       newSocket.close();
       socketRef.current = null;
     };
-  }, [userId, userType, MESSAGES_WS_URL, enrichConversation, onNewConversation, onNewMessage, toast]);
+  }, [userId, userType, MESSAGES_WS_URL]);
 
   /**
    * Carregar conversas quando conectar
