@@ -108,7 +108,8 @@
       "Bash(do mkdir -p \"$dir/sugestoes\")",
       "Bash(test:*)",
       "Bash(npm run db:generate:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(pm2 list:*)"
     ],
     "deny": [],
     "ask": []

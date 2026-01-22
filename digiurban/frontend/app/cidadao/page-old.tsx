@@ -425,7 +425,7 @@ export default function CitizenDashboard() {
           />
           <div className="fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl flex flex-col">
             {/* Header Sidebar */}
-            <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-600 to-purple-600">
+            <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700">
               <div className="flex items-center gap-3">
                 <Avatar className="w-12 h-12 border-2 border-white">
                   <AvatarFallback className="bg-white text-blue-600 font-bold">
@@ -492,7 +492,7 @@ export default function CitizenDashboard() {
         } bg-white flex flex-col`}
       >
         {/* Header da Lista */}
-        <div className="p-4 border-b bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="p-4 border-b bg-gradient-to-r from-blue-600 to-blue-700">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <Button
