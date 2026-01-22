@@ -20,6 +20,9 @@ export interface Conversation {
   metadata?: {
     botStatus?: 'ACTIVE' | 'PAUSED' | 'HUMAN_TAKEOVER';
     assignedTo?: string;
+    citizenName?: string;
+    serverName?: string;
+    avatar?: string;
   };
   // Campos enriquecidos pelo frontend
   title?: string;

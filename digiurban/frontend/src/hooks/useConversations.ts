@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -22,6 +22,9 @@ export interface Conversation {
   metadata?: {
     botStatus?: 'ACTIVE' | 'PAUSED' | 'HUMAN_TAKEOVER';
     assignedTo?: string;
+    citizenName?: string;
+    serverName?: string;
+    avatar?: string;
   };
   // Campos enriquecidos pelo frontend
   title?: string;
@@ -81,10 +84,24 @@ export function useConversations({
   const [error, setError] = useState<string | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
 
-  const MESSAGES_API_URL = apiUrl || process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
-  const MESSAGES_WS_URL = wsUrl || process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001';
-  const DIGIURBAN_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  // Estabilizar URLs usando useMemo
+  const MESSAGES_API_URL = useMemo(() =>
+    apiUrl || process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api',
+    [apiUrl]
+  );
+
+  const MESSAGES_WS_URL = useMemo(() =>
+    wsUrl || process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001',
+    [wsUrl]
+  );
+
+  const DIGIURBAN_API_URL = useMemo(() =>
+    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+    []
+  );
 
   /**
    * Enriquecer conversa com informações do participante
@@ -108,53 +125,36 @@ export function useConversations({
           conversationStatus: conv.metadata?.botStatus === 'PAUSED' || conv.metadata?.botStatus === 'HUMAN_TAKEOVER'
             ? 'human'
             : 'bot',
-          unreadCount: isParticipant1 ? conv.unreadCount1 : conv.unreadCount2,
+          unreadCount: isParticipant1 ? (conv.unreadCount1 || 0) : (conv.unreadCount2 || 0),
         };
       }
 
-      // Buscar nome real do participante
-      let participantName = 'Usuário';
-      let participantAvatar: string | undefined;
-
-      try {
-        if (otherParticipantType === 'CITIZEN') {
-          const citizenRes = await fetch(`${DIGIURBAN_API_URL}/citizens/${otherParticipantId}`, {
-            credentials: 'include',
-          });
-          if (citizenRes.ok) {
-            const citizen = await citizenRes.json();
-            participantName = citizen.name || 'Cidadão';
-            participantAvatar = citizen.avatar;
-          }
-        } else if (otherParticipantType === 'SERVER') {
-          const adminRes = await fetch(`${DIGIURBAN_API_URL}/admin/users/${otherParticipantId}`, {
-            credentials: 'include',
-          });
-          if (adminRes.ok) {
-            const admin = await adminRes.json();
-            participantName = admin.name || 'Servidor';
-          }
-        }
-      } catch (err) {
-        console.warn('Erro ao buscar nome do participante:', err);
-      }
+      // Para outras conversas, usar ID do participante como nome temporário
+      // O backend deve retornar os nomes já enriquecidos via metadata
+      const participantName = conv.metadata?.citizenName ||
+                             conv.metadata?.serverName ||
+                             `${otherParticipantType === 'CITIZEN' ? 'Cidadão' : 'Servidor'} ${otherParticipantId.substring(0, 8)}`;
 
       return {
         ...conv,
         title: participantName,
         citizenName: participantName,
         serverName: participantName,
-        avatar: participantAvatar,
+        avatar: conv.metadata?.avatar,
         isBot: false,
         isPinned: false,
         conversationStatus: conv.status === 'CLOSED' ? 'closed' : 'human',
-        unreadCount: isParticipant1 ? conv.unreadCount1 : conv.unreadCount2,
+        unreadCount: isParticipant1 ? (conv.unreadCount1 || 0) : (conv.unreadCount2 || 0),
       };
     } catch (error) {
       console.error('Erro ao enriquecer conversa:', error);
-      return conv;
+      return {
+        ...conv,
+        title: 'Conversa',
+        unreadCount: 0,
+      };
     }
-  }, [userId, userType, DIGIURBAN_API_URL]);
+  }, [userId, userType]);
 
   /**
    * Carregar conversas do backend
@@ -203,14 +203,32 @@ export function useConversations({
   useEffect(() => {
     if (!userId) return;
 
+    // Prevenir múltiplas conexões
+    if (socketRef.current?.connected) {
+      console.log('[useConversations] Socket já conectado, reutilizando...');
+      return;
+    }
+
+    // Limpar socket anterior se existir
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners();
+      socketRef.current.close();
+    }
+
     const newSocket = io(MESSAGES_WS_URL, {
       withCredentials: true,
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
     });
 
     socketRef.current = newSocket;
 
     newSocket.on('connect', () => {
+      reconnectAttemptsRef.current = 0;
       setIsConnected(true);
       console.log('[useConversations] Conectado ao servidor de mensagens', {
         userId,
@@ -218,9 +236,23 @@ export function useConversations({
       });
     });
 
-    newSocket.on('disconnect', () => {
+    newSocket.on('disconnect', (reason) => {
       setIsConnected(false);
-      console.log('[useConversations] Desconectado do servidor de mensagens');
+      console.log('[useConversations] Desconectado do servidor de mensagens', { reason });
+    });
+
+    newSocket.on('connect_error', (error) => {
+      reconnectAttemptsRef.current += 1;
+      console.error('[useConversations] Erro ao conectar ao WebSocket', {
+        error: error.message,
+        attempts: reconnectAttemptsRef.current,
+      });
+
+      if (reconnectAttemptsRef.current >= MAX_RECONNECT_ATTEMPTS) {
+        console.error('[useConversations] Máximo de tentativas de reconexão atingido');
+        newSocket.close();
+        setError('Não foi possível conectar ao servidor de mensagens');
+      }
     });
 
     // Event: Nova mensagem recebida
