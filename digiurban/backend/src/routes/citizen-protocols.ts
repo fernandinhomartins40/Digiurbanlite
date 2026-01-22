@@ -1494,12 +1494,10 @@ router.get('/:id/generated-documents', async (req, res) => {
       expiresAt: doc.expiresAt?.toISOString() || null,
       validationCode: doc.validationCode || null,
       fileUrl: doc.fileUrl || doc.filePath,
+      // ✅ CORREÇÃO: Enviar apenas metadados essenciais (sem variablesUsed)
       metadata: {
         template: doc.template.name,
-        templateVersion: doc.templateVersion,
-        generatedBy: doc.generatedBy,
-        protocolo: protocol.number,
-        ...(typeof doc.variablesUsed === 'object' ? doc.variablesUsed : {})
+        protocolo: protocol.number
       }
     }));
 

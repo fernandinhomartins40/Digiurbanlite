@@ -143,37 +143,18 @@ export function CitizenGeneratedDocumentsTab({
                 </div>
               )}
 
-              {/* Metadados Adicionais - Filtrados */}
-              {doc.metadata && Object.keys(doc.metadata).length > 0 && (() => {
-                // Filtrar apenas campos relevantes e de valor simples
-                const relevantFields = ['template', 'templateVersion', 'protocolo'];
-                const filteredMetadata = Object.entries(doc.metadata)
-                  .filter(([key, value]) => {
-                    // Incluir apenas campos relevantes
-                    if (!relevantFields.includes(key)) return false;
-                    // Excluir valores complexos (arrays, objetos)
-                    if (typeof value === 'object') return false;
-                    return true;
-                  });
-
-                if (filteredMetadata.length === 0) return null;
-
-                return (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-600">Informações Adicionais</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {filteredMetadata.map(([key, value]) => (
-                        <div key={key} className="flex items-center gap-2 text-sm">
-                          <span className="text-gray-600 capitalize">
-                            {key.replace(/_/g, ' ')}:
-                          </span>
-                          <span className="text-gray-900 font-medium">{String(value)}</span>
-                        </div>
-                      ))}
+              {/* Template Info */}
+              {doc.metadata?.template && (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-gray-600 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-600">Tipo de Documento</p>
+                      <p className="text-sm font-medium text-gray-900">{doc.metadata.template}</p>
                     </div>
                   </div>
-                );
-              })()}
+                </div>
+              )}
 
               {/* Ações */}
               <div className="flex flex-wrap gap-2 pt-4 border-t">
