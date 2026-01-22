@@ -243,6 +243,7 @@ export interface ExecutionContext {
   citizenId: string;
   municipioId?: string;
   userInput?: string | any; // Input do usuário
+  state: FlowState; // Estado atual da execução
 }
 
 // ============================================

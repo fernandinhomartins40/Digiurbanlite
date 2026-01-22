@@ -4,19 +4,19 @@
  */
 
 import { FlowEngine } from '../bot/flow/FlowEngine';
-import { ConversationService } from './ConversationService';
+// import { ConversationService } from './ConversationService';
 import { actionHandlers } from '../bot/flow/ActionHandlers';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
 
 export class FlowEngineService {
   private flowEngine: FlowEngine;
-  private conversationService: ConversationService;
+  // private conversationService: ConversationService;
   private wsServer: WebSocketServer | null = null;
 
   constructor(wsServer?: WebSocketServer) {
     this.flowEngine = new FlowEngine(actionHandlers);
-    this.conversationService = new ConversationService();
+    // this.conversationService = new ConversationService();
     if (wsServer) {
       this.wsServer = wsServer;
     }
@@ -61,9 +61,9 @@ export class FlowEngineService {
         sentAt: new Date(),
         metadata: {
           messageType: response.messageType,
-          options: response.data?.options || response.options,
+          options: response.data?.options ? JSON.parse(JSON.stringify(response.data.options)) : undefined,
           needsInput: response.metadata?.waitingForInput,
-        },
+        } as any,
       },
     });
 
@@ -80,13 +80,13 @@ export class FlowEngineService {
 
     // 6. Emitir via WebSocket
     if (this.wsServer) {
-      this.wsServer.emitToConversation(conversationId, 'message:new', {
+      this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
         conversationId,
         message,
       });
 
       // Notificar também o cidadão diretamente
-      this.wsServer.emitToUser(citizenId, 'CITIZEN', 'message:new', {
+      this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
         conversationId,
         message,
       });
@@ -135,9 +135,9 @@ export class FlowEngineService {
         sentAt: new Date(),
         metadata: {
           messageType: response.messageType,
-          options: response.data?.options || response.options,
+          options: response.data?.options ? JSON.parse(JSON.stringify(response.data.options)) : undefined,
           needsInput: response.metadata?.waitingForInput,
-        },
+        } as any,
       },
     });
 
@@ -155,7 +155,7 @@ export class FlowEngineService {
 
     // 6. Emitir via WebSocket
     if (this.wsServer) {
-      this.wsServer.emitToConversation(conversationId, 'message:new', {
+      this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
         conversationId,
         message: botMessage,
       });
@@ -198,7 +198,7 @@ export class FlowEngineService {
   async pauseExecution(citizenId: string, conversationId?: string) {
     const execution = await this.getActiveExecution(citizenId);
     if (execution) {
-      await this.flowEngine.pauseExecution(execution.id, conversationId);
+      await this.flowEngine.pauseExecution(citizenId);
 
       // Atualizar conversa
       if (conversationId) {
@@ -216,7 +216,7 @@ export class FlowEngineService {
   async resumeExecution(citizenId: string, conversationId?: string) {
     const execution = await this.getActiveExecution(citizenId);
     if (execution) {
-      await this.flowEngine.resumeExecution(execution.id, conversationId);
+      await this.flowEngine.resumeExecution(citizenId);
 
       // Atualizar conversa
       if (conversationId) {
@@ -231,7 +231,7 @@ export class FlowEngineService {
   /**
    * Handle upload de arquivos
    */
-  async handleUpload(citizenId: string, files: any[]) {
+  async handleUpload(_citizenId: string, files: any[]) {
     // Processar arquivos e retornar informações
     const uploadedFiles = files.map((file: any) => ({
       fileName: file.originalname,

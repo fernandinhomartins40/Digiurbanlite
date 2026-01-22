@@ -4,7 +4,7 @@
  * Suporta: {{variable}}, {{object.property}}, {{array[0]}}
  */
 
-import { FlowState } from '../../../types/flow.types';
+import { FlowState } from '../types';
 
 export class TemplateEngine {
   /**

@@ -3,7 +3,7 @@
  * Handlers que executam ações reais via API do DigiUrban
  */
 
-import { ActionHandler, ExecutionContext } from '../types';
+import { ActionHandler } from '../types';
 import { getDigiUrbanIntegration } from '../DigiUrbanIntegration';
 
 const integration = getDigiUrbanIntegration();
@@ -11,7 +11,7 @@ const integration = getDigiUrbanIntegration();
 /**
  * Busca serviços disponíveis
  */
-export const searchServices: ActionHandler = async (params, context) => {
+export const searchServices: ActionHandler = async (params, _context) => {
   console.log('[ActionHandlers.searchServices] Iniciando busca:', params);
 
   const { query, category, limit = 10 } = params;
@@ -35,7 +35,7 @@ export const searchServices: ActionHandler = async (params, context) => {
 /**
  * Lista todos os serviços
  */
-export const listServices: ActionHandler = async (params, context) => {
+export const listServices: ActionHandler = async (params, _context) => {
   const { limit = 50 } = params;
 
   try {
@@ -57,7 +57,7 @@ export const listServices: ActionHandler = async (params, context) => {
 /**
  * Lista categorias de serviços
  */
-export const listServiceCategories: ActionHandler = async (params, context) => {
+export const listServiceCategories: ActionHandler = async (_params, _context) => {
   try {
     const result = await integration.listServiceCategories();
 
@@ -77,7 +77,7 @@ export const listServiceCategories: ActionHandler = async (params, context) => {
 /**
  * Obtém detalhes de um serviço
  */
-export const getService: ActionHandler = async (params, context) => {
+export const getService: ActionHandler = async (params, _context) => {
   const { serviceId } = params;
 
   if (!serviceId) {
@@ -233,7 +233,7 @@ export const addProtocolComment: ActionHandler = async (params, context) => {
 /**
  * Obtém perfil do cidadão
  */
-export const getCitizenProfile: ActionHandler = async (params, context) => {
+export const getCitizenProfile: ActionHandler = async (_params, context) => {
   try {
     const result = await integration.getCitizen(context.citizenId);
 
@@ -275,7 +275,7 @@ export const updateCitizenProfile: ActionHandler = async (params, context) => {
 /**
  * Obtém composição familiar
  */
-export const getFamilyMembers: ActionHandler = async (params, context) => {
+export const getFamilyMembers: ActionHandler = async (_params, context) => {
   try {
     const result = await integration.getFamilyMembers(context.citizenId);
 
@@ -339,7 +339,7 @@ export const markNotificationsAsRead: ActionHandler = async (params, context) =>
 /**
  * Formata dados do protocolo para revisão
  */
-export const formatProtocolReview: ActionHandler = async (params, context) => {
+export const formatProtocolReview: ActionHandler = async (_params, context) => {
   try {
     const reviewText = integration.formatProtocolReview(context.state);
 

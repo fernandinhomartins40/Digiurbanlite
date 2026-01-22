@@ -3,7 +3,7 @@
  * Validação de entradas do usuário
  */
 
-import { QuestionNodeConfig } from '../../../types/flow.types';
+import { QuestionNodeConfig } from '../types';
 
 interface ValidationResult {
   valid: boolean;

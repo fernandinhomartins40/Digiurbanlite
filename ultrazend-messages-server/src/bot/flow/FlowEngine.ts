@@ -115,6 +115,7 @@ export class FlowEngine {
       currentNode,
       citizenId,
       userInput,
+      state: execution.state as any,
     };
 
     // Executa nodo com input do usuário
@@ -256,6 +257,7 @@ export class FlowEngine {
       flow,
       currentNode,
       citizenId: execution.citizenId,
+      state: execution.state as any,
     };
 
     const result = await this.executeNode(currentNode, context);
