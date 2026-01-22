@@ -198,7 +198,13 @@ export default function ProtocolDetailsPage() {
   };
 
   const handleGoToGenerated = () => {
-    setActiveTab('generated');
+    // ✅ CORREÇÃO: Baixar primeiro documento automaticamente
+    if (generatedDocuments.length > 0) {
+      handleDownloadGeneratedDocument(generatedDocuments[0]);
+    } else {
+      // Se não houver documentos, apenas mudar de aba
+      setActiveTab('generated');
+    }
   };
 
   const handleGoToPendings = () => {

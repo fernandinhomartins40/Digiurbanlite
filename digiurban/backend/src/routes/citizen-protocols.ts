@@ -14,7 +14,7 @@ import { protocolStatusEngine } from '../services/protocol-status.engine';
 import { DocumentStatus } from '@prisma/client';
 import { applyWorkflowToProtocol } from '../services/service-workflow.service';
 import { createProtocolSLA } from '../services/protocol-sla.service';
-import { sanitizeDocumentId, matchDocumentType, mapUploadedFilesToDocuments } from '../utils/document-mapping';
+import { sanitizeDocumentId, mapUploadedFilesToDocuments } from '../utils/document-mapping';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
 import fs from 'fs';
 import path from 'path';
@@ -1467,40 +1467,41 @@ router.get('/:id/generated-documents', async (req, res) => {
       });
     }
 
-    // Buscar documentos gerados - usar tabela GeneratedDocument se existir
-    // Por enquanto, retornar baseado em documentos do tipo GENERATED ou protocolo concluído
-    const generatedDocuments: any[] = [];
-
-    // Se protocolo está concluído, gerar documentos automaticamente
-    if (protocol.status === 'CONCLUIDO') {
-      // Buscar documentos do tipo certificado/certidão
-      const docs = await prisma.protocolDocument.findMany({
-        where: {
-          protocolId,
-          documentType: {
-            in: ['CERTIDAO', 'CERTIFICADO', 'COMPROVANTE', 'DOCUMENTO_GERADO']
+    // ✅ CORREÇÃO: Buscar documentos gerados na tabela GeneratedDocument
+    const docs = await prisma.generatedDocument.findMany({
+      where: {
+        protocolId,
+        isActive: true
+      },
+      include: {
+        template: {
+          select: {
+            id: true,
+            name: true,
+            documentType: true
           }
-        },
-        orderBy: { uploadedAt: 'desc' }
-      });
+        }
+      },
+      orderBy: { generatedAt: 'desc' }
+    });
 
-      for (const doc of docs) {
-        generatedDocuments.push({
-          id: doc.id,
-          type: doc.documentType,
-          name: doc.fileName || `${doc.documentType} - Protocolo ${protocol.number}`,
-          generatedAt: doc.uploadedAt?.toISOString() || protocol.updatedAt.toISOString(),
-          expiresAt: null,
-          validationCode: `VAL-2026-${protocol.number.replace(/[^0-9]/g, '')}`,
-          fileUrl: doc.fileUrl,
-          metadata: {
-            emitente: 'Sistema',
-            validade: 'Indeterminada',
-            protocolo: protocol.number
-          }
-        });
+    // Mapear para formato esperado pelo frontend
+    const generatedDocuments = docs.map(doc => ({
+      id: doc.id,
+      type: doc.template.documentType,
+      name: doc.fileName,
+      generatedAt: doc.generatedAt.toISOString(),
+      expiresAt: doc.expiresAt?.toISOString() || null,
+      validationCode: doc.validationCode || null,
+      fileUrl: doc.fileUrl || doc.filePath,
+      metadata: {
+        template: doc.template.name,
+        templateVersion: doc.templateVersion,
+        generatedBy: doc.generatedBy,
+        protocolo: protocol.number,
+        ...(typeof doc.variablesUsed === 'object' ? doc.variablesUsed : {})
       }
-    }
+    }));
 
     return res.json({
       success: true,
