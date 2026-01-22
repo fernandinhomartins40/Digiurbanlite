@@ -11,6 +11,7 @@ import conversationService from '../delivery/ConversationService';
 import channelService from '../delivery/ChannelService';
 import fileStorage from '../storage/FileStorage';
 import prisma from '../utils/prisma';
+import { FlowEngineService } from '../delivery/FlowEngineService';
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
@@ -18,12 +19,18 @@ export interface AuthRequest extends Request {
 
 export class ExpressServer {
   private app: Application;
+  private flowEngineService: FlowEngineService;
 
   constructor() {
     this.app = express();
+    this.flowEngineService = new FlowEngineService();
     this.setupMiddlewares();
     this.setupRoutes();
     this.setupErrorHandlers();
+  }
+
+  setWebSocketServer(wsServer: any) {
+    this.flowEngineService.setWebSocketServer(wsServer);
   }
 
   private setupMiddlewares() {
@@ -86,6 +93,9 @@ export class ExpressServer {
     this.app.use('/api/reports', this.authMiddleware.bind(this), this.reportRoutes());
     this.app.use('/api/contacts', this.authMiddleware.bind(this), this.contactRoutes());
     this.app.use('/api/users', this.authMiddleware.bind(this), this.userRoutes());
+
+    // Bot Flow routes
+    this.app.use('/api/bot-flow', this.authMiddleware.bind(this), this.botFlowRoutes());
 
     // Admin routes
     this.app.use('/api/admin', this.authMiddleware.bind(this), this.adminRoutes());
@@ -672,6 +682,141 @@ export class ExpressServer {
         logger.error('Error in GET /users/:userId/:userType', { error });
         res.status(500).json({ error: 'Internal server error' });
       }
+    });
+
+    return router;
+  }
+
+  private botFlowRoutes() {
+    const router = express.Router();
+
+    // Configuração do multer para upload de arquivos
+    const upload = multer({
+      dest: 'uploads/bot-temp/',
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+        files: 5,
+      },
+    });
+
+    // POST /api/bot-flow/start - Inicia novo fluxo
+    router.post('/start', async (req: AuthRequest, res: Response) => {
+      try {
+        const { flowName, conversationId } = req.body;
+        const citizenId = req.user!.userId;
+
+        const result = await this.flowEngineService.startFlow(citizenId, flowName, conversationId);
+        res.json(result);
+      } catch (error) {
+        logger.error('Error in POST /bot-flow/start', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // POST /api/bot-flow/message - Processa mensagem do usuário
+    router.post('/message', async (req: AuthRequest, res: Response) => {
+      try {
+        const { message, conversationId } = req.body;
+        const citizenId = req.user!.userId;
+
+        const result = await this.flowEngineService.processMessage(citizenId, message, conversationId);
+        res.json(result);
+      } catch (error) {
+        logger.error('Error in POST /bot-flow/message', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // GET /api/bot-flow/active-execution - Obtém execução ativa
+    router.get('/active-execution', async (req: AuthRequest, res: Response) => {
+      try {
+        const citizenId = req.user!.userId;
+        const execution = await this.flowEngineService.getActiveExecution(citizenId);
+        res.json({ execution });
+      } catch (error) {
+        logger.error('Error in GET /bot-flow/active-execution', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // POST /api/bot-flow/upload - Upload de arquivos
+    router.post('/upload', upload.array('files', 5), async (req: AuthRequest, res: Response) => {
+      try {
+        const citizenId = req.user!.userId;
+        const files = req.files as Express.Multer.File[];
+
+        const result = await this.flowEngineService.handleUpload(citizenId, files);
+        res.json(result);
+      } catch (error) {
+        logger.error('Error in POST /bot-flow/upload', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // POST /api/bot-flow/cancel - Cancela fluxo ativo
+    router.post('/cancel', async (req: AuthRequest, res: Response) => {
+      try {
+        const citizenId = req.user!.userId;
+        await this.flowEngineService.cancelActiveFlow(citizenId);
+        res.json({ success: true });
+      } catch (error) {
+        logger.error('Error in POST /bot-flow/cancel', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // POST /api/bot-flow/reset - Reseta e reinicia o fluxo
+    router.post('/reset', async (req: AuthRequest, res: Response) => {
+      try {
+        const citizenId = req.user!.userId;
+
+        // Cancela fluxo atual
+        await this.flowEngineService.cancelActiveFlow(citizenId);
+
+        // Inicia menu principal
+        const result = await this.flowEngineService.startFlow(citizenId, 'menu_principal');
+        res.json(result);
+      } catch (error) {
+        logger.error('Error in POST /bot-flow/reset', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // POST /api/bot-flow/pause - Pausa bot para atendimento humano
+    router.post('/pause', async (req: AuthRequest, res: Response) => {
+      try {
+        const { conversationId } = req.body;
+        const citizenId = req.user!.userId;
+
+        await this.flowEngineService.pauseExecution(citizenId, conversationId);
+        res.json({ success: true });
+      } catch (error) {
+        logger.error('Error in POST /bot-flow/pause', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // POST /api/bot-flow/resume - Retoma bot após atendimento humano
+    router.post('/resume', async (req: AuthRequest, res: Response) => {
+      try {
+        const { conversationId } = req.body;
+        const citizenId = req.user!.userId;
+
+        await this.flowEngineService.resumeExecution(citizenId, conversationId);
+        res.json({ success: true });
+      } catch (error) {
+        logger.error('Error in POST /bot-flow/resume', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // GET /api/bot-flow/health - Health check do bot
+    router.get('/health', (_req: Request, res: Response) => {
+      res.json({
+        status: 'ok',
+        service: 'bot-flow',
+        timestamp: new Date().toISOString(),
+      });
     });
 
     return router;

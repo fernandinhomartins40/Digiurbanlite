@@ -3,10 +3,8 @@
  * Gerencia o estado de execuções de fluxos
  */
 
-import { PrismaClient } from '@prisma/client';
-import { FlowExecution, FlowState } from '../../../types/flow.types';
-
-const prisma = new PrismaClient();
+import prisma from '../../utils/prisma';
+import { FlowExecution, FlowState } from '../types';
 
 export class FlowStateManager {
   /**

@@ -17,7 +17,7 @@ import {
   LocationNodeConfig,
   EndNodeConfig,
   MenuOption,
-} from '../../../types/flow.types';
+} from '../types';
 import { TemplateEngine } from './TemplateEngine';
 import { InputValidator } from './InputValidator';
 

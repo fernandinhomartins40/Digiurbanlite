@@ -177,7 +177,7 @@ export function useBotEnhanced() {
     files.forEach(file => formData.append('files', file));
     formData.append('conversationId', conversationIdRef.current);
 
-    const response = await fetch('/api/bot-flow/upload', {
+    const response = await fetch(process.env.NEXT_PUBLIC_MESSAGES_API_URL + '/api/bot-flow/upload', {
       method: 'POST',
       body: formData,
       credentials: 'include',
@@ -201,7 +201,7 @@ export function useBotEnhanced() {
    */
   const loadHistory = useCallback(async () => {
     try {
-      const response = await fetch('/api/bot-flow/active-execution', {
+      const response = await fetch(process.env.NEXT_PUBLIC_MESSAGES_API_URL + '/api/bot-flow/active-execution', {
         credentials: 'include',
       });
 

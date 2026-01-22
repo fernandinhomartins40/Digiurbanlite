@@ -48,6 +48,15 @@ model Conversation {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   closedAt           DateTime?
+
+  // Bot Flow Fields
+  isBotConversation    Boolean  @default(false)
+  botFlowType          String?
+  botFlowStep          Int      @default(0)
+  botFlowData          Json?
+  botContext           Json?
+  botLastInteractionAt DateTime?
+
   messageServer      MessageServer      @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
   messages           Message[]
 
@@ -56,6 +65,7 @@ model Conversation {
   @@index([participant2Id, participant2Type, status])
   @@index([protocolId])
   @@index([status, lastMessageAt])
+  @@index([isBotConversation, status])
   @@map("conversations")
 }
 
@@ -375,6 +385,7 @@ model Citizen {
   proactive_notifications                                    proactive_notifications[]
   protocol_citizen_links                                     protocol_citizen_links[]
   protocols_simplified                                       protocols_simplified[]
+  flowExecutions                                             FlowExecution[]
 
   @@map("citizens")
 }
@@ -4101,4 +4112,54 @@ enum VerificationStatus {
   VERIFIED
   GOLD
   REJECTED
+}
+
+
+// ========================================
+// BOT FLOW MODELS
+// ========================================
+
+model FlowDefinition {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  @db.Text
+  version     String   @default("1.0.0")
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false)
+  municipioId String?
+  nodes       Json
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+
+  executions  FlowExecution[]
+
+  @@index([isActive, isDefault])
+  @@index([municipioId])
+  @@map("flow_definitions")
+}
+
+model FlowExecution {
+  id              String   @id @default(cuid())
+  citizenId       String
+  flowId          String
+  conversationId  String?
+  currentNodeId   String
+  state           Json
+  history         Json
+  status          String
+  errorMessage    String?  @db.Text
+  metadata        Json?
+  startedAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+
+  citizen         Citizen         @relation(fields: [citizenId], references: [id])
+  flow            FlowDefinition  @relation(fields: [flowId], references: [id])
+
+  @@index([citizenId, status])
+  @@index([flowId])
+  @@index([conversationId])
+  @@map("flow_executions")
 }

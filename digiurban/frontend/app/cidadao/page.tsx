@@ -238,10 +238,10 @@ export default function CitizenDashboard() {
   // Iniciar fluxo do bot
   const startBotFlow = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
       console.log('🚀 [startBotFlow] Iniciando fluxo menu_principal...');
 
-      const response = await fetch(`${apiUrl}/bot-flow/start`, {
+      const response = await fetch(`${messagesApiUrl}/bot-flow/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -300,13 +300,13 @@ export default function CitizenDashboard() {
     // Se for o bot, carregar histórico do bot via SISTEMA DE FLUXOS
     if (conversationId === 'bot-digiurban') {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
         console.log('🔍 [loadMessages] Buscando execução ativa...');
 
         // Tenta buscar execução ativa
         const response = await fetch(
-          `${apiUrl}/bot-flow/active-execution`,
+          `${messagesApiUrl}/bot-flow/active-execution`,
           { credentials: 'include' }
         );
 
@@ -412,8 +412,8 @@ export default function CitizenDashboard() {
     try {
       // Se for mensagem para o bot - USAR SISTEMA DE FLUXOS
       if (selectedConversation.id === 'bot-digiurban') {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${apiUrl}/bot-flow/message`, {
+        const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
+        const response = await fetch(`${messagesApiUrl}/bot-flow/message`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -888,8 +888,8 @@ export default function CitizenDashboard() {
 
                                       // Envia ID da opção para o backend
                                       try {
-                                        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-                                        const response = await fetch(`${apiUrl}/bot-flow/message`, {
+                                        const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
+                                        const response = await fetch(`${messagesApiUrl}/bot-flow/message`, {
                                           method: 'POST',
                                           headers: { 'Content-Type': 'application/json' },
                                           credentials: 'include',

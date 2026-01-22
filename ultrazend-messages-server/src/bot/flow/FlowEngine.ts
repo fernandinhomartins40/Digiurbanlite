@@ -3,7 +3,7 @@
  * Motor principal de execução de fluxos conversacionais
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../utils/prisma';
 import {
   FlowDefinition,
   FlowExecution,
@@ -12,13 +12,11 @@ import {
   ExecutionContext,
   BotResponse,
   ActionHandlers,
-} from '../../../types/flow.types';
+} from '../types';
 import { FlowStateManager } from './FlowStateManager';
 import { NodeExecutors } from './NodeExecutors';
 import { TemplateEngine } from './TemplateEngine';
 import { InputValidator } from './InputValidator';
-
-const prisma = new PrismaClient();
 
 export class FlowEngine {
   private stateManager: FlowStateManager;
