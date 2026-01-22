@@ -172,6 +172,12 @@ export function AdminSidebar() {
           badge: 'NOVO'
         },
         {
+          title: 'Certificados Digitais',
+          href: '/admin/certificados-digitais',
+          icon: Award,
+          minRole: 'ADMIN'
+        },
+        {
           title: 'Estatísticas',
           href: '/admin/gerenciamento-servicos',
           icon: TrendingUp,

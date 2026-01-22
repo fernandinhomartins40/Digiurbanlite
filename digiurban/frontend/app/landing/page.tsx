@@ -20,7 +20,9 @@ import {
   Play,
   Lock,
   Bell,
-  BarChart3
+  BarChart3,
+  Award,
+  Search
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -466,6 +468,119 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Validação de Documentos Banner */}
+      <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#0fffbf] via-[#a7dbc9] to-[#0f6fbe] relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#0f6fbe] rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="container mx-auto relative z-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mb-6">
+                  <Award className="w-4 h-4 text-[#193642]" />
+                  <span className="text-sm font-medium text-[#193642]">Sistema de Validação Digital</span>
+                </div>
+
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#193642] mb-6">
+                  Valide a autenticidade dos seus documentos
+                </h2>
+
+                <p className="text-lg text-[#193642]/80 mb-8 leading-relaxed">
+                  Todos os documentos oficiais gerados pela plataforma possuem um código único de validação.
+                  Verifique a autenticidade e integridade de qualquer documento em segundos.
+                </p>
+
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#193642]/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-5 h-5 text-[#193642]" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-[#193642] mb-1">Validação por código</h4>
+                      <p className="text-sm text-[#193642]/70">Digite o código de validação e confirme a autenticidade do documento</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#193642]/10 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-[#193642]" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-[#193642] mb-1">Verificação de integridade</h4>
+                      <p className="text-sm text-[#193642]/70">Faça upload do PDF e verifique se foi modificado após a emissão</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#193642]/10 flex items-center justify-center flex-shrink-0">
+                      <BarChart3 className="w-5 h-5 text-[#193642]" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-[#193642] mb-1">Histórico de validações</h4>
+                      <p className="text-sm text-[#193642]/70">Veja quantas vezes o documento já foi validado publicamente</p>
+                    </div>
+                  </div>
+                </div>
+
+                <Link
+                  href="/validar-documento"
+                  className="inline-flex items-center justify-center gap-2 bg-[#193642] hover:bg-[#0f6fbe] text-white px-8 py-4 rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                >
+                  <Search className="w-5 h-5" />
+                  Validar Documento Agora
+                  <ChevronRight className="w-5 h-5" />
+                </Link>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#193642]/10 to-[#0f6fbe]/10 rounded-2xl blur-2xl"></div>
+                <div className="relative bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+                  <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#0fffbf] to-[#0f6fbe] flex items-center justify-center">
+                      <Award className="w-7 h-7 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-[#193642]">Sistema de Validação</h3>
+                      <p className="text-sm text-gray-500">Verificação em tempo real</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 mb-6">
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-[#0fffbf]/10 to-transparent border border-[#0fffbf]/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-[#193642]">Código de Validação</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">Válido</span>
+                      </div>
+                      <div className="font-mono text-lg font-bold text-[#0f6fbe] mb-1">VAL-2026-123456-7890</div>
+                      <div className="text-xs text-gray-500">Certidão de Protocolo • Protocolo 2026-000123</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                        <div className="text-xs text-gray-500 mb-1">Emissão</div>
+                        <div className="text-sm font-semibold text-[#193642]">22/01/2026</div>
+                      </div>
+                      <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                        <div className="text-xs text-gray-500 mb-1">Validações</div>
+                        <div className="text-sm font-semibold text-[#193642]">12 vezes</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Shield className="w-4 h-4 text-[#0fffbf]" />
+                    <span>Documento autêntico e sem alterações</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Final */}
       <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#0f6fbe] via-[#0f6fbe] to-[#193642] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -536,8 +651,8 @@ export default function LandingPage() {
               <h4 className="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Ajuda</h4>
               <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                 <li><a href="#como-funciona" className="text-white/60 hover:text-[#0fffbf] transition-colors">Como Funciona</a></li>
+                <li><Link href="/validar-documento" className="text-white/60 hover:text-[#0fffbf] transition-colors">Validar Documento</Link></li>
                 <li><a href="#" className="text-white/60 hover:text-[#0fffbf] transition-colors">Perguntas Frequentes</a></li>
-                <li><a href="#" className="text-white/60 hover:text-[#0fffbf] transition-colors">Suporte</a></li>
                 <li><a href="#seguranca" className="text-white/60 hover:text-[#0fffbf] transition-colors">Segurança</a></li>
               </ul>
             </div>
