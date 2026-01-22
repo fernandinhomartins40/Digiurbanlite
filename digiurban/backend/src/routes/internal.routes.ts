@@ -3,7 +3,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { internalAuthMiddleware } from '../middleware/internal-auth';
 
 const router = Router();
@@ -268,15 +268,15 @@ router.post('/protocols', async (req: Request, res: Response) => {
     // Criar protocolo
     const protocol = await prisma.protocolSimplified.create({
       data: {
-        protocolNumber,
+        number: protocolNumber,
+        title: service.name,
         citizenId,
         serviceId,
-        serviceName: service.name,
+        departmentId: service.departmentId,
         description: description || '',
-        status: 'PENDING',
-        priority: 'NORMAL',
-        customData: customData || {},
-        documents: documents || [],
+        status: 'VINCULADO',
+        priority: 3, // Prioridade normal
+        customData: customData || Prisma.JsonNull,
         createdById: citizenId, // Cidadão é o criador
       },
     });
@@ -332,7 +332,7 @@ router.get('/protocols/number/:protocolNumber', async (req: Request, res: Respon
 
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
-        protocolNumber,
+        number: protocolNumber,
         citizenId: citizenId as string,
       },
       include: {
@@ -463,8 +463,6 @@ router.get('/departments', async (req: Request, res: Response) => {
         id: true,
         name: true,
         description: true,
-        phone: true,
-        email: true,
       },
     });
 
