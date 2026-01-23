@@ -84,6 +84,9 @@ model User {
   // Revogações de certificados
   revokedCertificates CertificateRevocationList[] @relation("CRLRevokedBy")
 
+  // Documentos externos para assinatura
+  externalDocuments ExternalDocument[] @relation("UserExternalDocuments")
+
   @@map("users")
 }
 
@@ -187,6 +190,9 @@ model Citizen {
 
   // Certificados digitais
   digitalCertificates DigitalCertificate[] @relation("CitizenCertificates")
+
+  // Documentos externos para assinatura
+  externalDocuments ExternalDocument[] @relation("CitizenExternalDocuments")
 
   @@unique([cpf])
   @@map("citizens")
@@ -4917,9 +4923,10 @@ model DigitalCertificate {
 
 // Assinaturas Digitais em Documentos
 model Signature {
-  id              String    @id @default(cuid())
-  documentId      String    // FK para GeneratedDocument
-  certificateId   String    // FK para DigitalCertificate
+  id                 String    @id @default(cuid())
+  documentId         String?   // FK para GeneratedDocument (opcional)
+  externalDocumentId String?   // FK para ExternalDocument (opcional)
+  certificateId      String    // FK para DigitalCertificate
 
   // Dados da Assinatura Criptográfica
   signatureValue  String    @db.Text // Assinatura RSA em base64
@@ -4942,10 +4949,12 @@ model Signature {
   updatedAt       DateTime  @updatedAt
 
   // Relacionamentos
-  document        GeneratedDocument    @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  certificate     DigitalCertificate   @relation(fields: [certificateId], references: [id], onDelete: Restrict)
+  document         GeneratedDocument?  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  externalDocument ExternalDocument?   @relation(fields: [externalDocumentId], references: [id], onDelete: Cascade)
+  certificate      DigitalCertificate  @relation(fields: [certificateId], references: [id], onDelete: Restrict)
 
   @@index([documentId])
+  @@index([externalDocumentId])
   @@index([certificateId])
   @@index([signedAt])
   @@index([isValid])
@@ -5144,4 +5153,44 @@ model FlowExecution {
   @@index([status])
   @@index([startedAt])
   @@map("flow_executions")
+}
+
+// ============================================
+// DOCUMENTOS EXTERNOS PARA ASSINATURA
+// ============================================
+
+// Documentos externos enviados por usuários para assinatura digital
+model ExternalDocument {
+  id              String    @id @default(cuid())
+
+  // Proprietário do documento
+  userId          String?   // Servidor/Admin que fez upload
+  citizenId       String?   // Cidadão que fez upload
+
+  // Informações do arquivo
+  fileName        String
+  filePath        String    // Caminho no storage
+  fileSize        Int       // Tamanho em bytes
+  mimeType        String    @default("application/pdf")
+  documentHash    String    // SHA-256 para verificação de integridade
+
+  // Metadados
+  description     String?   @db.Text
+  uploadedAt      DateTime  @default(now())
+  isActive        Boolean   @default(true)
+
+  // Auditoria
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relacionamentos
+  user            User?        @relation("UserExternalDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  citizen         Citizen?     @relation("CitizenExternalDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
+  signatures      Signature[]
+
+  @@index([userId])
+  @@index([citizenId])
+  @@index([uploadedAt])
+  @@index([isActive])
+  @@map("external_documents")
 }

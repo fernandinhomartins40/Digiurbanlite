@@ -473,16 +473,59 @@ export default function MeusDocumentosPage() {
 
 ## 🚀 Resumo de Implementação
 
-**Status Atual:** ✅ Fase 1 Completa (30%)
+**Status Atual:** ✅ TODAS AS FASES COMPLETAS (100%)
 
-**Próximos Passos:**
-1. Criar hooks e componentes de seleção (Fase 2)
-2. Criar modal principal de assinatura (Fase 3)
-3. Implementar backend de upload e certificados (Fase 4)
-4. Integrar nos painéis admin e cidadão (Fase 5)
+### ✅ Fase 1: Infraestrutura Base (COMPLETO)
+- ✅ Dependências instaladas (react-pdf, pdfjs-dist, crypto-js)
+- ✅ SecureKeyManager implementado
+- ✅ PDFViewer componente criado
 
-**Estimativa:** 3-4 dias para completar Fases 2-5
+### ✅ Fase 2: Hooks e Componentes de Seleção (COMPLETO)
+- ✅ Hook useCertificates criado
+- ✅ Componente CertificateSelector implementado
+- ✅ Componente SignaturesList implementado
+
+### ✅ Fase 3: Modal Principal de Assinatura (COMPLETO)
+- ✅ DocumentSigningModal implementado
+- ✅ Interface visual estilo Gov.br
+- ✅ Fluxo completo: certificado → PIN → assinatura
+
+### ✅ Fase 4: Backend Completo (COMPLETO)
+- ✅ Modelo ExternalDocument no Prisma
+- ✅ Migration criada e pronta
+- ✅ Rota /api/admin/my-certificates
+- ✅ Rota /api/citizen/my-certificates
+- ✅ Rota /api/documents/upload-external
+- ✅ Rota /api/documents/upload-external-citizen
+- ✅ Rota /api/documents/sign (unificada)
+- ✅ Rota /api/documents/verify-signature
+- ✅ Todas as rotas registradas no servidor
+
+### ✅ Fase 5: Integração nos Painéis (COMPLETO)
+- ✅ Página /admin/meus-documentos
+- ✅ Página /cidadao/meus-documentos
+- ✅ Upload de documentos externos
+- ✅ Listagem com filtros e busca
+- ✅ Integração completa com modal de assinatura
 
 **Prioridade:** Alta - Funcionalidade crítica para prefeituras
 
 **Impacto:** Permite assinatura digital legal de documentos, reduzindo papel e burocracia
+
+## 📝 Próximos Passos para Deploy
+
+1. Rodar migration no banco de dados:
+   ```bash
+   cd digiurban/backend
+   npx prisma migrate deploy
+   ```
+
+2. Reiniciar o servidor backend para carregar as novas rotas
+
+3. Testar fluxo completo:
+   - Upload de documento
+   - Emissão de certificado (se ainda não tiver)
+   - Assinatura digital
+   - Verificação de assinatura
+
+4. (Opcional) Adicionar entrada no menu de navegação para "Meus Documentos"

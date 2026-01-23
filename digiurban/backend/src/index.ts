@@ -183,6 +183,21 @@ try {
   const certificatesRoutes = require('./routes/certificates.routes').default;
   app.use('/api/certificates', certificatesRoutes);
   console.log('   ✓ certificates carregado');
+
+  console.log('   → my-certificates...');
+  const myCertificatesRoutes = require('./routes/my-certificates.routes').default;
+  app.use('/api', myCertificatesRoutes);
+  console.log('   ✓ my-certificates carregado');
+
+  console.log('   → external-documents...');
+  const externalDocumentsRoutes = require('./routes/external-documents.routes').default;
+  app.use('/api/documents', externalDocumentsRoutes);
+  console.log('   ✓ external-documents carregado');
+
+  console.log('   → document-signing...');
+  const documentSigningRoutes = require('./routes/document-signing.routes').default;
+  app.use('/api/documents', documentSigningRoutes);
+  console.log('   ✓ document-signing carregado');
 } catch (e) {
   console.error('❌ certificates:', e);
 }

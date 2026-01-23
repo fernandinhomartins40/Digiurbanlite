@@ -110,7 +110,8 @@
       "Bash(npm run db:generate:*)",
       "Bash(tee:*)",
       "Bash(pm2 list:*)",
-      "Bash(npx next lint)"
+      "Bash(npx next lint)",
+      "Bash(before removing or force remove\"\n\nSolução:\n- Adiciona ''docker-compose down'' antes de ''up -d''\n- Usa ''|| true'' para não falhar se containers não existirem\n- Garante que containers antigos sejam parados antes da recriação\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []
