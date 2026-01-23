@@ -80,7 +80,7 @@ export default function CitizenDashboard() {
     userId: citizen?.id || '',
     userType: 'CITIZEN',
     onNewMessage: (message, conversationId) => {
-      // Se é mensagem para conversa selecionada, adicionar à lista
+      // Se Ã© mensagem para conversa selecionada, adicionar Ã  lista
       if (selectedConversation?.id === conversationId) {
         setMessages(prev => (prev.some(item => item.id === message.id) ? prev : [...prev, message]));
         scrollToBottom();
@@ -269,7 +269,7 @@ export default function CitizenDashboard() {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Não foi possível enviar a mensagem',
+        description: 'NÃ£o foi possÃ­vel enviar a mensagem',
       });
     }
   };
