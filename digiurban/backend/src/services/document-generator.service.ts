@@ -555,7 +555,46 @@ export async function getGeneratedDocuments(protocolId: string) {
     orderBy: { generatedAt: 'desc' }
   });
 
-  return documents;
+  // Mapear os documentos para o formato esperado pelo frontend (mesmo formato do cidadão)
+  return documents.map(doc => {
+    // Montar nome descritivo do documento
+    let displayName = doc.template.name || doc.fileName || 'Documento';
+
+    // Se tiver código do template, adicionar ao final
+    if (doc.template.code && !displayName.includes(doc.template.code)) {
+      displayName += ` (${doc.template.code})`;
+    }
+
+    return {
+      id: doc.id,
+      // Campo usado pelo componente admin
+      documentType: doc.template.documentType || doc.template.name || 'Documento',
+      // Campos adicionais para compatibilidade e informação completa
+      name: displayName,
+      type: doc.template.documentType || 'DOCUMENTO',
+      fileUrl: doc.fileUrl,
+      filePath: doc.filePath,
+      fileName: doc.fileName,
+      fileSize: doc.fileSize,
+      mimeType: doc.mimeType,
+      // Importante: usar "createdAt" que é o esperado pelo componente admin
+      createdAt: doc.generatedAt.toISOString(),
+      generatedAt: doc.generatedAt.toISOString(),
+      // Informações de envio
+      wasSent: doc.wasSent,
+      sentAt: doc.sentAt?.toISOString(),
+      sentTo: doc.sentTo,
+      // Informações de validação
+      validationCode: (doc as any).validationCode || null,
+      expiresAt: (doc as any).expiresAt?.toISOString() || null,
+      // Template info
+      template: doc.template,
+      metadata: {
+        template: doc.template.name,
+        templateCode: doc.template.code
+      }
+    };
+  });
 }
 
 /**
