@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Button } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,8 +13,10 @@ import {
   Maximize2,
   Minimize2
 } from 'lucide-react';
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
-import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+// Importar estilos do react-pdf (versão 10.3.0+)
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
 // Configurar worker do PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;

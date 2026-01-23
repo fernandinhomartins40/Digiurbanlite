@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { PDFViewer } from './PDFViewer';
+import { PDFViewerClient } from './PDFViewerClient';
 import { CertificateSelector } from './CertificateSelector';
 import { SignaturesList } from './SignaturesList';
 import { useCertificates } from '@/hooks/useCertificates';
@@ -182,7 +182,7 @@ export function DocumentSigningModal({
         <CardContent className="flex-1 overflow-hidden p-0">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 h-full">
             <div className="lg:col-span-3 border-r overflow-hidden">
-              <PDFViewer
+              <PDFViewerClient
                 file={document.fileUrl}
                 fileName={document.fileName}
                 showControls={true}
