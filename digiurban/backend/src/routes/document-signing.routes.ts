@@ -168,7 +168,7 @@ router.post('/sign', async (req, res) => {
             id: true,
             commonName: true,
             email: true,
-            type: true,
+            certificateType: true,
             status: true,
           },
         },

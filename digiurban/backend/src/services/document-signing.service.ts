@@ -79,7 +79,13 @@ export async function verifySignature(signatureId: string) {
     return { valid: false, reason: 'Certificado foi revogado' };
   }
 
-  const fileBuffer = await fs.readFile(signature.document.filePath);
+  // Buscar arquivo do documento (gerado ou externo)
+  const filePath = signature.document?.filePath || signature.externalDocument?.filePath;
+  if (!filePath) {
+    return { valid: false, reason: 'Arquivo do documento não encontrado' };
+  }
+
+  const fileBuffer = await fs.readFile(filePath);
   const currentHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
   if (currentHash !== signature.signatureHash) {
