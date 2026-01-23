@@ -356,7 +356,16 @@ router.get(
 
       // Verificar se o arquivo existe fisicamente
       const filePath = path.join(process.cwd(), document.filePath);
+
+      console.log('[DEBUG] Download de documento:');
+      console.log('  - Document ID:', documentId);
+      console.log('  - Document filePath (DB):', document.filePath);
+      console.log('  - Full filePath:', filePath);
+      console.log('  - File exists:', fs.existsSync(filePath));
+      console.log('  - Process CWD:', process.cwd());
+
       if (!fs.existsSync(filePath)) {
+        console.error('[ERROR] Arquivo físico não encontrado:', filePath);
         return res.status(404).json(createErrorResponse('FILE_NOT_FOUND', 'Arquivo não encontrado no servidor'));
       }
 

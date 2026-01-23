@@ -109,7 +109,8 @@
       "Bash(test:*)",
       "Bash(npm run db:generate:*)",
       "Bash(tee:*)",
-      "Bash(pm2 list:*)"
+      "Bash(pm2 list:*)",
+      "Bash(npx next lint)"
     ],
     "deny": [],
     "ask": []
