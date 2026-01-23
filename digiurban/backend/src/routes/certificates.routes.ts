@@ -18,6 +18,13 @@ router.get('/', async (req, res) => {
             email: true,
           }
         },
+        citizen: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        },
         _count: {
           select: {
             signatures: true
@@ -32,7 +39,8 @@ router.get('/', async (req, res) => {
     const formattedCertificates = certificates.map(cert => ({
       id: cert.id,
       userId: cert.userId,
-      userName: cert.user?.name,
+      citizenId: cert.citizenId,
+      userName: cert.user?.name || cert.citizen?.name,
       type: cert.certificateType,
       status: cert.status,
       serialNumber: cert.serialNumber,
@@ -56,6 +64,7 @@ router.post('/issue', async (req, res) => {
   try {
     const result = await issueServerCertificate({
       userId: req.body.userId,
+      citizenId: req.body.citizenId,
       commonName: req.body.commonName,
       email: req.body.email,
       department: req.body.department,

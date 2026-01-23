@@ -174,7 +174,7 @@ export default function CertificadosDigitaisPage() {
       setIssuing(true);
 
       const payload = {
-        userId: selectedCitizen.id,
+        citizenId: selectedCitizen.id,
         commonName: selectedCitizen.name,
         email: selectedCitizen.email || '',
         department: formData.department,

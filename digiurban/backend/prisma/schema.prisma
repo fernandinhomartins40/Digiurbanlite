@@ -185,6 +185,9 @@ model Citizen {
   botUploads          BotUpload[]
   flowExecutions      FlowExecution[]
 
+  // Certificados digitais
+  digitalCertificates DigitalCertificate[] @relation("CitizenCertificates")
+
   @@unique([cpf])
   @@map("citizens")
 }
@@ -4862,7 +4865,8 @@ enum RevocationReason {
 // Certificados Digitais
 model DigitalCertificate {
   id              String          @id @default(cuid())
-  userId          String          // FK para User (servidor ou cidadão)
+  userId          String?         // FK para User (servidor) - opcional
+  citizenId       String?         // FK para Citizen (cidadão) - opcional
   certificateType CertificateType // Tipo de certificado
 
   // Informações do Certificado X.509
@@ -4898,10 +4902,12 @@ model DigitalCertificate {
   updatedAt       DateTime        @updatedAt
 
   // Relacionamentos
-  user            User            @relation("UserCertificates", fields: [userId], references: [id], onDelete: Cascade)
+  user            User?           @relation("UserCertificates", fields: [userId], references: [id], onDelete: Cascade)
+  citizen         Citizen?        @relation("CitizenCertificates", fields: [citizenId], references: [id], onDelete: Cascade)
   signatures      Signature[]
 
   @@index([userId])
+  @@index([citizenId])
   @@index([serialNumber])
   @@index([status])
   @@index([expiresAt])

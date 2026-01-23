@@ -4,7 +4,8 @@ import * as forge from 'node-forge';
 const prisma = new PrismaClient();
 
 interface IssueCertificateInput {
-  userId: string;
+  userId?: string;
+  citizenId?: string;
   commonName: string;
   email: string;
   department?: string;
@@ -55,7 +56,8 @@ export async function issueServerCertificate(input: IssueCertificateInput) {
 
   const certificate = await prisma.digitalCertificate.create({
     data: {
-      userId: input.userId,
+      userId: input.userId || undefined,
+      citizenId: input.citizenId || undefined,
       certificateType: input.certificateType,
       serialNumber: cert.serialNumber,
       commonName: input.commonName,
@@ -68,7 +70,7 @@ export async function issueServerCertificate(input: IssueCertificateInput) {
       issuerCA: 'CA-MUNICIPAL-001',
       certificateChain: certPem + '\n' + forge.pki.certificateToPem(caCert),
       thumbprint,
-      createdBy: input.userId,
+      createdBy: input.userId || input.citizenId || 'SYSTEM',
     },
   });
 
