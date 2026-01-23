@@ -3312,6 +3312,7 @@ enum MessageContentType {
   VIDEO
   AUDIO
   DOCUMENT
+  FILE
   LOCATION
   STICKER
   SYSTEM

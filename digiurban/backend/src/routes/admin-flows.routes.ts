@@ -522,9 +522,11 @@ router.get('/:id/analytics', async (req: Request, res: Response) => {
     );
 
     executions.forEach((execution) => {
-      const history = Array.isArray(execution.history) ? execution.history : [];
+      const history = Array.isArray(execution.history)
+        ? (execution.history.filter((item): item is string => typeof item === 'string'))
+        : [];
 
-      history.forEach((nodeId: string) => {
+      history.forEach((nodeId) => {
         const stats = nodeMap.get(nodeId) || { visits: 0, errors: 0 };
         stats.visits += 1;
         nodeMap.set(nodeId, stats);
@@ -537,13 +539,13 @@ router.get('/:id/analytics', async (req: Request, res: Response) => {
       }
 
       const lastNode = history.length > 0 ? history[history.length - 1] : execution.currentNodeId;
-      if (lastNode) {
+      if (lastNode && typeof lastNode === 'string') {
         const exitCount = exitMap.get(lastNode) || 0;
         exitMap.set(lastNode, exitCount + 1);
       }
 
       if (execution.status !== 'COMPLETED') {
-        const dropNode = lastNode || execution.currentNodeId;
+        const dropNode = typeof lastNode === 'string' ? lastNode : execution.currentNodeId;
         if (dropNode) {
           const dropCount = dropOffMap.get(dropNode) || 0;
           dropOffMap.set(dropNode, dropCount + 1);

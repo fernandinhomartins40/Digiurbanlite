@@ -1,9 +1,9 @@
 # DigiUrban - Container Único (Backend + Frontend + Nginx)
 # Arquitetura: Multi-stage build para otimização
-# MODIFICADO: Debian (node:18-bookworm-slim) ao invés de Alpine para suportar Playwright
+# Node.js 20 LTS (Iron) - Suporte até Abril 2026
 
 # ========== STAGE 1: Build Backend ==========
-FROM node:18-bookworm-slim AS backend-builder
+FROM node:20-bookworm-slim AS backend-builder
 WORKDIR /app/backend
 
 # Build timestamp para invalidar cache
@@ -52,7 +52,7 @@ RUN rm -rf dist/.tsbuildinfo dist/* && \
     echo "✅ Build do TypeScript concluído com sucesso"
 
 # ========== STAGE 2: Build Frontend ==========
-FROM node:18-bookworm-slim AS frontend-builder
+FROM node:20-bookworm-slim AS frontend-builder
 WORKDIR /app/frontend
 
 # Build timestamp para invalidar cache
@@ -116,7 +116,7 @@ RUN set -e && \
 RUN touch /app/frontend/.build_complete && echo "Frontend builder stage completed successfully"
 
 # ========== STAGE 3: Production Image ==========
-FROM node:18-bookworm-slim AS runner
+FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 
 # Instalar Nginx, supervisord, PostgreSQL client, curl e dependências do Playwright
