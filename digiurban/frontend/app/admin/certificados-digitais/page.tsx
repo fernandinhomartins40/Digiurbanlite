@@ -48,6 +48,8 @@ export default function CertificadosDigitaisPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [showIssueModal, setShowIssueModal] = useState(false);
+  const [issuing, setIssuing] = useState(false);
 
   useEffect(() => {
     fetchCertificates();
@@ -57,46 +59,27 @@ export default function CertificadosDigitaisPage() {
     try {
       setLoading(true);
 
-      // Mock data para demonstração (substituir pela API real quando disponível)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const mockData: DigitalCertificate[] = [
-        {
-          id: '1',
-          userId: 'user1',
-          userName: 'Sistema DigiUrban',
-          type: 'SERVER',
-          status: 'ACTIVE',
-          serialNumber: 'SER-2026-001234',
-          commonName: 'digiurban.server.cert',
-          organization: 'Prefeitura Municipal',
-          issuer: 'DigiUrban CA',
-          issuedAt: '2026-01-01T00:00:00Z',
-          expiresAt: '2027-01-01T00:00:00Z',
-          thumbprint: 'SHA256:abc123def456...',
-          _count: { signatures: 156 }
+      const response = await fetch('/api/certificates', {
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: '2',
-          userId: 'admin1',
-          userName: 'João Silva',
-          type: 'CITIZEN',
-          status: 'ACTIVE',
-          serialNumber: 'CIT-2026-005678',
-          commonName: 'João Silva',
-          organization: 'Cidadão',
-          issuer: 'DigiUrban CA',
-          issuedAt: '2026-01-15T00:00:00Z',
-          expiresAt: '2026-02-20T00:00:00Z',
-          thumbprint: 'SHA256:xyz789ghi012...',
-          _count: { signatures: 12 }
-        }
-      ];
+      });
 
-      setCertificates(mockData);
+      if (!response.ok) {
+        throw new Error('Falha ao carregar certificados');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setCertificates(data.certificates || []);
+      } else {
+        throw new Error(data.message || 'Erro ao carregar certificados');
+      }
     } catch (error) {
       console.error('Erro ao buscar certificados:', error);
       toast.error('Erro ao carregar certificados');
+      setCertificates([]);
     } finally {
       setLoading(false);
     }
@@ -167,6 +150,70 @@ export default function CertificadosDigitaisPage() {
     return `${Math.ceil(diff / 30)} meses`;
   };
 
+  const handleIssueCertificate = async (formData: {
+    userId: string;
+    commonName: string;
+    email: string;
+    department?: string;
+    certificateType: 'SERVER' | 'CITIZEN' | 'SYSTEM';
+    validityYears: number;
+  }) => {
+    try {
+      setIssuing(true);
+
+      const response = await fetch('/api/certificates/issue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Certificado emitido com sucesso!');
+        setShowIssueModal(false);
+        fetchCertificates();
+      } else {
+        throw new Error(data.message || 'Erro ao emitir certificado');
+      }
+    } catch (error: any) {
+      console.error('Erro ao emitir certificado:', error);
+      toast.error(error.message || 'Erro ao emitir certificado');
+    } finally {
+      setIssuing(false);
+    }
+  };
+
+  const handleRevokeCertificate = async (serialNumber: string, reason: string) => {
+    try {
+      const response = await fetch('/api/certificates/revoke', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serialNumber,
+          reason,
+          revokedBy: 'admin', // TODO: pegar do contexto do usuário logado
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('Certificado revogado com sucesso!');
+        fetchCertificates();
+      } else {
+        throw new Error(data.message || 'Erro ao revogar certificado');
+      }
+    } catch (error: any) {
+      console.error('Erro ao revogar certificado:', error);
+      toast.error(error.message || 'Erro ao revogar certificado');
+    }
+  };
+
   const filteredCertificates = certificates.filter(cert => {
     const matchesSearch =
       cert.commonName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -202,7 +249,10 @@ export default function CertificadosDigitaisPage() {
               Gerencie certificados digitais e assinaturas do sistema
             </p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => setShowIssueModal(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Emitir Certificado
           </Button>
@@ -373,14 +423,38 @@ export default function CertificadosDigitaisPage() {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            toast.info('Funcionalidade de visualização em desenvolvimento');
+                          }}
+                          title="Visualizar detalhes"
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            toast.info('Funcionalidade de download em desenvolvimento');
+                          }}
+                          title="Baixar certificado"
+                        >
                           <Download className="w-4 h-4" />
                         </Button>
                         {cert.status === 'ACTIVE' && (
-                          <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => {
+                              if (confirm(`Deseja revogar o certificado ${cert.serialNumber}?`)) {
+                                handleRevokeCertificate(cert.serialNumber, 'Revogado manualmente pelo administrador');
+                              }
+                            }}
+                            title="Revogar certificado"
+                          >
                             <XCircle className="w-4 h-4" />
                           </Button>
                         )}
@@ -392,6 +466,149 @@ export default function CertificadosDigitaisPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Modal de Emissão de Certificado */}
+        {showIssueModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Emitir Novo Certificado Digital
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    handleIssueCertificate({
+                      userId: formData.get('userId') as string,
+                      commonName: formData.get('commonName') as string,
+                      email: formData.get('email') as string,
+                      department: formData.get('department') as string || undefined,
+                      certificateType: formData.get('certificateType') as 'SERVER' | 'CITIZEN' | 'SYSTEM',
+                      validityYears: parseInt(formData.get('validityYears') as string),
+                    });
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tipo de Certificado
+                      </label>
+                      <select
+                        name="certificateType"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="CITIZEN">Cidadão</option>
+                        <option value="SERVER">Servidor</option>
+                        <option value="SYSTEM">Sistema</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        ID do Usuário
+                      </label>
+                      <input
+                        type="text"
+                        name="userId"
+                        required
+                        placeholder="ID do usuário no sistema"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nome Comum (CN)
+                      </label>
+                      <input
+                        type="text"
+                        name="commonName"
+                        required
+                        placeholder="Nome do titular"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        required
+                        placeholder="email@example.com"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Departamento (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        name="department"
+                        placeholder="Ex: Secretaria de Saúde"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Validade (anos)
+                      </label>
+                      <select
+                        name="validityYears"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="1">1 ano</option>
+                        <option value="2" selected>2 anos</option>
+                        <option value="3">3 anos</option>
+                        <option value="5">5 anos</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 justify-end pt-4 border-t">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowIssueModal(false)}
+                      disabled={issuing}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="bg-blue-600 hover:bg-blue-700"
+                      disabled={issuing}
+                    >
+                      {issuing ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Emitindo...
+                        </>
+                      ) : (
+                        <>
+                          <Award className="w-4 h-4 mr-2" />
+                          Emitir Certificado
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
   );
 }
