@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
         user: {
           select: {
             id: true,
-            nome: true,
+            name: true,
             email: true,
           }
         },
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
     const formattedCertificates = certificates.map(cert => ({
       id: cert.id,
       userId: cert.userId,
-      userName: cert.user?.nome,
+      userName: cert.user?.name,
       type: cert.certificateType,
       status: cert.status,
       serialNumber: cert.serialNumber,
