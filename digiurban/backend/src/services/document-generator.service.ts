@@ -112,7 +112,12 @@ export async function generateDocument(input: GenerateDocumentInput) {
 
   console.log(`📄 Gerando documento: template=${templateId}, protocol=${protocolId}`);
 
-  // 1. Buscar template
+  // 1. Gerar código de validação ANTES de gerar o PDF
+  console.log('   → Gerando código de validação...');
+  const validationCode = await generateUniqueValidationCode(prisma);
+  console.log(`   ✓ Código de validação: ${validationCode}`);
+
+  // 2. Buscar template
   const template = await prisma.documentTemplate.findUnique({
     where: { id: templateId }
   });
@@ -255,6 +260,10 @@ export async function generateDocument(input: GenerateDocumentInput) {
     templateName: template.name,
     templateCode: template.code,
 
+    // ===== CÓDIGO DE VALIDAÇÃO =====
+    validationCode: validationCode,
+    validationCodeFormatted: validationCode.replace(/-/g, ' - '),
+
     // ===== DADOS ADICIONAIS =====
     ...additionalData
   };
@@ -382,11 +391,7 @@ export async function generateDocument(input: GenerateDocumentInput) {
     // 6. Obter tamanho do arquivo
     const stats = await fs.stat(filePath);
 
-    // 7. Gerar código de validação e hash do documento
-    console.log('   → Gerando código de validação...');
-    const validationCode = await generateUniqueValidationCode(prisma);
-    console.log(`   ✓ Código de validação: ${validationCode}`);
-
+    // 7. Calcular hash SHA-256 do documento (já contém o código de validação)
     console.log('   → Calculando hash SHA-256 do documento...');
     const documentHash = await generateDocumentHash(filePath);
     console.log(`   ✓ Hash: ${documentHash.substring(0, 16)}...`);
