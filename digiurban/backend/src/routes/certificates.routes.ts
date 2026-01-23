@@ -144,4 +144,177 @@ router.get('/:id/download', async (req, res) => {
   }
 });
 
+// ============================================================================
+// ROTAS DE GERENCIAMENTO DE SOLICITAÇÕES DE CERTIFICADOS
+// ============================================================================
+
+// Listar todas as solicitações de certificados (prefeito/secretário)
+router.get('/requests', async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    const where: any = {};
+    if (status) {
+      where.status = status;
+    }
+
+    const requests = await prisma.certificateRequest.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            department: {
+              select: {
+                name: true
+              }
+            }
+          }
+        },
+        reviewer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        certificate: {
+          select: {
+            id: true,
+            serialNumber: true,
+            status: true,
+            expiresAt: true
+          }
+        }
+      },
+      orderBy: {
+        requestedAt: 'desc'
+      }
+    });
+
+    const formattedRequests = requests.map(req => ({
+      id: req.id,
+      user: req.user,
+      commonName: req.commonName,
+      email: req.email,
+      certificateType: req.certificateType,
+      keySize: req.keySize,
+      status: req.status,
+      requestReason: req.requestReason,
+      requestedAt: req.requestedAt.toISOString(),
+      reviewedBy: req.reviewer,
+      reviewedAt: req.reviewedAt?.toISOString(),
+      reviewComments: req.reviewComments,
+      certificate: req.certificate,
+      createdAt: req.createdAt.toISOString(),
+      updatedAt: req.updatedAt.toISOString()
+    }));
+
+    res.json({ success: true, requests: formattedRequests });
+  } catch (error: any) {
+    console.error('Erro ao listar solicitações:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Aprovar solicitação e emitir certificado
+router.post('/requests/:id/approve', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reviewerId, comments } = req.body;
+
+    // Buscar solicitação
+    const request = await prisma.certificateRequest.findUnique({
+      where: { id },
+      include: {
+        user: true
+      }
+    });
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Solicitação não encontrada' });
+    }
+
+    if (request.status !== 'PENDING') {
+      return res.status(400).json({ success: false, message: 'Solicitação já foi processada' });
+    }
+
+    // Buscar departamento do usuário
+    const userWithDept = await prisma.user.findUnique({
+      where: { id: request.userId },
+      include: { department: true }
+    });
+
+    // Emitir certificado
+    const result = await issueServerCertificate({
+      userId: request.userId,
+      commonName: request.commonName,
+      email: request.email,
+      department: userWithDept?.department?.name || 'Não especificado',
+      certificateType: request.certificateType,
+      validityYears: 2
+    });
+
+    // Atualizar solicitação
+    await prisma.certificateRequest.update({
+      where: { id },
+      data: {
+        status: 'APPROVED',
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+        reviewComments: comments,
+        certificateId: result.certificate.id
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Certificado emitido com sucesso',
+      certificate: result.certificate,
+      privateKey: result.privateKey
+    });
+  } catch (error: any) {
+    console.error('Erro ao aprovar solicitação:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Rejeitar solicitação
+router.post('/requests/:id/reject', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reviewerId, comments } = req.body;
+
+    const request = await prisma.certificateRequest.findUnique({
+      where: { id }
+    });
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Solicitação não encontrada' });
+    }
+
+    if (request.status !== 'PENDING') {
+      return res.status(400).json({ success: false, message: 'Solicitação já foi processada' });
+    }
+
+    await prisma.certificateRequest.update({
+      where: { id },
+      data: {
+        status: 'REJECTED',
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+        reviewComments: comments || 'Solicitação rejeitada'
+      }
+    });
+
+    res.json({ success: true, message: 'Solicitação rejeitada' });
+  } catch (error: any) {
+    console.error('Erro ao rejeitar solicitação:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;

@@ -87,6 +87,10 @@ model User {
   // Documentos externos para assinatura
   externalDocuments ExternalDocument[] @relation("UserExternalDocuments")
 
+  // Solicitações de certificados
+  certificateRequests CertificateRequest[] @relation("UserCertificateRequests")
+  reviewedCertificateRequests CertificateRequest[] @relation("CertificateRequestReviewer")
+
   @@map("users")
 }
 
@@ -4911,6 +4915,7 @@ model DigitalCertificate {
   user            User?           @relation("UserCertificates", fields: [userId], references: [id], onDelete: Cascade)
   citizen         Citizen?        @relation("CitizenCertificates", fields: [citizenId], references: [id], onDelete: Cascade)
   signatures      Signature[]
+  request         CertificateRequest? @relation("RequestedCertificate")
 
   @@index([userId])
   @@index([citizenId])
@@ -4981,6 +4986,53 @@ model CertificateRevocationList {
   @@index([revokedAt])
   @@index([publishedAt])
   @@map("certificate_revocation_list")
+}
+
+// Solicitações de Certificado Digital
+model CertificateRequest {
+  id              String           @id @default(cuid())
+  userId          String           // FK para User (solicitante)
+
+  // Informações do Certificado Solicitado
+  commonName      String           // Nome do solicitante
+  email           String           // Email do solicitante
+  certificateType CertificateType  // Tipo de certificado solicitado
+  keySize         Int              @default(2048) // Tamanho da chave
+
+  // Status da Solicitação
+  status          CertificateRequestStatus @default(PENDING)
+  requestReason   String           @db.Text // Motivo/justificativa da solicitação
+  requestedAt     DateTime         @default(now())
+
+  // Aprovação/Rejeição
+  reviewedBy      String?          // userId do aprovador (prefeito/secretário)
+  reviewedAt      DateTime?
+  reviewComments  String?          @db.Text // Comentários do aprovador
+
+  // Certificado Gerado (se aprovado)
+  certificateId   String?          @unique // FK para DigitalCertificate
+
+  // Auditoria
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relacionamentos
+  user            User             @relation("UserCertificateRequests", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer        User?            @relation("CertificateRequestReviewer", fields: [reviewedBy], references: [id])
+  certificate     DigitalCertificate? @relation("RequestedCertificate", fields: [certificateId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+  @@index([reviewedBy])
+  @@map("certificate_requests")
+}
+
+enum CertificateRequestStatus {
+  PENDING    // Aguardando aprovação
+  APPROVED   // Aprovado - certificado emitido
+  REJECTED   // Rejeitado
+  CANCELLED  // Cancelado pelo solicitante
 }
 
 // ============================================

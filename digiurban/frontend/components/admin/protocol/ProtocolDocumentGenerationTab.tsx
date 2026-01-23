@@ -87,12 +87,36 @@ export function ProtocolDocumentGenerationTab({
       if (result.success) {
         toast({
           title: 'Documento gerado',
-          description: 'Documento gerado com sucesso'
+          description: result.warnings && result.warnings.length > 0
+            ? result.warnings[0]
+            : 'Documento gerado com sucesso'
         })
         setNotes('')
         onRefresh()
       } else {
-        throw new Error(result.error || 'Erro ao gerar documento')
+        // Verificar se é erro de certificado
+        if (result.error === 'CERTIFICATE_REQUIRED' || result.error === 'CERTIFICATE_PENDING') {
+          const data = result.data || {}
+
+          if (data.requestCreated) {
+            toast({
+              title: 'Certificado Digital Necessário',
+              description: 'Uma solicitação de certificado foi criada. Aguarde a aprovação do prefeito ou secretário para gerar documentos.',
+              variant: 'default',
+              duration: 8000
+            })
+          } else if (data.hasPendingRequest) {
+            toast({
+              title: 'Certificado Pendente',
+              description: 'Sua solicitação de certificado está aguardando aprovação.',
+              variant: 'default',
+              duration: 6000
+            })
+          }
+          return
+        }
+
+        throw new Error(result.message || result.error || 'Erro ao gerar documento')
       }
     } catch (error) {
       toast({

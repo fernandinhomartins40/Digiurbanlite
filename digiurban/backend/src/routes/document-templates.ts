@@ -196,7 +196,7 @@ router.delete('/document-templates/:id', authenticateToken, requireSuperAdmin, a
 
 /**
  * POST /api/protocols/:protocolId/generate-document
- * Gerar documento para protocolo
+ * Gerar documento para protocolo com assinatura digital
  */
 router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, requireMinRole(UserRole.USER), async (req, res) => {
   try {
@@ -208,6 +208,7 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
 
     const { protocolId } = req.params;
     const { templateId, additionalData } = req.body;
+    const userId = req.user!.id;
 
     if (!templateId) {
       console.log('❌ templateId ausente no body');
@@ -217,19 +218,119 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
       });
     }
 
+    // 1. Verificar se o usuário possui certificado digital ativo
+    console.log(`🔐 Verificando certificado digital do usuário ${userId}...`);
+
+    const activeCertificate = await prisma.digitalCertificate.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        expiresAt: {
+          gt: new Date() // Não expirado
+        }
+      },
+      orderBy: {
+        issuedAt: 'desc'
+      }
+    });
+
+    // 2. Se não tiver certificado ativo, verificar se há solicitação pendente
+    if (!activeCertificate) {
+      console.log('⚠️ Usuário não possui certificado digital ativo');
+
+      const pendingRequest = await prisma.certificateRequest.findFirst({
+        where: {
+          userId,
+          status: 'PENDING'
+        },
+        orderBy: {
+          requestedAt: 'desc'
+        }
+      });
+
+      if (pendingRequest) {
+        return res.status(403).json({
+          success: false,
+          error: 'CERTIFICATE_PENDING',
+          message: 'Você possui uma solicitação de certificado digital pendente de aprovação',
+          data: {
+            requestId: pendingRequest.id,
+            requestedAt: pendingRequest.requestedAt,
+            needsCertificate: true,
+            hasPendingRequest: true
+          }
+        });
+      }
+
+      // 3. Criar solicitação de certificado automaticamente
+      console.log('📝 Criando solicitação de certificado digital...');
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        throw new Error('Usuário não encontrado');
+      }
+
+      // Criar solicitação automática
+      const certificateRequest = await prisma.certificateRequest.create({
+        data: {
+          userId,
+          commonName: user.name,
+          email: user.email,
+          certificateType: 'SERVER',
+          keySize: 2048,
+          requestedAt: new Date(),
+          status: 'PENDING',
+          requestReason: 'Necessário para assinatura de documentos gerados no sistema'
+        }
+      });
+
+      console.log(`✅ Solicitação de certificado criada: ${certificateRequest.id}`);
+
+      return res.status(403).json({
+        success: false,
+        error: 'CERTIFICATE_REQUIRED',
+        message: 'Certificado digital necessário. Uma solicitação foi criada e precisa ser aprovada pelo prefeito ou secretário',
+        data: {
+          requestId: certificateRequest.id,
+          needsCertificate: true,
+          hasPendingRequest: true,
+          requestCreated: true
+        }
+      });
+    }
+
+    console.log(`✅ Certificado digital ativo encontrado: ${activeCertificate.serialNumber}`);
     console.log(`✅ Iniciando geração: templateId=${templateId}, protocolId=${protocolId}`);
 
+    // 4. Gerar documento
     const document = await documentGenerator.generateDocument({
       templateId,
       protocolId,
-      generatedBy: req.user!.id,
+      generatedBy: userId,
       additionalData
     });
 
+    console.log(`✅ Documento gerado: ${document.id}`);
+
+    // 5. TODO: Assinar documento automaticamente após geração
+    // (Necessita da chave privada do usuário - implementar fluxo seguro)
+    console.log(`⚠️ Assinatura digital automática: não implementada (requer chave privada)`);
+
     res.json({
       success: true,
-      data: document,
-      message: 'Documento gerado com sucesso'
+      data: {
+        ...document,
+        certificateUsed: {
+          id: activeCertificate.id,
+          serialNumber: activeCertificate.serialNumber,
+          commonName: activeCertificate.commonName
+        }
+      },
+      message: 'Documento gerado com sucesso',
+      warnings: ['Assinatura digital automática não aplicada - assine manualmente na aba de documentos gerados']
     });
   } catch (error: any) {
     console.error('❌ Error generating document:', error);
