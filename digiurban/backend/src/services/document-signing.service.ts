@@ -67,7 +67,7 @@ export async function signDocument(input: SignDocumentInput) {
 export async function verifySignature(signatureId: string) {
   const signature = await prisma.signature.findUnique({
     where: { id: signatureId },
-    include: { document: true, certificate: true },
+    include: { document: true, externalDocument: true, certificate: true },
   });
 
   if (!signature) {

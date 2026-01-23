@@ -26,6 +26,54 @@ export class FlowEngineService {
     this.wsServer = wsServer;
   }
 
+  private buildBotMetadata(response: any) {
+    const metadata: any = {
+      messageType: response.messageType,
+      needsInput: response.metadata?.waitingForInput,
+      flowId: response.metadata?.flowId,
+      executionId: response.metadata?.executionId,
+      nodeId: response.metadata?.nodeId,
+    };
+
+    if (response.data?.options) {
+      metadata.options = JSON.parse(JSON.stringify(response.data.options));
+    }
+
+    if (response.data?.fields) {
+      metadata.fields = JSON.parse(JSON.stringify(response.data.fields));
+    }
+
+    if (response.data?.uploadConfig) {
+      metadata.uploadConfig = response.data.uploadConfig;
+    }
+
+    if (response.data?.locationConfig) {
+      metadata.locationConfig = response.data.locationConfig;
+    }
+
+    if (response.data?.media) {
+      metadata.media = response.data.media;
+    }
+
+    return metadata;
+  }
+
+  private formatUserMessageContent(message: any) {
+    if (typeof message === 'string') {
+      return message;
+    }
+
+    if (Array.isArray(message)) {
+      return `Dados enviados (${message.length})`;
+    }
+
+    try {
+      return JSON.stringify(message);
+    } catch {
+      return 'Dados enviados';
+    }
+  }
+
   /**
    * Inicia novo fluxo
    */
@@ -53,6 +101,7 @@ export class FlowEngineService {
 
     // 2. Iniciar fluxo
     const response = await this.flowEngine.startFlow(citizenId, flowName, conversationId);
+    const botMetadata = this.buildBotMetadata(response);
 
     // 3. Atualizar conversa com dados do bot
     await this.updateConversationBotData(conversationId, {
@@ -60,6 +109,10 @@ export class FlowEngineService {
       botFlowType: flowName,
       botFlowStep: 0,
       botLastInteractionAt: new Date(),
+      botFlowData: {
+        currentNodeId: response.metadata?.nodeId,
+        waitingForInput: response.metadata?.waitingForInput,
+      },
     });
 
     // 4. Salvar mensagem do bot
@@ -72,11 +125,7 @@ export class FlowEngineService {
         contentType: 'TEXT',
         status: 'SENT',
         sentAt: new Date(),
-        metadata: {
-          messageType: response.messageType,
-          options: response.data?.options ? JSON.parse(JSON.stringify(response.data.options)) : undefined,
-          needsInput: response.metadata?.waitingForInput,
-        } as any,
+        metadata: botMetadata as any,
       },
     });
 
@@ -130,7 +179,7 @@ export class FlowEngineService {
   /**
    * Processa mensagem do usuário
    */
-  async processMessage(citizenId: string, message: string, conversationId?: string) {
+  async processMessage(citizenId: string, message: any, conversationId?: string) {
     console.log('[FlowEngineService.processMessage]', { citizenId, message, conversationId });
 
     // 1. Buscar/criar conversa
@@ -158,7 +207,7 @@ export class FlowEngineService {
         conversationId,
         senderId: citizenId,
         senderType: 'CITIZEN',
-        content: message,
+        content: this.formatUserMessageContent(message),
         contentType: 'TEXT',
         status: 'SENT',
         sentAt: new Date(),
@@ -167,6 +216,13 @@ export class FlowEngineService {
 
     // 3. Processar no FlowEngine
     const response = await this.flowEngine.processMessage(citizenId, message, conversationId);
+    const botMetadata = this.buildBotMetadata(response);
+    const flowName = response.metadata?.flowId
+      ? (await prisma.flowDefinition.findUnique({
+          where: { id: response.metadata.flowId },
+          select: { name: true },
+        }))?.name
+      : null;
 
     // 4. Salvar resposta do bot
     const botMessage = await prisma.message.create({
@@ -178,11 +234,7 @@ export class FlowEngineService {
         contentType: 'TEXT',
         status: 'SENT',
         sentAt: new Date(),
-        metadata: {
-          messageType: response.messageType,
-          options: response.data?.options ? JSON.parse(JSON.stringify(response.data.options)) : undefined,
-          needsInput: response.metadata?.waitingForInput,
-        } as any,
+        metadata: botMetadata as any,
       },
     });
 
@@ -194,6 +246,11 @@ export class FlowEngineService {
         lastMessagePreview: response.message.substring(0, 100),
         totalMessages: { increment: 2 },
         botLastInteractionAt: new Date(),
+        ...(flowName ? { botFlowType: flowName } : {}),
+        botFlowData: {
+          currentNodeId: response.metadata?.nodeId,
+          waitingForInput: response.metadata?.waitingForInput,
+        },
         ...(isParticipant1
           ? { unreadCount1: { increment: 1 } }
           : { unreadCount2: { increment: 1 } }),
@@ -292,8 +349,25 @@ export class FlowEngineService {
   /**
    * Handle upload de arquivos
    */
-  async handleUpload(_citizenId: string, files: any[]) {
-    // Processar arquivos e retornar informações
+  async handleUpload(citizenId: string, files: any[], conversationId?: string) {
+    if (!conversationId) {
+      const conversation = await this.findOrCreateBotConversation(citizenId);
+      conversationId = conversation.id;
+    }
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        participant1Id: true,
+        participant1Type: true,
+        participant2Id: true,
+        participant2Type: true,
+      },
+    });
+
+    const isParticipant1 = conversation?.participant1Id === citizenId &&
+      conversation?.participant1Type === 'CITIZEN';
+
     const uploadedFiles = files.map((file: any) => ({
       fileName: file.originalname,
       filePath: file.path,
@@ -301,9 +375,80 @@ export class FlowEngineService {
       mimeType: file.mimetype,
     }));
 
+    const userMessage = await prisma.message.create({
+      data: {
+        conversationId,
+        senderId: citizenId,
+        senderType: 'CITIZEN',
+        content: `Arquivos enviados (${uploadedFiles.length})`,
+        contentType: 'FILE',
+        attachments: uploadedFiles as any,
+        status: 'SENT',
+        sentAt: new Date(),
+      },
+    });
+
+    const response = await this.flowEngine.processMessage(citizenId, uploadedFiles, conversationId);
+    const botMetadata = this.buildBotMetadata(response);
+
+    const botMessage = await prisma.message.create({
+      data: {
+        conversationId,
+        senderId: 'DIGIBOT_SYSTEM',
+        senderType: 'SYSTEM',
+        content: response.message,
+        contentType: 'TEXT',
+        status: 'SENT',
+        sentAt: new Date(),
+        metadata: botMetadata as any,
+      },
+    });
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        lastMessagePreview: response.message.substring(0, 100),
+        totalMessages: { increment: 2 },
+        botLastInteractionAt: new Date(),
+        botFlowData: {
+          currentNodeId: response.metadata?.nodeId,
+          waitingForInput: response.metadata?.waitingForInput,
+        },
+        ...(isParticipant1
+          ? { unreadCount1: { increment: 1 } }
+          : { unreadCount2: { increment: 1 } }),
+        updatedAt: new Date(),
+      },
+    });
+
+    if (this.wsServer) {
+      this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
+        conversationId,
+        message: userMessage,
+      });
+      this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
+        conversationId,
+        message: botMessage,
+      });
+
+      this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
+        conversationId,
+        message: userMessage,
+      });
+      this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
+        conversationId,
+        message: botMessage,
+      });
+    }
+
     return {
       success: true,
       files: uploadedFiles,
+      response,
+      conversationId,
+      userMessage,
+      botMessage,
     };
   }
 

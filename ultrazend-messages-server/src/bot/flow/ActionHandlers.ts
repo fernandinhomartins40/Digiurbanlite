@@ -8,6 +8,63 @@ import { getDigiUrbanIntegration } from '../DigiUrbanIntegration';
 
 const integration = getDigiUrbanIntegration();
 
+const ensureArray = (data: any) => (Array.isArray(data) ? data : []);
+
+const buildServiceOptions = (services: any[]) =>
+  services.map((service: any) => ({
+    id: service.id,
+    label: service.name,
+    description: service.description || service.category || 'Serviço',
+    metadata: { service },
+  }));
+
+const buildCategoryOptions = (categories: string[]) =>
+  categories.map((category) => ({
+    id: category,
+    label: category,
+    description: 'Categoria',
+  }));
+
+const buildProtocolOptions = (protocols: any[]) =>
+  protocols.map((protocol: any) => ({
+    id: protocol.id,
+    label: `#${protocol.number} - ${protocol.title}`,
+    description: protocol.status || 'Protocolo',
+    metadata: {
+      number: protocol.number,
+      status: protocol.status,
+      service: protocol.service,
+      department: protocol.department,
+    },
+  }));
+
+const buildFamilyOptions = (members: any[]) =>
+  members.map((member: any) => ({
+    id: member.member?.id || member.id,
+    label: member.member?.name || member.name || 'Membro',
+    description: member.relationship || 'Parentesco',
+    metadata: {
+      relationship: member.relationship,
+      cpf: member.member?.cpf || member.cpf,
+      birthDate: member.member?.birthDate || member.birthDate,
+      isDependent: member.isDependent,
+    },
+  }));
+
+const buildNotificationOptions = (notifications: any[]) =>
+  notifications.map((notification: any) => ({
+    id: notification.id,
+    label: notification.title || notification.subject || 'Notificação',
+    description: notification.message || notification.content || '',
+    metadata: {
+      title: notification.title || notification.subject,
+      message: notification.message || notification.content,
+      createdAt: notification.createdAt,
+      type: notification.type,
+      isRead: notification.isRead,
+    },
+  }));
+
 /**
  * Busca serviços disponíveis
  */
@@ -17,11 +74,11 @@ export const searchServices: ActionHandler = async (params, _context) => {
   const { query, category, limit = 10 } = params;
 
   try {
-    const result = await integration.searchServices(query, category, limit);
-
+    const result = ensureArray(await integration.searchServices(query, category, limit));
     return {
-      success: true,
-      data: result,
+      count: result.length,
+      services: buildServiceOptions(result),
+      raw: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.searchServices] Erro:', error);
@@ -39,11 +96,11 @@ export const listServices: ActionHandler = async (params, _context) => {
   const { limit = 50 } = params;
 
   try {
-    const result = await integration.listServices(limit);
-
+    const result = ensureArray(await integration.listServices(limit));
     return {
-      success: true,
-      data: result,
+      count: result.length,
+      services: buildServiceOptions(result),
+      raw: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.listServices] Erro:', error);
@@ -59,11 +116,11 @@ export const listServices: ActionHandler = async (params, _context) => {
  */
 export const listServiceCategories: ActionHandler = async (_params, _context) => {
   try {
-    const result = await integration.listServiceCategories();
-
+    const result = ensureArray(await integration.listServiceCategories());
     return {
-      success: true,
-      data: result,
+      count: result.length,
+      categories: buildCategoryOptions(result),
+      raw: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.listServiceCategories] Erro:', error);
@@ -89,10 +146,8 @@ export const getService: ActionHandler = async (params, _context) => {
 
   try {
     const result = await integration.getService(serviceId);
-
     return {
-      success: true,
-      data: result,
+      service: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.getService] Erro:', error);
@@ -116,7 +171,9 @@ export const createProtocol: ActionHandler = async (params, context) => {
     serviceId,
     description,
     customData,
+    formData,
     documents,
+    uploadedDocuments,
   } = params;
 
   if (!serviceId) {
@@ -127,19 +184,26 @@ export const createProtocol: ActionHandler = async (params, context) => {
   }
 
   try {
+    const resolvedDescription =
+      description ||
+      formData?.description ||
+      formData?.descricao ||
+      '';
+    const resolvedCustomData = customData || formData || {};
+    const resolvedDocuments = documents || uploadedDocuments || [];
+
     const result = await integration.createProtocol({
       citizenId: context.citizenId,
       serviceId,
-      description,
-      customData,
-      documents,
+      description: resolvedDescription,
+      customData: resolvedCustomData,
+      documents: resolvedDocuments,
     });
 
     console.log('[ActionHandlers.createProtocol] Protocolo criado:', result);
 
     return {
-      success: true,
-      data: result,
+      protocol: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.createProtocol] Erro:', error);
@@ -157,11 +221,11 @@ export const getProtocols: ActionHandler = async (params, context) => {
   const { limit = 10 } = params;
 
   try {
-    const result = await integration.getProtocols(context.citizenId, limit);
-
+    const result = ensureArray(await integration.getProtocols(context.citizenId, limit));
     return {
-      success: true,
-      data: result,
+      count: result.length,
+      protocols: buildProtocolOptions(result),
+      raw: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.getProtocols] Erro:', error);
@@ -189,8 +253,7 @@ export const getProtocolByNumber: ActionHandler = async (params, context) => {
     const result = await integration.getProtocolByNumber(protocolNumber, context.citizenId);
 
     return {
-      success: true,
-      data: result,
+      protocol: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.getProtocolByNumber] Erro:', error);
@@ -205,9 +268,10 @@ export const getProtocolByNumber: ActionHandler = async (params, context) => {
  * Adiciona comentário ao protocolo
  */
 export const addProtocolComment: ActionHandler = async (params, context) => {
-  const { protocolId, comment } = params;
+  const { protocolId, comment, message } = params;
+  const resolvedComment = comment || message;
 
-  if (!protocolId || !comment) {
+  if (!protocolId || !resolvedComment) {
     return {
       success: false,
       error: 'Dados incompletos para adicionar comentário',
@@ -215,11 +279,14 @@ export const addProtocolComment: ActionHandler = async (params, context) => {
   }
 
   try {
-    const result = await integration.addProtocolComment(protocolId, context.citizenId, comment);
+    const result = await integration.addProtocolComment(
+      protocolId,
+      context.citizenId,
+      resolvedComment
+    );
 
     return {
-      success: true,
-      data: result,
+      comment: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.addProtocolComment] Erro:', error);
@@ -238,8 +305,7 @@ export const getCitizenProfile: ActionHandler = async (_params, context) => {
     const result = await integration.getCitizen(context.citizenId);
 
     return {
-      success: true,
-      data: result,
+      profile: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.getCitizenProfile] Erro:', error);
@@ -260,8 +326,7 @@ export const updateCitizenProfile: ActionHandler = async (params, context) => {
     const result = await integration.updateCitizenProfile(context.citizenId, updates);
 
     return {
-      success: true,
-      data: result,
+      profile: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.updateCitizenProfile] Erro:', error);
@@ -277,11 +342,17 @@ export const updateCitizenProfile: ActionHandler = async (params, context) => {
  */
 export const getFamilyMembers: ActionHandler = async (_params, context) => {
   try {
-    const result = await integration.getFamilyMembers(context.citizenId);
+    const result = ensureArray(await integration.getFamilyMembers(context.citizenId));
+    const uniqueMembers = Array.from(
+      new Map(
+        result.map((item: any) => [item.member?.id || item.id, item])
+      ).values()
+    );
 
     return {
-      success: true,
-      data: result,
+      count: uniqueMembers.length,
+      members: buildFamilyOptions(uniqueMembers),
+      raw: uniqueMembers,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.getFamilyMembers] Erro:', error);
@@ -299,11 +370,14 @@ export const getNotifications: ActionHandler = async (params, context) => {
   const { unreadOnly = false, limit = 20 } = params;
 
   try {
-    const result = await integration.getNotifications(context.citizenId, unreadOnly, limit);
+    const result = ensureArray(
+      await integration.getNotifications(context.citizenId, unreadOnly, limit)
+    );
 
     return {
-      success: true,
-      data: result,
+      count: result.length,
+      notifications: buildNotificationOptions(result),
+      raw: result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.getNotifications] Erro:', error);
@@ -324,8 +398,7 @@ export const markNotificationsAsRead: ActionHandler = async (params, context) =>
     const result = await integration.markNotificationsAsRead(context.citizenId, notificationIds);
 
     return {
-      success: true,
-      data: result,
+      result,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.markNotificationsAsRead] Erro:', error);

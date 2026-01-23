@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import { CalendarPicker } from './CalendarPicker';
 import { TimePicker } from './TimePicker';
 import { ConfirmationCard } from './ConfirmationCard';
@@ -12,6 +13,7 @@ import { SearchableSelect } from './SearchableSelect';
 import { MessageCard } from './MessageCard';
 import { InteractiveCard } from './InteractiveCard';
 import { QuickReplies } from './QuickReplies';
+import { FormCard } from './FormCard';
 
 interface BotMessageRendererProps {
   message: any;
@@ -19,17 +21,11 @@ interface BotMessageRendererProps {
 }
 
 export function BotMessageRenderer({ message, onInteraction }: BotMessageRendererProps) {
-  const { messageType, metadata } = message;
+  const metadata = message?.metadata || {};
+  const messageType = message?.messageType || metadata.messageType || 'text';
+  const options = Array.isArray(metadata.options) ? metadata.options : [];
+  const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
 
-  // DEBUG: Log para verificar o que está chegando
-  console.log('🔍 [BotMessageRenderer] Mensagem recebida:', {
-    messageType,
-    metadata,
-    hasQuickReplies: !!metadata?.quickReplies,
-    quickReplies: metadata?.quickReplies
-  });
-
-  // Renderiza barra de progresso se houver
   const renderProgress = () => {
     if (metadata?.progress && metadata?.totalSteps) {
       return (
@@ -42,15 +38,14 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
     return null;
   };
 
-  // Renderiza componente baseado no tipo
-  const renderInteractive = () => {
+  const renderLegacyInteractive = () => {
     const stepType = metadata?.stepType;
 
     switch (stepType) {
       case 'date':
         return (
           <CalendarPicker
-            onSelect={date => onInteraction(date.toISOString())}
+            onSelect={(date) => onInteraction(date.toISOString())}
             minDate={metadata.minDate}
             maxDate={metadata.maxDate}
           />
@@ -59,7 +54,7 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
       case 'time':
         return (
           <TimePicker
-            onSelect={time => onInteraction(time)}
+            onSelect={(time) => onInteraction(time)}
             availableTimes={metadata.availableTimes}
           />
         );
@@ -67,7 +62,7 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
       case 'location':
         return (
           <LocationPicker
-            onSelect={location => onInteraction(location)}
+            onSelect={(location) => onInteraction(location)}
             allowCurrentLocation={metadata.allowCurrentLocation}
             allowManualAddress={metadata.allowManualAddress}
           />
@@ -76,7 +71,7 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
       case 'file_upload':
         return (
           <DocumentUploadCard
-            onUpload={files => onInteraction(files)}
+            onUpload={(files) => onInteraction(files)}
             accept={metadata.accept}
             maxFiles={metadata.maxFiles}
             maxSize={metadata.maxSize}
@@ -87,7 +82,7 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
         return (
           <SearchableSelect
             options={metadata.options || []}
-            onSelect={value => onInteraction(value)}
+            onSelect={(value) => onInteraction(value)}
             placeholder={metadata.placeholder}
           />
         );
@@ -97,9 +92,9 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
         return (
           <InteractiveCard
             type={stepType === 'multiple_choice' ? 'multiple-choice' : 'single-choice'}
-            question={metadata.question || 'Selecione uma opção'}
+            question={metadata.question || 'Selecione uma opcao'}
             options={metadata.options || []}
-            onSelect={selected => onInteraction(selected)}
+            onSelect={(selected) => onInteraction(selected)}
           />
         );
 
@@ -112,43 +107,112 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
           />
         );
 
+      case 'rating':
+        return (
+          <RatingCard
+            onSelect={(rating) => onInteraction(rating)}
+            maxRating={metadata.maxRating || 5}
+            title={metadata.title}
+          />
+        );
+
       default:
         return null;
     }
+  };
+
+  const renderStructuredInput = () => {
+    if (messageType === 'menu' && options.length > 0) {
+      return (
+        <div className="flex flex-col gap-2">
+          {options.map((option: any) => (
+            <Button
+              key={option.id}
+              variant="outline"
+              onClick={() => onInteraction(option)}
+              className="justify-start text-left"
+            >
+              <div>
+                <div className="font-semibold">{option.label}</div>
+                {option.description && (
+                  <div className="text-xs text-muted-foreground">
+                    {option.description}
+                  </div>
+                )}
+              </div>
+            </Button>
+          ))}
+        </div>
+      );
+    }
+
+    if (messageType === 'form' && fields.length > 0) {
+      return <FormCard fields={fields} onSubmit={(data) => onInteraction(data)} />;
+    }
+
+    if (messageType === 'upload') {
+      const uploadConfig = metadata.uploadConfig || {};
+      const accept = Array.isArray(uploadConfig.allowedTypes)
+        ? uploadConfig.allowedTypes.join(',')
+        : undefined;
+      const maxFiles = uploadConfig.maxFiles || (uploadConfig.multiple ? 5 : 1);
+      const maxSize = uploadConfig.maxFileSize
+        ? uploadConfig.maxFileSize * 1024 * 1024
+        : undefined;
+
+      return (
+        <DocumentUploadCard
+          onUpload={(files) => onInteraction(files)}
+          accept={accept}
+          maxFiles={maxFiles}
+          maxSize={maxSize}
+          title={uploadConfig.text || 'Envie os documentos'}
+        />
+      );
+    }
+
+    if (messageType === 'location') {
+      const locationConfig = metadata.locationConfig || {};
+      return (
+        <LocationPicker
+          onSelect={(location) => onInteraction(location)}
+          allowCurrentLocation={locationConfig.allowCurrentLocation !== false}
+          allowManualAddress={locationConfig.allowManualInput !== false}
+        />
+      );
+    }
+
+    return null;
   };
 
   return (
     <div className="space-y-3">
       {renderProgress()}
 
-      {/* Texto da mensagem */}
-      {message.content && (
+      {message?.content && (
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <p className="text-gray-900 whitespace-pre-wrap">{message.content}</p>
         </div>
       )}
 
-      {/* Cards */}
       {messageType === 'card' && metadata?.cards && (
         <div className="space-y-2">
           {metadata.cards.map((card: any) => (
             <MessageCard
               key={card.id}
               card={card}
-              onAction={action => onInteraction(action)}
+              onAction={(action) => onInteraction(action)}
             />
           ))}
         </div>
       )}
 
-      {/* Componente interativo */}
-      {messageType === 'interactive' && renderInteractive()}
+      {renderStructuredInput() || (messageType === 'interactive' && renderLegacyInteractive())}
 
-      {/* Quick Replies */}
       {metadata?.quickReplies && (
         <QuickReplies
           replies={metadata.quickReplies}
-          onSelect={reply => onInteraction(reply)}
+          onSelect={(reply) => onInteraction(reply)}
         />
       )}
     </div>

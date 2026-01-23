@@ -91,6 +91,20 @@ export class FlowEngine {
       retryCount: execution.metadata?.retryCount || 0,
     });
 
+    if (execution.metadata?.paused) {
+      return {
+        message: 'Atendimento humano em andamento. Aguarde a resposta do atendente.',
+        messageType: 'text',
+        metadata: {
+          flowId: execution.flowId,
+          executionId: execution.id,
+          nodeId: execution.currentNodeId,
+          waitingForInput: false,
+          paused: true,
+        },
+      };
+    }
+
     // Busca definição do fluxo
     const flow = await this.getFlowById(execution.flowId);
     if (!flow) {
@@ -202,6 +216,11 @@ export class FlowEngine {
       return this.startFlow(execution.citizenId, flowName, execution.conversationId);
     }
 
+    if (result.data?.returnToMain) {
+      await this.stateManager.completeExecution(execution.id);
+      return this.startFlow(execution.citizenId, 'menu_principal', execution.conversationId);
+    }
+
     // Se está aguardando input, retorna resposta e mantém nodo
     if (result.waitingForInput) {
       return this.buildBotResponse(result, execution, flow, currentNode);
@@ -293,6 +312,11 @@ export class FlowEngine {
       // Cancela fluxo atual e inicia novo
       await this.stateManager.completeExecution(execution.id);
       return this.startFlow(execution.citizenId, flowName, execution.conversationId);
+    }
+
+    if (result.data?.returnToMain) {
+      await this.stateManager.completeExecution(execution.id);
+      return this.startFlow(execution.citizenId, 'menu_principal', execution.conversationId);
     }
 
     // Se aguarda input, retorna

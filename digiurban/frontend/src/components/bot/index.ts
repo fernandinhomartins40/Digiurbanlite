@@ -5,6 +5,7 @@ export { ProgressBar } from './ProgressBar';
 export { LocationPicker } from './LocationPicker';
 export { RatingCard } from './RatingCard';
 export { DocumentUploadCard } from './DocumentUploadCard';
+export { FormCard } from './FormCard';
 export { SearchableSelect } from './SearchableSelect';
 export { BotMessageRenderer } from './BotMessageRenderer';
 export { MessageCard } from './MessageCard';

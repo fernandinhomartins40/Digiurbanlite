@@ -241,7 +241,7 @@
         "action": "addProtocolComment",
         "params": {
           "protocolId": "{{protocolDetails.protocol.id}}",
-          "message": "{{comment}}"
+          "comment": "{{comment}}"
         }
       },
       "transitions": [
@@ -268,3 +268,4 @@
     }
   ]
 }
+

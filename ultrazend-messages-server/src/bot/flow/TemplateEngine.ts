@@ -7,6 +7,11 @@
 import { FlowState } from '../types';
 
 export class TemplateEngine {
+  private getExactTemplatePath(template: string): string | null {
+    const match = template.match(/^\s*\{\{([^}]+)\}\}\s*$/);
+    return match ? match[1].trim() : null;
+  }
+
   /**
    * Renderiza string com templates substituindo variáveis do estado
    * Ex: "Olá {{name}}, seu protocolo é {{protocol.number}}"
@@ -69,6 +74,10 @@ export class TemplateEngine {
    */
   renderObject(obj: any, state: FlowState): any {
     if (typeof obj === 'string') {
+      const exactPath = this.getExactTemplatePath(obj);
+      if (exactPath) {
+        return this.resolve(exactPath, state);
+      }
       return this.render(obj, state);
     }
 

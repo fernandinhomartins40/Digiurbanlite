@@ -1,6 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import ReactFlow, {
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  Background,
+  Controls,
+  MiniMap,
+  type Connection,
+  type Edge,
+  type EdgeChange,
+  type Node,
+  type NodeChange,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +24,14 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Save, Code, CheckCircle, AlertCircle } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Save, CheckCircle, AlertCircle, Plus, Trash2 } from 'lucide-react';
 
 interface FlowEditorProps {
   flowId?: string;
@@ -23,6 +44,128 @@ interface ValidationError {
   path: string;
   message: string;
 }
+
+type FlowTransition = {
+  to: string;
+  when?: string;
+};
+
+type FlowNodeDefinition = {
+  id: string;
+  type: string;
+  config?: Record<string, any>;
+  transitions?: FlowTransition[];
+  metadata?: Record<string, any>;
+};
+
+type FlowDefinition = {
+  name: string;
+  description: string;
+  version: string;
+  metadata: {
+    icon?: string;
+    color?: string;
+    category?: string;
+  };
+  nodes: FlowNodeDefinition[];
+};
+
+const NODE_TYPES = [
+  'message',
+  'question',
+  'menu',
+  'action',
+  'condition',
+  'form',
+  'upload',
+  'location',
+  'end',
+];
+
+const buildDefaultNodeConfig = (type: string) => {
+  switch (type) {
+    case 'message':
+      return { text: 'Mensagem inicial' };
+    case 'question':
+      return { text: 'Pergunta', saveAs: 'resposta' };
+    case 'menu':
+      return {
+        text: 'Menu de opcoes',
+        options: [
+          { id: 'opcao_1', label: 'Opcao 1', description: 'Descricao' },
+        ],
+      };
+    case 'action':
+      return { action: 'listServices', params: {}, saveResultAs: 'resultado' };
+    case 'condition':
+      return {
+        conditions: [
+          { field: 'valor', operator: 'eq', value: 'x', goto: 'destino' },
+        ],
+        defaultGoto: 'destino_padrao',
+      };
+    case 'form':
+      return { text: 'Formulario', fields: [] };
+    case 'upload':
+      return {
+        text: 'Envie os arquivos',
+        maxFiles: 5,
+        maxFileSize: 10,
+        allowSkip: true,
+      };
+    case 'location':
+      return { text: 'Informe a localizacao', allowManualInput: true };
+    case 'end':
+      return { message: 'Fim do fluxo', returnToMain: true };
+    default:
+      return {};
+  }
+};
+
+const buildNodeLabel = (node: FlowNodeDefinition) => {
+  const text = node.config?.text || node.config?.action || '';
+  if (typeof text === 'string' && text.trim()) {
+    const preview = text.split('\n')[0].slice(0, 40);
+    return `${node.id} (${node.type}) - ${preview}`;
+  }
+  return `${node.id} (${node.type})`;
+};
+
+const buildReactFlowNodes = (nodes: FlowNodeDefinition[]): Node[] =>
+  nodes.map((node, index) => {
+    const position = node.metadata?.position || {
+      x: (index % 4) * 220,
+      y: Math.floor(index / 4) * 140,
+    };
+
+    return {
+      id: node.id,
+      position,
+      data: {
+        label: buildNodeLabel(node),
+      },
+      type: 'default',
+    };
+  });
+
+const buildReactFlowEdges = (nodes: FlowNodeDefinition[]): Edge[] => {
+  const edges: Edge[] = [];
+
+  nodes.forEach((node) => {
+    (node.transitions || []).forEach((transition, index) => {
+      edges.push({
+        id: `${node.id}-${transition.to}-${index}`,
+        source: node.id,
+        target: transition.to,
+        type: 'smoothstep',
+        label: transition.when ? `when: ${transition.when}` : undefined,
+        data: { when: transition.when },
+      });
+    });
+  });
+
+  return edges;
+};
 
 export default function FlowEditor({
   flowId,
@@ -37,18 +180,47 @@ export default function FlowEditor({
     isActive: true,
     isDefault: false,
     metadata: {
-      icon: '📋',
+      icon: 'BOT',
       color: '#4CAF50',
       category: 'general',
     },
   });
+  const [flowNodes, setFlowNodes] = useState<FlowNodeDefinition[]>([]);
+  const [reactNodes, setReactNodes] = useState<Node[]>([]);
+  const [reactEdges, setReactEdges] = useState<Edge[]>([]);
   const [jsonContent, setJsonContent] = useState('');
+  const [activeTab, setActiveTab] = useState('builder');
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [nodeIdInput, setNodeIdInput] = useState('');
+  const [nodeTypeInput, setNodeTypeInput] = useState('message');
+  const [nodeConfigText, setNodeConfigText] = useState('');
+  const [nodeTransitionsText, setNodeTransitionsText] = useState('');
+  const [nodeEditorError, setNodeEditorError] = useState<string | null>(null);
+
+  const selectedNode = useMemo(
+    () => flowNodes.find((node) => node.id === selectedNodeId) || null,
+    [flowNodes, selectedNodeId]
+  );
+
+  const syncGraphFromFlow = useCallback((nodes: FlowNodeDefinition[]) => {
+    setReactNodes(buildReactFlowNodes(nodes));
+    setReactEdges(buildReactFlowEdges(nodes));
+  }, []);
+
+  const buildDefinition = useCallback((): FlowDefinition => ({
+    name: formData.name,
+    description: formData.description,
+    version: formData.version,
+    metadata: formData.metadata,
+    nodes: flowNodes,
+  }), [formData, flowNodes]);
 
   useEffect(() => {
     if (initialData) {
+      const nodes = (initialData.nodes || []) as FlowNodeDefinition[];
       setFormData({
         name: initialData.name || '',
         description: initialData.description || '',
@@ -56,28 +228,20 @@ export default function FlowEditor({
         isActive: initialData.isActive ?? true,
         isDefault: initialData.isDefault ?? false,
         metadata: initialData.metadata || {
-          icon: '📋',
+          icon: 'BOT',
           color: '#4CAF50',
           category: 'general',
         },
       });
-
-      const fullJson = {
-        name: initialData.name,
-        description: initialData.description,
-        version: initialData.version,
-        metadata: initialData.metadata,
-        nodes: initialData.nodes || [],
-      };
-
-      setJsonContent(JSON.stringify(fullJson, null, 2));
+      setFlowNodes(nodes);
+      syncGraphFromFlow(nodes);
     } else {
-      const template = {
+      const template: FlowDefinition = {
         name: 'novo_fluxo',
-        description: 'Descrição do fluxo',
+        description: 'Fluxo do bot',
         version: '1.0.0',
         metadata: {
-          icon: '📋',
+          icon: 'BOT',
           color: '#4CAF50',
           category: 'general',
         },
@@ -85,38 +249,58 @@ export default function FlowEditor({
           {
             id: 'start',
             type: 'message',
-            config: {
-              text: 'Mensagem inicial',
-            },
+            config: { text: 'Mensagem inicial' },
             transitions: [{ to: 'end' }],
           },
           {
             id: 'end',
             type: 'end',
-            config: {
-              message: 'Fim do fluxo',
-              returnToMain: true,
-            },
+            config: { message: 'Fim do fluxo', returnToMain: true },
           },
         ],
       };
-      setJsonContent(JSON.stringify(template, null, 2));
+      setFormData({
+        name: template.name,
+        description: template.description,
+        version: template.version,
+        isActive: true,
+        isDefault: false,
+        metadata: template.metadata,
+      });
+      setFlowNodes(template.nodes);
+      syncGraphFromFlow(template.nodes);
     }
-  }, [initialData]);
+  }, [initialData, syncGraphFromFlow]);
+
+  useEffect(() => {
+    if (activeTab !== 'json') {
+      setJsonContent(JSON.stringify(buildDefinition(), null, 2));
+    }
+  }, [activeTab, buildDefinition]);
+
+  useEffect(() => {
+    if (selectedNode) {
+      setNodeIdInput(selectedNode.id);
+      setNodeTypeInput(selectedNode.type);
+      setNodeConfigText(JSON.stringify(selectedNode.config || {}, null, 2));
+      setNodeTransitionsText(JSON.stringify(selectedNode.transitions || [], null, 2));
+      setNodeEditorError(null);
+    }
+  }, [selectedNode]);
 
   const validateFlowDefinition = (json: any): ValidationError[] => {
     const errors: ValidationError[] = [];
 
     if (!json.name || typeof json.name !== 'string') {
-      errors.push({ path: 'name', message: 'Nome é obrigatório' });
+      errors.push({ path: 'name', message: 'Nome obrigatorio' });
     }
 
     if (!json.description || typeof json.description !== 'string') {
-      errors.push({ path: 'description', message: 'Descrição é obrigatória' });
+      errors.push({ path: 'description', message: 'Descricao obrigatoria' });
     }
 
     if (!json.version || typeof json.version !== 'string') {
-      errors.push({ path: 'version', message: 'Versão é obrigatória' });
+      errors.push({ path: 'version', message: 'Versao obrigatoria' });
     }
 
     if (!json.nodes || !Array.isArray(json.nodes)) {
@@ -125,69 +309,37 @@ export default function FlowEditor({
     }
 
     if (json.nodes.length === 0) {
-      errors.push({ path: 'nodes', message: 'Deve haver pelo menos um nodo' });
+      errors.push({ path: 'nodes', message: 'Deve haver pelo menos um node' });
       return errors;
     }
 
     const nodeIds = new Set<string>();
     json.nodes.forEach((node: any, index: number) => {
       if (!node.id) {
-        errors.push({
-          path: `nodes[${index}].id`,
-          message: 'ID do nodo é obrigatório',
-        });
+        errors.push({ path: `nodes[${index}].id`, message: 'ID obrigatorio' });
       } else if (nodeIds.has(node.id)) {
-        errors.push({
-          path: `nodes[${index}].id`,
-          message: `ID duplicado: ${node.id}`,
-        });
+        errors.push({ path: `nodes[${index}].id`, message: `ID duplicado: ${node.id}` });
       } else {
         nodeIds.add(node.id);
       }
 
       if (!node.type) {
-        errors.push({
-          path: `nodes[${index}].type`,
-          message: 'Tipo do nodo é obrigatório',
-        });
+        errors.push({ path: `nodes[${index}].type`, message: 'Tipo obrigatorio' });
       }
 
-      const validTypes = [
-        'message',
-        'question',
-        'menu',
-        'action',
-        'condition',
-        'form',
-        'upload',
-        'location',
-        'end',
-      ];
-      if (node.type && !validTypes.includes(node.type)) {
-        errors.push({
-          path: `nodes[${index}].type`,
-          message: `Tipo inválido: ${node.type}`,
-        });
+      if (node.type && !NODE_TYPES.includes(node.type)) {
+        errors.push({ path: `nodes[${index}].type`, message: `Tipo invalido: ${node.type}` });
       }
 
       if (!node.config) {
-        errors.push({
-          path: `nodes[${index}].config`,
-          message: 'Config é obrigatório',
-        });
+        errors.push({ path: `nodes[${index}].config`, message: 'Config obrigatorio' });
       }
 
       if (node.type !== 'end') {
         if (!node.transitions || !Array.isArray(node.transitions)) {
-          errors.push({
-            path: `nodes[${index}].transitions`,
-            message: 'Transitions deve ser um array',
-          });
+          errors.push({ path: `nodes[${index}].transitions`, message: 'Transitions deve ser um array' });
         } else if (node.transitions.length === 0) {
-          errors.push({
-            path: `nodes[${index}].transitions`,
-            message: 'Deve haver pelo menos uma transição (exceto nodos END)',
-          });
+          errors.push({ path: `nodes[${index}].transitions`, message: 'Deve haver ao menos uma transicao' });
         }
       }
     });
@@ -196,15 +348,9 @@ export default function FlowEditor({
       if (node.transitions) {
         node.transitions.forEach((transition: any, tIndex: number) => {
           if (!transition.to) {
-            errors.push({
-              path: `nodes[${index}].transitions[${tIndex}].to`,
-              message: 'Destino da transição é obrigatório',
-            });
+            errors.push({ path: `nodes[${index}].transitions[${tIndex}].to`, message: 'Destino obrigatorio' });
           } else if (!nodeIds.has(transition.to)) {
-            errors.push({
-              path: `nodes[${index}].transitions[${tIndex}].to`,
-              message: `Nodo de destino não existe: ${transition.to}`,
-            });
+            errors.push({ path: `nodes[${index}].transitions[${tIndex}].to`, message: `Destino nao existe: ${transition.to}` });
           }
         });
       }
@@ -222,10 +368,10 @@ export default function FlowEditor({
       if (errors.length === 0) {
         setError(null);
         return true;
-      } else {
-        setError('Há erros de validação no fluxo');
-        return false;
       }
+
+      setError('Existe erro de validacao no fluxo');
+      return false;
     } catch (err: any) {
       setError(`Erro ao parsear JSON: ${err.message}`);
       setValidationErrors([]);
@@ -260,23 +406,226 @@ export default function FlowEditor({
     }
   };
 
-  const handleEditorChange = (value: string) => {
+  const handleJsonChange = (value: string) => {
     setJsonContent(value);
-    setTimeout(() => {
-      handleValidate();
-    }, 1000);
+    try {
+      const parsed = JSON.parse(value);
+      const errors = validateFlowDefinition(parsed);
+      setValidationErrors(errors);
+
+      if (errors.length === 0) {
+        setFormData((prev) => ({
+          ...prev,
+          name: parsed.name || prev.name,
+          description: parsed.description || prev.description,
+          version: parsed.version || prev.version,
+          metadata: parsed.metadata || prev.metadata,
+        }));
+        const nodes = Array.isArray(parsed.nodes) ? parsed.nodes : [];
+        setFlowNodes(nodes);
+        syncGraphFromFlow(nodes);
+        setError(null);
+      }
+    } catch {
+      setError('JSON invalido');
+    }
   };
+
+  const handleAddNode = (type: string) => {
+    const existingIds = new Set(flowNodes.map((node) => node.id));
+    let baseId = type;
+    let suffix = 1;
+    while (existingIds.has(baseId)) {
+      baseId = `${type}_${suffix}`;
+      suffix += 1;
+    }
+
+    const position = {
+      x: (flowNodes.length % 4) * 220,
+      y: Math.floor(flowNodes.length / 4) * 140,
+    };
+
+    const newNode: FlowNodeDefinition = {
+      id: baseId,
+      type,
+      config: buildDefaultNodeConfig(type),
+      transitions: [],
+      metadata: { position },
+    };
+
+    const updated = [...flowNodes, newNode];
+    setFlowNodes(updated);
+    syncGraphFromFlow(updated);
+    setSelectedNodeId(baseId);
+  };
+
+  const handleApplyNodeChanges = () => {
+    if (!selectedNode) return;
+
+    try {
+      const parsedConfig = nodeConfigText.trim()
+        ? JSON.parse(nodeConfigText)
+        : {};
+      const parsedTransitions = nodeTransitionsText.trim()
+        ? JSON.parse(nodeTransitionsText)
+        : [];
+
+      if (!Array.isArray(parsedTransitions)) {
+        setNodeEditorError('Transitions deve ser um array');
+        return;
+      }
+
+      const trimmedId = nodeIdInput.trim();
+      if (!trimmedId) {
+        setNodeEditorError('ID nao pode ficar vazio');
+        return;
+      }
+
+      if (trimmedId !== selectedNode.id && flowNodes.some((node) => node.id === trimmedId)) {
+        setNodeEditorError('ID ja existe em outro node');
+        return;
+      }
+
+      const updatedNodes = flowNodes.map((node) => {
+        if (node.id === selectedNode.id) {
+          return {
+            ...node,
+            id: trimmedId,
+            type: nodeTypeInput,
+            config: parsedConfig,
+            transitions: parsedTransitions,
+          };
+        }
+
+        if (node.transitions) {
+          return {
+            ...node,
+            transitions: node.transitions.map((transition) =>
+              transition.to === selectedNode.id
+                ? { ...transition, to: trimmedId }
+                : transition
+            ),
+          };
+        }
+
+        return node;
+      });
+
+      setFlowNodes(updatedNodes);
+      syncGraphFromFlow(updatedNodes);
+      setSelectedNodeId(trimmedId);
+      setNodeEditorError(null);
+    } catch (err: any) {
+      setNodeEditorError(`Erro ao aplicar: ${err.message}`);
+    }
+  };
+
+  const handleDeleteNode = () => {
+    if (!selectedNode) return;
+
+    const updated = flowNodes
+      .filter((node) => node.id !== selectedNode.id)
+      .map((node) => ({
+        ...node,
+        transitions: (node.transitions || []).filter((transition) => transition.to !== selectedNode.id),
+      }));
+
+    setFlowNodes(updated);
+    syncGraphFromFlow(updated);
+    setSelectedNodeId(null);
+  };
+
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      setReactNodes((nodes) => {
+        const updated = applyNodeChanges(changes, nodes);
+        const positions = new Map(updated.map((node) => [node.id, node.position]));
+        const updatedFlow = flowNodes.map((node) => ({
+          ...node,
+          metadata: {
+            ...node.metadata,
+            position: positions.get(node.id) || node.metadata?.position,
+          },
+        }));
+        setFlowNodes(updatedFlow);
+        return updated;
+      });
+    },
+    [flowNodes]
+  );
+
+  const handleEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      setReactEdges((edges) => {
+        const updated = applyEdgeChanges(changes, edges);
+        const transitionsBySource = new Map<string, FlowTransition[]>();
+
+        updated.forEach((edge) => {
+          const existing = transitionsBySource.get(edge.source) || [];
+          existing.push({
+            to: edge.target,
+            when: edge.data?.when,
+          });
+          transitionsBySource.set(edge.source, existing);
+        });
+
+        const updatedFlow = flowNodes.map((node) => ({
+          ...node,
+          transitions: transitionsBySource.get(node.id) || [],
+        }));
+        setFlowNodes(updatedFlow);
+
+        return updated;
+      });
+    },
+    [flowNodes]
+  );
+
+  const handleConnect = useCallback(
+    (connection: Connection) => {
+      if (!connection.source || !connection.target) return;
+
+      setReactEdges((edges) =>
+        addEdge(
+          {
+            ...connection,
+            type: 'smoothstep',
+            data: { when: undefined },
+          },
+          edges
+        )
+      );
+
+      const updatedFlow = flowNodes.map((node) => {
+        if (node.id !== connection.source) {
+          return node;
+        }
+
+        const transitions = node.transitions || [];
+        if (transitions.some((transition) => transition.to === connection.target)) {
+          return node;
+        }
+
+        return {
+          ...node,
+          transitions: [...transitions, { to: connection.target }],
+        };
+      });
+
+      setFlowNodes(updatedFlow);
+    },
+    [flowNodes]
+  );
 
   return (
     <div className="space-y-4">
-      {/* Header Actions */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <h2 className="text-2xl font-bold">
-              {flowId ? 'Editar Fluxo' : 'Novo Fluxo'}
+              {flowId ? 'Editar fluxo' : 'Novo fluxo'}
             </h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={handleValidate}>
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Validar
@@ -296,7 +645,6 @@ export default function FlowEditor({
         </CardContent>
       </Card>
 
-      {/* Error Alert */}
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -304,119 +652,198 @@ export default function FlowEditor({
         </Alert>
       )}
 
-      {/* Validation Errors */}
       {validationErrors.length > 0 && (
         <Alert variant="destructive">
           <AlertDescription>
             <div className="font-bold mb-2">
-              Erros de Validação ({validationErrors.length}):
+              Erros de validacao ({validationErrors.length}):
             </div>
             {validationErrors.map((err, idx) => (
               <div key={idx} className="text-sm">
-                • {err.path}: {err.message}
+                - {err.path}: {err.message}
               </div>
             ))}
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Success Message */}
       {validationErrors.length === 0 && jsonContent && (
         <Alert className="border-green-500 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            ✅ Fluxo válido! Pronto para salvar.
+            Fluxo valido. Pronto para salvar.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Tabs */}
-      <Tabs defaultValue="config" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="config">📝 Configurações</TabsTrigger>
-          <TabsTrigger value="json">💻 Editor JSON</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="builder">Builder</TabsTrigger>
+          <TabsTrigger value="config">Config</TabsTrigger>
+          <TabsTrigger value="json">JSON</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="builder">
+          <div className="grid gap-4 lg:grid-cols-[2fr,1fr]">
+            <Card className="min-h-[600px]">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-sm">Editor visual</CardTitle>
+                <div className="flex flex-wrap gap-2">
+                  {NODE_TYPES.map((type) => (
+                    <Button
+                      key={type}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAddNode(type)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      {type}
+                    </Button>
+                  ))}
+                </div>
+              </CardHeader>
+              <CardContent className="h-[600px]">
+                <ReactFlow
+                  nodes={reactNodes}
+                  edges={reactEdges}
+                  onNodesChange={handleNodesChange}
+                  onEdgesChange={handleEdgesChange}
+                  onConnect={handleConnect}
+                  onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+                  fitView
+                >
+                  <Background gap={20} size={1} />
+                  <MiniMap />
+                  <Controls />
+                </ReactFlow>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Inspector do node</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {selectedNode ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="node-id">ID</Label>
+                      <Input
+                        id="node-id"
+                        value={nodeIdInput}
+                        onChange={(event) => setNodeIdInput(event.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Tipo</Label>
+                      <Select value={nodeTypeInput} onValueChange={setNodeTypeInput}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {NODE_TYPES.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Config (JSON)</Label>
+                      <Textarea
+                        value={nodeConfigText}
+                        onChange={(event) => setNodeConfigText(event.target.value)}
+                        rows={8}
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Transitions (JSON)</Label>
+                      <Textarea
+                        value={nodeTransitionsText}
+                        onChange={(event) => setNodeTransitionsText(event.target.value)}
+                        rows={6}
+                        className="font-mono text-xs"
+                      />
+                    </div>
+
+                    {nodeEditorError && (
+                      <Alert variant="destructive">
+                        <AlertDescription>{nodeEditorError}</AlertDescription>
+                      </Alert>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={handleApplyNodeChanges}>Aplicar</Button>
+                      <Button variant="destructive" onClick={handleDeleteNode}>
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Remover
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    Selecione um node para editar.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="config">
           <Card>
             <CardContent className="pt-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Fluxo</Label>
+                  <Label htmlFor="name">Nome do fluxo</Label>
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => {
-                      setFormData({ ...formData, name: e.target.value });
-                      try {
-                        const parsed = JSON.parse(jsonContent);
-                        parsed.name = e.target.value;
-                        setJsonContent(JSON.stringify(parsed, null, 2));
-                      } catch {}
-                    }}
+                    onChange={(event) => setFormData({ ...formData, name: event.target.value })}
                     placeholder="ex: solicitar_servico"
                   />
-                  <p className="text-sm text-muted-foreground">
-                    Nome interno do fluxo
-                  </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="version">Versão</Label>
+                  <Label htmlFor="version">Versao</Label>
                   <Input
                     id="version"
                     value={formData.version}
-                    onChange={(e) => {
-                      setFormData({ ...formData, version: e.target.value });
-                      try {
-                        const parsed = JSON.parse(jsonContent);
-                        parsed.version = e.target.value;
-                        setJsonContent(JSON.stringify(parsed, null, 2));
-                      } catch {}
-                    }}
+                    onChange={(event) => setFormData({ ...formData, version: event.target.value })}
                     placeholder="1.0.0"
                   />
-                  <p className="text-sm text-muted-foreground">
-                    Versão semântica
-                  </p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="description">Descricao</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => {
-                    setFormData({ ...formData, description: e.target.value });
-                    try {
-                      const parsed = JSON.parse(jsonContent);
-                      parsed.description = e.target.value;
-                      setJsonContent(JSON.stringify(parsed, null, 2));
-                    } catch {}
-                  }}
+                  onChange={(event) => setFormData({ ...formData, description: event.target.value })}
                   rows={3}
-                  placeholder="Descrição detalhada do fluxo"
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="icon">Ícone</Label>
+                  <Label htmlFor="icon">Icon</Label>
                   <Input
                     id="icon"
                     value={formData.metadata.icon}
-                    onChange={(e) => {
+                    onChange={(event) =>
                       setFormData({
                         ...formData,
-                        metadata: { ...formData.metadata, icon: e.target.value },
-                      });
-                    }}
-                    placeholder="📋"
+                        metadata: { ...formData.metadata, icon: event.target.value },
+                      })
+                    }
+                    placeholder="BOT"
                   />
-                  <p className="text-sm text-muted-foreground">
-                    Emoji para identificação
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -425,12 +852,12 @@ export default function FlowEditor({
                     id="color"
                     type="color"
                     value={formData.metadata.color}
-                    onChange={(e) => {
+                    onChange={(event) =>
                       setFormData({
                         ...formData,
-                        metadata: { ...formData.metadata, color: e.target.value },
-                      });
-                    }}
+                        metadata: { ...formData.metadata, color: event.target.value },
+                      })
+                    }
                   />
                 </div>
 
@@ -439,18 +866,18 @@ export default function FlowEditor({
                   <Input
                     id="category"
                     value={formData.metadata.category}
-                    onChange={(e) => {
+                    onChange={(event) =>
                       setFormData({
                         ...formData,
-                        metadata: { ...formData.metadata, category: e.target.value },
-                      });
-                    }}
+                        metadata: { ...formData.metadata, category: event.target.value },
+                      })
+                    }
                     placeholder="general"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-6">
+              <div className="flex flex-wrap gap-6">
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="isActive"
@@ -459,7 +886,7 @@ export default function FlowEditor({
                       setFormData({ ...formData, isActive: checked })
                     }
                   />
-                  <Label htmlFor="isActive">Fluxo Ativo</Label>
+                  <Label htmlFor="isActive">Fluxo ativo</Label>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -470,7 +897,7 @@ export default function FlowEditor({
                       setFormData({ ...formData, isDefault: checked })
                     }
                   />
-                  <Label htmlFor="isDefault">Fluxo Padrão (Menu Principal)</Label>
+                  <Label htmlFor="isDefault">Fluxo padrao</Label>
                 </div>
               </div>
             </CardContent>
@@ -482,7 +909,7 @@ export default function FlowEditor({
             <CardContent className="pt-6">
               <Textarea
                 value={jsonContent}
-                onChange={(e) => handleEditorChange(e.target.value)}
+                onChange={(event) => handleJsonChange(event.target.value)}
                 className="font-mono text-sm min-h-[600px]"
                 placeholder="Cole aqui o JSON do fluxo..."
               />
@@ -491,22 +918,17 @@ export default function FlowEditor({
         </TabsContent>
       </Tabs>
 
-      {/* Quick Reference */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">📚 Tipos de Nodos Disponíveis</CardTitle>
+          <CardTitle className="text-sm">Tipos de nodes disponiveis</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline">message - Exibe mensagem</Badge>
-            <Badge variant="outline">question - Pergunta com input livre</Badge>
-            <Badge variant="outline">menu - Menu de opções</Badge>
-            <Badge variant="outline">action - Executa ação no backend</Badge>
-            <Badge variant="outline">condition - Avalia condições</Badge>
-            <Badge variant="outline">form - Formulário dinâmico</Badge>
-            <Badge variant="outline">upload - Upload de arquivos</Badge>
-            <Badge variant="outline">location - Solicita localização</Badge>
-            <Badge variant="outline">end - Finaliza fluxo</Badge>
+            {NODE_TYPES.map((type) => (
+              <Badge variant="outline" key={type}>
+                {type}
+              </Badge>
+            ))}
           </div>
         </CardContent>
       </Card>

@@ -372,7 +372,7 @@
       "id": "success",
       "type": "message",
       "config": {
-        "text": "✅ **Protocolo criado com sucesso!**\n\n📋 **Número:** {{createdProtocol.protocol.number}}\n📅 **Data:** {{createdProtocol.protocol.createdAt}}\n⏱️ **Prazo estimado:** {{createdProtocol.protocol.estimatedDays}} dias úteis\n\nVocê pode acompanhar seu protocolo pelo menu **\"Consultar Protocolo\"**.\n\nGuarde o número do seu protocolo para futuras consultas."
+        "text": "✅ **Protocolo criado com sucesso!**\n\n📋 **Número:** {{createdProtocol.protocol.number}}\n📅 **Data:** {{createdProtocol.protocol.createdAt}}\n⏱️ **Prazo estimado:** {{createdProtocol.protocol.service.estimatedDays}} dias úteis\n\nVocê pode acompanhar seu protocolo pelo menu **\"Consultar Protocolo\"**.\n\nGuarde o número do seu protocolo para futuras consultas."
       },
       "transitions": [
         { "to": "ask_new_request" }
@@ -421,3 +421,4 @@
     }
   ]
 }
+

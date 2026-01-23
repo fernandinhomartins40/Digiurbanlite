@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { BotMessageRenderer } from '@/src/components/bot';
 
 // Hook e helpers unificados
 import { useConversations, Message, Conversation } from '@/src/hooks/useConversations';
@@ -63,8 +64,6 @@ export function MessagesInterface({
   const [isMobileView, setIsMobileView] = useState(false);
   const [showConversationsList, setShowConversationsList] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [botOptions, setBotOptions] = useState<any[]>([]);
-  const [botMenuActive, setBotMenuActive] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -89,12 +88,6 @@ export function MessagesInterface({
       if (selectedConversation?.id === conversationId) {
         setMessages((prev) => (prev.some(item => item.id === message.id) ? prev : [...prev, message]));
         scrollToBottom();
-
-        if (mode === 'citizen' && (message.senderType === 'BOT' || message.senderType === 'SYSTEM')) {
-          const options = message.metadata?.options || [];
-          setBotOptions(options);
-          setBotMenuActive(options.length > 0);
-        }
 
         if (message.senderId !== userId) {
           markConversationAsRead(conversationId);
@@ -127,9 +120,6 @@ export function MessagesInterface({
     if (!conversation) return;
 
     setLoadingMessages(true);
-    setBotOptions([]);
-    setBotMenuActive(false);
-
     try {
       const response = await fetch(
         `${MESSAGES_API_URL}/conversations/${conversation.id}/messages`,
@@ -161,14 +151,6 @@ export function MessagesInterface({
       }
 
       setMessages(data);
-
-      const lastBotMessage = [...data]
-        .reverse()
-        .find((msg: Message) => msg.senderType === 'BOT' || msg.senderType === 'SYSTEM');
-
-      const options = lastBotMessage?.metadata?.options || [];
-      setBotOptions(options);
-      setBotMenuActive(options.length > 0);
 
       // Entrar na sala da conversa via socket
       if (socket) {
@@ -223,7 +205,7 @@ export function MessagesInterface({
   };
 
   // Enviar mensagem para o bot
-  const handleBotMessage = async (content: string) => {
+  const handleBotMessage = async (payload: any) => {
     if (!selectedConversation) return;
 
     try {
@@ -233,7 +215,7 @@ export function MessagesInterface({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationId: selectedConversation.id,
-          message: content,
+          message: payload,
         }),
       });
 
@@ -249,10 +231,6 @@ export function MessagesInterface({
 
       if (data.botMessage) {
         setMessages((prev) => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
-
-        const options = data.botMessage.metadata?.options || [];
-        setBotOptions(options);
-        setBotMenuActive(options.length > 0);
       }
     } catch (error) {
       console.error('Erro ao enviar mensagem para o bot:', error);
@@ -264,12 +242,56 @@ export function MessagesInterface({
     }
   };
 
-  // Clique em opção do bot
-  const handleBotOptionClick = (option: any) => {
-    if (option.value) {
-      setNewMessage(option.value);
-      handleBotMessage(option.value);
-      setBotMenuActive(false);
+  const handleBotUpload = async (files: File[]) => {
+    if (!selectedConversation) return;
+
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+    formData.append('conversationId', selectedConversation.id);
+
+    const response = await fetch(`${MESSAGES_API_URL}/bot-flow/upload`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao enviar arquivos');
+    }
+
+    const data = await response.json();
+
+    if (data.userMessage) {
+      setMessages((prev) => (prev.some(item => item.id === data.userMessage.id) ? prev : [...prev, data.userMessage]));
+    }
+
+    if (data.botMessage) {
+      setMessages((prev) => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
+    }
+  };
+
+  const handleBotInteraction = async (interaction: any) => {
+    try {
+      if (Array.isArray(interaction) && interaction.length > 0 && interaction[0] instanceof File) {
+        await handleBotUpload(interaction);
+        return;
+      }
+
+      if (interaction && typeof interaction === 'object' && !Array.isArray(interaction)) {
+        if (interaction.label && interaction.id) {
+          await handleBotMessage(interaction.label);
+          return;
+        }
+      }
+
+      await handleBotMessage(interaction);
+    } catch (err: any) {
+      console.error('Erro ao processar interacao do bot:', err);
+      toast({
+        title: 'Erro',
+        description: 'Nao foi possivel enviar a resposta para o bot',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -344,6 +366,28 @@ export function MessagesInterface({
     : null;
 
   const isConversationClosed = selectedConversation?.status === 'CLOSED';
+  const lastBotMessage = [...messages]
+    .reverse()
+    .find((msg) => msg.senderType === 'BOT' || msg.senderType === 'SYSTEM');
+  const lastBotType = lastBotMessage?.metadata?.messageType || lastBotMessage?.messageType;
+  const botStructuredInput =
+    mode === 'citizen' &&
+    lastBotMessage?.metadata?.needsInput &&
+    ['menu', 'form', 'upload', 'location'].includes(lastBotType || '');
+  const botInputHint = botStructuredInput
+    ? 'Selecione ou preencha as informacoes acima para continuar'
+    : '';
+  const botInputPlaceholder = botStructuredInput
+    ? lastBotType === 'menu'
+      ? 'Selecione uma opcao acima...'
+      : lastBotType === 'form'
+      ? 'Preencha o formulario acima...'
+      : lastBotType === 'upload'
+      ? 'Envie os arquivos acima...'
+      : lastBotType === 'location'
+      ? 'Informe a localizacao acima...'
+      : 'Aguarde a resposta acima...'
+    : 'Digite sua mensagem...';
 
   return (
     <div className="flex h-[calc(100vh-12rem)] bg-gray-50">
@@ -601,61 +645,50 @@ export function MessagesInterface({
                         </Avatar>
 
                         <div className="flex flex-col gap-2 max-w-[70%]">
-                          <div
-                            className={cn(
-                              'rounded-lg p-3',
-                              isOwn && !isBot && 'bg-blue-600 text-white',
-                              isBot &&
-                                'bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200',
-                              !isOwn && !isBot && 'bg-gray-100'
-                            )}
-                          >
-                            <p className="text-sm whitespace-pre-wrap break-words">
-                              {message.content}
-                            </p>
-                            <div
-                              className={cn(
-                                'flex items-center gap-1 mt-1',
-                                isOwn ? 'justify-end' : 'justify-start'
-                              )}
-                            >
-                              <span
-                                className={cn(
-                                  'text-xs',
-                                  isOwn ? 'text-white/70' : 'text-gray-500'
-                                )}
-                              >
+                          {isBot ? (
+                            <div className="space-y-2">
+                              <BotMessageRenderer
+                                message={message}
+                                onInteraction={handleBotInteraction}
+                              />
+                              <span className="text-xs text-gray-500">
                                 {formatTime(message.sentAt)}
                               </span>
-                              {isOwn && message.status === 'READ' && (
-                                <CheckCheck className="w-3 h-3 text-blue-300" />
-                              )}
-                              {isOwn && message.status !== 'READ' && (
-                                <Check className="w-3 h-3 text-white/70" />
-                              )}
                             </div>
-                          </div>
-
-                          {/* Quick Replies / Bot Options */}
-                          {isBot &&
-                            message.metadata?.options &&
-                            message.metadata.options.length > 0 &&
-                            mode === 'citizen' && (
-                              <div className="flex flex-col gap-2">
-                                {message.metadata.options.map((option: any, idx: number) => (
-                                  <Button
-                                    key={idx}
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleBotOptionClick(option)}
-                                    disabled={!botMenuActive}
-                                    className="justify-start text-left hover:bg-blue-50 hover:border-blue-300"
-                                  >
-                                    {option.label}
-                                  </Button>
-                                ))}
+                          ) : (
+                            <div
+                              className={cn(
+                                'rounded-lg p-3',
+                                isOwn && !isBot && 'bg-blue-600 text-white',
+                                !isOwn && !isBot && 'bg-gray-100'
+                              )}
+                            >
+                              <p className="text-sm whitespace-pre-wrap break-words">
+                                {message.content}
+                              </p>
+                              <div
+                                className={cn(
+                                  'flex items-center gap-1 mt-1',
+                                  isOwn ? 'justify-end' : 'justify-start'
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    'text-xs',
+                                    isOwn ? 'text-white/70' : 'text-gray-500'
+                                  )}
+                                >
+                                  {formatTime(message.sentAt)}
+                                </span>
+                                {isOwn && message.status === 'READ' && (
+                                  <CheckCheck className="w-3 h-3 text-blue-300" />
+                                )}
+                                {isOwn && message.status !== 'READ' && (
+                                  <Check className="w-3 h-3 text-white/70" />
+                                )}
                               </div>
-                            )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -673,22 +706,18 @@ export function MessagesInterface({
                 </div>
               ) : (
                 <>
-                  {botMenuActive && mode === 'citizen' && (
+                  {botStructuredInput && (
                     <div className="mb-2 text-xs text-center text-blue-600 bg-blue-50 py-1 px-3 rounded">
-                      ⬆️ Selecione uma das opções acima para continuar
+                      {botInputHint}
                     </div>
                   )}
                   <div className="flex gap-2">
                     <Input
-                      placeholder={
-                        botMenuActive && mode === 'citizen'
-                          ? 'Selecione uma opção acima...'
-                          : 'Digite sua mensagem...'
-                      }
+                      placeholder={botInputPlaceholder}
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                      disabled={!isConnected || (botMenuActive && mode === 'citizen')}
+                      disabled={!isConnected || botStructuredInput}
                       className="flex-1"
                     />
                     <Button
@@ -696,7 +725,7 @@ export function MessagesInterface({
                       disabled={
                         !newMessage.trim() ||
                         !isConnected ||
-                        (botMenuActive && mode === 'citizen')
+                        botStructuredInput
                       }
                     >
                       <Send className="w-4 h-4" />

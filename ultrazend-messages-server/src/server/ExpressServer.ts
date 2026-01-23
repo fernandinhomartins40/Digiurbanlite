@@ -849,7 +849,11 @@ export class ExpressServer {
         const { flowName, conversationId } = req.body;
         const citizenId = req.user!.userId;
 
-        const result = await this.flowEngineService.startFlow(citizenId, flowName, conversationId);
+        const result = await this.flowEngineService.startFlow(
+          citizenId,
+          flowName || 'menu_principal',
+          conversationId
+        );
         res.json(result);
       } catch (error) {
         logger.error('Error in POST /bot-flow/start', { error });
@@ -889,7 +893,8 @@ export class ExpressServer {
         const citizenId = req.user!.userId;
         const files = req.files as Express.Multer.File[];
 
-        const result = await this.flowEngineService.handleUpload(citizenId, files);
+        const conversationId = req.body?.conversationId as string | undefined;
+        const result = await this.flowEngineService.handleUpload(citizenId, files, conversationId);
         res.json(result);
       } catch (error) {
         logger.error('Error in POST /bot-flow/upload', { error });

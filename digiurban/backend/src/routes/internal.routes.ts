@@ -5,12 +5,34 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { internalAuthMiddleware } from '../middleware/internal-auth';
+import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { applyWorkflowToProtocol } from '../services/service-workflow.service';
+import { createProtocolSLA } from '../services/protocol-sla.service';
 
 const router = Router();
 const prisma = new PrismaClient();
 
 // Aplicar middleware de autenticação em todas as rotas
 router.use(internalAuthMiddleware);
+
+const coerceObject = (value: any) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+};
 
 // ========================================
 // CITIZENS
@@ -138,6 +160,25 @@ router.get('/services/search', async (req: Request, res: Response) => {
     const limitNum = parseInt(limit as string, 10);
 
     let services;
+    const selectFields = {
+      id: true,
+      name: true,
+      description: true,
+      category: true,
+      estimatedDays: true,
+      requiresDocuments: true,
+      requiredDocuments: true,
+      formSchema: true,
+      formFieldsConfig: true,
+      enabledFields: true,
+      moduleType: true,
+      department: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    };
 
     if (query) {
       // Busca por query (texto)
@@ -151,6 +192,7 @@ router.get('/services/search', async (req: Request, res: Response) => {
         },
         take: limitNum,
         orderBy: { name: 'asc' },
+        select: selectFields,
       });
     } else if (category) {
       // Busca por categoria
@@ -161,6 +203,7 @@ router.get('/services/search', async (req: Request, res: Response) => {
         },
         take: limitNum,
         orderBy: { name: 'asc' },
+        select: selectFields,
       });
     } else {
       // Listar serviços populares
@@ -168,6 +211,7 @@ router.get('/services/search', async (req: Request, res: Response) => {
         where: { isActive: true },
         take: limitNum,
         orderBy: { name: 'asc' },
+        select: selectFields,
       });
     }
 
@@ -188,6 +232,25 @@ router.get('/services', async (req: Request, res: Response) => {
       where: { isActive: true },
       take: limitNum,
       orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: true,
+        estimatedDays: true,
+        requiresDocuments: true,
+        requiredDocuments: true,
+        formSchema: true,
+        formFieldsConfig: true,
+        enabledFields: true,
+        moduleType: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     res.json(services);
@@ -225,6 +288,9 @@ router.get('/services/:serviceId', async (req: Request, res: Response) => {
 
     const service = await prisma.serviceSimplified.findUnique({
       where: { id: serviceId },
+      include: {
+        department: true,
+      },
     });
 
     if (!service) {
@@ -244,8 +310,8 @@ router.get('/services/:serviceId', async (req: Request, res: Response) => {
 
 // POST /api/internal/protocols - Criar protocolo
 router.post('/protocols', async (req: Request, res: Response) => {
-  try {
-    const { citizenId, serviceId, description, customData, documents } = req.body;
+    try {
+      const { citizenId, serviceId, description, customData, documents, moduleType } = req.body;
 
     if (!citizenId || !serviceId) {
       return res.status(400).json({ error: 'citizenId and serviceId are required' });
@@ -254,6 +320,9 @@ router.post('/protocols', async (req: Request, res: Response) => {
     // Buscar o serviço
     const service = await prisma.serviceSimplified.findUnique({
       where: { id: serviceId },
+      include: {
+        department: true,
+      },
     });
 
     if (!service) {
@@ -261,9 +330,15 @@ router.post('/protocols', async (req: Request, res: Response) => {
     }
 
     // Gerar número do protocolo
-    const year = new Date().getFullYear();
-    const count = await prisma.protocolSimplified.count();
-    const protocolNumber = `${year}${String(count + 1).padStart(6, '0')}`;
+    const protocolNumber = await generateProtocolNumberSafe();
+
+    const baseCustomData = coerceObject(customData);
+    const resolvedDocuments = Array.isArray(documents) ? documents : [];
+    const mergedCustomData = {
+      ...baseCustomData,
+      botDocuments: resolvedDocuments,
+      source: 'DIGIBOT',
+    };
 
     // Criar protocolo
     const protocol = await prisma.protocolSimplified.create({
@@ -276,10 +351,54 @@ router.post('/protocols', async (req: Request, res: Response) => {
         description: description || '',
         status: 'VINCULADO',
         priority: 3, // Prioridade normal
-        customData: customData || Prisma.JsonNull,
+        customData: mergedCustomData || Prisma.JsonNull,
+        moduleType: service.moduleType || moduleType || 'GERAL',
         createdById: citizenId, // Cidadão é o criador
       },
+      include: {
+        service: true,
+        department: true,
+      },
     });
+
+    const citizen = await prisma.citizen.findUnique({
+      where: { id: citizenId },
+      select: { id: true, name: true, cpf: true },
+    });
+
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId: protocol.id,
+        action: 'Protocolo criado',
+        comment: `Protocolo criado via DigiBot para o serviÇõo: ${service.name}`,
+        timestamp: new Date(),
+      },
+    });
+
+    await prisma.protocolInteraction.create({
+      data: {
+        protocolId: protocol.id,
+        type: 'MESSAGE',
+        authorType: 'CITIZEN',
+        authorId: citizenId,
+        authorName: citizen?.name || 'Cidadao',
+        message: `Protocolo ${protocolNumber} criado`,
+        isInternal: false,
+        isRead: false,
+      },
+    });
+
+    const stages = await applyWorkflowToProtocol(protocol.id);
+
+    if (!stages || stages.length === 0) {
+      throw new Error(`ServiÇõo "${service.name}" nÇœo possui workflow configurado`);
+    }
+
+    const sla = await createProtocolSLA(protocol.id);
+
+    if (!sla) {
+      throw new Error('Erro ao criar SLA do protocolo');
+    }
 
     res.json(protocol);
   } catch (error) {
@@ -308,6 +427,13 @@ router.get('/protocols', async (req: Request, res: Response) => {
             id: true,
             name: true,
             category: true,
+            estimatedDays: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
@@ -341,6 +467,13 @@ router.get('/protocols/number/:protocolNumber', async (req: Request, res: Respon
             id: true,
             name: true,
             category: true,
+            estimatedDays: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
           },
         },
       },
@@ -368,23 +501,48 @@ router.post('/protocols/:protocolId/comments', async (req: Request, res: Respons
     }
 
     // Atualizar protocolo com comentário no metadata ou criar sistema de comentários
-    const protocol = await prisma.protocolSimplified.update({
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId },
+      select: { customData: true },
+    });
+
+    const existingCustomData = coerceObject(protocol?.customData);
+    const existingComments = Array.isArray((existingCustomData as any).comments)
+      ? (existingCustomData as any).comments
+      : [];
+
+    const newComment = {
+      citizenId,
+      comment,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedCustomData = {
+      ...existingCustomData,
+      comments: [...existingComments, newComment],
+    };
+
+    const updated = await prisma.protocolSimplified.update({
       where: { id: protocolId },
       data: {
-        customData: {
-          ...{},
-          comments: [
-            {
-              citizenId,
-              comment,
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        },
+        customData: updatedCustomData,
       },
     });
 
-    res.json({ success: true, protocol });
+    await prisma.protocolInteraction.create({
+      data: {
+        protocolId,
+        type: 'MESSAGE',
+        authorType: 'CITIZEN',
+        authorId: citizenId,
+        authorName: 'Cidadao',
+        message: comment,
+        isInternal: false,
+        isRead: false,
+      },
+    });
+
+    res.json({ success: true, protocol: updated, comment: newComment });
   } catch (error) {
     console.error('[internal.routes] Error in POST /protocols/:protocolId/comments', error);
     res.status(500).json({ error: 'Internal server error' });

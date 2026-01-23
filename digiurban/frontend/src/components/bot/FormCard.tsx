@@ -1,0 +1,230 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+
+interface FormFieldOption {
+  value: string;
+  label: string;
+}
+
+interface FormField {
+  id?: string;
+  name?: string;
+  label?: string;
+  type?: string;
+  required?: boolean;
+  options?: FormFieldOption[];
+  placeholder?: string;
+  description?: string;
+}
+
+interface FormCardProps {
+  fields: FormField[];
+  onSubmit: (data: Record<string, any>) => void;
+  submitLabel?: string;
+}
+
+const normalizeField = (field: FormField) => {
+  const id = field.id || field.name || '';
+  return {
+    ...field,
+    id,
+    label: field.label || id,
+    type: field.type || 'text',
+  } as Required<FormField>;
+};
+
+export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardProps) {
+  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleChange = (id: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleSubmit = () => {
+    const nextErrors: Record<string, string> = {};
+
+    fields.map(normalizeField).forEach((field) => {
+      if (field.required && !formData[field.id]) {
+        nextErrors[field.id] = 'Campo obrigatorio';
+      }
+    });
+
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    onSubmit(formData);
+  };
+
+  const renderField = (field: Required<FormField>) => {
+    switch (field.type) {
+      case 'textarea':
+        return (
+          <Textarea
+            id={field.id}
+            value={formData[field.id] || ''}
+            onChange={(event) => handleChange(field.id, event.target.value)}
+            placeholder={field.placeholder || field.label}
+          />
+        );
+
+      case 'select':
+        return (
+          <Select
+            value={formData[field.id] || ''}
+            onValueChange={(value) => handleChange(field.id, value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={field.placeholder || 'Selecione'} />
+            </SelectTrigger>
+            <SelectContent>
+              {(field.options || []).map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+
+      case 'multiselect':
+        return (
+          <div className="space-y-2">
+            {(field.options || []).map((option) => {
+              const currentValues = Array.isArray(formData[field.id])
+                ? formData[field.id]
+                : [];
+              const checked = currentValues.includes(option.value);
+              return (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`${field.id}-${option.value}`}
+                    checked={checked}
+                    onCheckedChange={(value) => {
+                      const nextValues = value
+                        ? [...currentValues, option.value]
+                        : currentValues.filter((item: string) => item !== option.value);
+                      handleChange(field.id, nextValues);
+                    }}
+                  />
+                  <label
+                    htmlFor={`${field.id}-${option.value}`}
+                    className="text-sm text-gray-700"
+                  >
+                    {option.label}
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        );
+
+      case 'checkbox':
+      case 'boolean':
+        return (
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={field.id}
+              checked={Boolean(formData[field.id])}
+              onCheckedChange={(value) => handleChange(field.id, value)}
+            />
+            <label htmlFor={field.id} className="text-sm text-gray-700">
+              {field.label}
+            </label>
+          </div>
+        );
+
+      case 'number':
+        return (
+          <Input
+            id={field.id}
+            type="number"
+            value={formData[field.id] || ''}
+            onChange={(event) => handleChange(field.id, event.target.value)}
+            placeholder={field.placeholder || field.label}
+          />
+        );
+
+      case 'email':
+        return (
+          <Input
+            id={field.id}
+            type="email"
+            value={formData[field.id] || ''}
+            onChange={(event) => handleChange(field.id, event.target.value)}
+            placeholder={field.placeholder || field.label}
+          />
+        );
+
+      case 'date':
+        return (
+          <Input
+            id={field.id}
+            type="date"
+            value={formData[field.id] || ''}
+            onChange={(event) => handleChange(field.id, event.target.value)}
+          />
+        );
+
+      default:
+        return (
+          <Input
+            id={field.id}
+            type="text"
+            value={formData[field.id] || ''}
+            onChange={(event) => handleChange(field.id, event.target.value)}
+            placeholder={field.placeholder || field.label}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-6 space-y-4">
+      {fields.map((field) => {
+        const normalized = normalizeField(field);
+        if (!normalized.id) return null;
+
+        return (
+          <div key={normalized.id} className="space-y-2">
+            {normalized.type !== 'checkbox' && normalized.type !== 'boolean' && (
+              <Label htmlFor={normalized.id}>
+                {normalized.label}
+                {normalized.required && <span className="text-red-500 ml-1">*</span>}
+              </Label>
+            )}
+            {renderField(normalized)}
+            {normalized.description && (
+              <p className="text-xs text-muted-foreground">{normalized.description}</p>
+            )}
+            {errors[normalized.id] && (
+              <p className="text-xs text-red-500">{errors[normalized.id]}</p>
+            )}
+          </div>
+        );
+      })}
+
+      <Button className="w-full" onClick={handleSubmit}>
+        {submitLabel}
+      </Button>
+    </div>
+  );
+}
+
+export default FormCard;

@@ -27,6 +27,103 @@ export class NodeExecutors {
     private inputValidator: InputValidator
   ) {}
 
+  private buildStateUpdates(
+    saveAs: string,
+    value: any,
+    currentState: Record<string, any>
+  ): Record<string, any> {
+    if (!saveAs.includes('.')) {
+      return { [saveAs]: value };
+    }
+
+    const keys = saveAs.split('.');
+    const rootKey = keys.shift()!;
+    const rootValue =
+      currentState[rootKey] && typeof currentState[rootKey] === 'object'
+        ? { ...currentState[rootKey] }
+        : {};
+
+    let cursor: any = rootValue;
+    for (let i = 0; i < keys.length - 1; i += 1) {
+      const key = keys[i];
+      const existing =
+        cursor[key] && typeof cursor[key] === 'object' ? cursor[key] : {};
+      cursor[key] = { ...existing };
+      cursor = cursor[key];
+    }
+
+    cursor[keys[keys.length - 1]] = value;
+
+    return { [rootKey]: rootValue };
+  }
+
+  private resolveParams(params: Record<string, any>, state: Record<string, any>) {
+    return this.templateEngine.renderObject(params, state);
+  }
+
+  private normalizeFormFields(fieldsData: any): any[] {
+    if (Array.isArray(fieldsData)) {
+      return fieldsData.map((field) => this.normalizeField(field));
+    }
+
+    if (!fieldsData || typeof fieldsData !== 'object') {
+      return [];
+    }
+
+    if (Array.isArray(fieldsData.fields)) {
+      return fieldsData.fields.map((field: any) => this.normalizeField(field));
+    }
+
+    if (fieldsData.properties && typeof fieldsData.properties === 'object') {
+      const requiredFields = Array.isArray(fieldsData.required) ? fieldsData.required : [];
+      return Object.entries(fieldsData.properties).map(([key, schema]: [string, any]) => {
+        const field: any = {
+          id: key,
+          label: schema?.title || key,
+          required: requiredFields.includes(key),
+          placeholder: schema?.description,
+          type: schema?.type,
+        };
+
+        if (schema?.enum) {
+          field.type = 'select';
+          field.options = schema.enum.map((value: any) => ({
+            value: String(value),
+            label: String(value),
+          }));
+        } else if (schema?.format === 'date') {
+          field.type = 'date';
+        } else if (schema?.type === 'integer' || schema?.type === 'number') {
+          field.type = 'number';
+        } else if (schema?.type === 'boolean') {
+          field.type = 'checkbox';
+        } else {
+          field.type = 'text';
+        }
+
+        return this.normalizeField(field);
+      });
+    }
+
+    return [];
+  }
+
+  private normalizeField(field: any): any {
+    if (!field || typeof field !== 'object') {
+      return field;
+    }
+
+    const id = field.id || field.name;
+    const label = field.label || field.title || id;
+
+    return {
+      ...field,
+      id,
+      label,
+      name: field.name || id,
+    };
+  }
+
   /**
    * Executa nodo MESSAGE
    */
@@ -78,9 +175,12 @@ export class NodeExecutors {
       }
 
       // Salva resposta no estado
-      const stateUpdates: any = {};
       const saveAs = config.saveAs || node.id;
-      stateUpdates[saveAs] = context.userInput;
+      const stateUpdates = this.buildStateUpdates(
+        saveAs,
+        context.userInput,
+        context.execution.state as any
+      );
 
       // Avança para próximo nodo
       const nextNodeId = node.transitions[0]?.to;
@@ -189,9 +289,12 @@ export class NodeExecutors {
       console.log('[NodeExecutors.executeMenu] Opção matched:', matchedOption);
 
       // Salva seleção no estado
-      const stateUpdates: any = {};
       const saveAs = config.saveAs || node.id;
-      stateUpdates[saveAs] = matchedOption.id;
+      const stateUpdates = this.buildStateUpdates(
+        saveAs,
+        matchedOption.id,
+        context.execution.state as any
+      );
       stateUpdates[`${saveAs}_data`] = matchedOption;
 
       // Determina próximo nodo baseado na seleção
@@ -299,14 +402,7 @@ export class NodeExecutors {
 
     // Resolve parâmetros com templates
     const params = config.params || {};
-    const resolvedParams: any = {};
-    for (const [key, value] of Object.entries(params)) {
-      if (typeof value === 'string') {
-        resolvedParams[key] = this.templateEngine.render(value, context.execution.state);
-      } else {
-        resolvedParams[key] = value;
-      }
-    }
+    const resolvedParams = this.resolveParams(params, context.execution.state as any);
 
     // Caso especial: startFlow deve ser tratado pelo FlowEngine
     if (config.action === 'startFlow') {
@@ -332,22 +428,29 @@ export class NodeExecutors {
     }
 
     try {
+      const nextNodeId = node.transitions[0]?.to;
       const result = await handler(resolvedParams, context);
 
       // Salva resultado no estado se configurado
-      const stateUpdates: any = {};
       if (config.saveResultAs) {
-        stateUpdates[config.saveResultAs] = result;
+        const stateUpdates = this.buildStateUpdates(
+          config.saveResultAs,
+          result,
+          context.execution.state as any
+        );
+        return {
+          success: true,
+          nextNodeId,
+          waitingForInput: false,
+          stateUpdates,
+          data: result,
+        };
       }
-
-      // Avança para próximo nodo
-      const nextNodeId = node.transitions[0]?.to;
 
       return {
         success: true,
         nextNodeId,
         waitingForInput: false,
-        stateUpdates,
         data: result,
       };
     } catch (error: any) {
@@ -446,16 +549,17 @@ export class NodeExecutors {
     const config = node.config as FormNodeConfig;
 
     // Resolve fields (pode ser array ou path para schema dinâmico)
-    let fields: any[];
+    let fieldsData: any;
     if (typeof config.fields === 'string') {
-      const fieldsData = this.templateEngine.resolve(
+      fieldsData = this.templateEngine.resolve(
         config.fields,
         context.execution.state
       );
-      fields = Array.isArray(fieldsData) ? fieldsData : [];
     } else {
-      fields = config.fields;
+      fieldsData = config.fields;
     }
+
+    const fields = this.normalizeFormFields(fieldsData);
 
     // Se há input do usuário, valida e salva
     if (context.userInput !== undefined) {
@@ -489,9 +593,12 @@ export class NodeExecutors {
       }
 
       // Salva dados do formulário no estado
-      const stateUpdates: any = {};
       const saveAs = config.saveAs || node.id;
-      stateUpdates[saveAs] = formData;
+      const stateUpdates = this.buildStateUpdates(
+        saveAs,
+        formData,
+        context.execution.state as any
+      );
 
       // Avança para próximo nodo
       const nextNodeId = node.transitions[0]?.to;
@@ -547,9 +654,12 @@ export class NodeExecutors {
       }
 
       // Salva arquivos no estado
-      const stateUpdates: any = {};
       const saveAs = config.saveAs || node.id;
-      stateUpdates[saveAs] = files;
+      const stateUpdates = this.buildStateUpdates(
+        saveAs,
+        files,
+        context.execution.state as any
+      );
 
       // Avança para próximo nodo
       const nextNodeId = node.transitions[0]?.to;
@@ -585,9 +695,12 @@ export class NodeExecutors {
 
     // Se há localização, salva no estado
     if (context.userInput !== undefined) {
-      const stateUpdates: any = {};
       const saveAs = config.saveAs || node.id;
-      stateUpdates[saveAs] = context.userInput;
+      const stateUpdates = this.buildStateUpdates(
+        saveAs,
+        context.userInput,
+        context.execution.state as any
+      );
 
       // Avança para próximo nodo
       const nextNodeId = node.transitions[0]?.to;

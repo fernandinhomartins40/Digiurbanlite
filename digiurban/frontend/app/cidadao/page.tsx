@@ -37,6 +37,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { BottomNavigation } from '@/components/citizen/mobile/BottomNavigation';
 import { NewConversationDialog } from '@/src/components/Messages/NewConversationDialog';
+import { BotMessageRenderer } from '@/src/components/bot';
 
 // Hook unificado
 import { useConversations, Message, Conversation } from '@/src/hooks/useConversations';
@@ -66,6 +67,7 @@ export default function CitizenDashboard() {
   const [showNewConversation, setShowNewConversation] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
   // Hook unificado de conversas
   const {
@@ -135,8 +137,7 @@ export default function CitizenDashboard() {
    */
   const startBotFlow = async (conversationId: string) => {
     try {
-      const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
-      await fetch(`${messagesApiUrl}/bot-flow/start`, {
+      await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -156,9 +157,8 @@ export default function CitizenDashboard() {
     const conv = conversations.find(c => c.id === conversationId);
 
     try {
-      const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
       const response = await fetch(
-        `${messagesApiUrl}/conversations/${conversationId}/messages?limit=50`,
+        `${MESSAGES_API_URL}/conversations/${conversationId}/messages?limit=50`,
         { credentials: 'include' }
       );
 
@@ -170,7 +170,7 @@ export default function CitizenDashboard() {
           await startBotFlow(conversationId);
 
           const refreshResponse = await fetch(
-            `${messagesApiUrl}/conversations/${conversationId}/messages?limit=50`,
+            `${MESSAGES_API_URL}/conversations/${conversationId}/messages?limit=50`,
             { credentials: 'include' }
           );
 
@@ -206,6 +206,125 @@ export default function CitizenDashboard() {
     }
   };
 
+  const handleBotMessage = async (payload: any) => {
+    if (!selectedConversation) return;
+
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          message: payload,
+          conversationId: selectedConversation.id,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao enviar mensagem para o bot');
+      }
+
+      const data = await response.json();
+
+      if (data.userMessage) {
+        setMessages((prev) =>
+          prev.some((item) => item.id === data.userMessage.id)
+            ? prev
+            : [...prev, data.userMessage]
+        );
+      }
+
+      if (data.botMessage) {
+        setMessages((prev) =>
+          prev.some((item) => item.id === data.botMessage.id)
+            ? prev
+            : [...prev, data.botMessage]
+        );
+      }
+
+      scrollToBottom();
+    } catch (error) {
+      console.error('Erro ao enviar mensagem para o bot:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Nao foi possivel enviar a mensagem para o bot',
+      });
+    }
+  };
+
+  const handleBotUpload = async (files: File[]) => {
+    if (!selectedConversation) return;
+
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('files', file));
+      formData.append('conversationId', selectedConversation.id);
+
+      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/upload`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao enviar arquivos');
+      }
+
+      const data = await response.json();
+
+      if (data.userMessage) {
+        setMessages((prev) =>
+          prev.some((item) => item.id === data.userMessage.id)
+            ? prev
+            : [...prev, data.userMessage]
+        );
+      }
+
+      if (data.botMessage) {
+        setMessages((prev) =>
+          prev.some((item) => item.id === data.botMessage.id)
+            ? prev
+            : [...prev, data.botMessage]
+        );
+      }
+
+      scrollToBottom();
+    } catch (error) {
+      console.error('Erro ao enviar arquivos para o bot:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Nao foi possivel enviar os arquivos',
+      });
+    }
+  };
+
+  const handleBotInteraction = async (interaction: any) => {
+    try {
+      if (Array.isArray(interaction) && interaction.length > 0 && interaction[0] instanceof File) {
+        await handleBotUpload(interaction);
+        return;
+      }
+
+      if (interaction && typeof interaction === 'object' && !Array.isArray(interaction)) {
+        if (interaction.label && interaction.id) {
+          await handleBotMessage(interaction.label);
+          return;
+        }
+      }
+
+      await handleBotMessage(interaction);
+    } catch (error) {
+      console.error('Erro ao processar interacao do bot:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Nao foi possivel enviar a resposta para o bot',
+      });
+    }
+  };
+
   /**
    * Enviar mensagem
    */
@@ -223,30 +342,7 @@ export default function CitizenDashboard() {
 
       // Se for mensagem para o bot - USAR SISTEMA DE FLUXOS
       if (conv?.isBotConversation) {
-        const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
-        const response = await fetch(`${messagesApiUrl}/bot-flow/message`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            message: messageContent,
-            conversationId: selectedConversation.id,
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-
-          if (data.userMessage) {
-            setMessages(prev => (prev.some(item => item.id === data.userMessage.id) ? prev : [...prev, data.userMessage]));
-          }
-
-          if (data.botMessage) {
-            setMessages(prev => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
-          }
-
-          scrollToBottom();
-        }
+        await handleBotMessage(messageContent);
       } else {
         const tempMessage: Message = {
           id: `temp-${Date.now()}`,
@@ -296,6 +392,32 @@ export default function CitizenDashboard() {
    * Filtrar conversas
    */
   const filteredConversations = filterConversations(conversations, searchQuery);
+  const lastBotMessage = [...messages]
+    .reverse()
+    .find((msg) => msg.senderType === 'BOT' || msg.senderType === 'SYSTEM');
+  const lastBotType = lastBotMessage?.metadata?.messageType || lastBotMessage?.messageType;
+  const botStructuredInput = Boolean(
+    selectedConversation?.isBotConversation &&
+      lastBotMessage?.metadata?.needsInput &&
+      ['menu', 'form', 'upload', 'location'].includes(lastBotType || '')
+  );
+  const botInputHint = botStructuredInput
+    ? 'Selecione ou preencha as informacoes acima para continuar'
+    : '';
+  const defaultPlaceholder = selectedConversation?.isBotConversation
+    ? 'Digite sua mensagem...'
+    : 'Digite uma mensagem...';
+  const botInputPlaceholder = botStructuredInput
+    ? lastBotType === 'menu'
+      ? 'Selecione uma opcao acima...'
+      : lastBotType === 'form'
+      ? 'Preencha o formulario acima...'
+      : lastBotType === 'upload'
+      ? 'Envie os arquivos acima...'
+      : lastBotType === 'location'
+      ? 'Informe a localizacao acima...'
+      : defaultPlaceholder
+    : defaultPlaceholder;
 
   if (authLoading) {
     return (
@@ -627,101 +749,48 @@ export default function CitizenDashboard() {
                         )}
 
                         <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
-                          <div
-                            className={cn(
-                              "max-w-[70%] rounded-lg px-4 py-2 shadow-sm",
-                              isOwnMessage
-                                ? 'bg-blue-600 text-white'
-                                : isBot
-                                ? 'bg-gradient-to-br from-blue-50 to-purple-50 text-gray-900 border border-blue-200'
-                                : 'bg-white text-gray-900'
-                            )}
-                          >
-                            {isBot && !isOwnMessage && (
-                              <div className="flex items-center gap-2 mb-2 pb-2 border-b border-blue-200">
+                          {isBot ? (
+                            <div className="max-w-[70%] space-y-2">
+                              <div className="flex items-center gap-2 text-blue-700">
                                 <Sparkles className="w-4 h-4 text-blue-600" />
-                                <span className="text-xs font-semibold text-blue-700">DigiBot</span>
+                                <span className="text-xs font-semibold">DigiBot</span>
                               </div>
-                            )}
-                            <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
-
-                            {/* Quick Replies - Botões clicáveis */}
-                            {(message as any).metadata?.options && (message as any).metadata.options.length > 0 && (
-                              <div className="mt-3 flex flex-col gap-2">
-                                {(message as any).metadata.options.map((option: any) => (
-                                  <Button
-                                    key={option.id}
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={async () => {
-                                      console.log('🔘 [page.tsx] Opção selecionada:', option);
-
-                                      const userMsg: Message = {
-                                        id: `temp-${Date.now()}`,
-                                        content: option.label,
-                                        senderId: citizen?.id || '',
-                                        senderType: 'CITIZEN',
-                                        contentType: 'TEXT',
-                                        sentAt: new Date().toISOString(),
-                                        status: 'SENT',
-                                        isEdited: false,
-                                        isDeleted: false,
-                                        conversationId: selectedConversation.id,
-                                      };
-                                      setMessages(prev => [...prev, userMsg]);
-
-                                      try {
-                                        const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
-                                        const response = await fetch(`${messagesApiUrl}/bot-flow/message`, {
-                                          method: 'POST',
-                                          headers: { 'Content-Type': 'application/json' },
-                                          credentials: 'include',
-                                          body: JSON.stringify({ message: option.id, conversationId: selectedConversation.id })
-                                        });
-
-                                        if (response.ok) {
-                                          const data = await response.json();
-                                          if (data.botMessage) {
-                                            setMessages(prev => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
-                                          }
-                                          scrollToBottom();
-                                        }
-                                      } catch (error) {
-                                        console.error('Erro ao enviar opção:', error);
-                                      }
-                                    }}
-                                    className="text-sm bg-white hover:bg-blue-50 border-blue-300 text-blue-700 hover:text-blue-800 hover:border-blue-400 transition-all shadow-sm flex items-start justify-start text-left p-3"
-                                  >
-                                    <div className="flex-1">
-                                      <div className="font-semibold flex items-center gap-2">
-                                        {option.label}
-                                      </div>
-                                      {option.description && (
-                                        <div className="text-xs text-gray-600 mt-1">{option.description}</div>
-                                      )}
-                                    </div>
-                                  </Button>
-                                ))}
+                              <BotMessageRenderer
+                                message={message}
+                                onInteraction={handleBotInteraction}
+                              />
+                              <div className="flex items-center justify-end gap-1 mt-1 text-gray-500">
+                                <span className="text-xs">{formatTime(message.sentAt)}</span>
                               </div>
-                            )}
-
-                            <div className={`flex items-center justify-end gap-1 mt-1 ${
-                              isOwnMessage ? 'text-blue-100' : 'text-gray-500'
-                            }`}>
-                              <span className="text-xs">
-                                {formatTime(message.sentAt)}
-                              </span>
-                              {isOwnMessage && (
-                                message.status === 'READ' ? (
-                                  <CheckCheck className="w-3 h-3 text-blue-200" />
-                                ) : message.status === 'DELIVERED' ? (
-                                  <CheckCheck className="w-3 h-3" />
-                                ) : (
-                                  <Check className="w-3 h-3" />
-                                )
-                              )}
                             </div>
-                          </div>
+                          ) : (
+                            <div
+                              className={cn(
+                                "max-w-[70%] rounded-lg px-4 py-2 shadow-sm",
+                                isOwnMessage
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-white text-gray-900'
+                              )}
+                            >
+                              <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
+                              <div className={`flex items-center justify-end gap-1 mt-1 ${
+                                isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                              }`}>
+                                <span className="text-xs">
+                                  {formatTime(message.sentAt)}
+                                </span>
+                                {isOwnMessage && (
+                                  message.status === 'READ' ? (
+                                    <CheckCheck className="w-3 h-3 text-blue-200" />
+                                  ) : message.status === 'DELIVERED' ? (
+                                    <CheckCheck className="w-3 h-3" />
+                                  ) : (
+                                    <Check className="w-3 h-3" />
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -733,64 +802,63 @@ export default function CitizenDashboard() {
 
             {/* Input de Mensagem */}
             <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
-              {(() => {
-                const lastMessage = messages[messages.length - 1];
-                const hasActiveMenu = lastMessage &&
-                                     (lastMessage.senderType === 'BOT' || lastMessage.senderType === 'SYSTEM') &&
-                                     (lastMessage as any).metadata?.options &&
-                                     (lastMessage as any).metadata.options.length > 0;
-
-                const needsTextInput = lastMessage &&
-                                      (lastMessage.senderType === 'BOT' || lastMessage.senderType === 'SYSTEM') &&
-                                      (lastMessage as any).metadata?.needsInput &&
-                                      (!(lastMessage as any).metadata?.options || (lastMessage as any).metadata.options.length === 0);
-
-                if (hasActiveMenu) {
-                  return (
-                    <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto py-2">
-                      <div className="text-center text-sm text-gray-500">
-                        👆 Selecione uma das opções acima para continuar
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="flex items-center gap-2 max-w-4xl mx-auto">
-                    <Button type="button" variant="ghost" size="icon" className="text-gray-500">
-                      <Smile className="w-5 h-5" />
-                    </Button>
-                    <Button type="button" variant="ghost" size="icon" className="text-gray-500">
-                      <Paperclip className="w-5 h-5" />
-                    </Button>
-
-                    <Input
-                      type="text"
-                      placeholder={
-                        selectedConversation.isBotConversation && needsTextInput
-                          ? "Digite sua resposta..."
-                          : selectedConversation.isBotConversation
-                          ? "Aguarde o DigiBot..."
-                          : "Digite uma mensagem..."
-                      }
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      className="flex-1"
-                      disabled={!isConnected}
-                    />
-
-                    {newMessage.trim() ? (
-                      <Button type="submit" size="icon" className="bg-blue-600 hover:bg-blue-700" disabled={!isConnected}>
-                        <Send className="w-5 h-5" />
-                      </Button>
-                    ) : (
-                      <Button type="button" variant="ghost" size="icon" className="text-gray-500">
-                        <Mic className="w-5 h-5" />
-                      </Button>
-                    )}
+              {botStructuredInput && (
+                <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto py-2">
+                  <div className="text-center text-sm text-gray-500">
+                    {botInputHint}
                   </div>
-                );
-              })()}
+                </div>
+              )}
+              <div className="flex items-center gap-2 max-w-4xl mx-auto">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-500"
+                  disabled={!isConnected || botStructuredInput}
+                >
+                  <Smile className="w-5 h-5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-gray-500"
+                  disabled={!isConnected || botStructuredInput}
+                >
+                  <Paperclip className="w-5 h-5" />
+                </Button>
+
+                <Input
+                  type="text"
+                  placeholder={botInputPlaceholder}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  className="flex-1"
+                  disabled={!isConnected || botStructuredInput}
+                />
+
+                {newMessage.trim() ? (
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="bg-blue-600 hover:bg-blue-700"
+                    disabled={!isConnected || botStructuredInput}
+                  >
+                    <Send className="w-5 h-5" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-500"
+                    disabled={!isConnected || botStructuredInput}
+                  >
+                    <Mic className="w-5 h-5" />
+                  </Button>
+                )}
+              </div>
             </form>
           </>
         ) : (
@@ -849,13 +917,6 @@ export default function CitizenDashboard() {
     </div>
   );
 }
-
-
-
-
-
-
-
 
 
 

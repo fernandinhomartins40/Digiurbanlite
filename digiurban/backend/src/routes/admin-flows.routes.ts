@@ -14,6 +14,50 @@ const prisma = new PrismaClient();
 router.use(authenticateToken);
 
 /**
+ * GET /api/admin/flows/stats
+ * Estatisticas resumidas
+ */
+router.get('/stats', async (_req: Request, res: Response) => {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [
+      totalFlows,
+      activeFlows,
+      totalExecutions,
+      activeExecutions,
+      completedToday,
+    ] = await Promise.all([
+      prisma.flowDefinition.count(),
+      prisma.flowDefinition.count({ where: { isActive: true } }),
+      prisma.flowExecution.count(),
+      prisma.flowExecution.count({ where: { status: 'ACTIVE' } }),
+      prisma.flowExecution.count({
+        where: {
+          status: 'COMPLETED',
+          completedAt: { gte: todayStart },
+        },
+      }),
+    ]);
+
+    res.json({
+      totalFlows,
+      activeFlows,
+      totalExecutions,
+      activeExecutions,
+      completedToday,
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar estatisticas de fluxos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao buscar estatisticas de fluxos',
+    });
+  }
+});
+
+/**
  * GET /api/admin/flows
  * Lista todos os fluxos
  */
@@ -43,6 +87,7 @@ router.get('/', async (req: Request, res: Response) => {
         isDefault: true,
         municipioId: true,
         metadata: true,
+        nodes: true,
         createdAt: true,
         updatedAt: true,
         _count: {
@@ -160,10 +205,10 @@ router.post('/', async (req: Request, res: Response) => {
  * PUT /api/admin/flows/:id
  * Atualiza fluxo existente
  */
-router.put('/:id', async (req: Request, res: Response) => {
+const updateFlowHandler = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { description, version, nodes, metadata, isActive, isDefault } = req.body;
+    const { name, description, version, nodes, metadata, isActive, isDefault } = req.body;
 
     const flow = await prisma.flowDefinition.findUnique({
       where: { id },
@@ -172,11 +217,26 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (!flow) {
       return res.status(404).json({
         success: false,
-        error: 'Fluxo não encontrado',
+        error: 'Fluxo nao encontrado',
       });
     }
 
     const updateData: any = {};
+
+    if (name !== undefined && name !== flow.name) {
+      const existing = await prisma.flowDefinition.findUnique({
+        where: { name },
+      });
+
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          error: 'Ja existe um fluxo com este nome',
+        });
+      }
+
+      updateData.name = name;
+    }
 
     if (description !== undefined) updateData.description = description;
     if (version !== undefined) updateData.version = version;
@@ -201,7 +261,10 @@ router.put('/:id', async (req: Request, res: Response) => {
       error: 'Erro ao atualizar fluxo',
     });
   }
-});
+};
+
+router.put('/:id', updateFlowHandler);
+router.patch('/:id', updateFlowHandler);
 
 /**
  * DELETE /api/admin/flows/:id
@@ -268,9 +331,10 @@ router.delete('/:id', async (req: Request, res: Response) => {
 router.post('/:id/duplicate', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { newName } = req.body;
+    const { newName, name } = req.body;
+    const duplicateName = newName || name;
 
-    if (!newName) {
+    if (!duplicateName) {
       return res.status(400).json({
         success: false,
         error: 'Novo nome é obrigatório',
@@ -290,7 +354,7 @@ router.post('/:id/duplicate', async (req: Request, res: Response) => {
 
     // Verifica se novo nome já existe
     const existing = await prisma.flowDefinition.findUnique({
-      where: { name: newName },
+      where: { name: duplicateName },
     });
 
     if (existing) {
@@ -302,7 +366,7 @@ router.post('/:id/duplicate', async (req: Request, res: Response) => {
 
     const duplicate = await prisma.flowDefinition.create({
       data: {
-        name: newName,
+        name: duplicateName,
         description: `${original.description} (Cópia)`,
         version: '1.0.0',
         nodes: original.nodes as any,
@@ -376,6 +440,168 @@ router.get('/:id/executions', async (req: Request, res: Response) => {
  * GET /api/admin/flows/stats/overview
  * Estatísticas gerais dos fluxos
  */
+/**
+ * GET /api/admin/flows/:id/analytics
+ * Analytics detalhado do fluxo
+ */
+router.get('/:id/analytics', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const flow = await prisma.flowDefinition.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        nodes: true,
+      },
+    });
+
+    if (!flow) {
+      return res.status(404).json({
+        success: false,
+        error: 'Fluxo nao encontrado',
+      });
+    }
+
+    const executions = await prisma.flowExecution.findMany({
+      where: { flowId: id },
+      select: {
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        history: true,
+        currentNodeId: true,
+      },
+    });
+
+    const totalExecutions = executions.length;
+    const completedExecutions = executions.filter((e) => e.status === 'COMPLETED').length;
+    const cancelledExecutions = executions.filter((e) => e.status === 'CANCELLED').length;
+    const activeExecutions = executions.filter((e) => e.status === 'ACTIVE').length;
+
+    const completionTimes = executions
+      .filter((e) => e.status === 'COMPLETED' && e.completedAt)
+      .map((e) => (new Date(e.completedAt as Date).getTime() - new Date(e.startedAt).getTime()) / 1000);
+
+    const avgCompletionTime = completionTimes.length
+      ? completionTimes.reduce((acc, value) => acc + value, 0) / completionTimes.length
+      : 0;
+
+    const now = new Date();
+    const executionsByDay = Array.from({ length: 7 }).map((_, index) => {
+      const day = new Date(now);
+      day.setDate(now.getDate() - (6 - index));
+      const key = day.toISOString().slice(0, 10);
+      return { date: key, count: 0 };
+    });
+
+    const dayIndex = new Map(executionsByDay.map((item, index) => [item.date, index]));
+
+    executions.forEach((execution) => {
+      const key = new Date(execution.startedAt).toISOString().slice(0, 10);
+      const idx = dayIndex.get(key);
+      if (idx !== undefined) {
+        executionsByDay[idx].count += 1;
+      }
+    });
+
+    const nodeMap = new Map<string, { visits: number; errors: number }>();
+    const dropOffMap = new Map<string, number>();
+    const exitMap = new Map<string, number>();
+
+    const nodes = Array.isArray(flow.nodes) ? (flow.nodes as any[]) : [];
+    const nodeNameMap = new Map(
+      nodes.map((node) => {
+        const labelSource = node?.config?.text || node?.config?.label || node?.config?.action;
+        const label = typeof labelSource === 'string' && labelSource.trim().length > 0
+          ? labelSource.split('\n')[0].slice(0, 60)
+          : node.id;
+        return [node.id, label];
+      })
+    );
+
+    executions.forEach((execution) => {
+      const history = Array.isArray(execution.history) ? execution.history : [];
+
+      history.forEach((nodeId: string) => {
+        const stats = nodeMap.get(nodeId) || { visits: 0, errors: 0 };
+        stats.visits += 1;
+        nodeMap.set(nodeId, stats);
+      });
+
+      if (execution.status === 'ERROR' && execution.currentNodeId) {
+        const stats = nodeMap.get(execution.currentNodeId) || { visits: 0, errors: 0 };
+        stats.errors += 1;
+        nodeMap.set(execution.currentNodeId, stats);
+      }
+
+      const lastNode = history.length > 0 ? history[history.length - 1] : execution.currentNodeId;
+      if (lastNode) {
+        const exitCount = exitMap.get(lastNode) || 0;
+        exitMap.set(lastNode, exitCount + 1);
+      }
+
+      if (execution.status !== 'COMPLETED') {
+        const dropNode = lastNode || execution.currentNodeId;
+        if (dropNode) {
+          const dropCount = dropOffMap.get(dropNode) || 0;
+          dropOffMap.set(dropNode, dropCount + 1);
+        }
+      }
+    });
+
+    const nodeStatistics = nodes.map((node) => {
+      const stats = nodeMap.get(node.id) || { visits: 0, errors: 0 };
+      const errorRate = stats.visits > 0 ? (stats.errors / stats.visits) * 100 : 0;
+
+      return {
+        nodeId: node.id,
+        nodeName: nodeNameMap.get(node.id) || node.id,
+        visits: stats.visits,
+        errors: stats.errors,
+        avgTimeSpent: 0,
+        errorRate,
+      };
+    });
+
+    const dropOffPoints = Array.from(dropOffMap.entries())
+      .map(([nodeId, count]) => ({
+        nodeId,
+        nodeName: nodeNameMap.get(nodeId) || nodeId,
+        dropOffRate: totalExecutions ? (count / totalExecutions) * 100 : 0,
+      }))
+      .sort((a, b) => b.dropOffRate - a.dropOffRate)
+      .slice(0, 10);
+
+    let mostCommonExitPoint = '';
+    if (exitMap.size > 0) {
+      const sorted = Array.from(exitMap.entries()).sort((a, b) => b[1] - a[1]);
+      mostCommonExitPoint = nodeNameMap.get(sorted[0][0]) || sorted[0][0];
+    }
+
+    res.json({
+      flowId: flow.id,
+      flowName: flow.name,
+      totalExecutions,
+      completedExecutions,
+      cancelledExecutions,
+      activeExecutions,
+      completionRate: totalExecutions ? (completedExecutions / totalExecutions) * 100 : 0,
+      avgCompletionTime,
+      mostCommonExitPoint,
+      executionsByDay,
+      nodeStatistics,
+      dropOffPoints,
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar analytics do fluxo:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao buscar analytics do fluxo',
+    });
+  }
+});
 router.get('/stats/overview', async (req: Request, res: Response) => {
   try {
     const totalFlows = await prisma.flowDefinition.count();
@@ -445,3 +671,5 @@ router.get('/stats/overview', async (req: Request, res: Response) => {
 });
 
 export default router;
+
+
