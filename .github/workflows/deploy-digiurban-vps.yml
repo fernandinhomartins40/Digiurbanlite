@@ -191,6 +191,10 @@ jobs:
             echo "Construindo nova imagem..."
             docker-compose -f docker-compose.vps.yml build --no-cache --pull
 
+            # Parar containers existentes antes de iniciar
+            echo "Parando containers existentes..."
+            docker-compose -f docker-compose.vps.yml down || true
+
             # Iniciar container
             echo "Iniciando container..."
             docker-compose -f docker-compose.vps.yml up -d
