@@ -8,8 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { PDFViewer } from './PDFViewer';
 import { CertificateSelector } from './CertificateSelector';
 import { SignaturesList } from './SignaturesList';
-import { useCertificates, DigitalCertificate } from '@/hooks/useCertificates';
-import { retrievePrivateKey, storePrivateKey, hasStoredKey } from '@/services/secure-key-manager';
+import { useCertificates } from '@/hooks/useCertificates';
+import { retrievePrivateKey, hasStoredKey } from '@/services/secure-key-manager';
 import {
   X,
   FileText,
@@ -21,6 +21,27 @@ import {
   FileSignature,
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+interface DigitalCertificate {
+  id: string;
+  userId?: string;
+  citizenId?: string;
+  type: 'ADMIN' | 'CITIZEN';
+  status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
+  commonName: string;
+  email: string;
+  organization: string;
+  department?: string;
+  serialNumber: string;
+  thumbprint: string;
+  issuedAt: string;
+  expiresAt: string;
+  publicKey: string;
+  privateKeyHash: string;
+  _count?: {
+    signatures: number;
+  };
+}
 
 interface Signature {
   id: string;
@@ -62,7 +83,6 @@ export function DocumentSigningModal({
   const [signatures, setSignatures] = useState<Signature[]>(document.signatures || []);
 
   useEffect(() => {
-    // Se já tiver um certificado selecionado e uma chave armazenada, pular para o PIN
     if (selectedCertificate && hasStoredKey(selectedCertificate.id)) {
       setStep('enter-pin');
     }
@@ -83,13 +103,11 @@ export function DocumentSigningModal({
     setStep('signing');
 
     try {
-      // Tentar recuperar a chave privada com o PIN
       let privateKey: string | null = null;
 
       try {
         privateKey = retrievePrivateKey(selectedCertificate.id, pin);
       } catch (error: any) {
-        // Se falhar, a chave não está armazenada - precisamos que o usuário forneça
         toast.error('PIN incorreto ou chave privada não encontrada');
         setSigning(false);
         setStep('enter-pin');
@@ -103,14 +121,13 @@ export function DocumentSigningModal({
         return;
       }
 
-      // Enviar requisição de assinatura para o backend
       const response = await fetch('/api/documents/sign', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          documentId: document.id,
+          externalDocumentId: document.id,
           certificateId: selectedCertificate.id,
           privateKey,
           pin,
@@ -123,21 +140,17 @@ export function DocumentSigningModal({
         throw new Error(result.message || 'Erro ao assinar documento');
       }
 
-      // Sucesso!
       setStep('success');
       toast.success('Documento assinado com sucesso!');
 
-      // Atualizar lista de assinaturas
       if (result.signature) {
-        setSignatures(prev => [...prev, result.signature]);
+        setSignatures((prev) => [...prev, result.signature]);
       }
 
-      // Chamar callback de sucesso
       if (onSuccess) {
         onSuccess(result.signature);
       }
 
-      // Fechar modal após 2 segundos
       setTimeout(() => {
         onClose();
       }, 2000);
@@ -154,7 +167,6 @@ export function DocumentSigningModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <Card className="w-full max-w-7xl h-[90vh] flex flex-col">
-        {/* Header */}
         <CardHeader className="border-b shrink-0">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -165,12 +177,10 @@ export function DocumentSigningModal({
               <X className="w-4 h-4" />
             </Button>
           </div>
-        </CardTitle>
+        </CardHeader>
 
-        {/* Content */}
         <CardContent className="flex-1 overflow-hidden p-0">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-0 h-full">
-            {/* PDF Viewer - 60% */}
             <div className="lg:col-span-3 border-r overflow-hidden">
               <PDFViewer
                 file={document.fileUrl}
@@ -180,10 +190,8 @@ export function DocumentSigningModal({
               />
             </div>
 
-            {/* Signing Panel - 40% */}
             <div className="lg:col-span-2 p-6 overflow-y-auto">
               <div className="space-y-6">
-                {/* Document Info */}
                 <div>
                   <h3 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
                     <FileText className="w-4 h-4" />
@@ -207,7 +215,6 @@ export function DocumentSigningModal({
                   </div>
                 </div>
 
-                {/* Step Indicator */}
                 <div className="flex items-center gap-2 text-xs">
                   <Badge variant={step === 'select-cert' ? 'default' : 'outline'}>
                     1. Certificado
@@ -222,7 +229,6 @@ export function DocumentSigningModal({
                   </Badge>
                 </div>
 
-                {/* Certificate Selection */}
                 {(step === 'select-cert' || step === 'enter-pin') && (
                   <div>
                     <h3 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
@@ -238,7 +244,6 @@ export function DocumentSigningModal({
                   </div>
                 )}
 
-                {/* PIN Input */}
                 {step === 'enter-pin' && selectedCertificate && (
                   <div>
                     <h3 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
@@ -275,7 +280,6 @@ export function DocumentSigningModal({
                   </div>
                 )}
 
-                {/* Signing in Progress */}
                 {step === 'signing' && (
                   <div className="py-8 text-center">
                     <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
@@ -286,7 +290,6 @@ export function DocumentSigningModal({
                   </div>
                 )}
 
-                {/* Success */}
                 {step === 'success' && (
                   <div className="py-8 text-center">
                     <CheckCircle2 className="h-12 w-12 text-green-600 mx-auto mb-4" />
@@ -297,12 +300,10 @@ export function DocumentSigningModal({
                   </div>
                 )}
 
-                {/* Existing Signatures */}
                 {signatures.length > 0 && (
                   <SignaturesList signatures={signatures} />
                 )}
 
-                {/* Actions */}
                 {step !== 'signing' && step !== 'success' && (
                   <div className="flex gap-3 pt-4 border-t">
                     <Button variant="outline" onClick={onClose} className="flex-1">
