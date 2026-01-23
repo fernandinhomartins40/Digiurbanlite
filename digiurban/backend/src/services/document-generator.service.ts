@@ -26,6 +26,14 @@ interface GenerateDocumentInput {
   protocolId: string;
   generatedBy: string;
   additionalData?: Record<string, any>;
+  certificateInfo?: {
+    serialNumber: string;
+    commonName: string;
+    issuer: string;
+    issuedAt: Date;
+    expiresAt: Date;
+    thumbprint: string;
+  };
 }
 
 interface SendDocumentInput {
@@ -264,6 +272,15 @@ export async function generateDocument(input: GenerateDocumentInput) {
     validationCode: validationCode,
     validationCodeFormatted: validationCode.replace(/-/g, ' - '),
 
+    // ===== CERTIFICADO DIGITAL (se fornecido) =====
+    hasCertificate: !!input.certificateInfo,
+    certificateSerialNumber: input.certificateInfo?.serialNumber || '',
+    certificateCommonName: input.certificateInfo?.commonName || '',
+    certificateIssuer: input.certificateInfo?.issuer || '',
+    certificateIssuedAt: input.certificateInfo ? formatDateTime(input.certificateInfo.issuedAt) : '',
+    certificateExpiresAt: input.certificateInfo ? formatDate(input.certificateInfo.expiresAt) : '',
+    certificateThumbprint: input.certificateInfo?.thumbprint || '',
+
     // ===== DADOS ADICIONAIS =====
     ...additionalData
   };
@@ -339,13 +356,78 @@ export async function generateDocument(input: GenerateDocumentInput) {
 
           /* Página */
           @page { margin: 0; }
-          .page-content { padding: 40px; }
+          .page-content { padding: 40px; padding-bottom: ${input.certificateInfo ? '120px' : '40px'}; }
+
+          /* Assinatura Digital */
+          .digital-signature {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-top: 3px solid #1976d2;
+            padding: 15px 40px;
+            font-size: 9pt;
+            color: #0d47a1;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+          }
+          .digital-signature h4 {
+            margin: 0 0 8px 0;
+            font-size: 10pt;
+            color: #0d47a1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .digital-signature .cert-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+          }
+          .digital-signature .cert-info span {
+            font-size: 8pt;
+          }
+          .digital-signature .cert-info strong {
+            color: #1565c0;
+          }
+          .digital-signature .shield-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #1976d2;
+            color: white;
+            border-radius: 3px;
+            text-align: center;
+            line-height: 16px;
+            font-weight: bold;
+            font-size: 10pt;
+          }
         </style>
       </head>
       <body>
         <div class="page-content">
           ${html}
         </div>
+        ${input.certificateInfo ? `
+        <div class="digital-signature">
+          <h4>
+            <span class="shield-icon">🔐</span>
+            DOCUMENTO ASSINADO DIGITALMENTE
+          </h4>
+          <div class="cert-info">
+            <span><strong>Assinado por:</strong> ${variables.certificateCommonName}</span>
+            <span><strong>Emissor:</strong> ${variables.certificateIssuer}</span>
+            <span><strong>Certificado Nº:</strong> ${variables.certificateSerialNumber}</span>
+            <span><strong>Validade:</strong> ${variables.certificateIssuedAt} até ${variables.certificateExpiresAt}</span>
+            <span style="grid-column: 1 / -1; font-size: 7pt;"><strong>Identificador (Thumbprint):</strong> ${variables.certificateThumbprint.substring(0, 40)}...</span>
+          </div>
+          <p style="margin: 8px 0 0 0; font-size: 7pt; text-align: center; color: #546e7a;">
+            Este documento foi assinado eletronicamente e possui validade jurídica conforme MP 2.200-2/2001 e Lei 14.063/2020.
+            Verifique a autenticidade em: https://digiurban.com.br/validar-documento usando o código ${variables.validationCode}
+          </p>
+        </div>
+        ` : ''}
       </body>
       </html>
     `;

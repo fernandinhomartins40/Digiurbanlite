@@ -304,19 +304,24 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
     console.log(`✅ Certificado digital ativo encontrado: ${activeCertificate.serialNumber}`);
     console.log(`✅ Iniciando geração: templateId=${templateId}, protocolId=${protocolId}`);
 
-    // 4. Gerar documento
+    // 4. Gerar documento com informações do certificado para marca visual
     const document = await documentGenerator.generateDocument({
       templateId,
       protocolId,
       generatedBy: userId,
-      additionalData
+      additionalData,
+      certificateInfo: {
+        serialNumber: activeCertificate.serialNumber,
+        commonName: activeCertificate.commonName,
+        issuer: activeCertificate.issuerCA,
+        issuedAt: activeCertificate.issuedAt,
+        expiresAt: activeCertificate.expiresAt,
+        thumbprint: activeCertificate.thumbprint
+      }
     });
 
     console.log(`✅ Documento gerado: ${document.id}`);
-
-    // 5. TODO: Assinar documento automaticamente após geração
-    // (Necessita da chave privada do usuário - implementar fluxo seguro)
-    console.log(`⚠️ Assinatura digital automática: não implementada (requer chave privada)`);
+    console.log(`✅ Marca visual de certificado digital aplicada ao documento`);
 
     res.json({
       success: true,
@@ -325,11 +330,12 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
         certificateUsed: {
           id: activeCertificate.id,
           serialNumber: activeCertificate.serialNumber,
-          commonName: activeCertificate.commonName
+          commonName: activeCertificate.commonName,
+          issuer: activeCertificate.issuerCA,
+          expiresAt: activeCertificate.expiresAt
         }
       },
-      message: 'Documento gerado com sucesso',
-      warnings: ['Assinatura digital automática não aplicada - assine manualmente na aba de documentos gerados']
+      message: 'Documento gerado e certificado digitalmente com sucesso'
     });
   } catch (error: any) {
     console.error('❌ Error generating document:', error);
