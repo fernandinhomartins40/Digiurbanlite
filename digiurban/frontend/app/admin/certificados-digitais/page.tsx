@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CitizenAutocomplete } from '@/components/admin/CitizenAutocomplete';
+import { CertificateRequestsManager } from '@/components/admin/CertificateRequestsManager';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import {
   Shield,
@@ -21,7 +23,8 @@ import {
   Eye,
   Trash2,
   RefreshCw,
-  X
+  X,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -55,6 +58,7 @@ interface Citizen {
 
 export default function CertificadosDigitaisPage() {
   const { user } = useAdminAuth();
+  const [activeTab, setActiveTab] = useState('certificates');
   const [certificates, setCertificates] = useState<DigitalCertificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -65,6 +69,7 @@ export default function CertificadosDigitaisPage() {
   const [selectedCertificate, setSelectedCertificate] = useState<DigitalCertificate | null>(null);
   const [issuing, setIssuing] = useState(false);
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
+  const [issueType, setIssueType] = useState<'citizen' | 'server'>('citizen');
 
   useEffect(() => {
     fetchCertificates();
@@ -169,23 +174,41 @@ export default function CertificadosDigitaisPage() {
     certificateType: 'SERVER' | 'CITIZEN' | 'SYSTEM';
     validityYears: number;
     department?: string;
+    userId?: string;
+    commonName?: string;
+    email?: string;
   }) => {
-    if (!selectedCitizen) {
+    // Validar se é emissão para cidadão ou servidor
+    if (issueType === 'citizen' && !selectedCitizen) {
       toast.error('Selecione um cidadão antes de emitir o certificado');
+      return;
+    }
+
+    if (issueType === 'server' && (!formData.userId || !formData.commonName || !formData.email)) {
+      toast.error('Preencha todos os campos obrigatórios');
       return;
     }
 
     try {
       setIssuing(true);
 
-      const payload = {
-        citizenId: selectedCitizen.id,
-        commonName: selectedCitizen.name,
-        email: selectedCitizen.email || '',
-        department: formData.department,
-        certificateType: formData.certificateType,
-        validityYears: formData.validityYears,
-      };
+      const payload = issueType === 'citizen'
+        ? {
+            citizenId: selectedCitizen!.id,
+            commonName: selectedCitizen!.name,
+            email: selectedCitizen!.email || '',
+            department: formData.department,
+            certificateType: formData.certificateType,
+            validityYears: formData.validityYears,
+          }
+        : {
+            userId: formData.userId,
+            commonName: formData.commonName,
+            email: formData.email,
+            department: formData.department,
+            certificateType: formData.certificateType,
+            validityYears: formData.validityYears,
+          };
 
       const response = await fetch('/api/certificates/issue', {
         method: 'POST',
@@ -199,6 +222,9 @@ export default function CertificadosDigitaisPage() {
 
       if (data.success) {
         toast.success('Certificado emitido com sucesso!');
+        if (data.privateKey) {
+          alert(`IMPORTANTE: Salve esta chave privada em local seguro!\n\nChave Privada:\n${data.privateKey}\n\nEsta é a ÚNICA vez que a chave será exibida!`);
+        }
         setShowIssueModal(false);
         setSelectedCitizen(null);
         fetchCertificates();
@@ -318,12 +344,28 @@ export default function CertificadosDigitaisPage() {
             onClick={() => {
               setShowIssueModal(true);
               setSelectedCitizen(null);
+              setIssueType('citizen');
             }}
           >
             <Plus className="w-4 h-4 mr-2" />
             Emitir Certificado
           </Button>
         </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="certificates" className="flex items-center gap-2">
+              <Award className="w-4 h-4" />
+              Certificados Emitidos
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Solicitações
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="certificates" className="space-y-6 mt-6">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -529,6 +571,12 @@ export default function CertificadosDigitaisPage() {
             )}
           </CardContent>
         </Card>
+        </TabsContent>
+
+        <TabsContent value="requests" className="mt-6">
+          <CertificateRequestsManager />
+        </TabsContent>
+      </Tabs>
 
         {/* Modal de Detalhes do Certificado */}
         {showDetailsModal && selectedCertificate && (
@@ -692,47 +740,130 @@ export default function CertificadosDigitaisPage() {
                       certificateType: formData.get('certificateType') as 'SERVER' | 'CITIZEN' | 'SYSTEM',
                       validityYears: parseInt(formData.get('validityYears') as string),
                       department: formData.get('department') as string || undefined,
+                      userId: formData.get('userId') as string || undefined,
+                      commonName: formData.get('commonName') as string || undefined,
+                      email: formData.get('email') as string || undefined,
                     });
                   }}
                   className="space-y-4"
                 >
                   <div className="space-y-4">
-                    {/* Busca de Cidadão */}
+                    {/* Seletor de Tipo de Emissão */}
                     <div>
-                      <CitizenAutocomplete
-                        value={selectedCitizen}
-                        onChange={setSelectedCitizen}
-                        label="Cidadão"
-                        placeholder="Digite o nome, CPF ou email do cidadão..."
-                        required
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Emitir certificado para:
+                      </label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="issueType"
+                            value="citizen"
+                            checked={issueType === 'citizen'}
+                            onChange={() => setIssueType('citizen')}
+                            className="w-4 h-4"
+                          />
+                          <span>Cidadão</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="issueType"
+                            value="server"
+                            checked={issueType === 'server'}
+                            onChange={() => setIssueType('server')}
+                            className="w-4 h-4"
+                          />
+                          <span>Servidor (Funcionário)</span>
+                        </label>
+                      </div>
                     </div>
 
-                    {/* Dados do Cidadão Selecionado */}
-                    {selectedCitizen && (
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <h4 className="font-semibold text-blue-900 mb-2">Dados do Certificado</h4>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-blue-700 font-medium">Nome (CN):</span>
-                            <p className="text-blue-900">{selectedCitizen.name}</p>
-                          </div>
-                          <div>
-                            <span className="text-blue-700 font-medium">Email:</span>
-                            <p className="text-blue-900">{selectedCitizen.email || 'Não informado'}</p>
-                          </div>
-                          {selectedCitizen.cpf && (
-                            <div>
-                              <span className="text-blue-700 font-medium">CPF:</span>
-                              <p className="text-blue-900">{selectedCitizen.cpf}</p>
+                    {issueType === 'citizen' ? (
+                      <>
+                        {/* Busca de Cidadão */}
+                        <div>
+                          <CitizenAutocomplete
+                            value={selectedCitizen}
+                            onChange={setSelectedCitizen}
+                            label="Cidadão"
+                            placeholder="Digite o nome, CPF ou email do cidadão..."
+                            required
+                          />
+                        </div>
+
+                        {/* Dados do Cidadão Selecionado */}
+                        {selectedCitizen && (
+                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 className="font-semibold text-blue-900 mb-2">Dados do Certificado</h4>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <span className="text-blue-700 font-medium">Nome (CN):</span>
+                                <p className="text-blue-900">{selectedCitizen.name}</p>
+                              </div>
+                              <div>
+                                <span className="text-blue-700 font-medium">Email:</span>
+                                <p className="text-blue-900">{selectedCitizen.email || 'Não informado'}</p>
+                              </div>
+                              {selectedCitizen.cpf && (
+                                <div>
+                                  <span className="text-blue-700 font-medium">CPF:</span>
+                                  <p className="text-blue-900">{selectedCitizen.cpf}</p>
+                                </div>
+                              )}
+                              <div>
+                                <span className="text-blue-700 font-medium">ID do Usuário:</span>
+                                <p className="text-blue-900 font-mono text-xs">{selectedCitizen.id}</p>
+                              </div>
                             </div>
-                          )}
-                          <div>
-                            <span className="text-blue-700 font-medium">ID do Usuário:</span>
-                            <p className="text-blue-900 font-mono text-xs">{selectedCitizen.id}</p>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {/* Campos para Servidor */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              ID do Usuário *
+                            </label>
+                            <input
+                              type="text"
+                              name="userId"
+                              required={issueType === 'server'}
+                              placeholder="ID do usuário no sistema"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Use o ID do usuário que será o titular do certificado
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Nome Completo (CN) *
+                            </label>
+                            <input
+                              type="text"
+                              name="commonName"
+                              required={issueType === 'server'}
+                              placeholder="Nome completo do servidor"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Email *
+                            </label>
+                            <input
+                              type="email"
+                              name="email"
+                              required={issueType === 'server'}
+                              placeholder="email@prefeitura.gov.br"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
                           </div>
                         </div>
-                      </div>
+                      </>
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
