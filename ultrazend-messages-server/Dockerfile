@@ -13,13 +13,19 @@ RUN apk add --no-cache \
 
 WORKDIR /app
 
+# Configurar npm para ambientes CI/CD
+RUN npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-timeout 60000
+
 # Copiar package files
 COPY package*.json ./
 COPY tsconfig.json ./
 COPY tsconfig.prisma.json ./
 
 # Instalar TODAS as dependências (incluindo devDependencies para build)
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 
 # Copiar código
 COPY prisma ./prisma
@@ -41,11 +47,17 @@ RUN apk add --no-cache dumb-init tini
 
 WORKDIR /app
 
+# Configurar npm para ambientes CI/CD
+RUN npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-timeout 60000
+
 # Copiar package files
 COPY package*.json ./
 
 # Instalar APENAS dependências de produção
-RUN npm install --omit=dev --legacy-peer-deps
+RUN npm install --omit=dev --legacy-peer-deps --prefer-offline --no-audit
 
 # Copiar Prisma Client gerado no builder (evita conflito de versões)
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma

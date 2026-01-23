@@ -22,12 +22,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
+# Configurar npm para ambientes CI/CD
+RUN npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-timeout 60000
+
 # ⚡ CACHE BUSTER: Força invalidação de cache antes de copiar código
 RUN echo "Backend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
 
 # Copiar package files do backend
 COPY digiurban/backend/package.json digiurban/backend/package-lock.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 
 # Copiar código do backend
 COPY digiurban/backend ./
@@ -69,6 +75,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ⚡ CACHE BUSTER
 RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
 
+# Configurar npm para ambientes CI/CD
+RUN npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-timeout 60000
+
 # ✅ CRÍTICO: URLs para produção
 ARG NEXT_PUBLIC_API_URL=/api
 ARG NEXT_PUBLIC_MESSAGES_API_URL=/messages-api
@@ -82,7 +94,7 @@ ENV NEXT_PUBLIC_MESSAGES_WS_URL=$NEXT_PUBLIC_MESSAGES_WS_URL
 
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 
 # Copiar código do frontend
 COPY digiurban/frontend ./
