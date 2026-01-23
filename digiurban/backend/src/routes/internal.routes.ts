@@ -388,19 +388,33 @@ router.post('/protocols', async (req: Request, res: Response) => {
       },
     });
 
-    const stages = await applyWorkflowToProtocol(protocol.id);
+    let workflowWarning: string | null = null;
+    let slaWarning: string | null = null;
 
-    if (!stages || stages.length === 0) {
-      throw new Error(`ServiÇõo "${service.name}" nÇœo possui workflow configurado`);
+    try {
+      const stages = await applyWorkflowToProtocol(protocol.id);
+      if (!stages || stages.length === 0) {
+        workflowWarning = `Servico "${service.name}" sem workflow configurado`;
+      }
+    } catch (error: any) {
+      workflowWarning = error?.message || 'Erro ao aplicar workflow';
     }
 
-    const sla = await createProtocolSLA(protocol.id);
-
-    if (!sla) {
-      throw new Error('Erro ao criar SLA do protocolo');
+    try {
+      const sla = await createProtocolSLA(protocol.id);
+      if (!sla) {
+        slaWarning = 'Erro ao criar SLA do protocolo';
+      }
+    } catch (error: any) {
+      slaWarning = error?.message || 'Erro ao criar SLA do protocolo';
     }
 
-    res.json(protocol);
+    const warnings = [workflowWarning, slaWarning].filter(Boolean);
+    if (warnings.length > 0) {
+      console.warn('[internal.routes] Protocol created with warnings:', warnings);
+    }
+
+    res.json({ protocol, warnings });
   } catch (error) {
     console.error('[internal.routes] Error in POST /protocols', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -632,3 +646,4 @@ router.get('/departments', async (req: Request, res: Response) => {
 });
 
 export default router;
+

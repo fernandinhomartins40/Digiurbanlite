@@ -281,7 +281,6 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
           email: user.email,
           certificateType: 'SERVER',
           keySize: 2048,
-          requestedAt: new Date(),
           status: 'PENDING',
           requestReason: 'Necessário para assinatura de documentos gerados no sistema'
         }

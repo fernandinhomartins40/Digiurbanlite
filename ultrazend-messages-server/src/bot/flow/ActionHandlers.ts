@@ -203,7 +203,8 @@ export const createProtocol: ActionHandler = async (params, context) => {
     console.log('[ActionHandlers.createProtocol] Protocolo criado:', result);
 
     return {
-      protocol: result,
+      protocol: result?.protocol || result,
+      warnings: result?.warnings,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.createProtocol] Erro:', error);

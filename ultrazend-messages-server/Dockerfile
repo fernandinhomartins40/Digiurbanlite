@@ -38,6 +38,7 @@ RUN npx prisma generate
 # Build TypeScript
 RUN npm run build:prisma
 RUN npm run build
+RUN mkdir -p dist/bot/flows && cp -r src/bot/flows/* dist/bot/flows/
 
 # ========== STAGE 2: Production ==========
 FROM node:22-alpine

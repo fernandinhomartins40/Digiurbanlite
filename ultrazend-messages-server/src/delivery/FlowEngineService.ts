@@ -9,6 +9,9 @@ import { actionHandlers } from '../bot/flow/ActionHandlers';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
 
+const isPlainObject = (value: unknown): value is Record<string, any> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+
 export class FlowEngineService {
   private flowEngine: FlowEngine;
   // private conversationService: ConversationService;
@@ -112,6 +115,11 @@ export class FlowEngineService {
       botFlowData: {
         currentNodeId: response.metadata?.nodeId,
         waitingForInput: response.metadata?.waitingForInput,
+        paused: false,
+      },
+      metadata: {
+        botStatus: 'ACTIVE',
+        botStatusUpdatedAt: new Date().toISOString(),
       },
     });
 
@@ -217,6 +225,7 @@ export class FlowEngineService {
     // 3. Processar no FlowEngine
     const response = await this.flowEngine.processMessage(citizenId, message, conversationId);
     const botMetadata = this.buildBotMetadata(response);
+    const botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
     const flowName = response.metadata?.flowId
       ? (await prisma.flowDefinition.findUnique({
           where: { id: response.metadata.flowId },
@@ -239,23 +248,24 @@ export class FlowEngineService {
     });
 
     // 5. Atualizar conversa
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: {
-        lastMessageAt: new Date(),
-        lastMessagePreview: response.message.substring(0, 100),
-        totalMessages: { increment: 2 },
-        botLastInteractionAt: new Date(),
-        ...(flowName ? { botFlowType: flowName } : {}),
-        botFlowData: {
-          currentNodeId: response.metadata?.nodeId,
-          waitingForInput: response.metadata?.waitingForInput,
-        },
-        ...(isParticipant1
-          ? { unreadCount1: { increment: 1 } }
-          : { unreadCount2: { increment: 1 } }),
-        updatedAt: new Date(),
+    await this.updateConversationBotData(conversationId, {
+      lastMessageAt: new Date(),
+      lastMessagePreview: response.message.substring(0, 100),
+      totalMessages: { increment: 2 },
+      botLastInteractionAt: new Date(),
+      ...(flowName ? { botFlowType: flowName } : {}),
+      botFlowData: {
+        currentNodeId: response.metadata?.nodeId,
+        waitingForInput: response.metadata?.waitingForInput,
+        paused: response.metadata?.paused || false,
       },
+      metadata: {
+        botStatus,
+        botStatusUpdatedAt: new Date().toISOString(),
+      },
+      ...(isParticipant1
+        ? { unreadCount1: { increment: 1 } }
+        : { unreadCount2: { increment: 1 } }),
     });
 
     // 6. Emitir via WebSocket
@@ -317,13 +327,16 @@ export class FlowEngineService {
     const execution = await this.getActiveExecution(citizenId);
     if (execution) {
       await this.flowEngine.pauseExecution(citizenId);
+    }
 
-      // Atualizar conversa
-      if (conversationId) {
-        await this.updateConversationBotData(conversationId, {
-          botFlowData: { paused: true, pausedAt: new Date() },
-        });
-      }
+    if (conversationId) {
+      await this.updateConversationBotData(conversationId, {
+        botFlowData: { paused: true, pausedAt: new Date() },
+        metadata: {
+          botStatus: 'HUMAN_TAKEOVER',
+          botStatusUpdatedAt: new Date().toISOString(),
+        },
+      });
     }
     return { success: true };
   }
@@ -335,13 +348,16 @@ export class FlowEngineService {
     const execution = await this.getActiveExecution(citizenId);
     if (execution) {
       await this.flowEngine.resumeExecution(citizenId);
+    }
 
-      // Atualizar conversa
-      if (conversationId) {
-        await this.updateConversationBotData(conversationId, {
-          botFlowData: { paused: false, resumedAt: new Date() },
-        });
-      }
+    if (conversationId) {
+      await this.updateConversationBotData(conversationId, {
+        botFlowData: { paused: false, resumedAt: new Date() },
+        metadata: {
+          botStatus: 'ACTIVE',
+          botStatusUpdatedAt: new Date().toISOString(),
+        },
+      });
     }
     return { success: true };
   }
@@ -390,6 +406,7 @@ export class FlowEngineService {
 
     const response = await this.flowEngine.processMessage(citizenId, uploadedFiles, conversationId);
     const botMetadata = this.buildBotMetadata(response);
+    const botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
 
     const botMessage = await prisma.message.create({
       data: {
@@ -404,22 +421,23 @@ export class FlowEngineService {
       },
     });
 
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: {
-        lastMessageAt: new Date(),
-        lastMessagePreview: response.message.substring(0, 100),
-        totalMessages: { increment: 2 },
-        botLastInteractionAt: new Date(),
-        botFlowData: {
-          currentNodeId: response.metadata?.nodeId,
-          waitingForInput: response.metadata?.waitingForInput,
-        },
-        ...(isParticipant1
-          ? { unreadCount1: { increment: 1 } }
-          : { unreadCount2: { increment: 1 } }),
-        updatedAt: new Date(),
+    await this.updateConversationBotData(conversationId, {
+      lastMessageAt: new Date(),
+      lastMessagePreview: response.message.substring(0, 100),
+      totalMessages: { increment: 2 },
+      botLastInteractionAt: new Date(),
+      botFlowData: {
+        currentNodeId: response.metadata?.nodeId,
+        waitingForInput: response.metadata?.waitingForInput,
+        paused: response.metadata?.paused || false,
       },
+      metadata: {
+        botStatus,
+        botStatusUpdatedAt: new Date().toISOString(),
+      },
+      ...(isParticipant1
+        ? { unreadCount1: { increment: 1 } }
+        : { unreadCount2: { increment: 1 } }),
     });
 
     if (this.wsServer) {
@@ -499,6 +517,10 @@ export class FlowEngineService {
           botFlowStep: 0,
           botFlowData: {},
           botContext: {},
+          metadata: {
+            botStatus: 'ACTIVE',
+            botStatusUpdatedAt: new Date().toISOString(),
+          },
           totalMessages: 0,
           unreadCount1: 0,
           unreadCount2: 0,
@@ -513,10 +535,32 @@ export class FlowEngineService {
    * Atualiza dados do bot na conversa
    */
   private async updateConversationBotData(conversationId: string, data: any) {
+    let metadata = data.metadata;
+    let botFlowData = data.botFlowData;
+
+    if (data.metadata || data.botFlowData) {
+      const existing = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        select: { metadata: true, botFlowData: true },
+      });
+
+      if (data.metadata) {
+        const base = isPlainObject(existing?.metadata) ? existing!.metadata : {};
+        metadata = { ...base, ...data.metadata };
+      }
+
+      if (data.botFlowData) {
+        const base = isPlainObject(existing?.botFlowData) ? existing!.botFlowData : {};
+        botFlowData = { ...base, ...data.botFlowData };
+      }
+    }
+
     await prisma.conversation.update({
       where: { id: conversationId },
       data: {
         ...data,
+        ...(metadata ? { metadata } : {}),
+        ...(botFlowData ? { botFlowData } : {}),
         updatedAt: new Date(),
       },
     });

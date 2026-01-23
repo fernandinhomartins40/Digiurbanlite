@@ -9,7 +9,25 @@ import path from 'path';
 
 const prisma = new PrismaClient();
 
-const FLOWS_DIR = path.join(__dirname, '../services/bot/flows');
+const resolveFlowsDir = () => {
+  const candidates = [
+    process.env.BOT_FLOWS_DIR,
+    path.join(__dirname, '../services/bot/flows'),
+    path.join(process.cwd(), '../ultrazend-messages-server/src/bot/flows'),
+    path.join(process.cwd(), 'ultrazend-messages-server/src/bot/flows'),
+    path.join(process.cwd(), 'src/bot/flows'),
+  ].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return candidates[0] || '';
+};
+
+const FLOWS_DIR = resolveFlowsDir();
 
 const flowFiles = [
   'menu-principal.json',

@@ -934,8 +934,40 @@ export class ExpressServer {
     // POST /api/bot-flow/pause - Pausa bot para atendimento humano
     router.post('/pause', async (req: AuthRequest, res: Response) => {
       try {
-        const { conversationId } = req.body;
-        const citizenId = req.user!.userId;
+        const { conversationId, citizenId: bodyCitizenId } = req.body;
+        let citizenId = req.user!.userId;
+
+        if (req.user!.userType === 'SERVER') {
+          if (bodyCitizenId) {
+            citizenId = bodyCitizenId;
+          } else if (conversationId) {
+            const conversation = await prisma.conversation.findUnique({
+              where: { id: conversationId },
+              select: {
+                participant1Id: true,
+                participant1Type: true,
+                participant2Id: true,
+                participant2Type: true,
+              },
+            });
+
+            if (!conversation) {
+              res.status(404).json({ error: 'Conversation not found' });
+              return;
+            }
+
+            if (conversation.participant1Type === 'CITIZEN') {
+              citizenId = conversation.participant1Id;
+            } else if (conversation.participant2Type === 'CITIZEN') {
+              citizenId = conversation.participant2Id;
+            }
+          }
+        }
+
+        if (!citizenId) {
+          res.status(400).json({ error: 'Citizen not found' });
+          return;
+        }
 
         await this.flowEngineService.pauseExecution(citizenId, conversationId);
         res.json({ success: true });
@@ -948,8 +980,40 @@ export class ExpressServer {
     // POST /api/bot-flow/resume - Retoma bot após atendimento humano
     router.post('/resume', async (req: AuthRequest, res: Response) => {
       try {
-        const { conversationId } = req.body;
-        const citizenId = req.user!.userId;
+        const { conversationId, citizenId: bodyCitizenId } = req.body;
+        let citizenId = req.user!.userId;
+
+        if (req.user!.userType === 'SERVER') {
+          if (bodyCitizenId) {
+            citizenId = bodyCitizenId;
+          } else if (conversationId) {
+            const conversation = await prisma.conversation.findUnique({
+              where: { id: conversationId },
+              select: {
+                participant1Id: true,
+                participant1Type: true,
+                participant2Id: true,
+                participant2Type: true,
+              },
+            });
+
+            if (!conversation) {
+              res.status(404).json({ error: 'Conversation not found' });
+              return;
+            }
+
+            if (conversation.participant1Type === 'CITIZEN') {
+              citizenId = conversation.participant1Id;
+            } else if (conversation.participant2Type === 'CITIZEN') {
+              citizenId = conversation.participant2Id;
+            }
+          }
+        }
+
+        if (!citizenId) {
+          res.status(400).json({ error: 'Citizen not found' });
+          return;
+        }
 
         await this.flowEngineService.resumeExecution(citizenId, conversationId);
         res.json({ success: true });

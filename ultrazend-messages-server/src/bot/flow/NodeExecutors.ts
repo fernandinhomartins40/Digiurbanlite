@@ -431,6 +431,19 @@ export class NodeExecutors {
       const nextNodeId = node.transitions[0]?.to;
       const result = await handler(resolvedParams, context);
 
+      if (
+        result &&
+        typeof result === 'object' &&
+        ((result as any).success === false ||
+          ((result as any).error && (result as any).success !== true))
+      ) {
+        return {
+          success: false,
+          error: (result as any).error || `Action '${config.action}' failed`,
+          waitingForInput: false,
+        };
+      }
+
       // Salva resultado no estado se configurado
       if (config.saveResultAs) {
         const stateUpdates = this.buildStateUpdates(

@@ -4,6 +4,7 @@ import logger from './utils/logger';
 import ExpressServer from './server/ExpressServer';
 import WebSocketServer from './server/WebSocketServer';
 import prisma from './utils/prisma';
+import { seedFlowDefinitions } from './bot/flow/FlowDefinitionSeeder';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -22,6 +23,7 @@ class UltraZendMessagesServer {
 
       // Testar conexão com banco de dados
       await this.testDatabaseConnection();
+      await seedFlowDefinitions();
 
       // Criar servidor HTTP
       this.expressServer = new ExpressServer();
