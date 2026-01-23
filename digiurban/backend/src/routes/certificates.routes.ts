@@ -80,9 +80,16 @@ router.post('/issue', async (req, res) => {
 
 router.post('/revoke', async (req, res) => {
   try {
-    await revokeCertificate(req.body.serialNumber, req.body.reason, req.body.revokedBy);
-    res.json({ success: true });
+    const { serialNumber, reason, revokedBy, comments } = req.body;
+
+    // Validar reason - deve ser um valor do enum
+    const validReasons = ['UNSPECIFIED', 'KEY_COMPROMISE', 'CA_COMPROMISE', 'AFFILIATION_CHANGED', 'SUPERSEDED', 'CESSATION', 'CERTIFICATE_HOLD'];
+    const revocationReason = validReasons.includes(reason) ? reason : 'UNSPECIFIED';
+
+    await revokeCertificate(serialNumber, revocationReason as any, revokedBy, comments);
+    res.json({ success: true, message: 'Certificado revogado com sucesso' });
   } catch (error: any) {
+    console.error('Erro ao revogar certificado:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

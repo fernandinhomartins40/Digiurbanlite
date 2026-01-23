@@ -61,6 +61,10 @@ export function CertificateRequestsManager() {
   const [filterStatus, setFilterStatus] = useState<string>('PENDING');
   const [selectedRequest, setSelectedRequest] = useState<CertificateRequest | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showPrivateKeyModal, setShowPrivateKeyModal] = useState(false);
+  const [privateKey, setPrivateKey] = useState<string>('');
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
@@ -93,17 +97,20 @@ export function CertificateRequestsManager() {
     }
   };
 
-  const handleApprove = async (requestId: string) => {
+  const handleApprove = async (comments: string) => {
     if (!user?.id) {
       toast.error('Usuário não autenticado');
       return;
     }
 
-    const comments = prompt('Comentários sobre a aprovação (opcional):');
+    if (!selectedRequest) {
+      toast.error('Nenhuma solicitação selecionada');
+      return;
+    }
 
     try {
       setProcessing(true);
-      const response = await fetch(`/api/certificates/requests/${requestId}/approve`, {
+      const response = await fetch(`/api/certificates/requests/${selectedRequest.id}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,9 +125,10 @@ export function CertificateRequestsManager() {
 
       if (data.success) {
         toast.success('Certificado emitido com sucesso!');
+        setShowApproveModal(false);
         if (data.privateKey) {
-          // Exibir chave privada em um alert ou modal
-          alert(`IMPORTANTE: Salve esta chave privada em local seguro!\n\nChave Privada:\n${data.privateKey}\n\nEsta é a ÚNICA vez que a chave será exibida!`);
+          setPrivateKey(data.privateKey);
+          setShowPrivateKeyModal(true);
         }
         fetchRequests();
         setShowDetailsModal(false);
@@ -135,21 +143,25 @@ export function CertificateRequestsManager() {
     }
   };
 
-  const handleReject = async (requestId: string) => {
+  const handleReject = async (comments: string) => {
     if (!user?.id) {
       toast.error('Usuário não autenticado');
       return;
     }
 
-    const comments = prompt('Motivo da rejeição:');
-    if (!comments) {
+    if (!selectedRequest) {
+      toast.error('Nenhuma solicitação selecionada');
+      return;
+    }
+
+    if (!comments || comments.trim() === '') {
       toast.error('É necessário informar o motivo da rejeição');
       return;
     }
 
     try {
       setProcessing(true);
-      const response = await fetch(`/api/certificates/requests/${requestId}/reject`, {
+      const response = await fetch(`/api/certificates/requests/${selectedRequest.id}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -164,6 +176,7 @@ export function CertificateRequestsManager() {
 
       if (data.success) {
         toast.success('Solicitação rejeitada');
+        setShowRejectModal(false);
         fetchRequests();
         setShowDetailsModal(false);
       } else {
@@ -400,7 +413,10 @@ export function CertificateRequestsManager() {
                             variant="default"
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
-                            onClick={() => handleApprove(request.id)}
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setShowApproveModal(true);
+                            }}
                             disabled={processing}
                           >
                             <CheckCircle2 className="w-4 h-4 mr-1" />
@@ -410,7 +426,10 @@ export function CertificateRequestsManager() {
                             variant="outline"
                             size="sm"
                             className="text-red-600 hover:text-red-700"
-                            onClick={() => handleReject(request.id)}
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setShowRejectModal(true);
+                            }}
                             disabled={processing}
                           >
                             <XCircle className="w-4 h-4 mr-1" />
@@ -519,7 +538,7 @@ export function CertificateRequestsManager() {
                     <Button
                       variant="default"
                       className="bg-green-600 hover:bg-green-700"
-                      onClick={() => handleApprove(selectedRequest.id)}
+                      onClick={() => setShowApproveModal(true)}
                       disabled={processing}
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -527,7 +546,7 @@ export function CertificateRequestsManager() {
                     </Button>
                     <Button
                       variant="destructive"
-                      onClick={() => handleReject(selectedRequest.id)}
+                      onClick={() => setShowRejectModal(true)}
                       disabled={processing}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
@@ -543,6 +562,266 @@ export function CertificateRequestsManager() {
                   }}
                 >
                   Fechar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Aprovação */}
+      {showApproveModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2 text-green-700">
+                <CheckCircle2 className="w-5 h-5" />
+                Aprovar Solicitação de Certificado
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const comments = formData.get('comments') as string;
+                  handleApprove(comments || 'Aprovado');
+                }}
+                className="space-y-4"
+              >
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <strong>Solicitante:</strong> {selectedRequest.user.name}
+                  </p>
+                  <p className="text-sm text-green-800 mt-1">
+                    <strong>Email:</strong> {selectedRequest.user.email}
+                  </p>
+                  <p className="text-sm text-green-800 mt-1">
+                    <strong>Tipo:</strong> {selectedRequest.certificateType}
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="approve-comments" className="block text-sm font-medium text-gray-700 mb-2">
+                    Comentários sobre a aprovação (opcional)
+                  </label>
+                  <textarea
+                    id="approve-comments"
+                    name="comments"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    placeholder="Ex: Aprovado conforme solicitação do departamento..."
+                  />
+                </div>
+
+                <div className="p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
+                  <p className="text-sm text-yellow-800 font-medium">
+                    ⚠️ Ao aprovar, um certificado digital será gerado automaticamente e a chave privada será exibida apenas uma vez.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowApproveModal(false);
+                      setSelectedRequest(null);
+                    }}
+                    disabled={processing}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700"
+                    disabled={processing}
+                  >
+                    {processing ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Aprovar e Emitir Certificado
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Rejeição */}
+      {showRejectModal && selectedRequest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2 text-red-700">
+                <XCircle className="w-5 h-5" />
+                Rejeitar Solicitação de Certificado
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  const comments = formData.get('comments') as string;
+                  handleReject(comments);
+                }}
+                className="space-y-4"
+              >
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800">
+                    <strong>Solicitante:</strong> {selectedRequest.user.name}
+                  </p>
+                  <p className="text-sm text-red-800 mt-1">
+                    <strong>Email:</strong> {selectedRequest.user.email}
+                  </p>
+                  <p className="text-sm text-red-800 mt-1">
+                    <strong>Tipo:</strong> {selectedRequest.certificateType}
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="reject-comments" className="block text-sm font-medium text-gray-700 mb-2">
+                    Motivo da rejeição <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="reject-comments"
+                    name="comments"
+                    rows={4}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    placeholder="Descreva o motivo da rejeição..."
+                  />
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowRejectModal(false);
+                      setSelectedRequest(null);
+                    }}
+                    disabled={processing}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    disabled={processing}
+                  >
+                    {processing ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Rejeitar Solicitação
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Chave Privada */}
+      {showPrivateKeyModal && privateKey && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <CardHeader className="border-b bg-red-50">
+              <CardTitle className="flex items-center gap-2 text-red-700">
+                <Shield className="w-5 h-5" />
+                Chave Privada do Certificado Emitido
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div className="p-4 bg-red-50 border-2 border-red-400 rounded-lg space-y-2">
+                <p className="font-bold text-red-800 text-lg">
+                  🔐 ATENÇÃO: SALVE ESTA CHAVE EM LOCAL SEGURO!
+                </p>
+                <ul className="list-disc list-inside text-sm text-red-700 space-y-1">
+                  <li>Esta é a <strong>ÚNICA vez</strong> que a chave privada será exibida</li>
+                  <li>Sem esta chave, o certificado não poderá ser usado para assinar documentos</li>
+                  <li>Guarde em local seguro e criptografado</li>
+                  <li><strong>NUNCA</strong> compartilhe esta chave com terceiros</li>
+                  <li>Em caso de perda, será necessário solicitar um novo certificado</li>
+                </ul>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Chave Privada (PEM)
+                </label>
+                <textarea
+                  readOnly
+                  value={privateKey}
+                  rows={12}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs bg-gray-50"
+                  onClick={(e) => e.currentTarget.select()}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    navigator.clipboard.writeText(privateKey);
+                    toast.success('Chave copiada para a área de transferência');
+                  }}
+                >
+                  📋 Copiar Chave
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    const blob = new Blob([privateKey], { type: 'application/x-pem-file' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `private_key_${selectedRequest?.user.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pem`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    toast.success('Chave privada baixada com sucesso');
+                  }}
+                >
+                  💾 Baixar Arquivo
+                </Button>
+              </div>
+
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Como usar:</strong> Forneça este arquivo ao usuário {selectedRequest?.user.name} através de um canal seguro (presencial, email criptografado, etc). O usuário deve guardar esta chave em local seguro.
+                </p>
+              </div>
+
+              <div className="flex justify-end pt-4 border-t">
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    setShowPrivateKeyModal(false);
+                    setPrivateKey('');
+                    setSelectedRequest(null);
+                  }}
+                >
+                  Fechar (Já salvei a chave)
                 </Button>
               </div>
             </CardContent>

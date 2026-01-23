@@ -66,10 +66,14 @@ export default function CertificadosDigitaisPage() {
   const [filterType, setFilterType] = useState<string>('all');
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<DigitalCertificate | null>(null);
   const [issuing, setIssuing] = useState(false);
+  const [revoking, setRevoking] = useState(false);
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
   const [issueType, setIssueType] = useState<'citizen' | 'server'>('citizen');
+  const [showPrivateKeyModal, setShowPrivateKeyModal] = useState(false);
+  const [privateKey, setPrivateKey] = useState<string>('');
 
   useEffect(() => {
     fetchCertificates();
@@ -223,7 +227,8 @@ export default function CertificadosDigitaisPage() {
       if (data.success) {
         toast.success('Certificado emitido com sucesso!');
         if (data.privateKey) {
-          alert(`IMPORTANTE: Salve esta chave privada em local seguro!\n\nChave Privada:\n${data.privateKey}\n\nEsta é a ÚNICA vez que a chave será exibida!`);
+          setPrivateKey(data.privateKey);
+          setShowPrivateKeyModal(true);
         }
         setShowIssueModal(false);
         setSelectedCitizen(null);
@@ -239,22 +244,29 @@ export default function CertificadosDigitaisPage() {
     }
   };
 
-  const handleRevokeCertificate = async (serialNumber: string, reason: string) => {
+  const handleRevokeCertificate = async (reason: string, comments: string) => {
     if (!user?.id) {
       toast.error('Usuário não autenticado');
       return;
     }
 
+    if (!selectedCertificate) {
+      toast.error('Nenhum certificado selecionado');
+      return;
+    }
+
     try {
+      setRevoking(true);
       const response = await fetch('/api/certificates/revoke', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          serialNumber,
+          serialNumber: selectedCertificate.serialNumber,
           reason,
           revokedBy: user.id,
+          comments
         }),
       });
 
@@ -262,6 +274,9 @@ export default function CertificadosDigitaisPage() {
 
       if (data.success) {
         toast.success('Certificado revogado com sucesso!');
+        setShowRevokeModal(false);
+        setShowDetailsModal(false);
+        setSelectedCertificate(null);
         fetchCertificates();
       } else {
         throw new Error(data.message || 'Erro ao revogar certificado');
@@ -269,6 +284,8 @@ export default function CertificadosDigitaisPage() {
     } catch (error: any) {
       console.error('Erro ao revogar certificado:', error);
       toast.error(error.message || 'Erro ao revogar certificado');
+    } finally {
+      setRevoking(false);
     }
   };
 
@@ -554,9 +571,8 @@ export default function CertificadosDigitaisPage() {
                             size="sm"
                             className="text-red-600 hover:text-red-700"
                             onClick={() => {
-                              if (confirm(`Deseja revogar o certificado ${cert.serialNumber}?`)) {
-                                handleRevokeCertificate(cert.serialNumber, 'Revogado manualmente pelo administrador');
-                              }
+                              setSelectedCertificate(cert);
+                              setShowRevokeModal(true);
                             }}
                             title="Revogar certificado"
                           >
@@ -696,11 +712,8 @@ export default function CertificadosDigitaisPage() {
                     <Button
                       variant="destructive"
                       onClick={() => {
-                        if (confirm(`Deseja revogar o certificado ${selectedCertificate.serialNumber}?`)) {
-                          handleRevokeCertificate(selectedCertificate.serialNumber, 'Revogado manualmente pelo administrador');
-                          setShowDetailsModal(false);
-                          setSelectedCertificate(null);
-                        }
+                        setShowDetailsModal(false);
+                        setShowRevokeModal(true);
                       }}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
@@ -943,6 +956,189 @@ export default function CertificadosDigitaisPage() {
                     </Button>
                   </div>
                 </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Modal de Revogação de Certificado */}
+        {showRevokeModal && selectedCertificate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-lg">
+              <CardHeader className="border-b bg-red-50">
+                <CardTitle className="flex items-center gap-2 text-red-900">
+                  <XCircle className="w-5 h-5" />
+                  Revogar Certificado Digital
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    handleRevokeCertificate(
+                      formData.get('reason') as string,
+                      formData.get('comments') as string
+                    );
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+                    <p className="text-sm text-yellow-800 font-medium mb-2">
+                      ⚠️ Atenção: Esta ação não pode ser desfeita!
+                    </p>
+                    <p className="text-sm text-yellow-700">
+                      Você está prestes a revogar o certificado:
+                    </p>
+                    <p className="text-sm font-mono text-yellow-900 mt-2">
+                      {selectedCertificate.serialNumber}
+                    </p>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Titular: <span className="font-medium">{selectedCertificate.commonName}</span>
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Motivo da Revogação *
+                    </label>
+                    <select
+                      name="reason"
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      <option value="UNSPECIFIED">Não especificado</option>
+                      <option value="KEY_COMPROMISE">Chave comprometida</option>
+                      <option value="CA_COMPROMISE">Autoridade certificadora comprometida</option>
+                      <option value="AFFILIATION_CHANGED">Mudança de lotação/desligamento</option>
+                      <option value="SUPERSEDED">Substituído por novo certificado</option>
+                      <option value="CESSATION">Cessação de operação</option>
+                      <option value="CERTIFICATE_HOLD">Suspensão temporária</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Comentários (opcional)
+                    </label>
+                    <textarea
+                      name="comments"
+                      rows={3}
+                      placeholder="Descreva o motivo da revogação..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 justify-end pt-4 border-t">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowRevokeModal(false);
+                        setSelectedCertificate(null);
+                      }}
+                      disabled={revoking}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="destructive"
+                      disabled={revoking}
+                    >
+                      {revoking ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Revogando...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Revogar Certificado
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Modal de Chave Privada */}
+        {showPrivateKeyModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-2xl">
+              <CardHeader className="border-b bg-yellow-50">
+                <CardTitle className="flex items-center gap-2 text-yellow-900">
+                  <Shield className="w-5 h-5" />
+                  Chave Privada do Certificado
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="p-4 bg-red-50 border-2 border-red-400 rounded-lg">
+                  <p className="text-sm font-bold text-red-900 mb-2">
+                    🔐 ATENÇÃO: SALVE ESTA CHAVE EM LOCAL SEGURO!
+                  </p>
+                  <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
+                    <li>Esta é a ÚNICA vez que a chave privada será exibida</li>
+                    <li>Sem esta chave, você NÃO poderá assinar documentos</li>
+                    <li>NUNCA compartilhe esta chave com terceiros</li>
+                    <li>Armazene em local seguro e criptografado</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chave Privada (formato PEM):
+                  </label>
+                  <textarea
+                    readOnly
+                    value={privateKey}
+                    rows={12}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs bg-gray-50"
+                    onClick={(e) => e.currentTarget.select()}
+                  />
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(privateKey);
+                      toast.success('Chave privada copiada para área de transferência!');
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Copiar Chave
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const blob = new Blob([privateKey], { type: 'text/plain' });
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `private-key-${Date.now()}.pem`;
+                      document.body.appendChild(a);
+                      a.click();
+                      window.URL.revokeObjectURL(url);
+                      document.body.removeChild(a);
+                      toast.success('Chave privada baixada com sucesso!');
+                    }}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Baixar Arquivo
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      setShowPrivateKeyModal(false);
+                      setPrivateKey('');
+                    }}
+                  >
+                    Fechar
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

@@ -127,21 +127,27 @@ function generateDefaultCACert(): string {
   return forge.pki.certificateToPem(cert);
 }
 
-export async function revokeCertificate(serialNumber: string, reason: string, revokedBy: string) {
+export async function revokeCertificate(
+  serialNumber: string,
+  reason: 'UNSPECIFIED' | 'KEY_COMPROMISE' | 'CA_COMPROMISE' | 'AFFILIATION_CHANGED' | 'SUPERSEDED' | 'CESSATION' | 'CERTIFICATE_HOLD',
+  revokedBy: string,
+  comments?: string
+) {
   await prisma.digitalCertificate.updateMany({
     where: { serialNumber },
     data: {
       status: 'REVOKED',
       revokedAt: new Date(),
-      revocationReason: reason as any,
+      revocationReason: reason,
     },
   });
 
   await prisma.certificateRevocationList.create({
     data: {
       serialNumber,
-      reason: reason as any,
+      reason,
       revokedBy,
+      comments: comments || `Certificado revogado: ${reason}`
     },
   });
 }
