@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { io, Socket } from 'socket.io-client';
@@ -85,6 +85,8 @@ export function useConversations({
 
   const socketRef = useRef<Socket | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const processedMessageIdsRef = useRef<Set<string>>(new Set());
+  const botEnsureAttemptedRef = useRef(false);
   const MAX_RECONNECT_ATTEMPTS = 5;
 
   // Refs para callbacks e valores para evitar recriação do socket
@@ -105,6 +107,7 @@ export function useConversations({
   useEffect(() => {
     userIdRef.current = userId;
     userTypeRef.current = userType;
+    processedMessageIdsRef.current.clear();
   }, [userId, userType]);
 
   // Estabilizar URLs usando useMemo
@@ -118,10 +121,25 @@ export function useConversations({
     [wsUrl]
   );
 
-  const DIGIURBAN_API_URL = useMemo(() =>
-    process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
-    []
-  );
+  const ensureBotConversation = useCallback(async () => {
+    if (userTypeRef.current !== 'CITIZEN') {
+      return false;
+    }
+
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flowName: 'menu_principal' }),
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Erro ao criar conversa do bot:', error);
+      return false;
+    }
+  }, [MESSAGES_API_URL]);
 
   /**
    * Enriquecer conversa com informações do participante
@@ -180,6 +198,30 @@ export function useConversations({
     }
   }, []); // Sem dependências - usa refs
 
+  const fetchConversations = useCallback(async () => {
+    const response = await fetch(`${MESSAGES_API_URL}/conversations`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Erro ao carregar conversas');
+    }
+
+    const data = await response.json();
+    const conversationList = Array.isArray(data) ? data : data.conversations || [];
+    const enriched = await Promise.all(conversationList.map(enrichConversation));
+
+    return enriched.sort((a, b) => {
+      if (a.isBotConversation && !b.isBotConversation) return -1;
+      if (!a.isBotConversation && b.isBotConversation) return 1;
+
+      const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+      const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+
+      return dateB - dateA;
+    });
+  }, [MESSAGES_API_URL, enrichConversation]);
+
   /**
    * Carregar conversas do backend
    */
@@ -188,31 +230,22 @@ export function useConversations({
     setError(null);
 
     try {
-      const response = await fetch(`${MESSAGES_API_URL}/conversations`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro ao carregar conversas');
-      }
-
-      const data = await response.json();
-
-      // Enriquecer TODAS as conversas (incluindo bot)
-      const enriched = await Promise.all(data.map(enrichConversation));
-
-      // Ordenar: Bot sempre no topo, depois por última mensagem
-      const sorted = enriched.sort((a, b) => {
-        if (a.isBotConversation && !b.isBotConversation) return -1;
-        if (!a.isBotConversation && b.isBotConversation) return 1;
-
-        const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
-        const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
-
-        return dateB - dateA;
-      });
-
+      const sorted = await fetchConversations();
       setConversations(sorted);
+
+      if (userTypeRef.current === 'CITIZEN' && !botEnsureAttemptedRef.current) {
+        const hasBot = sorted.some(conv => conv.isBotConversation);
+
+        if (!hasBot) {
+          botEnsureAttemptedRef.current = true;
+          const created = await ensureBotConversation();
+
+          if (created) {
+            const refreshed = await fetchConversations();
+            setConversations(refreshed);
+          }
+        }
+      }
     } catch (err) {
       console.error('Erro ao carregar conversas:', err);
       setError('Não foi possível carregar as conversas. Tente novamente.');
@@ -281,6 +314,14 @@ export function useConversations({
 
     // Event: Nova mensagem recebida
     newSocket.on('message:new', async (data: { conversationId: string; message: Message }) => {
+      if (data.message?.id && processedMessageIdsRef.current.has(data.message.id)) {
+        return;
+      }
+
+      if (data.message?.id) {
+        processedMessageIdsRef.current.add(data.message.id);
+      }
+
       console.log('[useConversations] Nova mensagem recebida:', data);
 
       setConversations(prev => {
@@ -472,6 +513,25 @@ export function useConversations({
     }
   }, [socket, isConnected]);
 
+  const markConversationAsRead = useCallback(async (conversationId: string) => {
+    try {
+      await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/read`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === conversationId
+            ? { ...conv, unreadCount: 0, unreadCount1: 0, unreadCount2: 0 }
+            : conv
+        )
+      );
+    } catch (error) {
+      console.error('Erro ao marcar conversa como lida:', error);
+    }
+  }, [MESSAGES_API_URL]);
+
   /**
    * Criar ou buscar conversa
    */
@@ -544,8 +604,10 @@ export function useConversations({
     loadConversations,
     sendMessage,
     markAsRead,
+    markConversationAsRead,
     findOrCreateConversation,
   };
 }
 
 export default useConversations;
+

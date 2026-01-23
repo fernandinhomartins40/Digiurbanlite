@@ -111,6 +111,7 @@ export default function AdminMessagesPage() {
     error,
     loadConversations,
     sendMessage,
+    markConversationAsRead,
     findOrCreateConversation,
   } = useConversations({
     userId: user?.id || '',
@@ -118,8 +119,12 @@ export default function AdminMessagesPage() {
     onNewMessage: (message, conversationId) => {
       // Se é mensagem para conversa selecionada, adicionar à lista
       if (selectedConversation?.id === conversationId) {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => (prev.some(item => item.id === message.id) ? prev : [...prev, message]));
         scrollToBottom();
+
+        if (message.senderId !== user?.id) {
+          markConversationAsRead(conversationId);
+        }
       }
     },
     onNewConversation: (conversation) => {
@@ -198,7 +203,7 @@ export default function AdminMessagesPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setMessages(data);
+        setMessages(Array.isArray(data) ? data : data.messages || []);
 
         // Entrar na sala do WebSocket
         if (socket) {
@@ -229,6 +234,7 @@ export default function AdminMessagesPage() {
    */
   const handleSelectConversation = async (conversation: Conversation) => {
     setSelectedConversation(conversation);
+    markConversationAsRead(conversation.id);
 
     if (isMobileView) {
       setShowConversationsList(false);
@@ -795,7 +801,7 @@ export default function AdminMessagesPage() {
                 <div className="space-y-4 max-w-4xl mx-auto">
                   {messages.map((message, index) => {
                     const isOwnMessage = message.senderType === 'SERVER';
-                    const isBot = message.senderType === 'BOT';
+                    const isBot = message.senderType === 'BOT' || message.senderType === 'SYSTEM';
                     const showDate = index === 0 ||
                       new Date(messages[index - 1].sentAt).toDateString() !==
                       new Date(message.sentAt).toDateString();
@@ -930,14 +936,8 @@ export default function AdminMessagesPage() {
         <NewConversationDialog
           isOpen={showNewConversation}
           onClose={() => setShowNewConversation(false)}
-          currentUserId={user.id}
-          currentUserType="SERVER"
-          onConversationCreated={async (conversation) => {
-            // Buscar ou criar conversa via hook
-            const newConv = await findOrCreateConversation(
-              conversation.id,
-              conversation.type === 'SERVER' ? 'SERVER' : 'CITIZEN'
-            );
+          onConversationCreated={async ({ contactId, contactType }) => {
+            const newConv = await findOrCreateConversation(contactId, contactType);
 
             if (newConv) {
               setSelectedConversation(newConv);

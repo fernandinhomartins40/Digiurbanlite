@@ -268,6 +268,35 @@ export class ExpressServer {
       try {
         const { conversationId, content, replyToId, attachments } = req.body;
 
+        if (!conversationId || !content) {
+          res.status(400).json({ error: 'conversationId and content are required' });
+          return;
+        }
+
+        const conversation = await prisma.conversation.findUnique({
+          where: { id: conversationId },
+        });
+
+        if (!conversation) {
+          res.status(404).json({ error: 'Conversation not found' });
+          return;
+        }
+
+        const isParticipant1 = conversation.participant1Id === req.user!.userId &&
+          conversation.participant1Type === req.user!.userType;
+
+        const isParticipant2 = conversation.participant2Id === req.user!.userId &&
+          conversation.participant2Type === req.user!.userType;
+
+        if (!isParticipant1 && !isParticipant2) {
+          res.status(403).json({ error: 'Unauthorized' });
+          return;
+        }
+
+        const recipientId = isParticipant1 ? conversation.participant2Id : conversation.participant1Id;
+        const recipientType = isParticipant1 ? conversation.participant2Type : conversation.participant1Type;
+        const now = new Date();
+
         const message = await prisma.message.create({
           data: {
             conversationId,
@@ -277,6 +306,7 @@ export class ExpressServer {
             replyToId,
             attachments: attachments || [],
             status: 'SENT',
+            sentAt: now,
           },
         });
 
@@ -284,11 +314,26 @@ export class ExpressServer {
         await prisma.conversation.update({
           where: { id: conversationId },
           data: {
-            lastMessageAt: new Date(),
+            lastMessageAt: now,
             lastMessagePreview: content.substring(0, 100),
             totalMessages: { increment: 1 },
+            ...(isParticipant1
+              ? { unreadCount2: { increment: 1 } }
+              : { unreadCount1: { increment: 1 } }),
           },
         });
+
+        if (this.wsServer) {
+          const messagePayload = { conversationId, message };
+          this.wsServer.io.to(`conversation:${conversationId}`).emit('message:new', messagePayload);
+          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', messagePayload);
+          this.wsServer.io.to(`user:${recipientId}`).emit('message:new', messagePayload);
+
+          const conversationWithDetails = await conversationService.getConversationById(conversationId);
+          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('conversation:new', {
+            conversation: conversationWithDetails,
+          });
+        }
 
         res.json(message);
       } catch (error) {
@@ -322,6 +367,7 @@ export class ExpressServer {
         });
 
         // 2. Criar mensagem
+        const now = new Date();
         const message = await prisma.message.create({
           data: {
             conversationId: conversation.id,
@@ -331,17 +377,25 @@ export class ExpressServer {
             contentType,
             attachments: attachments || [],
             status: 'SENT',
-            sentAt: new Date(),
+            sentAt: now,
           },
         });
+
+        const isParticipant1 = conversation.participant1Id === req.user!.userId &&
+          conversation.participant1Type === req.user!.userType;
+        const actualRecipientId = isParticipant1 ? conversation.participant2Id : conversation.participant1Id;
+        const actualRecipientType = isParticipant1 ? conversation.participant2Type : conversation.participant1Type;
 
         // 3. Atualizar conversa
         await prisma.conversation.update({
           where: { id: conversation.id },
           data: {
-            lastMessageAt: new Date(),
+            lastMessageAt: now,
             lastMessagePreview: content.substring(0, 100),
             totalMessages: { increment: 1 },
+            ...(isParticipant1
+              ? { unreadCount2: { increment: 1 } }
+              : { unreadCount1: { increment: 1 } }),
           },
         });
 
@@ -355,24 +409,22 @@ export class ExpressServer {
           // 4a. Emitir para sala da conversa
           this.wsServer.io.to(`conversation:${conversation.id}`).emit('message:new', messagePayload);
 
-          // 4b. Emitir para sala pessoal do remetente
-          this.wsServer.io.to(`user:${req.user!.userId}:${req.user!.userType}`).emit('message:new', messagePayload);
-
-          // 4c. Emitir para sala pessoal do destinatário
-          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', messagePayload);
+          // 4b. Emitir para sala pessoal do destinatário
+          this.wsServer.io.to(`user:${actualRecipientId}:${actualRecipientType}`).emit('message:new', messagePayload);
+          this.wsServer.io.to(`user:${actualRecipientId}`).emit('message:new', messagePayload);
 
           // 4d. Notificar nova conversa para o destinatário (se necessário)
           // Buscar conversa completa com informações do remetente
           const conversationWithDetails = await conversationService.getConversationById(conversation.id);
 
-          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('conversation:new', {
+          this.wsServer.io.to(`user:${actualRecipientId}:${actualRecipientType}`).emit('conversation:new', {
             conversation: conversationWithDetails,
           });
 
           logger.info('WebSocket events emitted', {
             conversationId: conversation.id,
             messageId: message.id,
-            recipientId,
+            recipientId: actualRecipientId,
           });
         }
 

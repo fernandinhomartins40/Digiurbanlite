@@ -29,6 +29,7 @@ class UltraZendMessagesServer {
 
       // Criar servidor WebSocket
       this.wsServer = new WebSocketServer(this.httpServer);
+      this.expressServer.setWebSocketServer(this.wsServer);
 
       // Iniciar servidor
       this.httpServer.listen(PORT, HOST, () => {

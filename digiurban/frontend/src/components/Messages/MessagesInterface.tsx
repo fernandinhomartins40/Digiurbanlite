@@ -79,6 +79,7 @@ export function MessagesInterface({
     error,
     loadConversations,
     sendMessage,
+    markConversationAsRead,
     findOrCreateConversation,
   } = useConversations({
     userId,
@@ -86,8 +87,18 @@ export function MessagesInterface({
     onNewMessage: (message, conversationId) => {
       // Se é mensagem para conversa selecionada, adicionar à lista
       if (selectedConversation?.id === conversationId) {
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => (prev.some(item => item.id === message.id) ? prev : [...prev, message]));
         scrollToBottom();
+
+        if (mode === 'citizen' && (message.senderType === 'BOT' || message.senderType === 'SYSTEM')) {
+          const options = message.metadata?.options || [];
+          setBotOptions(options);
+          setBotMenuActive(options.length > 0);
+        }
+
+        if (message.senderId !== userId) {
+          markConversationAsRead(conversationId);
+        }
       }
     },
   });
@@ -120,56 +131,44 @@ export function MessagesInterface({
     setBotMenuActive(false);
 
     try {
-      // Se é conversa com bot no modo cidadão, buscar fluxo ativo
-      if (conversation.isBotConversation && mode === 'citizen') {
-        const execResponse = await fetch(
-          `${MESSAGES_API_URL}/bot-flow/active-execution?conversationId=${conversation.id}`,
-          { credentials: 'include' }
-        );
+      const response = await fetch(
+        `${MESSAGES_API_URL}/conversations/${conversation.id}/messages`,
+        { credentials: 'include' }
+      );
 
-        if (execResponse.ok) {
-          const execution = await execResponse.json();
+      if (!response.ok) {
+        throw new Error('Erro ao carregar mensagens');
+      }
 
-          if (execution.currentStep) {
-            const step = execution.currentStep;
+      let data = await response.json();
 
-            // Criar mensagem do bot com opções
-            const botMessage: Message = {
-              id: `bot-${Date.now()}`,
-              conversationId: conversation.id,
-              senderId: 'bot',
-              senderType: 'BOT',
-              content: step.message || 'Como posso ajudar?',
-              contentType: 'TEXT',
-              status: 'SENT',
-              sentAt: new Date().toISOString(),
-              isEdited: false,
-              isDeleted: false,
-              metadata: step.options ? { options: step.options } : undefined,
-            };
+      if (conversation.isBotConversation && mode === 'citizen' && data.length === 0) {
+        await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ flowName: 'menu_principal', conversationId: conversation.id }),
+        });
 
-            setMessages([botMessage]);
-
-            if (step.options && step.options.length > 0) {
-              setBotOptions(step.options);
-              setBotMenuActive(true);
-            }
-          }
-        }
-      } else {
-        // Carregar mensagens normais
-        const response = await fetch(
+        const refreshResponse = await fetch(
           `${MESSAGES_API_URL}/conversations/${conversation.id}/messages`,
           { credentials: 'include' }
         );
 
-        if (!response.ok) {
-          throw new Error('Erro ao carregar mensagens');
+        if (refreshResponse.ok) {
+          data = await refreshResponse.json();
         }
-
-        const data = await response.json();
-        setMessages(data);
       }
+
+      setMessages(data);
+
+      const lastBotMessage = [...data]
+        .reverse()
+        .find((msg: Message) => msg.senderType === 'BOT' || msg.senderType === 'SYSTEM');
+
+      const options = lastBotMessage?.metadata?.options || [];
+      setBotOptions(options);
+      setBotMenuActive(options.length > 0);
 
       // Entrar na sala da conversa via socket
       if (socket) {
@@ -191,6 +190,7 @@ export function MessagesInterface({
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
     loadMessages(conversation);
+    markConversationAsRead(conversation.id);
     if (isMobileView) {
       setShowConversationsList(false);
     }
@@ -243,50 +243,16 @@ export function MessagesInterface({
 
       const data = await response.json();
 
-      // Adicionar mensagem do usuário
-      const userMessage: Message = {
-        id: `user-${Date.now()}`,
-        conversationId: selectedConversation.id,
-        senderId: userId,
-        senderType: userType,
-        content,
-        contentType: 'TEXT',
-        status: 'SENT',
-        sentAt: new Date().toISOString(),
-        isEdited: false,
-        isDeleted: false,
-      };
+      if (data.userMessage) {
+        setMessages((prev) => (prev.some(item => item.id === data.userMessage.id) ? prev : [...prev, data.userMessage]));
+      }
 
-      setMessages((prev) => [...prev, userMessage]);
+      if (data.botMessage) {
+        setMessages((prev) => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
 
-      // Processar resposta do bot
-      if (data.botResponse) {
-        const botMessage: Message = {
-          id: `bot-${Date.now()}`,
-          conversationId: selectedConversation.id,
-          senderId: 'bot',
-          senderType: 'BOT',
-          content: data.botResponse.message || 'Processando...',
-          contentType: 'TEXT',
-          status: 'SENT',
-          sentAt: new Date().toISOString(),
-          isEdited: false,
-          isDeleted: false,
-          metadata: data.botResponse.options
-            ? { options: data.botResponse.options }
-            : undefined,
-        };
-
-        setMessages((prev) => [...prev, botMessage]);
-
-        // Atualizar opções se existirem
-        if (data.botResponse.options && data.botResponse.options.length > 0) {
-          setBotOptions(data.botResponse.options);
-          setBotMenuActive(true);
-        } else {
-          setBotOptions([]);
-          setBotMenuActive(false);
-        }
+        const options = data.botMessage.metadata?.options || [];
+        setBotOptions(options);
+        setBotMenuActive(options.length > 0);
       }
     } catch (error) {
       console.error('Erro ao enviar mensagem para o bot:', error);

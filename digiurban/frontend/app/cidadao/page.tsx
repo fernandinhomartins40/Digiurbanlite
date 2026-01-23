@@ -70,21 +70,23 @@ export default function CitizenDashboard() {
   // Hook unificado de conversas
   const {
     conversations,
-    setConversations,
     socket,
     isConnected,
     loading,
-    loadConversations,
     sendMessage,
+    markConversationAsRead,
     findOrCreateConversation,
   } = useConversations({
     userId: citizen?.id || '',
     userType: 'CITIZEN',
     onNewMessage: (message, conversationId) => {
-      // Se é mensagem para conversa selecionada, adicionar à lista
+      // Se � mensagem para conversa selecionada, adicionar � lista
       if (selectedConversation?.id === conversationId) {
-        setMessages(prev => [...prev, message]);
+        setMessages(prev => (prev.some(item => item.id === message.id) ? prev : [...prev, message]));
         scrollToBottom();
+        if (message.senderId !== citizen?.id) {
+          markConversationAsRead(conversationId);
+        }
       }
     },
   });
@@ -131,66 +133,17 @@ export default function CitizenDashboard() {
   /**
    * Iniciar fluxo do bot
    */
-  const startBotFlow = async () => {
+  const startBotFlow = async (conversationId: string) => {
     try {
       const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
-      console.log('🚀 [startBotFlow] Iniciando fluxo menu_principal...');
-
-      const response = await fetch(`${messagesApiUrl}/bot-flow/start`, {
+      await fetch(`${messagesApiUrl}/bot-flow/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ flowName: 'menu_principal' })
+        body: JSON.stringify({ flowName: 'menu_principal', conversationId })
       });
-
-      console.log('📡 [startBotFlow] Status:', response.status);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📦 [startBotFlow] Resposta completa:', data);
-        const botResponse = data.response;
-        console.log('🤖 [startBotFlow] Bot response:', botResponse);
-
-        const options = botResponse.data?.options || botResponse.options || [];
-        console.log('📋 [startBotFlow] Opções do menu:', options);
-
-        setMessages([
-          {
-            id: `bot-${Date.now()}`,
-            content: botResponse.message,
-            senderId: 'bot',
-            senderType: 'BOT',
-            contentType: 'TEXT',
-            sentAt: new Date().toISOString(),
-            status: 'READ',
-            isEdited: false,
-            isDeleted: false,
-            conversationId: selectedConversation?.id || '',
-            metadata: {
-              options: options,
-              quickReplies: options.map((opt: any) => opt.label),
-              needsInput: botResponse.metadata?.waitingForInput || false
-            }
-          }
-        ]);
-      }
     } catch (error) {
       console.error('Erro ao iniciar fluxo do bot:', error);
-      // Mensagem de fallback
-      setMessages([
-        {
-          id: '1',
-          content: 'Olá! Sou o DigiBot, seu assistente virtual! 🤖\n\nEstou tendo dificuldades para conectar. Por favor, tente novamente em instantes.',
-          senderId: 'bot',
-          senderType: 'BOT',
-          contentType: 'TEXT',
-          sentAt: new Date().toISOString(),
-          status: 'READ',
-          isEdited: false,
-          isDeleted: false,
-          conversationId: selectedConversation?.id || '',
-        }
-      ]);
     }
   };
 
@@ -202,68 +155,6 @@ export default function CitizenDashboard() {
 
     const conv = conversations.find(c => c.id === conversationId);
 
-    // Se for o bot, carregar histórico do bot via SISTEMA DE FLUXOS
-    if (conv?.isBotConversation) {
-      try {
-        const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
-
-        console.log('🔍 [loadMessages] Buscando execução ativa...');
-
-        const response = await fetch(
-          `${messagesApiUrl}/bot-flow/active-execution`,
-          { credentials: 'include' }
-        );
-
-        console.log('📡 [loadMessages] Status da resposta:', response.status);
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log('📦 [loadMessages] Dados recebidos:', data);
-
-          if (data.execution && data.execution.currentState) {
-            const state = data.execution.currentState;
-            console.log('✅ [loadMessages] Execução ativa encontrada:', state);
-
-            const options = state.data?.options || state.options || [];
-            console.log('📋 [loadMessages] Opções encontradas:', options);
-
-            setMessages([
-              {
-                id: data.execution.id,
-                content: state.message || 'Olá! Como posso ajudar você?',
-                senderId: 'bot',
-                senderType: 'BOT',
-                contentType: 'TEXT',
-                sentAt: data.execution.updatedAt,
-                status: 'READ',
-                isEdited: false,
-                isDeleted: false,
-                conversationId,
-                metadata: {
-                  options: options,
-                  quickReplies: options.map((opt: any) => opt.label),
-                  needsInput: state.metadata?.waitingForInput || false
-                }
-              }
-            ]);
-          } else {
-            console.log('ℹ️ [loadMessages] Nenhuma execução ativa, iniciando novo fluxo...');
-            await startBotFlow();
-          }
-        } else {
-          console.log('⚠️ [loadMessages] Erro ao buscar execução, iniciando novo fluxo...');
-          await startBotFlow();
-        }
-      } catch (error) {
-        console.error('Erro ao carregar histórico do bot:', error);
-        await startBotFlow();
-      }
-      setIsLoadingMessages(false);
-      scrollToBottom();
-      return;
-    }
-
-    // Conversa normal - carregar via API
     try {
       const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
       const response = await fetch(
@@ -272,8 +163,23 @@ export default function CitizenDashboard() {
       );
 
       if (response.ok) {
-        const data = await response.json();
-        setMessages(Array.isArray(data) ? data : []);
+        let data = await response.json();
+        const normalized = Array.isArray(data) ? data : data.messages || [];
+
+        if (conv?.isBotConversation && normalized.length === 0) {
+          await startBotFlow(conversationId);
+
+          const refreshResponse = await fetch(
+            `${messagesApiUrl}/conversations/${conversationId}/messages?limit=50`,
+            { credentials: 'include' }
+          );
+
+          if (refreshResponse.ok) {
+            data = await refreshResponse.json();
+          }
+        }
+
+        setMessages(Array.isArray(data) ? data : data.messages || []);
         scrollToBottom();
       }
     } catch (error) {
@@ -288,6 +194,7 @@ export default function CitizenDashboard() {
    */
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
+    markConversationAsRead(conversation.id);
 
     if (isMobileView) {
       setShowConversationsList(false);
@@ -307,20 +214,6 @@ export default function CitizenDashboard() {
 
     if (!newMessage.trim() || !selectedConversation || !citizen) return;
 
-    const tempMessage: Message = {
-      id: `temp-${Date.now()}`,
-      content: newMessage.trim(),
-      senderId: citizen.id,
-      senderType: 'CITIZEN',
-      contentType: 'TEXT',
-      sentAt: new Date().toISOString(),
-      status: 'SENT',
-      isEdited: false,
-      isDeleted: false,
-      conversationId: selectedConversation.id,
-    };
-
-    setMessages(prev => [...prev, tempMessage]);
     const messageContent = newMessage.trim();
     setNewMessage('');
     scrollToBottom();
@@ -335,39 +228,40 @@ export default function CitizenDashboard() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ message: messageContent })
+          body: JSON.stringify({
+            message: messageContent,
+            conversationId: selectedConversation.id,
+          })
         });
 
         if (response.ok) {
           const data = await response.json();
-          const botResponse = data.response;
 
-          console.log('📥 [page.tsx] Resposta do sistema de fluxos:', botResponse);
+          if (data.userMessage) {
+            setMessages(prev => (prev.some(item => item.id === data.userMessage.id) ? prev : [...prev, data.userMessage]));
+          }
 
-          const options = botResponse.data?.options || botResponse.options || [];
-          console.log('📋 [handleSendMessage] Opções do menu:', options);
+          if (data.botMessage) {
+            setMessages(prev => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
+          }
 
-          setMessages(prev => [...prev, {
-            id: `bot-${Date.now()}`,
-            content: botResponse.message,
-            senderId: 'bot',
-            senderType: 'BOT',
-            contentType: 'TEXT',
-            sentAt: new Date().toISOString(),
-            status: 'READ',
-            isEdited: false,
-            isDeleted: false,
-            conversationId: selectedConversation.id,
-            metadata: {
-              options: options,
-              quickReplies: options.map((opt: any) => opt.label),
-              needsInput: botResponse.metadata?.waitingForInput || false
-            }
-          }]);
           scrollToBottom();
         }
       } else {
-        // Mensagem normal via hook
+        const tempMessage: Message = {
+          id: `temp-${Date.now()}`,
+          content: messageContent,
+          senderId: citizen.id,
+          senderType: 'CITIZEN',
+          contentType: 'TEXT',
+          sentAt: new Date().toISOString(),
+          status: 'SENT',
+          isEdited: false,
+          isDeleted: false,
+          conversationId: selectedConversation.id,
+        };
+
+        setMessages(prev => [...prev, tempMessage]);
         await sendMessage(selectedConversation.id, messageContent);
       }
     } catch (error) {
@@ -375,7 +269,7 @@ export default function CitizenDashboard() {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Não foi possível enviar a mensagem',
+        description: 'N�o foi poss�vel enviar a mensagem',
       });
     }
   };
@@ -713,7 +607,7 @@ export default function CitizenDashboard() {
                 <div className="space-y-4 max-w-4xl mx-auto">
                   {messages.map((message, index) => {
                     const isOwnMessage = message.senderId === citizen?.id;
-                    const isBot = message.senderType === 'BOT';
+                    const isBot = message.senderType === 'BOT' || message.senderType === 'SYSTEM';
                     const showDate = index === 0 ||
                       new Date(messages[index - 1].sentAt).toDateString() !==
                       new Date(message.sentAt).toDateString();
@@ -782,31 +676,14 @@ export default function CitizenDashboard() {
                                           method: 'POST',
                                           headers: { 'Content-Type': 'application/json' },
                                           credentials: 'include',
-                                          body: JSON.stringify({ message: option.id })
+                                          body: JSON.stringify({ message: option.id, conversationId: selectedConversation.id })
                                         });
 
                                         if (response.ok) {
                                           const data = await response.json();
-                                          const botResponse = data.response;
-                                          const options = botResponse.data?.options || [];
-
-                                          setMessages(prev => [...prev, {
-                                            id: `bot-${Date.now()}`,
-                                            content: botResponse.message,
-                                            senderId: 'bot',
-                                            senderType: 'BOT',
-                                            contentType: 'TEXT',
-                                            sentAt: new Date().toISOString(),
-                                            status: 'READ',
-                                            isEdited: false,
-                                            isDeleted: false,
-                                            conversationId: selectedConversation.id,
-                                            metadata: {
-                                              options: options,
-                                              quickReplies: options.map((opt: any) => opt.label),
-                                              needsInput: botResponse.metadata?.waitingForInput || false
-                                            }
-                                          } as any]);
+                                          if (data.botMessage) {
+                                            setMessages(prev => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
+                                          }
                                           scrollToBottom();
                                         }
                                       } catch (error) {
@@ -859,12 +736,12 @@ export default function CitizenDashboard() {
               {(() => {
                 const lastMessage = messages[messages.length - 1];
                 const hasActiveMenu = lastMessage &&
-                                     lastMessage.senderType === 'BOT' &&
+                                     (lastMessage.senderType === 'BOT' || lastMessage.senderType === 'SYSTEM') &&
                                      (lastMessage as any).metadata?.options &&
                                      (lastMessage as any).metadata.options.length > 0;
 
                 const needsTextInput = lastMessage &&
-                                      lastMessage.senderType === 'BOT' &&
+                                      (lastMessage.senderType === 'BOT' || lastMessage.senderType === 'SYSTEM') &&
                                       (lastMessage as any).metadata?.needsInput &&
                                       (!(lastMessage as any).metadata?.options || (lastMessage as any).metadata.options.length === 0);
 
@@ -950,14 +827,8 @@ export default function CitizenDashboard() {
         <NewConversationDialog
           isOpen={showNewConversation}
           onClose={() => setShowNewConversation(false)}
-          currentUserId={citizen.id}
-          currentUserType="CITIZEN"
-          onConversationCreated={async (conversation) => {
-            // Buscar ou criar conversa via hook
-            const newConv = await findOrCreateConversation(
-              conversation.id,
-              conversation.type === 'SERVER' ? 'SERVER' : 'CITIZEN'
-            );
+          onConversationCreated={async ({ contactId, contactType }) => {
+            const newConv = await findOrCreateConversation(contactId, contactType);
 
             if (newConv) {
               setSelectedConversation(newConv);
@@ -978,3 +849,16 @@ export default function CitizenDashboard() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

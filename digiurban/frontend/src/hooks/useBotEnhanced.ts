@@ -13,7 +13,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const ULTRAZEND_WS_URL = process.env.NEXT_PUBLIC_ULTRAZEND_WS_URL || 'http://localhost:9001';
+const ULTRAZEND_WS_URL = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001';
+const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
 interface Message {
   id: string;
@@ -177,7 +178,7 @@ export function useBotEnhanced() {
     files.forEach(file => formData.append('files', file));
     formData.append('conversationId', conversationIdRef.current);
 
-    const response = await fetch(process.env.NEXT_PUBLIC_MESSAGES_API_URL + '/api/bot-flow/upload', {
+    const response = await fetch(`${MESSAGES_API_URL}/bot-flow/upload`, {
       method: 'POST',
       body: formData,
       credentials: 'include',
@@ -201,7 +202,7 @@ export function useBotEnhanced() {
    */
   const loadHistory = useCallback(async () => {
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_MESSAGES_API_URL + '/api/bot-flow/active-execution', {
+      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/active-execution`, {
         credentials: 'include',
       });
 

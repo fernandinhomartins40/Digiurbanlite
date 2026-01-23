@@ -1,8 +1,22 @@
 import { Router, Response } from 'express';
+import axios from 'axios';
 import { authenticateToken } from '../middleware/auth';
 import { CitizenAuthenticatedRequest } from '../types';
 
 const router = Router();
+const messagesBaseUrl = process.env.MESSAGES_SERVER_URL || 'http://ultrazend-messages:9001';
+const messagesClient = axios.create({
+  baseURL: messagesBaseUrl,
+  timeout: 15000,
+});
+
+const getAuthToken = (req: CitizenAuthenticatedRequest) => {
+  return (
+    req.cookies?.digiurban_admin_token ||
+    req.cookies?.digiurban_citizen_token ||
+    req.headers.authorization?.replace('Bearer ', '')
+  );
+};
 
 /**
  * GET /api/messages/conversations
@@ -14,18 +28,19 @@ const router = Router();
  */
 router.get('/conversations', authenticateToken, async (req: CitizenAuthenticatedRequest, res: Response) => {
   try {
-    const citizenId = req.citizen?.id;
+    const token = getAuthToken(req);
 
-    if (!citizenId) {
+    if (!token) {
       return res.status(401).json({ error: 'Não autenticado' });
     }
 
-    // Por enquanto, retorna array vazio
-    // O DigiBot é adicionado no frontend
-    // Futuras conversas com atendentes serão buscadas do banco
+    const response = await messagesClient.get('/api/conversations', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
     res.json({
       success: true,
-      conversations: []
+      conversations: response.data,
     });
 
   } catch (error) {
@@ -40,18 +55,20 @@ router.get('/conversations', authenticateToken, async (req: CitizenAuthenticated
  */
 router.get('/conversations/:id/messages', authenticateToken, async (req: CitizenAuthenticatedRequest, res: Response) => {
   try {
-    const citizenId = req.citizen?.id;
     const conversationId = req.params.id;
+    const token = getAuthToken(req);
 
-    if (!citizenId) {
+    if (!token) {
       return res.status(401).json({ error: 'Não autenticado' });
     }
 
-    // Por enquanto, retorna array vazio
-    // Mensagens do bot vêm de /api/bot/history
+    const response = await messagesClient.get(`/api/conversations/${conversationId}/messages`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
     res.json({
       success: true,
-      messages: []
+      messages: response.data,
     });
 
   } catch (error) {

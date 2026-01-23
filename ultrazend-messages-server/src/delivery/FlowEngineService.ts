@@ -38,6 +38,19 @@ export class FlowEngineService {
       conversationId = conversation.id;
     }
 
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        participant1Id: true,
+        participant1Type: true,
+        participant2Id: true,
+        participant2Type: true,
+      },
+    });
+
+    const isParticipant1 = conversation?.participant1Id === citizenId &&
+      conversation?.participant1Type === 'CITIZEN';
+
     // 2. Iniciar fluxo
     const response = await this.flowEngine.startFlow(citizenId, flowName, conversationId);
 
@@ -74,6 +87,9 @@ export class FlowEngineService {
         lastMessageAt: new Date(),
         lastMessagePreview: response.message.substring(0, 100),
         totalMessages: { increment: 1 },
+        ...(isParticipant1
+          ? { unreadCount1: { increment: 1 } }
+          : { unreadCount2: { increment: 1 } }),
         updatedAt: new Date(),
       },
     });
@@ -90,6 +106,22 @@ export class FlowEngineService {
         conversationId,
         message,
       });
+
+      const conversationDetails = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        include: {
+          messages: {
+            orderBy: { sentAt: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      if (conversationDetails) {
+        this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'conversation:new', {
+          conversation: conversationDetails,
+        });
+      }
     }
 
     return { response, conversationId, message };
@@ -106,6 +138,19 @@ export class FlowEngineService {
       const conversation = await this.findOrCreateBotConversation(citizenId);
       conversationId = conversation.id;
     }
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        participant1Id: true,
+        participant1Type: true,
+        participant2Id: true,
+        participant2Type: true,
+      },
+    });
+
+    const isParticipant1 = conversation?.participant1Id === citizenId &&
+      conversation?.participant1Type === 'CITIZEN';
 
     // 2. Salvar mensagem do cidadão
     const userMessage = await prisma.message.create({
@@ -149,6 +194,9 @@ export class FlowEngineService {
         lastMessagePreview: response.message.substring(0, 100),
         totalMessages: { increment: 2 },
         botLastInteractionAt: new Date(),
+        ...(isParticipant1
+          ? { unreadCount1: { increment: 1 } }
+          : { unreadCount2: { increment: 1 } }),
         updatedAt: new Date(),
       },
     });
@@ -156,6 +204,19 @@ export class FlowEngineService {
     // 6. Emitir via WebSocket
     if (this.wsServer) {
       this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
+        conversationId,
+        message: userMessage,
+      });
+      this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
+        conversationId,
+        message: botMessage,
+      });
+
+      this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
+        conversationId,
+        message: userMessage,
+      });
+      this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
         conversationId,
         message: botMessage,
       });
@@ -250,7 +311,20 @@ export class FlowEngineService {
    * Busca ou cria conversa do bot
    */
   private async findOrCreateBotConversation(citizenId: string) {
-    const messageServerId = process.env.MESSAGE_SERVER_ID || 'default-message-server-id';
+    let messageServerId = process.env.MESSAGE_SERVER_ID;
+
+    if (!messageServerId) {
+      const activeServer = await prisma.messageServer.findFirst({
+        where: { isActive: true },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (!activeServer) {
+        throw new Error('No active message server found');
+      }
+
+      messageServerId = activeServer.id;
+    }
 
     // Buscar conversa existente
     let conversation = await prisma.conversation.findFirst({

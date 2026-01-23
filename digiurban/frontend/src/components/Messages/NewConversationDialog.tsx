@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, User, Users, X, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -24,17 +24,17 @@ interface Contact {
 interface NewConversationDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onConversationCreated: (conversation: any) => void;
-  currentUserId: string;
-  currentUserType: 'CITIZEN' | 'SERVER';
+  onConversationCreated: (payload: {
+    contactId: string;
+    contactType: 'CITIZEN' | 'SERVER';
+    contact: Contact;
+  }) => void;
 }
 
 export function NewConversationDialog({
   isOpen,
   onClose,
   onConversationCreated,
-  currentUserId,
-  currentUserType
 }: NewConversationDialogProps) {
   const [activeTab, setActiveTab] = useState<'citizens' | 'servers'>('citizens');
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,44 +103,11 @@ export function NewConversationDialog({
     setError(null);
 
     try {
-      const messagesApiUrl = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
-
-      const response = await fetch(
-        `${messagesApiUrl}/conversations/find-or-create`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            participant2Id: contact.id,
-            participant2Type: activeTab === 'citizens' ? 'CITIZEN' : 'SERVER'
-          })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Erro ao criar conversa');
-      }
-
-      const conversation = await response.json();
-
-      // Formatar conversa para o padrão esperado
-      const formattedConversation = {
-        id: conversation.id,
-        type: 'DIRECT',
-        title: contact.name,
-        subtitle: contact.email,
-        lastMessage: null,
-        unreadCount: 0,
-        participants: [contact],
-        avatar: contact.avatar,
-        isPinned: false,
-        isBot: false
-      };
-
-      onConversationCreated(formattedConversation);
+      onConversationCreated({
+        contactId: contact.id,
+        contactType: activeTab === 'citizens' ? 'CITIZEN' : 'SERVER',
+        contact,
+      });
       onClose();
     } catch (err) {
       console.error('Erro ao criar conversa:', err);
