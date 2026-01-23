@@ -355,17 +355,33 @@ router.get(
       }
 
       // Verificar se o arquivo existe fisicamente
-      const filePath = path.join(process.cwd(), document.filePath);
+      // Normalizar o caminho para o sistema operacional correto
+      const normalizedPath = document.filePath.replace(/\\/g, '/');
+      const filePath = path.join(process.cwd(), normalizedPath);
 
       console.log('[DEBUG] Download de documento:');
       console.log('  - Document ID:', documentId);
       console.log('  - Document filePath (DB):', document.filePath);
+      console.log('  - Normalized path:', normalizedPath);
       console.log('  - Full filePath:', filePath);
       console.log('  - File exists:', fs.existsSync(filePath));
       console.log('  - Process CWD:', process.cwd());
 
       if (!fs.existsSync(filePath)) {
         console.error('[ERROR] Arquivo físico não encontrado:', filePath);
+
+        // Tentar caminhos alternativos
+        const alternativePaths = [
+          path.join(process.cwd(), document.filePath),
+          path.resolve(process.cwd(), document.filePath),
+          path.resolve(document.filePath)
+        ];
+
+        console.error('[ERROR] Tentando caminhos alternativos:');
+        for (const altPath of alternativePaths) {
+          console.error(`  - ${altPath}: ${fs.existsSync(altPath) ? 'EXISTS' : 'NOT FOUND'}`);
+        }
+
         return res.status(404).json(createErrorResponse('FILE_NOT_FOUND', 'Arquivo não encontrado no servidor'));
       }
 
