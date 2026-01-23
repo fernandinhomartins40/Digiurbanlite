@@ -493,6 +493,160 @@ router.post('/generated-documents/:id/send', authenticateToken, async (req, res)
 });
 
 /**
+ * POST /api/generated-documents/send-multiple
+ * Enviar múltiplos documentos por email e adicionar aos documentos do cidadão
+ */
+router.post('/generated-documents/send-multiple', authenticateToken, async (req, res) => {
+  try {
+    const { documentIds, citizenId, recipientEmail, recipientName, subject, message, protocolNumber } = req.body;
+
+    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'documentIds deve ser um array não vazio'
+      });
+    }
+
+    if (!citizenId || !recipientEmail || !recipientName) {
+      return res.status(400).json({
+        success: false,
+        error: 'citizenId, recipientEmail e recipientName são obrigatórios'
+      });
+    }
+
+    console.log(`📧 Enviando ${documentIds.length} documentos para ${recipientEmail}...`);
+
+    const results = {
+      emailsSent: 0,
+      documentsAdded: 0,
+      notificationSent: false,
+      errors: [] as string[]
+    };
+
+    // 1. Buscar todos os documentos
+    const documents = await prisma.generatedDocument.findMany({
+      where: {
+        id: { in: documentIds },
+        isActive: true
+      },
+      include: {
+        template: {
+          select: {
+            name: true,
+            documentType: true
+          }
+        }
+      }
+    });
+
+    if (documents.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Nenhum documento encontrado'
+      });
+    }
+
+    console.log(`   ✓ Encontrados ${documents.length} documentos`);
+
+    // 2. Enviar cada documento por email
+    for (const doc of documents) {
+      try {
+        await documentGenerator.sendDocumentByEmail({
+          documentId: doc.id,
+          recipientEmail,
+          recipientName,
+          subject: subject || `Documento: ${doc.template.name}`,
+          message,
+          sentBy: req.user!.id
+        });
+        results.emailsSent++;
+        console.log(`   ✓ Email enviado: ${doc.template.name}`);
+      } catch (emailError: any) {
+        console.error(`   ✗ Erro ao enviar email para ${doc.template.name}:`, emailError.message);
+        results.errors.push(`Erro ao enviar ${doc.template.name}: ${emailError.message}`);
+      }
+    }
+
+    // 3. Adicionar documentos aos documentos do cidadão
+    for (const doc of documents) {
+      try {
+        // Verificar se já existe
+        const existingDoc = await prisma.citizenDocument.findFirst({
+          where: {
+            citizenId,
+            sourceDocumentId: doc.id
+          }
+        });
+
+        if (!existingDoc) {
+          await prisma.citizenDocument.create({
+            data: {
+              citizenId,
+              documentType: `Protocolo: ${doc.template.documentType || doc.template.name}`,
+              fileName: doc.fileName,
+              filePath: doc.filePath,
+              fileUrl: doc.fileUrl || undefined,
+              fileSize: doc.fileSize,
+              mimeType: doc.mimeType,
+              sourceType: 'PROTOCOL',
+              sourceDocumentId: doc.id,
+              notes: message || `Documento gerado a partir do protocolo ${protocolNumber}`,
+              isVerified: true,
+              verifiedAt: new Date(),
+              verifiedBy: req.user!.id
+            }
+          });
+          results.documentsAdded++;
+          console.log(`   ✓ Documento adicionado: ${doc.template.name}`);
+        } else {
+          console.log(`   ⊙ Documento já existe: ${doc.template.name}`);
+        }
+      } catch (docError: any) {
+        console.error(`   ✗ Erro ao adicionar documento ${doc.template.name}:`, docError.message);
+        results.errors.push(`Erro ao adicionar ${doc.template.name}: ${docError.message}`);
+      }
+    }
+
+    // 4. Criar notificação para o cidadão
+    try {
+      const docList = documents.map(d => d.template.name).join(', ');
+      const notificationMessage = message
+        ? `${message}\n\nDocumentos: ${docList}`
+        : `Você recebeu ${documents.length} documento(s) do protocolo ${protocolNumber}: ${docList}`;
+
+      await prisma.notification.create({
+        data: {
+          citizenId,
+          title: `Novos documentos disponíveis - Protocolo ${protocolNumber}`,
+          message: notificationMessage,
+          type: 'DOCUMENT',
+          isRead: false
+        }
+      });
+      results.notificationSent = true;
+      console.log(`   ✓ Notificação criada`);
+    } catch (notifError: any) {
+      console.error(`   ✗ Erro ao criar notificação:`, notifError.message);
+      results.errors.push(`Erro ao criar notificação: ${notifError.message}`);
+    }
+
+    console.log(`✅ Processamento concluído:`, results);
+
+    res.json({
+      success: true,
+      message: `${results.emailsSent} documento(s) enviado(s) por email, ${results.documentsAdded} adicionado(s) aos documentos do cidadão`,
+      data: results
+    });
+  } catch (error: any) {
+    console.error('❌ Error sending multiple documents:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao enviar documentos'
+    });
+  }
+});
+
+/**
  * GET /api/document-stats
  * Estatísticas de documentos gerados
  */

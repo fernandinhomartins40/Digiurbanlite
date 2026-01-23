@@ -391,9 +391,11 @@ export default function ProtocolDetailPage() {
                   <ProtocolSendGeneratedDocumentTab
                     protocolId={protocolId}
                     protocolNumber={protocol.number || protocol.protocolNumber}
+                    citizenId={protocol.citizen?.id}
                     citizenEmail={protocol.citizen?.email}
                     citizenName={protocol.citizen?.name}
                     generatedDocuments={generatedDocuments}
+                    onRefresh={loadProtocolData}
                   />
                 </TabsContent>
               )}
