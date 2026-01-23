@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CitizenAutocomplete } from '@/components/admin/CitizenAutocomplete';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import {
   Shield,
   Plus,
@@ -19,7 +20,8 @@ import {
   Download,
   Eye,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -52,12 +54,15 @@ interface Citizen {
 }
 
 export default function CertificadosDigitaisPage() {
+  const { user } = useAdminAuth();
   const [certificates, setCertificates] = useState<DigitalCertificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [showIssueModal, setShowIssueModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedCertificate, setSelectedCertificate] = useState<DigitalCertificate | null>(null);
   const [issuing, setIssuing] = useState(false);
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
 
@@ -209,6 +214,11 @@ export default function CertificadosDigitaisPage() {
   };
 
   const handleRevokeCertificate = async (serialNumber: string, reason: string) => {
+    if (!user?.id) {
+      toast.error('Usuário não autenticado');
+      return;
+    }
+
     try {
       const response = await fetch('/api/certificates/revoke', {
         method: 'POST',
@@ -218,7 +228,7 @@ export default function CertificadosDigitaisPage() {
         body: JSON.stringify({
           serialNumber,
           reason,
-          revokedBy: 'admin', // TODO: pegar do contexto do usuário logado
+          revokedBy: user.id,
         }),
       });
 
@@ -234,6 +244,38 @@ export default function CertificadosDigitaisPage() {
       console.error('Erro ao revogar certificado:', error);
       toast.error(error.message || 'Erro ao revogar certificado');
     }
+  };
+
+  const handleDownloadCertificate = async (cert: DigitalCertificate) => {
+    try {
+      const response = await fetch(`/api/certificates/${cert.id}/download`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao baixar certificado');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `certificado_${cert.serialNumber}.pem`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Certificado baixado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao baixar certificado:', error);
+      toast.error(error.message || 'Erro ao baixar certificado');
+    }
+  };
+
+  const handleViewDetails = (cert: DigitalCertificate) => {
+    setSelectedCertificate(cert);
+    setShowDetailsModal(true);
   };
 
   const filteredCertificates = certificates.filter(cert => {
@@ -451,9 +493,7 @@ export default function CertificadosDigitaisPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            toast.info('Funcionalidade de visualização em desenvolvimento');
-                          }}
+                          onClick={() => handleViewDetails(cert)}
                           title="Visualizar detalhes"
                         >
                           <Eye className="w-4 h-4" />
@@ -461,9 +501,7 @@ export default function CertificadosDigitaisPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            toast.info('Funcionalidade de download em desenvolvimento');
-                          }}
+                          onClick={() => handleDownloadCertificate(cert)}
                           title="Baixar certificado"
                         >
                           <Download className="w-4 h-4" />
@@ -491,6 +529,149 @@ export default function CertificadosDigitaisPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Modal de Detalhes do Certificado */}
+        {showDetailsModal && selectedCertificate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+              <CardHeader className="border-b">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Detalhes do Certificado Digital
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowDetailsModal(false);
+                      setSelectedCertificate(null);
+                    }}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                {/* Status e Tipo */}
+                <div className="flex items-center gap-3">
+                  {getStatusBadge(selectedCertificate.status, selectedCertificate.expiresAt)}
+                  {getTypeBadge(selectedCertificate.type)}
+                </div>
+
+                {/* Informações do Titular */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">
+                    Informações do Titular
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Nome Comum (CN)</label>
+                      <p className="text-gray-900 mt-1">{selectedCertificate.commonName}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Usuário</label>
+                      <p className="text-gray-900 mt-1">{selectedCertificate.userName || selectedCertificate.userId}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Organização</label>
+                      <p className="text-gray-900 mt-1">{selectedCertificate.organization}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Emissor</label>
+                      <p className="text-gray-900 mt-1">{selectedCertificate.issuer}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informações do Certificado */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">
+                    Informações do Certificado
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Número de Série</label>
+                      <p className="text-gray-900 mt-1 font-mono text-sm break-all">
+                        {selectedCertificate.serialNumber}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Impressão Digital (Thumbprint)</label>
+                      <p className="text-gray-900 mt-1 font-mono text-xs break-all">
+                        {selectedCertificate.thumbprint}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Data de Emissão</label>
+                      <p className="text-gray-900 mt-1">
+                        {format(new Date(selectedCertificate.issuedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Data de Expiração</label>
+                      <p className={`mt-1 font-medium ${new Date(selectedCertificate.expiresAt) < new Date() ? 'text-red-600' : 'text-gray-900'}`}>
+                        {format(new Date(selectedCertificate.expiresAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                        <span className="block text-sm font-normal text-gray-600">
+                          ({getDaysUntilExpiry(selectedCertificate.expiresAt)})
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Estatísticas de Uso */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg text-gray-900 border-b pb-2">
+                    Estatísticas de Uso
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <label className="text-sm font-medium text-blue-900">Total de Assinaturas</label>
+                      <p className="text-3xl font-bold text-blue-600 mt-2">
+                        {selectedCertificate._count?.signatures || 0}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ações */}
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownloadCertificate(selectedCertificate)}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Baixar Certificado
+                  </Button>
+                  {selectedCertificate.status === 'ACTIVE' && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        if (confirm(`Deseja revogar o certificado ${selectedCertificate.serialNumber}?`)) {
+                          handleRevokeCertificate(selectedCertificate.serialNumber, 'Revogado manualmente pelo administrador');
+                          setShowDetailsModal(false);
+                          setSelectedCertificate(null);
+                        }
+                      }}
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Revogar Certificado
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => {
+                      setShowDetailsModal(false);
+                      setSelectedCertificate(null);
+                    }}
+                  >
+                    Fechar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Modal de Emissão de Certificado */}
         {showIssueModal && (

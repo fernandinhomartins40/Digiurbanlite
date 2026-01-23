@@ -112,4 +112,36 @@ router.get('/verify/:signatureId', async (req, res) => {
   }
 });
 
+// Download de certificado
+router.get('/:id/download', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const certificate = await prisma.digitalCertificate.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        serialNumber: true,
+        commonName: true,
+        certificateChain: true,
+        status: true,
+      }
+    });
+
+    if (!certificate) {
+      return res.status(404).json({ success: false, message: 'Certificado não encontrado' });
+    }
+
+    // Definir headers para download
+    res.setHeader('Content-Type', 'application/x-pem-file');
+    res.setHeader('Content-Disposition', `attachment; filename="certificado_${certificate.serialNumber}.pem"`);
+
+    // Enviar a cadeia de certificação em formato PEM
+    res.send(certificate.certificateChain);
+  } catch (error: any) {
+    console.error('Erro ao fazer download do certificado:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
