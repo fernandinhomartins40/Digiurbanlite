@@ -7,6 +7,7 @@ import {
   safeStringWithDefault,
   DEFAULT_VALUES
         } from '../../types/lead';
+import { getSystemEmail, getPrimaryEmailDomain } from '../../utils/email-domain.utils';
 
 export class LeadNotificationService {
   private emailService: TransactionalEmailService;
@@ -20,7 +21,7 @@ export class LeadNotificationService {
    */
   async notifyDemoRequest(lead: LeadData): Promise<void> {
     try {
-      const salesTeamEmail = process.env.SALES_TEAM_EMAIL || 'vendas@digiurban.com';
+      const salesTeamEmail = process.env.SALES_TEAM_EMAIL || '${await getSystemEmail('vendas')}';
       // DIA 3: Removed systemTenant, using default emailServerId
       const defaultEmailServerId = process.env.DEFAULT_EMAIL_SERVER_ID || 'system';
 
@@ -42,7 +43,7 @@ export class LeadNotificationService {
         },
         from: {
           name: 'DigiUrban Sistema',
-          email: 'noreply@digiurban.com'
+          email: '${await getSystemEmail('noreply')}'
         },
         priority: 1, // Alta prioridade
         tags: ['lead', 'demo', 'sales']
@@ -52,7 +53,7 @@ export class LeadNotificationService {
       await prisma.email.create({
         data: {
           messageId: `lead-${lead.id}-${Date.now()}`,
-          fromEmail: 'noreply@digiurban.com',
+          fromEmail: '${await getSystemEmail('noreply')}',
           toEmail: salesTeamEmail,
           subject: `Novo Lead - Solicitação de Demo: ${lead.company}`,
           htmlContent: `<p>Novo lead recebido de ${lead.company}</p>`,
@@ -74,7 +75,7 @@ export class LeadNotificationService {
    */
   async notifyContactForm(lead: LeadData): Promise<void> {
     try {
-      const supportTeamEmail = process.env.SUPPORT_TEAM_EMAIL || 'suporte@digiurban.com';
+      const supportTeamEmail = process.env.SUPPORT_TEAM_EMAIL || '${await getSystemEmail('suporte')}';
       // DIA 3: Removed systemTenant, using default emailServerId
       const defaultEmailServerId = process.env.DEFAULT_EMAIL_SERVER_ID || 'system';
 
@@ -95,7 +96,7 @@ export class LeadNotificationService {
         },
         from: {
           name: 'DigiUrban Sistema',
-          email: 'noreply@digiurban.com'
+          email: '${await getSystemEmail('noreply')}'
         },
         priority: 2,
         tags: ['lead', 'contact', 'support']
@@ -104,7 +105,7 @@ export class LeadNotificationService {
       await prisma.email.create({
         data: {
           messageId: `contact-${lead.id}-${Date.now()}`,
-          fromEmail: 'noreply@digiurban.com',
+          fromEmail: '${await getSystemEmail('noreply')}',
           toEmail: supportTeamEmail,
           subject: `Nova Mensagem de Contato: ${lead.name}`,
           htmlContent: `<p>Nova mensagem de contato de ${lead.name}</p>`,
@@ -140,12 +141,12 @@ export class LeadNotificationService {
           email: trialData.email,
           temporaryPassword: trialData.temporaryPassword,
           trialExpiryDate: this.getTrialExpiryDate().toLocaleDateString('pt-BR'),
-          supportEmail: process.env.SUPPORT_TEAM_EMAIL || 'suporte@digiurban.com',
+          supportEmail: process.env.SUPPORT_TEAM_EMAIL || '${await getSystemEmail('suporte')}',
           trialDays: 30
         },
         from: {
           name: 'Equipe DigiUrban',
-          email: 'onboarding@digiurban.com'
+          email: '${await getSystemEmail('onboarding')}'
         },
         priority: 1,
         tags: ['trial', 'welcome', 'onboarding']
@@ -154,7 +155,7 @@ export class LeadNotificationService {
       await prisma.email.create({
         data: {
           messageId: `trial-welcome-${trialData.id}-${Date.now()}`, // DIA 3: Removed tenantId from messageId
-          fromEmail: 'onboarding@digiurban.com',
+          fromEmail: '${await getSystemEmail('onboarding')}',
           toEmail: trialData.email,
           subject: `Bem-vindo ao DigiUrban - ${trialData.tenantName}`,
           htmlContent: `<p>Bem-vindo ao DigiUrban, ${trialData.tenantName}!</p>`,
@@ -194,7 +195,7 @@ export class LeadNotificationService {
       await prisma.email.create({
         data: {
           messageId: `marketing-add-${lead.id}-${Date.now()}`,
-          fromEmail: 'system@digiurban.com',
+          fromEmail: '${await getSystemEmail('system')}',
           toEmail: lead.email,
           subject: 'Adicionado à lista de marketing',
           htmlContent: '<p>Você foi adicionado à nossa lista de marketing</p>',
@@ -419,7 +420,7 @@ export class LeadNotificationService {
             daysRemaining: 7,
             expiryDate: expiryDate.toLocaleDateString('pt-BR'),
             upgradeUrl: `${process.env.FRONTEND_URL}/upgrade`,
-            supportEmail: process.env.SUPPORT_TEAM_EMAIL || 'suporte@digiurban.com'
+            supportEmail: process.env.SUPPORT_TEAM_EMAIL || '${await getSystemEmail('suporte')}'
         },
           scheduledFor: sevenDaysBefore,
           priority: 2,
@@ -439,7 +440,7 @@ export class LeadNotificationService {
             tenantName: tenant.name,
             expiryDate: expiryDate.toLocaleDateString('pt-BR'),
             upgradeUrl: `${process.env.FRONTEND_URL}/upgrade`,
-            supportEmail: process.env.SUPPORT_TEAM_EMAIL || 'suporte@digiurban.com'
+            supportEmail: process.env.SUPPORT_TEAM_EMAIL || '${await getSystemEmail('suporte')}'
         },
           scheduledFor: oneDayBefore,
           priority: 1,
@@ -454,7 +455,7 @@ export class LeadNotificationService {
         variables: {
           tenantName: tenant.name,
           upgradeUrl: `${process.env.FRONTEND_URL}/upgrade`,
-          supportEmail: process.env.SUPPORT_TEAM_EMAIL || 'suporte@digiurban.com'
+          supportEmail: process.env.SUPPORT_TEAM_EMAIL || '${await getSystemEmail('suporte')}'
         },
         scheduledFor: expiryDate,
         priority: 1,

@@ -13,6 +13,7 @@ import { logLoginSuccess, logLoginFailed, AUDIT_EVENTS, logAuditEvent } from '..
 import { sanitizeForLog } from '../utils/logger';
 import { transactionalEmailService } from '../lib/email/TransactionalEmailService';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
+import { getSystemEmail } from '../utils/email-domain.utils';
 
 const router = Router();
 
@@ -189,16 +190,18 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
         });
 
         // Enviar email de boas-vindas de forma assíncrona (não bloqueia resposta)
-        transactionalEmailService.sendWelcomeEmail(
-          emailServer.id,
-          citizen.email,
-          citizen.name,
-          municipioConfig?.nome || 'DigiUrban',
-          process.env.FRONTEND_URL || 'https://digiurban.com.br',
-          process.env.SUPPORT_EMAIL || 'suporte@digiurban.com.br'
-        ).catch(error => {
-          console.error('Erro ao enviar email de boas-vindas:', error);
-          // Não falhamos o cadastro por erro de email
+        getSystemEmail('suporte').then(supportEmail => {
+          transactionalEmailService.sendWelcomeEmail(
+            emailServer.id,
+            citizen.email,
+            citizen.name,
+            municipioConfig?.nome || 'DigiUrban',
+            process.env.FRONTEND_URL || 'https://digiurban.com.br',
+            process.env.SUPPORT_EMAIL || supportEmail
+          ).catch(error => {
+            console.error('Erro ao enviar email de boas-vindas:', error);
+            // Não falhamos o cadastro por erro de email
+          });
         });
 
         console.log('✅ Email de boas-vindas agendado para:', citizen.email);

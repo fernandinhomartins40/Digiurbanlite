@@ -14,6 +14,7 @@ import {
   generateUniqueValidationCode,
   generateDocumentHash
 } from '../utils/validation-code.utils';
+import { getSystemEmail } from '../utils/email-domain.utils';
 
 const prisma = new PrismaClient();
 
@@ -560,15 +561,24 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
     host: process.env.SMTP_HOST || 'ultrazend-smtp',
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: false,
+    connectionTimeout: 60000, // 60 segundos
+    greetingTimeout: 30000,   // 30 segundos
+    socketTimeout: 60000,     // 60 segundos
     tls: {
       rejectUnauthorized: false
-    }
+    },
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100
   });
 
   const filePath = path.join(process.cwd(), doc.filePath);
 
+  // Buscar email do sistema dinamicamente
+  const fromEmail = process.env.SMTP_FROM || await getSystemEmail('noreply');
+
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || 'noreply@digiurban.com',
+    from: fromEmail,
     to: recipientEmail,
     subject: emailSubject,
     html: emailMessage,
