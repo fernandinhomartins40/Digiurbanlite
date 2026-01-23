@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CitizenAutocomplete } from '@/components/admin/CitizenAutocomplete';
 import {
   Shield,
   Plus,
@@ -42,6 +43,14 @@ interface DigitalCertificate {
   };
 }
 
+interface Citizen {
+  id: string;
+  name: string;
+  cpf?: string;
+  email?: string;
+  phone?: string;
+}
+
 export default function CertificadosDigitaisPage() {
   const [certificates, setCertificates] = useState<DigitalCertificate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +59,7 @@ export default function CertificadosDigitaisPage() {
   const [filterType, setFilterType] = useState<string>('all');
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [issuing, setIssuing] = useState(false);
+  const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
 
   useEffect(() => {
     fetchCertificates();
@@ -151,22 +161,33 @@ export default function CertificadosDigitaisPage() {
   };
 
   const handleIssueCertificate = async (formData: {
-    userId: string;
-    commonName: string;
-    email: string;
-    department?: string;
     certificateType: 'SERVER' | 'CITIZEN' | 'SYSTEM';
     validityYears: number;
+    department?: string;
   }) => {
+    if (!selectedCitizen) {
+      toast.error('Selecione um cidadão antes de emitir o certificado');
+      return;
+    }
+
     try {
       setIssuing(true);
+
+      const payload = {
+        userId: selectedCitizen.id,
+        commonName: selectedCitizen.name,
+        email: selectedCitizen.email || '',
+        department: formData.department,
+        certificateType: formData.certificateType,
+        validityYears: formData.validityYears,
+      };
 
       const response = await fetch('/api/certificates/issue', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -174,6 +195,7 @@ export default function CertificadosDigitaisPage() {
       if (data.success) {
         toast.success('Certificado emitido com sucesso!');
         setShowIssueModal(false);
+        setSelectedCitizen(null);
         fetchCertificates();
       } else {
         throw new Error(data.message || 'Erro ao emitir certificado');
@@ -251,7 +273,10 @@ export default function CertificadosDigitaisPage() {
           </div>
           <Button
             className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => setShowIssueModal(true)}
+            onClick={() => {
+              setShowIssueModal(true);
+              setSelectedCitizen(null);
+            }}
           >
             <Plus className="w-4 h-4 mr-2" />
             Emitir Certificado
@@ -483,97 +508,95 @@ export default function CertificadosDigitaisPage() {
                     e.preventDefault();
                     const formData = new FormData(e.currentTarget);
                     handleIssueCertificate({
-                      userId: formData.get('userId') as string,
-                      commonName: formData.get('commonName') as string,
-                      email: formData.get('email') as string,
-                      department: formData.get('department') as string || undefined,
                       certificateType: formData.get('certificateType') as 'SERVER' | 'CITIZEN' | 'SYSTEM',
                       validityYears: parseInt(formData.get('validityYears') as string),
+                      department: formData.get('department') as string || undefined,
                     });
                   }}
                   className="space-y-4"
                 >
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Tipo de Certificado
-                      </label>
-                      <select
-                        name="certificateType"
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="CITIZEN">Cidadão</option>
-                        <option value="SERVER">Servidor</option>
-                        <option value="SYSTEM">Sistema</option>
-                      </select>
-                    </div>
-
+                  <div className="space-y-4">
+                    {/* Busca de Cidadão */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        ID do Usuário
-                      </label>
-                      <input
-                        type="text"
-                        name="userId"
+                      <CitizenAutocomplete
+                        value={selectedCitizen}
+                        onChange={setSelectedCitizen}
+                        label="Cidadão"
+                        placeholder="Digite o nome ou CPF do cidadão..."
                         required
-                        placeholder="ID do usuário no sistema"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nome Comum (CN)
-                      </label>
-                      <input
-                        type="text"
-                        name="commonName"
-                        required
-                        placeholder="Nome do titular"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
+                    {/* Dados do Cidadão Selecionado */}
+                    {selectedCitizen && (
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="font-semibold text-blue-900 mb-2">Dados do Certificado</h4>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-blue-700 font-medium">Nome (CN):</span>
+                            <p className="text-blue-900">{selectedCitizen.name}</p>
+                          </div>
+                          <div>
+                            <span className="text-blue-700 font-medium">Email:</span>
+                            <p className="text-blue-900">{selectedCitizen.email || 'Não informado'}</p>
+                          </div>
+                          {selectedCitizen.cpf && (
+                            <div>
+                              <span className="text-blue-700 font-medium">CPF:</span>
+                              <p className="text-blue-900">{selectedCitizen.cpf}</p>
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-blue-700 font-medium">ID do Usuário:</span>
+                            <p className="text-blue-900 font-mono text-xs">{selectedCitizen.id}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        required
-                        placeholder="email@example.com"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Tipo de Certificado
+                        </label>
+                        <select
+                          name="certificateType"
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="CITIZEN">Cidadão</option>
+                          <option value="SERVER">Servidor</option>
+                          <option value="SYSTEM">Sistema</option>
+                        </select>
+                      </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Departamento (opcional)
-                      </label>
-                      <input
-                        type="text"
-                        name="department"
-                        placeholder="Ex: Secretaria de Saúde"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Departamento (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          name="department"
+                          placeholder="Ex: Secretaria de Saúde"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
 
-                    <div className="col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Validade (anos)
-                      </label>
-                      <select
-                        name="validityYears"
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="1">1 ano</option>
-                        <option value="2" selected>2 anos</option>
-                        <option value="3">3 anos</option>
-                        <option value="5">5 anos</option>
-                      </select>
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Validade (anos)
+                        </label>
+                        <select
+                          name="validityYears"
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="1">1 ano</option>
+                          <option value="2">2 anos</option>
+                          <option value="3">3 anos</option>
+                          <option value="5">5 anos</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -581,7 +604,10 @@ export default function CertificadosDigitaisPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setShowIssueModal(false)}
+                      onClick={() => {
+                        setShowIssueModal(false);
+                        setSelectedCitizen(null);
+                      }}
                       disabled={issuing}
                     >
                       Cancelar
