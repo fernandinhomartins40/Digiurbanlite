@@ -56,8 +56,8 @@ export function CitizenAutocomplete({
 
     setIsLoading(true)
     try {
-      const response = await apiRequest(`/api/admin/protocols/search-citizens?q=${encodeURIComponent(search)}`)
-      const citizensData = response.data?.citizens || response.citizens || []
+      const response = await apiRequest(`/api/admin/citizens/search?q=${encodeURIComponent(search)}`)
+      const citizensData = response.data || []
       setCitizens(citizensData)
       setIsOpen(true)
       setHighlightedIndex(0)
@@ -265,7 +265,7 @@ export function CitizenAutocomplete({
 
       {!value && searchTerm.length === 0 && (
         <p className="text-xs text-gray-500">
-          💡 Digite o nome ou CPF do cidadão (mínimo 2 caracteres)
+          Digite o nome, CPF ou email do cidadão (mínimo 2 caracteres)
         </p>
       )}
     </div>

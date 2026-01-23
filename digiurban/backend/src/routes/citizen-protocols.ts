@@ -1560,18 +1560,29 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
     }
 
     // Verificar se arquivo existe
-    const filePath = document.filePath;
+    const filePathFromDB = document.filePath;
 
-    if (!filePath) {
+    if (!filePathFromDB) {
       return res.status(404).json({
         success: false,
         error: 'Caminho do arquivo não disponível'
       });
     }
 
+    // Construir caminho absoluto do arquivo
+    const filePath = path.join(process.cwd(), filePathFromDB);
+
+    console.log('[DEBUG] Download de documento gerado:');
+    console.log('  - Document ID:', documentId);
+    console.log('  - Protocol ID:', protocolId);
+    console.log('  - FilePath (DB):', filePathFromDB);
+    console.log('  - Full filePath:', filePath);
+    console.log('  - Process CWD:', process.cwd());
+    console.log('  - File exists:', fs.existsSync(filePath));
+
     // Verificar se arquivo existe no sistema de arquivos
     if (!fs.existsSync(filePath)) {
-      console.error(`[Download] Arquivo não encontrado: ${filePath}`);
+      console.error(`[ERROR] Arquivo não encontrado: ${filePath}`);
       return res.status(404).json({
         success: false,
         error: 'Arquivo não encontrado no servidor'

@@ -522,7 +522,7 @@ export default function CertificadosDigitaisPage() {
                         value={selectedCitizen}
                         onChange={setSelectedCitizen}
                         label="Cidadão"
-                        placeholder="Digite o nome ou CPF do cidadão..."
+                        placeholder="Digite o nome, CPF ou email do cidadão..."
                         required
                       />
                     </div>
