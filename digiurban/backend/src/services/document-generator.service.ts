@@ -608,6 +608,19 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
     </html>
   `;
 
+  // Verificar se arquivo existe
+  console.log(`📎 Anexando arquivo: ${filePath}`);
+  const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+
+  if (!fileExists) {
+    console.error(`❌ Arquivo não encontrado: ${filePath}`);
+    throw new Error(`Arquivo não encontrado: ${filePath}`);
+  }
+
+  console.log(`✅ Arquivo existe, lendo conteúdo...`);
+  const fileBuffer = await fs.readFile(filePath);
+  console.log(`✅ Arquivo lido: ${fileBuffer.length} bytes`);
+
   await transporter.sendMail({
     from: fromEmail,
     to: recipientEmail,
@@ -615,9 +628,12 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
     html: htmlContent,
     attachments: [{
       filename: doc.fileName,
-      path: filePath
+      content: fileBuffer,
+      contentType: 'application/pdf'
     }]
   });
+
+  console.log(`📧 Email enviado com anexo de ${fileBuffer.length} bytes`);
 
   // 4. Atualizar registro
   await prisma.generatedDocument.update({
