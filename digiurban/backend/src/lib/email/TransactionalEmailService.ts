@@ -98,6 +98,13 @@ export interface EmailTemplateVariables {
   [key: string]: string | number | boolean | Date | undefined;
 }
 
+export interface EmailAttachment {
+  filename: string;
+  path?: string;
+  content?: Buffer | string;
+  contentType?: string;
+}
+
 export interface SendEmailOptions {
   emailServerId: string; // DIA 3: Changed from tenantId to emailServerId
   templateName: string;
@@ -111,6 +118,7 @@ export interface SendEmailOptions {
   scheduledFor?: Date;
   tags?: string[];
   campaignId?: string;
+  attachments?: EmailAttachment[];
 }
 
 export interface EmailTemplate {
@@ -142,7 +150,8 @@ export class TransactionalEmailService {
         priority = 3,
         scheduledFor,
         tags = ['transactional'],
-        campaignId
+        campaignId,
+        attachments = []
         } = options;
 
       // DIA 3: Buscar configurações do servidor de email diretamente por ID
@@ -229,6 +238,7 @@ export class TransactionalEmailService {
         subject: processedSubject,
         html: processedHtml,
         text: processedText,
+        attachments: attachments.length > 0 ? attachments : undefined,
         headers: {
           'X-Campaign-ID': campaignId || `transactional-${templateName}`,
           'X-EmailServer-ID': emailServerId, // DIA 3: Changed from X-Tenant-ID
@@ -339,6 +349,34 @@ export class TransactionalEmailService {
         siteUrl,
         supportEmail,
       }
+    });
+  }
+
+  /**
+   * Envia email com documento anexado
+   */
+  async sendEmailWithDocument(
+    emailServerId: string,
+    recipientEmail: string,
+    recipientName: string,
+    subject: string,
+    message: string,
+    documentPath: string,
+    documentFileName: string
+  ) {
+    return this.sendEmail({
+      emailServerId,
+      templateName: 'document-delivery',
+      to: recipientEmail,
+      variables: {
+        recipientName,
+        message,
+        documentName: documentFileName
+      },
+      attachments: [{
+        filename: documentFileName,
+        path: documentPath
+      }]
     });
   }
 

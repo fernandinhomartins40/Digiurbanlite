@@ -543,27 +543,23 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
     throw new Error('Documento não encontrado');
   }
 
-  // 2. Preparar email
+  // 2. Preparar paths e dados do email
+  const filePath = path.join(process.cwd(), doc.filePath);
   const emailSubject = subject || `Documento do Protocolo ${doc.protocol.number}`;
-  const emailMessage = message || `
-    <p>Olá <strong>${recipientName}</strong>,</p>
-    <br>
-    <p>Segue em anexo o documento referente ao protocolo <strong>${doc.protocol.number}</strong> - <strong>${doc.protocol.service.name}</strong>.</p>
-    <br>
-    <p>Atenciosamente,<br>
-    Equipe de Atendimento</p>
-  `;
+  const emailMessage = message || `Segue em anexo o documento referente ao protocolo ${doc.protocol.number} - ${doc.protocol.service.name}.`;
 
-  // 3. Enviar via serviço de email (usando nodemailer direto)
+  // 3. Enviar via nodemailer direto com attachments
+  // IMPORTANTE: Continuamos usando nodemailer direto porque o UltraZend SMTP
+  // processa melhor attachments quando enviados diretamente via SMTP
   const nodemailer = require('nodemailer');
 
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'ultrazend-smtp',
     port: parseInt(process.env.SMTP_PORT || '587'),
     secure: false,
-    connectionTimeout: 60000, // 60 segundos
-    greetingTimeout: 30000,   // 30 segundos
-    socketTimeout: 60000,     // 60 segundos
+    connectionTimeout: 60000,
+    greetingTimeout: 30000,
+    socketTimeout: 60000,
     tls: {
       rejectUnauthorized: false
     },
@@ -572,16 +568,48 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
     maxMessages: 100
   });
 
-  const filePath = path.join(process.cwd(), doc.filePath);
-
-  // Buscar email do sistema dinamicamente
   const fromEmail = process.env.SMTP_FROM || await getSystemEmail('noreply');
+
+  // Montar HTML do email
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #0066cc; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .footer { text-align: center; padding: 10px; font-size: 12px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h2>Documento Disponível</h2>
+        </div>
+        <div class="content">
+          <p>Olá <strong>${recipientName}</strong>,</p>
+          <p>${emailMessage}</p>
+          <p><strong>Documento:</strong> ${doc.fileName}</p>
+          <p>O documento está anexado a este email.</p>
+          <br>
+          <p>Atenciosamente,<br>Equipe de Atendimento</p>
+        </div>
+        <div class="footer">
+          <p>Este é um email automático, por favor não responda.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 
   await transporter.sendMail({
     from: fromEmail,
     to: recipientEmail,
     subject: emailSubject,
-    html: emailMessage,
+    html: htmlContent,
     attachments: [{
       filename: doc.fileName,
       path: filePath
