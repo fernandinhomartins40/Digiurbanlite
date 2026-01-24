@@ -165,6 +165,9 @@ services:
       - FRONTEND_PORT=3000
       # NEXT_PUBLIC_API_URL é setado em BUILD TIME no Dockerfile (linha 40)
 
+      # Build timestamp for cache busting
+      - BUILD_TIMESTAMP=${BUILD_TIMESTAMP:-0}
+
       # Database PostgreSQL
       - DATABASE_URL=${DATABASE_URL}
 
