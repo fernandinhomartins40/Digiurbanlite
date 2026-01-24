@@ -125,9 +125,36 @@ export class MXDeliveryService {
    */
   private async attemptDeliveryViaMX(emailData: EmailData, mxServer: string): Promise<boolean> {
     const transporter = await this.getTransporter(mxServer);
-    
+
     try {
-      const mailOptions = {
+      // Preparar anexos para o nodemailer
+      const attachments = emailData.attachments?.map(att => {
+        const attachment: any = {
+          filename: att.filename,
+          contentType: att.contentType
+        };
+
+        // Usar content (Buffer) se disponível, senão path
+        if (att.content) {
+          attachment.content = att.content;
+        } else if (att.path) {
+          attachment.path = att.path;
+        }
+
+        // Adicionar encoding se especificado
+        if (att.encoding) {
+          attachment.encoding = att.encoding;
+        }
+
+        // Adicionar CID para imagens inline
+        if (att.cid) {
+          attachment.cid = att.cid;
+        }
+
+        return attachment;
+      }) || [];
+
+      const mailOptions: any = {
         from: emailData.from,
         to: emailData.to,
         subject: emailData.subject,
@@ -139,15 +166,21 @@ export class MXDeliveryService {
         }
       };
 
+      // Adicionar anexos se houver
+      if (attachments.length > 0) {
+        mailOptions.attachments = attachments;
+      }
+
       const result = await transporter.sendMail(mailOptions);
-      
+
       logger.info('📨 Email sent via MX', {
         to: emailData.to,
         mxServer,
         messageId: result.messageId,
-        hasDKIM: !!emailData.dkimSignature
+        hasDKIM: !!emailData.dkimSignature,
+        attachmentCount: attachments.length
       });
-      
+
       return true;
     } catch (error) {
       logger.warn('MX delivery attempt failed', {

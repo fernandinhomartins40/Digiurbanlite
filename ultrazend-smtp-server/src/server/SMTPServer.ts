@@ -282,7 +282,17 @@ export class UltraZendSMTPServer {
   private async processOutgoingEmail(parsedEmail: ParsedMail, session: SMTPSession): Promise<void> {
     try {
       const messageId = generateMessageId(this.config.hostname);
-      
+
+      // Processar anexos do email parseado
+      const attachments = parsedEmail.attachments?.map(att => ({
+        filename: att.filename || 'attachment',
+        content: att.content,
+        contentType: att.contentType,
+        encoding: att.contentTransferEncoding,
+        cid: att.cid,
+        size: att.size
+      })) || [];
+
       const emailData: EmailData = {
         messageId,
         from: parsedEmail.from?.text || '',
@@ -290,20 +300,30 @@ export class UltraZendSMTPServer {
         subject: parsedEmail.subject || '',
         html: parsedEmail.html?.toString(),
         text: parsedEmail.text,
-        headers: parsedEmail.headers as any
+        headers: parsedEmail.headers as any,
+        attachments: attachments.length > 0 ? attachments : undefined
       };
+
+      logger.info('Processing outgoing email', {
+        messageId,
+        to: emailData.to,
+        subject: emailData.subject,
+        hasAttachments: !!attachments.length,
+        attachmentCount: attachments.length
+      });
 
       // Assinar com DKIM
       const signedEmail = await this.dkimManager.signEmail(emailData);
-      
+
       // Entregar via MX
       const result = await this.deliveryService.deliverEmail(signedEmail);
-      
+
       if (result.success) {
         logger.info('Outgoing email delivered', {
           messageId,
           to: emailData.to,
-          mxServer: result.mxServer
+          mxServer: result.mxServer,
+          attachmentCount: attachments.length
         });
       } else {
         logger.error('Outgoing email delivery failed', {

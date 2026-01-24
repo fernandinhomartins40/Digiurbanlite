@@ -35,6 +35,17 @@ export interface EmailData {
   headers?: Record<string, string>;
   messageId?: string;
   dkimSignature?: string;
+  attachments?: EmailAttachment[];
+}
+
+export interface EmailAttachment {
+  filename: string;
+  content?: Buffer;
+  path?: string;
+  contentType?: string;
+  encoding?: string;
+  cid?: string;
+  size?: number;
 }
 
 export interface MXRecord {
