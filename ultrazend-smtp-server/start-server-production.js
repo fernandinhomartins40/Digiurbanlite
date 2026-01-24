@@ -1,9 +1,9 @@
 /**
- * @ultrazend/smtp-server - Production Server Starter (Prisma Version)
+ * @ultrazend/smtp-server - Production Server Starter
  * Script para iniciar o servidor SMTP em produção com PostgreSQL
  */
 
-const { SMTPServer } = require('./dist/index.prisma.js');
+const { SMTPServer } = require('./dist/index.js');
 
 async function startProductionServer() {
   console.log('🚀 UltraZend SMTP Server (Production) - Starting...\n');

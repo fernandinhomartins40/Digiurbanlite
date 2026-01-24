@@ -25,7 +25,7 @@ COPY src ./src
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 
-# Compilar TypeScript (apenas arquivos Prisma)
+# Compilar TypeScript (arquivos Prisma)
 RUN npm run build:prisma
 
 # ========== STAGE 2: Production ==========

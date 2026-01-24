@@ -70,5 +70,3 @@ certs/
 # Test files
 test-*.js
 example-*.sqlite
-# Arquivos alternativos não usados
-src/**/*.prisma.ts
