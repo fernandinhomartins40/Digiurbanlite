@@ -551,21 +551,25 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   const emailSubject = subject || `Documento do Protocolo ${doc.protocol.number}`;
   const emailMessage = message || `Segue em anexo o documento referente ao protocolo ${doc.protocol.number} - ${doc.protocol.service.name}.`;
 
-  // 3. SOLUÇÃO DEFINITIVA: Enviar via nodemailer com encoding base64 explícito
+  // 3. SOLUÇÃO COMUNIDADE: Usar PATH em vez de buffer para melhor compatibilidade com SMTP
   const nodemailer = require('nodemailer');
   const fromEmail = process.env.SMTP_FROM || await getSystemEmail('noreply');
 
-  // Ler arquivo
-  console.log(`📎 Lendo arquivo: ${filePath}`);
-  const fileBuffer = await fs.readFile(filePath);
-  console.log(`✅ Arquivo lido: ${fileBuffer.length} bytes`);
+  // Verificar se arquivo existe
+  console.log(`📎 Verificando arquivo: ${filePath}`);
+  const fileExists = await fs.access(filePath).then(() => true).catch(() => false);
+  if (!fileExists) {
+    throw new Error(`Arquivo não encontrado: ${filePath}`);
+  }
+  console.log(`✅ Arquivo encontrado: ${filePath}`);
 
-  // SOLUÇÃO: Enviar direto para servidor MX do destinatário (bypass UltraZend)
-  // O UltraZend SMTP não está repassando anexos corretamente
+  // Configurar transporter com pool para melhor performance
   const transporter = nodemailer.createTransport({
-    direct: true, // Conexão direta com MX records do destinatário
-    name: 'mail.digiurban.com.br',
-    connectionTimeout: 60000
+    host: 'ultrazend-smtp',
+    port: 587,
+    secure: false,
+    pool: true, // Usar pooling para melhor performance
+    tls: { rejectUnauthorized: false }
   });
 
   // Montar HTML
@@ -590,7 +594,8 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   </div>
 </body></html>`;
 
-  // CRÍTICO: Usar encoding base64 explícito para PDF
+  // USAR PATH: Recomendação da comunidade para arquivos em disco com SMTP
+  // Isso permite streaming incremental e melhor performance de memória
   const result = await transporter.sendMail({
     from: fromEmail,
     to: recipientEmail,
@@ -598,8 +603,7 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
     html: htmlContent,
     attachments: [{
       filename: doc.fileName,
-      content: fileBuffer,
-      encoding: 'base64',
+      path: filePath, // Usar path em vez de content para streaming
       contentType: 'application/pdf'
     }]
   });
