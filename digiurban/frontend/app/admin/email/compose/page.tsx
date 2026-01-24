@@ -205,6 +205,9 @@ export default function ComposeEmailPage() {
 
       // Se houver anexos, usar FormData
       if (attachments.length > 0) {
+        console.log('📎 [FRONTEND] Enviando email com anexos:', attachments.length);
+        console.log('📎 [FRONTEND] Arquivos:', attachments.map(f => ({ name: f.name, size: f.size, type: f.type })));
+
         const formDataPayload = new FormData();
         formDataPayload.append('accountId', selectedAccount);
         formDataPayload.append('to', JSON.stringify(formData.to.split(',').map(e => e.trim())));
@@ -218,9 +221,20 @@ export default function ComposeEmailPage() {
         formDataPayload.append('html', formData.message);
 
         // Adicionar anexos
-        attachments.forEach((file) => {
+        attachments.forEach((file, index) => {
+          console.log(`📎 [FRONTEND] Adicionando arquivo ${index + 1}:`, file.name, file.size);
           formDataPayload.append('attachments', file);
         });
+
+        // Debug: mostrar todas as entradas do FormData
+        console.log('📎 [FRONTEND] FormData entries:');
+        for (const [key, value] of formDataPayload.entries()) {
+          if (value instanceof File) {
+            console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`);
+          } else {
+            console.log(`  ${key}:`, value);
+          }
+        }
 
         const response = await apiRequest('/admin/email-accounts/send', {
           method: 'POST',

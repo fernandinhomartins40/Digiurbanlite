@@ -608,7 +608,17 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
     const userId = req.user.id;
 
     // Log de debug
+    console.log('📧 [EMAIL SEND] Content-Type:', req.headers['content-type']);
     console.log('📧 [EMAIL SEND] Request body:', JSON.stringify(req.body, null, 2));
+    console.log('📧 [EMAIL SEND] Files received:', uploadedFiles.length);
+    if (uploadedFiles.length > 0) {
+      console.log('📧 [EMAIL SEND] Files details:', uploadedFiles.map(f => ({
+        fieldname: f.fieldname,
+        originalname: f.originalname,
+        size: f.size,
+        mimetype: f.mimetype
+      })));
+    }
 
     // Aceitar tanto "body" quanto "text"/"html" (compatibilidade com diferentes frontends)
     const emailBody = body || text || html;

@@ -103,6 +103,10 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     // O browser define automaticamente multipart/form-data com boundary
     const isFormData = options.body instanceof FormData;
 
+    if (isFormData) {
+      console.log('📎 [AUTH CONTEXT] Detectado FormData - Content-Type será definido pelo browser');
+    }
+
     const headers = {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       // Não precisa enviar X-Tenant-ID - backend extrai do JWT cookie
