@@ -224,8 +224,8 @@ export default function ComposeEmailPage() {
 
         const response = await apiRequest('/admin/email-accounts/send', {
           method: 'POST',
-          body: formDataPayload,
-          headers: {} // Empty for multipart/form-data
+          body: formDataPayload
+          // Content-Type será definido automaticamente como multipart/form-data
         });
 
         if (response?.success) {

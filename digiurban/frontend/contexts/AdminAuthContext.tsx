@@ -99,8 +99,12 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     // ✅ CORRIGIDO: TenantId não é mais necessário no header
     // O backend extrai automaticamente do JWT cookie
 
+    // ✅ CORREÇÃO: Não adicionar Content-Type se body for FormData
+    // O browser define automaticamente multipart/form-data com boundary
+    const isFormData = options.body instanceof FormData;
+
     const headers = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       // Não precisa enviar X-Tenant-ID - backend extrai do JWT cookie
       ...options.headers
     }
