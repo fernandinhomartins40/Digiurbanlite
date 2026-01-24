@@ -560,12 +560,12 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   const fileBuffer = await fs.readFile(filePath);
   console.log(`✅ Arquivo lido: ${fileBuffer.length} bytes`);
 
-  // Criar transporter
+  // SOLUÇÃO: Enviar direto para servidor MX do destinatário (bypass UltraZend)
+  // O UltraZend SMTP não está repassando anexos corretamente
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'ultrazend-smtp',
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: false,
-    tls: { rejectUnauthorized: false }
+    direct: true, // Conexão direta com MX records do destinatário
+    name: 'mail.digiurban.com.br',
+    connectionTimeout: 60000
   });
 
   // Montar HTML
