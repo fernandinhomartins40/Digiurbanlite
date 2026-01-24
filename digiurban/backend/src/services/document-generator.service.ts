@@ -544,7 +544,10 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   }
 
   // 2. Preparar paths e dados do email
-  const filePath = path.join(process.cwd(), doc.filePath);
+  // IMPORTANTE: doc.filePath já começa com "/" (ex: /uploads/generated/...)
+  // No container, os arquivos estão em /app/uploads, não em /uploads
+  // Então precisamos adicionar /app antes do caminho
+  const filePath = path.join('/app', doc.filePath);
   const emailSubject = subject || `Documento do Protocolo ${doc.protocol.number}`;
   const emailMessage = message || `Segue em anexo o documento referente ao protocolo ${doc.protocol.number} - ${doc.protocol.service.name}.`;
 
