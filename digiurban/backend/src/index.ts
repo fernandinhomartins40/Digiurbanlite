@@ -64,15 +64,23 @@ app.use(requestLoggerMiddleware);
 
 // ✅ CORREÇÃO: Aumentar limite para suportar múltiplos uploads (TFD, etc)
 // Multer permite 20 arquivos x 10MB = 200MB, mas express.json/urlencoded limitava em 10MB
-// ✅ IMPORTANTE: Pular parse JSON para multipart/form-data (usado por multer)
-app.use((req, res, next) => {
-  const contentType = req.headers['content-type'];
-  if (contentType && contentType.includes('multipart/form-data')) {
-    return next(); // Pular JSON parse para multipart
+// ✅ IMPORTANTE: Pular body parsers para multipart/form-data (usado por multer)
+const conditionalBodyParser = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const contentType = req.headers['content-type'] || '';
+
+  // Se for multipart/form-data, pular todos os body parsers (multer vai processar)
+  if (contentType.includes('multipart/form-data')) {
+    return next();
   }
-  express.json({ limit: '50mb' })(req, res, next);
-});
-app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Form URL encoded
+
+  // Caso contrário, aplicar parsers JSON e URL-encoded
+  express.json({ limit: '50mb' })(req, res, (err) => {
+    if (err) return next(err);
+    express.urlencoded({ extended: true, limit: '50mb' })(req, res, next);
+  });
+};
+
+app.use(conditionalBodyParser);
 app.use(cookieParser()); // Parser de cookies para httpOnly tokens
 
 // Servir arquivos de upload de forma segura
