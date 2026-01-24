@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Bold, Italic, List, ListOrdered, Undo, Redo } from 'lucide-react'
-import { Button } from './button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface RichTextEditorProps {
