@@ -60,8 +60,7 @@ export default function ComposeEmailPage() {
     cc: '',
     bcc: '',
     subject: '',
-    message: '',
-    priority: 3
+    message: ''
   });
 
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -217,7 +216,6 @@ export default function ComposeEmailPage() {
         }
         formDataPayload.append('subject', formData.subject);
         formDataPayload.append('html', formData.message);
-        formDataPayload.append('priority', formData.priority.toString());
 
         // Adicionar anexos
         attachments.forEach((file) => {
@@ -242,8 +240,7 @@ export default function ComposeEmailPage() {
             cc: '',
             bcc: '',
             subject: '',
-            message: '',
-            priority: 3
+            message: ''
           });
           setAttachments([]);
           setShowCc(false);
@@ -263,8 +260,7 @@ export default function ComposeEmailPage() {
           bcc: formData.bcc ? formData.bcc.split(',').map(e => e.trim()) : undefined,
           subject: formData.subject,
           text: formData.message.replace(/<[^>]*>/g, ''),
-          html: formData.message,
-          priority: formData.priority
+          html: formData.message
         };
 
         const response = await apiRequest('/admin/email-accounts/send', {
@@ -284,8 +280,7 @@ export default function ComposeEmailPage() {
             cc: '',
             bcc: '',
             subject: '',
-            message: '',
-            priority: 3
+            message: ''
           });
           setAttachments([]);
           setShowCc(false);
@@ -526,21 +521,6 @@ export default function ComposeEmailPage() {
               onChange={(e) => handleInputChange('subject', e.target.value)}
               className="text-xs sm:text-sm h-9 sm:h-10"
             />
-          </div>
-
-          {/* Prioridade */}
-          <div className="space-y-2">
-            <Label htmlFor="priority" className="text-sm sm:text-base">Prioridade</Label>
-            <select
-              id="priority"
-              value={formData.priority}
-              onChange={(e) => handleInputChange('priority', parseInt(e.target.value))}
-              className="flex h-9 sm:h-10 w-full rounded-md border border-input bg-background px-2 sm:px-3 py-2 text-xs sm:text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <option value={1}>Alta</option>
-              <option value={3}>Normal</option>
-              <option value={5}>Baixa</option>
-            </select>
           </div>
 
           {/* Mensagem */}
