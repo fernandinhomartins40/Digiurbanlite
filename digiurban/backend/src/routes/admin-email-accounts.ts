@@ -7,6 +7,8 @@ import { prisma } from '../lib/prisma';
 import { UserRole } from '@prisma/client';
 import * as crypto from 'crypto';
 import { emailSenderService } from '../services/EmailSenderService';
+import { uploadDocuments } from '../config/upload';
+import path from 'path';
 
 const router = Router();
 
@@ -572,11 +574,37 @@ router.get('/:id/usage', requireMinRole(UserRole.ADMIN), asyncHandler(async (req
 
 /**
  * POST /api/admin/email-accounts/send
- * Enviar email via webmail interno
+ * Enviar email via webmail interno (com suporte a anexos)
  */
-router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { accountId, to, cc, bcc, subject, text, html, body, attachments } = req.body;
+    // Parse de campos JSON se vieram via FormData
+    let accountId = req.body.accountId;
+    let to = req.body.to;
+    let cc = req.body.cc;
+    let bcc = req.body.bcc;
+    let subject = req.body.subject;
+    let text = req.body.text;
+    let html = req.body.html;
+    let body = req.body.body;
+    let priority = req.body.priority;
+
+    // Se vieram como JSON strings (FormData), fazer parse
+    try {
+      if (typeof to === 'string' && to.startsWith('[')) {
+        to = JSON.parse(to);
+      }
+      if (typeof cc === 'string' && cc.startsWith('[')) {
+        cc = JSON.parse(cc);
+      }
+      if (typeof bcc === 'string' && bcc.startsWith('[')) {
+        bcc = JSON.parse(bcc);
+      }
+    } catch (parseError) {
+      console.log('Destinatários já estão no formato correto');
+    }
+
+    const uploadedFiles = (req.files as Express.Multer.File[]) || [];
     const userId = req.user.id;
 
     // Log de debug
@@ -732,6 +760,14 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
     const toEmails = Array.isArray(to) ? to : [to];
     const primaryTo = toEmails[0]; // Primeiro destinatário principal
 
+    // Preparar anexos se houver arquivos
+    const attachmentsData = uploadedFiles.length > 0 ? uploadedFiles.map(file => ({
+      filename: file.originalname,
+      path: file.path,
+      contentType: file.mimetype,
+      size: file.size
+    })) : undefined;
+
     // ✅ CRIAR registro no banco com status QUEUED
     const email = await prisma.email.create({
       data: {
@@ -746,7 +782,8 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
         textContent: text || emailBody, // Priorizar text se existir
         htmlContent: html || emailBody, // Priorizar html se existir
         status: 'QUEUED', // ← QUEUED ao invés de SENT
-        priority: 3
+        priority: priority ? parseInt(priority) : 3,
+        attachments: attachmentsData as any // Armazenar metadados dos anexos
       }
     });
 
@@ -817,14 +854,17 @@ router.post('/send', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Au
 
     res.json({
       success: true,
-      message: 'Email enviado com sucesso!',
+      message: uploadedFiles.length > 0
+        ? `Email enviado com sucesso com ${uploadedFiles.length} anexo(s)!`
+        : 'Email enviado com sucesso!',
       email: {
         id: email.id,
         messageId: email.messageId,
         from: email.fromEmail,
         to: email.toEmail,
         subject: email.subject,
-        sentAt: email.sentAt
+        sentAt: email.sentAt,
+        attachmentCount: uploadedFiles.length
       }
     });
   } catch (error) {

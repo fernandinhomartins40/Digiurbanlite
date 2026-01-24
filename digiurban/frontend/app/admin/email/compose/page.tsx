@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/src/components/ui/rich-text-editor';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -16,7 +17,9 @@ import {
   Mail,
   Loader2,
   ChevronDown,
-  FileText
+  FileText,
+  Upload,
+  Paperclip
 } from 'lucide-react';
 
 interface EmailAccount {
@@ -60,6 +63,9 @@ export default function ComposeEmailPage() {
     message: '',
     priority: 3
   });
+
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchData();
@@ -107,6 +113,18 @@ export default function ComposeEmailPage() {
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    setAttachments(prev => [...prev, ...files]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
   const useTemplate = (template: Template) => {
@@ -186,44 +204,98 @@ export default function ComposeEmailPage() {
     try {
       setLoading(true);
 
-      const payload = {
-        accountId: selectedAccount,
-        to: formData.to.split(',').map(e => e.trim()),
-        cc: formData.cc ? formData.cc.split(',').map(e => e.trim()) : undefined,
-        bcc: formData.bcc ? formData.bcc.split(',').map(e => e.trim()) : undefined,
-        subject: formData.subject,
-        text: formData.message,
-        html: `<html><body><pre style="font-family: Arial, sans-serif; white-space: pre-wrap;">${formData.message}</pre></body></html>`,
-        priority: formData.priority
-      };
+      // Se houver anexos, usar FormData
+      if (attachments.length > 0) {
+        const formDataPayload = new FormData();
+        formDataPayload.append('accountId', selectedAccount);
+        formDataPayload.append('to', JSON.stringify(formData.to.split(',').map(e => e.trim())));
+        if (formData.cc) {
+          formDataPayload.append('cc', JSON.stringify(formData.cc.split(',').map(e => e.trim())));
+        }
+        if (formData.bcc) {
+          formDataPayload.append('bcc', JSON.stringify(formData.bcc.split(',').map(e => e.trim())));
+        }
+        formDataPayload.append('subject', formData.subject);
+        formDataPayload.append('html', formData.message);
+        formDataPayload.append('priority', formData.priority.toString());
 
-      const response = await apiRequest('/admin/email-accounts/send', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
-
-      if (response?.success) {
-        toast({
-          title: 'Email enviado com sucesso!',
-          description: `Email enviado para ${formData.to}`
+        // Adicionar anexos
+        attachments.forEach((file) => {
+          formDataPayload.append('attachments', file);
         });
 
-        // Limpar formulário
-        setFormData({
-          to: '',
-          cc: '',
-          bcc: '',
-          subject: '',
-          message: '',
-          priority: 3
+        const response = await apiRequest('/admin/email-accounts/send', {
+          method: 'POST',
+          body: formDataPayload,
+          headers: {} // Empty for multipart/form-data
         });
-        setShowCc(false);
-        setShowBcc(false);
 
-        // Redirecionar para enviados após 1 segundo
-        setTimeout(() => {
-          router.push('/admin/email/sent');
-        }, 1000);
+        if (response?.success) {
+          toast({
+            title: 'Email enviado com sucesso!',
+            description: `Email enviado para ${formData.to} com ${attachments.length} anexo(s)`
+          });
+
+          // Limpar formulário
+          setFormData({
+            to: '',
+            cc: '',
+            bcc: '',
+            subject: '',
+            message: '',
+            priority: 3
+          });
+          setAttachments([]);
+          setShowCc(false);
+          setShowBcc(false);
+
+          // Redirecionar para enviados após 1 segundo
+          setTimeout(() => {
+            router.push('/admin/email/sent');
+          }, 1000);
+        }
+      } else {
+        // Sem anexos, usar JSON
+        const payload = {
+          accountId: selectedAccount,
+          to: formData.to.split(',').map(e => e.trim()),
+          cc: formData.cc ? formData.cc.split(',').map(e => e.trim()) : undefined,
+          bcc: formData.bcc ? formData.bcc.split(',').map(e => e.trim()) : undefined,
+          subject: formData.subject,
+          text: formData.message.replace(/<[^>]*>/g, ''),
+          html: formData.message,
+          priority: formData.priority
+        };
+
+        const response = await apiRequest('/admin/email-accounts/send', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (response?.success) {
+          toast({
+            title: 'Email enviado com sucesso!',
+            description: `Email enviado para ${formData.to}`
+          });
+
+          // Limpar formulário
+          setFormData({
+            to: '',
+            cc: '',
+            bcc: '',
+            subject: '',
+            message: '',
+            priority: 3
+          });
+          setAttachments([]);
+          setShowCc(false);
+          setShowBcc(false);
+
+          // Redirecionar para enviados após 1 segundo
+          setTimeout(() => {
+            router.push('/admin/email/sent');
+          }, 1000);
+        }
       }
     } catch (error: any) {
       toast({
@@ -474,17 +546,71 @@ export default function ComposeEmailPage() {
           {/* Mensagem */}
           <div className="space-y-2">
             <Label htmlFor="message" className="text-sm sm:text-base">Mensagem</Label>
-            <Textarea
-              id="message"
-              placeholder="Escreva sua mensagem aqui..."
+            <RichTextEditor
               value={formData.message}
-              onChange={(e) => handleInputChange('message', e.target.value)}
-              rows={10}
-              className="font-mono text-xs sm:text-sm min-h-[200px] sm:min-h-[300px]"
+              onChange={(value) => handleInputChange('message', value)}
+              placeholder="Escreva sua mensagem aqui..."
+              className="min-h-[200px] sm:min-h-[300px]"
             />
             <p className="text-[10px] sm:text-xs text-muted-foreground">
-              {formData.message.length} caracteres
+              {formData.message.replace(/<[^>]*>/g, '').length} caracteres
             </p>
+          </div>
+
+          {/* Anexos */}
+          <div className="space-y-2">
+            <Label className="text-sm sm:text-base">Anexos</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs sm:text-sm h-9 sm:h-10"
+              >
+                <Paperclip className="mr-2 h-4 w-4" />
+                Adicionar Anexo
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+                accept="*/*"
+              />
+            </div>
+            {attachments.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  {attachments.length} arquivo(s) anexado(s)
+                </p>
+                <div className="space-y-2">
+                  {attachments.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-muted rounded-lg text-xs sm:text-sm"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Paperclip className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                        <span className="truncate">{file.name}</span>
+                        <span className="text-muted-foreground flex-shrink-0">
+                          ({(file.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveAttachment(index)}
+                        className="h-7 w-7 p-0 flex-shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Ações do formulário */}
