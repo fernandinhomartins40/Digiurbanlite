@@ -35,7 +35,7 @@ export async function getPrimaryEmailDomain(): Promise<string> {
     }
 
     // Buscar domínio verificado e com DKIM ativo
-    const domain = await prisma.emailDomains.findFirst({
+    const domain = await prisma.emailDomain.findFirst({
       where: {
         isVerified: true,
         dkimEnabled: true
@@ -58,7 +58,7 @@ export async function getPrimaryEmailDomain(): Promise<string> {
     }
 
     // Fallback: buscar qualquer domínio verificado
-    const anyVerifiedDomain = await prisma.emailDomains.findFirst({
+    const anyVerifiedDomain = await prisma.emailDomain.findFirst({
       where: { isVerified: true },
       select: { domainName: true, dkimEnabled: true, spfEnabled: true, isVerified: true }
     });
@@ -106,7 +106,7 @@ export async function getEmailDomainConfig(): Promise<EmailDomainConfig | null> 
       return cachedDomain;
     }
 
-    const domain = await prisma.emailDomains.findFirst({
+    const domain = await prisma.emailDomain.findFirst({
       where: {
         isVerified: true,
         dkimEnabled: true
