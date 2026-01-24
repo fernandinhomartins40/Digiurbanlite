@@ -64,7 +64,14 @@ app.use(requestLoggerMiddleware);
 
 // ✅ CORREÇÃO: Aumentar limite para suportar múltiplos uploads (TFD, etc)
 // Multer permite 20 arquivos x 10MB = 200MB, mas express.json/urlencoded limitava em 10MB
-app.use(express.json({ limit: '50mb' })); // JSON requests (API calls)
+// ✅ IMPORTANTE: Pular parse JSON para multipart/form-data (usado por multer)
+app.use((req, res, next) => {
+  const contentType = req.headers['content-type'];
+  if (contentType && contentType.includes('multipart/form-data')) {
+    return next(); // Pular JSON parse para multipart
+  }
+  express.json({ limit: '50mb' })(req, res, next);
+});
 app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Form URL encoded
 app.use(cookieParser()); // Parser de cookies para httpOnly tokens
 
