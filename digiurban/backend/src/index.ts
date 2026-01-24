@@ -68,14 +68,22 @@ app.use(requestLoggerMiddleware);
 const conditionalBodyParser = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const contentType = req.headers['content-type'] || '';
 
+  console.log(`🔍 [BODY PARSER] Content-Type: "${contentType}" | URL: ${req.method} ${req.url}`);
+
   // Se for multipart/form-data, pular todos os body parsers (multer vai processar)
   if (contentType.includes('multipart/form-data')) {
+    console.log('✅ [BODY PARSER] Skipping parsers for multipart/form-data');
     return next();
   }
 
+  console.log('📝 [BODY PARSER] Applying JSON/URL parsers');
+
   // Caso contrário, aplicar parsers JSON e URL-encoded
   express.json({ limit: '50mb' })(req, res, (err) => {
-    if (err) return next(err);
+    if (err) {
+      console.error('❌ [BODY PARSER] JSON parse error:', err.message);
+      return next(err);
+    }
     express.urlencoded({ extended: true, limit: '50mb' })(req, res, next);
   });
 };
