@@ -51,6 +51,18 @@ export class EmailSenderService {
       const cc = email.ccEmails ? (Array.isArray(email.ccEmails) ? email.ccEmails : [email.ccEmails]) : undefined;
       const bcc = email.bccEmails ? (Array.isArray(email.bccEmails) ? email.bccEmails : [email.bccEmails]) : undefined;
 
+      // Preparar anexos se existirem
+      let attachments = undefined;
+      if (email.attachments && Array.isArray(email.attachments)) {
+        console.log('📎 [EMAIL SENDER] Processando anexos:', email.attachments.length);
+        attachments = (email.attachments as any[]).map((att: any) => ({
+          filename: att.filename,
+          path: att.path,
+          contentType: att.contentType
+        }));
+        console.log('📎 [EMAIL SENDER] Anexos preparados:', attachments.map(a => ({ filename: a.filename, path: a.path })));
+      }
+
       // Enviar email
       const info = await transporter.sendMail({
         from: email.fromEmail,
@@ -61,14 +73,16 @@ export class EmailSenderService {
         text: email.textContent || undefined,
         html: email.htmlContent || undefined,
         messageId: email.messageId,
-        priority: email.priority === 1 ? 'high' : email.priority === 5 ? 'low' : 'normal'
+        priority: email.priority === 1 ? 'high' : email.priority === 5 ? 'low' : 'normal',
+        attachments
       });
 
       console.log('✅ Email enviado com sucesso:', {
         emailId: email.id,
         messageId: info.messageId,
         from: email.fromEmail,
-        to: to.join(', ')
+        to: to.join(', '),
+        attachments: attachments ? attachments.length : 0
       });
 
       // Atualizar status no banco
