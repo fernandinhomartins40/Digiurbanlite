@@ -9,7 +9,9 @@ import { authenticateToken, requireAdmin, requireSuperAdmin } from '../middlewar
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { PrismaClient, UserRole } from '@prisma/client';
 import * as documentGenerator from '../services/document-generator.service';
+import { uploadDocuments } from '../config/upload';
 import path from 'path';
+import fs from 'fs/promises';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -495,10 +497,19 @@ router.post('/generated-documents/:id/send', authenticateToken, async (req, res)
 /**
  * POST /api/generated-documents/send-multiple
  * Enviar múltiplos documentos por email e adicionar aos documentos do cidadão
+ * Aceita arquivos adicionais via multipart/form-data
  */
-router.post('/generated-documents/send-multiple', authenticateToken, async (req, res) => {
+router.post('/generated-documents/send-multiple', authenticateToken, uploadDocuments, async (req, res) => {
   try {
-    const { documentIds, citizenId, recipientEmail, recipientName, subject, message, protocolNumber } = req.body;
+    // Parse documentIds como JSON se vier como string (FormData)
+    const documentIds = typeof req.body.documentIds === 'string'
+      ? JSON.parse(req.body.documentIds)
+      : req.body.documentIds;
+
+    const { citizenId, recipientEmail, recipientName, subject, message, protocolNumber } = req.body;
+
+    // Arquivos adicionais enviados pelo frontend
+    const additionalFiles = (req.files as Express.Multer.File[]) || [];
 
     if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
       return res.status(400).json({
@@ -547,24 +558,77 @@ router.post('/generated-documents/send-multiple', authenticateToken, async (req,
     }
 
     console.log(`   ✓ Encontrados ${documents.length} documentos`);
+    if (additionalFiles.length > 0) {
+      console.log(`   ✓ ${additionalFiles.length} arquivo(s) adicional(is) enviado(s)`);
+    }
 
-    // 2. Enviar cada documento por email
-    for (const doc of documents) {
-      try {
-        await documentGenerator.sendDocumentByEmail({
-          documentId: doc.id,
-          recipientEmail,
-          recipientName,
-          subject: subject || `Documento: ${doc.template.name}`,
-          message,
-          sentBy: req.user!.id
-        });
-        results.emailsSent++;
-        console.log(`   ✓ Email enviado: ${doc.template.name}`);
-      } catch (emailError: any) {
-        console.error(`   ✗ Erro ao enviar email para ${doc.template.name}:`, emailError.message);
-        results.errors.push(`Erro ao enviar ${doc.template.name}: ${emailError.message}`);
-      }
+    // 2. Enviar email único com todos os documentos + arquivos adicionais como anexos
+    try {
+      // Preparar anexos dos documentos gerados
+      const documentAttachments = documents.map(doc => ({
+        filename: doc.fileName,
+        path: path.join(process.cwd(), doc.filePath)
+      }));
+
+      // Preparar anexos dos arquivos adicionais
+      const additionalAttachments = additionalFiles.map(file => ({
+        filename: file.originalname,
+        path: file.path
+      }));
+
+      // Combinar todos os anexos
+      const allAttachments = [...documentAttachments, ...additionalAttachments];
+
+      // Enviar email único com todos os anexos
+      const nodemailer = require('nodemailer');
+      const { getSystemEmail } = require('../utils/email-domain.utils');
+
+      const transporter = nodemailer.createTransport({
+        host: 'ultrazend-smtp',
+        port: 587,
+        secure: false,
+        tls: { rejectUnauthorized: false }
+      });
+
+      const fromEmail = process.env.SMTP_FROM || await getSystemEmail('noreply');
+
+      const docList = documents.map(d => `• ${d.template.name}`).join('\n');
+      const fileList = additionalFiles.map(f => `• ${f.originalname}`).join('\n');
+      const totalCount = documents.length + additionalFiles.length;
+
+      const htmlContent = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: #0066cc; color: white; padding: 20px; text-align: center;">
+      <h2>Documentos Disponíveis</h2>
+    </div>
+    <div style="padding: 20px; background: #f9f9f9;">
+      <p>Olá <strong>${recipientName}</strong>,</p>
+      ${message ? `<p>${message}</p>` : ''}
+      <p>Você recebeu <strong>${totalCount} documento(s)</strong> do protocolo <strong>${protocolNumber}</strong>:</p>
+      ${documents.length > 0 ? `<p><strong>Documentos Gerados:</strong></p><p style="margin-left: 20px;">${docList}</p>` : ''}
+      ${additionalFiles.length > 0 ? `<p><strong>Arquivos Adicionais:</strong></p><p style="margin-left: 20px;">${fileList}</p>` : ''}
+      <p>Os documentos estão anexados a este email e também disponíveis na área "Meus Documentos".</p>
+      <br>
+      <p>Atenciosamente,<br>Equipe de Atendimento</p>
+    </div>
+  </div>
+</body></html>`;
+
+      await transporter.sendMail({
+        from: fromEmail,
+        to: recipientEmail,
+        subject: subject || `Documentos do Protocolo ${protocolNumber}`,
+        html: htmlContent,
+        attachments: allAttachments
+      });
+
+      results.emailsSent = 1;
+      console.log(`   ✓ Email enviado com ${totalCount} anexo(s)`);
+    } catch (emailError: any) {
+      console.error(`   ✗ Erro ao enviar email:`, emailError.message);
+      results.errors.push(`Erro ao enviar email: ${emailError.message}`);
     }
 
     // 3. Adicionar documentos aos documentos do cidadão
@@ -607,6 +671,35 @@ router.post('/generated-documents/send-multiple', authenticateToken, async (req,
       }
     }
 
+    // 3.1. Adicionar arquivos adicionais aos documentos do cidadão
+    for (const file of additionalFiles) {
+      try {
+        const stats = await fs.stat(file.path);
+        const relativePath = file.path.replace(process.cwd(), '').replace(/\\/g, '/');
+
+        await prisma.citizenDocument.create({
+          data: {
+            citizenId,
+            documentType: `Protocolo: Arquivo Adicional`,
+            fileName: file.originalname,
+            filePath: relativePath,
+            fileSize: stats.size,
+            mimeType: file.mimetype,
+            sourceType: 'PROTOCOL',
+            notes: message || `Arquivo enviado junto com protocolo ${protocolNumber}`,
+            isVerified: true,
+            verifiedAt: new Date(),
+            verifiedBy: req.user!.id
+          }
+        });
+        results.documentsAdded++;
+        console.log(`   ✓ Arquivo adicional adicionado: ${file.originalname}`);
+      } catch (docError: any) {
+        console.error(`   ✗ Erro ao adicionar arquivo ${file.originalname}:`, docError.message);
+        results.errors.push(`Erro ao adicionar ${file.originalname}: ${docError.message}`);
+      }
+    }
+
     // 4. Criar notificação para o cidadão
     try {
       const docList = documents.map(d => d.template.name).join(', ');
@@ -632,9 +725,10 @@ router.post('/generated-documents/send-multiple', authenticateToken, async (req,
 
     console.log(`✅ Processamento concluído:`, results);
 
+    const totalFiles = documents.length + additionalFiles.length;
     res.json({
       success: true,
-      message: `${results.emailsSent} documento(s) enviado(s) por email, ${results.documentsAdded} adicionado(s) aos documentos do cidadão`,
+      message: `Email enviado com ${totalFiles} arquivo(s) anexado(s), ${results.documentsAdded} adicionado(s) aos documentos do cidadão`,
       data: results
     });
   } catch (error: any) {

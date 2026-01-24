@@ -1,14 +1,14 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { RichTextEditor } from '@/components/ui/rich-text-editor'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Send, FileText, CheckCircle2 } from 'lucide-react'
+import { Loader2, Send, FileText, CheckCircle2, Paperclip, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -46,7 +46,9 @@ export function ProtocolSendGeneratedDocumentTab({
   const { toast } = useToast()
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
   const [message, setMessage] = useState('')
+  const [additionalFiles, setAdditionalFiles] = useState<File[]>([])
   const [isSending, setIsSending] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const sortedDocuments = useMemo(() => {
     return [...generatedDocuments].sort((a, b) => {
@@ -70,6 +72,26 @@ export function ProtocolSendGeneratedDocumentTab({
     } else {
       setSelectedDocumentIds(sortedDocuments.map(doc => doc.id))
     }
+  }
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || [])
+    setAdditionalFiles(prev => [...prev, ...files])
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const removeFile = (index: number) => {
+    setAdditionalFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
   }
 
   const handleSend = async () => {
@@ -102,26 +124,39 @@ export function ProtocolSendGeneratedDocumentTab({
 
     try {
       setIsSending(true)
+
+      // Criar FormData para enviar arquivos
+      const formData = new FormData()
+      formData.append('documentIds', JSON.stringify(selectedDocumentIds))
+      formData.append('citizenId', citizenId)
+      formData.append('recipientEmail', citizenEmail)
+      formData.append('recipientName', citizenName || '')
+      formData.append('subject', `Documentos do Protocolo ${protocolNumber}`)
+      if (message.trim()) {
+        formData.append('message', message.trim())
+      }
+      formData.append('protocolNumber', protocolNumber)
+
+      // Adicionar arquivos adicionais
+      additionalFiles.forEach((file) => {
+        formData.append('additionalFiles', file)
+      })
+
       const result = await apiRequest(`/generated-documents/send-multiple`, {
         method: 'POST',
-        body: JSON.stringify({
-          documentIds: selectedDocumentIds,
-          citizenId,
-          recipientEmail: citizenEmail,
-          recipientName: citizenName,
-          subject: `Documentos do Protocolo ${protocolNumber}`,
-          message: message.trim() || undefined,
-          protocolNumber
-        })
+        body: formData,
+        headers: {} // Deixar vazio para multipart/form-data
       })
 
       if (result.success) {
+        const totalFiles = selectedDocumentIds.length + additionalFiles.length
         toast({
           title: 'Documentos enviados',
-          description: `${selectedDocumentIds.length} documento(s) enviado(s) para ${citizenEmail} e adicionado(s) aos documentos do cidadão`
+          description: `${totalFiles} arquivo(s) enviado(s) para ${citizenEmail} e adicionado(s) aos documentos do cidadão`
         })
         setMessage('')
         setSelectedDocumentIds([])
+        setAdditionalFiles([])
         onRefresh?.()
       } else {
         throw new Error(result.error || 'Erro ao enviar documentos')
@@ -239,16 +274,64 @@ export function ProtocolSendGeneratedDocumentTab({
 
         {/* Mensagem Opcional */}
         <div className="space-y-2">
-          <Label htmlFor="send-message">Mensagem Personalizada (opcional)</Label>
-          <Textarea
-            id="send-message"
+          <Label>Mensagem Personalizada (opcional)</Label>
+          <RichTextEditor
             value={message}
-            onChange={(event) => setMessage(event.target.value)}
+            onChange={setMessage}
             placeholder="Escreva uma mensagem para o cidadão (será incluída no email e na notificação)"
-            rows={4}
           />
           <p className="text-xs text-muted-foreground">
             Os documentos serão enviados por email e ficarão disponíveis na aba "Meus Documentos" do cidadão
+          </p>
+        </div>
+
+        {/* Arquivos Adicionais */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label>Arquivos Adicionais (opcional)</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip className="h-4 w-4 mr-2" />
+              Adicionar Arquivos
+            </Button>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+          />
+          {additionalFiles.length > 0 && (
+            <div className="border rounded-lg divide-y">
+              {additionalFiles.map((file, index) => (
+                <div key={index} className="p-3 flex items-center justify-between hover:bg-muted/50">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeFile(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Arquivos aceitos: PDF, DOC, DOCX, JPG, PNG, TXT (máx. 10MB cada)
           </p>
         </div>
 
