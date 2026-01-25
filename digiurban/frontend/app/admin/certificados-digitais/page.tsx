@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CitizenAutocomplete } from '@/components/admin/CitizenAutocomplete';
+import { AdminUserAutocomplete } from '@/components/admin/AdminUserAutocomplete';
 import { CertificateRequestsManager } from '@/components/admin/CertificateRequestsManager';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import {
@@ -56,6 +57,14 @@ interface Citizen {
   phone?: string;
 }
 
+interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role?: string;
+  department?: string;
+}
+
 export default function CertificadosDigitaisPage() {
   const { user } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('certificates');
@@ -71,6 +80,7 @@ export default function CertificadosDigitaisPage() {
   const [issuing, setIssuing] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
+  const [selectedAdminUser, setSelectedAdminUser] = useState<AdminUser | null>(null);
   const [issueType, setIssueType] = useState<'citizen' | 'server'>('citizen');
   const [showPrivateKeyModal, setShowPrivateKeyModal] = useState(false);
   const [privateKey, setPrivateKey] = useState<string>('');
@@ -188,8 +198,8 @@ export default function CertificadosDigitaisPage() {
       return;
     }
 
-    if (issueType === 'server' && (!formData.userId || !formData.commonName || !formData.email)) {
-      toast.error('Preencha todos os campos obrigatórios');
+    if (issueType === 'server' && !selectedAdminUser) {
+      toast.error('Selecione um servidor antes de emitir o certificado');
       return;
     }
 
@@ -206,10 +216,10 @@ export default function CertificadosDigitaisPage() {
             validityYears: formData.validityYears,
           }
         : {
-            userId: formData.userId,
-            commonName: formData.commonName,
-            email: formData.email,
-            department: formData.department,
+            userId: selectedAdminUser!.id,
+            commonName: selectedAdminUser!.name,
+            email: selectedAdminUser!.email,
+            department: formData.department || selectedAdminUser!.department,
             certificateType: formData.certificateType,
             validityYears: formData.validityYears,
           };
@@ -232,6 +242,7 @@ export default function CertificadosDigitaisPage() {
         }
         setShowIssueModal(false);
         setSelectedCitizen(null);
+        setSelectedAdminUser(null);
         fetchCertificates();
       } else {
         throw new Error(data.message || 'Erro ao emitir certificado');
@@ -361,6 +372,7 @@ export default function CertificadosDigitaisPage() {
             onClick={() => {
               setShowIssueModal(true);
               setSelectedCitizen(null);
+              setSelectedAdminUser(null);
               setIssueType('citizen');
             }}
           >
@@ -834,48 +846,43 @@ export default function CertificadosDigitaisPage() {
                       </>
                     ) : (
                       <>
-                        {/* Campos para Servidor */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              ID do Usuário *
-                            </label>
-                            <input
-                              type="text"
-                              name="userId"
-                              required={issueType === 'server'}
-                              placeholder="ID do usuário no sistema"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Use o ID do usuário que será o titular do certificado
-                            </p>
-                          </div>
-                          <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Nome Completo (CN) *
-                            </label>
-                            <input
-                              type="text"
-                              name="commonName"
-                              required={issueType === 'server'}
-                              placeholder="Nome completo do servidor"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Email *
-                            </label>
-                            <input
-                              type="email"
-                              name="email"
-                              required={issueType === 'server'}
-                              placeholder="email@prefeitura.gov.br"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            />
-                          </div>
+                        {/* Busca de Servidor */}
+                        <div>
+                          <AdminUserAutocomplete
+                            value={selectedAdminUser}
+                            onChange={setSelectedAdminUser}
+                            label="Servidor"
+                            placeholder="Digite o nome ou email do servidor..."
+                            required
+                          />
                         </div>
+
+                        {/* Dados do Servidor Selecionado */}
+                        {selectedAdminUser && (
+                          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <h4 className="font-semibold text-green-900 mb-2">Dados do Certificado</h4>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <span className="text-green-700 font-medium">Nome (CN):</span>
+                                <p className="text-green-900">{selectedAdminUser.name}</p>
+                              </div>
+                              <div>
+                                <span className="text-green-700 font-medium">Email:</span>
+                                <p className="text-green-900">{selectedAdminUser.email}</p>
+                              </div>
+                              {selectedAdminUser.department && (
+                                <div>
+                                  <span className="text-green-700 font-medium">Departamento:</span>
+                                  <p className="text-green-900">{selectedAdminUser.department}</p>
+                                </div>
+                              )}
+                              <div>
+                                <span className="text-green-700 font-medium">ID do Usuário:</span>
+                                <p className="text-green-900 font-mono text-xs">{selectedAdminUser.id}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
 
@@ -932,6 +939,7 @@ export default function CertificadosDigitaisPage() {
                       onClick={() => {
                         setShowIssueModal(false);
                         setSelectedCitizen(null);
+                        setSelectedAdminUser(null);
                       }}
                       disabled={issuing}
                     >
