@@ -353,7 +353,6 @@ export function DocumentSigningModalSimple({
                           className="flex-1 bg-blue-600 hover:bg-blue-700"
                         >
                           Continuar
-                          <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                       </>
                     )}
