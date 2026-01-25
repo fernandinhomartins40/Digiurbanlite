@@ -154,6 +154,22 @@ export class MXDeliveryService {
         return attachment;
       }) || [];
 
+      // ✅ DEBUG: Log detalhado dos anexos antes de enviar
+      if (attachments.length > 0) {
+        logger.info('📎 [MX DELIVERY] Anexos preparados para MX:', {
+          mxServer,
+          count: attachments.length,
+          details: attachments.map(att => ({
+            filename: att.filename,
+            contentType: att.contentType,
+            hasContent: !!att.content,
+            hasPath: !!att.path,
+            contentLength: att.content?.length,
+            encoding: att.encoding
+          }))
+        });
+      }
+
       const mailOptions: any = {
         from: emailData.from,
         to: emailData.to,
@@ -169,6 +185,7 @@ export class MXDeliveryService {
       // Adicionar anexos se houver
       if (attachments.length > 0) {
         mailOptions.attachments = attachments;
+        logger.info('📎 [MX DELIVERY] mailOptions.attachments definido:', { count: attachments.length });
       }
 
       const result = await transporter.sendMail(mailOptions);
