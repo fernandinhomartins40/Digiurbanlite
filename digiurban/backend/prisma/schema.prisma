@@ -4898,9 +4898,10 @@ model DigitalCertificate {
   department      String?                 // OU=
 
   // Chaves Criptográficas (RSA)
-  publicKey       String          @db.Text // Chave pública (formato PEM)
-  privateKeyHash  String                   // Hash SHA-256 da chave privada (NUNCA armazenar a chave!)
-  keySize         Int             @default(2048) // Tamanho da chave em bits (2048, 3072, 4096)
+  publicKey            String  @db.Text // Chave pública (formato PEM)
+  privateKeyHash       String           // Hash SHA-256 da chave privada (para validação)
+  encryptedPrivateKey  String  @db.Text // Chave privada criptografada com AES-256-GCM
+  keySize              Int     @default(2048) // Tamanho da chave em bits (2048, 3072, 4096)
 
   // Validade
   issuedAt        DateTime        @default(now())

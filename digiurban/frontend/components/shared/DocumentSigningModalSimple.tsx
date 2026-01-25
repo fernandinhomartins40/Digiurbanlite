@@ -12,14 +12,11 @@ import {
   X,
   FileText,
   Shield,
-  Upload,
   Loader2,
   CheckCircle2,
   AlertTriangle,
   FileSignature,
   MousePointer2,
-  ArrowRight,
-  Key,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -56,7 +53,7 @@ interface DocumentSigningModalSimpleProps {
   onSuccess?: (signature: any) => void;
 }
 
-type SigningStep = 'position' | 'select-cert' | 'upload-key' | 'signing' | 'success';
+type SigningStep = 'position' | 'select-cert' | 'signing' | 'success';
 
 export function DocumentSigningModalSimple({
   document,
@@ -67,7 +64,6 @@ export function DocumentSigningModalSimple({
   const { activeCertificates, loading: loadingCerts } = useCertificates({ userType });
   const [selectedCertificate, setSelectedCertificate] = useState<DigitalCertificate | null>(null);
   const [signaturePosition, setSignaturePosition] = useState<SignaturePosition | null>(null);
-  const [privateKeyFile, setPrivateKeyFile] = useState<File | null>(null);
   const [step, setStep] = useState<SigningStep>('position');
   const [signing, setSigning] = useState(false);
   const [signatures, setSignatures] = useState<Signature[]>(document.signatures || []);
@@ -88,29 +84,8 @@ export function DocumentSigningModalSimple({
     setSelectedCertificate(cert);
   };
 
-  const handleContinueToUploadKey = () => {
-    if (!selectedCertificate) {
-      toast.error('Por favor, selecione um certificado');
-      return;
-    }
-    setStep('upload-key');
-  };
-
-  const handleKeyFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validar extensão do arquivo
-      if (!file.name.endsWith('.pem') && !file.name.endsWith('.key')) {
-        toast.error('Por favor, selecione um arquivo .pem ou .key');
-        return;
-      }
-      setPrivateKeyFile(file);
-      toast.success('Chave privada carregada!');
-    }
-  };
-
   const handleSign = async () => {
-    if (!selectedCertificate || !signaturePosition || !privateKeyFile) {
+    if (!selectedCertificate || !signaturePosition) {
       toast.error('Dados incompletos para assinatura');
       return;
     }
@@ -119,9 +94,6 @@ export function DocumentSigningModalSimple({
     setStep('signing');
 
     try {
-      // Ler conteúdo do arquivo da chave privada
-      const privateKeyText = await privateKeyFile.text();
-
       const response = await fetch('/api/documents/sign', {
         method: 'POST',
         headers: {
@@ -130,7 +102,6 @@ export function DocumentSigningModalSimple({
         body: JSON.stringify({
           externalDocumentId: document.id,
           certificateId: selectedCertificate.id,
-          privateKey: privateKeyText,
           position: signaturePosition,
         }),
       });
@@ -159,15 +130,15 @@ export function DocumentSigningModalSimple({
       console.error('Erro ao assinar documento:', error);
       toast.error(error.message || 'Erro ao assinar documento');
       setSigning(false);
-      setStep('upload-key');
+      setStep('select-cert');
     }
   };
 
   const canContinue = signaturePosition !== null;
-  const canSign = selectedCertificate && privateKeyFile !== null;
+  const canSign = selectedCertificate !== null;
 
   const getStepNumber = (currentStep: SigningStep): number => {
-    const steps = { position: 1, 'select-cert': 2, 'upload-key': 3, signing: 4, success: 4 };
+    const steps = { position: 1, 'select-cert': 2, signing: 3, success: 3 };
     return steps[currentStep] || 1;
   };
 
@@ -195,12 +166,8 @@ export function DocumentSigningModalSimple({
               2. Certificado
             </Badge>
             <div className="flex-1 h-px bg-gray-300"></div>
-            <Badge variant={step === 'upload-key' ? 'default' : getStepNumber(step) > 3 ? 'default' : 'outline'}>
-              3. Chave Privada
-            </Badge>
-            <div className="flex-1 h-px bg-gray-300"></div>
             <Badge variant={step === 'signing' || step === 'success' ? 'default' : 'outline'}>
-              4. Assinar
+              3. Assinar
             </Badge>
           </div>
         </CardHeader>
@@ -218,7 +185,7 @@ export function DocumentSigningModalSimple({
                 />
               )}
 
-              {(step === 'select-cert' || step === 'upload-key') && signaturePosition && (
+              {step === 'select-cert' && signaturePosition && (
                 <div className="h-full flex items-center justify-center bg-gray-50 p-8">
                   <div className="text-center max-w-md">
                     <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
@@ -338,7 +305,7 @@ export function DocumentSigningModalSimple({
                 )}
 
                 {/* Step: Select Certificate */}
-                {(step === 'select-cert' || step === 'upload-key') && (
+                {step === 'select-cert' && (
                   <div>
                     <h3 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
                       <Shield className="w-4 h-4" />
@@ -350,57 +317,20 @@ export function DocumentSigningModalSimple({
                       onSelect={handleCertificateSelect}
                       loading={loadingCerts}
                     />
-                  </div>
-                )}
 
-                {/* Step: Upload Key */}
-                {step === 'upload-key' && selectedCertificate && (
-                  <div>
-                    <h3 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
-                      <Key className="w-4 h-4" />
-                      Passo 3: Chave Privada
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-                        <input
-                          type="file"
-                          accept=".pem,.key"
-                          onChange={handleKeyFileChange}
-                          className="hidden"
-                          id="private-key-upload"
-                        />
-                        <label htmlFor="private-key-upload" className="cursor-pointer">
-                          <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm font-medium text-gray-700">
-                            {privateKeyFile ? privateKeyFile.name : 'Selecionar chave privada'}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Arquivo .pem ou .key
-                          </p>
-                        </label>
-                      </div>
-
-                      {privateKeyFile && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
-                            <span className="text-sm text-green-900">Chave carregada!</span>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    {selectedCertificate && (
+                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div className="flex items-start gap-2">
                           <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
                           <div className="text-xs text-yellow-900">
                             <p className="font-medium">Assinatura Digital Oficial</p>
                             <p className="mt-1">
-                              Ao assinar, você declara ciência do conteúdo e assume responsabilidade legal.
+                              Ao assinar, você declara ciência do conteúdo e assume responsabilidade legal pela assinatura.
                             </p>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
@@ -438,27 +368,6 @@ export function DocumentSigningModalSimple({
                           Voltar
                         </Button>
                         <Button
-                          onClick={handleContinueToUploadKey}
-                          disabled={!selectedCertificate}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700"
-                        >
-                          Continuar
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </>
-                    )}
-
-                    {step === 'upload-key' && (
-                      <>
-                        <Button
-                          variant="outline"
-                          onClick={() => setStep('select-cert')}
-                          className="flex-1"
-                          disabled={signing}
-                        >
-                          Voltar
-                        </Button>
-                        <Button
                           onClick={handleSign}
                           disabled={!canSign || signing}
                           className="flex-1 bg-blue-600 hover:bg-blue-700"
@@ -471,7 +380,7 @@ export function DocumentSigningModalSimple({
                           ) : (
                             <>
                               <Shield className="w-4 h-4 mr-2" />
-                              Assinar
+                              Assinar Documento
                             </>
                           )}
                         </Button>

@@ -5,6 +5,7 @@ import * as forge from 'node-forge';
 import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { decryptPrivateKey } from '../services/encryption.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -13,7 +14,6 @@ interface SignDocumentRequest {
   documentId?: string; // ID do GeneratedDocument
   externalDocumentId?: string; // ID do ExternalDocument
   certificateId: string;
-  privateKey: string;
   position?: {
     page: number;
     x: number;
@@ -29,7 +29,7 @@ interface SignDocumentRequest {
  */
 router.post('/sign', async (req, res) => {
   try {
-    const { documentId, externalDocumentId, certificateId, privateKey, position }: SignDocumentRequest = req.body;
+    const { documentId, externalDocumentId, certificateId, position }: SignDocumentRequest = req.body;
 
     // Validar que ao menos um tipo de documento foi fornecido
     if (!documentId && !externalDocumentId) {
@@ -39,17 +39,24 @@ router.post('/sign', async (req, res) => {
       });
     }
 
-    // Validar campos obrigatórios
-    if (!certificateId || !privateKey) {
+    // Validar campo obrigatório
+    if (!certificateId) {
       return res.status(400).json({
         success: false,
-        message: 'Certificado e chave privada são obrigatórios',
+        message: 'Certificado é obrigatório',
       });
     }
 
-    // Buscar certificado
+    // Buscar certificado com chave privada criptografada
     const certificate = await prisma.digitalCertificate.findUnique({
       where: { id: certificateId },
+      select: {
+        id: true,
+        status: true,
+        expiresAt: true,
+        encryptedPrivateKey: true,
+        publicKey: true,
+      },
     });
 
     if (!certificate) {
@@ -74,12 +81,14 @@ router.post('/sign', async (req, res) => {
       });
     }
 
-    // Validar chave privada (comparar hash)
-    const privateKeyHash = crypto.createHash('sha256').update(privateKey).digest('hex');
-    if (privateKeyHash !== certificate.privateKeyHash) {
-      return res.status(401).json({
+    // Descriptografar chave privada automaticamente
+    let privateKey: string;
+    try {
+      privateKey = decryptPrivateKey(certificate.encryptedPrivateKey);
+    } catch (error) {
+      return res.status(500).json({
         success: false,
-        message: 'Chave privada inválida',
+        message: 'Erro ao recuperar chave privada do certificado',
       });
     }
 

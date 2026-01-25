@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as forge from 'node-forge';
+import { encryptPrivateKey } from './encryption.service';
 
 const prisma = new PrismaClient();
 
@@ -53,6 +54,7 @@ export async function issueServerCertificate(input: IssueCertificateInput) {
   const thumbprint = md.digest().toHex();
 
   const privateKeyHash = forge.md.sha256.create().update(privateKeyPem).digest().toHex();
+  const encryptedPrivateKey = encryptPrivateKey(privateKeyPem);
 
   const certificate = await prisma.digitalCertificate.create({
     data: {
@@ -65,6 +67,7 @@ export async function issueServerCertificate(input: IssueCertificateInput) {
       department: input.department,
       publicKey: publicKeyPem,
       privateKeyHash,
+      encryptedPrivateKey,
       issuedAt: cert.validity.notBefore,
       expiresAt: cert.validity.notAfter,
       issuerCA: 'CA-MUNICIPAL-001',
