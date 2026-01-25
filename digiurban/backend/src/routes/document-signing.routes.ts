@@ -6,6 +6,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { decryptPrivateKey } from '../services/encryption.service';
+import { addVisualSignatureToPdf, saveSignedPdf } from '../services/pdf-signature.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -141,8 +142,49 @@ router.post('/sign', async (req, res) => {
       });
     }
 
-    // Calcular hash SHA-256 do documento
-    const hash = crypto.createHash('sha256').update(fileBuffer).digest();
+    // Obter IP e User Agent
+    const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+
+    // Buscar informações do certificado para assinatura visual
+    const certWithDetails = await prisma.digitalCertificate.findUnique({
+      where: { id: certificateId },
+      select: {
+        commonName: true,
+        email: true,
+        serialNumber: true,
+      },
+    });
+
+    // Se a posição foi fornecida, adicionar assinatura visual ao PDF
+    let finalBuffer = fileBuffer;
+    if (position && certWithDetails) {
+      try {
+        const signedPdfBuffer = await addVisualSignatureToPdf(
+          fullPath,
+          position,
+          {
+            signerName: certWithDetails.commonName,
+            signerEmail: certWithDetails.email || '',
+            signedAt: new Date(),
+            certificateSerialNumber: certWithDetails.serialNumber,
+          }
+        );
+
+        // Salvar o PDF com a assinatura visual
+        await saveSignedPdf(fullPath, signedPdfBuffer);
+        finalBuffer = signedPdfBuffer;
+      } catch (error: any) {
+        console.error('Erro ao adicionar assinatura visual ao PDF:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Erro ao adicionar assinatura visual ao documento',
+        });
+      }
+    }
+
+    // Calcular hash SHA-256 do documento (com assinatura visual se houver)
+    const hash = crypto.createHash('sha256').update(finalBuffer).digest();
 
     // Assinar o hash com a chave privada
     let signature: string;
@@ -161,10 +203,6 @@ router.post('/sign', async (req, res) => {
       });
     }
 
-    // Obter IP e User Agent
-    const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || 'unknown';
-    const userAgent = req.headers['user-agent'] || 'unknown';
-
     // Criar registro de assinatura
     const signatureRecord = await prisma.signature.create({
       data: {
@@ -176,6 +214,7 @@ router.post('/sign', async (req, res) => {
         signatureAlgo: 'SHA256withRSA',
         ipAddress,
         userAgent,
+        visualPosition: position || null,
       },
       include: {
         certificate: {

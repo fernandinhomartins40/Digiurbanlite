@@ -4955,6 +4955,7 @@ model Signature {
   ipAddress       String                      // IP do assinante
   userAgent       String?                     // User agent do navegador
   geolocation     Json?                       // Lat/Long opcional para auditoria
+  visualPosition  Json?                       // Posição da assinatura visual no PDF (page, x, y, width, height)
 
   // Validação
   isValid         Boolean   @default(true)    // Flag de validade
