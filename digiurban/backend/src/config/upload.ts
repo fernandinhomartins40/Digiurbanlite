@@ -10,7 +10,8 @@ import path from 'path';
 import fs from 'fs';
 
 // Diretório de uploads
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
+// ✅ IMPORTANTE: Usar /app/uploads (compartilhado com ultrazend-smtp via volume)
+const UPLOAD_DIR = process.env.UPLOAD_BASE_PATH || path.join(process.cwd(), 'uploads');
 
 // Criar diretório se não existir
 if (!fs.existsSync(UPLOAD_DIR)) {

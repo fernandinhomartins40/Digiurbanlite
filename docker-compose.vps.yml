@@ -55,6 +55,7 @@ services:
     volumes:
       - smtp_data:/app/data
       - smtp_logs:/app/logs
+      - digiurban_uploads:/app/uploads:ro  # ← Compartilhar uploads (read-only)
     restart: unless-stopped
     depends_on:
       postgres:
