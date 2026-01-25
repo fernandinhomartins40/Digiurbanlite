@@ -87,6 +87,8 @@ export function PDFSignaturePlacer({
   useEffect(() => {
     if (!pdfDocument || !canvasRef.current) return;
 
+    let renderTask: any = null;
+
     const renderPage = async () => {
       try {
         const page = await pdfDocument.getPage(currentPage);
@@ -106,7 +108,13 @@ export function PDFSignaturePlacer({
           viewport: viewport,
         };
 
-        await page.render(renderContext).promise;
+        // Cancelar render anterior se existir
+        if (renderTask) {
+          renderTask.cancel();
+        }
+
+        renderTask = page.render(renderContext);
+        await renderTask.promise;
 
         // Desenhar retângulo de seleção temporário no canvas
         if (tempPosition && isDragging) {
@@ -118,13 +126,24 @@ export function PDFSignaturePlacer({
           context.strokeRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
           context.setLineDash([]);
         }
-      } catch (err) {
+      } catch (err: any) {
+        // Ignorar erros de cancelamento
+        if (err?.name === 'RenderingCancelledException') {
+          return;
+        }
         console.error('Erro ao renderizar página:', err);
         toast.error('Erro ao renderizar página do PDF');
       }
     };
 
     renderPage();
+
+    // Cleanup: cancelar render ao desmontar
+    return () => {
+      if (renderTask) {
+        renderTask.cancel();
+      }
+    };
   }, [pdfDocument, currentPage, scale, tempPosition, isDragging]);
 
   // Handlers de mouse para desenhar área de assinatura
