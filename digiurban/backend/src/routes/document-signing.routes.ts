@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { authenticateAdmin, authenticateCitizen } from '../middleware/auth';
 import * as forge from 'node-forge';
 import * as crypto from 'crypto';
@@ -214,7 +214,7 @@ router.post('/sign', async (req, res) => {
         signatureAlgo: 'SHA256withRSA',
         ipAddress,
         userAgent,
-        visualPosition: position || null,
+        visualPosition: position ? position as Prisma.InputJsonValue : Prisma.JsonNull,
       },
       include: {
         certificate: {
