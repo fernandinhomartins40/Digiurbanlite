@@ -60,8 +60,8 @@ export function PDFSignaturePlacer({
         // Importar PDF.js
         const pdfjsLib = await import('pdfjs-dist');
 
-        // Configurar worker - usar CDN para evitar problemas de build
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+        // Configurar worker - usar arquivo local copiado no build
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
         // Carregar documento
         const loadingTask = pdfjsLib.getDocument(fileUrl);
@@ -107,6 +107,17 @@ export function PDFSignaturePlacer({
         };
 
         await page.render(renderContext).promise;
+
+        // Desenhar retângulo de seleção temporário no canvas
+        if (tempPosition && isDragging) {
+          context.strokeStyle = '#3b82f6';
+          context.lineWidth = 3;
+          context.setLineDash([10, 5]);
+          context.fillStyle = 'rgba(59, 130, 246, 0.1)';
+          context.fillRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
+          context.strokeRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
+          context.setLineDash([]);
+        }
       } catch (err) {
         console.error('Erro ao renderizar página:', err);
         toast.error('Erro ao renderizar página do PDF');
@@ -114,7 +125,7 @@ export function PDFSignaturePlacer({
     };
 
     renderPage();
-  }, [pdfDocument, currentPage, scale]);
+  }, [pdfDocument, currentPage, scale, tempPosition, isDragging]);
 
   // Handlers de mouse para desenhar área de assinatura
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {

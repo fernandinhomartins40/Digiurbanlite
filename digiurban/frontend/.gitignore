@@ -42,3 +42,6 @@ errors-only.txt
 **/public/fallback-*.js
 **/public/icon-*.png
 **/public/apple-*.png
+
+# PDF.js worker (copiado no build)
+**/public/pdf.worker.min.mjs

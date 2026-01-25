@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "npm run generate:icons && next build",
-    "build:no-icons": "next build",
+    "dev": "npm run copy:pdfjs && next dev",
+    "build": "npm run copy:pdfjs && npm run generate:icons && next build",
+    "build:no-icons": "npm run copy:pdfjs && next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "generate:icons": "node scripts/generate-icons.js",
-    "pwa:validate": "node scripts/validate-pwa.js"
+    "pwa:validate": "node scripts/validate-pwa.js",
+    "copy:pdfjs": "node scripts/copy-pdfjs-worker.js"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
