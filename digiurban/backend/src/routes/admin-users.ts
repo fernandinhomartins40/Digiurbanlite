@@ -33,7 +33,11 @@ router.get('/search', authenticateAdmin, async (req, res) => {
         name: true,
         email: true,
         role: true,
-        department: true,
+        department: {
+          select: {
+            name: true,
+          },
+        },
       },
       take: 10,
       orderBy: {
@@ -41,9 +45,18 @@ router.get('/search', authenticateAdmin, async (req, res) => {
       },
     });
 
+    // Transformar department de objeto para string
+    const formattedUsers = users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      department: user.department?.name || undefined,
+    }));
+
     res.json({
       success: true,
-      data: users,
+      data: formattedUsers,
     });
   } catch (error: any) {
     console.error('Erro ao buscar usuários:', error);

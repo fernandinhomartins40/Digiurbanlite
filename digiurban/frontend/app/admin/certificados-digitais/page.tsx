@@ -762,7 +762,7 @@ export default function CertificadosDigitaisPage() {
                     e.preventDefault();
                     const formData = new FormData(e.currentTarget);
                     handleIssueCertificate({
-                      certificateType: formData.get('certificateType') as 'SERVER' | 'CITIZEN' | 'SYSTEM',
+                      certificateType: issueType === 'citizen' ? 'CITIZEN' : 'SERVER',
                       validityYears: parseInt(formData.get('validityYears') as string),
                       department: formData.get('department') as string || undefined,
                       userId: formData.get('userId') as string || undefined,
@@ -887,21 +887,6 @@ export default function CertificadosDigitaisPage() {
                     )}
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Tipo de Certificado
-                        </label>
-                        <select
-                          name="certificateType"
-                          required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="CITIZEN">Cidadão</option>
-                          <option value="SERVER">Servidor</option>
-                          <option value="SYSTEM">Sistema</option>
-                        </select>
-                      </div>
-
                       <div className="col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Departamento (opcional)
