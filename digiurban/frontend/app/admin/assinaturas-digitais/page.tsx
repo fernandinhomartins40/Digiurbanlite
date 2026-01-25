@@ -27,7 +27,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { DocumentSigningModalWithPosition } from '@/components/shared/DocumentSigningModalWithPosition';
+import { DocumentSigningModalSimple } from '@/components/shared/DocumentSigningModalSimple';
 
 interface Signature {
   id: string;
@@ -633,7 +633,7 @@ export default function AssinaturasDigitaisPage() {
 
       {/* Signing Modal */}
       {showSignModal && selectedDocument && (
-        <DocumentSigningModalWithPosition
+        <DocumentSigningModalSimple
           document={selectedDocument}
           userType="admin"
           onClose={() => {

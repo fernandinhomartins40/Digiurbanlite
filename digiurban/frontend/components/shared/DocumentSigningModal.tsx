@@ -26,7 +26,7 @@ interface DigitalCertificate {
   id: string;
   userId?: string;
   citizenId?: string;
-  type: 'ADMIN' | 'CITIZEN';
+  type: 'ADMIN' | 'CITIZEN' | 'SERVER' | 'SYSTEM';
   status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
   commonName: string;
   email: string;
@@ -49,7 +49,7 @@ interface Signature {
   certificate: {
     commonName: string;
     email: string;
-    type: 'ADMIN' | 'CITIZEN';
+    type: 'ADMIN' | 'CITIZEN' | 'SERVER' | 'SYSTEM';
     status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
   };
 }

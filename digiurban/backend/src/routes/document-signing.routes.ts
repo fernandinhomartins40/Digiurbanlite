@@ -14,7 +14,13 @@ interface SignDocumentRequest {
   externalDocumentId?: string; // ID do ExternalDocument
   certificateId: string;
   privateKey: string;
-  pin: string;
+  position?: {
+    page: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 /**
@@ -23,7 +29,7 @@ interface SignDocumentRequest {
  */
 router.post('/sign', async (req, res) => {
   try {
-    const { documentId, externalDocumentId, certificateId, privateKey, pin }: SignDocumentRequest = req.body;
+    const { documentId, externalDocumentId, certificateId, privateKey, position }: SignDocumentRequest = req.body;
 
     // Validar que ao menos um tipo de documento foi fornecido
     if (!documentId && !externalDocumentId) {

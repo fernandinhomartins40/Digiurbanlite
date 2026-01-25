@@ -38,7 +38,7 @@ interface ExternalDocument {
     certificate: {
       commonName: string;
       email: string;
-      type: 'ADMIN' | 'CITIZEN';
+      type: 'ADMIN' | 'CITIZEN' | 'SERVER' | 'SYSTEM';
       status: string;
     };
   }>;

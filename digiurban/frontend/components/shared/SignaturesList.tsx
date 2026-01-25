@@ -11,7 +11,7 @@ interface Signature {
   certificate: {
     commonName: string;
     email: string;
-    type: 'ADMIN' | 'CITIZEN';
+    type: 'ADMIN' | 'CITIZEN' | 'SERVER' | 'SYSTEM';
     status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
   };
 }
@@ -95,10 +95,20 @@ export function SignaturesList({ signatures, loading = false }: SignaturesListPr
                     className={
                       sig.certificate.type === 'CITIZEN'
                         ? 'text-purple-700 border-purple-300'
-                        : 'text-blue-700 border-blue-300'
+                        : sig.certificate.type === 'ADMIN'
+                        ? 'text-blue-700 border-blue-300'
+                        : sig.certificate.type === 'SERVER'
+                        ? 'text-orange-700 border-orange-300'
+                        : 'text-gray-700 border-gray-300'
                     }
                   >
-                    {sig.certificate.type === 'CITIZEN' ? 'Cidadão' : 'Servidor'}
+                    {sig.certificate.type === 'CITIZEN'
+                      ? 'Cidadão'
+                      : sig.certificate.type === 'ADMIN'
+                      ? 'Servidor'
+                      : sig.certificate.type === 'SERVER'
+                      ? 'Sistema'
+                      : 'Sistema'}
                   </Badge>
                 </div>
               </div>
