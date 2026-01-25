@@ -158,7 +158,11 @@ router.post('/sign', async (req, res) => {
 
     // Se a posição foi fornecida, adicionar assinatura visual ao PDF
     let finalBuffer = fileBuffer;
+    console.log('[SIGN] Position provided:', position ? 'YES' : 'NO');
+    console.log('[SIGN] Cert details found:', certWithDetails ? 'YES' : 'NO');
+
     if (position && certWithDetails) {
+      console.log('[SIGN] Adding visual signature to PDF at position:', position);
       try {
         const signedPdfBuffer = await addVisualSignatureToPdf(
           fullPath,
@@ -171,16 +175,22 @@ router.post('/sign', async (req, res) => {
           }
         );
 
+        console.log('[SIGN] Visual signature added successfully, buffer size:', signedPdfBuffer.length);
+
         // Salvar o PDF com a assinatura visual
         await saveSignedPdf(fullPath, signedPdfBuffer);
+        console.log('[SIGN] PDF saved with visual signature');
+
         finalBuffer = signedPdfBuffer;
       } catch (error: any) {
-        console.error('Erro ao adicionar assinatura visual ao PDF:', error);
+        console.error('[SIGN ERROR] Failed to add visual signature:', error);
         return res.status(500).json({
           success: false,
           message: 'Erro ao adicionar assinatura visual ao documento',
         });
       }
+    } else {
+      console.log('[SIGN] Skipping visual signature - position or cert details missing');
     }
 
     // Calcular hash SHA-256 do documento (com assinatura visual se houver)
