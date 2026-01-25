@@ -305,7 +305,16 @@ try {
   console.error('❌ Erro ao carregar rotas dinâmicas:', error);
 }
 
-// 🔧 ROTAS DE GESTÃO ADMINISTRATIVA (team, departments) - DEVEM VIR PRIMEIRO
+// 🔧 ROTAS ESPECÍFICAS DE ADMIN - DEVEM VIR ANTES DAS GENÉRICAS
+try {
+  console.log('   → admin-users...');
+  app.use('/api/admin/users', require('./routes/admin-users').default);
+  console.log('   ✓');
+} catch (e) {
+  console.error('❌ admin-users:', e);
+}
+
+// 🔧 ROTAS DE GESTÃO ADMINISTRATIVA (team, departments) - DEVEM VIR DEPOIS DAS ESPECÍFICAS
 try {
   const adminManagementRoutes = require('./routes/admin-management').default;
   app.use('/api/admin', adminManagementRoutes);
@@ -369,7 +378,6 @@ try { console.log('   → admin-reports...'); app.use('/api/admin/relatorios', r
 try { console.log('   → admin-gabinete...'); app.use('/api/admin/gabinete', require('./routes/admin-gabinete').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-gabinete:', e); }
 try { console.log('   → admin-gabinete-painel...'); app.use('/api/admin/gabinete/painel-prefeito', require('./routes/admin-gabinete-painel').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-gabinete-painel:', e); }
 try { console.log('   → admin-citizens...'); app.use('/api/admin/citizens', require('./routes/admin-citizens').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-citizens:', e); }
-try { console.log('   → admin-users...'); app.use('/api/admin/users', require('./routes/admin-users').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-users:', e); }
 try { console.log('   → admin-citizen-documents...'); app.use('/api/admin/citizen-documents', require('./routes/admin-citizen-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ admin-citizen-documents:', e); }
 try { console.log('   → citizens...'); app.use('/api/citizens', require('./routes/citizens').default); console.log('   ✓'); } catch (e) { console.error('❌ citizens:', e); }
 
