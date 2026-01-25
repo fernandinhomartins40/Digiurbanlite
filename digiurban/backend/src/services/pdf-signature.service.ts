@@ -32,18 +32,27 @@ export async function addVisualSignatureToPdf(
   const existingPdfBytes = await fs.readFile(pdfPath);
   const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-  // Obter a página especificada
+  // Obter a página especificada (frontend envia 1-indexed, converter para 0-indexed)
   const pages = pdfDoc.getPages();
-  if (position.page < 0 || position.page >= pages.length) {
-    throw new Error(`Página ${position.page} não existe no documento`);
+  const pageIndex = position.page - 1; // Converter de 1-indexed para 0-indexed
+
+  if (pageIndex < 0 || pageIndex >= pages.length) {
+    throw new Error(`Página ${position.page} não existe no documento (total de ${pages.length} páginas)`);
   }
 
-  const page = pages[position.page];
+  const page = pages[pageIndex];
+  const pageWidth = page.getWidth();
   const pageHeight = page.getHeight();
+
+  // Converter coordenadas proporcionais (0-1) para pixels da página
+  const xPixels = position.x * pageWidth;
+  const yPixels = position.y * pageHeight;
+  const widthPixels = position.width * pageWidth;
+  const heightPixels = position.height * pageHeight;
 
   // Converter coordenadas do sistema de coordenadas do navegador (top-left)
   // para o sistema do PDF (bottom-left)
-  const pdfY = pageHeight - position.y - position.height;
+  const pdfY = pageHeight - yPixels - heightPixels;
 
   // Carregar fonte
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -51,22 +60,22 @@ export async function addVisualSignatureToPdf(
 
   // Desenhar retângulo de fundo
   page.drawRectangle({
-    x: position.x,
+    x: xPixels,
     y: pdfY,
-    width: position.width,
-    height: position.height,
+    width: widthPixels,
+    height: heightPixels,
     borderColor: rgb(0, 0, 0),
     borderWidth: 1,
     color: rgb(0.95, 0.95, 0.95),
   });
 
   // Calcular tamanhos de fonte proporcionais
-  const fontSize = Math.min(position.height / 6, 10);
+  const fontSize = Math.min(heightPixels / 6, 10);
   const smallFontSize = fontSize * 0.8;
 
   // Posição inicial do texto (com margem)
-  const textX = position.x + 5;
-  let currentY = pdfY + position.height - fontSize - 5;
+  const textX = xPixels + 5;
+  let currentY = pdfY + heightPixels - fontSize - 5;
 
   // Linha 1: Título "ASSINADO DIGITALMENTE"
   page.drawText('ASSINADO DIGITALMENTE', {
