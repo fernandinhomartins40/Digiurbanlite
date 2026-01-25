@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { prisma } from '../lib/prisma';
+import fs from 'fs';
 
 export class EmailSenderService {
   /**
@@ -55,12 +56,39 @@ export class EmailSenderService {
       let attachments = undefined;
       if (email.attachments && Array.isArray(email.attachments)) {
         console.log('📎 [EMAIL SENDER] Processando anexos:', email.attachments.length);
-        attachments = (email.attachments as any[]).map((att: any) => ({
-          filename: att.filename,
-          path: att.path,
-          contentType: att.contentType
-        }));
-        console.log('📎 [EMAIL SENDER] Anexos preparados:', attachments.map(a => ({ filename: a.filename, path: a.path })));
+
+        // ✅ IMPORTANTE: Ler arquivos como Buffer
+        // Nodemailer via TCP (porta 587) não tem acesso ao filesystem do backend
+        // Precisamos enviar o conteúdo do arquivo, não apenas o caminho
+        attachments = (email.attachments as any[]).map((att: any) => {
+          const filePath = att.path;
+
+          try {
+            // Verificar se arquivo existe
+            if (!fs.existsSync(filePath)) {
+              console.error(`❌ [EMAIL SENDER] Arquivo não encontrado: ${filePath}`);
+              return null;
+            }
+
+            // Ler arquivo como Buffer
+            const content = fs.readFileSync(filePath);
+            console.log(`📎 [EMAIL SENDER] Arquivo lido: ${att.filename} (${content.length} bytes)`);
+
+            return {
+              filename: att.filename,
+              content: content, // ← Buffer ao invés de path
+              contentType: att.contentType
+            };
+          } catch (error) {
+            console.error(`❌ [EMAIL SENDER] Erro ao ler arquivo ${filePath}:`, error);
+            return null;
+          }
+        }).filter(att => att !== null); // Remover anexos que falharam
+
+        console.log('📎 [EMAIL SENDER] Anexos preparados:', attachments.map(a => ({
+          filename: a.filename,
+          size: a.content.length
+        })));
       }
 
       // Enviar email
