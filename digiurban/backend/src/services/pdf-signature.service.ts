@@ -48,7 +48,13 @@ export async function addVisualSignatureToPdf(
   const xPixels = position.x * pageWidth;
   const yPixels = position.y * pageHeight;
   const widthPixels = position.width * pageWidth;
-  const heightPixels = position.height * pageHeight;
+  let heightPixels = position.height * pageHeight;
+
+  // Garantir altura mínima de 80 pixels para caber todo o conteúdo
+  const minHeight = 80;
+  if (heightPixels < minHeight) {
+    heightPixels = minHeight;
+  }
 
   // Converter coordenadas do sistema de coordenadas do navegador (top-left)
   // para o sistema do PDF (bottom-left)
@@ -58,20 +64,20 @@ export async function addVisualSignatureToPdf(
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Desenhar retângulo de fundo
+  // Desenhar retângulo de fundo com cor mais visível
   page.drawRectangle({
     x: xPixels,
     y: pdfY,
     width: widthPixels,
     height: heightPixels,
     borderColor: rgb(0, 0, 0),
-    borderWidth: 1,
-    color: rgb(0.95, 0.95, 0.95),
+    borderWidth: 1.5,
+    color: rgb(0.98, 0.98, 0.98),
   });
 
-  // Calcular tamanhos de fonte proporcionais
-  const fontSize = Math.min(heightPixels / 6, 10);
-  const smallFontSize = fontSize * 0.8;
+  // Calcular tamanhos de fonte (mais legível)
+  const fontSize = Math.max(Math.min(heightPixels / 7, 9), 8);
+  const smallFontSize = Math.max(fontSize * 0.85, 7);
 
   // Posição inicial do texto (com margem)
   const textX = xPixels + 5;
@@ -85,7 +91,7 @@ export async function addVisualSignatureToPdf(
     font: boldFont,
     color: rgb(0, 0, 0),
   });
-  currentY -= fontSize + 2;
+  currentY -= fontSize + 3;
 
   // Linha 2: Nome do assinante
   const nameText = `Por: ${signatureInfo.signerName}`;
@@ -94,20 +100,20 @@ export async function addVisualSignatureToPdf(
     y: currentY,
     size: smallFontSize,
     font: font,
-    color: rgb(0.2, 0.2, 0.2),
+    color: rgb(0.1, 0.1, 0.1),
   });
-  currentY -= smallFontSize + 2;
+  currentY -= smallFontSize + 3;
 
   // Linha 3: Email
   const emailText = signatureInfo.signerEmail;
   page.drawText(emailText, {
     x: textX,
     y: currentY,
-    size: smallFontSize * 0.9,
+    size: smallFontSize * 0.95,
     font: font,
-    color: rgb(0.3, 0.3, 0.3),
+    color: rgb(0.15, 0.15, 0.15),
   });
-  currentY -= smallFontSize + 2;
+  currentY -= smallFontSize + 3;
 
   // Linha 4: Data e hora
   const dateText = `Data: ${signatureInfo.signedAt.toLocaleString('pt-BR', {
@@ -121,20 +127,20 @@ export async function addVisualSignatureToPdf(
   page.drawText(dateText, {
     x: textX,
     y: currentY,
-    size: smallFontSize * 0.9,
+    size: smallFontSize * 0.95,
     font: font,
-    color: rgb(0.3, 0.3, 0.3),
+    color: rgb(0.15, 0.15, 0.15),
   });
-  currentY -= smallFontSize + 2;
+  currentY -= smallFontSize + 3;
 
   // Linha 5: Número de série do certificado
   const serialText = `Cert: ${signatureInfo.certificateSerialNumber.substring(0, 20)}...`;
   page.drawText(serialText, {
     x: textX,
     y: currentY,
-    size: smallFontSize * 0.8,
+    size: smallFontSize * 0.9,
     font: font,
-    color: rgb(0.4, 0.4, 0.4),
+    color: rgb(0.2, 0.2, 0.2),
   });
 
   // Salvar o PDF modificado
