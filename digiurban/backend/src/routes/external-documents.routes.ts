@@ -25,6 +25,76 @@ const upload = multer({
 });
 
 /**
+ * POST /api/external-documents/upload
+ * Upload de documento externo para assinatura (Admin) - rota esperada pelo frontend
+ */
+router.post('/upload', authenticateAdmin, upload.single('file'), async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { description } = req.body;
+    const file = req.file;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Usuário não autenticado' });
+    }
+
+    if (!file) {
+      return res.status(400).json({ success: false, message: 'Nenhum arquivo enviado' });
+    }
+
+    if (file.mimetype !== 'application/pdf') {
+      return res.status(400).json({ success: false, message: 'Apenas arquivos PDF são aceitos' });
+    }
+
+    // Gerar hash do documento
+    const documentHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+
+    // Criar diretório se não existir
+    const uploadDir = path.join(process.cwd(), 'uploads', 'external-docs');
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    // Salvar arquivo com nome único
+    const uniqueFileName = `${Date.now()}_${userId}_${file.originalname}`;
+    const filePath = path.join('uploads', 'external-docs', uniqueFileName);
+    const fullPath = path.join(process.cwd(), filePath);
+
+    await fs.writeFile(fullPath, file.buffer);
+
+    // Criar registro no banco
+    const document = await prisma.externalDocument.create({
+      data: {
+        userId,
+        fileName: file.originalname,
+        filePath,
+        fileSize: file.size,
+        documentHash,
+        description: description || null,
+        mimeType: 'application/pdf',
+      },
+      include: {
+        signatures: {
+          include: {
+            certificate: true,
+          },
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Documento enviado com sucesso',
+      document,
+    });
+  } catch (error: any) {
+    console.error('Erro ao fazer upload de documento externo:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao fazer upload do documento',
+    });
+  }
+});
+
+/**
  * POST /api/documents/upload-external
  * Upload de documento externo para assinatura (Admin)
  */
@@ -225,6 +295,88 @@ router.get('/external/:id', async (req, res) => {
 });
 
 /**
+ * GET /api/external-documents
+ * Listar TODOS os documentos externos (Admin) - para página de assinaturas
+ */
+router.get('/', authenticateAdmin, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Usuário não autenticado' });
+    }
+
+    // Buscar todos os documentos do departamento/secretaria do usuário
+    const documents = await prisma.externalDocument.findMany({
+      where: {
+        isActive: true,
+      },
+      include: {
+        signatures: {
+          include: {
+            certificate: {
+              select: {
+                id: true,
+                commonName: true,
+                email: true,
+                certificateType: true,
+                status: true,
+                serialNumber: true,
+              },
+            },
+          },
+          orderBy: { signedAt: 'desc' },
+        },
+        _count: {
+          select: { signatures: true },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { uploadedAt: 'desc' },
+    });
+
+    // Mapear para o formato esperado pelo frontend
+    const mappedDocuments = documents.map(doc => ({
+      id: doc.id,
+      fileName: doc.fileName,
+      fileUrl: `/api/external-documents/${doc.id}/view`,
+      fileSize: doc.fileSize,
+      mimeType: doc.mimeType,
+      createdAt: doc.uploadedAt,
+      status: 'ACTIVE',
+      _count: doc._count,
+      signatures: doc.signatures.map((sig: any) => ({
+        id: sig.id,
+        signedAt: sig.signedAt,
+        verificationStatus: sig.verificationStatus || 'VALID',
+        certificate: {
+          id: sig.certificate.id,
+          commonName: sig.certificate.commonName,
+          email: sig.certificate.email,
+          type: sig.certificate.certificateType,
+          status: sig.certificate.status,
+          serialNumber: sig.certificate.serialNumber,
+        },
+      })),
+    }));
+
+    res.json({ success: true, documents: mappedDocuments });
+  } catch (error: any) {
+    console.error('Erro ao listar documentos externos:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao listar documentos',
+    });
+  }
+});
+
+/**
  * GET /api/documents/my-external-documents
  * Listar documentos externos do usuário admin logado
  */
@@ -316,6 +468,53 @@ router.get('/my-external-documents-citizen', authenticateCitizen, async (req, re
     res.status(500).json({
       success: false,
       message: error.message || 'Erro ao listar documentos',
+    });
+  }
+});
+
+/**
+ * GET /api/external-documents/:id/view
+ * Visualizar documento externo (serve o PDF inline)
+ */
+router.get('/:id/view', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const document = await prisma.externalDocument.findUnique({
+      where: { id },
+      select: {
+        fileName: true,
+        filePath: true,
+      },
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        message: 'Documento não encontrado',
+      });
+    }
+
+    const fullPath = path.join(process.cwd(), document.filePath);
+
+    // Verificar se o arquivo existe
+    try {
+      await fs.access(fullPath);
+    } catch {
+      return res.status(404).json({
+        success: false,
+        message: 'Arquivo não encontrado no servidor',
+      });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${document.fileName}"`);
+    res.sendFile(fullPath);
+  } catch (error: any) {
+    console.error('Erro ao visualizar documento externo:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Erro ao visualizar documento',
     });
   }
 });

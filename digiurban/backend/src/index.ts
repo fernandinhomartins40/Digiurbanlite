@@ -215,12 +215,18 @@ try {
   console.log('   → external-documents...');
   const externalDocumentsRoutes = require('./routes/external-documents.routes').default;
   app.use('/api/documents', externalDocumentsRoutes);
+  app.use('/api/external-documents', externalDocumentsRoutes); // Rota adicional para frontend
   console.log('   ✓ external-documents carregado');
 
   console.log('   → document-signing...');
   const documentSigningRoutes = require('./routes/document-signing.routes').default;
   app.use('/api/documents', documentSigningRoutes);
   console.log('   ✓ document-signing carregado');
+
+  console.log('   → signatures...');
+  const signaturesRoutes = require('./routes/signatures.routes').default;
+  app.use('/api/signatures', signaturesRoutes);
+  console.log('   ✓ signatures carregado');
 } catch (e) {
   console.error('❌ certificates:', e);
 }
