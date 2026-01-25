@@ -288,6 +288,20 @@ export class UltraZendSMTPServer {
         size: att.size
       })) || [];
 
+      // ✅ DEBUG: Log detalhado dos anexos parseados
+      if (attachments.length > 0) {
+        logger.info('📎 [SMTP SERVER] Anexos parseados do email:', {
+          count: attachments.length,
+          details: attachments.map(att => ({
+            filename: att.filename,
+            contentType: att.contentType,
+            size: att.size,
+            hasContent: !!att.content,
+            contentLength: att.content?.length
+          }))
+        });
+      }
+
       const emailData: EmailData = {
         messageId,
         from: getAddressText(parsedEmail.from),

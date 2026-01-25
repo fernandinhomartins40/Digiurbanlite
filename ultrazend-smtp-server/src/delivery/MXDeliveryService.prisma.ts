@@ -126,7 +126,50 @@ export class MXDeliveryService {
     const transporter = await this.getTransporter(mxServer, emailData);
 
     try {
-      const mailOptions = {
+      // Preparar anexos para o nodemailer
+      const attachments = emailData.attachments?.map(att => {
+        const attachment: any = {
+          filename: att.filename,
+          contentType: att.contentType
+        };
+
+        // Usar content (Buffer) se disponível, senão path
+        if (att.content) {
+          attachment.content = att.content;
+        } else if (att.path) {
+          attachment.path = att.path;
+        }
+
+        // Adicionar encoding se especificado
+        if (att.encoding) {
+          attachment.encoding = att.encoding;
+        }
+
+        // Adicionar CID para imagens inline
+        if (att.cid) {
+          attachment.cid = att.cid;
+        }
+
+        return attachment;
+      }) || [];
+
+      // ✅ DEBUG: Log detalhado dos anexos antes de enviar
+      if (attachments.length > 0) {
+        logger.info('📎 [MX DELIVERY] Anexos preparados para MX:', {
+          mxServer,
+          count: attachments.length,
+          details: attachments.map(att => ({
+            filename: att.filename,
+            contentType: att.contentType,
+            hasContent: !!att.content,
+            hasPath: !!att.path,
+            contentLength: att.content?.length,
+            encoding: att.encoding
+          }))
+        });
+      }
+
+      const mailOptions: any = {
         from: emailData.from,
         to: emailData.to,
         subject: emailData.subject,
@@ -138,6 +181,12 @@ export class MXDeliveryService {
           'X-Mailer': 'UltraZend SMTP Server'
         }
       };
+
+      // Adicionar anexos se houver
+      if (attachments.length > 0) {
+        mailOptions.attachments = attachments;
+        logger.info('📎 [MX DELIVERY] mailOptions.attachments definido:', { count: attachments.length });
+      }
 
       const result = await transporter.sendMail(mailOptions);
 
