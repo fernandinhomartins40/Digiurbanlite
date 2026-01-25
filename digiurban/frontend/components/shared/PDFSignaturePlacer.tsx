@@ -83,7 +83,7 @@ export function PDFSignaturePlacer({
     }
   }, [fileUrl]);
 
-  // Renderizar página atual
+  // Renderizar página atual do PDF (apenas quando mudar página ou escala)
   useEffect(() => {
     if (!pdfDocument || !canvasRef.current) return;
 
@@ -115,17 +115,6 @@ export function PDFSignaturePlacer({
 
         renderTask = page.render(renderContext);
         await renderTask.promise;
-
-        // Desenhar retângulo de seleção temporário no canvas
-        if (tempPosition && isDragging) {
-          context.strokeStyle = '#3b82f6';
-          context.lineWidth = 3;
-          context.setLineDash([10, 5]);
-          context.fillStyle = 'rgba(59, 130, 246, 0.1)';
-          context.fillRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
-          context.strokeRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
-          context.setLineDash([]);
-        }
       } catch (err: any) {
         // Ignorar erros de cancelamento
         if (err?.name === 'RenderingCancelledException') {
@@ -144,7 +133,27 @@ export function PDFSignaturePlacer({
         renderTask.cancel();
       }
     };
-  }, [pdfDocument, currentPage, scale, tempPosition, isDragging]);
+  }, [pdfDocument, currentPage, scale]);
+
+  // Desenhar retângulo de seleção temporário (separado da renderização do PDF)
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    // Redesenhar apenas o retângulo sobre o canvas já renderizado
+    if (tempPosition && isDragging) {
+      context.strokeStyle = '#3b82f6';
+      context.lineWidth = 3;
+      context.setLineDash([10, 5]);
+      context.fillStyle = 'rgba(59, 130, 246, 0.1)';
+      context.fillRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
+      context.strokeRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
+      context.setLineDash([]);
+    }
+  }, [tempPosition, isDragging]);
 
   // Handlers de mouse para desenhar área de assinatura
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
