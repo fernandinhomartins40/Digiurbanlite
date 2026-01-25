@@ -5,6 +5,8 @@ import { authenticateAdmin } from '../middleware/auth';
 const router = Router();
 const prisma = new PrismaClient();
 
+console.log('🔧 [ADMIN-USERS] Rota admin-users carregada!');
+
 /**
  * GET /api/admin/users/search
  * Buscar usuários admin por nome ou email
