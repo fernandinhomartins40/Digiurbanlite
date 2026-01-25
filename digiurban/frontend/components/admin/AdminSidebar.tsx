@@ -49,7 +49,8 @@ import {
   Car,
   Bus,
   MessageCircle,
-  Bot
+  Bot,
+  FileSignature
 } from 'lucide-react'
 
 interface NavItem {
@@ -176,6 +177,13 @@ export function AdminSidebar() {
           href: '/admin/certificados-digitais',
           icon: Award,
           minRole: 'ADMIN'
+        },
+        {
+          title: 'Assinaturas Digitais',
+          href: '/admin/assinaturas-digitais',
+          icon: FileSignature,
+          minRole: 'COORDINATOR',
+          badge: 'NOVO'
         },
         {
           title: 'Estatísticas',

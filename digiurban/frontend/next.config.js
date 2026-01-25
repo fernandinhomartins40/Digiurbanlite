@@ -85,6 +85,17 @@ const nextConfig = {
   experimental: {
     outputFileTracingRoot: undefined,
   },
+
+  // Webpack config para PDF.js
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        canvas: false,
+      };
+    }
+    return config;
+  },
 }
 
 module.exports = withPWA(nextConfig)
