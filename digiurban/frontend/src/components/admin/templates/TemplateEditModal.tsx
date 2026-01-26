@@ -7,35 +7,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/../../../components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RichTextEditor } from './RichTextEditor'
 import { Code, Eye, FileText, Info, Save, Settings } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-
-interface DocumentTemplate {
-  id: string
-  name: string
-  code: string
-  description?: string
-  documentType: string
-  outputFormat: string
-  htmlTemplate: string
-  headerHtml?: string
-  footerHtml?: string
-  cssStyles?: string
-  pageSize: string
-  orientation: string
-  availableVariables?: Array<{
-    name: string
-    description: string
-    example: string
-  }>
-  isGlobal: boolean
-  isActive: boolean
-  version: number
-}
+import { DocumentTemplate } from './types'
 
 interface TemplateEditModalProps {
   template: DocumentTemplate | null

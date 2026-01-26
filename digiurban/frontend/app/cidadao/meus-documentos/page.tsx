@@ -39,7 +39,7 @@ interface ExternalDocument {
       commonName: string;
       email: string;
       type: 'ADMIN' | 'CITIZEN' | 'SERVER' | 'SYSTEM';
-      status: string;
+      status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
     };
   }>;
   _count?: {

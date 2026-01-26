@@ -110,9 +110,9 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
       case 'rating':
         return (
           <RatingCard
-            onSelect={(rating) => onInteraction(rating)}
-            maxRating={metadata.maxRating || 5}
+            onSubmit={(rating: number, comment?: string) => onInteraction({ rating, comment })}
             title={metadata.title}
+            subtitle={metadata.subtitle}
           />
         );
 

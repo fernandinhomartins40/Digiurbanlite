@@ -369,7 +369,7 @@ export function MessagesInterface({
   const lastBotMessage = [...messages]
     .reverse()
     .find((msg) => msg.senderType === 'BOT' || msg.senderType === 'SYSTEM');
-  const lastBotType = lastBotMessage?.metadata?.messageType || lastBotMessage?.messageType;
+  const lastBotType = lastBotMessage?.metadata?.messageType;
   const botStructuredInput =
     mode === 'citizen' &&
     lastBotMessage?.metadata?.needsInput &&

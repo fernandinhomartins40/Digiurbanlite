@@ -20,24 +20,9 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { TemplateViewModal } from '@/components/admin/templates/TemplateViewModal'
-import { TemplateEditModal } from '@/components/admin/templates/TemplateEditModal'
-
-interface DocumentTemplate {
-  id: string
-  name: string
-  code: string
-  description?: string
-  documentType: string
-  outputFormat: string
-  isGlobal: boolean
-  isActive: boolean
-  version: number
-  createdAt: string
-  _count?: {
-    generatedDocuments: number
-  }
-}
+import { TemplateViewModal } from '@/src/components/admin/templates/TemplateViewModal'
+import { TemplateEditModal } from '@/src/components/admin/templates/TemplateEditModal'
+import type { DocumentTemplate } from '@/src/components/admin/templates/types'
 
 export default function TemplatesDocumentosPage() {
   const { apiRequest, user } = useAdminAuth()

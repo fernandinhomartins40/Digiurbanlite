@@ -29,7 +29,7 @@ import {
   WebsiteStructuredData,
   GovernmentServiceStructuredData,
   FAQStructuredData,
-} from '@/components/seo/StructuredData';
+} from '@/src/components/seo/StructuredData';
 
 export default function LandingPage() {
   return (

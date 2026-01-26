@@ -395,7 +395,7 @@ export default function CitizenDashboard() {
   const lastBotMessage = [...messages]
     .reverse()
     .find((msg) => msg.senderType === 'BOT' || msg.senderType === 'SYSTEM');
-  const lastBotType = lastBotMessage?.metadata?.messageType || lastBotMessage?.messageType;
+  const lastBotType = lastBotMessage?.metadata?.messageType;
   const botStructuredInput = Boolean(
     selectedConversation?.isBotConversation &&
       lastBotMessage?.metadata?.needsInput &&

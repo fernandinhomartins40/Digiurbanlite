@@ -3,32 +3,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/../../../components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Code, Eye, FileText, Info } from 'lucide-react'
-
-interface DocumentTemplate {
-  id: string
-  name: string
-  code: string
-  description?: string
-  documentType: string
-  outputFormat: string
-  htmlTemplate: string
-  headerHtml?: string
-  footerHtml?: string
-  cssStyles?: string
-  pageSize: string
-  orientation: string
-  availableVariables?: Array<{
-    name: string
-    description: string
-    example: string
-  }>
-  isGlobal: boolean
-  isActive: boolean
-  version: number
-}
+import { DocumentTemplate } from './types'
 
 interface TemplateViewModalProps {
   template: DocumentTemplate | null

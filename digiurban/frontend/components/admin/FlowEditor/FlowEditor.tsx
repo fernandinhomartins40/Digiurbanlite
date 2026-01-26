@@ -62,7 +62,7 @@ type FlowDefinition = {
   name: string;
   description: string;
   version: string;
-  metadata: {
+  metadata?: {
     icon?: string;
     color?: string;
     category?: string;
@@ -265,7 +265,11 @@ export default function FlowEditor({
         version: template.version,
         isActive: true,
         isDefault: false,
-        metadata: template.metadata,
+        metadata: {
+          icon: template.metadata?.icon || 'BOT',
+          color: template.metadata?.color || '#4CAF50',
+          category: template.metadata?.category || 'general',
+        },
       });
       setFlowNodes(template.nodes);
       syncGraphFromFlow(template.nodes);
@@ -596,19 +600,26 @@ export default function FlowEditor({
         )
       );
 
+      if (!connection.target || !connection.source) {
+        return;
+      }
+
+      const targetId = connection.target;
+      const sourceId = connection.source;
+
       const updatedFlow = flowNodes.map((node) => {
-        if (node.id !== connection.source) {
+        if (node.id !== sourceId) {
           return node;
         }
 
         const transitions = node.transitions || [];
-        if (transitions.some((transition) => transition.to === connection.target)) {
+        if (transitions.some((transition) => transition.to === targetId)) {
           return node;
         }
 
         return {
           ...node,
-          transitions: [...transitions, { to: connection.target }],
+          transitions: [...transitions, { to: targetId }],
         };
       });
 
