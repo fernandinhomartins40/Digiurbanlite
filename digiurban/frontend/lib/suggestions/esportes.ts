@@ -1,4 +1,4 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const esportesSuggestions: ServiceSuggestion[] = [
   {
@@ -29,6 +29,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
         expectedRelationships: ['SON', 'DAUGHTER']
       }]
     }
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-volei',
@@ -43,6 +52,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-basquete',
@@ -57,6 +75,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'categoria_idade', type: 'select', label: 'Categoria de Idade', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'natacao-criancas',
@@ -71,6 +98,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'restricao_saude', type: 'textarea', label: 'Restrições de Saúde', required: false },
       { name: 'turma_preferencia', type: 'select', label: 'Turma de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'natacao-adultos',
@@ -85,6 +121,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'objetivo', type: 'select', label: 'Objetivo', required: true },
       { name: 'horario_disponibilidade', type: 'select', label: 'Horário de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'hidroginastica',
@@ -99,6 +144,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'restricao_medica', type: 'textarea', label: 'Restrições Médicas', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'reserva-quadra-futebol',
@@ -115,6 +169,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'duracao', type: 'select', label: 'Duração', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'reserva-quadra-poliesportiva',
@@ -130,6 +193,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'data_reserva', type: 'date', label: 'Data da Reserva', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'reserva-ginasio',
@@ -146,6 +218,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'publico_estimado', type: 'number', label: 'Público Estimado', required: true },
       { name: 'descricao_evento', type: 'textarea', label: 'Descrição do Evento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'cadastro-equipe-campeonato',
@@ -160,6 +241,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'categoria', type: 'select', label: 'Categoria', required: true },
       { name: 'num_atletas', type: 'number', label: 'Número de Atletas', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'bolsa-atleta-municipal',
@@ -176,6 +266,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'clube_associacao', type: 'text', label: 'Clube/Associação', required: false },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'academia-saude-programa',
@@ -191,6 +290,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'atividade_interesse', type: 'select', label: 'Atividade de Interesse', required: true },
       { name: 'problema_saude', type: 'textarea', label: 'Problemas de Saúde', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'ginastica-terceira-idade',
@@ -206,6 +314,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'horario', type: 'select', label: 'Horário', required: true },
       { name: 'limitacao_fisica', type: 'textarea', label: 'Limitações Físicas', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'corrida-rua-inscricao',
@@ -220,6 +337,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'categoria', type: 'select', label: 'Categoria', required: true },
       { name: 'tamanho_camisa', type: 'select', label: 'Tamanho da Camisa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'arbitro-cadastro',
@@ -234,6 +360,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_certificacao', type: 'select', label: 'Nível de Certificação', required: true },
       { name: 'tempo_experiencia', type: 'number', label: 'Tempo de Experiência (anos)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'treinador-cadastro',
@@ -248,6 +383,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'especialidade', type: 'select', label: 'Especialidade', required: true },
       { name: 'formacao', type: 'select', label: 'Formação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-futsal',
@@ -261,6 +405,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'categoria', type: 'select', label: 'Categoria por Idade', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-handbol',
@@ -274,6 +427,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-tenis-mesa',
@@ -287,6 +449,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-judo',
@@ -301,6 +472,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_previa', type: 'select', label: 'Experiência Prévia', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-karate',
@@ -314,6 +494,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'faixa_graduacao', type: 'select', label: 'Faixa/Graduação', required: false },
       { name: 'turma', type: 'select', label: 'Turma', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-atletismo',
@@ -327,6 +516,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'prova_interesse', type: 'select', label: 'Prova de Interesse', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'ciclismo-grupo',
@@ -341,6 +539,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'dia_preferencia', type: 'select', label: 'Dia de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'caminhada-orientada',
@@ -355,6 +562,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'xadrez-aulas',
@@ -368,6 +584,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'patinacao-aulas',
@@ -382,6 +607,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'possui_patins', type: 'select', label: 'Possui Patins Próprios', required: true },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'skate-pista',
@@ -395,6 +629,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'possui_equipamento', type: 'select', label: 'Possui Skate e Equipamentos', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'yoga-aulas',
@@ -409,6 +652,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
       { name: 'local', type: 'select', label: 'Local', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'pilates-solo',
@@ -423,6 +675,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'objetivo', type: 'select', label: 'Objetivo', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'danca-ritmos',
@@ -437,6 +698,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'musculacao-academia',
@@ -451,6 +721,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'horario_treino', type: 'select', label: 'Horário de Treino', required: true },
       { name: 'problema_saude', type: 'textarea', label: 'Problemas de Saúde', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'avaliacao-fisica',
@@ -464,6 +743,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'objetivo_avaliacao', type: 'select', label: 'Objetivo da Avaliação', required: true },
       { name: 'pratica_atividade', type: 'select', label: 'Pratica Atividade Física', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'escolinha-tenis-campo',
@@ -478,6 +766,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'possui_raquete', type: 'select', label: 'Possui Raquete', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'badminton-aulas',
@@ -491,6 +788,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'capoeira-esporte',
@@ -504,6 +810,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'corda_graduacao', type: 'text', label: 'Corda/Graduação (se houver)', required: false },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'tai-chi-chuan',
@@ -518,6 +833,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: false },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'futevolei-aulas',
@@ -531,6 +855,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_habilidade', type: 'select', label: 'Nível de Habilidade', required: true },
       { name: 'horario_preferencia', type: 'select', label: 'Horário de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'beach-tennis',
@@ -545,6 +878,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'possui_raquete', type: 'select', label: 'Possui Raquete', required: false },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'funcional-treino',
@@ -559,6 +901,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'alongamento-grupo',
@@ -573,6 +924,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'local', type: 'select', label: 'Local', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'corrida-orientacao',
@@ -586,6 +946,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia', type: 'select', label: 'Experiência', required: true },
       { name: 'dia_atividade', type: 'select', label: 'Dia da Atividade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'slackline-aulas',
@@ -599,6 +968,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'ginastica-ritmica',
@@ -612,6 +990,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'ginastica-artistica',
@@ -626,6 +1013,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia', type: 'select', label: 'Experiência', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'esgrima-aulas',
@@ -639,6 +1035,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'arma_interesse', type: 'select', label: 'Arma de Interesse', required: false },
       { name: 'nivel', type: 'select', label: 'Nível', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'tiro-arco',
@@ -652,6 +1057,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia', type: 'select', label: 'Experiência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'rugby-escolinha',
@@ -665,6 +1079,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'categoria', type: 'select', label: 'Categoria', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'bocha-terceira-idade',
@@ -679,6 +1102,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'frescobol-aulas',
@@ -693,6 +1125,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'local', type: 'select', label: 'Local', required: true },
       { name: 'horario', type: 'select', label: 'Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'evento-esportivo-organizacao',
@@ -709,6 +1150,15 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'num_participantes', type: 'number', label: 'Número de Participantes Esperados', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição do Evento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   },
   {
     id: 'material-esportivo-emprestimo',
@@ -725,5 +1175,14 @@ export const esportesSuggestions: ServiceSuggestion[] = [
       { name: 'data_devolucao', type: 'date', label: 'Data de Devolução', required: true },
       { name: 'finalidade', type: 'textarea', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ESPORTES',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.142Z'
   }
 ];

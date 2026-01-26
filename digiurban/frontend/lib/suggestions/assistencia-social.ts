@@ -1,4 +1,4 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const assistenciasocialSuggestions: ServiceSuggestion[] = [
   {
@@ -13,20 +13,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar Mensal (R$)', required: true },
     ]
-  },
-  {
-    id: 'cesta-basica',
-    name: 'Solicitação de Cesta Básica',
-    description: 'Solicite cestas básicas de alimentos',
-    icon: 'ShoppingBasket',
-    category: 'Segurança Alimentar',
-    estimatedDays: 7,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'num_pessoas_familia', type: 'number', label: 'Número de Pessoas na Família', required: true },
-      { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
-      { name: 'situacao_vulnerabilidade', type: 'textarea', label: 'Descrição da Situação de Vulnerabilidade', required: true },
-    ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'bpc',
@@ -42,6 +37,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'idoso_65_mais', type: 'checkbox', label: 'Idoso com 65 anos ou mais', required: false },
       { name: 'renda_per_capita', type: 'number', label: 'Renda Per Capita Familiar (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'passe-livre',
@@ -56,6 +60,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'laudo_medico', type: 'checkbox', label: 'Anexar Laudo Médico', required: true },
       { name: 'necessita_acompanhante', type: 'checkbox', label: 'Necessita Acompanhante', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'aluguel-social',
@@ -72,6 +85,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'atendimento-psicologo',
@@ -87,34 +109,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'cras_referencia', type: 'select', label: 'CRAS de Referência', required: true },
       { name: 'urgente', type: 'checkbox', label: 'Situação Urgente', required: false },
     ]
-  },
-  {
-    id: 'cadastro-unico',
-    name: 'Cadastro Único (CadÚnico)',
-    description: 'Cadastramento no Cadastro Único para Programas Sociais',
-    icon: 'FileText',
-    category: 'Cadastro',
-    estimatedDays: 10,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'num_membros_familia', type: 'number', label: 'Número de Membros da Família', required: true },
-      { name: 'renda_total', type: 'number', label: 'Renda Total Familiar (R$)', required: true },
-    ],
-    linkedCitizensConfig: {
-      enabled: true,
-      links: [{
-        linkType: 'FAMILY_MEMBER',
-        role: 'DEPENDENT',
-        label: 'Membros da Família',
-        required: false,
-        mapFromLegacyFields: {},
-        contextFields: [
-          { id: 'parentesco', sourceField: 'membrosFamilia[].parentesco' },
-          { id: 'renda', sourceField: 'membrosFamilia[].renda' }
-        ],
-        expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING']
-      }]
-    }
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'acolhimento-institucional',
@@ -130,6 +133,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'motivo', type: 'textarea', label: 'Motivo do Acolhimento', required: true },
       { name: 'situacao_emergencia', type: 'checkbox', label: 'Situação de Emergência', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'programa-crianca-feliz',
@@ -142,6 +154,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     suggestedFields: [
       { name: 'cadastro_unico', type: 'checkbox', label: 'Possui Cadastro Único', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'creas-atendimento',
@@ -158,6 +179,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'anonimo', type: 'checkbox', label: 'Denúncia Anônima', required: false },
       { name: 'urgente', type: 'checkbox', label: 'Situação Urgente', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'auxilio-natalidade',
@@ -172,6 +202,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'data_nascimento_bebe', type: 'date', label: 'Data de Nascimento do Bebê', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'auxilio-funeral',
@@ -186,6 +225,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'parentesco', type: 'select', label: 'Parentesco com o Falecido', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'cursos-qualificacao',
@@ -200,6 +248,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'idoso-convivencia',
@@ -213,6 +270,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'atividades_interesse', type: 'textarea', label: 'Atividades de Interesse', required: false },
       { name: 'restricao_saude', type: 'textarea', label: 'Restrições de Saúde', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'abrigo-temporario',
@@ -228,6 +294,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'tem_idosos', type: 'checkbox', label: 'Há Idosos no Grupo', required: false },
       { name: 'motivo_emergencia', type: 'textarea', label: 'Motivo da Emergência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 4,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'violencia-domestica',
@@ -244,6 +319,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_risco', type: 'checkbox', label: 'Situação de Risco Imediato', required: false },
       { name: 'denuncia_anonima', type: 'checkbox', label: 'Denúncia Anônima', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'tarifa-social-energia',
@@ -259,6 +343,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'cadastro_unico', type: 'text', label: 'NIS - Cadastro Único', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'minha-casa-minha-vida',
@@ -272,6 +365,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
       { name: 'imovel_proprio', type: 'checkbox', label: 'Possui Imóvel Próprio', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'atendimento-assistente-social',
@@ -286,6 +388,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'cras_preferencia', type: 'select', label: 'CRAS de Preferência', required: true },
       { name: 'urgente', type: 'checkbox', label: 'Situação Urgente', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'programa-leite',
@@ -300,6 +411,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'gestante', type: 'checkbox', label: 'Há Gestante na Família', required: false },
       { name: 'renda_per_capita', type: 'number', label: 'Renda Per Capita (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'banco-alimentos',
@@ -313,6 +433,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'num_pessoas_familia', type: 'number', label: 'Número de Pessoas na Família', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'familia-acolhedora',
@@ -327,6 +456,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'motivacao', type: 'textarea', label: 'Motivação para Acolher', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'adolescente-aprendiz',
@@ -341,6 +479,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'turno_escola', type: 'select', label: 'Turno da Escola', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'auxilio-vulnerabilidade',
@@ -355,6 +502,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'num_pessoas_afetadas', type: 'number', label: 'Número de Pessoas Afetadas', required: true },
       { name: 'renda_atual', type: 'number', label: 'Renda Atual (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'central-interprete-libras',
@@ -370,6 +526,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'horario', type: 'text', label: 'Horário', required: true },
       { name: 'local', type: 'text', label: 'Local do Atendimento', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'documentacao-basica',
@@ -384,6 +549,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'primeira_via', type: 'checkbox', label: 'Primeira Via', required: false },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'cadastro-isentos',
@@ -398,6 +572,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'servico-convivencia-crianca',
@@ -410,6 +593,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     suggestedFields: [
       { name: 'turno_disponivel', type: 'select', label: 'Turno Disponível', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'servico-convivencia-adolescente',
@@ -423,6 +615,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
       { name: 'atividades_interesse', type: 'textarea', label: 'Atividades de Interesse', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'acessuas-trabalho',
@@ -438,6 +639,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'horario_trabalho', type: 'text', label: 'Horário de Trabalho', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'cadastro-artesao',
@@ -452,6 +662,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_atuacao', type: 'number', label: 'Tempo de Atuação (anos)', required: false },
       { name: 'interesse_cooperativa', type: 'checkbox', label: 'Interesse em Cooperativa', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'mediacao-conflitos',
@@ -466,6 +685,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'descricao_breve', type: 'textarea', label: 'Descrição Breve', required: true },
       { name: 'num_envolvidos', type: 'number', label: 'Número de Pessoas Envolvidas', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'inclusao-produtiva',
@@ -480,6 +708,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_profissional', type: 'textarea', label: 'Experiência Profissional', required: false },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'cuidador-idoso',
@@ -494,6 +731,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_anterior', type: 'checkbox', label: 'Possui Experiência Anterior', required: false },
       { name: 'disponibilidade', type: 'select', label: 'Disponibilidade de Horário', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'protecao-animais',
@@ -509,6 +755,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
       { name: 'denuncia_anonima', type: 'checkbox', label: 'Denúncia Anônima', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'orientacao-juridica',
@@ -523,6 +778,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'descricao_caso', type: 'textarea', label: 'Descrição do Caso', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'cadastro-defeso',
@@ -536,6 +800,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'rg_pescador', type: 'text', label: 'RG de Pescador Profissional', required: true },
       { name: 'colonia_pescadores', type: 'text', label: 'Colônia de Pescadores', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'doacao-sangue-cadastro',
@@ -550,6 +823,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'peso', type: 'number', label: 'Peso (kg)', required: true },
       { name: 'ja_doou_antes', type: 'checkbox', label: 'Já Doou Antes', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'programa-cisternas',
@@ -565,6 +847,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'possui_poco', type: 'checkbox', label: 'Possui Poço', required: false },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'grupo-gestantes',
@@ -579,6 +870,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'primeira_gestacao', type: 'checkbox', label: 'Primeira Gestação', required: false },
       { name: 'cras_referencia', type: 'select', label: 'CRAS de Referência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'inclusao-digital',
@@ -593,6 +893,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento em Informática', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'oficinas-artesanato',
@@ -607,6 +916,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'reconhecimento-paternidade',
@@ -620,6 +938,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'cpf_mae', type: 'cpf', label: 'CPF da Mãe', required: true },
       { name: 'data_nascimento_crianca', type: 'date', label: 'Data de Nascimento da Criança', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'acompanhamento-egressos',
@@ -634,6 +961,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'tem_familia', type: 'checkbox', label: 'Possui Família de Referência', required: false },
       { name: 'necessidades', type: 'textarea', label: 'Necessidades Principais', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'crianca-desaparecida',
@@ -649,6 +985,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'local_desaparecimento', type: 'text', label: 'Local do Desaparecimento', required: true },
       { name: 'data_desaparecimento', type: 'date', label: 'Data do Desaparecimento', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'programa-bolsa-universitaria',
@@ -665,6 +1010,15 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   },
   {
     id: 'atestado-residencia',
@@ -678,5 +1032,14 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_residencia', type: 'text', label: 'Tempo de Residência no Endereço', required: true },
       { name: 'finalidade', type: 'text', label: 'Finalidade do Atestado', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'ASSISTENCIA_SOCIAL',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.121Z'
   }
 ];

@@ -1,4 +1,4 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const segurancapublicaSuggestions: ServiceSuggestion[] = [
   {
@@ -16,6 +16,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'local_ocorrencia', type: 'text', label: 'Local da Ocorrência', required: true },
       { name: 'relato_fatos', type: 'textarea', label: 'Relato dos Fatos', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'ronda-gm',
@@ -31,6 +40,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_preferencial', type: 'select', label: 'Período Preferencial', required: true },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'videomonitoramento',
@@ -47,6 +65,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'horario_fim', type: 'text', label: 'Horário Final', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-sossego',
@@ -62,6 +89,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'esta_ocorrendo', type: 'select', label: 'Está Ocorrendo Agora?', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-comercio-irregular',
@@ -77,6 +113,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_funcionamento', type: 'text', label: 'Período de Funcionamento', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição Detalhada', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'cadastro-alarme',
@@ -95,6 +140,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'responsavel_chaves', type: 'text', label: 'Responsável pelas Chaves', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'seguranca-evento',
@@ -113,6 +167,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'publico_estimado', type: 'number', label: 'Público Estimado', required: true },
       { name: 'tipo_evento', type: 'select', label: 'Tipo de Evento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'credencial-estacionamento-deficiente',
@@ -128,6 +191,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'placa_veiculo', type: 'text', label: 'Placa do Veículo', required: true },
       { name: 'condutor_principal', type: 'text', label: 'Condutor Principal', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'ronda-escolar',
@@ -142,6 +214,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_atendimento', type: 'select', label: 'Período de Funcionamento', required: true },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'vizinhanca-solidaria',
@@ -155,6 +236,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'num_residencias', type: 'number', label: 'Número de Residências Participantes', required: true },
       { name: 'objetivos', type: 'textarea', label: 'Objetivos do Grupo', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'achados-perdidos',
@@ -170,6 +260,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'local_perda', type: 'text', label: 'Local onde Perdeu/Achou', required: true },
       { name: 'data_ocorrencia', type: 'date', label: 'Data da Ocorrência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'fiscalizacao-transito',
@@ -185,6 +284,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_ocorrencia', type: 'text', label: 'Período de Ocorrência', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-violencia-domestica',
@@ -201,6 +309,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_urgente', type: 'select', label: 'Situação de Urgência?', required: true },
       { name: 'relato', type: 'textarea', label: 'Relato da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'cadastro-veiculo-gm',
@@ -217,6 +334,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'ano_fabricacao', type: 'number', label: 'Ano de Fabricação', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade do Cadastro', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'balada-segura',
@@ -233,6 +359,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_publico', type: 'number', label: 'Capacidade de Público', required: true },
       { name: 'horario_funcionamento', type: 'text', label: 'Horário de Funcionamento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-drogas',
@@ -249,6 +384,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_atividade', type: 'text', label: 'Período de Atividade', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição Detalhada', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'credencial-acesso-vip',
@@ -263,6 +407,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'funcao_evento', type: 'text', label: 'Função no Evento', required: true },
       { name: 'area_acesso', type: 'select', label: 'Área de Acesso', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'patrulha-rural',
@@ -278,6 +431,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
       { name: 'possui_caseiro', type: 'select', label: 'Possui Caseiro?', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-maus-tratos-animais',
@@ -294,6 +456,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_urgente', type: 'select', label: 'Situação Urgente?', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'botao-panico-idoso',
@@ -309,6 +480,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'telefone_emergencia', type: 'tel', label: 'Telefone de Emergência', required: true },
       { name: 'condicao_saude', type: 'textarea', label: 'Condições de Saúde Relevantes', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-trabalho-infantil',
@@ -325,6 +505,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_trabalho', type: 'text', label: 'Período de Trabalho', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'escolta-valores',
@@ -344,6 +533,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'destino', type: 'text', label: 'Destino', required: true },
       { name: 'valor_estimado', type: 'text', label: 'Valor Estimado da Carga', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'vistoria-seguranca',
@@ -360,6 +558,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'area_total', type: 'number', label: 'Área Total (m²)', required: true },
       { name: 'finalidade_vistoria', type: 'select', label: 'Finalidade da Vistoria', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'registro-arma-fogo',
@@ -377,6 +584,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'calibre_arma', type: 'text', label: 'Calibre da Arma', required: true },
       { name: 'numero_serie', type: 'text', label: 'Número de Série', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'autorizacao-filme',
@@ -395,6 +611,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'horario_termino', type: 'text', label: 'Horário de Término', required: true },
       { name: 'num_pessoas_envolvidas', type: 'number', label: 'Número de Pessoas Envolvidas', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-pichacao',
@@ -411,6 +636,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'data_ocorrencia', type: 'date', label: 'Data Aproximada', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'cadastro-mototaxi',
@@ -428,6 +662,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'cor_moto', type: 'text', label: 'Cor da Moto', required: true },
       { name: 'ponto_trabalho', type: 'text', label: 'Ponto de Trabalho', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'ocorrencia-animal-solto',
@@ -444,6 +687,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'comportamento', type: 'select', label: 'Comportamento do Animal', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'ronda-comercial',
@@ -459,6 +711,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_preferencial', type: 'select', label: 'Período Preferencial', required: true },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'autorizacao-passeata',
@@ -478,6 +739,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'percurso', type: 'textarea', label: 'Percurso Pretendido', required: true },
       { name: 'publico_estimado', type: 'number', label: 'Público Estimado', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-queimada',
@@ -494,6 +764,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'extensao_estimada', type: 'text', label: 'Extensão Estimada', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'cadastro-seguranca-privada',
@@ -513,6 +792,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'num_vigilantes', type: 'number', label: 'Número de Vigilantes', required: true },
       { name: 'areas_atuacao', type: 'textarea', label: 'Áreas de Atuação no Município', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'operacao-transito',
@@ -531,6 +819,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'horario_operacao', type: 'text', label: 'Horário da Operação', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'monitoramento-tornozeira',
@@ -548,6 +845,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_medida', type: 'select', label: 'Tipo de Medida', required: true },
       { name: 'prazo_monitoramento', type: 'number', label: 'Prazo de Monitoramento (meses)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'busca-pessoa-desaparecida',
@@ -568,6 +874,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'roupas', type: 'text', label: 'Roupas que Vestia', required: false },
       { name: 'condicao_saude', type: 'textarea', label: 'Condições de Saúde', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-violacao-medida-protetiva',
@@ -586,6 +901,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_urgente', type: 'select', label: 'Situação de Urgência?', required: true },
       { name: 'relato', type: 'textarea', label: 'Relato da Violação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'credencial-estacionamento-idoso',
@@ -600,6 +924,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'condutor_principal', type: 'text', label: 'Condutor Principal', required: true },
       { name: 'possui_mobilidade_reduzida', type: 'select', label: 'Possui Mobilidade Reduzida?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'curso-defesa-pessoal',
@@ -614,6 +947,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'turma_preferencial', type: 'select', label: 'Turma Preferencial', required: true },
       { name: 'experiencia_previa', type: 'select', label: 'Possui Experiência Prévia?', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-aglomeracao',
@@ -630,6 +972,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'esta_ocorrendo', type: 'select', label: 'Está Ocorrendo Agora?', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'escolta-autoridade',
@@ -649,6 +1000,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'locais_visita', type: 'textarea', label: 'Locais que Visitará', required: true },
       { name: 'nivel_seguranca', type: 'select', label: 'Nível de Segurança Requerido', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'cadastro-guarda-patrimonio',
@@ -665,6 +1025,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'disponibilidade', type: 'textarea', label: 'Disponibilidade de Horários', required: true },
       { name: 'motivacao', type: 'textarea', label: 'Motivação para Participar', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-perturbacao-fauna',
@@ -681,6 +1050,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'frequencia', type: 'select', label: 'Frequência', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição Detalhada', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'autorizacao-manifestacao-religiosa',
@@ -700,6 +1078,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'percurso', type: 'textarea', label: 'Percurso (se aplicável)', required: false },
       { name: 'publico_estimado', type: 'number', label: 'Público Estimado', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-ocupacao-irregular',
@@ -716,6 +1103,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'num_familias_estimado', type: 'text', label: 'Número Estimado de Famílias', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'cadastro-porteiro',
@@ -733,6 +1129,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'cnpj_empresa', type: 'cnpj', label: 'CNPJ da Empresa', required: false },
       { name: 'horario_trabalho', type: 'text', label: 'Horário de Trabalho', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'patrulha-parques',
@@ -747,6 +1152,15 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_preferencial', type: 'select', label: 'Período Preferencial', required: true },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
   },
   {
     id: 'denuncia-crimes-ambientais',
@@ -763,5 +1177,14 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
       { name: 'responsavel_conhecido', type: 'select', label: 'Responsável é Conhecido?', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição Detalhada', required: true },
     ]
-  },
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SEGURANCA_PUBLICA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.168Z'
+  }
 ];

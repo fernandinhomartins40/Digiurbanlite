@@ -1,4 +1,4 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const obraspublicasSuggestions: ServiceSuggestion[] = [
   {
@@ -16,6 +16,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_urgencia', type: 'select', label: 'Nível de Urgência', required: true },
       { name: 'descricao_situacao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'iluminacao-publica-manutencao',
@@ -31,6 +40,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_problema', type: 'select', label: 'Tipo de Problema', required: true },
       { name: 'horario_notado', type: 'select', label: 'Horário em que o Problema foi Notado', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'limpeza-via-publica',
@@ -46,6 +64,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_residuo', type: 'select', label: 'Tipo de Resíduo', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'calcada-cidada',
@@ -62,6 +89,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_atual', type: 'select', label: 'Situação Atual da Calçada', required: true },
       { name: 'tipo_solicitacao', type: 'select', label: 'Tipo de Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'drenagem-pluvial',
@@ -78,6 +114,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'causa_alagamento', type: 'select', label: 'Causa Alagamento?', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'pavimentacao-rua',
@@ -92,6 +137,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores Beneficiados', required: false },
       { name: 'tipo_pavimento_desejado', type: 'select', label: 'Tipo de Pavimento Desejado', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'sinalizacao-viaria',
@@ -107,6 +161,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_solicitacao', type: 'select', label: 'Tipo de Solicitação', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'pintura-faixa-pedestre',
@@ -122,6 +185,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_atual', type: 'select', label: 'Situação Atual', required: true },
       { name: 'proximo_estabelecimento', type: 'text', label: 'Próximo a (escola, hospital, etc.)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'reducao-velocidade',
@@ -138,6 +210,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'num_acidentes', type: 'number', label: 'Número de Acidentes Recentes (se souber)', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa Detalhada', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'semaforo-instalacao',
@@ -154,6 +235,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'fluxo_pedestres', type: 'select', label: 'Fluxo de Pedestres', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'meio-fio',
@@ -168,6 +258,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
       { name: 'motivo', type: 'select', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'ponte-manutencao',
@@ -183,6 +282,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_gravidade', type: 'select', label: 'Nível de Gravidade', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição do Problema', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'recapeamento-asfaltico',
@@ -198,6 +306,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'estado_pavimento', type: 'select', label: 'Estado do Pavimento', required: true },
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'rampa-acessibilidade',
@@ -212,6 +329,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'publico_beneficiado', type: 'textarea', label: 'Público Beneficiado', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'praca-reforma',
@@ -225,6 +351,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'itens_reforma', type: 'textarea', label: 'Itens que Necessitam Reforma', required: true },
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'parque-infantil',
@@ -240,6 +375,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'possui_area_disponivel', type: 'select', label: 'Área Possui Espaço Disponível?', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'academia-ar-livre',
@@ -255,6 +399,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'possui_iluminacao', type: 'select', label: 'Local Possui Iluminação?', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'quadra-esportiva',
@@ -270,6 +423,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_quadra', type: 'select', label: 'Tipo de Quadra', required: true },
       { name: 'num_beneficiados', type: 'number', label: 'Número de Beneficiados (estimativa)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'ponto-onibus',
@@ -285,6 +447,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'num_usuarios_diarios', type: 'number', label: 'Número de Usuários Diários (estimativa)', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'ciclovia-ciclofaixa',
@@ -300,6 +471,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (km)', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'estacionamento-rotativo',
@@ -315,6 +495,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'motivo', type: 'select', label: 'Motivo da Solicitação', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'bueiro-instalacao',
@@ -330,6 +519,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'frequencia_alagamento', type: 'select', label: 'Frequência de Alagamentos', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'muro-contencao',
@@ -346,6 +544,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'risco_deslizamento', type: 'select', label: 'Existe Risco de Deslizamento?', required: true },
       { name: 'descricao_situacao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'galeria-pluvial',
@@ -361,6 +568,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'problema_drenagem', type: 'textarea', label: 'Descrição do Problema de Drenagem', required: true },
       { name: 'frequencia_alagamento', type: 'select', label: 'Frequência de Alagamentos', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'passarela-pedestre',
@@ -377,6 +593,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'num_acidentes', type: 'number', label: 'Número de Acidentes Recentes (se souber)', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'rotatoria',
@@ -392,6 +617,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'problema_atual', type: 'select', label: 'Problema Atual', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'pista-caminhada',
@@ -407,6 +641,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'possui_iluminacao', type: 'select', label: 'Local Possui Iluminação?', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'mirante-publico',
@@ -422,6 +665,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'possui_acesso', type: 'select', label: 'Local Possui Acesso?', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'banheiro-publico',
@@ -437,6 +689,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_area', type: 'select', label: 'Tipo de Área', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'fonte-agua-potavel',
@@ -451,6 +712,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'possui_rede_agua', type: 'select', label: 'Local Possui Rede de Água?', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'canaleta-escoamento',
@@ -466,6 +736,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'problema_atual', type: 'select', label: 'Problema Atual', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'escadaria-publica',
@@ -481,6 +760,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'num_usuarios_diarios', type: 'number', label: 'Usuários Diários (estimativa)', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'paisagismo-urbano',
@@ -496,6 +784,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'area_estimada', type: 'number', label: 'Área Estimada (m²)', required: false },
       { name: 'elementos_desejados', type: 'textarea', label: 'Elementos Desejados', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'cerca-alambrado',
@@ -511,6 +808,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
       { name: 'motivo', type: 'select', label: 'Motivo da Instalação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'pintura-edificio-publico',
@@ -524,6 +830,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_edificio', type: 'select', label: 'Tipo de Edifício', required: true },
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'cobertura-arquibancada',
@@ -538,6 +853,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_arquibancada', type: 'number', label: 'Capacidade da Arquibancada', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'guarita-seguranca',
@@ -552,6 +876,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_equipamento', type: 'select', label: 'Tipo de Equipamento Público', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'estacionamento-bicicletario',
@@ -567,6 +900,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'demanda_estimada', type: 'select', label: 'Demanda Estimada', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'murais-artisticos',
@@ -582,6 +924,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tema_obra', type: 'textarea', label: 'Tema da Obra', required: true },
       { name: 'possui_portfolio', type: 'select', label: 'Possui Portfólio?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'relogio-publico',
@@ -596,6 +947,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_area', type: 'select', label: 'Tipo de Área', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'totem-informativo',
@@ -610,6 +970,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_informacao', type: 'select', label: 'Tipo de Informação', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'bancos-praça',
@@ -624,6 +993,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade_bancos', type: 'number', label: 'Quantidade de Bancos', required: false },
       { name: 'motivo', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'lixeiras-publicas',
@@ -639,6 +1017,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade', type: 'number', label: 'Quantidade', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'marquise-ponto-onibus',
@@ -654,6 +1041,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'num_usuarios', type: 'number', label: 'Usuários Diários (estimativa)', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'piso-tatil',
@@ -669,6 +1065,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'extensao_estimada', type: 'number', label: 'Extensão Estimada (metros)', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'cameras-monitoramento',
@@ -684,6 +1089,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_solicitacao', type: 'select', label: 'Motivo da Solicitação', required: true },
       { name: 'historico_ocorrencias', type: 'textarea', label: 'Histórico de Ocorrências', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'parquimetro-digital',
@@ -698,6 +1112,15 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'numero_vagas', type: 'number', label: 'Número de Vagas', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   },
   {
     id: 'revitalizacao-fachada',
@@ -713,5 +1136,14 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
       { name: 'tombamento', type: 'select', label: 'Imóvel Tombado?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'OBRAS_PUBLICAS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.159Z'
   }
 ];

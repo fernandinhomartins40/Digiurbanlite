@@ -1,39 +1,6 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const turismoSuggestions: ServiceSuggestion[] = [
-  {
-    id: 'cadastro-guia',
-    name: 'Cadastro de Guia Turístico',
-    description: 'Registro oficial de guias turísticos municipais',
-    icon: 'MapPin',
-    category: 'Cadastro Profissional',
-    estimatedDays: 15,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'num_cadastur', type: 'text', label: 'Número CADASTUR (se possuir)', required: false },
-      { name: 'idiomas', type: 'text', label: 'Idiomas que Fala', required: true },
-      { name: 'especializacao', type: 'select', label: 'Especialização', required: true },
-      { name: 'formacao', type: 'text', label: 'Formação', required: true },
-      { name: 'experiencia_anos', type: 'number', label: 'Anos de Experiência', required: true },
-    ]
-  },
-  {
-    id: 'cadastro-estabelecimento',
-    name: 'Cadastro de Estabelecimento Turístico',
-    description: 'Registro de hotéis, pousadas, restaurantes e agências',
-    icon: 'Building',
-    category: 'Cadastro Comercial',
-    estimatedDays: 20,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'cnpj', type: 'cnpj', label: 'CNPJ', required: true },
-      { name: 'responsavel', type: 'text', label: 'Nome do Responsável', required: true },
-      { name: 'tipo_estabelecimento', type: 'select', label: 'Tipo de Estabelecimento', required: true },
-      { name: 'capacidade', type: 'number', label: 'Capacidade de Atendimento', required: true },
-      { name: 'num_cadastur', type: 'text', label: 'Número CADASTUR (se possuir)', required: false },
-      { name: 'classificacao', type: 'select', label: 'Classificação', required: false },
-    ]
-  },
   {
     id: 'autorizacao-evento-turistico',
     name: 'Autorização para Evento Turístico',
@@ -51,6 +18,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'publico_estimado', type: 'number', label: 'Público Estimado', required: true },
       { name: 'descricao_evento', type: 'textarea', label: 'Descrição do Evento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'roteiro-turistico',
@@ -69,6 +45,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'valor_entrada', type: 'text', label: 'Valor de Entrada (se houver)', required: false },
       { name: 'acessibilidade', type: 'select', label: 'Possui Acessibilidade?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'selo-turismo',
@@ -86,6 +71,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'num_funcionarios', type: 'number', label: 'Número de Funcionários', required: true },
       { name: 'certificacoes_existentes', type: 'text', label: 'Certificações Existentes', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'material-promocional',
@@ -100,6 +94,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade', type: 'number', label: 'Quantidade Solicitada', required: true },
       { name: 'finalidade', type: 'textarea', label: 'Finalidade do Material', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'capacitacao-turismo',
@@ -115,6 +118,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'area_atuacao', type: 'text', label: 'Área de Atuação', required: false },
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'cadastro-artesao',
@@ -130,6 +142,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_experiencia', type: 'text', label: 'Tempo de Experiência', required: true },
       { name: 'possui_certificacao', type: 'select', label: 'Possui Certificação de Artesão?', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'feira-artesanato',
@@ -144,6 +165,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'necessita_energia', type: 'select', label: 'Necessita Energia Elétrica?', required: true },
       { name: 'tamanho_barraca', type: 'select', label: 'Tamanho da Barraca', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'apoio-evento-cultural',
@@ -161,6 +191,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_apoio_solicitado', type: 'select', label: 'Tipo de Apoio Solicitado', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'visita-tecnica-turismo',
@@ -177,6 +216,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'atrativos_interesse', type: 'textarea', label: 'Atrativos de Interesse', required: true },
       { name: 'objetivo_visita', type: 'textarea', label: 'Objetivo da Visita', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'hospedagem-familiar',
@@ -193,6 +241,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'oferece_cafe_manha', type: 'select', label: 'Oferece Café da Manhã?', required: true },
       { name: 'idiomas_falados', type: 'text', label: 'Idiomas Falados', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'restaurante-tipico',
@@ -209,6 +266,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'pratos_tipicos', type: 'textarea', label: 'Principais Pratos Típicos', required: true },
       { name: 'tempo_atividade', type: 'text', label: 'Tempo de Atividade (anos)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'cadastro-condutor',
@@ -224,6 +290,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_experiencia', type: 'number', label: 'Anos de Experiência', required: true },
       { name: 'possui_seguro', type: 'select', label: 'Possui Seguro de Responsabilidade Civil?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'patrimonio-historico',
@@ -240,6 +315,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_construcao', type: 'text', label: 'Período de Construção', required: false },
       { name: 'relevancia_historica', type: 'textarea', label: 'Relevância Histórica/Cultural', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'autorizacao-filmagem',
@@ -258,6 +342,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'data_termino', type: 'date', label: 'Data de Término', required: true },
       { name: 'num_equipe', type: 'number', label: 'Tamanho da Equipe', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'transporte-turistico',
@@ -275,6 +368,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_total', type: 'number', label: 'Capacidade Total de Passageiros', required: true },
       { name: 'roteiros_atendidos', type: 'textarea', label: 'Roteiros Atendidos', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'mirante-observacao',
@@ -292,6 +394,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_pessoas', type: 'number', label: 'Capacidade de Pessoas', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa e Objetivo', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'festival-gastronomico',
@@ -308,6 +419,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'ingredientes_principais', type: 'textarea', label: 'Ingredientes Principais', required: true },
       { name: 'historia_prato', type: 'textarea', label: 'História do Prato', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'rota-gastronomica',
@@ -324,6 +444,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'especialidades', type: 'textarea', label: 'Especialidades da Casa', required: true },
       { name: 'horario_funcionamento', type: 'text', label: 'Horário de Funcionamento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'centro-informacoes',
@@ -339,6 +468,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'fluxo_turistas_estimado', type: 'text', label: 'Fluxo de Turistas Estimado', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'sinalizacao-turistica',
@@ -354,6 +492,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'distancia_aproximada', type: 'text', label: 'Distância do Centro (km)', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'camping-autorizado',
@@ -370,6 +517,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_barracas', type: 'number', label: 'Capacidade de Barracas', required: true },
       { name: 'infraestrutura_disponivel', type: 'textarea', label: 'Infraestrutura Disponível', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'turismo-rural',
@@ -386,6 +542,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'atividades_oferecidas', type: 'textarea', label: 'Atividades Oferecidas', required: true },
       { name: 'capacidade_hospedagem', type: 'number', label: 'Capacidade de Hospedagem', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'passeio-nautico',
@@ -403,6 +568,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'possui_habilitacao', type: 'select', label: 'Possui Habilitação Náutica?', required: true },
       { name: 'possui_seguro', type: 'select', label: 'Possui Seguro?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'tour-bicicleta',
@@ -419,6 +593,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_dificuldade', type: 'select', label: 'Nível de Dificuldade', required: true },
       { name: 'equipamentos_seguranca', type: 'textarea', label: 'Equipamentos de Segurança', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'observacao-fauna',
@@ -435,6 +618,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'tamanho_grupo_maximo', type: 'number', label: 'Tamanho Máximo do Grupo', required: true },
       { name: 'formacao_especifica', type: 'textarea', label: 'Formação Específica', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'fam-tour',
@@ -451,6 +643,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_disponivel', type: 'text', label: 'Período Disponível', required: true },
       { name: 'interesse_roteiros', type: 'textarea', label: 'Interesse em Roteiros', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'feira-turismo',
@@ -467,6 +668,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'interesse_feira', type: 'select', label: 'Feira de Interesse', required: true },
       { name: 'tamanho_stand', type: 'select', label: 'Tamanho de Stand Desejado', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'museu-comunitario',
@@ -483,6 +693,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'horario_visitacao', type: 'text', label: 'Horário de Visitação', required: true },
       { name: 'cobra_entrada', type: 'select', label: 'Cobra Entrada?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'trilha-ecologica',
@@ -500,6 +719,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_percurso', type: 'text', label: 'Tempo Médio de Percurso', required: true },
       { name: 'capacidade_grupo', type: 'number', label: 'Capacidade do Grupo', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'festa-tradicional',
@@ -516,6 +744,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'manifestacoes_culturais', type: 'textarea', label: 'Manifestações Culturais Envolvidas', required: true },
       { name: 'tempo_tradicao', type: 'text', label: 'Tempo de Tradição (anos)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'produtor-local',
@@ -532,6 +769,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'possui_selo_certificacao', type: 'select', label: 'Possui Selo/Certificação?', required: false },
       { name: 'capacidade_producao', type: 'text', label: 'Capacidade de Produção Mensal', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'loja-souvenirs',
@@ -547,6 +793,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'produtos_vendidos', type: 'textarea', label: 'Principais Produtos Vendidos', required: true },
       { name: 'produtos_locais_percentual', type: 'text', label: 'Percentual de Produtos Locais', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'wifi-turistico',
@@ -562,6 +817,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'fluxo_pessoas_estimado', type: 'text', label: 'Fluxo Estimado de Pessoas', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'calendario-eventos',
@@ -580,6 +844,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'descricao', type: 'textarea', label: 'Descrição do Evento', required: true },
       { name: 'publico_alvo', type: 'select', label: 'Público-Alvo', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'programa-voluntario',
@@ -595,6 +868,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'disponibilidade', type: 'text', label: 'Disponibilidade (dias/horários)', required: true },
       { name: 'experiencia_turismo', type: 'select', label: 'Possui Experiência em Turismo?', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'pesquisa-satisfacao',
@@ -612,6 +894,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'avaliacao_geral', type: 'select', label: 'Avaliação Geral', required: true },
       { name: 'sugestoes', type: 'textarea', label: 'Sugestões e Comentários', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'aplicativo-turistico',
@@ -628,6 +919,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'site', type: 'text', label: 'Website', required: false },
       { name: 'redes_sociais', type: 'text', label: 'Redes Sociais', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'reclamacao-servico-turistico',
@@ -643,6 +943,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'data_ocorrencia', type: 'date', label: 'Data da Ocorrência', required: true },
       { name: 'descricao_reclamacao', type: 'textarea', label: 'Descrição da Reclamação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'indicacao-turistica',
@@ -658,6 +967,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'descricao', type: 'textarea', label: 'Descrição e Relevância', required: true },
       { name: 'fotos_disponiveis', type: 'select', label: 'Possui Fotos para Compartilhar?', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'parceria-institucional',
@@ -675,6 +993,15 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'proposta_parceria', type: 'textarea', label: 'Proposta de Parceria', required: true },
       { name: 'beneficios_esperados', type: 'textarea', label: 'Benefícios Esperados', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
   },
   {
     id: 'receptivo-turismo',
@@ -692,5 +1019,14 @@ export const turismoSuggestions: ServiceSuggestion[] = [
       { name: 'num_cadastur', type: 'text', label: 'Número CADASTUR', required: false },
       { name: 'capacidade_atendimento', type: 'number', label: 'Capacidade de Atendimento Diário', required: true },
     ]
-  },
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'TURISMO',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.173Z'
+  }
 ];

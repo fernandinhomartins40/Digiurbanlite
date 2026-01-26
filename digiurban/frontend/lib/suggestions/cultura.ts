@@ -1,4 +1,4 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const culturaSuggestions: ServiceSuggestion[] = [
   {
@@ -14,6 +14,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'oficina-danca',
@@ -28,6 +37,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'oficina-teatro',
@@ -42,6 +60,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_teatro', type: 'select', label: 'Experiência em Teatro', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'oficina-artes-plasticas',
@@ -56,20 +83,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_habilidade', type: 'select', label: 'Nível de Habilidade', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
-  },
-  {
-    id: 'cadastro-artista-local',
-    name: 'Cadastro de Artista Local',
-    description: 'Registro oficial de artistas do município',
-    icon: 'User',
-    category: 'Cadastro',
-    estimatedDays: 10,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'area_atuacao', type: 'select', label: 'Área de Atuação', required: true },
-      { name: 'tempo_atuacao', type: 'number', label: 'Tempo de Atuação (anos)', required: true },
-      { name: 'portfolio_link', type: 'text', label: 'Link do Portfólio', required: false },
-    ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'reserva-teatro-municipal',
@@ -86,6 +108,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'publico_estimado', type: 'number', label: 'Público Estimado', required: true },
       { name: 'descricao_evento', type: 'textarea', label: 'Descrição do Evento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'reserva-centro-cultural',
@@ -102,6 +133,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'horario_fim', type: 'text', label: 'Horário de Término', required: true },
       { name: 'finalidade', type: 'textarea', label: 'Finalidade do Uso', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'lei-incentivo-cultura',
@@ -119,6 +159,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'contrapartida', type: 'textarea', label: 'Contrapartida Social', required: true },
       { name: 'resumo_projeto', type: 'textarea', label: 'Resumo do Projeto', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'tombamento-patrimonio',
@@ -134,6 +183,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_historico', type: 'text', label: 'Período Histórico', required: false },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa do Tombamento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'cadastro-biblioteca',
@@ -146,6 +204,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     suggestedFields: [
       { name: 'escolaridade', type: 'select', label: 'Escolaridade', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'visita-museu',
@@ -162,6 +229,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'num_visitantes', type: 'number', label: 'Número de Visitantes', required: true },
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária do Grupo', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'inscricao-festival',
@@ -178,6 +254,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'link_portfolio', type: 'text', label: 'Link de Vídeo/Portfólio', required: false },
       { name: 'sinopse', type: 'textarea', label: 'Sinopse da Apresentação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'cadastro-grupo-teatral',
@@ -193,6 +278,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'num_integrantes', type: 'number', label: 'Número de Integrantes', required: true },
       { name: 'genero_teatral', type: 'select', label: 'Gênero Teatral', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'ponto-cultura',
@@ -207,6 +301,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'publico_atendido', type: 'number', label: 'Público Atendido (mensal)', required: false },
       { name: 'descricao_atividades', type: 'textarea', label: 'Descrição das Atividades', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'oficina-fotografia',
@@ -221,6 +324,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'possui_camera', type: 'select', label: 'Possui Câmera Própria', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'oficina-video',
@@ -235,6 +347,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_previa', type: 'select', label: 'Experiência Prévia', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'circo-arte',
@@ -249,6 +370,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'literatura-curso',
@@ -263,6 +393,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'capoeira-cultura',
@@ -276,6 +415,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'graduacao_capoeira', type: 'text', label: 'Graduação (se houver)', required: false },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'grafite-arte-urbana',
@@ -289,6 +437,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_grafite', type: 'select', label: 'Experiência com Grafite', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'artesanato-tradicional',
@@ -303,6 +460,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_habilidade', type: 'select', label: 'Nível de Habilidade', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'coral-municipal',
@@ -317,6 +483,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_coral', type: 'select', label: 'Experiência em Coral', required: true },
       { name: 'disponibilidade_ensaios', type: 'select', label: 'Disponibilidade para Ensaios', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'banda-municipal',
@@ -331,6 +506,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_experiencia', type: 'number', label: 'Tempo de Experiência (anos)', required: true },
       { name: 'disponibilidade_ensaios', type: 'select', label: 'Disponibilidade para Ensaios', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'cinema-itinerante',
@@ -347,6 +531,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'publico_estimado', type: 'number', label: 'Público Estimado', required: true },
       { name: 'tema_preferencia', type: 'select', label: 'Tema de Preferência', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'exposicao-arte',
@@ -363,6 +556,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_solicitado', type: 'text', label: 'Período Solicitado', required: true },
       { name: 'descricao_projeto', type: 'textarea', label: 'Descrição do Projeto', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'quadrinhos-oficina',
@@ -377,6 +579,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_desenho', type: 'select', label: 'Nível de Desenho', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'sarau-cultural',
@@ -392,6 +603,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'mes_interesse', type: 'select', label: 'Mês de Interesse', required: true },
       { name: 'sinopse_apresentacao', type: 'textarea', label: 'Sinopse da Apresentação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'dj-producao-musical',
@@ -406,6 +626,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_musica', type: 'select', label: 'Experiência com Música', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'moda-design',
@@ -420,6 +649,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'cultura-popular',
@@ -435,6 +673,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_atuacao', type: 'number', label: 'Tempo de Atuação (anos)', required: false },
       { name: 'descricao_atividades', type: 'textarea', label: 'Descrição das Atividades', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'patrimonio-imaterial',
@@ -450,6 +697,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_abrangencia', type: 'text', label: 'Área de Abrangência', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa do Registro', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'contacao-historias',
@@ -464,6 +720,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_anterior', type: 'select', label: 'Experiência Anterior', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'radio-comunitaria',
@@ -478,6 +743,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_comunicacao', type: 'select', label: 'Experiência em Comunicação', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'restauracao-obras',
@@ -493,6 +767,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
       { name: 'valor_historico', type: 'textarea', label: 'Valor Histórico/Cultural', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'cultura-indigena',
@@ -506,6 +789,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'cultura-afro',
@@ -519,6 +811,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'modalidade_interesse', type: 'select', label: 'Modalidade de Interesse', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'jogos-tradicionais',
@@ -532,6 +833,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'culinaria-cultural',
@@ -546,6 +856,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_experiencia', type: 'select', label: 'Nível de Experiência', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'musica-eletronica',
@@ -560,6 +879,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'pintura-mural',
@@ -575,6 +903,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'dimensoes_aprox', type: 'text', label: 'Dimensões Aproximadas', required: true },
       { name: 'descricao_projeto', type: 'textarea', label: 'Descrição do Projeto', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'festa-junina',
@@ -589,6 +926,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'num_participantes', type: 'number', label: 'Número de Participantes', required: true },
       { name: 'necessita_espaco', type: 'select', label: 'Necessita Espaço para Ensaio', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'carnaval-blocos',
@@ -604,6 +950,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'estilo_musical', type: 'select', label: 'Estilo Musical', required: true },
       { name: 'percurso_proposto', type: 'textarea', label: 'Percurso Proposto', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'eventos-religiosos',
@@ -619,6 +974,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'publico_esperado', type: 'number', label: 'Público Esperado', required: true },
       { name: 'tipo_apoio', type: 'textarea', label: 'Tipo de Apoio Solicitado', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'feira-artesanato',
@@ -633,6 +997,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'tamanho_estande', type: 'select', label: 'Tamanho de Estande Desejado', required: true },
       { name: 'descricao_produtos', type: 'textarea', label: 'Descrição dos Produtos', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'circo-apresentacao',
@@ -648,6 +1021,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'local_apresentacao', type: 'text', label: 'Local da Apresentação', required: true },
       { name: 'publico_esperado', type: 'number', label: 'Público Esperado', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'pesquisa-cultural',
@@ -663,6 +1045,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_interesse', type: 'text', label: 'Período de Interesse', required: false },
       { name: 'objetivos_pesquisa', type: 'textarea', label: 'Objetivos da Pesquisa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'clube-leitura',
@@ -676,6 +1067,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'genero_literario', type: 'select', label: 'Gênero Literário de Preferência', required: true },
       { name: 'disponibilidade_encontros', type: 'select', label: 'Disponibilidade para Encontros', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'doacao-livros',
@@ -690,6 +1090,15 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_livros', type: 'select', label: 'Tipo de Livros', required: true },
       { name: 'forma_entrega', type: 'select', label: 'Forma de Entrega', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   },
   {
     id: 'lampiao-gas',
@@ -704,5 +1113,14 @@ export const culturaSuggestions: ServiceSuggestion[] = [
       { name: 'estado_conservacao', type: 'select', label: 'Estado de Conservação', required: true },
       { name: 'tipo_solicitacao', type: 'select', label: 'Tipo de Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'CULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.128Z'
   }
 ];

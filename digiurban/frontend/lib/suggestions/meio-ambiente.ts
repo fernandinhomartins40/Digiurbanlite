@@ -1,4 +1,4 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const meioambienteSuggestions: ServiceSuggestion[] = [
   {
@@ -16,6 +16,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_atividade', type: 'text', label: 'Endereço da Atividade', required: true },
       { name: 'descricao_atividade', type: 'textarea', label: 'Descrição da Atividade', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'poda-arvore-via-publica',
@@ -31,22 +40,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_arvore', type: 'text', label: 'Tipo/Espécie da Árvore (se souber)', required: false },
       { name: 'descricao_situacao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
-  },
-  {
-    id: 'denuncia-ambiental',
-    name: 'Denúncia Ambiental',
-    description: 'Denuncie crimes e infrações ambientais',
-    icon: 'AlertTriangle',
-    category: 'Fiscalização',
-    estimatedDays: 3,
-    requiresDocuments: false,
-    suggestedFields: [
-      { name: 'tipo_denuncia', type: 'select', label: 'Tipo de Infração', required: true },
-      { name: 'local_ocorrencia', type: 'text', label: 'Local da Ocorrência', required: true },
-      { name: 'data_ocorrencia', type: 'date', label: 'Data da Ocorrência', required: true },
-      { name: 'descricao_denuncia', type: 'textarea', label: 'Descrição Detalhada', required: true },
-      { name: 'possui_fotos', type: 'select', label: 'Possui Fotos/Vídeos?', required: false },
-    ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'coleta-seletiva-cadastro',
@@ -62,6 +64,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'interesse_compostagem', type: 'select', label: 'Interesse em Compostagem', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'destinacao-residuo-construcao',
@@ -78,6 +89,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_origem', type: 'text', label: 'Endereço de Origem', required: true },
       { name: 'possui_transporte', type: 'select', label: 'Possui Transporte Próprio?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'plantio-arvore-calçada',
@@ -93,6 +113,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'possui_fiacao', type: 'select', label: 'Possui Fiação Aérea?', required: true },
       { name: 'preferencia_especie', type: 'text', label: 'Preferência de Espécie (se houver)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'autorizacao-queimada-controlada',
@@ -110,6 +139,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'data_pretendida', type: 'date', label: 'Data Pretendida', required: true },
       { name: 'medidas_seguranca', type: 'textarea', label: 'Medidas de Segurança', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'recuperacao-nascente',
@@ -126,6 +164,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'possui_app_preservada', type: 'select', label: 'Possui APP Preservada?', required: true },
       { name: 'observacoes', type: 'textarea', label: 'Observações', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'compostagem-domestica',
@@ -141,6 +188,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'tem_quintal', type: 'select', label: 'Possui Quintal?', required: true },
       { name: 'experiencia_compostagem', type: 'select', label: 'Experiência com Compostagem', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'palestra-educacao-ambiental',
@@ -157,6 +213,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'num_participantes', type: 'number', label: 'Número de Participantes', required: true },
       { name: 'data_preferencia', type: 'date', label: 'Data de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'remocao-arvore',
@@ -174,6 +239,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_remocao', type: 'select', label: 'Motivo da Remoção', required: true },
       { name: 'laudo_tecnico', type: 'select', label: 'Possui Laudo Técnico?', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'fiscalizacao-barulho',
@@ -190,6 +264,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'frequencia', type: 'select', label: 'Frequência', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'outorga-uso-agua',
@@ -206,6 +289,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'vazao_pretendida', type: 'number', label: 'Vazão Pretendida (m³/h)', required: true },
       { name: 'corpo_hidrico', type: 'text', label: 'Corpo Hídrico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'licenca-poco-artesiano',
@@ -222,6 +314,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'profundidade_estimada', type: 'number', label: 'Profundidade Estimada (metros)', required: true },
       { name: 'empresa_perfuradora', type: 'text', label: 'Empresa Perfuradora', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'area-preservacao-permanente',
@@ -238,6 +339,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_app', type: 'select', label: 'Tipo de APP', required: true },
       { name: 'possui_geo', type: 'select', label: 'Possui Georreferenciamento?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'reserva-legal',
@@ -254,6 +364,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'percentual_reserva', type: 'number', label: 'Percentual de Reserva (%)', required: true },
       { name: 'car_registrado', type: 'select', label: 'CAR Registrado?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'ecoponto-cadastro',
@@ -268,6 +387,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'num_familias_beneficiadas', type: 'number', label: 'Famílias Beneficiadas (estimativa)', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'descarte-oleo-usado',
@@ -281,6 +409,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade_estimada', type: 'select', label: 'Quantidade Estimada', required: true },
       { name: 'frequencia_descarte', type: 'select', label: 'Frequência de Descarte', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'coleta-eletronicos',
@@ -296,6 +433,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade_itens', type: 'number', label: 'Quantidade de Itens', required: true },
       { name: 'descricao_itens', type: 'textarea', label: 'Descrição dos Itens', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'horta-comunitaria',
@@ -310,6 +456,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'disponibilidade_horas', type: 'number', label: 'Disponibilidade (horas/semana)', required: true },
       { name: 'interesse_organico', type: 'select', label: 'Interesse em Cultivo Orgânico', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'inspecao-ambiental',
@@ -325,6 +480,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_inspecao', type: 'select', label: 'Motivo da Inspeção', required: true },
       { name: 'descricao_solicitacao', type: 'textarea', label: 'Descrição da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'fauna-silvestre',
@@ -341,6 +505,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_urgente', type: 'select', label: 'Situação Urgente?', required: true },
       { name: 'descricao_situacao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'dedetizacao-publica',
@@ -356,6 +529,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_infestacao', type: 'select', label: 'Nível de Infestação', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'capina-terreno',
@@ -371,6 +553,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_terreno', type: 'select', label: 'Situação do Terreno', required: true },
       { name: 'risco_saude', type: 'select', label: 'Representa Risco à Saúde?', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'certificado-dispensa-licenca',
@@ -386,6 +577,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_atividade', type: 'text', label: 'Endereço da Atividade', required: true },
       { name: 'descricao_atividade', type: 'textarea', label: 'Descrição da Atividade', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'mudas-nativas',
@@ -401,6 +601,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_area', type: 'select', label: 'Tipo de Área', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'parque-visita-monitorada',
@@ -416,6 +625,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'faixa_etaria', type: 'select', label: 'Faixa Etária', required: true },
       { name: 'data_preferencia', type: 'date', label: 'Data de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'analise-agua-poco',
@@ -431,6 +649,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade_agua', type: 'select', label: 'Finalidade da Água', required: true },
       { name: 'tipo_analise', type: 'select', label: 'Tipo de Análise', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'viveiro-municipal',
@@ -444,6 +671,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade_mudas', type: 'select', label: 'Finalidade das Mudas', required: true },
       { name: 'area_plantio', type: 'number', label: 'Área de Plantio (m²)', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'car-cadastro-rural',
@@ -459,6 +695,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'possui_matricula', type: 'select', label: 'Possui Matrícula do Imóvel?', required: true },
       { name: 'possui_geo', type: 'select', label: 'Possui Georreferenciamento?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'curso-agente-ambiental',
@@ -473,6 +718,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'disponibilidade', type: 'textarea', label: 'Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'termos-compromisso-ambiental',
@@ -488,6 +742,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'area_atividade', type: 'number', label: 'Área da Atividade (hectares)', required: true },
       { name: 'compromissos', type: 'textarea', label: 'Compromissos a Serem Assumidos', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'denuncia-maus-tratos-animais',
@@ -504,6 +767,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'data_ocorrencia', type: 'date', label: 'Data da Ocorrência', required: true },
       { name: 'descricao_detalhada', type: 'textarea', label: 'Descrição Detalhada', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'recuperacao-area-degradada',
@@ -520,6 +792,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'metodologia', type: 'textarea', label: 'Metodologia de Recuperação', required: true },
       { name: 'prazo_execucao', type: 'number', label: 'Prazo de Execução (meses)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'fiscalizacao-postura-animal',
@@ -535,6 +816,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade_estimada', type: 'number', label: 'Quantidade Estimada', required: false },
       { name: 'problemas_causados', type: 'textarea', label: 'Problemas Causados', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'energia-solar-orientacao',
@@ -551,6 +841,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'area_telhado', type: 'number', label: 'Área Disponível no Telhado (m²)', required: false },
       { name: 'objetivo', type: 'select', label: 'Objetivo', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'compensacao-ambiental',
@@ -567,6 +866,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_compensacao', type: 'select', label: 'Tipo de Compensação', required: true },
       { name: 'area_compensacao', type: 'number', label: 'Área de Compensação (hectares)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'autorizacao-manejo-fauna',
@@ -582,6 +890,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_manejo', type: 'select', label: 'Tipo de Manejo', required: true },
       { name: 'area_manejo', type: 'number', label: 'Área de Manejo (hectares)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'monitoramento-qualidade-ar',
@@ -597,6 +914,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'fonte_suspeita', type: 'text', label: 'Fonte Suspeita de Poluição', required: false },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'licenca-supressao-vegetal',
@@ -613,6 +939,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade_supressao', type: 'select', label: 'Finalidade da Supressão', required: true },
       { name: 'possui_inventario', type: 'select', label: 'Possui Inventário Florestal?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'certificado-regularidade-ambiental',
@@ -628,6 +963,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'possui_licencas', type: 'select', label: 'Possui Todas as Licenças?', required: true },
       { name: 'finalidade_certificado', type: 'select', label: 'Finalidade do Certificado', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'programa-arboriza-cidade',
@@ -642,6 +986,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'disponibilidade_horario', type: 'select', label: 'Disponibilidade de Horário', required: true },
       { name: 'experiencia_plantio', type: 'select', label: 'Experiência com Plantio', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'relatorio-impacto-ambiental',
@@ -658,6 +1011,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'area_influencia', type: 'number', label: 'Área de Influência (km²)', required: true },
       { name: 'possui_eia', type: 'select', label: 'Possui EIA Elaborado?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'oficina-reciclagem-artesanato',
@@ -673,6 +1035,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
       { name: 'experiencia_artesanato', type: 'select', label: 'Experiência com Artesanato', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'selo-verde-empresa',
@@ -689,6 +1060,15 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'praticas_sustentaveis', type: 'textarea', label: 'Práticas Sustentáveis Adotadas', required: true },
       { name: 'gestao_residuos', type: 'select', label: 'Possui Gestão de Resíduos?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   },
   {
     id: 'projeto-reflorestamento',
@@ -705,5 +1085,14 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
       { name: 'densidade_plantio', type: 'number', label: 'Densidade de Plantio (mudas/hectare)', required: true },
       { name: 'cronograma_execucao', type: 'textarea', label: 'Cronograma de Execução', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'MEIO_AMBIENTE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.155Z'
   }
 ];

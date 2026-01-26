@@ -1,4 +1,4 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const habitacaoSuggestions: ServiceSuggestion[] = [
   {
@@ -15,6 +15,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_moradia', type: 'select', label: 'Situação Atual de Moradia', required: true },
       { name: 'possui_imovel', type: 'select', label: 'Possui Imóvel Próprio', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'minha-casa-minha-vida',
@@ -31,6 +40,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_residencia_municipio', type: 'number', label: 'Tempo de Residência no Município (anos)', required: true },
       { name: 'cadastro_unico', type: 'select', label: 'Possui Cadastro Único', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'regularizacao-fundiaria',
@@ -46,6 +64,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_ocupacao', type: 'number', label: 'Tempo de Ocupação (anos)', required: true },
       { name: 'tipo_regularizacao', type: 'select', label: 'Tipo de Regularização', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'auxilio-aluguel-social',
@@ -61,6 +88,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'reforma-habitacional',
@@ -76,6 +112,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'descricao_necessidade', type: 'textarea', label: 'Descrição da Necessidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'lote-urbanizado',
@@ -91,6 +136,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'possui_imovel', type: 'select', label: 'Possui Outro Imóvel', required: true },
       { name: 'num_dependentes', type: 'number', label: 'Número de Dependentes', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'autoconstrucao-assistida',
@@ -106,6 +160,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'possui_projeto', type: 'select', label: 'Possui Projeto Arquitetônico', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'usucapiao-urbano',
@@ -121,6 +184,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_posse', type: 'number', label: 'Tempo de Posse (anos)', required: true },
       { name: 'tipo_usucapiao', type: 'select', label: 'Tipo de Usucapião', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'melhorias-sanitarias',
@@ -136,6 +208,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'possui_banheiro', type: 'select', label: 'Possui Banheiro', required: true },
       { name: 'tipo_esgoto', type: 'select', label: 'Tipo de Esgotamento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'kit-construcao',
@@ -150,6 +231,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'habitacao-rural',
@@ -165,6 +255,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
       { name: 'possui_dap', type: 'select', label: 'Possui DAP', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'planta-gratuita',
@@ -180,6 +279,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'num_comodos', type: 'number', label: 'Número de Cômodos Desejado', required: true },
       { name: 'tipo_projeto', type: 'select', label: 'Tipo de Projeto', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'assistencia-tecnica-habitacional',
@@ -194,6 +302,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_assistencia', type: 'select', label: 'Tipo de Assistência', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'reurb-regularizacao',
@@ -207,6 +324,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_ocupacao', type: 'text', label: 'Endereço da Ocupação', required: true },
       { name: 'tempo_ocupacao', type: 'number', label: 'Tempo de Ocupação (anos)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'energia-solar-social',
@@ -221,6 +347,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_telhado', type: 'select', label: 'Tipo de Telhado', required: true },
       { name: 'conta_energia_media', type: 'number', label: 'Valor Médio Conta de Energia (R$)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'cisterna-residencial',
@@ -235,6 +370,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'area_telhado', type: 'number', label: 'Área do Telhado (m²)', required: false },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'acessibilidade-residencial',
@@ -249,6 +393,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_deficiencia', type: 'select', label: 'Tipo de Deficiência', required: true },
       { name: 'adaptacoes_necessarias', type: 'textarea', label: 'Adaptações Necessárias', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'mutirao-habitacional',
@@ -263,6 +416,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'habilidade_construcao', type: 'select', label: 'Possui Habilidade em Construção', required: false },
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'troca-imovel',
@@ -277,6 +439,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'area_risco', type: 'select', label: 'Tipo de Área de Risco', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'desapropriacao-compensacao',
@@ -291,6 +462,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_desapropriacao', type: 'textarea', label: 'Motivo da Desapropriação', required: false },
       { name: 'tipo_compensacao', type: 'select', label: 'Tipo de Compensação Desejada', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'habitacao-indigena',
@@ -305,6 +485,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'etnia', type: 'text', label: 'Etnia', required: false },
       { name: 'num_familia', type: 'number', label: 'Número de Membros da Família', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'habitacao-quilombola',
@@ -319,6 +508,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'possui_certidao', type: 'select', label: 'Possui Certidão Quilombola', required: false },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'visita-tecnica-habitacional',
@@ -333,6 +531,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_vistoria', type: 'select', label: 'Motivo da Vistoria', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'laudos-habitabilidade',
@@ -346,6 +553,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'finalidade_laudo', type: 'select', label: 'Finalidade do Laudo', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'defesa-civil-moradia',
@@ -360,6 +576,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_risco', type: 'select', label: 'Tipo de Risco Observado', required: true },
       { name: 'descricao_situacao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'aluguel-social-emergencial',
@@ -374,6 +599,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_desastre', type: 'select', label: 'Tipo de Desastre', required: true },
       { name: 'num_desabrigados', type: 'number', label: 'Número de Desabrigados', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 4,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'conjuntos-habitacionais',
@@ -389,6 +623,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'conjunto_preferencia', type: 'select', label: 'Conjunto de Preferência', required: false },
       { name: 'grupo_prioritario', type: 'select', label: 'Pertence a Grupo Prioritário', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'parcelamento-lote',
@@ -404,6 +647,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'renda_mensal', type: 'number', label: 'Renda Mensal (R$)', required: true },
       { name: 'entrada_proposta', type: 'number', label: 'Valor de Entrada Proposto (R$)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'habite-se-popular',
@@ -418,6 +670,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'area_construida', type: 'number', label: 'Área Construída (m²)', required: true },
       { name: 'ano_construcao', type: 'number', label: 'Ano da Construção', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'certidao-posse',
@@ -432,6 +693,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_posse', type: 'number', label: 'Tempo de Posse (anos)', required: true },
       { name: 'finalidade_certidao', type: 'select', label: 'Finalidade da Certidão', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'doacao-terreno-municipal',
@@ -447,6 +717,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'situacao_moradia_atual', type: 'select', label: 'Situação de Moradia Atual', required: true },
       { name: 'tempo_residencia_municipio', type: 'number', label: 'Tempo de Residência no Município (anos)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'permuta-terreno',
@@ -461,6 +740,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'area_terreno_atual', type: 'number', label: 'Área do Terreno Atual (m²)', required: true },
       { name: 'motivo_permuta', type: 'textarea', label: 'Motivo da Permuta', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'credito-habitacional-municipal',
@@ -476,6 +764,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'valor_entrada', type: 'number', label: 'Valor de Entrada (R$)', required: true },
       { name: 'prazo_desejado', type: 'number', label: 'Prazo Desejado (meses)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'programa-locacao-social',
@@ -490,6 +787,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
       { name: 'capacidade_pagamento', type: 'number', label: 'Capacidade de Pagamento Mensal (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'piso-tatil-residencial',
@@ -504,6 +810,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_deficiencia', type: 'select', label: 'Tipo de Deficiência', required: true },
       { name: 'area_instalar', type: 'textarea', label: 'Área a Instalar', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'rampa-acessibilidade',
@@ -518,6 +833,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_mobilidade', type: 'select', label: 'Tipo de Mobilidade Reduzida', required: true },
       { name: 'local_rampa', type: 'select', label: 'Local da Rampa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'adequacao-incendio',
@@ -532,6 +856,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
       { name: 'num_pavimentos', type: 'number', label: 'Número de Pavimentos', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'eficiencia-energetica',
@@ -545,6 +878,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'gasto_energia_mensal', type: 'number', label: 'Gasto Médio Mensal com Energia (R$)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'horta-comunitaria-residencial',
@@ -559,6 +901,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'area_disponivel', type: 'number', label: 'Área Disponível (m²)', required: false },
       { name: 'num_interessados', type: 'number', label: 'Número de Interessados', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'coleta-seletiva-condominio',
@@ -571,6 +922,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     suggestedFields: [
       { name: 'num_unidades', type: 'number', label: 'Número de Unidades', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'mediacao-conflitos-habitacionais',
@@ -585,6 +945,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_conflito', type: 'select', label: 'Tipo de Conflito', required: true },
       { name: 'descricao_conflito', type: 'textarea', label: 'Descrição do Conflito', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'curso-sindico',
@@ -598,6 +967,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'conjunto_habitacional', type: 'text', label: 'Conjunto Habitacional', required: false },
       { name: 'tempo_sindico', type: 'select', label: 'Tempo como Síndico', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'oficina-manutencao-residencial',
@@ -611,6 +989,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'declaracao-residencia',
@@ -624,6 +1011,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_residencia', type: 'number', label: 'Tempo de Residência (anos)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'consorcio-habitacional',
@@ -638,6 +1034,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'valor_credito_desejado', type: 'number', label: 'Valor de Crédito Desejado (R$)', required: true },
       { name: 'capacidade_parcela', type: 'number', label: 'Capacidade de Parcela Mensal (R$)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'cadastro-morador-conjunto',
@@ -652,6 +1057,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'unidade_bloco', type: 'text', label: 'Unidade/Bloco', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'transferencia-unidade',
@@ -666,6 +1080,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_transferencia', type: 'textarea', label: 'Motivo da Transferência', required: true },
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'segunda-via-contrato',
@@ -679,6 +1102,15 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'numero_contrato', type: 'text', label: 'Número do Contrato Original', required: false },
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   },
   {
     id: 'quitacao-imovel',
@@ -693,5 +1125,14 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
       { name: 'numero_contrato', type: 'text', label: 'Número do Contrato', required: true },
       { name: 'valor_quitacao', type: 'number', label: 'Valor de Quitação (R$)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'HABITACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.148Z'
   }
 ];

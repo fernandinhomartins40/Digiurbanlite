@@ -1,37 +1,6 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const saudeSuggestions: ServiceSuggestion[] = [
-  {
-    id: 'agendamento-consulta',
-    name: 'Agendamento de Consulta',
-    description: 'Agende consultas médicas em unidades básicas de saúde',
-    icon: 'Stethoscope',
-    category: 'Agendamento',
-    estimatedDays: 5,
-    requiresDocuments: false,
-    suggestedFields: [
-      { name: 'especialidade', type: 'select', label: 'Especialidade', required: true },
-      { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde Preferida', required: true },
-      { name: 'periodo_preferencia', type: 'select', label: 'Período de Preferência', required: false },
-      { name: 'observacoes', type: 'textarea', label: 'Observações', required: false },
-    ]
-  },
-  {
-    id: 'solicitacao-medicamento',
-    name: 'Solicitação de Medicamento',
-    description: 'Solicite medicamentos da farmácia municipal',
-    icon: 'Pill',
-    category: 'Farmácia',
-    estimatedDays: 3,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'cartao_sus', type: 'text', label: 'Número do Cartão SUS', required: true },
-      { name: 'medicamento', type: 'text', label: 'Nome do Medicamento', required: true },
-      { name: 'dosagem', type: 'text', label: 'Dosagem Prescrita', required: true },
-      { name: 'medico_prescritor', type: 'text', label: 'Nome do Médico Prescritor', required: true },
-      { name: 'uso_continuo', type: 'checkbox', label: 'Uso Contínuo', required: false },
-    ]
-  },
   {
     id: 'cadastro-gestante',
     name: 'Cadastro de Gestante',
@@ -45,6 +14,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'primeira_gestacao', type: 'checkbox', label: 'Primeira Gestação', required: false },
       { name: 'unidade_preferencia', type: 'select', label: 'Unidade de Saúde para Pré-Natal', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'vacinacao-agendamento',
@@ -59,6 +37,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'posto_vacinacao', type: 'select', label: 'Posto de Vacinação', required: true },
       { name: 'carteira_vacinacao', type: 'text', label: 'Número da Carteira de Vacinação', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'exames-laboratoriais',
@@ -75,6 +62,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'laboratorio_preferencia', type: 'select', label: 'Laboratório de Preferência', required: false },
       { name: 'jejum_necessario', type: 'checkbox', label: 'Exame Requer Jejum', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'tratamento-especial',
@@ -109,6 +105,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
         expectedRelationships: ['SPOUSE', 'SON', 'DAUGHTER', 'MOTHER', 'FATHER', 'SIBLING']
       }]
     }
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'programa-hiperdia',
@@ -123,6 +128,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'diabetes', type: 'checkbox', label: 'Diabetes', required: false },
       { name: 'unidade_acompanhamento', type: 'select', label: 'Unidade para Acompanhamento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'saude-bucal',
@@ -138,6 +152,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'primeira_consulta', type: 'checkbox', label: 'Primeira Consulta', required: false },
       { name: 'urgencia', type: 'checkbox', label: 'Urgência/Dor', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'fisioterapia',
@@ -154,6 +177,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'sessoes_semana', type: 'number', label: 'Sessões por Semana', required: false },
       { name: 'mobilidade_reduzida', type: 'checkbox', label: 'Mobilidade Reduzida', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'psicologia-saude',
@@ -169,6 +201,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'primeira_vez', type: 'checkbox', label: 'Primeira Vez em Atendimento Psicológico', required: false },
       { name: 'emergencia', type: 'checkbox', label: 'Situação de Emergência', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'cartao-sus',
@@ -182,6 +223,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'municipio_nascimento', type: 'text', label: 'Município de Nascimento', required: true },
       { name: 'segunda_via', type: 'checkbox', label: 'Segunda Via', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'atestado-saude',
@@ -197,6 +247,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_aso', type: 'select', label: 'Tipo de ASO', required: true },
       { name: 'unidade_atendimento', type: 'select', label: 'Unidade de Atendimento', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'planejamento-familiar',
@@ -211,6 +270,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'metodo_interesse', type: 'select', label: 'Método de Interesse', required: false },
       { name: 'unidade_referencia', type: 'select', label: 'Unidade de Referência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'teste-covid',
@@ -227,6 +295,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'contato_confirmado', type: 'checkbox', label: 'Teve Contato com Caso Confirmado', required: false },
       { name: 'posto_coleta', type: 'select', label: 'Posto de Coleta', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'home-care',
@@ -242,6 +319,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'acamado', type: 'checkbox', label: 'Paciente Acamado', required: false },
       { name: 'cuidador', type: 'text', label: 'Nome do Cuidador/Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'mamografia',
@@ -257,6 +343,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'data_ultima_mamografia', type: 'date', label: 'Data da Última Mamografia', required: false },
       { name: 'unidade_preferencia', type: 'select', label: 'Unidade de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'preventivo',
@@ -271,6 +366,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'primeira_vez', type: 'checkbox', label: 'Primeira Vez', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'nutricao',
@@ -287,6 +391,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'doenca_cronica', type: 'checkbox', label: 'Possui Doença Crônica', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'nebulizacao',
@@ -302,6 +415,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
       { name: 'crianca', type: 'checkbox', label: 'Paciente é Criança (menor de 12 anos)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'curativos',
@@ -318,6 +440,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'diabetico', type: 'checkbox', label: 'Paciente Diabético', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'aferimento-pressao',
@@ -332,6 +463,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'medicacao_controlada', type: 'checkbox', label: 'Faz Uso de Medicação Controlada', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'teste-glicemia',
@@ -346,6 +486,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'jejum', type: 'checkbox', label: 'Em Jejum', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'insulina',
@@ -362,6 +511,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'medico_prescritor', type: 'text', label: 'Médico Prescritor', required: true },
       { name: 'tipo_diabetes', type: 'select', label: 'Tipo de Diabetes', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'cadeira-rodas',
@@ -376,6 +534,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_uso', type: 'select', label: 'Período de Uso Estimado', required: true },
       { name: 'laudo_medico', type: 'checkbox', label: 'Possui Laudo Médico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'muletas',
@@ -391,6 +558,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'motivo', type: 'text', label: 'Motivo da Necessidade', required: true },
       { name: 'periodo_uso', type: 'select', label: 'Período Estimado de Uso', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'fraldas-geriatricas',
@@ -407,6 +583,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'laudo_medico', type: 'checkbox', label: 'Possui Laudo Médico', required: true },
       { name: 'acamado', type: 'checkbox', label: 'Paciente Acamado', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'eletrocardiograma',
@@ -421,6 +606,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'sintomas', type: 'textarea', label: 'Sintomas Apresentados', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'ultrassom',
@@ -437,6 +631,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'semanas_gestacao', type: 'number', label: 'Semanas de Gestação (se aplicável)', required: false },
       { name: 'unidade_referencia', type: 'select', label: 'Unidade de Referência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'raio-x',
@@ -453,6 +656,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'gestante', type: 'checkbox', label: 'Paciente Gestante', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'saude-mental-caps',
@@ -467,6 +679,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'caps_unidade', type: 'select', label: 'Unidade CAPS', required: true },
       { name: 'emergencia', type: 'checkbox', label: 'Situação de Emergência', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'programa-tabagismo',
@@ -482,6 +703,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'tentativas_anteriores', type: 'number', label: 'Tentativas Anteriores de Parar', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'alongamento-terceira-idade',
@@ -497,6 +727,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'descricao_restricao', type: 'textarea', label: 'Descrição da Restrição', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'atendimento-fonoaudiologo',
@@ -512,6 +751,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'crianca', type: 'checkbox', label: 'Paciente é Criança', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'terapia-ocupacional',
@@ -528,6 +776,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'deficiencia', type: 'checkbox', label: 'Possui Deficiência', required: false },
       { name: 'unidade_referencia', type: 'select', label: 'Unidade de Referência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'teste-orelhinha',
@@ -542,6 +799,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'peso_nascimento', type: 'number', label: 'Peso ao Nascer (gramas)', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'teste-pezinho',
@@ -556,6 +822,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'idade_bebe_dias', type: 'number', label: 'Idade do Bebê (em dias)', required: true },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'acompanhamento-puericultura',
@@ -571,6 +846,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'altura_atual', type: 'number', label: 'Altura Atual (cm)', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'atestado-acompanhante',
@@ -586,6 +870,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'data_atendimento', type: 'date', label: 'Data do Atendimento', required: true },
       { name: 'periodo_acompanhamento', type: 'select', label: 'Período de Acompanhamento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'programa-obesidade',
@@ -601,6 +894,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'doenca_associada', type: 'checkbox', label: 'Possui Doença Associada (diabetes, hipertensão)', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'saude-bucal-crianca',
@@ -616,6 +918,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'primeira_consulta', type: 'checkbox', label: 'Primeira Consulta ao Dentista', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'aplicacao-injecao',
@@ -631,6 +942,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'prescricao_medica', type: 'checkbox', label: 'Possui Prescrição Médica', required: true },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'circuncisao',
@@ -645,6 +965,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'medico_encaminhamento', type: 'text', label: 'Médico que Encaminhou', required: true },
       { name: 'grau_fimose', type: 'select', label: 'Grau da Fimose', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'retirada-pontos',
@@ -660,6 +989,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade_pontos', type: 'number', label: 'Quantidade de Pontos (aproximada)', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'atestado-sanidade',
@@ -673,6 +1011,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade', type: 'text', label: 'Finalidade do Atestado', required: true },
       { name: 'orgao_destino', type: 'text', label: 'Órgão de Destino', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'coleta-preventivo-homem',
@@ -688,6 +1035,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'primeiro_exame', type: 'checkbox', label: 'Primeiro Exame', required: false },
       { name: 'unidade_saude', type: 'select', label: 'Unidade de Saúde', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'solicitacao-oxigenio',
@@ -703,6 +1059,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'fluxo_oxigenio', type: 'text', label: 'Fluxo de Oxigênio Prescrito', required: true },
       { name: 'uso_continuo', type: 'checkbox', label: 'Uso Contínuo (24h)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'programa-hanseniase',
@@ -717,6 +1082,15 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'contatos_domiciliares', type: 'number', label: 'Número de Contatos Domiciliares', required: false },
       { name: 'unidade_referencia', type: 'select', label: 'Unidade de Referência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   },
   {
     id: 'programa-tuberculose',
@@ -731,5 +1105,14 @@ export const saudeSuggestions: ServiceSuggestion[] = [
       { name: 'tratamento_supervisionado', type: 'checkbox', label: 'Necessita Tratamento Supervisionado', required: false },
       { name: 'unidade_referencia', type: 'select', label: 'Unidade de Referência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SAUDE',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.165Z'
   }
 ];

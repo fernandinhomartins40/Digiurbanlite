@@ -1,43 +1,6 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const educacaoSuggestions: ServiceSuggestion[] = [
-  {
-    id: 'matricula-escolar',
-    name: 'Matrícula Escolar',
-    description: 'Matrícula na rede municipal de ensino',
-    icon: 'GraduationCap',
-    category: 'Matrícula',
-    estimatedDays: 5,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'serie_ano', type: 'select', label: 'Série/Ano', required: true },
-      { name: 'escola_preferencia', type: 'select', label: 'Escola de Preferência', required: true },
-      { name: 'turno', type: 'select', label: 'Turno Desejado', required: true },
-    ],
-    linkedCitizensConfig: {
-      enabled: true,
-      links: [{
-        linkType: 'STUDENT',
-        role: 'BENEFICIARY',
-        label: 'Aluno',
-        description: 'Selecione o aluno que será matriculado',
-        required: true,
-        mapFromLegacyFields: {
-          name: 'nomeAluno',
-          birthDate: 'dataNascimentoAluno'
-        },
-        contextFields: [
-          { id: 'sexoAluno', sourceField: 'sexoAluno' },
-          { id: 'escolaPreferencial', sourceField: 'escolaPreferencial' },
-          { id: 'anoEscolar', sourceField: 'anoEscolar' },
-          { id: 'turnoPreferencial', sourceField: 'turnoPreferencial' },
-          { id: 'possuiNecessidadesEspeciais', sourceField: 'possuiNecessidadesEspeciais' },
-          { id: 'descricaoNecessidades', sourceField: 'descricaoNecessidades' }
-        ],
-        expectedRelationships: ['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER']
-      }]
-    }
-  },
   {
     id: 'transporte-escolar',
     name: 'Transporte Escolar',
@@ -54,6 +17,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'distancia_escola', type: 'number', label: 'Distância até a Escola (km)', required: false },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'merenda-especial',
@@ -70,6 +42,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'laudo_medico', type: 'checkbox', label: 'Possui Laudo Médico', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'transferencia-escola',
@@ -102,21 +83,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
         expectedRelationships: ['SON', 'DAUGHTER']
       }]
     }
-  },
-  {
-    id: 'declaracao-escolaridade',
-    name: 'Declaração de Escolaridade',
-    description: 'Emissão de declarações e atestados escolares',
-    icon: 'FileText',
-    category: 'Documentos',
-    estimatedDays: 3,
-    requiresDocuments: false,
-    suggestedFields: [
-      { name: 'escola', type: 'select', label: 'Escola', required: true },
-      { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
-      { name: 'tipo_documento', type: 'select', label: 'Tipo de Documento', required: true },
-      { name: 'finalidade', type: 'text', label: 'Finalidade do Documento', required: true },
-    ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'bolsa-estudo',
@@ -132,6 +107,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'renda_familiar', type: 'number', label: 'Renda Familiar Mensal (R$)', required: true },
       { name: 'num_moradores', type: 'number', label: 'Número de Moradores na Casa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'eja-inscricao',
@@ -146,6 +130,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'unidade_eja', type: 'select', label: 'Unidade EJA', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'educacao-especial',
@@ -162,6 +155,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'laudo_medico', type: 'checkbox', label: 'Possui Laudo Médico', required: true },
       { name: 'atendimento_solicitado', type: 'textarea', label: 'Tipo de Atendimento Necessário', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'uniforme-escolar',
@@ -179,6 +181,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tamanho_tenis', type: 'number', label: 'Número do Calçado', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'material-escolar',
@@ -194,19 +205,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'turno', type: 'select', label: 'Turno', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
-  },
-  {
-    id: 'historico-escolar',
-    name: 'Histórico Escolar',
-    description: 'Solicitação de histórico escolar completo',
-    icon: 'FileText',
-    category: 'Documentos',
-    estimatedDays: 7,
-    requiresDocuments: false,
-    suggestedFields: [
-      { name: 'escola', type: 'select', label: 'Escola onde Estudou', required: true },
-      { name: 'ano_conclusao', type: 'number', label: 'Ano de Conclusão', required: true },
-    ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'segunda-chamada-prova',
@@ -224,6 +231,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo', type: 'textarea', label: 'Motivo da Ausência', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'atendimento-psicologo-escolar',
@@ -238,6 +254,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
       { name: 'motivo_solicitacao', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'reforco-escolar',
@@ -254,6 +279,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'turno_disponivel', type: 'select', label: 'Turno Disponível', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'rematricula',
@@ -270,6 +304,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'turno', type: 'select', label: 'Turno Desejado', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'trancamento-matricula',
@@ -285,6 +328,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo', type: 'textarea', label: 'Motivo do Trancamento', required: true },
       { name: 'previsao_retorno', type: 'date', label: 'Previsão de Retorno', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'certificado-conclusao',
@@ -299,6 +351,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'curso_nivel', type: 'select', label: 'Curso/Nível Concluído', required: true },
       { name: 'ano_conclusao', type: 'number', label: 'Ano de Conclusão', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'visita-pedagogica',
@@ -316,6 +377,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'autorizo', type: 'checkbox', label: 'Autorizo a Participação', required: true },
       { name: 'telefone_emergencia', type: 'tel', label: 'Telefone de Emergência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'atividades-complementares',
@@ -332,6 +402,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'turno_disponivel', type: 'select', label: 'Turno Disponível', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'recuperacao-nota',
@@ -348,6 +427,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_recuperacao', type: 'select', label: 'Tipo de Recuperação', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'biblioteca-emprestimo',
@@ -363,6 +451,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'turma', type: 'text', label: 'Turma', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'pass-livre-estudante',
@@ -378,6 +475,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'turno', type: 'select', label: 'Turno', required: true },
       { name: 'endereco_residencia', type: 'text', label: 'Endereço de Residência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'carteirinha-estudante',
@@ -391,6 +497,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'escola', type: 'select', label: 'Escola', required: true },
       { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'alergia-medicamentos',
@@ -408,6 +523,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'condicao_saude', type: 'textarea', label: 'Condições de Saúde Relevantes', required: false },
       { name: 'telefone_emergencia', type: 'tel', label: 'Telefone de Emergência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'dispensa-educacao-fisica',
@@ -426,6 +550,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'laudo_medico', type: 'checkbox', label: 'Anexar Laudo Médico', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'pre-matricula-creche',
@@ -439,6 +572,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'creche_preferencia', type: 'select', label: 'Creche de Preferência', required: true },
       { name: 'periodo', type: 'select', label: 'Período (Integral/Parcial)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'pre-escola',
@@ -452,6 +594,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'pre_escola', type: 'select', label: 'Pré-Escola de Preferência', required: true },
       { name: 'turno', type: 'select', label: 'Turno', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'conselho-escola',
@@ -465,6 +616,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'escola', type: 'select', label: 'Escola', required: true },
       { name: 'segmento', type: 'select', label: 'Segmento (Pais/Professores/Funcionários)', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'reclamacao-bullying',
@@ -481,6 +641,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'data_ocorrencia', type: 'date', label: 'Data da Ocorrência', required: false },
       { name: 'denuncia_anonima', type: 'checkbox', label: 'Denúncia Anônima', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'programa-mais-educacao',
@@ -496,6 +665,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'atividades_interesse', type: 'textarea', label: 'Atividades de Interesse', required: false },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'estagio-supervisionado',
@@ -511,6 +689,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'periodo', type: 'text', label: 'Período Atual', required: true },
       { name: 'area_interesse', type: 'select', label: 'Área de Interesse para Estágio', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'projeto-leitura',
@@ -526,6 +713,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'genero_preferencia', type: 'select', label: 'Gênero Literário de Preferência', required: false },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'alfabetizacao-adultos',
@@ -539,6 +735,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'local_preferencia', type: 'select', label: 'Local de Preferência para as Aulas', required: true },
       { name: 'turno_preferencia', type: 'select', label: 'Turno de Preferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'curso-profissionalizante',
@@ -553,6 +758,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'olimpiadas-escolares',
@@ -568,6 +782,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'olimpiada', type: 'select', label: 'Olimpíada/Competição', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'renovacao-contrato-professor',
@@ -582,6 +805,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'disciplina', type: 'text', label: 'Disciplina/Área', required: true },
       { name: 'data_inicio_contrato', type: 'date', label: 'Data de Início do Contrato Atual', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'capacitacao-professores',
@@ -596,6 +828,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'area_atuacao', type: 'text', label: 'Área de Atuação', required: true },
       { name: 'curso_interesse', type: 'select', label: 'Curso de Interesse', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'projeto-horta-escolar',
@@ -611,6 +852,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'espaco_disponivel', type: 'checkbox', label: 'Possui Espaço Disponível', required: true },
       { name: 'objetivo_projeto', type: 'textarea', label: 'Objetivo do Projeto', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'sala-recursos-multifuncionais',
@@ -627,6 +877,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'laudo_anexado', type: 'checkbox', label: 'Laudo Médico Anexado', required: true },
       { name: 'horario_disponivel', type: 'select', label: 'Horário Disponível', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'conselho-classe',
@@ -642,6 +901,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'serie_turma', type: 'text', label: 'Série/Turma', required: true },
       { name: 'periodo', type: 'text', label: 'Período (Bimestre/Trimestre/Ano)', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'projeto-feira-ciencias',
@@ -659,6 +927,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'resumo_projeto', type: 'textarea', label: 'Resumo do Projeto', required: true },
       { name: 'professor_orientador', type: 'text', label: 'Professor Orientador', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#ec4899',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'atendimento-assistente-social',
@@ -674,6 +951,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_atendimento', type: 'textarea', label: 'Motivo do Atendimento', required: true },
       { name: 'urgente', type: 'checkbox', label: 'Situação Urgente', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'termo-responsabilidade-menor',
@@ -689,6 +975,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_autorizacao', type: 'select', label: 'Tipo de Autorização', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'calendario-escolar',
@@ -702,6 +997,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'escola', type: 'select', label: 'Escola', required: true },
       { name: 'ano_letivo', type: 'number', label: 'Ano Letivo', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'lista-material-escolar',
@@ -715,6 +1019,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'escola', type: 'select', label: 'Escola', required: true },
       { name: 'serie', type: 'select', label: 'Série/Ano', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'renegociacao-mensalidade',
@@ -729,6 +1042,15 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'valor_debito', type: 'number', label: 'Valor do Débito (R$)', required: true },
       { name: 'parcelas_desejadas', type: 'number', label: 'Número de Parcelas Desejadas', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   },
   {
     id: 'atualizacao-cadastral',
@@ -745,5 +1067,14 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
       { name: 'novos_dados', type: 'textarea', label: 'Novos Dados', required: true },
       { name: 'telefone_responsavel', type: 'tel', label: 'Telefone do Responsável', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'EDUCACAO',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.137Z'
   }
 ];

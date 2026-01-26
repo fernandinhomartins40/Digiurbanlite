@@ -1,21 +1,6 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const agriculturaSuggestions: ServiceSuggestion[] = [
-  {
-    id: 'cadastro-produtor-rural',
-    name: 'Cadastro de Produtor Rural',
-    description: 'Registro oficial de produtor rural do município',
-    icon: 'Users',
-    category: 'Cadastro',
-    estimatedDays: 10,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'endereco_propriedade', type: 'text', label: 'Endereço da Propriedade', required: true },
-      { name: 'tamanho_propriedade', type: 'number', label: 'Tamanho da Propriedade (hectares)', required: true },
-      { name: 'tipo_producao', type: 'select', label: 'Tipo de Produção', required: true },
-      { name: 'possui_dap', type: 'select', label: 'Possui DAP (Declaração de Aptidão ao PRONAF)', required: false },
-    ]
-  },
   {
     id: 'dap-declaracao',
     name: 'DAP - Declaração de Aptidão ao PRONAF',
@@ -31,6 +16,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'num_membros_familia', type: 'number', label: 'Número de Membros da Família', required: true },
       { name: 'tipo_renovacao', type: 'select', label: 'Tipo de Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'emprestimo-maquinas',
@@ -47,6 +41,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial de Uso', required: true },
       { name: 'periodo_necessario', type: 'number', label: 'Período Necessário (dias)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'cadastro-cooperativa',
@@ -61,6 +64,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'num_cooperados', type: 'number', label: 'Número de Cooperados', required: true },
       { name: 'area_atuacao', type: 'select', label: 'Área de Atuação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'cadastro-agroindustria',
@@ -76,6 +88,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'producao_mensal', type: 'number', label: 'Produção Mensal Estimada (kg)', required: false },
       { name: 'possui_alvara', type: 'select', label: 'Possui Alvará Sanitário', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'cadastro-apicultor',
@@ -91,6 +112,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'producao_anual', type: 'number', label: 'Produção Anual Estimada (kg)', required: false },
       { name: 'tipo_producao', type: 'select', label: 'Tipo de Produção', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'licenca-uso-agua',
@@ -107,6 +137,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'cultura_irrigada', type: 'select', label: 'Cultura a ser Irrigada', required: true },
       { name: 'coordenadas_gps', type: 'text', label: 'Coordenadas GPS do Ponto de Captação', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'licenca-poco',
@@ -123,6 +162,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade_uso', type: 'select', label: 'Finalidade do Uso', required: true },
       { name: 'vazao_pretendida', type: 'number', label: 'Vazão Pretendida (L/h)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'selo-inspecao-municipal',
@@ -138,6 +186,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_estabelecimento', type: 'text', label: 'Endereço do Estabelecimento', required: true },
       { name: 'volume_producao', type: 'number', label: 'Volume de Produção Mensal', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'assistencia-tecnica',
@@ -153,6 +210,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'cultura_atividade', type: 'select', label: 'Cultura/Atividade', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema/Necessidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'analise-solo',
@@ -168,6 +234,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'cultura_pretendida', type: 'select', label: 'Cultura Pretendida', required: true },
       { name: 'num_amostras', type: 'number', label: 'Número de Amostras', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'distribuicao-sementes',
@@ -183,6 +258,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_plantio', type: 'number', label: 'Área de Plantio (hectares)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'credito-rural',
@@ -198,6 +282,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'valor_estimado', type: 'number', label: 'Valor Estimado (R$)', required: false },
       { name: 'possui_dap', type: 'select', label: 'Possui DAP', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'nota-produtor',
@@ -212,6 +305,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'produtos_comercializar', type: 'textarea', label: 'Produtos a Comercializar', required: true },
       { name: 'volume_mensal', type: 'text', label: 'Volume Mensal Estimado', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'piscicultura-cadastro',
@@ -227,6 +329,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_total', type: 'number', label: 'Área Total de Lâmina d\'água (m²)', required: true },
       { name: 'especies_criadas', type: 'textarea', label: 'Espécies Criadas', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'feira-produtor',
@@ -242,6 +353,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'dia_preferencia', type: 'select', label: 'Dia de Preferência', required: true },
       { name: 'tamanho_banca', type: 'select', label: 'Tamanho de Banca Desejado', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'pnae-cadastro',
@@ -256,6 +376,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_fornecimento', type: 'text', label: 'Capacidade de Fornecimento', required: true },
       { name: 'possui_dap', type: 'select', label: 'Possui DAP', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'organicos-certificacao',
@@ -271,6 +400,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_transicao', type: 'number', label: 'Tempo em Transição (meses)', required: false },
       { name: 'tipo_certificacao', type: 'select', label: 'Tipo de Certificação Desejada', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'patrulha-mecanizada',
@@ -286,6 +424,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_trabalhar', type: 'number', label: 'Área a Trabalhar (hectares)', required: true },
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'vacina-animal',
@@ -301,6 +448,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_vacina', type: 'select', label: 'Tipo de Vacina', required: true },
       { name: 'local_vacinacao', type: 'text', label: 'Local da Vacinação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'gta-guia-transito',
@@ -317,6 +473,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'destino', type: 'text', label: 'Destino', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade do Transporte', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'curso-capacitacao',
@@ -331,6 +496,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
       { name: 'turno_disponibilidade', type: 'select', label: 'Turno de Disponibilidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'cadastro-horta-comunitaria',
@@ -345,6 +519,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_agricultura', type: 'select', label: 'Experiência em Agricultura', required: true },
       { name: 'disponibilidade_semanal', type: 'select', label: 'Disponibilidade Semanal', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'desmatamento-autorizacao',
@@ -360,6 +543,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade', type: 'select', label: 'Finalidade da Supressão', required: true },
       { name: 'possui_car', type: 'select', label: 'Possui CAR (Cadastro Ambiental Rural)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'car-cadastro',
@@ -374,6 +566,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: true },
       { name: 'possui_app', type: 'select', label: 'Possui APP (Área de Preservação Permanente)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'agrotoxico-receituario',
@@ -388,6 +589,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_aplicacao', type: 'number', label: 'Área de Aplicação (hectares)', required: true },
       { name: 'praga_doenca', type: 'textarea', label: 'Praga/Doença a Controlar', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'adubo-organico',
@@ -403,6 +613,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'cultura_destino', type: 'select', label: 'Cultura de Destino', required: true },
       { name: 'endereco_entrega', type: 'text', label: 'Endereço para Entrega', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'calcario-distribuicao',
@@ -418,6 +637,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'cultura_pretendida', type: 'select', label: 'Cultura Pretendida', required: true },
       { name: 'local_entrega', type: 'text', label: 'Local de Entrega', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'tanque-peixe',
@@ -433,6 +661,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'fonte_agua', type: 'select', label: 'Fonte de Água', required: true },
       { name: 'especie_criar', type: 'select', label: 'Espécie a Criar', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'irrigacao-projeto',
@@ -448,6 +685,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_cultura', type: 'select', label: 'Tipo de Cultura', required: true },
       { name: 'sistema_desejado', type: 'select', label: 'Sistema de Irrigação Desejado', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'cerca-eletrica',
@@ -462,6 +708,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_propriedade', type: 'number', label: 'Área da Propriedade (hectares)', required: false },
       { name: 'experiencia_cerca', type: 'select', label: 'Experiência com Cerca Elétrica', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'silagem-orientacao',
@@ -476,6 +731,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'volume_produzir', type: 'number', label: 'Volume a Produzir (toneladas)', required: true },
       { name: 'num_animais', type: 'number', label: 'Número de Animais', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'inseminacao-artificial',
@@ -490,6 +754,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'raca_desejada', type: 'select', label: 'Raça Desejada', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade (Leite/Corte)', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'castanha-programa',
@@ -505,6 +778,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'num_arvores', type: 'number', label: 'Número de Árvores', required: true },
       { name: 'producao_anual', type: 'number', label: 'Produção Anual (kg)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'fruticultura-mudas',
@@ -520,6 +802,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_plantio', type: 'number', label: 'Área de Plantio (hectares)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'olericultura-projeto',
@@ -535,6 +826,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'possui_irrigacao', type: 'select', label: 'Possui Irrigação', required: true },
       { name: 'hortalizas_interesse', type: 'textarea', label: 'Hortaliças de Interesse', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'mandioca-processamento',
@@ -549,6 +849,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
       { name: 'produto_final', type: 'select', label: 'Produto Final Desejado', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'leite-resfriador',
@@ -564,6 +873,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'possui_energia', type: 'select', label: 'Possui Energia Elétrica', required: true },
       { name: 'tipo_ordenha', type: 'select', label: 'Tipo de Ordenha', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'avicultura-galinheiro',
@@ -578,6 +896,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
       { name: 'area_disponivel', type: 'number', label: 'Área Disponível (m²)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'suinocultura-orientacao',
@@ -592,6 +919,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_criacao', type: 'select', label: 'Tipo de Criação', required: true },
       { name: 'problema_encontrado', type: 'textarea', label: 'Problema/Dúvida', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'agrofloresta-projeto',
@@ -606,6 +942,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_solo', type: 'select', label: 'Tipo de Solo', required: false },
       { name: 'especies_interesse', type: 'textarea', label: 'Espécies de Interesse', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'cadastro-produtor-organico',
@@ -620,6 +965,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'produtos_organicos', type: 'textarea', label: 'Produtos Orgânicos Cultivados', required: true },
       { name: 'tipo_certificacao', type: 'select', label: 'Possui Certificação', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 3,
+    color: '#10b981',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'apicultura-enxame',
@@ -635,6 +989,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'possui_colmeias', type: 'select', label: 'Possui Colmeias', required: true },
       { name: 'experiencia_apicultura', type: 'select', label: 'Experiência em Apicultura', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'agroecologia-transicao',
@@ -649,6 +1012,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'sistema_atual', type: 'select', label: 'Sistema de Produção Atual', required: true },
       { name: 'metas_transicao', type: 'textarea', label: 'Metas da Transição', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'ervas-medicinais',
@@ -663,6 +1035,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'plantas_interesse', type: 'textarea', label: 'Plantas de Interesse', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'quintal-produtivo',
@@ -676,6 +1057,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_disponivel', type: 'number', label: 'Área Disponível (m²)', required: true },
       { name: 'tipo_producao', type: 'select', label: 'Tipo de Produção Desejada', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'defensivos-alternativos',
@@ -689,6 +1079,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_producao', type: 'select', label: 'Tipo de Produção', required: true },
       { name: 'nivel_conhecimento', type: 'select', label: 'Nível de Conhecimento', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'compostagem-curso',
@@ -702,6 +1101,15 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
       { name: 'area_interesse', type: 'number', label: 'Área de Interesse (m²)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   },
   {
     id: 'irrigacao-gotejamento',
@@ -715,5 +1123,14 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
       { name: 'area_irrigar', type: 'number', label: 'Área a Irrigar (hectares)', required: false },
       { name: 'cultura_pretendida', type: 'select', label: 'Cultura Pretendida', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'AGRICULTURA',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:56.971Z'
   }
 ];

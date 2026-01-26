@@ -1,23 +1,6 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
-  {
-    id: 'alvara-construcao',
-    name: 'Alvará de Construção',
-    description: 'Licença para construir, reformar ou ampliar edificação',
-    icon: 'Building2',
-    category: 'Licenciamento',
-    estimatedDays: 30,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
-      { name: 'tipo_obra', type: 'select', label: 'Tipo de Obra', required: true },
-      { name: 'area_construir', type: 'number', label: 'Área a Construir (m²)', required: true },
-      { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
-      { name: 'crea_cau', type: 'text', label: 'CREA/CAU', required: true },
-    ]
-  },
   {
     id: 'certidao-uso-solo',
     name: 'Certidão de Uso do Solo',
@@ -32,6 +15,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'matricula_imovel', type: 'text', label: 'Matrícula do Imóvel', required: false },
       { name: 'finalidade_certidao', type: 'select', label: 'Finalidade da Certidão', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'parcelamento-solo-loteamento',
@@ -47,6 +39,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'num_lotes', type: 'number', label: 'Número de Lotes Projetados', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'habite-se',
@@ -63,6 +64,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'data_conclusao', type: 'date', label: 'Data de Conclusão da Obra', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'desmembramento-terreno',
@@ -79,6 +89,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'num_lotes_resultantes', type: 'number', label: 'Número de Lotes Resultantes', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'unificacao-lotes',
@@ -94,6 +113,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'num_lotes_unificar', type: 'number', label: 'Número de Lotes a Unificar', required: true },
       { name: 'area_total_resultante', type: 'number', label: 'Área Total Resultante (m²)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'consulta-previa-viabilidade',
@@ -110,6 +138,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'area_terreno', type: 'number', label: 'Área do Terreno (m²)', required: true },
       { name: 'area_construir_estimada', type: 'number', label: 'Área a Construir Estimada (m²)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'alvara-demolicao',
@@ -126,6 +163,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_demolicao', type: 'textarea', label: 'Motivo da Demolição', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-numeracao-predial',
@@ -140,6 +186,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
       { name: 'possui_habite_se', type: 'select', label: 'Possui Habite-se?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-alinhamento',
@@ -155,24 +210,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'area_terreno', type: 'number', label: 'Área do Terreno (m²)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
-  },
-  {
-    id: 'aprovacao-projeto-arquitetonico',
-    name: 'Aprovação de Projeto Arquitetônico',
-    description: 'Análise e aprovação de projeto arquitetônico',
-    icon: 'PenTool',
-    category: 'Projetos',
-    estimatedDays: 30,
-    requiresDocuments: true,
-    suggestedFields: [
-      { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
-      { name: 'endereco_obra', type: 'text', label: 'Endereço da Obra', required: true },
-      { name: 'tipo_projeto', type: 'select', label: 'Tipo de Projeto', required: true },
-      { name: 'area_construir', type: 'number', label: 'Área a Construir (m²)', required: true },
-      { name: 'num_pavimentos', type: 'number', label: 'Número de Pavimentos', required: true },
-      { name: 'responsavel_tecnico', type: 'text', label: 'Arquiteto Responsável', required: true },
-      { name: 'cau', type: 'text', label: 'CAU', required: true },
-    ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'modificacao-projeto-aprovado',
@@ -188,6 +234,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'descricao_alteracoes', type: 'textarea', label: 'Descrição das Alterações', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'regularizacao-obra',
@@ -205,6 +260,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'ano_construcao_estimado', type: 'number', label: 'Ano de Construção (estimado)', required: false },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'zoneamento-consulta',
@@ -218,6 +282,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_consulta', type: 'text', label: 'Endereço para Consulta', required: true },
       { name: 'finalidade_consulta', type: 'textarea', label: 'Finalidade da Consulta', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-cadastro-urbano',
@@ -233,6 +306,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'inscricao_municipal', type: 'text', label: 'Inscrição Municipal (se souber)', required: false },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'licenca-localizacao',
@@ -250,6 +332,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'area_estabelecimento', type: 'number', label: 'Área do Estabelecimento (m²)', required: true },
       { name: 'num_funcionarios', type: 'number', label: 'Número de Funcionários', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'alvara-reforma',
@@ -267,6 +358,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'descricao_reforma', type: 'textarea', label: 'Descrição da Reforma', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'autorizacao-movimento-terra',
@@ -283,6 +383,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_movimento', type: 'select', label: 'Tipo de Movimento', required: true },
       { name: 'finalidade', type: 'textarea', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'licenca-instalacao-publicidade',
@@ -299,6 +408,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'dimensoes', type: 'text', label: 'Dimensões (LxAxP)', required: true },
       { name: 'possui_iluminacao', type: 'select', label: 'Possui Iluminação?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-baixa-imovel',
@@ -314,6 +432,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_baixa', type: 'select', label: 'Motivo da Baixa', required: true },
       { name: 'possui_demolicao', type: 'select', label: 'Possui Alvará de Demolição?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'plano-diretor-consulta',
@@ -327,6 +454,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'assunto_consulta', type: 'textarea', label: 'Assunto da Consulta', required: true },
       { name: 'area_interesse', type: 'text', label: 'Área de Interesse (se aplicável)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'retificacao-area',
@@ -343,6 +479,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'area_real', type: 'number', label: 'Área Real Medida (m²)', required: true },
       { name: 'motivo_retificacao', type: 'textarea', label: 'Motivo da Retificação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'desdobro-matricula',
@@ -358,6 +503,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'matricula_origem', type: 'text', label: 'Matrícula de Origem', required: true },
       { name: 'num_lotes_resultantes', type: 'number', label: 'Número de Lotes Resultantes', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-confrontacao',
@@ -371,6 +525,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_lote', type: 'text', label: 'Endereço do Lote', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'aprovacao-condominio',
@@ -387,6 +550,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_condominio', type: 'select', label: 'Tipo de Condomínio', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'aumento-area-construida',
@@ -404,6 +576,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade_ampliacao', type: 'textarea', label: 'Finalidade da Ampliação', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'autorizacao-perfuracao-poco',
@@ -419,6 +600,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade_uso', type: 'select', label: 'Finalidade do Uso', required: true },
       { name: 'profundidade_prevista', type: 'number', label: 'Profundidade Prevista (metros)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-area-verde',
@@ -432,6 +622,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'cpf_cnpj', type: 'text', label: 'CPF/CNPJ', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'transferencia-potencial-construtivo',
@@ -448,6 +647,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'imovel_receptor', type: 'text', label: 'Endereço Imóvel Receptor', required: true },
       { name: 'area_transferir', type: 'number', label: 'Área a Transferir (m²)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-baixa-edificacao',
@@ -463,6 +671,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_baixa', type: 'select', label: 'Motivo da Baixa', required: true },
       { name: 'data_demolicao', type: 'date', label: 'Data da Demolição', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'licenca-ocupacao-temporaria',
@@ -480,6 +697,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'data_fim', type: 'date', label: 'Data de Término', required: true },
       { name: 'area_ocupar', type: 'number', label: 'Área a Ocupar (m²)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'aprovacao-remembramento',
@@ -494,6 +720,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'lotes_rememorar', type: 'textarea', label: 'Identificação dos Lotes a Remembrar', required: true },
       { name: 'area_total_resultante', type: 'number', label: 'Área Total Resultante (m²)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-restricao-urbanistica',
@@ -508,6 +743,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'outorga-onerosa',
@@ -523,6 +767,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'area_adicional', type: 'number', label: 'Área Adicional Solicitada (m²)', required: true },
       { name: 'finalidade_uso', type: 'select', label: 'Finalidade do Uso', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-caracteristicas-urbanisticas',
@@ -537,6 +790,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_lote', type: 'text', label: 'Endereço do Lote', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'aprovacao-edificio-garagem',
@@ -554,6 +816,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'area_total', type: 'number', label: 'Área Total (m²)', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'licenca-instalacao-antena',
@@ -570,6 +841,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'altura_estrutura', type: 'number', label: 'Altura da Estrutura (metros)', required: true },
       { name: 'possui_autorizacao_anatel', type: 'select', label: 'Possui Autorização ANATEL?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-destinacao-lote',
@@ -583,6 +863,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_lote', type: 'text', label: 'Endereço do Lote', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'aprovacao-mezanino',
@@ -600,6 +889,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'finalidade_uso', type: 'select', label: 'Finalidade do Uso', required: true },
       { name: 'responsavel_tecnico', type: 'text', label: 'Responsável Técnico', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'autorizacao-tapume',
@@ -615,6 +913,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'num_alvara', type: 'text', label: 'Número do Alvará de Construção', required: false },
       { name: 'tipo_tapume', type: 'select', label: 'Tipo de Tapume', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'renovacao-alvara',
@@ -631,6 +938,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'percentual_executado', type: 'number', label: 'Percentual Executado (%)', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa para Renovação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'licenca-obra-arte',
@@ -647,6 +963,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'dimensoes_obra', type: 'text', label: 'Dimensões da Obra', required: true },
       { name: 'descricao_conceito', type: 'textarea', label: 'Descrição e Conceito', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-ocupacao-irregular',
@@ -661,6 +986,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'tempo_ocupacao', type: 'number', label: 'Tempo de Ocupação (anos)', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade da Certidão', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'aprovacao-piscina',
@@ -676,6 +1010,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'dimensoes', type: 'text', label: 'Dimensões (CxLxP)', required: true },
       { name: 'volume_agua', type: 'number', label: 'Volume de Água (m³)', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-negativa-obra',
@@ -690,6 +1033,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'finalidade', type: 'select', label: 'Finalidade', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'autorizacao-andaime',
@@ -705,6 +1057,15 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'area_ocupacao_calcada', type: 'number', label: 'Área de Ocupação da Calçada (m²)', required: true },
       { name: 'prazo_ocupacao', type: 'number', label: 'Prazo de Ocupação (dias)', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 3,
+    color: '#f59e0b',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   },
   {
     id: 'certidao-averbacao-construcao',
@@ -721,5 +1082,14 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
       { name: 'area_construida', type: 'number', label: 'Área Construída (m²)', required: true },
       { name: 'possui_habite_se', type: 'select', label: 'Possui Habite-se?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'PLANEJAMENTO_URBANO',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.161Z'
   }
 ];

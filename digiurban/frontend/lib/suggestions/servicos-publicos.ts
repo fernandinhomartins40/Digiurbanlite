@@ -1,4 +1,4 @@
-import { ServiceSuggestion } from './types';
+import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
 export const servicospublicosSuggestions: ServiceSuggestion[] = [
   {
@@ -14,6 +14,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'mes_referencia', type: 'text', label: 'Mês de Referência', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'religacao-agua',
@@ -28,6 +37,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'num_protocolo_pagamento', type: 'text', label: 'Protocolo de Pagamento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'nova-ligacao-agua',
@@ -44,6 +62,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'area_construida', type: 'number', label: 'Área Construída (m²)', required: true },
       { name: 'num_economias', type: 'number', label: 'Número de Economias', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'troca-hidrometro',
@@ -59,6 +86,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_solicitacao', type: 'select', label: 'Motivo da Solicitação', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'vazamento-agua',
@@ -74,6 +110,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'intensidade', type: 'select', label: 'Intensidade do Vazamento', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'limpeza-fossa',
@@ -89,6 +134,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_estimada', type: 'text', label: 'Capacidade Estimada', required: false },
       { name: 'local_acesso_caminhao', type: 'select', label: 'Caminhão tem Acesso?', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'desobstrucao-esgoto',
@@ -103,6 +157,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_rede', type: 'select', label: 'Tipo de Rede', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'coleta-entulho',
@@ -118,6 +181,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'volume_estimado', type: 'select', label: 'Volume Estimado', required: true },
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'poda-terreno-publico',
@@ -132,6 +204,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'area_estimada', type: 'text', label: 'Área Estimada', required: false },
       { name: 'descricao_situacao', type: 'textarea', label: 'Descrição da Situação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'coleta-moveis-velhos',
@@ -147,6 +228,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade_itens', type: 'number', label: 'Quantidade de Itens', required: true },
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'denuncia-lixo-irregular',
@@ -162,6 +252,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'volume_estimado', type: 'select', label: 'Volume Estimado', required: false },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'iluminacao-publica-manutencao',
@@ -177,6 +276,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_problema', type: 'select', label: 'Tipo de Problema', required: true },
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'nova-luminaria-publica',
@@ -191,6 +299,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'concessao-sepultura',
@@ -205,6 +322,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_sepultura', type: 'select', label: 'Tipo de Sepultura', required: true },
       { name: 'tipo_concessao', type: 'select', label: 'Tipo de Concessão', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'exumacao',
@@ -221,6 +347,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'data_falecimento', type: 'date', label: 'Data do Falecimento', required: true },
       { name: 'motivo_exumacao', type: 'textarea', label: 'Motivo da Exumação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'renovacao-concessao-cemiterio',
@@ -236,6 +371,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'num_concessao_anterior', type: 'text', label: 'Número da Concessão Anterior', required: true },
       { name: 'periodo_renovacao', type: 'select', label: 'Período de Renovação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'permissao-uso-box-feira',
@@ -252,6 +396,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'experiencia_anterior', type: 'select', label: 'Possui Experiência como Feirante?', required: false },
       { name: 'possui_veiculo', type: 'select', label: 'Possui Veículo para Transporte?', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'permissao-box-mercado-municipal',
@@ -268,6 +421,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'area_box_pretendida', type: 'text', label: 'Área de Box Pretendida (m²)', required: false },
       { name: 'descricao_atividade', type: 'textarea', label: 'Descrição da Atividade', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'taxa-lixo-isencao',
@@ -283,6 +445,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_isencao', type: 'select', label: 'Motivo da Isenção', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.PAGAMENTO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'alteracao-titularidade-agua',
@@ -298,6 +469,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'motivo_alteracao', type: 'select', label: 'Motivo da Alteração', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'vistoria-caixa-dagua',
@@ -313,6 +493,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_caixa', type: 'text', label: 'Capacidade da Caixa (litros)', required: false },
       { name: 'motivo_vistoria', type: 'textarea', label: 'Motivo da Vistoria', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'tampao-bueiro-manutencao',
@@ -328,6 +517,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_problema', type: 'select', label: 'Tipo de Problema', required: true },
       { name: 'nivel_risco', type: 'select', label: 'Nível de Risco', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'limpeza-caixa-rua',
@@ -342,6 +540,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'poda-arvore-municipal',
@@ -357,6 +564,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_poda', type: 'select', label: 'Motivo da Poda', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'autorizacao-evento-feira',
@@ -375,6 +591,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'horario_termino', type: 'text', label: 'Horário de Término', required: true },
       { name: 'descricao_evento', type: 'textarea', label: 'Descrição do Evento', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'varricao-rua',
@@ -389,6 +614,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'trecho', type: 'text', label: 'Trecho (entre quais ruas)', required: false },
       { name: 'motivo', type: 'textarea', label: 'Motivo da Solicitação', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'parcelamento-debitos-agua',
@@ -404,6 +638,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'num_parcelas_desejadas', type: 'number', label: 'Número de Parcelas Desejadas', required: true },
       { name: 'renda_familiar', type: 'text', label: 'Renda Familiar', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'autorizacao-queima-terreno',
@@ -420,6 +663,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'data_pretendida', type: 'date', label: 'Data Pretendida', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'relocacao-ponto-feira',
@@ -436,6 +688,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'ponto_desejado', type: 'text', label: 'Ponto Desejado', required: true },
       { name: 'motivo_relocacao', type: 'textarea', label: 'Motivo da Relocação', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'limpeza-caixa-dagua-comunitaria',
@@ -451,6 +712,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'num_familias_beneficiadas', type: 'number', label: 'Número de Famílias Beneficiadas', required: true },
       { name: 'capacidade_caixa', type: 'text', label: 'Capacidade da Caixa (litros)', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'certidao-regularidade-agua',
@@ -465,6 +735,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'endereco_imovel', type: 'text', label: 'Endereço do Imóvel', required: true },
       { name: 'finalidade_certidao', type: 'select', label: 'Finalidade da Certidão', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'cadastro-carrinheiro',
@@ -480,6 +759,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'possui_carrinho_proprio', type: 'select', label: 'Possui Carrinho Próprio?', required: true },
       { name: 'tempo_experiencia', type: 'text', label: 'Tempo de Experiência', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'limpeza-boca-lobo',
@@ -495,6 +783,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'nivel_obstrucao', type: 'select', label: 'Nível de Obstrução', required: true },
       { name: 'causa_provavel', type: 'text', label: 'Causa Provável', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'instalacao-lixeira-publica',
@@ -509,6 +806,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'justificativa', type: 'textarea', label: 'Justificativa', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'reclamacao-horario-coleta-lixo',
@@ -523,6 +829,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'problema_horario', type: 'textarea', label: 'Problema com o Horário', required: true },
       { name: 'horario_sugerido', type: 'text', label: 'Horário Sugerido', required: false },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'analise-qualidade-agua',
@@ -538,6 +853,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'motivo_analise', type: 'select', label: 'Motivo da Análise', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'denuncia-agua-clandestina',
@@ -552,6 +876,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_irregularidade', type: 'select', label: 'Tipo de Irregularidade', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'conserto-bebedouro-publico',
@@ -566,6 +899,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_local', type: 'select', label: 'Tipo de Local', required: true },
       { name: 'descricao_problema', type: 'textarea', label: 'Descrição do Problema', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'horta-comunitaria-residuos',
@@ -581,6 +923,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'quantidade_necessaria', type: 'text', label: 'Quantidade Necessária (kg ou m³)', required: true },
       { name: 'finalidade', type: 'textarea', label: 'Finalidade do Composto', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'inclusao-roteiro-coleta',
@@ -594,6 +945,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_imovel', type: 'select', label: 'Tipo de Imóvel', required: true },
       { name: 'ponto_referencia', type: 'text', label: 'Ponto de Referência', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'cadastro-coletor-reciclavel',
@@ -610,6 +970,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'associacao_cooperativa', type: 'text', label: 'Associação/Cooperativa (se houver)', required: false },
       { name: 'tempo_atividade', type: 'text', label: 'Tempo na Atividade', required: false },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'autorizacao-ocupacao-calcada-feira',
@@ -626,6 +995,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_atividade', type: 'text', label: 'Tipo de Atividade', required: true },
       { name: 'area_ocupacao', type: 'text', label: 'Área de Ocupação (m²)', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'suspensao-fornecimento-agua',
@@ -642,6 +1020,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'periodo_estimado', type: 'text', label: 'Período Estimado (meses)', required: true },
       { name: 'motivo_suspensao', type: 'textarea', label: 'Motivo da Suspensão', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'autorizacao-desfile-rua',
@@ -661,6 +1048,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'publico_estimado', type: 'number', label: 'Público Estimado', required: true },
       { name: 'num_participantes', type: 'number', label: 'Número de Participantes', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'visita-tecnica-educacional',
@@ -679,6 +1075,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'data_preferencial', type: 'date', label: 'Data Preferencial', required: true },
       { name: 'objetivos_visita', type: 'textarea', label: 'Objetivos da Visita', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'denuncia-desperdicio-agua-publica',
@@ -693,6 +1098,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'tipo_desperdicio', type: 'select', label: 'Tipo de Desperdício', required: true },
       { name: 'descricao', type: 'textarea', label: 'Descrição Detalhada', required: true },
     ]
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'transferencia-jazigo',
@@ -710,6 +1124,15 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'num_concessao', type: 'text', label: 'Número da Concessão', required: true },
       { name: 'motivo_transferencia', type: 'select', label: 'Motivo da Transferência', required: true },
     ]
+  ,
+    serviceType: ServiceType.COM_DADOS,
+    serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
   },
   {
     id: 'recarga-caminhao-pipa',
@@ -727,5 +1150,14 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
       { name: 'capacidade_armazenamento', type: 'text', label: 'Capacidade de Armazenamento (litros)', required: false },
       { name: 'descricao_emergencia', type: 'textarea', label: 'Descrição da Emergência', required: true },
     ]
-  },
+  ,
+    serviceType: ServiceType.SEM_DADOS,
+    serviceSubtype: ServiceSubtype.CONSULTIVO,
+    departmentCode: 'SERVICOS_PUBLICOS',
+    priority: 2,
+    color: '#3b82f6',
+    moduleType: null,
+    status: 'ACTIVE' as const,
+    createdAt: '2026-01-26T17:57:57.171Z'
+  }
 ];
