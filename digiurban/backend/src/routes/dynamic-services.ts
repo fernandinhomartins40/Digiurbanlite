@@ -82,6 +82,7 @@ async function deleteCache(key: string): Promise<void> {
 // ============================================================
 function slugToDepartmentName(slug: string): string {
   const mapping: Record<string, string> = {
+    // Secretarias originais
     'agricultura': 'Secretaria de Agricultura',
     'saude': 'Secretaria de Saúde',
     'educacao': 'Secretaria de Educação',
@@ -94,7 +95,16 @@ function slugToDepartmentName(slug: string): string {
     'planejamento-urbano': 'Secretaria de Planejamento Urbano',
     'seguranca-publica': 'Secretaria de Segurança Pública',
     'servicos-publicos': 'Secretaria de Serviços Públicos',
-    'turismo': 'Secretaria de Turismo'
+    'turismo': 'Secretaria de Turismo',
+    // Novas secretarias
+    'administracao': 'Secretaria de Administração',
+    'defesa-civil': 'Defesa Civil',
+    'desenvolvimento-economico': 'Secretaria de Desenvolvimento Econômico',
+    'financas': 'Secretaria de Fazenda',
+    'mobilidade-urbana': 'Secretaria de Mobilidade Urbana',
+    'politicas-mulheres': 'Secretaria de Políticas para Mulheres',
+    'tecnologia-inovacao': 'Secretaria de Tecnologia e Inovação',
+    'transportes-transito': 'Secretaria de Transportes e Trânsito'
   };
   return mapping[slug] || slug;
 }
