@@ -226,6 +226,20 @@ const moduleWorkflows = [
   { moduleType: 'CADASTRO_EVENTO_TURISTICO', name: 'Eventos Turísticos', description: 'Cadastro de eventos turísticos', defaultSLA: 10 },
   { moduleType: 'REGISTRO_EVENTO_TURISTICO', name: 'Registro de Eventos Turísticos', description: 'Registro de eventos turísticos', defaultSLA: 10 },
 
+  // 🆕 NOVOS MÓDULOS TURISMO (6)
+  { moduleType: 'LICENCA_ATIVIDADE_TURISTICA', name: 'Licença para Atividade Turística', description: 'Licenciamento de atividades turísticas', defaultSLA: 20 },
+  { moduleType: 'CREDENCIAMENTO_AGENCIA_TURISMO', name: 'Credenciamento de Agência de Turismo', description: 'Credenciamento oficial de agências de turismo', defaultSLA: 25 },
+  { moduleType: 'AUTORIZACAO_TRANSPORTE_TURISTICO', name: 'Autorização para Transporte Turístico', description: 'Autorização para operação de transporte turístico', defaultSLA: 30 },
+  { moduleType: 'CADASTRO_ATRACAO_TURISTICA', name: 'Cadastro de Atração Turística', description: 'Cadastro de pontos e atrações turísticas', defaultSLA: 15 },
+  { moduleType: 'APOIO_FEIRA_EXPOSICAO', name: 'Apoio a Feira/Exposição', description: 'Solicitação de apoio municipal para feiras e exposições turísticas', defaultSLA: 30 },
+  { moduleType: 'INSCRICAO_CIRCUITO_TURISTICO', name: 'Inscrição em Circuito Turístico', description: 'Inscrição em circuito turístico regional', defaultSLA: 20 },
+
+  // PLANEJAMENTO URBANO
+  // 🆕 NOVOS MÓDULOS PLANEJAMENTO URBANO (3)
+  { moduleType: 'REMEMBRAMENTO_LOTE', name: 'Remembramento de Lote', description: 'Anuência para remembramento de lote', defaultSLA: 30 },
+  { moduleType: 'ANALISE_VIABILIDADE_EMPREENDIMENTO', name: 'Análise de Viabilidade de Empreendimento', description: 'Análise técnica de viabilidade para empreendimento', defaultSLA: 45 },
+  { moduleType: 'APROVACAO_PROJETO_URBANIZACAO', name: 'Aprovação de Projeto de Urbanização', description: 'Aprovação de projeto de urbanização/loteamento', defaultSLA: 60 },
+
   // MÓDULOS ADICIONAIS (FALTANTES)
   { moduleType: 'AGENDAMENTO_CONSULTA', name: 'Agendamento de Consulta Médica', description: 'Agendamento de consultas médicas', defaultSLA: 3 },
   { moduleType: 'CARTAO_SUS', name: 'Cartão SUS', description: 'Solicitação de cartão SUS', defaultSLA: 5 },
