@@ -20,6 +20,8 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { TemplateViewModal } from '@/components/admin/templates/TemplateViewModal'
+import { TemplateEditModal } from '@/components/admin/templates/TemplateEditModal'
 
 interface DocumentTemplate {
   id: string
@@ -44,6 +46,9 @@ export default function TemplatesDocumentosPage() {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PROTOCOL_CERTIFICATE' | 'COMPLETION_REPORT'>('all')
+  const [viewModalOpen, setViewModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null)
 
   // Carregar templates
   useEffect(() => {
@@ -99,6 +104,49 @@ export default function TemplatesDocumentosPage() {
         description: error.message,
         variant: 'destructive'
       })
+    }
+  }
+
+  const handleViewTemplate = (template: DocumentTemplate) => {
+    setSelectedTemplate(template)
+    setViewModalOpen(true)
+  }
+
+  const handleEditTemplate = async (template: DocumentTemplate) => {
+    // Carregar template completo
+    try {
+      const result = await apiRequest(`/document-templates/${template.id}`)
+      if (result.success) {
+        setSelectedTemplate(result.data)
+        setEditModalOpen(true)
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao carregar template',
+        description: error.message,
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleSaveTemplate = async (updatedTemplate: Partial<DocumentTemplate>) => {
+    if (!selectedTemplate) return
+
+    try {
+      const result = await apiRequest(`/document-templates/${selectedTemplate.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updatedTemplate)
+      })
+
+      if (result.success) {
+        await loadTemplates()
+        setEditModalOpen(false)
+        setSelectedTemplate(null)
+      } else {
+        throw new Error(result.error || 'Erro ao salvar template')
+      }
+    } catch (error: any) {
+      throw error
     }
   }
 
@@ -326,13 +374,21 @@ export default function TemplatesDocumentosPage() {
 
                 {/* Ações */}
                 <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" disabled>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewTemplate(template)}
+                  >
                     <Eye className="h-4 w-4 mr-1" />
                     Visualizar
                   </Button>
                   {isSuperAdmin && (
                     <>
-                      <Button variant="outline" size="sm" disabled>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditTemplate(template)}
+                      >
                         <Edit className="h-4 w-4 mr-1" />
                         Editar
                       </Button>
@@ -354,6 +410,26 @@ export default function TemplatesDocumentosPage() {
           ))}
         </div>
       )}
+
+      {/* Modais */}
+      <TemplateViewModal
+        template={selectedTemplate}
+        open={viewModalOpen}
+        onClose={() => {
+          setViewModalOpen(false)
+          setSelectedTemplate(null)
+        }}
+      />
+
+      <TemplateEditModal
+        template={selectedTemplate}
+        open={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false)
+          setSelectedTemplate(null)
+        }}
+        onSave={handleSaveTemplate}
+      />
     </div>
   )
 }

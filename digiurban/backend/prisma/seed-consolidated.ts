@@ -415,6 +415,15 @@ async function main() {
     const { seedCitizenCategories } = await import('./seeds/citizen-categories.seed');
     await seedCitizenCategories();
 
+    // ========================================================================
+    // 9. TEMPLATES DE DOCUMENTOS
+    // ========================================================================
+    console.log('\n9️⃣  Templates de Documentos');
+    console.log('   ─────────────────────────────\n');
+
+    const seedDocumentTemplates = (await import('./seeds/document-templates.seed')).default;
+    await seedDocumentTemplates();
+
     console.log('\n╔════════════════════════════════════════════════════════╗');
     console.log('║  🚀 Sistema pronto para uso!                          ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');
