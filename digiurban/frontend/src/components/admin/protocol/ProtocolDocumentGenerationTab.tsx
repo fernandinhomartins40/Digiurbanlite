@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { FilePlus, Loader2 } from 'lucide-react'
+import { DocumentSigningModalSimple } from '@/components/shared/DocumentSigningModalSimple'
 
 interface DocumentTemplate {
   id: string
@@ -34,6 +35,8 @@ export function ProtocolDocumentGenerationTab({
   const [notes, setNotes] = useState('')
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedDocument, setGeneratedDocument] = useState<any>(null)
+  const [showSigningModal, setShowSigningModal] = useState(false)
 
   useEffect(() => {
     const loadTemplates = async () => {
@@ -87,12 +90,13 @@ export function ProtocolDocumentGenerationTab({
       if (result.success) {
         toast({
           title: 'Documento gerado',
-          description: result.warnings && result.warnings.length > 0
-            ? result.warnings[0]
-            : 'Documento gerado com sucesso'
+          description: 'Agora você pode assinar o documento'
         })
         setNotes('')
-        onRefresh()
+
+        // Armazenar documento gerado e abrir modal de assinatura
+        setGeneratedDocument(result.document)
+        setShowSigningModal(true)
       } else {
         // Verificar se é erro de certificado
         if (result.error === 'CERTIFICATE_REQUIRED' || result.error === 'CERTIFICATE_PENDING') {
@@ -129,7 +133,20 @@ export function ProtocolDocumentGenerationTab({
     }
   }
 
+  const handleSigningComplete = () => {
+    setShowSigningModal(false)
+    setGeneratedDocument(null)
+    onRefresh() // Atualizar lista de documentos
+  }
+
+  const handleCloseSigningModal = () => {
+    setShowSigningModal(false)
+    setGeneratedDocument(null)
+    onRefresh() // Atualizar lista mesmo sem assinar
+  }
+
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
@@ -182,5 +199,17 @@ export function ProtocolDocumentGenerationTab({
         </Button>
       </CardContent>
     </Card>
+
+    {/* Modal de assinatura após geração */}
+    {showSigningModal && generatedDocument && (
+      <DocumentSigningModalSimple
+        document={generatedDocument}
+        userType="admin"
+        documentType="generated"
+        onClose={handleCloseSigningModal}
+        onSuccess={handleSigningComplete}
+      />
+    )}
+    </>
   )
 }

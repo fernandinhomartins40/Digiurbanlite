@@ -49,6 +49,7 @@ interface DocumentSigningModalSimpleProps {
     signatures?: Signature[];
   };
   userType: 'admin' | 'citizen';
+  documentType?: 'generated' | 'external'; // Tipo do documento (padrão: external)
   onClose: () => void;
   onSuccess?: (signature: any) => void;
 }
@@ -58,6 +59,7 @@ type SigningStep = 'position' | 'select-cert' | 'signing' | 'success';
 export function DocumentSigningModalSimple({
   document,
   userType,
+  documentType = 'external',
   onClose,
   onSuccess,
 }: DocumentSigningModalSimpleProps) {
@@ -94,16 +96,21 @@ export function DocumentSigningModalSimple({
     setStep('signing');
 
     try {
+      const requestBody = {
+        certificateId: selectedCertificate.id,
+        position: signaturePosition,
+        ...(documentType === 'generated'
+          ? { documentId: document.id }
+          : { externalDocumentId: document.id }
+        ),
+      };
+
       const response = await fetch('/api/documents/sign', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          externalDocumentId: document.id,
-          certificateId: selectedCertificate.id,
-          position: signaturePosition,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const result = await response.json();
