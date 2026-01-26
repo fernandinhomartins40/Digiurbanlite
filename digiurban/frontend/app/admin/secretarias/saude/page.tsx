@@ -26,6 +26,7 @@ import {
   Stethoscope,
   IdCard,
   Info,
+  ChevronRight,
 } from 'lucide-react';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
@@ -283,44 +284,51 @@ export default function SecretariaSaudePage() {
               return (
                 <Card
                   key={module.id}
-                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-all cursor-pointer group`}
+                  className={`${colors.border} ${colors.bg} hover:shadow-lg transition-all cursor-pointer group p-4`}
                   onClick={() => router.push(`/admin/secretarias/saude/${module.moduleType}`)}
                 >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <Badge className="mb-2 bg-blue-600 text-white">
-                          Módulo COM_DADOS
-                        </Badge>
-                        <CardTitle className="text-lg flex items-center gap-2 group-hover:text-blue-600 transition-colors">
-                          <FileText className={`h-5 w-5 ${colors.icon}`} />
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className={`p-2 rounded-lg ${colors.bg} flex-shrink-0`}>
+                        <FileText className={`h-4 w-4 ${colors.icon}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-sm truncate group-hover:text-blue-600 transition-colors">
                           {module.name}
-                        </CardTitle>
+                        </h3>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {module.description || 'Módulo de gestão'}
+                        </p>
                       </div>
                     </div>
-                    <CardDescription className="mt-2">
-                      {module.description || 'Módulo de gestão com formulário dinâmico'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm space-y-2">
-                      <div className="flex justify-between items-center p-2 bg-white/50 rounded">
-                        <span className="text-muted-foreground">Total:</span>
-                        <span className="font-semibold text-lg">{module.stats?.total || 0}</span>
+                    <ChevronRight className={`h-4 w-4 ${colors.icon} group-hover:translate-x-0.5 transition-all flex-shrink-0`} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-1.5 bg-white/50 rounded">
+                      <div className="text-base font-bold text-gray-900">
+                        {module.stats?.total || 0}
                       </div>
-                      <div className="flex justify-between items-center p-2 bg-yellow-50 rounded">
-                        <span className="text-muted-foreground">Pendentes:</span>
-                        <span className="font-semibold text-yellow-700">{module.stats?.pending || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 bg-green-50 rounded">
-                        <span className="text-muted-foreground">Aprovados:</span>
-                        <span className="font-semibold text-green-700">{module.stats?.approved || 0}</span>
+                      <div className="text-[9px] text-muted-foreground uppercase tracking-wider">
+                        Total
                       </div>
                     </div>
-                    <Button className="w-full mt-4 group-hover:bg-blue-600 transition-colors" variant="outline">
-                      Abrir Painel Completo →
-                    </Button>
-                  </CardContent>
+                    <div className="p-1.5 bg-yellow-50 rounded">
+                      <div className="text-base font-bold text-yellow-700">
+                        {module.stats?.pending || 0}
+                      </div>
+                      <div className="text-[9px] text-yellow-700 uppercase tracking-wider">
+                        Pend
+                      </div>
+                    </div>
+                    <div className="p-1.5 bg-green-50 rounded">
+                      <div className="text-base font-bold text-green-700">
+                        {module.stats?.approved || 0}
+                      </div>
+                      <div className="text-[9px] text-green-700 uppercase tracking-wider">
+                        Aprov
+                      </div>
+                    </div>
+                  </div>
                 </Card>
               );
             })
