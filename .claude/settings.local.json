@@ -112,7 +112,15 @@
       "Bash(pm2 list:*)",
       "Bash(npx next lint)",
       "Bash(before removing or force remove\"\n\nSolução:\n- Adiciona ''docker-compose down'' antes de ''up -d''\n- Usa ''|| true'' para não falhar se containers não existirem\n- Garante que containers antigos sejam parados antes da recriação\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(npm run build:no-icons:*)"
+      "Bash(npm run build:no-icons:*)",
+      "Bash(npm run copy:pdfjs:*)",
+      "Bash(Get-Process)",
+      "Bash(Where-Object {$_ProcessName -like \"*node*\"})",
+      "Bash(Select-Object ProcessName, Id)",
+      "Bash(Format-Table)",
+      "Bash(read:*)",
+      "Bash(tree:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []

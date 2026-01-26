@@ -165,7 +165,16 @@ const OFFICIAL_DEPARTMENTS = [
   'Secretaria de Saúde',
   'Secretaria de Segurança Pública',
   'Secretaria de Serviços Públicos',
-  'Secretaria de Turismo'
+  'Secretaria de Turismo',
+  // Novas secretarias
+  'Secretaria de Administração',
+  'Defesa Civil',
+  'Secretaria de Desenvolvimento Econômico',
+  'Secretaria de Fazenda',
+  'Secretaria de Mobilidade Urbana',
+  'Secretaria de Políticas para Mulheres',
+  'Secretaria de Tecnologia e Inovação',
+  'Secretaria de Transportes e Trânsito'
 ];
 
 // Alias para manter compatibilidade
