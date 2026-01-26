@@ -16,6 +16,7 @@ import {
   Calendar,
   TrendingUp,
   FileCheck,
+  ChevronRight,
 } from 'lucide-react';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
