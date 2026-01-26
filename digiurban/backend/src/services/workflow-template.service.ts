@@ -363,8 +363,8 @@ export function generateMinimalWorkflowForSemDados(
       requiresApproval: false,
       stageType: 'CONCLUSION',
       actionLabels: { APPROVE: 'Concluir protocolo' },
-      availableTabs: ['summary-final', 'communication'],
-      primaryTab: 'summary-final'
+      availableTabs: ['resumo-final', 'comunicacao'],
+      primaryTab: 'resumo-final'
     }
   ];
 
@@ -722,8 +722,8 @@ export function generateSpecializedWorkflow(input: {
     requiresApproval: false,
     stageType: 'CONCLUSION',
     actionLabels: { APPROVE: 'Concluir protocolo' },
-    availableTabs: ['summary-final', 'document-generation', 'send', 'communication'],
-    primaryTab: 'summary-final'
+    availableTabs: ['resumo-final', 'documentos-gerados', 'enviar', 'comunicacao'],
+    primaryTab: 'resumo-final'
   });
 
   // ✅ CORREÇÃO: Recalcular SLA total como SOMA dos slaDays das stages
@@ -1081,8 +1081,8 @@ export function generateCompleteWorkflowBySubtype(service: ServiceSimplified): C
     order: currentOrder++,
     description: 'Finalização e encerramento do protocolo',
     slaDays: 1,
-    availableTabs: ['summary-final', 'document-generation', 'send', 'communication'],
-    primaryTab: 'summary-final',
+    availableTabs: ['resumo-final', 'documentos-gerados', 'enviar', 'comunicacao'],
+    primaryTab: 'resumo-final',
     requiredDocumentTypes: [],
     requiredFormFieldIds: [],
     allowedActions: ['APPROVE'],

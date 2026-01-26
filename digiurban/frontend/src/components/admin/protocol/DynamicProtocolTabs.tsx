@@ -33,16 +33,14 @@ const TAB_CONFIG: Record<string, { label: string; icon: any }> = {
   payment: { label: 'Pagamento', icon: CreditCard },
 
   // Modo Completing
-  'summary-final': { label: 'Resumo Final', icon: CheckCircle },
-  'document-generation': { label: 'Gerar Documento', icon: FilePlus },
-  send: { label: 'Enviar', icon: Send },
+  'resumo-final': { label: 'Resumo Final', icon: CheckCircle },
+  'documentos-gerados': { label: 'Documentos Gerados', icon: FilePlus },
+  enviar: { label: 'Enviar', icon: Send },
 
   // Modo Archived
   timeline: { label: 'Timeline', icon: Clock },
-  documents: { label: 'Recebidos', icon: FileText },
-  generated: { label: 'Gerados', icon: FilePlus },
-  communication: { label: 'Histórico', icon: MessageSquare },
-  involved: { label: 'Envolvidos', icon: Users }
+  envolvidos: { label: 'Envolvidos', icon: Users }
+  // Nota: 'documentos', 'documentos-gerados' e 'comunicacao' são compartilhados entre modos
 }
 
 export function DynamicProtocolTabs({

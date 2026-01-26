@@ -55,7 +55,7 @@ export function CompletingProtocolView({
 }: CompletingProtocolViewProps) {
   const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState<'summary-final' | 'document-generation' | 'send'>('summary-final')
+  const [activeTab, setActiveTab] = useState<'resumo-final' | 'documentos-gerados' | 'enviar'>('resumo-final')
   const [finalNotes, setFinalNotes] = useState('')
   const [generatedDocument, setGeneratedDocument] = useState<{ id: string; url: string; name: string } | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -103,7 +103,7 @@ export function CompletingProtocolView({
           title: 'Documento gerado',
           description: 'Documento de conclusão criado com sucesso'
         })
-        setActiveTab('send')
+        setActiveTab('enviar')
       } else {
         throw new Error(result.error || 'Erro ao gerar documento')
       }
@@ -266,23 +266,23 @@ export function CompletingProtocolView({
       {/* Tabs de Finalização */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-white shadow-sm mb-4">
-          <TabsTrigger value="summary-final" className="flex items-center gap-2">
+          <TabsTrigger value="resumo-final" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             <span className="hidden sm:inline">Resumo Final</span>
           </TabsTrigger>
-          <TabsTrigger value="document-generation" className="flex items-center gap-2">
+          <TabsTrigger value="documentos-gerados" className="flex items-center gap-2">
             <FilePlus className="h-4 w-4" />
             <span className="hidden sm:inline">Gerar Documento</span>
             {generatedDocument && <CheckCircle2 className="h-3 w-3 text-green-600" />}
           </TabsTrigger>
-          <TabsTrigger value="send" className="flex items-center gap-2">
+          <TabsTrigger value="enviar" className="flex items-center gap-2">
             <Send className="h-4 w-4" />
             <span className="hidden sm:inline">Enviar</span>
           </TabsTrigger>
         </TabsList>
 
         {/* Aba: Resumo Final */}
-        <TabsContent value="summary-final" className="space-y-4">
+        <TabsContent value="resumo-final" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -353,7 +353,7 @@ export function CompletingProtocolView({
         </TabsContent>
 
         {/* Aba: Geração de Documento */}
-        <TabsContent value="document-generation" className="space-y-4">
+        <TabsContent value="documentos-gerados" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -437,7 +437,7 @@ export function CompletingProtocolView({
         </TabsContent>
 
         {/* Aba: Enviar */}
-        <TabsContent value="send" className="space-y-4">
+        <TabsContent value="enviar" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">

@@ -379,8 +379,8 @@ export default function ProtocolDetailPage() {
                 </TabsContent>
               )}
 
-              {availableTabs.includes('send') && (
-                <TabsContent value="send" className="mt-0">
+              {availableTabs.includes('enviar') && (
+                <TabsContent value="enviar" className="mt-0">
                   <ProtocolSendGeneratedDocumentTab
                     protocolId={protocolId}
                     protocolNumber={protocol.number || protocol.protocolNumber}

@@ -83,7 +83,7 @@ export function ArchivedProtocolView({
 }: ArchivedProtocolViewProps) {
   const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState<'timeline' | 'documents' | 'generated' | 'communication' | 'involved'>('timeline')
+  const [activeTab, setActiveTab] = useState<'timeline' | 'documentos' | 'documentos-gerados' | 'comunicacao' | 'envolvidos'>('timeline')
   const [isReopening, setIsReopening] = useState(false)
   const [showReopenModal, setShowReopenModal] = useState(false)
   const [reopenMode, setReopenMode] = useState<'restart' | 'append'>('append')
@@ -716,22 +716,22 @@ export function ArchivedProtocolView({
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Timeline</span>
           </TabsTrigger>
-          <TabsTrigger value="documents" className="flex items-center gap-2">
+          <TabsTrigger value="documentos" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Docs Recebidos</span>
             <Badge variant="outline" className="ml-auto text-xs">{receivedDocuments.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="generated" className="flex items-center gap-2">
+          <TabsTrigger value="documentos-gerados" className="flex items-center gap-2">
             <FilePlus className="h-4 w-4" />
             <span className="hidden sm:inline">Docs Gerados</span>
             <Badge variant="outline" className="ml-auto text-xs">{generatedDocuments.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="communication" className="flex items-center gap-2">
+          <TabsTrigger value="comunicacao" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
             <span className="hidden sm:inline">Comunicação</span>
             <Badge variant="outline" className="ml-auto text-xs">{totalInteractions}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="involved" className="flex items-center gap-2">
+          <TabsTrigger value="envolvidos" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             <span className="hidden sm:inline">Envolvidos</span>
             <Badge variant="outline" className="ml-auto text-xs">{involvedPeople.length}</Badge>
@@ -752,7 +752,7 @@ export function ArchivedProtocolView({
         </TabsContent>
 
         {/* Tab: Documentos Recebidos */}
-        <TabsContent value="documents" className="space-y-4">
+        <TabsContent value="documentos" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -832,7 +832,7 @@ export function ArchivedProtocolView({
         </TabsContent>
 
         {/* Tab: Documentos Gerados */}
-        <TabsContent value="generated" className="space-y-4">
+        <TabsContent value="documentos-gerados" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -906,7 +906,7 @@ export function ArchivedProtocolView({
         </TabsContent>
 
         {/* Tab: Comunicação */}
-        <TabsContent value="communication" className="space-y-4">
+        <TabsContent value="comunicacao" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -963,7 +963,7 @@ export function ArchivedProtocolView({
         </TabsContent>
 
         {/* Tab: Pessoas Envolvidas */}
-        <TabsContent value="involved" className="space-y-4">
+        <TabsContent value="envolvidos" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">

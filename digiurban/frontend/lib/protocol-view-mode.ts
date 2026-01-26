@@ -129,12 +129,12 @@ export function getContextualTabs(
 ): string[] {
   // Modo arquivado - abas especiais
   if (viewMode === ProtocolViewMode.ARCHIVED) {
-    return ['timeline', 'documents', 'documentos-gerados', 'communication', 'involved']
+    return ['timeline', 'documentos', 'documentos-gerados', 'comunicacao', 'envolvidos']
   }
 
   // Modo de conclusão - abas especiais
   if (viewMode === ProtocolViewMode.COMPLETING) {
-    return ['summary-final', 'documentos-gerados', 'send', 'communication']
+    return ['resumo-final', 'documentos-gerados', 'enviar', 'comunicacao']
   }
 
   // Modo ativo - abas contextuais
@@ -234,13 +234,12 @@ export const TAB_LABELS: Record<string, { label: string; icon: string }> = {
   payment: { label: 'Pagamento', icon: 'CreditCard' },
 
   // Modo Completing
-  'summary-final': { label: 'Resumo Final', icon: 'CheckCircle' },
+  'resumo-final': { label: 'Resumo Final', icon: 'CheckCircle' },
   'documentos-gerados': { label: 'Documentos Gerados', icon: 'FileText' },
-  send: { label: 'Enviar', icon: 'Send' },
+  enviar: { label: 'Enviar', icon: 'Send' },
 
   // Modo Archived
   timeline: { label: 'Linha do Tempo', icon: 'Clock' },
-  documents: { label: 'Docs Recebidos', icon: 'FileText' },
-  communication: { label: 'Histórico', icon: 'MessageSquare' },
-  involved: { label: 'Envolvidos', icon: 'Users' }
+  envolvidos: { label: 'Envolvidos', icon: 'Users' }
+  // Nota: 'documentos', 'documentos-gerados' e 'comunicacao' são compartilhados entre modos
 }
