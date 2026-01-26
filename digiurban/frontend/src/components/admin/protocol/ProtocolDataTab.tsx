@@ -601,53 +601,61 @@ export function ProtocolDataTab({
       {/* Campos Obrigatórios */}
       {requiredFields.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
+          <CardHeader className="bg-gray-50">
+            <CardTitle className="text-base flex items-center gap-2">
+              <span className="text-red-600">*</span>
               Campos Obrigatórios ({requiredFields.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
+          <CardContent className="pt-6">
+            <div className="grid gap-6">
               {requiredFields.map((field) => (
-                <div key={field.id} className="border-b pb-4 last:border-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <Label className="text-sm font-medium text-gray-700">
-                        {field.fieldLabel}
-                        {field.isRequired && <span className="text-red-500 ml-1">*</span>}
-                      </Label>
-                      {field.version > 1 && (
-                        <span className="text-xs text-gray-500 ml-2">
-                          (Versão {field.version})
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(field.status)}
-                      {field.version > 1 && (
+                <div key={field.id} className="grid md:grid-cols-[200px_1fr_auto] gap-4 items-start p-4 rounded-lg border bg-white hover:bg-gray-50 transition-colors">
+                  {/* Label do Campo */}
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold text-gray-900">
+                      {field.fieldLabel}
+                      <span className="text-red-500 ml-1">*</span>
+                    </Label>
+                    {field.version > 1 && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-500">Versão {field.version}</span>
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7"
+                          className="h-5 px-1 text-xs"
                           onClick={() => {
                             setSelectedField({ key: field.fieldKey, label: field.fieldLabel })
                             setHistoryDialogOpen(true)
                           }}
                         >
                           <History className="h-3 w-3 mr-1" />
-                          Histórico
+                          Ver histórico
                         </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
+                    {field.validatedAt && (
+                      <div className="text-xs text-gray-500">
+                        Validado em {new Date(field.validatedAt).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-2">
+
+                  {/* Valor e Ações */}
+                  <div className="flex-1">
                     {renderFieldValue(field)}
                   </div>
-                  {field.validatedAt && (
-                    <div className="text-xs text-gray-500 mt-2">
-                      Validado em {new Date(field.validatedAt).toLocaleDateString('pt-BR')}
-                    </div>
-                  )}
+
+                  {/* Status Badge */}
+                  <div className="flex items-start">
+                    {getStatusBadge(field.status)}
+                  </div>
                 </div>
               ))}
             </div>
@@ -658,52 +666,60 @@ export function ProtocolDataTab({
       {/* Campos Opcionais */}
       {optionalFields.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
+          <CardHeader className="bg-blue-50">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Info className="h-4 w-4 text-blue-600" />
               Campos Opcionais ({optionalFields.length})
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
+          <CardContent className="pt-6">
+            <div className="grid gap-6">
               {optionalFields.map((field) => (
-                <div key={field.id} className="border-b pb-4 last:border-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <Label className="text-sm font-medium text-gray-700">
-                        {field.fieldLabel}
-                      </Label>
-                      {field.version > 1 && (
-                        <span className="text-xs text-gray-500 ml-2">
-                          (Versão {field.version})
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(field.status)}
-                      {field.version > 1 && (
+                <div key={field.id} className="grid md:grid-cols-[200px_1fr_auto] gap-4 items-start p-4 rounded-lg border bg-white hover:bg-gray-50 transition-colors">
+                  {/* Label do Campo */}
+                  <div className="space-y-1">
+                    <Label className="text-sm font-semibold text-gray-900">
+                      {field.fieldLabel}
+                    </Label>
+                    {field.version > 1 && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-500">Versão {field.version}</span>
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7"
+                          className="h-5 px-1 text-xs"
                           onClick={() => {
                             setSelectedField({ key: field.fieldKey, label: field.fieldLabel })
                             setHistoryDialogOpen(true)
                           }}
                         >
                           <History className="h-3 w-3 mr-1" />
-                          Histórico
+                          Ver histórico
                         </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
+                    {field.validatedAt && (
+                      <div className="text-xs text-gray-500">
+                        Validado em {new Date(field.validatedAt).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-2">
+
+                  {/* Valor e Ações */}
+                  <div className="flex-1">
                     {renderFieldValue(field)}
                   </div>
-                  {field.validatedAt && (
-                    <div className="text-xs text-gray-500 mt-2">
-                      Validado em {new Date(field.validatedAt).toLocaleDateString('pt-BR')}
-                    </div>
-                  )}
+
+                  {/* Status Badge */}
+                  <div className="flex items-start">
+                    {getStatusBadge(field.status)}
+                  </div>
                 </div>
               ))}
             </div>

@@ -129,12 +129,12 @@ export function getContextualTabs(
 ): string[] {
   // Modo arquivado - abas especiais
   if (viewMode === ProtocolViewMode.ARCHIVED) {
-    return ['timeline', 'documents', 'generated', 'communication', 'involved']
+    return ['timeline', 'documents', 'documentos-gerados', 'communication', 'involved']
   }
 
   // Modo de conclusão - abas especiais
   if (viewMode === ProtocolViewMode.COMPLETING) {
-    return ['summary-final', 'document-generation', 'send', 'communication']
+    return ['summary-final', 'documentos-gerados', 'send', 'communication']
   }
 
   // Modo ativo - abas contextuais
@@ -210,7 +210,7 @@ export function getPrimaryTab(
   }
 
   if (stageName.includes('emissão') || stageName.includes('geração')) {
-    return 'document-generation'
+    return 'documentos-gerados'
   }
 
   // Padrão: documentos se requeridos, senão resumo
@@ -235,13 +235,12 @@ export const TAB_LABELS: Record<string, { label: string; icon: string }> = {
 
   // Modo Completing
   'summary-final': { label: 'Resumo Final', icon: 'CheckCircle' },
-  'document-generation': { label: 'Gerar Documento', icon: 'FileText' },
+  'documentos-gerados': { label: 'Documentos Gerados', icon: 'FileText' },
   send: { label: 'Enviar', icon: 'Send' },
 
   // Modo Archived
   timeline: { label: 'Linha do Tempo', icon: 'Clock' },
   documents: { label: 'Docs Recebidos', icon: 'FileText' },
-  generated: { label: 'Docs Gerados', icon: 'FilePlus' },
   communication: { label: 'Histórico', icon: 'MessageSquare' },
   involved: { label: 'Envolvidos', icon: 'Users' }
 }

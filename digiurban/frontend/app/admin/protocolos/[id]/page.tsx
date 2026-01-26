@@ -23,8 +23,7 @@ import { ProtocolDocumentsUnified } from '@/src/components/admin/protocol/Protoc
 import { ProtocolDataTab } from '@/src/components/admin/protocol/ProtocolDataTab'
 import { ProtocolPendingsTab } from '@/src/components/admin/protocol/ProtocolPendingsTab'
 import { ProtocolCommunicationTab } from '@/src/components/admin/protocol/ProtocolCommunicationTab'
-import { ProtocolDocumentGenerationTab } from '@/src/components/admin/protocol/ProtocolDocumentGenerationTab'
-import { ProtocolGeneratedDocumentsTab } from '@/src/components/admin/protocol/ProtocolGeneratedDocumentsTab'
+import { ProtocolDocumentsManager } from '@/src/components/admin/protocol/ProtocolDocumentsManager'
 import { ProtocolSendGeneratedDocumentTab } from '@/src/components/admin/protocol/ProtocolSendGeneratedDocumentTab'
 import { ProtocolPaymentTab } from '@/src/components/admin/protocol/ProtocolPaymentTab'
 import { TabsContent } from '@/components/ui/tabs'
@@ -296,7 +295,7 @@ export default function ProtocolDetailPage() {
     documentos: documents.filter(d => d.status === 'PENDING').length,
     pendencias: openPendings.length,
     comunicacao: unreadMessages,
-    generated: generatedDocuments.length
+    'documentos-gerados': generatedDocuments.filter(d => !d.isSigned).length // Mostra apenas não assinados
   }
 
   return (
@@ -368,19 +367,13 @@ export default function ProtocolDetailPage() {
                 </TabsContent>
               )}
 
-              {availableTabs.includes('generated') && (
-                <TabsContent value="generated" className="mt-0">
-                  <ProtocolGeneratedDocumentsTab
-                    generatedDocuments={generatedDocuments}
-                  />
-                </TabsContent>
-              )}
-
-              {availableTabs.includes('document-generation') && (
-                <TabsContent value="document-generation" className="mt-0">
-                  <ProtocolDocumentGenerationTab
+              {/* Tab Unificada: Geração e Documentos Gerados */}
+              {availableTabs.includes('documentos-gerados') && (
+                <TabsContent value="documentos-gerados" className="mt-0">
+                  <ProtocolDocumentsManager
                     protocolId={protocolId}
                     serviceId={protocol?.service?.id}
+                    generatedDocuments={generatedDocuments}
                     onRefresh={loadProtocolData}
                   />
                 </TabsContent>
