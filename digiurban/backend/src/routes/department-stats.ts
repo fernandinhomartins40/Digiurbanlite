@@ -16,6 +16,7 @@ const prisma = new PrismaClient();
 // Mapping de slugs para nomes de departamentos
 function departmentSlugToName(slug: string): string {
   const mapping: Record<string, string> = {
+    // Secretarias originais
     'agricultura': 'Secretaria de Agricultura',
     'saude': 'Secretaria de Saúde',
     'educacao': 'Secretaria de Educação',
@@ -29,7 +30,16 @@ function departmentSlugToName(slug: string): string {
     'seguranca-publica': 'Secretaria de Segurança Pública',
     'servicos-publicos': 'Secretaria de Serviços Públicos',
     'turismo': 'Secretaria de Turismo',
+    // Novas secretarias
     'fazenda': 'Secretaria de Fazenda',
+    'financas': 'Secretaria de Fazenda', // No banco está como "Secretaria de Fazenda" com code FINANCAS
+    'administracao': 'Secretaria de Administração',
+    'defesa-civil': 'Defesa Civil', // No banco está sem "Secretaria de"
+    'politicas-mulheres': 'Secretaria de Políticas para Mulheres', // Sem "as" no final
+    'tecnologia-inovacao': 'Secretaria de Tecnologia e Inovação',
+    'transportes-transito': 'Secretaria de Transportes e Trânsito',
+    'desenvolvimento-economico': 'Secretaria de Desenvolvimento Econômico',
+    'mobilidade-urbana': 'Secretaria de Mobilidade Urbana',
   };
   return mapping[slug] || slug;
 }
