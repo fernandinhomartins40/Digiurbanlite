@@ -19,7 +19,7 @@ import { saudeSuggestions } from './saude';
 import { segurancapublicaSuggestions } from './seguranca-publica';
 import { servicospublicosSuggestions } from './servicos-publicos';
 import { tecnologiaInovacaoSuggestions } from './tecnologia-inovacao';
-import { transporteTransitoSuggestions } from './transporte-transito';
+import { transportesTransitoSuggestions } from './transportes-transito';
 import { turismoSuggestions } from './turismo';
 
 export const SUGGESTIONS_POOL: Record<string, ServiceSuggestion[]> = {
@@ -42,7 +42,7 @@ export const SUGGESTIONS_POOL: Record<string, ServiceSuggestion[]> = {
   'seguranca-publica': segurancapublicaSuggestions,
   'servicos-publicos': servicospublicosSuggestions,
   'tecnologia-inovacao': tecnologiaInovacaoSuggestions,
-  'transporte-transito': transporteTransitoSuggestions,
+  'transportes-transito': transportesTransitoSuggestions,
   'turismo': turismoSuggestions,
 };
 

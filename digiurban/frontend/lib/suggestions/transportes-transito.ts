@@ -1,6 +1,6 @@
 import { ServiceSuggestion, ServiceType, ServiceSubtype } from './types';
 
-export const transporteTransitoSuggestions: ServiceSuggestion[] = [
+export const transportesTransitoSuggestions: ServiceSuggestion[] = [
   {
     id: 'carteira-habilitacao-primeira',
     name: 'Primeira Habilitação',
