@@ -1,21 +1,27 @@
-'use client'
+import type { Metadata } from 'next'
+import { AdminLayoutContent } from './layout-content'
 
-import { AdminAuthProvider } from '@/contexts/AdminAuthContext'
-import { AdminLayout } from '@/components/admin/AdminLayout'
-import { SidebarProvider } from '@/hooks/use-sidebar'
+export const metadata: Metadata = {
+  title: {
+    default: 'Admin - DigiUrban',
+    template: '%s | Admin - DigiUrban',
+  },
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+}
 
 export default function AdminRootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <AdminAuthProvider>
-      <SidebarProvider>
-        <AdminLayout>
-          {children}
-        </AdminLayout>
-      </SidebarProvider>
-    </AdminAuthProvider>
-  )
+  return <AdminLayoutContent>{children}</AdminLayoutContent>
 }

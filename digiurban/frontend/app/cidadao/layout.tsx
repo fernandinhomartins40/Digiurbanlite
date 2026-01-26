@@ -1,15 +1,27 @@
-'use client';
+import type { Metadata } from 'next'
+import { CitizenLayoutContent } from './layout-content'
 
-import { CitizenAuthProvider } from '@/contexts/CitizenAuthContext';
+export const metadata: Metadata = {
+  title: {
+    default: 'Portal do Cidadão - DigiUrban',
+    template: '%s | Portal do Cidadão - DigiUrban',
+  },
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+    nosnippet: true,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+}
 
 export default function CidadaoLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  return (
-    <CitizenAuthProvider>
-      {children}
-    </CitizenAuthProvider>
-  );
+  return <CitizenLayoutContent>{children}</CitizenLayoutContent>
 }

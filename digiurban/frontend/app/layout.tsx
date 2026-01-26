@@ -7,12 +7,19 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://digiurban.com.br'),
   title: {
-    default: 'DigiUrban - Sistema de Gestão Municipal',
+    default: 'DigiUrban - Sistema de Gestão Municipal Digital',
     template: '%s | DigiUrban'
   },
-  description: 'Plataforma completa para gestão municipal com foco em protocolos. Acesse serviços públicos, acompanhe protocolos e gerencie documentos.',
+  description: 'Plataforma completa para gestão municipal com foco em protocolos digitais. Acesse serviços públicos online, acompanhe protocolos em tempo real e gerencie documentos de forma 100% digital. Disponível 24/7, seguro e gratuito para cidadãos.',
   manifest: '/manifest.json',
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
+  alternates: {
+    canonical: '/',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -27,15 +34,20 @@ export const metadata: Metadata = {
   applicationName: 'DigiUrban',
   keywords: [
     'gestão municipal',
-    'serviços públicos',
-    'protocolos',
-    'cidadão',
-    'prefeitura',
+    'serviços públicos online',
+    'protocolos digitais',
+    'portal do cidadão',
+    'prefeitura digital',
     'governo digital',
-    'e-gov',
-    'atendimento digital',
+    'e-gov Brasil',
+    'atendimento ao cidadão',
     'solicitações online',
     'documentos digitais',
+    'governo eletrônico',
+    'transparência pública',
+    'serviços municipais',
+    'transformação digital',
+    'administração pública',
   ],
   authors: [{ name: 'DigiUrban', url: 'https://digiurban.com.br' }],
   creator: 'DigiUrban',
@@ -79,24 +91,26 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: 'https://digiurban.com.br',
+    url: '/',
     siteName: 'DigiUrban',
-    title: 'DigiUrban - Sistema de Gestão Municipal',
-    description: 'Plataforma completa para gestão municipal com foco em protocolos e atendimento ao cidadão.',
+    title: 'DigiUrban - Sistema de Gestão Municipal Digital',
+    description: 'Plataforma completa para gestão municipal com foco em protocolos digitais e atendimento ao cidadão. Acesse serviços públicos 24/7 de forma gratuita e segura.',
     images: [
       {
         url: '/icon-512x512.png',
         width: 512,
         height: 512,
-        alt: 'DigiUrban Logo',
+        alt: 'DigiUrban - Plataforma de Gestão Municipal Digital',
+        type: 'image/png',
       },
     ],
   },
   twitter: {
-    card: 'summary',
-    title: 'DigiUrban - Sistema de Gestão Municipal',
-    description: 'Plataforma completa para gestão municipal com foco em protocolos e atendimento ao cidadão.',
+    card: 'summary_large_image',
+    title: 'DigiUrban - Sistema de Gestão Municipal Digital',
+    description: 'Plataforma completa para gestão municipal com foco em protocolos digitais e atendimento ao cidadão. Disponível 24/7, gratuito e seguro.',
     images: ['/icon-512x512.png'],
+    creator: '@DigiUrban',
   },
 }
 

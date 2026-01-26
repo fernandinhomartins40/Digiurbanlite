@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
-import SuperAdminLayoutContent from './layout-content'
 
-export const metadata: Metadata = {
+export const superAdminMetadata: Metadata = {
   title: {
     default: 'Super Admin - DigiUrban',
     template: '%s | Super Admin - DigiUrban',
@@ -16,12 +15,4 @@ export const metadata: Metadata = {
       follow: false,
     },
   },
-}
-
-export default function SuperAdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return <SuperAdminLayoutContent>{children}</SuperAdminLayoutContent>
 }
