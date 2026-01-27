@@ -166,7 +166,7 @@ export function getContextualTabs(
     tabs.push('dados')
   }
 
-  // Se o stage é de emissão/geração de documentos, mostrar aba de documentos gerados
+  // Se o stage é de emissão/geração de documentos, mostrar aba de documentos gerados E enviar
   if (stageName.includes('emissão') ||
       stageName.includes('emissao') ||
       stageName.includes('geração') ||
@@ -177,6 +177,7 @@ export function getContextualTabs(
       stageName.includes('alvará') ||
       stageName.includes('alvara')) {
     tabs.push('documentos-gerados')
+    tabs.push('enviar')  // Adicionar aba de envio para stages de emissão
   }
 
   // Sempre mostrar pendências (para criar se necessário)

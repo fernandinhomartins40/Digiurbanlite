@@ -300,7 +300,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         description: 'Emissão da certidão de produtor rural',
         slaDays: 3,
 
-        availableTabs: ['resumo', 'documentos-gerados', 'comunicacao'],
+        availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
 
         requiredFormFields: [],
@@ -400,7 +400,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         description: 'Emissão da licença de obra',
         slaDays: 3,
 
-        availableTabs: ['resumo', 'documentos-gerados', 'comunicacao'],
+        availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
 
         requiredFormFields: [],
@@ -484,7 +484,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         description: 'Emissão do alvará de funcionamento',
         slaDays: 5,
 
-        availableTabs: ['resumo', 'documentos-gerados', 'comunicacao'],
+        availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
 
         requiredFormFields: [],
