@@ -227,7 +227,7 @@ SELECT
   s.id as "serviceId",
   s."moduleType",
   s.name as "serviceName",
-  s."departmentCode",
+  s."departmentId",
   c.id as "categoryId",
   c.code as "categoryCode",
   c.name as "categoryName",
@@ -268,7 +268,7 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS trigger_analyze_service ON "services_simplified";
 
 CREATE TRIGGER trigger_analyze_service
-AFTER INSERT OR UPDATE OF "moduleType", "departmentCode", name
+AFTER INSERT OR UPDATE OF "moduleType", "departmentId", name
 ON "services_simplified"
 FOR EACH ROW
 WHEN (NEW."moduleType" IS NOT NULL)
