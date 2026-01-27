@@ -149,6 +149,7 @@ export function getContextualTabs(
 
   // Inferir abas baseado nas necessidades da etapa
   const tabs: string[] = []
+  const stageName = currentStage.stageName?.toLowerCase() || ''
 
   // Sempre mostrar resumo como primeira aba
   tabs.push('resumo')
@@ -163,6 +164,19 @@ export function getContextualTabs(
   if (currentStage.metadata?.requiredFormFields &&
       currentStage.metadata.requiredFormFields.length > 0) {
     tabs.push('dados')
+  }
+
+  // Se o stage é de emissão/geração de documentos, mostrar aba de documentos gerados
+  if (stageName.includes('emissão') ||
+      stageName.includes('emissao') ||
+      stageName.includes('geração') ||
+      stageName.includes('geracao') ||
+      stageName.includes('documento') ||
+      stageName.includes('certidão') ||
+      stageName.includes('certidao') ||
+      stageName.includes('alvará') ||
+      stageName.includes('alvara')) {
+    tabs.push('documentos-gerados')
   }
 
   // Sempre mostrar pendências (para criar se necessário)
