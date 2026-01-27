@@ -135,25 +135,8 @@ export function PDFSignaturePlacer({
     };
   }, [pdfDocument, currentPage, scale]);
 
-  // Desenhar retângulo de seleção temporário (separado da renderização do PDF)
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const context = canvas.getContext('2d');
-    if (!context) return;
-
-    // Redesenhar apenas o retângulo sobre o canvas já renderizado
-    if (tempPosition && isDragging) {
-      context.strokeStyle = '#3b82f6';
-      context.lineWidth = 3;
-      context.setLineDash([10, 5]);
-      context.fillStyle = 'rgba(59, 130, 246, 0.1)';
-      context.fillRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
-      context.strokeRect(tempPosition.x, tempPosition.y, tempPosition.width, tempPosition.height);
-      context.setLineDash([]);
-    }
-  }, [tempPosition, isDragging]);
+  // Nota: Não desenhamos no canvas para evitar sobrescrever o PDF
+  // A área de assinatura é renderizada como overlay HTML (ver renderSignatureArea)
 
   // Handlers de mouse para desenhar área de assinatura
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -226,21 +209,32 @@ export function PDFSignaturePlacer({
     toast.success('Área de assinatura definida com sucesso!');
   };
 
-  // Renderizar retângulo da área de assinatura
+  // Renderizar retângulo da área de assinatura como overlay HTML
   const renderSignatureArea = () => {
-    const position = tempPosition || selectedPosition;
-    if (!position || position.page !== currentPage) return null;
-
     const canvas = canvasRef.current;
     if (!canvas) return null;
+
+    // Priorizar tempPosition enquanto arrasta, senão usar selectedPosition
+    let position = null;
+    let isTemp = false;
+
+    if (isDragging && tempPosition && tempPosition.page === currentPage) {
+      position = tempPosition;
+      isTemp = true;
+    } else if (selectedPosition && selectedPosition.page === currentPage) {
+      position = selectedPosition;
+      isTemp = false;
+    }
+
+    if (!position) return null;
 
     let displayX = position.x;
     let displayY = position.y;
     let displayWidth = position.width;
     let displayHeight = position.height;
 
-    // Se é uma posição selecionada (normalizada), converter de volta para pixels
-    if (selectedPosition && !tempPosition) {
+    // Se é uma posição selecionada (normalizada 0-1), converter de volta para pixels
+    if (!isTemp) {
       displayX = position.x * canvas.width;
       displayY = position.y * canvas.height;
       displayWidth = position.width * canvas.width;
