@@ -11,8 +11,6 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
-import { useCategorySuggestions } from '@/hooks/useCategorySuggestions'
-import { CategorySuggestionModal } from '@/components/admin/CategorySuggestionModal'
 import {
   Search,
   Plus,
@@ -96,12 +94,7 @@ export default function ServicesManagementPage() {
   const [showViewDialog, setShowViewDialog] = useState(false)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
 
-  // ✅ NOVO: Modal de sugestões de categorização
-  const [showSuggestionsModal, setShowSuggestionsModal] = useState(false)
-  const [selectedServiceForSuggestions, setSelectedServiceForSuggestions] = useState<string | null>(null)
-
-  // Hook para re-análise de serviços
-  const { analyzeService } = useCategorySuggestions()
+  // Sistema de sugestões de categorias removido - agora é automático via triggerServices
 
   // Carregar serviços
   const loadServices = useCallback(async () => {
@@ -169,19 +162,7 @@ export default function ServicesManagementPage() {
     }
   }
 
-  // ✅ NOVO: Re-analisar categorização de serviço
-  const handleReanalyzeService = async (serviceId: string) => {
-    try {
-      await analyzeService(serviceId)
-      await loadServices()
-
-      // Abrir modal com sugestões
-      setSelectedServiceForSuggestions(serviceId)
-      setShowSuggestionsModal(true)
-    } catch (error) {
-      console.error('Erro ao re-analisar serviço:', error)
-    }
-  }
+  // Sistema de re-análise removido - categorização agora é automática
 
   // ✅ NOVO: Renderizar badge de status de categorização
   const renderCategorizationStatus = (service: Service) => {
@@ -437,19 +418,6 @@ export default function ServicesManagementPage() {
                     {renderCategorizationStatus(service)}
                   </div>
 
-                  {/* ✅ NOVO: Botão de re-análise se houver sugestões pendentes ou não categorizado */}
-                  {(service.categorizationStatus === 'pending' || service.categorizationStatus === 'uncategorized') && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleReanalyzeService(service.id)}
-                      className="w-full text-xs"
-                    >
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      {service.categorizationStatus === 'pending' ? 'Ver Sugestões' : 'Analisar Categorias'}
-                    </Button>
-                  )}
-
                   <div className="pt-3 flex flex-wrap gap-2">
                     <Button
                       size="sm"
@@ -606,20 +574,6 @@ export default function ServicesManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* ✅ NOVO: Modal de Sugestões de Categorização */}
-      <CategorySuggestionModal
-        serviceId={selectedServiceForSuggestions}
-        isOpen={showSuggestionsModal}
-        onClose={() => {
-          setShowSuggestionsModal(false);
-          setSelectedServiceForSuggestions(null);
-        }}
-        onApproved={() => {
-          // Recarregar lista de serviços após aprovação
-          loadServices();
-        }}
-      />
     </div>
   )
 }
