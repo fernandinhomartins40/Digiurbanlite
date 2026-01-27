@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import { useSidebar } from '@/hooks/use-sidebar'
-import { useCategorySuggestions } from '@/hooks/useCategorySuggestions'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
@@ -76,11 +75,7 @@ export function AdminSidebar() {
   const pathname = usePathname()
   const { isOpen, isMobile, close } = useSidebar()
 
-  // Hook para buscar contagem de sugestões pendentes
-  const { stats: categoryStats } = useCategorySuggestions({
-    autoRefresh: true,
-    refreshInterval: 30000, // Atualizar a cada 30 segundos
-  })
+  // Sistema de sugestões de categorias removido - agora é automático via triggerServices
 
   // Fechar sidebar ao mudar de rota em mobile (apenas quando já estiver aberta)
   useEffect(() => {
@@ -161,13 +156,6 @@ export function AdminSidebar() {
           href: '/admin/servicos',
           icon: Settings,
           permissions: ['services:create', 'services:update']
-        },
-        {
-          title: 'Sugestões de Categorização',
-          href: '/admin/categorias/sugestoes',
-          icon: Sparkles,
-          minRole: 'COORDINATOR',
-          badge: categoryStats?.pending ? categoryStats.pending.toString() : undefined
         },
         {
           title: 'Templates de Documentos',
