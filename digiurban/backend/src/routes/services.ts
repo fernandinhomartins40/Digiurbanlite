@@ -75,74 +75,14 @@ router.get(
               name: true,
               code: true
         }
-      },
-          // ✅ NOVO: Incluir informações de categorização
-          matchSuggestions: {
-            where: {
-              status: 'PENDING'
-            },
-            select: {
-              id: true,
-              categoryId: true,
-              matchType: true,
-              confidence: true,
-              category: {
-                select: {
-                  code: true,
-                  name: true,
-                  icon: true
-                }
-              }
-            },
-            take: 3 // Limitar a 3 sugestões
-          },
-          categoryAssignments: {
-            where: {
-              active: true
-            },
-            select: {
-              id: true,
-              categoryId: true,
-              assignmentType: true,
-              confidence: true,
-              category: {
-                select: {
-                  code: true,
-                  name: true,
-                  icon: true
-                }
-              }
-            }
-          }
+      }
         },
         orderBy: [{ priority: 'desc' }, { name: 'asc' }]
         });
 
       console.log('[GET /api/services] Services found:', services.length);
 
-      // ✅ NOVO: Adicionar status de categorização a cada serviço
-      const servicesWithStatus = services.map(service => {
-        const hasPendingSuggestions = service.matchSuggestions.length > 0;
-        const hasCategoryAssignments = service.categoryAssignments.length > 0;
-
-        let categorizationStatus: 'uncategorized' | 'pending' | 'categorized' | 'auto_categorized' = 'uncategorized';
-
-        if (hasCategoryAssignments) {
-          const hasAutoAssigned = service.categoryAssignments.some(a => a.assignmentType === 'AUTO');
-          categorizationStatus = hasAutoAssigned ? 'auto_categorized' : 'categorized';
-        } else if (hasPendingSuggestions) {
-          categorizationStatus = 'pending';
-        }
-
-        return {
-          ...service,
-          categorizationStatus,
-          pendingSuggestionsCount: service.matchSuggestions.length,
-          categoriesCount: service.categoryAssignments.length
-        };
-      });
-
-      res.json({ data: servicesWithStatus, success: true });
+      res.json({ data: services, success: true });
     } catch (error) {
       console.error('List services error:', error);
       res.status(500).json({

@@ -162,22 +162,18 @@ router.get('/stream', adminAuthMiddleware, async (req: any, res: Response) => {
 
   // Enviar estatísticas iniciais
   try {
-    const [pendingSuggestions, pendingProtocols, pendingCitizens] = await Promise.all([
-      prisma.citizenCategoryMatchSuggestion.count({
-        where: { status: 'PENDING' },
-      }),
+    const [pendingProtocols, pendingCitizens] = await Promise.all([
       prisma.protocolSimplified.count({
         where: { status: { in: ['VINCULADO', 'PROGRESSO', 'PENDENCIA'] } },
       }),
       prisma.citizen.count({
-        where: { verificationStatus: 'PENDING' }, // accountStatus doesn't exist, using verificationStatus
+        where: { verificationStatus: 'PENDING' },
       }),
     ]);
 
     const statsEvent = {
       type: 'STATS_UPDATE',
       data: {
-        pendingSuggestions,
         pendingProtocols,
         pendingCitizens,
       },
@@ -335,22 +331,18 @@ export function notifySuggestionApproved(data: {
  */
 export async function notifyStatsUpdate() {
   try {
-    const [pendingSuggestions, pendingProtocols, pendingCitizens] = await Promise.all([
-      prisma.citizenCategoryMatchSuggestion.count({
-        where: { status: 'PENDING' },
-      }),
+    const [pendingProtocols, pendingCitizens] = await Promise.all([
       prisma.protocolSimplified.count({
         where: { status: { in: ['VINCULADO', 'PROGRESSO', 'PENDENCIA'] } },
       }),
       prisma.citizen.count({
-        where: { verificationStatus: 'PENDING' }, // accountStatus doesn't exist, using verificationStatus
+        where: { verificationStatus: 'PENDING' },
       }),
     ]);
 
     const event: NotificationEvent = {
       type: 'STATS_UPDATE',
       data: {
-        pendingSuggestions,
         pendingProtocols,
         pendingCitizens,
       },
