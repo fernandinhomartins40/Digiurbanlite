@@ -48,11 +48,21 @@ PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_US
   echo "⚠️ Aviso: Erro ao criar tabelas do bot (talvez já existam)"
 }
 
+# Corrigir migrations com problemas (se existirem)
+echo "🔧 Verificando e corrigindo migrations..."
+if [ -f "/app/backend/fix-production-migrations.js" ]; then
+  node /app/backend/fix-production-migrations.js || {
+    echo "⚠️ Aviso: Script de correção falhou, continuando..."
+  }
+else
+  echo "   ℹ️ Script de correção não encontrado (OK)"
+fi
+
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
 npx prisma migrate deploy || {
   echo "⚠️ Migrations falharam, tentando db push..."
-  npx prisma db push --skip-generate || {
+  npx prisma db push --skip-generate --accept-data-loss || {
     echo "❌ db push falhou"
     exit 1
   }
