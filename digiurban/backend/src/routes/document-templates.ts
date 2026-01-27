@@ -306,38 +306,32 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
     console.log(`✅ Certificado digital ativo encontrado: ${activeCertificate.serialNumber}`);
     console.log(`✅ Iniciando geração: templateId=${templateId}, protocolId=${protocolId}`);
 
-    // 4. Gerar documento com informações do certificado para marca visual
+    // 4. Gerar documento SEM assinatura automática
+    // A assinatura deve ser feita manualmente pelo usuário através do modal de assinatura
     const document = await documentGenerator.generateDocument({
       templateId,
       protocolId,
       generatedBy: userId,
-      additionalData,
-      certificateInfo: {
-        serialNumber: activeCertificate.serialNumber,
-        commonName: activeCertificate.commonName,
-        issuer: activeCertificate.issuerCA,
-        issuedAt: activeCertificate.issuedAt,
-        expiresAt: activeCertificate.expiresAt,
-        thumbprint: activeCertificate.thumbprint
-      }
+      additionalData
+      // certificateInfo removido - assinatura manual apenas
     });
 
     console.log(`✅ Documento gerado: ${document.id}`);
-    console.log(`✅ Marca visual de certificado digital aplicada ao documento`);
+    console.log(`ℹ️  Documento criado sem assinatura - necessita assinatura manual`);
 
     res.json({
       success: true,
       data: {
         ...document,
-        certificateUsed: {
+        needsSignature: true, // Indica que precisa assinar manualmente
+        certificateAvailable: {
           id: activeCertificate.id,
           serialNumber: activeCertificate.serialNumber,
           commonName: activeCertificate.commonName,
-          issuer: activeCertificate.issuerCA,
           expiresAt: activeCertificate.expiresAt
         }
       },
-      message: 'Documento gerado e certificado digitalmente com sucesso'
+      message: 'Documento gerado com sucesso. Utilize o botão "Assinar" para aplicar a assinatura digital.'
     });
   } catch (error: any) {
     console.error('❌ Error generating document:', error);
