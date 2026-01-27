@@ -4769,6 +4769,9 @@ model GeneratedDocument {
   sentBy          String?
   sentTo          String?                   // Email do destinatário
 
+  // Assinatura Digital
+  isSigned        Boolean  @default(false)  // Se o documento foi assinado digitalmente
+
   // Controle
   isActive        Boolean  @default(true)   // Soft delete
   deletedAt       DateTime?
@@ -5243,6 +5246,9 @@ model ExternalDocument {
   description     String?   @db.Text
   uploadedAt      DateTime  @default(now())
   isActive        Boolean   @default(true)
+
+  // Assinatura Digital
+  isSigned        Boolean   @default(false)  // Se o documento foi assinado digitalmente
 
   // Auditoria
   createdAt       DateTime  @default(now())

@@ -239,6 +239,19 @@ router.post('/sign', async (req, res) => {
       },
     });
 
+    // Atualizar status do documento para "assinado"
+    if (documentType === 'generated' && documentId) {
+      await prisma.generatedDocument.update({
+        where: { id: documentId },
+        data: { isSigned: true },
+      });
+    } else if (documentType === 'external' && externalDocumentId) {
+      await prisma.externalDocument.update({
+        where: { id: externalDocumentId },
+        data: { isSigned: true },
+      });
+    }
+
     res.json({
       success: true,
       message: 'Documento assinado com sucesso',
