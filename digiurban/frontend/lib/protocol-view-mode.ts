@@ -132,8 +132,13 @@ export function getContextualTabs(
     return ['timeline', 'documentos', 'documentos-gerados', 'comunicacao', 'envolvidos']
   }
 
-  // Modo de conclusão - abas especiais
+  // Modo de conclusão - usar abas definidas no stage metadata
   if (viewMode === ProtocolViewMode.COMPLETING) {
+    // Priorizar abas definidas no metadata do stage
+    if (currentStage?.metadata?.availableTabs) {
+      return currentStage.metadata.availableTabs
+    }
+    // Fallback para abas padrão de conclusão
     return ['resumo-final', 'documentos-gerados', 'enviar', 'comunicacao']
   }
 
