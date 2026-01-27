@@ -429,8 +429,7 @@ try { console.log('   → municipality...'); app.use('/api/municipality', requir
 try { console.log('   → workflows (legado)...'); app.use('/api/workflows', require('./routes/module-workflows').default); console.log('   ✓'); } catch (e) { console.error('❌ workflows:', e); }
 try { console.log('   → service-workflows (novo)...'); app.use('/api/service-workflows', require('./routes/service-workflows.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ service-workflows:', e); }
 
-// ✅ NOVO: Sistema de Categorização Dinâmica
-try { console.log('   → category-suggestions...'); app.use('/api/category-suggestions', require('./routes/category-suggestions.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ category-suggestions:', e); }
+// ✅ Notificações SSE
 try { console.log('   → notifications (SSE)...'); app.use('/api/notifications', require('./routes/notifications.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ notifications:', e); }
 
 console.log('✅ Todas as rotas carregadas com sucesso!');

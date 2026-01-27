@@ -431,11 +431,6 @@ model ServiceSimplified {
   // ✅ NOVO: Workflow próprio do serviço
   workflow ServiceWorkflow?
 
-  // Sistema dinâmico de categorização
-  tags                ServiceTag[]
-  matchSuggestions    CitizenCategoryMatchSuggestion[]
-  categoryAssignments ServiceCategoryAssignment[]
-
   @@map("services_simplified")
 }
 
@@ -4824,15 +4819,11 @@ model CitizenCategory {
   active      Boolean @default(true)
 
   // ═══════════════════════════════════════════════════════════════════
-  // SISTEMA DE MATCHING DINÂMICO (100% flexível)
+  // ✅ SISTEMA SIMPLES DE AUTO-ATRIBUIÇÃO
   // ═══════════════════════════════════════════════════════════════════
-  matchingEnabled     Boolean @default(true)
-  autoAssignThreshold Int     @default(85) // Score mínimo para auto-atribuir (0-100)
-  suggestThreshold    Int     @default(60) // Score mínimo para sugerir (0-100)
-
-  exactPatterns String[] @default([]) // Padrões exatos: ["CADASTRO_PRODUTOR"]
-  regexPatterns Json     @default("[]") // [{pattern: "PRODUTOR.*", confidence: 80}]
-  semanticRules Json     @default("{}") // {tags:{required:[], optional:[]}, departments:[]}
+  // Array de moduleTypes que ativam esta categoria quando protocolo aprovado
+  // Ex: ["CADASTRO_PRODUTOR", "RENOVACAO_PRODUTOR"]
+  triggerServices String[] @default([])
 
   // ═══════════════════════════════════════════════════════════════════
   // RELACIONAMENTOS ENTRE CATEGORIAS
@@ -4877,12 +4868,6 @@ model CitizenCategory {
   relationshipsAsSource CitizenCategoryRelationship[] @relation("SourceCategory")
   relationshipsAsTarget CitizenCategoryRelationship[] @relation("TargetCategory")
   badges                CitizenCategoryBadge[]
-
-  // Sistema dinâmico
-  matchRules                 CitizenCategoryMatchRule[]
-  matchSuggestions           CitizenCategoryMatchSuggestion[]
-  serviceCategoryAssignments ServiceCategoryAssignment[]
-  learningData               CitizenCategoryLearningData?
 
   createdAt                        DateTime                         @default(now())
   updatedAt                        DateTime                         @updatedAt
@@ -5129,159 +5114,15 @@ model CitizenCategoryBadge {
 // ============================================================================
 
 // Tags para Serviços
-model ServiceTag {
-  id        String            @id @default(cuid())
-  serviceId String
-  service   ServiceSimplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  tag    String
-  source String @default("MANUAL") // 'MANUAL', 'AUTO', 'AI'
-
-  createdAt DateTime @default(now())
-
-  @@unique([serviceId, tag])
-  @@index([serviceId])
-  @@index([tag])
-  @@map("service_tags")
-}
-
-// Regras de Match para Categorias
-model CitizenCategoryMatchRule {
-  id         String          @id @default(cuid())
-  categoryId String
-  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  ruleType String // 'EXACT', 'PATTERN', 'SEMANTIC', 'CUSTOM'
-
-  // Configuração da regra
-  pattern        String?
-  regex          String?
-  semanticConfig Json?
-  customLogic    Json?
-
-  // Score
-  confidence Int @default(80) // 0-100
-  priority   Int @default(5)
-
-  active      Boolean @default(true)
-  description String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([categoryId])
-  @@index([ruleType])
-  @@index([active])
-  @@map("citizen_category_match_rules")
-}
-
-// Sugestões de Match (Aguardando Aprovação)
-model CitizenCategoryMatchSuggestion {
-  id String @id @default(cuid())
-
-  serviceId String
-  service   ServiceSimplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  categoryId String
-  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  matchType     String // 'EXACT', 'PATTERN', 'SEMANTIC', 'MANUAL'
-  confidence    Int // 0-100
-  matchDetails  Json?
-  matchedRuleId String?
-
-  status      String    @default("PENDING") // 'PENDING', 'APPROVED', 'REJECTED', 'AUTO_ASSIGNED'
-  reviewedBy  String?
-  reviewedAt  DateTime?
-  reviewNotes String?
-
-  wasAutoAssigned         Boolean @default(false)
-  assignedToCitizensCount Int     @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([serviceId, categoryId])
-  @@index([serviceId])
-  @@index([categoryId])
-  @@index([status])
-  @@index([matchType])
-  @@map("citizen_category_match_suggestions")
-}
-
-// Vínculo Dinâmico Serviço → Categoria
-model ServiceCategoryAssignment {
-  id String @id @default(cuid())
-
-  serviceId String
-  service   ServiceSimplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  categoryId String
-  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  assignmentType String // 'AUTO', 'MANUAL', 'APPROVED_SUGGESTION'
-  confidence     Int? // Score quando auto-atribuído
-  matchRuleId    String? // Regra que gerou
-
-  assignedBy String?
-  assignedAt DateTime @default(now())
-
-  active   Boolean @default(true)
-  metadata Json?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([serviceId, categoryId])
-  @@index([serviceId])
-  @@index([categoryId])
-  @@index([active])
-  @@index([assignmentType])
-  @@map("service_category_assignments")
-}
-
-// Dados de Aprendizado (Machine Learning)
-model CitizenCategoryLearningData {
-  id         String          @id @default(cuid())
-  categoryId String          @unique
-  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  commonPatterns    Json     @default("[]")
-  commonTags        Json     @default("[]")
-  commonDepartments String[] @default([])
-  avgConfidence     Decimal? @db.Decimal(5, 2)
-
-  totalAutoAssignments   Int      @default(0)
-  totalManualAssignments Int      @default(0)
-  totalRejections        Int      @default(0)
-  successRate            Decimal? @db.Decimal(5, 2)
-
-  lastUpdated DateTime @default(now())
-
-  @@index([categoryId])
-  @@map("citizen_category_learning_data")
-}
-
-// Fila de Jobs em Background
-model BackgroundJob {
-  id      String @id @default(cuid())
-  type    String // 'ANALYZE_SERVICE_CATEGORIES', etc
-  payload Json
-
-  status      String    @default("PENDING") // 'PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'
-  result      Json?
-  error       String?
-  attempts    Int       @default(0)
-  maxAttempts Int       @default(3)
-  processedAt DateTime?
-
-  createdAt DateTime @default(now())
-
-  @@index([status])
-  @@index([type])
-  @@index([createdAt])
-  @@map("background_jobs")
-}
+// ═══════════════════════════════════════════════════════════════════
+// MODELS REMOVIDOS - Sistema simplificado não precisa de IA/ML/Tags
+// ═══════════════════════════════════════════════════════════════════
+// - ServiceTag (removido - desnecessário)
+// - CitizenCategoryMatchRule (removido)
+// - CitizenCategoryMatchSuggestion (removido)
+// - ServiceCategoryAssignment (removido)
+// - CitizenCategoryLearningData (removido)
+// - BackgroundJob (removido)
 
 // ========================================
 // SISTEMA DE ASSINATURA DIGITAL MUNICIPAL
