@@ -53,9 +53,7 @@ export function DynamicProtocolTabs({
 }: DynamicProtocolTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
-      <TabsList className={`grid w-full bg-white shadow-sm mb-4`} style={{
-        gridTemplateColumns: `repeat(${availableTabs.length}, minmax(0, 1fr))`
-      }}>
+      <TabsList className="flex w-full bg-white shadow-sm mb-4 overflow-x-auto gap-1 p-1">
         {availableTabs.map((tabId) => {
           const config = TAB_CONFIG[tabId]
           if (!config) return null
@@ -68,7 +66,7 @@ export function DynamicProtocolTabs({
             <TabsTrigger
               key={tabId}
               value={tabId}
-              className={`flex items-center gap-2 relative ${
+              className={`flex items-center gap-2 relative whitespace-nowrap flex-shrink-0 ${
                 isPrimary ? 'ring-2 ring-blue-400 ring-offset-2' : ''
               }`}
             >

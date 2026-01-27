@@ -169,7 +169,13 @@ export function ProtocolDocumentsManager({
   }
 
   const handleSignDocument = async (doc: GeneratedDocument) => {
-    setGeneratedDocument(doc)
+    // Construir URL completa para o PDF
+    const documentWithFullUrl = {
+      ...doc,
+      fileUrl: getFullApiUrl(`/generated-documents/${doc.id}/download?inline=true`),
+      fileName: doc.documentType || 'Documento Gerado'
+    }
+    setGeneratedDocument(documentWithFullUrl)
     setSigningDocumentId(doc.id)
     setShowSigningModal(true)
   }
