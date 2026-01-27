@@ -35,7 +35,7 @@ export interface ServiceAnalysis {
   serviceId: string;
   serviceName: string;
   moduleType: string | null;
-  departmentCode: string;
+  departmentId: string;
   matches: MatchResult[];
   autoAssigned: number;
   suggested: number;
@@ -60,7 +60,7 @@ export async function analyzeServiceForCategories(serviceId: string): Promise<Se
       name: true,
       description: true,
       moduleType: true,
-      departmentCode: true,
+      departmentId: true,
       serviceType: true,
       tags: {
         select: { tag: true }
@@ -73,7 +73,7 @@ export async function analyzeServiceForCategories(serviceId: string): Promise<Se
   }
 
   // 2. Extrair tags do serviço
-  const serviceTags = service.tags.map(t => t.tag);
+  const serviceTags = service.tags.map((t: { tag: string }) => t.tag);
 
   // 3. Buscar todas as categorias ativas
   const categories = await prisma.citizenCategory.findMany({
@@ -105,7 +105,7 @@ export async function analyzeServiceForCategories(serviceId: string): Promise<Se
     serviceId: service.id,
     serviceName: service.name,
     moduleType: service.moduleType,
-    departmentCode: service.departmentCode,
+    departmentId: service.departmentId,
     matches,
     autoAssigned: matches.filter(m => m.shouldAutoAssign).length,
     suggested: matches.filter(m => m.shouldSuggest && !m.shouldAutoAssign).length,
@@ -229,7 +229,7 @@ function calculateSemanticScore(
 
   // 1. DEPARTAMENTO (30 pontos)
   if (rules.departments && rules.departments.length > 0) {
-    if (rules.departments.includes(service.departmentCode)) {
+    if (rules.departments.includes(service.departmentId)) {
       score += 30;
       details.departmentMatch = true;
     }

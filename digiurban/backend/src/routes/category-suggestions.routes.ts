@@ -40,7 +40,7 @@ router.get('/pending', adminAuthMiddleware, async (req: any, res) => {
             id: true,
             name: true,
             moduleType: true,
-            departmentCode: true,
+            departmentId: true,
             createdAt: true
           }
         },
@@ -63,7 +63,7 @@ router.get('/pending', adminAuthMiddleware, async (req: any, res) => {
 
     // Filtrar por departamento se fornecido
     const filtered = departmentCode
-      ? suggestions.filter(s => s.service.departmentCode === departmentCode)
+      ? suggestions.filter(s => s.service.departmentId === departmentCode)
       : suggestions;
 
     res.json({
@@ -96,7 +96,7 @@ router.get('/service/:serviceId', adminAuthMiddleware, async (req: any, res) => 
           id: true,
           name: true,
           moduleType: true,
-          departmentCode: true
+          departmentId: true
         }
       }),
       prisma.citizenCategoryMatchSuggestion.findMany({
@@ -170,12 +170,12 @@ router.get('/stats', adminAuthMiddleware, async (req: any, res) => {
       // Estatísticas por departamento
       prisma.$queryRaw`
         SELECT
-          s."departmentCode",
+          s."departmentId" as "departmentId",
           COUNT(*) as total,
           SUM(CASE WHEN cms.status = 'PENDING' THEN 1 ELSE 0 END) as pending
         FROM citizen_category_match_suggestions cms
         JOIN services_simplified s ON s.id = cms."serviceId"
-        GROUP BY s."departmentCode"
+        GROUP BY s."departmentId"
         ORDER BY total DESC
       `
     ]);
@@ -218,7 +218,14 @@ router.post('/:id/approve', adminAuthMiddleware, async (req: any, res) => {
     const suggestion = await prisma.citizenCategoryMatchSuggestion.findUnique({
       where: { id },
       include: {
-        service: true,
+        service: {
+          select: {
+            id: true,
+            name: true,
+            moduleType: true,
+            departmentId: true
+          }
+        },
         category: true
       }
     });

@@ -601,8 +601,7 @@ router.get('/suggestions', citizenAuthMiddleware, async (req, res) => {
         category: {
           select: {
             code: true,
-            department: true,
-            triggerServices: true
+            department: true
           }
         }
       }
@@ -610,7 +609,8 @@ router.get('/suggestions', citizenAuthMiddleware, async (req, res) => {
 
     const categoryCodes = citizenCategories.map(c => c.category.code);
     const departments = [...new Set(citizenCategories.map(c => c.category.department))];
-    const relatedModuleTypes = citizenCategories.flatMap(c => c.category.triggerServices || []);
+    // triggerServices field doesn't exist in schema - removed
+    const relatedModuleTypes: string[] = [];
 
     console.log(`[SUGGESTIONS] Cidadão possui ${categoryCodes.length} categorias:`, categoryCodes);
     console.log(`[SUGGESTIONS] Departamentos relacionados:`, departments);

@@ -87,14 +87,14 @@ export async function sendRenewalReminders() {
           type: 'CATEGORY_RENEWAL_REMINDER',
           title: `Renovação de Categoria: ${assignment.category.name}`,
           message: `Sua categoria "${assignment.category.name}" expira em ${daysUntilExpiry} dia(s). Clique para renovar.`,
-          priority: daysUntilExpiry <= 7 ? 'HIGH' : 'MEDIUM',
-          read: false,
+          isRead: false,
           metadata: {
             assignmentId: assignment.id,
             categoryId: assignment.categoryId,
             categoryCode: assignment.category.code,
             expiresAt: assignment.expiresAt,
             daysUntilExpiry,
+            priority: daysUntilExpiry <= 7 ? 'HIGH' : 'MEDIUM', // Moved to metadata
           },
         },
       });
@@ -165,11 +165,11 @@ export async function checkCategoryProgression() {
               type: 'CATEGORY_UPGRADED',
               title: 'Parabéns! Você evoluiu de categoria!',
               message: `Sua categoria "${assignment.category.name}" foi promovida para "${check.nextCategory.name}"!`,
-              priority: 'HIGH',
-              read: false,
+              isRead: false,
               metadata: {
                 fromCategory: assignment.category.code,
                 toCategory: check.nextCategory.code,
+                priority: 'HIGH', // Moved to metadata
               },
             },
           });

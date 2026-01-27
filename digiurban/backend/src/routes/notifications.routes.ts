@@ -166,11 +166,11 @@ router.get('/stream', adminAuthMiddleware, async (req: any, res: Response) => {
       prisma.citizenCategoryMatchSuggestion.count({
         where: { status: 'PENDING' },
       }),
-      prisma.protocol.count({
-        where: { status: { in: ['VINCULADO', 'EM_ANDAMENTO', 'AGUARDANDO_DOCUMENTOS'] } },
+      prisma.protocolSimplified.count({
+        where: { status: { in: ['VINCULADO', 'PROGRESSO', 'PENDENCIA'] } },
       }),
       prisma.citizen.count({
-        where: { accountStatus: 'PENDING_APPROVAL' },
+        where: { verificationStatus: 'PENDING' }, // accountStatus doesn't exist, using verificationStatus
       }),
     ]);
 
@@ -207,7 +207,7 @@ router.get('/stream', adminAuthMiddleware, async (req: any, res: Response) => {
     console.log(`[SSE] Conexão fechada: ${clientId}`);
   });
 
-  req.on('error', (error) => {
+  req.on('error', (error: Error) => {
     console.error(`[SSE] Erro na conexão ${clientId}:`, error);
     clearInterval(heartbeatInterval);
     removeSSEClient(clientId);
@@ -339,11 +339,11 @@ export async function notifyStatsUpdate() {
       prisma.citizenCategoryMatchSuggestion.count({
         where: { status: 'PENDING' },
       }),
-      prisma.protocol.count({
-        where: { status: { in: ['VINCULADO', 'EM_ANDAMENTO', 'AGUARDANDO_DOCUMENTOS'] } },
+      prisma.protocolSimplified.count({
+        where: { status: { in: ['VINCULADO', 'PROGRESSO', 'PENDENCIA'] } },
       }),
       prisma.citizen.count({
-        where: { accountStatus: 'PENDING_APPROVAL' },
+        where: { verificationStatus: 'PENDING' }, // accountStatus doesn't exist, using verificationStatus
       }),
     ]);
 

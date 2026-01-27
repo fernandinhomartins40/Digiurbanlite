@@ -9,6 +9,7 @@
 import { Router } from 'express';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
+import { prisma } from '../lib/prisma';
 import * as categoryService from '../services/citizen-category.service';
 import * as expandedService from '../services/citizen-category-expanded.service';
 import * as relationshipsService from '../services/citizen-category-relationships.service';
@@ -97,7 +98,7 @@ router.get('/category/:assignmentId/history', citizenAuthMiddleware, async (req:
     const citizenId = req.citizen.id;
 
     // Verificar se assignment pertence ao cidadão
-    const assignment = await categoryService.prisma.citizenCategoryAssignment.findUnique({
+    const assignment = await prisma.citizenCategoryAssignment.findUnique({
       where: { id: assignmentId },
     });
 
@@ -134,7 +135,7 @@ router.post('/category/:assignmentId/renew', citizenAuthMiddleware, async (req: 
     const citizenId = req.citizen.id;
 
     // Verificar se assignment pertence ao cidadão
-    const assignment = await categoryService.prisma.citizenCategoryAssignment.findUnique({
+    const assignment = await prisma.citizenCategoryAssignment.findUnique({
       where: { id: assignmentId },
     });
 
@@ -230,10 +231,11 @@ router.post('/admin/category/:assignmentId/award-badge', adminAuthMiddleware, as
     }
 
     const result = await expandedService.awardBadge(assignmentId, badgeCode, reason);
+    const { success: _, ...resultData } = result as any;
 
     res.json({
       success: true,
-      ...result,
+      ...resultData,
     });
   } catch (error: any) {
     console.error('Erro ao atribuir badge:', error);
@@ -254,11 +256,12 @@ router.post('/admin/category/:assignmentId/apply-progression', adminAuthMiddlewa
     const performedBy = req.user.id;
 
     const result = await expandedService.applyProgression(assignmentId, performedBy);
+    const { success: _, ...resultData } = result as any;
 
     res.json({
       success: true,
       message: 'Progressão aplicada com sucesso',
-      ...result,
+      ...resultData,
     });
   } catch (error: any) {
     console.error('Erro ao aplicar progressão:', error);
@@ -278,7 +281,7 @@ router.get('/admin/citizen/:citizenId/full-profile', adminAuthMiddleware, async 
     const { citizenId } = req.params;
 
     const [citizen, assignments, suggestions] = await Promise.all([
-      categoryService.prisma.citizen.findUnique({
+      prisma.citizen.findUnique({
         where: { id: citizenId },
         select: {
           id: true,
@@ -301,7 +304,7 @@ router.get('/admin/citizen/:citizenId/full-profile', adminAuthMiddleware, async 
 
     // Enriquecer assignments
     const enrichedAssignments = await Promise.all(
-      assignments.map(async (assignment) => {
+      assignments.map(async (assignment: any) => {
         const [history, auditLog, progression] = await Promise.all([
           expandedService.getProtocolHistory(assignment.id),
           expandedService.getAuditLog(assignment.id),
@@ -326,11 +329,11 @@ router.get('/admin/citizen/:citizenId/full-profile', adminAuthMiddleware, async 
       suggestions,
       statistics: {
         totalCategories: assignments.length,
-        activeCategories: assignments.filter((a) => a.active).length,
-        expiredCategories: assignments.filter((a) => a.isExpired).length,
-        totalProtocols: assignments.reduce((sum, a) => sum + a.protocolCount, 0),
-        totalExperiencePoints: assignments.reduce((sum, a) => sum + a.experiencePoints, 0),
-        totalBadges: assignments.reduce((sum, a) => sum + ((a.badges as any[]) || []).length, 0),
+        activeCategories: assignments.filter((a: any) => a.active).length,
+        expiredCategories: assignments.filter((a: any) => a.isExpired).length,
+        totalProtocols: assignments.reduce((sum: number, a: any) => sum + a.protocolCount, 0),
+        totalExperiencePoints: assignments.reduce((sum: number, a: any) => sum + a.experiencePoints, 0),
+        totalBadges: assignments.reduce((sum: number, a: any) => sum + ((a.badges as any[]) || []).length, 0),
       },
     });
   } catch (error: any) {
