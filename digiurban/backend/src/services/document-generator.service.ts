@@ -694,6 +694,8 @@ export async function getGeneratedDocuments(protocolId: string) {
       // Importante: usar "createdAt" que é o esperado pelo componente admin
       createdAt: doc.generatedAt.toISOString(),
       generatedAt: doc.generatedAt.toISOString(),
+      // Informações de assinatura
+      isSigned: doc.isSigned || false,
       // Informações de envio
       wasSent: doc.wasSent,
       sentAt: doc.sentAt?.toISOString(),
