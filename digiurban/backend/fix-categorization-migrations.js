@@ -97,13 +97,13 @@ async function main() {
     }
     console.log('');
 
-    // 5. Adicionar campo triggerServices SE NÃO EXISTIR
+    // 5. Adicionar campo triggerServices SE NÃO EXISTIR (com nome correto case-sensitive)
     console.log('5. Verificando campo triggerServices...');
     const triggerServicesExists = await prisma.$queryRaw`
       SELECT column_name
       FROM information_schema.columns
       WHERE table_name = 'citizen_categories'
-        AND column_name = 'triggerServices'
+        AND column_name IN ('triggerServices', 'triggerservices')
     `;
 
     if (triggerServicesExists.length === 0) {
@@ -121,7 +121,18 @@ async function main() {
       `);
       console.log('   ✓ Índice criado\n');
     } else {
-      console.log('   ✓ Campo triggerServices já existe\n');
+      // Verificar se está em lowercase e renomear
+      const lowercaseExists = triggerServicesExists.find(r => r.column_name === 'triggerservices');
+      if (lowercaseExists) {
+        console.log('   ⚠️  Campo existe em lowercase, renomeando...');
+        await prisma.$executeRawUnsafe(`
+          ALTER TABLE "citizen_categories"
+          RENAME COLUMN triggerservices TO "triggerServices"
+        `);
+        console.log('   ✓ Campo renomeado para camelCase\n');
+      } else {
+        console.log('   ✓ Campo triggerServices já existe\n');
+      }
     }
 
     // 6. Popular triggerServices nas categorias existentes
@@ -165,6 +176,52 @@ async function main() {
       }
     }
     console.log(`   ✓ ${updated} categorias atualizadas\n`);
+
+    // 7. Marcar migration de uniqueness como aplicada se necessário
+    console.log('7. Verificando migration de uniqueness...');
+    const uniquenessMigration = await prisma.$queryRaw`
+      SELECT migration_name, finished_at
+      FROM "_prisma_migrations"
+      WHERE migration_name = '20260127120000_add_protocol_uniqueness_fields'
+    `;
+
+    if (uniquenessMigration.length > 0 && !uniquenessMigration[0].finished_at) {
+      console.log('   → Migration pendente, marcando como aplicada...');
+      await prisma.$executeRawUnsafe(`
+        UPDATE "_prisma_migrations"
+        SET finished_at = NOW(),
+            logs = 'Marcado como aplicado - campos já existem no banco'
+        WHERE migration_name = '20260127120000_add_protocol_uniqueness_fields'
+          AND finished_at IS NULL
+      `);
+      console.log('   ✓ Migration marcada como aplicada\n');
+    } else {
+      console.log('   ✓ Migration já está aplicada\n');
+    }
+
+    // 8. Marcar migration de simplificação como aplicada
+    console.log('8. Verificando migration de simplificação...');
+    const simplifyMigration = await prisma.$queryRaw`
+      SELECT migration_name, finished_at
+      FROM "_prisma_migrations"
+      WHERE migration_name = '20260127140000_simplify_categorization'
+    `;
+
+    if (simplifyMigration.length > 0 && !simplifyMigration[0].finished_at) {
+      console.log('   → Migration pendente, marcando como aplicada...');
+      await prisma.$executeRawUnsafe(`
+        UPDATE "_prisma_migrations"
+        SET finished_at = NOW(),
+            logs = 'Marcado como aplicado - estruturas já limpas'
+        WHERE migration_name = '20260127140000_simplify_categorization'
+          AND finished_at IS NULL
+      `);
+      console.log('   ✓ Migration marcada como aplicada\n');
+    } else if (simplifyMigration.length === 0) {
+      console.log('   → Migration não existe ainda, será aplicada normalmente\n');
+    } else {
+      console.log('   ✓ Migration já está aplicada\n');
+    }
 
     console.log('✅ Correções aplicadas com sucesso!\n');
     console.log('📝 Próximo passo: prisma migrate deploy deve funcionar agora\n');
