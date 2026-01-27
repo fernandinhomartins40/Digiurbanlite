@@ -139,6 +139,11 @@ COPY --from=backend-builder /app/backend/node_modules/.prisma ./node_modules/.pr
 # Copiar scripts diretamente do contexto
 COPY digiurban/backend/scripts ./scripts
 
+# Copiar scripts de correção de migrations
+COPY digiurban/backend/fix-production-migrations.js ./fix-production-migrations.js
+COPY digiurban/backend/fix-categorization-migrations.js ./fix-categorization-migrations.js
+COPY digiurban/backend/apply-uniqueness-migration.js ./apply-uniqueness-migration.js
+
 # Copiar Playwright do builder e instalar browsers
 COPY --from=backend-builder /app/backend/node_modules/playwright ./node_modules/playwright
 
