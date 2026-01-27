@@ -88,7 +88,7 @@ model User {
   externalDocuments ExternalDocument[] @relation("UserExternalDocuments")
 
   // Solicitações de certificados
-  certificateRequests CertificateRequest[] @relation("UserCertificateRequests")
+  certificateRequests         CertificateRequest[] @relation("UserCertificateRequests")
   reviewedCertificateRequests CertificateRequest[] @relation("CertificateRequestReviewer")
 
   @@map("users")
@@ -161,15 +161,15 @@ model Citizen {
   lastLogin           DateTime?
 
   // Campos adicionais para perfil completo do cidadão (endereço já está em address JSON)
-  rg                  String?
-  phoneSecondary      String?
-  motherName          String?
-  maritalStatus       String?
-  occupation          String?
-  familyIncome        String?
+  rg             String?
+  phoneSecondary String?
+  motherName     String?
+  maritalStatus  String?
+  occupation     String?
+  familyIncome   String?
 
   // Avatar/Foto de perfil
-  avatar              String?  // URL da foto ou null para usar iniciais+cor
+  avatar              String? // URL da foto ou null para usar iniciais+cor
   auditLogs           AuditLog[]
   transferRequests    CitizenTransferRequest[]
   familyAsMember      FamilyComposition[]      @relation("FamilyMember")
@@ -184,13 +184,15 @@ model Citizen {
   passwordResetTokens PasswordResetToken[]
 
   // Categorias do cidadão
-  categories          CitizenCategoryAssignment[] @relation("CitizenCategories")
+  categories              CitizenCategoryAssignment[]      @relation("CitizenCategories")
+  categoryProtocolHistory CitizenCategoryProtocolHistory[] @relation("CitizenCategoryProtocolHistory")
+  categoryAuditLog        CitizenCategoryAuditLog[]        @relation("CitizenCategoryAuditLog")
 
   // Bot e conversações
-  botConversations    BotConversation[]
+  botConversations       BotConversation[]
   proactiveNotifications ProactiveNotification[]
-  botUploads          BotUpload[]
-  flowExecutions      FlowExecution[]
+  botUploads             BotUpload[]
+  flowExecutions         FlowExecution[]
 
   // Certificados digitais
   digitalCertificates DigitalCertificate[] @relation("CitizenCertificates")
@@ -207,24 +209,24 @@ model Citizen {
 // ========================================
 
 model PasswordResetToken {
-  id           String   @id @default(cuid())
-  token        String   @unique
+  id    String @id @default(cuid())
+  token String @unique
 
   // Suporte para ambos tipos de usuário
-  userId       String?
-  citizenId    String?
+  userId    String?
+  citizenId String?
 
-  userType     String   // "admin" ou "citizen"
-  email        String
+  userType String // "admin" ou "citizen"
+  email    String
 
-  expiresAt    DateTime
-  used         Boolean  @default(false)
-  usedAt       DateTime?
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime?
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  citizen      Citizen? @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  citizen Citizen? @relation(fields: [citizenId], references: [id], onDelete: Cascade)
 
   @@index([token])
   @@index([email])
@@ -239,30 +241,30 @@ model PasswordResetToken {
 // ========================================
 
 model CitizenDocument {
-  id                String         @id @default(cuid())
-  citizenId         String
-  documentType      String // RG, CPF, Comprovante de Residência, Protocolo, etc.
-  fileName          String
-  filePath          String
-  fileUrl           String? // URL para acesso direto (opcional)
-  fileSize          Int
-  mimeType          String
-  status            DocumentStatus @default(PENDING)
-  notes             String? // Observações de análise/rejeição
-  uploadedAt        DateTime       @default(now())
-  reviewedBy        String? // ID do admin que revisou
-  reviewedAt        DateTime? // Data da revisão
-  rejectionReason   String? // Motivo da rejeição
+  id              String         @id @default(cuid())
+  citizenId       String
+  documentType    String // RG, CPF, Comprovante de Residência, Protocolo, etc.
+  fileName        String
+  filePath        String
+  fileUrl         String? // URL para acesso direto (opcional)
+  fileSize        Int
+  mimeType        String
+  status          DocumentStatus @default(PENDING)
+  notes           String? // Observações de análise/rejeição
+  uploadedAt      DateTime       @default(now())
+  reviewedBy      String? // ID do admin que revisou
+  reviewedAt      DateTime? // Data da revisão
+  rejectionReason String? // Motivo da rejeição
 
   // Campos para documentos vindos de protocolos
-  sourceType        String?        // 'PROTOCOL', 'UPLOAD', null (legado)
-  sourceDocumentId  String?        // ID do GeneratedDocument se vier de protocolo
-  isVerified        Boolean        @default(false) // Documentos de protocolo são pré-verificados
-  verifiedAt        DateTime?
-  verifiedBy        String?
+  sourceType       String? // 'PROTOCOL', 'UPLOAD', null (legado)
+  sourceDocumentId String? // ID do GeneratedDocument se vier de protocolo
+  isVerified       Boolean   @default(false) // Documentos de protocolo são pré-verificados
+  verifiedAt       DateTime?
+  verifiedBy       String?
 
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   citizen Citizen @relation("CitizenDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
 
@@ -414,6 +416,11 @@ model ServiceSimplified {
   locationLabel            String? // Label personalizado para o campo (ex: "Local do buraco", "Endereço da ocorrência")
   enableMapSelection       Boolean @default(false) // Permite marcar localização no mapa
 
+  // ✅ NOVO: Sistema de validação de unicidade de protocolos
+  allowMultipleActiveProtocols Boolean @default(true) // Permite múltiplos protocolos ativos do mesmo serviço por cidadão
+  uniquenessScope              String? // 'CITIZEN' | 'CUSTOM' | 'CITIZEN_PER_FIELD'
+  uniquenessRules              Json? // Regras JSON para validação (estrutura varia por scope)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -422,7 +429,12 @@ model ServiceSimplified {
   tickets    AdminTicket[]
 
   // ✅ NOVO: Workflow próprio do serviço
-  workflow   ServiceWorkflow?
+  workflow ServiceWorkflow?
+
+  // Sistema dinâmico de categorização
+  tags                ServiceTag[]
+  matchSuggestions    CitizenCategoryMatchSuggestion[]
+  categoryAssignments ServiceCategoryAssignment[]
 
   @@map("services_simplified")
 }
@@ -445,12 +457,12 @@ model ProtocolSimplified {
   moduleType String? // Para roteamento
 
   // Geolocalização
-  latitude         Float?
-  longitude        Float?
-  address          String?
-  locationType     String? // 'CITIZEN_ADDRESS', 'SPECIFIC_LOCATION', 'MANUAL_PIN', 'GPS'
+  latitude          Float?
+  longitude         Float?
+  address           String?
+  locationType      String? // 'CITIZEN_ADDRESS', 'SPECIFIC_LOCATION', 'MANUAL_PIN', 'GPS'
   geocodingProvider String? // 'nominatim', 'geoapify', 'manual'
-  specificLocation String? // Endereço específico informado (diferente do endereço do cidadão)
+  specificLocation  String? // Endereço específico informado (diferente do endereço do cidadão)
 
   // Gestão
   assignedUserId String?
@@ -473,20 +485,21 @@ model ProtocolSimplified {
   createdBy    User?             @relation("CreatedByUserSimplified", fields: [createdById], references: [id])
 
   // Relacionamentos núcleo do protocolo
-  history        ProtocolHistorySimplified[]
-  evaluations    ProtocolEvaluationSimplified[]
-  interactions   ProtocolInteraction[]
-  documentFiles  ProtocolDocument[]
-  dataFields     ProtocolDataField[]
-  pendings       ProtocolPending[]
-  stages         ProtocolStage[]
-  currentStage   ProtocolStage?              @relation("CurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
-  sla            ProtocolSLA?
-  citizenLinks   ProtocolCitizenLink[]
-  tfdSolicitacao SolicitacaoTFD?                @relation("TFDProtocol")
-  ticket         AdminTicket?
-  generatedDocuments GeneratedDocument[]
-  generatedCategories CitizenCategoryAssignment[] @relation("ProtocolGeneratedCategories")
+  history                 ProtocolHistorySimplified[]
+  evaluations             ProtocolEvaluationSimplified[]
+  interactions            ProtocolInteraction[]
+  documentFiles           ProtocolDocument[]
+  dataFields              ProtocolDataField[]
+  pendings                ProtocolPending[]
+  stages                  ProtocolStage[]
+  currentStage            ProtocolStage?                   @relation("CurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
+  sla                     ProtocolSLA?
+  citizenLinks            ProtocolCitizenLink[]
+  tfdSolicitacao          SolicitacaoTFD?                  @relation("TFDProtocol")
+  ticket                  AdminTicket?
+  generatedDocuments      GeneratedDocument[]
+  generatedCategories     CitizenCategoryAssignment[]      @relation("ProtocolGeneratedCategories")
+  categoryProtocolHistory CitizenCategoryProtocolHistory[] @relation("CategoryProtocolHistory")
 
   @@index([status])
   @@index([createdAt])
@@ -531,43 +544,43 @@ model ProtocolEvaluationSimplified {
 // ========================================
 
 model AdminTicket {
-  id          String       @id @default(cuid())
-  number      String       @unique // CH-2025-XXXXX
+  id     String @id @default(cuid())
+  number String @unique // CH-2025-XXXXX
 
   // Dados da solicitação
   title       String
   description String
-  priority    Int          @default(3)
+  priority    Int    @default(3)
 
   // Solicitante (prefeito/admin)
-  requestedById   String
-  requestedBy     User     @relation("TicketRequester", fields: [requestedById], references: [id])
+  requestedById String
+  requestedBy   User   @relation("TicketRequester", fields: [requestedById], references: [id])
 
   // Alvo da solicitação
-  citizenId       String
-  citizen         Citizen  @relation(fields: [citizenId], references: [id])
-  serviceId       String
-  service         ServiceSimplified @relation(fields: [serviceId], references: [id])
-  departmentId    String
-  department      Department @relation(fields: [departmentId], references: [id])
+  citizenId    String
+  citizen      Citizen           @relation(fields: [citizenId], references: [id])
+  serviceId    String
+  service      ServiceSimplified @relation(fields: [serviceId], references: [id])
+  departmentId String
+  department   Department        @relation(fields: [departmentId], references: [id])
 
   // Estado do chamado
-  status      TicketStatus @default(PENDING)
+  status TicketStatus @default(PENDING)
 
   // Protocolo gerado (quando secretaria aceita)
-  protocolId  String?      @unique
-  protocol    ProtocolSimplified? @relation(fields: [protocolId], references: [id])
+  protocolId String?             @unique
+  protocol   ProtocolSimplified? @relation(fields: [protocolId], references: [id])
 
   // Atribuição (quando secretaria aceita)
-  assignedUserId  String?
-  assignedUser    User?    @relation("TicketAssigned", fields: [assignedUserId], references: [id])
+  assignedUserId String?
+  assignedUser   User?   @relation("TicketAssigned", fields: [assignedUserId], references: [id])
 
   // Timestamps
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  acceptedAt         DateTime?
-  rejectedAt         DateTime?
-  protocolCreatedAt  DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  acceptedAt        DateTime?
+  rejectedAt        DateTime?
+  protocolCreatedAt DateTime?
 
   // Observações e histórico
   observations    String?
@@ -750,29 +763,29 @@ enum PendingStatus {
 // ========================================
 
 model ProtocolDataField {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   protocolId String
 
   // Identificação do campo
-  fieldKey   String   // Ex: "nome_propriedade", "area_hectares"
-  fieldLabel String   // Ex: "Nome da Propriedade", "Área (hectares)"
-  fieldValue String   // Valor armazenado como string
+  fieldKey   String // Ex: "nome_propriedade", "area_hectares"
+  fieldLabel String // Ex: "Nome da Propriedade", "Área (hectares)"
+  fieldValue String // Valor armazenado como string
 
   // Classificação
-  isRequired Boolean  @default(false)
-  fieldType  String?  // "text", "number", "date", "cpf", etc
+  isRequired Boolean @default(false)
+  fieldType  String? // "text", "number", "date", "cpf", etc
 
   // Status de aprovação
-  status        DataFieldStatus @default(PENDING)
+  status DataFieldStatus @default(PENDING)
 
   // Validação
-  validatedBy   String?
-  validatedAt   DateTime?
-  rejectedAt    DateTime?
+  validatedBy     String?
+  validatedAt     DateTime?
+  rejectedAt      DateTime?
   rejectionReason String?
 
   // Histórico de versões
-  version       Int      @default(1)
+  version       Int     @default(1)
   previousValue String?
 
   // Timestamps
@@ -792,11 +805,11 @@ model ProtocolDataField {
 }
 
 enum DataFieldStatus {
-  PENDING       // Aguardando validação
-  UNDER_REVIEW  // Em análise
-  APPROVED      // Aprovado
-  REJECTED      // Rejeitado, precisa correção
-  CORRECTED     // Corrigido pelo cidadão, aguarda revalidação
+  PENDING // Aguardando validação
+  UNDER_REVIEW // Em análise
+  APPROVED // Aprovado
+  REJECTED // Rejeitado, precisa correção
+  CORRECTED // Corrigido pelo cidadão, aguarda revalidação
 }
 
 // ========================================
@@ -805,19 +818,19 @@ enum DataFieldStatus {
 
 // Histórico de aprovações/rejeições de campos
 model FieldApproval {
-  id       String   @id @default(cuid())
-  fieldId  String
+  id      String @id @default(cuid())
+  fieldId String
 
   // Ação realizada
-  action   String   // "approve", "reject", "request_correction", "corrected"
+  action    String // "approve", "reject", "request_correction", "corrected"
   timestamp DateTime @default(now())
 
   // Responsável pela ação
-  approvedBy String  // userId
-  approvedByUser User @relation("FieldApprovals", fields: [approvedBy], references: [id], onDelete: Cascade)
+  approvedBy     String // userId
+  approvedByUser User   @relation("FieldApprovals", fields: [approvedBy], references: [id], onDelete: Cascade)
 
   // Detalhes
-  reason     String?  // Motivo da rejeição ou comentário
+  reason String? // Motivo da rejeição ou comentário
 
   // Valores envolvidos
   previousValue String?
@@ -832,20 +845,20 @@ model FieldApproval {
 
 // Rastreamento de mudanças de campos
 model FieldChange {
-  id       String   @id @default(cuid())
-  fieldId  String
+  id      String @id @default(cuid())
+  fieldId String
 
   // Tipo de mudança
-  changeType String  // "value_changed", "status_changed", "version_increment"
+  changeType String // "value_changed", "status_changed", "version_increment"
   timestamp  DateTime @default(now())
 
   // Valores
-  oldValue   String?
-  newValue   String?
+  oldValue String?
+  newValue String?
 
   // Responsável pela mudança
-  actor      String  // userId
-  actorUser  User @relation("FieldChanges", fields: [actor], references: [id], onDelete: Cascade)
+  actor     String // userId
+  actorUser User   @relation("FieldChanges", fields: [actor], references: [id], onDelete: Cascade)
 
   field ProtocolDataField @relation("FieldChanges", fields: [fieldId], references: [id], onDelete: Cascade)
 
@@ -940,8 +953,8 @@ model ProtocolStage {
   notes    String?
   metadata Json?
 
-  protocol              ProtocolSimplified   @relation(fields: [protocolId], references: [id], onDelete: Cascade)
-  protocolsAsCurrent    ProtocolSimplified[] @relation("CurrentStage")
+  protocol           ProtocolSimplified   @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  protocolsAsCurrent ProtocolSimplified[] @relation("CurrentStage")
 
   @@index([protocolId, stageOrder])
   @@index([protocolId])
@@ -951,7 +964,7 @@ model ProtocolStage {
 enum StageStatus {
   PENDING
   IN_PROGRESS
-  PAUSED      // ✅ NOVO: Stage pausada (aguardando correção do cidadão)
+  PAUSED // ✅ NOVO: Stage pausada (aguardando correção do cidadão)
   COMPLETED
   SKIPPED
   FAILED
@@ -1426,73 +1439,73 @@ model Prediction {
 }
 
 model EmailServer {
-  id                String        @id @default(cuid())
-  hostname          String
-  mxPort            Int           @default(25)
-  submissionPort    Int           @default(587)
-  isActive          Boolean       @default(false)
-  isPremiumService  Boolean       @default(true)
-  monthlyPrice      Decimal       @default(99.00)
+  id               String             @id @default(cuid())
+  hostname         String
+  mxPort           Int                @default(25)
+  submissionPort   Int                @default(587)
+  isActive         Boolean            @default(false)
+  isPremiumService Boolean            @default(true)
+  monthlyPrice     Decimal            @default(99.00)
   // maxEmailsPerMonth removido - usar subscription.planConfig.maxEmailsPerMonth
-  tlsEnabled        Boolean       @default(true)
-  certPath          String?
-  keyPath           String?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  domains           EmailDomain[]
-  logs              EmailLog[]
-  statistics        EmailStats[]
-  users             EmailUser[]
-  emails            Email[]
-  receivedEmails    ReceivedEmail[]
-  subscription      EmailSubscription?
+  tlsEnabled       Boolean            @default(true)
+  certPath         String?
+  keyPath          String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  domains          EmailDomain[]
+  logs             EmailLog[]
+  statistics       EmailStats[]
+  users            EmailUser[]
+  emails           Email[]
+  receivedEmails   ReceivedEmail[]
+  subscription     EmailSubscription?
 
   @@map("email_servers")
 }
 
 model EmailDomain {
-  id                   String                    @id @default(cuid())
-  emailServerId        String
-  domainName           String
-  isVerified           Boolean                   @default(false)
-  verificationToken    String?
-  dkimEnabled          Boolean                   @default(true)
-  dkimSelector         String                    @default("default")
-  dkimPrivateKey       String?
-  dkimPublicKey        String?
-  spfEnabled           Boolean                   @default(true)
-  spfRecord            String?
-  dmarcEnabled         Boolean                   @default(false)
-  dmarcPolicy          String?
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-  emailServer          EmailServer               @relation(fields: [emailServerId], references: [id])
-  sentEmails           Email[]
-  allowedInPlans       EmailPlanAllowedDomain[]  // ✅ NOVO: Planos que permitem este domínio
+  id                String                   @id @default(cuid())
+  emailServerId     String
+  domainName        String
+  isVerified        Boolean                  @default(false)
+  verificationToken String?
+  dkimEnabled       Boolean                  @default(true)
+  dkimSelector      String                   @default("default")
+  dkimPrivateKey    String?
+  dkimPublicKey     String?
+  spfEnabled        Boolean                  @default(true)
+  spfRecord         String?
+  dmarcEnabled      Boolean                  @default(false)
+  dmarcPolicy       String?
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  emailServer       EmailServer              @relation(fields: [emailServerId], references: [id])
+  sentEmails        Email[]
+  allowedInPlans    EmailPlanAllowedDomain[] // ✅ NOVO: Planos que permitem este domínio
 
   @@unique([emailServerId, domainName])
   @@map("email_domains")
 }
 
 model EmailUser {
-  id            String             @id @default(cuid())
-  emailServerId String
-  email         String
-  passwordHash  String
-  name          String
-  isActive      Boolean            @default(true)
-  isAdmin       Boolean            @default(false)
-  dailyLimit    Int                @default(1000)
-  monthlyLimit  Int                @default(10000)
-  sentToday     Int                @default(0)
-  sentThisMonth Int                @default(0)
-  lastLoginAt   DateTime?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  authAttempts    EmailAuthAttempt[]
-  emailServer     EmailServer        @relation(fields: [emailServerId], references: [id])
-  sentEmails      Email[]
-  receivedEmails  ReceivedEmail[]
+  id             String             @id @default(cuid())
+  emailServerId  String
+  email          String
+  passwordHash   String
+  name           String
+  isActive       Boolean            @default(true)
+  isAdmin        Boolean            @default(false)
+  dailyLimit     Int                @default(1000)
+  monthlyLimit   Int                @default(10000)
+  sentToday      Int                @default(0)
+  sentThisMonth  Int                @default(0)
+  lastLoginAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  authAttempts   EmailAuthAttempt[]
+  emailServer    EmailServer        @relation(fields: [emailServerId], references: [id])
+  sentEmails     Email[]
+  receivedEmails ReceivedEmail[]
 
   @@unique([emailServerId, email])
   @@map("email_users")
@@ -1650,18 +1663,18 @@ model EmailSubscription {
 
 // ✅ NOVA TABELA: Configuração dinâmica de planos de email
 model EmailPlanConfig {
-  id                String                    @id @default(cuid())
-  name              String                    // Ex: "Básico Municipal"
-  code              String                    @unique // Ex: "BASIC", "STANDARD"
-  monthlyPrice      Decimal                   @map("monthly_price") // Ex: 49.00
-  maxEmailsPerMonth Int                       @map("max_emails_per_month") // Ex: 5000, -1 = ilimitado
-  maxAccounts       Int                       @map("max_accounts") // Ex: 5
-  features          Json                      // ["DKIM/SPF", "Templates", "Suporte básico"]
-  isActive          Boolean                   @default(true) @map("is_active")
-  createdAt         DateTime                  @default(now()) @map("created_at")
-  updatedAt         DateTime                  @updatedAt @map("updated_at")
-  subscriptions     EmailSubscription[]       // Assinaturas usando este plano
-  allowedDomains    EmailPlanAllowedDomain[]  // Domínios permitidos para este plano
+  id                String                   @id @default(cuid())
+  name              String // Ex: "Básico Municipal"
+  code              String                   @unique // Ex: "BASIC", "STANDARD"
+  monthlyPrice      Decimal                  @map("monthly_price") // Ex: 49.00
+  maxEmailsPerMonth Int                      @map("max_emails_per_month") // Ex: 5000, -1 = ilimitado
+  maxAccounts       Int                      @map("max_accounts") // Ex: 5
+  features          Json // ["DKIM/SPF", "Templates", "Suporte básico"]
+  isActive          Boolean                  @default(true) @map("is_active")
+  createdAt         DateTime                 @default(now()) @map("created_at")
+  updatedAt         DateTime                 @updatedAt @map("updated_at")
+  subscriptions     EmailSubscription[] // Assinaturas usando este plano
+  allowedDomains    EmailPlanAllowedDomain[] // Domínios permitidos para este plano
 
   @@map("email_plan_configs")
 }
@@ -1703,18 +1716,18 @@ model EmailDraft {
 }
 
 model EmailInvoice {
-  id             String             @id @default(cuid())
+  id             String            @id @default(cuid())
   subscriptionId String
-  invoiceNumber  String             @unique
+  invoiceNumber  String            @unique
   amount         Decimal
   description    String
-  status         InvoiceStatus      @default(PENDING)
+  status         InvoiceStatus     @default(PENDING)
   dueDate        DateTime
   paidAt         DateTime?
   paymentMethod  String?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  subscription   EmailSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  subscription   EmailSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([dueDate])
@@ -1743,35 +1756,35 @@ model EmailAddon {
 // ============================================================================
 
 model ReceivedEmail {
-  id              String    @id @default(cuid())
-  messageId       String    @unique @map("message_id")
-  fromEmail       String    @map("from_email")
-  fromName        String?   @map("from_name")
-  toEmail         String    @map("to_email")
-  ccEmails        Json?     @map("cc_emails")
-  bccEmails       Json?     @map("bcc_emails")
-  replyTo         String?   @map("reply_to")
-  subject         String
-  textContent     String?   @map("text_content") @db.Text
-  htmlContent     String?   @map("html_content") @db.Text
-  headers         Json?
-  attachments     Json?
-  size            Int       @default(0)
-  receivedAt      DateTime  @map("received_at")
-  isRead          Boolean   @default(false) @map("is_read")
-  isStarred       Boolean   @default(false) @map("is_starred")
-  isArchived      Boolean   @default(false) @map("is_archived")
-  isTrash         Boolean   @default(false) @map("is_trash")
-  isSpam          Boolean   @default(false) @map("is_spam")
-  folder          String    @default("inbox")
-  labels          Json?
-  emailServerId   String    @map("email_server_id")
-  emailUserId     String?   @map("email_user_id")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id            String   @id @default(cuid())
+  messageId     String   @unique @map("message_id")
+  fromEmail     String   @map("from_email")
+  fromName      String?  @map("from_name")
+  toEmail       String   @map("to_email")
+  ccEmails      Json?    @map("cc_emails")
+  bccEmails     Json?    @map("bcc_emails")
+  replyTo       String?  @map("reply_to")
+  subject       String
+  textContent   String?  @map("text_content") @db.Text
+  htmlContent   String?  @map("html_content") @db.Text
+  headers       Json?
+  attachments   Json?
+  size          Int      @default(0)
+  receivedAt    DateTime @map("received_at")
+  isRead        Boolean  @default(false) @map("is_read")
+  isStarred     Boolean  @default(false) @map("is_starred")
+  isArchived    Boolean  @default(false) @map("is_archived")
+  isTrash       Boolean  @default(false) @map("is_trash")
+  isSpam        Boolean  @default(false) @map("is_spam")
+  folder        String   @default("inbox")
+  labels        Json?
+  emailServerId String   @map("email_server_id")
+  emailUserId   String?  @map("email_user_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  emailServer     EmailServer @relation(fields: [emailServerId], references: [id], onDelete: Cascade)
-  emailUser       EmailUser?  @relation(fields: [emailUserId], references: [id], onDelete: SetNull)
+  emailServer EmailServer @relation(fields: [emailServerId], references: [id], onDelete: Cascade)
+  emailUser   EmailUser?  @relation(fields: [emailUserId], references: [id], onDelete: SetNull)
 
   @@index([emailServerId])
   @@index([emailUserId])
@@ -1988,11 +2001,11 @@ enum ProtocolStatus {
 }
 
 enum TicketStatus {
-  PENDING          // Aguardando análise da secretaria
-  ACCEPTED         // Aceito pela secretaria
+  PENDING // Aguardando análise da secretaria
+  ACCEPTED // Aceito pela secretaria
   PROTOCOL_CREATED // Protocolo criado e atribuído
-  REJECTED         // Recusado pela secretaria
-  CANCELLED        // Cancelado pelo prefeito
+  REJECTED // Recusado pela secretaria
+  CANCELLED // Cancelado pelo prefeito
 }
 
 enum ServiceType {
@@ -2136,12 +2149,12 @@ enum SubscriptionStatus {
 }
 
 enum EmailAddonType {
-  EXTRA_ACCOUNTS    // Contas extras além do plano
-  EXTRA_EMAILS      // Pacote extra de emails
-  DEDICATED_IP      // IP dedicado
-  PRIORITY_SUPPORT  // Suporte prioritário
-  API_ACCESS        // Acesso à API avançada
-  CUSTOM_REPORTS    // Relatórios customizados
+  EXTRA_ACCOUNTS // Contas extras além do plano
+  EXTRA_EMAILS // Pacote extra de emails
+  DEDICATED_IP // IP dedicado
+  PRIORITY_SUPPORT // Suporte prioritário
+  API_ACCESS // Acesso à API avançada
+  CUSTOM_REPORTS // Relatórios customizados
 }
 
 enum VerificationStatus {
@@ -3490,9 +3503,9 @@ model DestinoTFD {
   cidade         String
   estado         String
   hospital       String?
-  especialidades Json?    // Array de especialidades disponíveis
+  especialidades Json? // Array de especialidades disponíveis
   distanciaKm    Int?
-  tempoViagem    String?  // Ex: "2h30min"
+  tempoViagem    String? // Ex: "2h30min"
   observacoes    String?
   ativo          Boolean  @default(true)
   createdAt      DateTime @default(now())
@@ -4062,17 +4075,17 @@ enum MeioPagamento {
 // ============================================
 
 model MessageServer {
-  id                String   @id @default(cuid())
-  name              String   // "DigiUrban Messages"
-  hostname          String   // messages.digiurban.com.br
-  wsPort            Int      @default(9001)
-  isActive          Boolean  @default(false)
-  maxDailyMessages  Int      @default(100000)
-  enableEncryption  Boolean  @default(false) // E2E encryption
-  enableP2P         Boolean  @default(false) // Cidadão-Cidadão
-  enableBroadcast   Boolean  @default(true)  // Canais oficiais
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String // "DigiUrban Messages"
+  hostname         String // messages.digiurban.com.br
+  wsPort           Int      @default(9001)
+  isActive         Boolean  @default(false)
+  maxDailyMessages Int      @default(100000)
+  enableEncryption Boolean  @default(false) // E2E encryption
+  enableP2P        Boolean  @default(false) // Cidadão-Cidadão
+  enableBroadcast  Boolean  @default(true) // Canais oficiais
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relacionamentos
   conversations Conversation[]
@@ -4088,45 +4101,45 @@ model MessageServer {
 // ============================================
 
 model Conversation {
-  id              String             @id @default(cuid())
+  id              String @id @default(cuid())
   messageServerId String
 
   // Participantes
   participant1Id   String
-  participant1Type ParticipantType  // CITIZEN ou SERVER
+  participant1Type ParticipantType // CITIZEN ou SERVER
   participant2Id   String
-  participant2Type ParticipantType  // CITIZEN ou SERVER
+  participant2Type ParticipantType // CITIZEN ou SERVER
 
   // Contexto (opcional - para vincular a protocolos)
-  protocolId       String?
-  departmentId     String?
+  protocolId   String?
+  departmentId String?
 
   // Tipo de conversa
-  type             ConversationType @default(SUPPORT) // SUPPORT, P2P, GROUP
+  type ConversationType @default(SUPPORT) // SUPPORT, P2P, GROUP
 
   // Status
-  status           ConversationStatus @default(ACTIVE)
-  lastMessageAt    DateTime?
-  lastMessagePreview String?         // Preview da última mensagem
+  status             ConversationStatus @default(ACTIVE)
+  lastMessageAt      DateTime?
+  lastMessagePreview String? // Preview da última mensagem
 
   // Contadores
-  totalMessages    Int      @default(0)
-  unreadCount1     Int      @default(0) // Não lidas por participant1
-  unreadCount2     Int      @default(0) // Não lidas por participant2
+  totalMessages Int @default(0)
+  unreadCount1  Int @default(0) // Não lidas por participant1
+  unreadCount2  Int @default(0) // Não lidas por participant2
 
   // Metadados
-  metadata         Json?
+  metadata Json?
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  closedAt         DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  closedAt  DateTime?
 
   // Bot-specific fields
-  isBotConversation Boolean  @default(false)
-  botFlowType       String?
-  botFlowStep       Int      @default(0)
-  botFlowData       Json?
-  botContext        Json?
+  isBotConversation    Boolean   @default(false)
+  botFlowType          String?
+  botFlowStep          Int       @default(0)
+  botFlowData          Json?
+  botContext           Json?
   botLastInteractionAt DateTime?
 
   // Relacionamentos
@@ -4143,22 +4156,22 @@ model Conversation {
 }
 
 enum ParticipantType {
-  CITIZEN  // Cidadão
-  SERVER   // Servidor público (User)
-  SYSTEM   // Sistema automático
+  CITIZEN // Cidadão
+  SERVER // Servidor público (User)
+  SYSTEM // Sistema automático
 }
 
 enum ConversationType {
-  SUPPORT  // Suporte (cidadão <-> servidor)
-  P2P      // Peer-to-peer (cidadão <-> cidadão)
-  GROUP    // Grupo (futuro)
+  SUPPORT // Suporte (cidadão <-> servidor)
+  P2P // Peer-to-peer (cidadão <-> cidadão)
+  GROUP // Grupo (futuro)
 }
 
 enum ConversationStatus {
-  ACTIVE      // Conversa ativa
-  ARCHIVED    // Arquivada pelo usuário
-  CLOSED      // Encerrada oficialmente
-  BLOCKED     // Bloqueada por violação
+  ACTIVE // Conversa ativa
+  ARCHIVED // Arquivada pelo usuário
+  CLOSED // Encerrada oficialmente
+  BLOCKED // Bloqueada por violação
 }
 
 // ============================================
@@ -4166,47 +4179,47 @@ enum ConversationStatus {
 // ============================================
 
 model Message {
-  id             String   @id @default(cuid())
+  id             String @id @default(cuid())
   conversationId String
 
   // Autor
-  senderId       String
-  senderType     ParticipantType
+  senderId   String
+  senderType ParticipantType
 
   // Conteúdo
-  content        String   @db.Text
-  contentType    MessageContentType @default(TEXT)
+  content     String             @db.Text
+  contentType MessageContentType @default(TEXT)
 
   // Anexos
-  attachments    Json?    // Array de {url, type, name, size}
+  attachments Json? // Array de {url, type, name, size}
 
   // Mensagem citada/respondida
-  replyToId      String?
+  replyToId String?
 
   // Status de entrega
-  status         MessageStatus @default(SENT)
-  sentAt         DateTime @default(now())
-  deliveredAt    DateTime?
-  readAt         DateTime?
+  status      MessageStatus @default(SENT)
+  sentAt      DateTime      @default(now())
+  deliveredAt DateTime?
+  readAt      DateTime?
 
   // Edição/Exclusão
-  isEdited       Boolean  @default(false)
-  editedAt       DateTime?
-  isDeleted      Boolean  @default(false)
-  deletedAt      DateTime?
-  deletedBy      String?  // ID de quem deletou
+  isEdited  Boolean   @default(false)
+  editedAt  DateTime?
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+  deletedBy String? // ID de quem deletou
 
   // Metadados
-  metadata       Json?    // IP, user-agent, location, etc
+  metadata Json? // IP, user-agent, location, etc
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  replyTo        Message?     @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
-  replies        Message[]    @relation("MessageReplies")
-  reports        MessageReport[]
+  conversation Conversation    @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replyTo      Message?        @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      Message[]       @relation("MessageReplies")
+  reports      MessageReport[]
 
   @@index([conversationId, sentAt])
   @@index([senderId, senderType])
@@ -4216,22 +4229,22 @@ model Message {
 }
 
 enum MessageContentType {
-  TEXT       // Texto simples
-  IMAGE      // Imagem
-  VIDEO      // Vídeo
-  AUDIO      // Áudio
-  DOCUMENT   // Documento (PDF, DOC, etc)
-  LOCATION   // Localização geográfica
-  STICKER    // Figurinha/Emoji
-  SYSTEM     // Mensagem do sistema
+  TEXT // Texto simples
+  IMAGE // Imagem
+  VIDEO // Vídeo
+  AUDIO // Áudio
+  DOCUMENT // Documento (PDF, DOC, etc)
+  LOCATION // Localização geográfica
+  STICKER // Figurinha/Emoji
+  SYSTEM // Mensagem do sistema
 }
 
 enum MessageStatus {
-  QUEUED     // Na fila para envio
-  SENT       // Enviada
-  DELIVERED  // Entregue
-  READ       // Lida
-  FAILED     // Falha no envio
+  QUEUED // Na fila para envio
+  SENT // Enviada
+  DELIVERED // Entregue
+  READ // Lida
+  FAILED // Falha no envio
 }
 
 // ============================================
@@ -4239,38 +4252,38 @@ enum MessageStatus {
 // ============================================
 
 model OfficialChannel {
-  id              String   @id @default(cuid())
+  id              String @id @default(cuid())
   messageServerId String
 
   // Informações
-  name            String   // "Canal Oficial da Saúde"
-  slug            String   @unique  // "saude-oficial"
-  description     String?  @db.Text
-  iconUrl         String?
-  bannerUrl       String?
-  color           String?  // Cor do canal (hex)
+  name        String // "Canal Oficial da Saúde"
+  slug        String  @unique // "saude-oficial"
+  description String? @db.Text
+  iconUrl     String?
+  bannerUrl   String?
+  color       String? // Cor do canal (hex)
 
   // Vinculação
-  departmentId    String?
-  managedBy       Json     // Array de User IDs com permissão
+  departmentId String?
+  managedBy    Json // Array de User IDs com permissão
 
   // Configurações
-  isPublic        Boolean  @default(true)  // Qualquer um pode se inscrever?
+  isPublic         Boolean @default(true) // Qualquer um pode se inscrever?
   requiresApproval Boolean @default(false) // Inscrição precisa aprovação?
-  isActive        Boolean  @default(true)
-  allowComments   Boolean  @default(false) // Cidadãos podem comentar?
+  isActive         Boolean @default(true)
+  allowComments    Boolean @default(false) // Cidadãos podem comentar?
 
   // Estatísticas
-  subscriberCount Int      @default(0)
-  messageCount    Int      @default(0)
+  subscriberCount Int @default(0)
+  messageCount    Int @default(0)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  messageServer   MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
-  subscriptions   ChannelSubscription[]
-  messages        ChannelMessage[]
+  messageServer MessageServer         @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
+  subscriptions ChannelSubscription[]
+  messages      ChannelMessage[]
 
   @@index([isActive, isPublic])
   @@index([slug])
@@ -4278,31 +4291,31 @@ model OfficialChannel {
 }
 
 model ChannelSubscription {
-  id         String   @id @default(cuid())
-  channelId  String
-  citizenId  String
+  id        String @id @default(cuid())
+  channelId String
+  citizenId String
 
   // Status
-  status     ChannelSubscriptionStatus @default(PENDING)
-  subscribedAt DateTime @default(now())
+  status       ChannelSubscriptionStatus @default(PENDING)
+  subscribedAt DateTime                  @default(now())
   approvedAt   DateTime?
-  approvedBy   String?  // User ID que aprovou
+  approvedBy   String? // User ID que aprovou
 
   // Preferências de Notificação
-  notifyInApp   Boolean @default(true)
-  notifyEmail   Boolean @default(false)
-  notifySMS     Boolean @default(false)
-  notifyPush    Boolean @default(true)
+  notifyInApp Boolean @default(true)
+  notifyEmail Boolean @default(false)
+  notifySMS   Boolean @default(false)
+  notifyPush  Boolean @default(true)
 
   // Metadados
-  metadata      Json?
+  metadata Json?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  channel       OfficialChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  deliveries    ChannelDelivery[]
+  channel    OfficialChannel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  deliveries ChannelDelivery[]
 
   @@unique([channelId, citizenId])
   @@index([citizenId, status])
@@ -4313,24 +4326,24 @@ model ChannelSubscription {
 // SubscriptionStatus já definido no schema (usado por email)
 
 model ChannelMessage {
-  id         String   @id @default(cuid())
-  channelId  String
-  authorId   String   // User ID (servidor público)
+  id        String @id @default(cuid())
+  channelId String
+  authorId  String // User ID (servidor público)
 
   // Conteúdo
-  title      String?
-  content    String   @db.Text
+  title       String?
+  content     String             @db.Text
   contentType MessageContentType @default(TEXT)
 
   // Mídia
-  attachments Json?   // Array de {url, type, name, size}
+  attachments Json? // Array de {url, type, name, size}
 
   // Agendamento
   scheduledFor DateTime?
   publishedAt  DateTime?
 
   // Status
-  status       BroadcastStatus @default(DRAFT)
+  status BroadcastStatus @default(DRAFT)
 
   // Estatísticas
   deliveredCount Int @default(0)
@@ -4338,18 +4351,18 @@ model ChannelMessage {
   failedCount    Int @default(0)
 
   // Prioridade
-  priority       Int @default(3) // 1=urgent, 3=normal, 5=low
+  priority Int @default(3) // 1=urgent, 3=normal, 5=low
 
   // Metadados
-  metadata       Json?
+  metadata Json?
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  sentAt         DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  sentAt    DateTime?
 
   // Relacionamentos
-  channel        OfficialChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  deliveries     ChannelDelivery[]
+  channel    OfficialChannel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  deliveries ChannelDelivery[]
 
   @@index([channelId, publishedAt])
   @@index([status, scheduledFor])
@@ -4358,40 +4371,40 @@ model ChannelMessage {
 }
 
 enum BroadcastStatus {
-  DRAFT      // Rascunho
-  SCHEDULED  // Agendada
-  SENDING    // Enviando
-  SENT       // Enviada
-  FAILED     // Falhou
-  CANCELLED  // Cancelada
+  DRAFT // Rascunho
+  SCHEDULED // Agendada
+  SENDING // Enviando
+  SENT // Enviada
+  FAILED // Falhou
+  CANCELLED // Cancelada
 }
 
 model ChannelDelivery {
-  id        String   @id @default(cuid())
-  messageId String
+  id             String @id @default(cuid())
+  messageId      String
   subscriptionId String
-  citizenId String
+  citizenId      String
 
   // Status
-  status    MessageStatus @default(QUEUED)
-  queuedAt  DateTime @default(now())
-  sentAt    DateTime?
+  status      MessageStatus @default(QUEUED)
+  queuedAt    DateTime      @default(now())
+  sentAt      DateTime?
   deliveredAt DateTime?
   readAt      DateTime?
   failedAt    DateTime?
 
   // Erro
   errorMessage String?
-  retryCount   Int @default(0)
+  retryCount   Int     @default(0)
 
   // Metadados
-  metadata     Json?
+  metadata Json?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  message      ChannelMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  message      ChannelMessage      @relation(fields: [messageId], references: [id], onDelete: Cascade)
   subscription ChannelSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, citizenId])
@@ -4406,62 +4419,62 @@ model ChannelDelivery {
 // ============================================
 
 model CitizenPrivacySettings {
-  citizenId            String   @id
+  citizenId String @id
 
   // Quem pode enviar mensagens diretas?
-  allowMessagesFromAll Boolean  @default(false)  // Qualquer cidadão
+  allowMessagesFromAll     Boolean @default(false) // Qualquer cidadão
   allowMessagesFromServers Boolean @default(true) // Servidores públicos
 
   // Bloqueios
-  blockedCitizens      Json     @default("[]")   // Array de citizen IDs
-  blockedServers       Json     @default("[]")   // Array de user IDs
+  blockedCitizens Json @default("[]") // Array de citizen IDs
+  blockedServers  Json @default("[]") // Array de user IDs
 
   // Notificações
-  notifyNewMessage     Boolean  @default(true)
-  notifySound          Boolean  @default(true)
-  notifyVibrate        Boolean  @default(true)
+  notifyNewMessage Boolean @default(true)
+  notifySound      Boolean @default(true)
+  notifyVibrate    Boolean @default(true)
 
   // Online Status
-  showOnlineStatus     Boolean  @default(true)
-  showLastSeen         Boolean  @default(true)
-  showReadReceipts     Boolean  @default(true)
+  showOnlineStatus Boolean @default(true)
+  showLastSeen     Boolean @default(true)
+  showReadReceipts Boolean @default(true)
 
   // Backup
-  autoBackup           Boolean  @default(false)
+  autoBackup Boolean @default(false)
 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("citizen_privacy_settings")
 }
 
 model MessageReport {
-  id          String   @id @default(cuid())
-  messageId   String
-  reportedBy  String   // Citizen ID ou User ID
+  id           String          @id @default(cuid())
+  messageId    String
+  reportedBy   String // Citizen ID ou User ID
   reporterType ParticipantType
 
   // Motivo
   reason      ReportReason
-  description String?  @db.Text
+  description String?      @db.Text
 
   // Status
-  status      ReportStatus @default(PENDING)
+  status ReportStatus @default(PENDING)
 
   // Evidências
-  screenshots Json?    // Array de URLs de screenshots
+  screenshots Json? // Array de URLs de screenshots
 
   // Revisão
   reviewedAt  DateTime?
-  reviewedBy  String?  // User ID (moderador)
-  reviewNotes String?  @db.Text
+  reviewedBy  String? // User ID (moderador)
+  reviewNotes String?           @db.Text
   action      ModerationAction?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  message     Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
   @@index([reportedBy, reporterType])
@@ -4481,20 +4494,20 @@ enum ReportReason {
 }
 
 enum ReportStatus {
-  PENDING     // Aguardando revisão
-  REVIEWING   // Em análise
-  RESOLVED    // Resolvida
-  DISMISSED   // Descartada
-  ESCALATED   // Escalada para autoridades
+  PENDING // Aguardando revisão
+  REVIEWING // Em análise
+  RESOLVED // Resolvida
+  DISMISSED // Descartada
+  ESCALATED // Escalada para autoridades
 }
 
 enum ModerationAction {
-  NONE            // Nenhuma ação
-  WARNING         // Aviso ao usuário
+  NONE // Nenhuma ação
+  WARNING // Aviso ao usuário
   MESSAGE_DELETED // Mensagem deletada
-  USER_WARNED     // Usuário advertido
-  USER_SUSPENDED  // Usuário suspenso temporariamente
-  USER_BANNED     // Usuário banido permanentemente
+  USER_WARNED // Usuário advertido
+  USER_SUSPENDED // Usuário suspenso temporariamente
+  USER_BANNED // Usuário banido permanentemente
   REPORTED_POLICE // Reportado às autoridades
 }
 
@@ -4503,32 +4516,32 @@ enum ModerationAction {
 // ============================================
 
 model MessageLog {
-  id              String   @id @default(cuid())
+  id              String  @id @default(cuid())
   messageServerId String?
 
   // Tipo de evento
-  level           LogLevel @default(INFO)
-  event           String   // message-sent, conversation-started, user-blocked, etc
+  level LogLevel @default(INFO)
+  event String // message-sent, conversation-started, user-blocked, etc
 
   // Contexto
-  userId          String?
-  citizenId       String?
-  conversationId  String?
-  messageId       String?
-  channelId       String?
+  userId         String?
+  citizenId      String?
+  conversationId String?
+  messageId      String?
+  channelId      String?
 
   // Dados
-  message         String   @db.Text
-  data            Json?
+  message String @db.Text
+  data    Json?
 
   // Request info
-  ipAddress       String?
-  userAgent       String?
+  ipAddress String?
+  userAgent String?
 
-  timestamp       DateTime @default(now())
+  timestamp DateTime @default(now())
 
   // Relacionamentos
-  messageServer   MessageServer? @relation(fields: [messageServerId], references: [id], onDelete: SetNull)
+  messageServer MessageServer? @relation(fields: [messageServerId], references: [id], onDelete: SetNull)
 
   @@index([messageServerId, timestamp])
   @@index([event, timestamp])
@@ -4541,28 +4554,28 @@ model MessageLog {
 // LogLevel já definido no schema (usado por outros módulos)
 
 model MessageStats {
-  id              String   @id @default(cuid())
+  id              String @id @default(cuid())
   messageServerId String
 
   // Data de referência
-  date            DateTime @db.Date
-  hour            Int?     // 0-23 (null = agregado do dia)
+  date DateTime @db.Date
+  hour Int? // 0-23 (null = agregado do dia)
 
   // Métricas de mensagens
-  totalMessages        Int @default(0)
-  textMessages         Int @default(0)
-  mediaMessages        Int @default(0)
-  deletedMessages      Int @default(0)
+  totalMessages   Int @default(0)
+  textMessages    Int @default(0)
+  mediaMessages   Int @default(0)
+  deletedMessages Int @default(0)
 
   // Métricas de conversas
-  totalConversations   Int @default(0)
-  newConversations     Int @default(0)
-  closedConversations  Int @default(0)
+  totalConversations  Int @default(0)
+  newConversations    Int @default(0)
+  closedConversations Int @default(0)
 
   // Métricas de usuários
-  activeUsers          Int @default(0)  // Servidores ativos
-  activeCitizens       Int @default(0)  // Cidadãos ativos
-  onlineUsers          Int @default(0)  // Online agora
+  activeUsers    Int @default(0) // Servidores ativos
+  activeCitizens Int @default(0) // Cidadãos ativos
+  onlineUsers    Int @default(0) // Online agora
 
   // Métricas de canais
   channelMessages      Int @default(0)
@@ -4570,19 +4583,19 @@ model MessageStats {
   channelDeliveries    Int @default(0)
 
   // Performance
-  avgResponseTime      Float?  // Tempo médio de resposta (segundos)
-  avgMessageLength     Float?  // Tamanho médio da mensagem
+  avgResponseTime  Float? // Tempo médio de resposta (segundos)
+  avgMessageLength Float? // Tamanho médio da mensagem
 
   // Moderação
-  reportsCreated       Int @default(0)
-  reportsResolved      Int @default(0)
-  usersBlocked         Int @default(0)
+  reportsCreated  Int @default(0)
+  reportsResolved Int @default(0)
+  usersBlocked    Int @default(0)
 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  messageServer        MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
+  messageServer MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
 
   @@unique([messageServerId, date, hour])
   @@index([messageServerId, date])
@@ -4594,12 +4607,12 @@ model MessageStats {
 // ============================================
 
 model WebSocketSession {
-  id          String   @id @default(cuid())
-  socketId    String   @unique  // Socket.io socket.id
+  id       String @id @default(cuid())
+  socketId String @unique // Socket.io socket.id
 
   // Usuário
-  userId      String?
-  userType    ParticipantType
+  userId   String?
+  userType ParticipantType
 
   // Conexão
   ipAddress   String
@@ -4608,10 +4621,10 @@ model WebSocketSession {
   lastPingAt  DateTime @default(now())
 
   // Status
-  isOnline    Boolean  @default(true)
+  isOnline Boolean @default(true)
 
   // Metadados
-  metadata    Json?
+  metadata Json?
 
   disconnectedAt DateTime?
 
@@ -4625,49 +4638,49 @@ model WebSocketSession {
 // ============================================
 
 model MessageTemplate {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Identificação
-  name        String   @unique  // protocol-created, welcome-message, etc
-  category    TemplateCategory
+  name     String           @unique // protocol-created, welcome-message, etc
+  category TemplateCategory
 
   // Conteúdo
   title       String?
-  content     String   @db.Text
+  content     String             @db.Text
   contentType MessageContentType @default(TEXT)
 
   // Variáveis
-  variables   Json     @default("[]")  // ["citizenName", "protocolNumber", etc]
+  variables Json @default("[]") // ["citizenName", "protocolNumber", etc]
 
   // Configuração
-  isActive    Boolean  @default(true)
-  isSystem    Boolean  @default(false) // Template do sistema (não editável)
+  isActive Boolean @default(true)
+  isSystem Boolean @default(false) // Template do sistema (não editável)
 
   // Metadados
   description String?
   metadata    Json?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("message_templates")
 }
 
 enum TemplateCategory {
-  WELCOME          // Boas-vindas
-  PROTOCOL         // Relacionado a protocolos
-  NOTIFICATION     // Notificações gerais
-  REMINDER         // Lembretes
-  CONFIRMATION     // Confirmações
-  ALERT            // Alertas
-  SYSTEM           // Sistema
+  WELCOME // Boas-vindas
+  PROTOCOL // Relacionado a protocolos
+  NOTIFICATION // Notificações gerais
+  REMINDER // Lembretes
+  CONFIRMATION // Confirmações
+  ALERT // Alertas
+  SYSTEM // Sistema
 }
 
 enum ChannelSubscriptionStatus {
-  PENDING    // Aguardando aprovação
-  ACTIVE     // Inscrito e recebendo
-  MUTED      // Inscrito mas sem notificações
-  BLOCKED    // Bloqueado de se inscrever
+  PENDING // Aguardando aprovação
+  ACTIVE // Inscrito e recebendo
+  MUTED // Inscrito mas sem notificações
+  BLOCKED // Bloqueado de se inscrever
 }
 
 // ============================================================================
@@ -4675,48 +4688,48 @@ enum ChannelSubscriptionStatus {
 // ============================================================================
 
 model DocumentTemplate {
-  id            String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Identificação
-  name          String                      // Ex: "Certidão de Protocolo"
-  code          String   @unique            // Ex: "CERTIDAO_PROTOCOLO"
-  description   String?
+  name        String // Ex: "Certidão de Protocolo"
+  code        String  @unique // Ex: "CERTIDAO_PROTOCOLO"
+  description String?
 
   // Tipo de documento
-  documentType  DocumentTemplateType        // PROTOCOL_CERTIFICATE, COMPLETION_REPORT, etc
-  outputFormat  OutputFormat                // PDF, DOCX, HTML
+  documentType DocumentTemplateType // PROTOCOL_CERTIFICATE, COMPLETION_REPORT, etc
+  outputFormat OutputFormat // PDF, DOCX, HTML
 
   // Associação com serviços
-  serviceIds    Json     @default("[]")     // Array de IDs de serviços
-  isGlobal      Boolean  @default(false)    // Se true, disponível para todos os serviços
+  serviceIds Json    @default("[]") // Array de IDs de serviços
+  isGlobal   Boolean @default(false) // Se true, disponível para todos os serviços
 
   // ✅ NOVO: Controle de quando o template pode ser usado no workflow
-  allowedStageTypes Json?  @default("[]")   // Array de stageTypes permitidos (ex: ["CONCLUSION", "APPROVAL"])
+  allowedStageTypes Json? @default("[]") // Array de stageTypes permitidos (ex: ["CONCLUSION", "APPROVAL"])
 
   // Template Handlebars
-  htmlTemplate  String   @db.Text           // HTML com variáveis {{protocolNumber}}, {{citizenName}}
-  headerHtml    String?  @db.Text           // Cabeçalho (logo, brasão)
-  footerHtml    String?  @db.Text           // Rodapé (assinaturas, carimbos)
-  cssStyles     String?  @db.Text           // CSS para estilização
+  htmlTemplate String  @db.Text // HTML com variáveis {{protocolNumber}}, {{citizenName}}
+  headerHtml   String? @db.Text // Cabeçalho (logo, brasão)
+  footerHtml   String? @db.Text // Rodapé (assinaturas, carimbos)
+  cssStyles    String? @db.Text // CSS para estilização
 
   // Variáveis disponíveis (documentação)
-  availableVariables Json? @default("[]")   // Array de {name, description, example}
+  availableVariables Json? @default("[]") // Array de {name, description, example}
 
   // Configurações de geração
-  pageSize      String   @default("A4")     // A4, Letter, Legal
-  orientation   String   @default("portrait") // portrait, landscape
-  margins       Json?                        // {top, right, bottom, left} em mm
+  pageSize    String @default("A4") // A4, Letter, Legal
+  orientation String @default("portrait") // portrait, landscape
+  margins     Json? // {top, right, bottom, left} em mm
 
   // Assinaturas/Carimbos
   requiresSignature Boolean @default(false)
-  signatureFields   Json?   @default("[]")   // Array de {label, role, position}
+  signatureFields   Json?   @default("[]") // Array de {label, role, position}
 
   // Controle
-  isActive      Boolean  @default(true)
-  version       Int      @default(1)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  createdBy     String
+  isActive  Boolean  @default(true)
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String
 
   // Relacionamentos
   generatedDocuments GeneratedDocument[]
@@ -4727,12 +4740,12 @@ model DocumentTemplate {
 }
 
 enum DocumentTemplateType {
-  PROTOCOL_CERTIFICATE    // Certidão/comprovante de protocolo
-  COMPLETION_REPORT       // Relatório de conclusão
-  RECEIPT                 // Recibo de atendimento
-  AUTHORIZATION           // Autorização/licença
-  NOTIFICATION            // Notificação
-  CUSTOM                  // Personalizado
+  PROTOCOL_CERTIFICATE // Certidão/comprovante de protocolo
+  COMPLETION_REPORT // Relatório de conclusão
+  RECEIPT // Recibo de atendimento
+  AUTHORIZATION // Autorização/licença
+  NOTIFICATION // Notificação
+  CUSTOM // Personalizado
 }
 
 enum OutputFormat {
@@ -4742,51 +4755,51 @@ enum OutputFormat {
 }
 
 model GeneratedDocument {
-  id              String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // Referências
-  protocolId      String
-  templateId      String
+  protocolId String
+  templateId String
 
   // Arquivo gerado
-  fileName        String
-  filePath        String                    // /uploads/generated/{protocolId}/{timestamp}_{fileName}
-  fileUrl         String?                   // URL pública (se configurado)
-  fileSize        Int
-  mimeType        String
+  fileName String
+  filePath String // /uploads/generated/{protocolId}/{timestamp}_{fileName}
+  fileUrl  String? // URL pública (se configurado)
+  fileSize Int
+  mimeType String
 
   // Metadados
   generatedAt     DateTime @default(now())
-  generatedBy     String                    // userId do admin
-  templateVersion Int                       // Versão do template usada
+  generatedBy     String // userId do admin
+  templateVersion Int // Versão do template usada
 
   // Dados usados na geração (snapshot)
-  variablesUsed   Json                      // Snapshot dos dados usados {protocolNumber, citizenName, etc}
+  variablesUsed Json // Snapshot dos dados usados {protocolNumber, citizenName, etc}
 
   // Envio
-  wasSent         Boolean  @default(false)
-  sentAt          DateTime?
-  sentBy          String?
-  sentTo          String?                   // Email do destinatário
+  wasSent Boolean   @default(false)
+  sentAt  DateTime?
+  sentBy  String?
+  sentTo  String? // Email do destinatário
 
   // Assinatura Digital
-  isSigned        Boolean  @default(false)  // Se o documento foi assinado digitalmente
+  isSigned Boolean @default(false) // Se o documento foi assinado digitalmente
 
   // Controle
-  isActive        Boolean  @default(true)   // Soft delete
-  deletedAt       DateTime?
+  isActive  Boolean   @default(true) // Soft delete
+  deletedAt DateTime?
 
   // SISTEMA DE VALIDAÇÃO DE DOCUMENTOS
-  validationCode  String?  @unique          // Código único de validação (VAL-YYYY-XXXXXX-CCCC)
-  documentHash    String?                   // Hash SHA-256 do documento para verificação de integridade
-  expiresAt       DateTime?                 // Data de expiração (opcional)
-  validatedCount  Int      @default(0)      // Contador de validações públicas
-  lastValidatedAt DateTime?                 // Última validação pública
+  validationCode  String?   @unique // Código único de validação (VAL-YYYY-XXXXXX-CCCC)
+  documentHash    String? // Hash SHA-256 do documento para verificação de integridade
+  expiresAt       DateTime? // Data de expiração (opcional)
+  validatedCount  Int       @default(0) // Contador de validações públicas
+  lastValidatedAt DateTime? // Última validação pública
 
   // Relacionamentos
-  protocol        ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
-  template        DocumentTemplate   @relation(fields: [templateId], references: [id])
-  signatures      Signature[]
+  protocol   ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  template   DocumentTemplate   @relation(fields: [templateId], references: [id])
+  signatures Signature[]
 
   @@index([protocolId])
   @@index([templateId])
@@ -4801,136 +4814,547 @@ model GeneratedDocument {
 // ========================================
 
 model CitizenCategory {
-  id          String   @id @default(cuid())
-  code        String   @unique  // Ex: PRODUTOR_RURAL, ARTISTA_LOCAL
-  name        String               // Ex: "Produtor Rural", "Artista Local"
-  description String?  @db.Text
-  department  String               // Departamento responsável
-  icon        String?              // Ícone visual
-  color       String?              // Cor para UI
-  active      Boolean  @default(true)
+  id          String  @id @default(cuid())
+  code        String  @unique // Ex: PRODUTOR_RURAL, ARTISTA_LOCAL
+  name        String // Ex: "Produtor Rural", "Artista Local"
+  description String? @db.Text
+  department  String // Departamento responsável
+  icon        String? // Ícone visual
+  color       String? // Cor para UI
+  active      Boolean @default(true)
 
-  // Array de moduleTypes que ativam esta categoria automaticamente
-  triggerServices String[] // Ex: ["CADASTRO_PRODUTOR", "INSCRICAO_PROGRAMA_RURAL"]
+  // ═══════════════════════════════════════════════════════════════════
+  // SISTEMA DE MATCHING DINÂMICO (100% flexível)
+  // ═══════════════════════════════════════════════════════════════════
+  matchingEnabled     Boolean @default(true)
+  autoAssignThreshold Int     @default(85) // Score mínimo para auto-atribuir (0-100)
+  suggestThreshold    Int     @default(60) // Score mínimo para sugerir (0-100)
 
-  // Relacionamento com cidadãos
-  citizens    CitizenCategoryAssignment[]
+  exactPatterns String[] @default([]) // Padrões exatos: ["CADASTRO_PRODUTOR"]
+  regexPatterns Json     @default("[]") // [{pattern: "PRODUTOR.*", confidence: 80}]
+  semanticRules Json     @default("{}") // {tags:{required:[], optional:[]}, departments:[]}
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // ═══════════════════════════════════════════════════════════════════
+  // RELACIONAMENTOS ENTRE CATEGORIAS
+  // ═══════════════════════════════════════════════════════════════════
+  parentCategoryId String?
+  parentCategory   CitizenCategory?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  childCategories  CitizenCategory[] @relation("CategoryHierarchy")
+
+  level                   Int      @default(1) // Nível hierárquico (1=base, 2=intermediário, 3=avançado)
+  prerequisiteCategories  String[] @default([]) // Códigos de categorias pré-requisito
+  complementaryCategories String[] @default([]) // Códigos de categorias complementares
+  conflictingCategories   String[] @default([]) // Códigos de categorias conflitantes
+
+  // ═══════════════════════════════════════════════════════════════════
+  // VALIDADE E RENOVAÇÃO
+  // ═══════════════════════════════════════════════════════════════════
+  hasValidity            Boolean @default(false)
+  validityDays           Int? // Dias de validade após atribuição
+  requiresRenewal        Boolean @default(false)
+  renewalReminderDays    Int     @default(30) // Dias antes do vencimento para enviar lembrete
+  autoDeactivateOnExpiry Boolean @default(false)
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PROGRESSÃO E GAMIFICAÇÃO
+  // ═══════════════════════════════════════════════════════════════════
+  hasProgression      Boolean @default(false)
+  nextLevelCategory   String? // Código da próxima categoria na progressão
+  progressionCriteria Json? // Critérios para evoluir (protocolos, tempo, etc)
+
+  // ═══════════════════════════════════════════════════════════════════
+  // METADATA AVANÇADA
+  // ═══════════════════════════════════════════════════════════════════
+  categoryType     String  @default("STANDARD") // STANDARD, PREMIUM, TEMPORARY, SYSTEM
+  priority         Int     @default(5) // 1=alta, 10=baixa
+  isPublic         Boolean @default(true) // Se aparece no perfil público
+  requiresApproval Boolean @default(false) // Se requer aprovação manual
+  benefits         Json? // Benefícios da categoria
+  restrictions     Json? // Restrições/requisitos
+
+  // Relacionamentos
+  citizens              CitizenCategoryAssignment[]
+  relationshipsAsSource CitizenCategoryRelationship[] @relation("SourceCategory")
+  relationshipsAsTarget CitizenCategoryRelationship[] @relation("TargetCategory")
+  badges                CitizenCategoryBadge[]
+
+  // Sistema dinâmico
+  matchRules                 CitizenCategoryMatchRule[]
+  matchSuggestions           CitizenCategoryMatchSuggestion[]
+  serviceCategoryAssignments ServiceCategoryAssignment[]
+  learningData               CitizenCategoryLearningData?
+
+  createdAt                        DateTime                         @default(now())
+  updatedAt                        DateTime                         @updatedAt
+  citizenCategoryProtocolHistories CitizenCategoryProtocolHistory[]
+  citizenCategoryAuditLogs         CitizenCategoryAuditLog[]
 
   @@index([code])
   @@index([active])
+  @@index([parentCategoryId])
+  @@index([level])
+  @@index([categoryType])
+  @@index([hasValidity])
+  @@index([hasProgression])
   @@map("citizen_categories")
 }
 
 model CitizenCategoryAssignment {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  citizenId   String
-  citizen     Citizen  @relation("CitizenCategories", fields: [citizenId], references: [id], onDelete: Cascade)
+  citizenId String
+  citizen   Citizen @relation("CitizenCategories", fields: [citizenId], references: [id], onDelete: Cascade)
 
-  categoryId  String
-  category    CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  // Rastreabilidade - protocolo que originou a categoria
-  protocolId  String?
-  protocol    ProtocolSimplified? @relation("ProtocolGeneratedCategories", fields: [protocolId], references: [id], onDelete: SetNull)
+  // Rastreabilidade - protocolo que originou a categoria (MANTIDO POR COMPATIBILIDADE)
+  protocolId String?
+  protocol   ProtocolSimplified? @relation("ProtocolGeneratedCategories", fields: [protocolId], references: [id], onDelete: SetNull)
 
-  assignedAt  DateTime @default(now())
-  assignedBy  String?          // Usuário que atribuiu (se manual)
-  assignedByUser User? @relation("CategoryAssignedBy", fields: [assignedBy], references: [id], onDelete: SetNull)
+  assignedAt     DateTime @default(now())
+  assignedBy     String? // Usuário que atribuiu (se manual)
+  assignedByUser User?    @relation("CategoryAssignedBy", fields: [assignedBy], references: [id], onDelete: SetNull)
 
-  active      Boolean  @default(true)
-  deactivatedAt DateTime?
-  deactivatedBy String?
+  active             Boolean   @default(true)
+  deactivatedAt      DateTime?
+  deactivatedBy      String?
   deactivationReason String?
 
+  // ═══════════════════════════════════════════════════════════════════
+  // VALIDADE E RENOVAÇÃO
+  // ═══════════════════════════════════════════════════════════════════
+  validFrom       DateTime? // Data de início da validade
+  validUntil      DateTime? // Data final da validade
+  expiresAt       DateTime? // Data de expiração (calculada)
+  isExpired       Boolean   @default(false)
+  lastRenewalDate DateTime? // Data da última renovação
+  renewalCount    Int       @default(0) // Quantas vezes foi renovada
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PROGRESSÃO E GAMIFICAÇÃO
+  // ═══════════════════════════════════════════════════════════════════
+  level            Int  @default(1) // Nível atual dentro da categoria
+  experiencePoints Int  @default(0) // Pontos de experiência acumulados
+  badges           Json @default("[]") // Array de badges conquistados
+  achievements     Json @default("[]") // Conquistas específicas
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ESTATÍSTICAS E HISTÓRICO
+  // ═══════════════════════════════════════════════════════════════════
+  protocolCount    Int       @default(0) // Quantidade de protocolos relacionados
+  lastProtocolDate DateTime? // Data do último protocolo
+  statistics       Json      @default("{}") // Estatísticas diversas
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AUDITORIA EXPANDIDA
+  // ═══════════════════════════════════════════════════════════════════
+  activationCount   Int     @default(1) // Quantas vezes foi ativada
+  deactivationCount Int     @default(0) // Quantas vezes foi desativada
+  notes             String? // Notas administrativas
+
   // Dados específicos desta atribuição (ex: número DAP, especialidade artística)
-  metadata    Json?
+  metadata Json?
+
+  // Relacionamentos
+  protocolHistory CitizenCategoryProtocolHistory[]
+  auditLog        CitizenCategoryAuditLog[]
 
   @@unique([citizenId, categoryId])
   @@index([citizenId])
   @@index([categoryId])
   @@index([protocolId])
   @@index([active])
+  @@index([expiresAt])
+  @@index([isExpired])
+  @@index([level])
+  @@index([lastProtocolDate])
   @@map("citizen_category_assignments")
 }
 
+// ============================================================================
+// HISTÓRICO DE PROTOCOLOS POR CATEGORIA
+// ============================================================================
+model CitizenCategoryProtocolHistory {
+  id String @id @default(cuid())
 
+  // Relacionamentos
+  assignmentId String
+  assignment   CitizenCategoryAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  protocolId String
+  protocol   ProtocolSimplified @relation("CategoryProtocolHistory", fields: [protocolId], references: [id], onDelete: Cascade)
+
+  citizenId String
+  citizen   Citizen @relation("CitizenCategoryProtocolHistory", fields: [citizenId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Dados do evento
+  eventType String // 'ASSIGNED', 'RENEWED', 'UPGRADED', 'REACTIVATED'
+  eventDate DateTime @default(now())
+
+  // Dados do protocolo
+  protocolNumber String?
+  moduleType     String?
+  serviceName    String?
+
+  // Metadata do evento
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([assignmentId])
+  @@index([protocolId])
+  @@index([citizenId])
+  @@index([categoryId])
+  @@index([eventType])
+  @@index([eventDate])
+  @@map("citizen_category_protocol_history")
+}
+
+// ============================================================================
+// LOG DE AUDITORIA DE CATEGORIAS
+// ============================================================================
+model CitizenCategoryAuditLog {
+  id String @id @default(cuid())
+
+  // Relacionamentos
+  assignmentId String
+  assignment   CitizenCategoryAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  citizenId String
+  citizen   Citizen @relation("CitizenCategoryAuditLog", fields: [citizenId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Tipo de ação
+  action     String // 'ASSIGNED', 'ACTIVATED', 'DEACTIVATED', 'RENEWED', 'UPGRADED', 'EXPIRED'
+  actionDate DateTime @default(now())
+
+  // Quem realizou a ação
+  performedBy     String?
+  performedByType String? // 'SYSTEM', 'ADMIN', 'CITIZEN'
+
+  // Dados da ação
+  reason        String?
+  previousState Json?
+  newState      Json?
+  metadata      Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([assignmentId])
+  @@index([citizenId])
+  @@index([categoryId])
+  @@index([action])
+  @@index([actionDate])
+  @@map("citizen_category_audit_log")
+}
+
+// ============================================================================
+// RELACIONAMENTOS ENTRE CATEGORIAS
+// ============================================================================
+model CitizenCategoryRelationship {
+  id String @id @default(cuid())
+
+  // Categorias relacionadas
+  sourceCategoryId String
+  sourceCategory   CitizenCategory @relation("SourceCategory", fields: [sourceCategoryId], references: [id], onDelete: Cascade)
+
+  targetCategoryId String
+  targetCategory   CitizenCategory @relation("TargetCategory", fields: [targetCategoryId], references: [id], onDelete: Cascade)
+
+  // Tipo de relacionamento
+  relationshipType String // 'PARENT', 'CHILD', 'PREREQUISITE', 'COMPLEMENTARY', 'CONFLICTING', 'UPGRADE'
+
+  // Configuração
+  isRequired Boolean @default(false)
+  autoAssign Boolean @default(false)
+  weight     Int     @default(1)
+  metadata   Json?
+
+  // Auditoria
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sourceCategoryId, targetCategoryId, relationshipType])
+  @@index([sourceCategoryId])
+  @@index([targetCategoryId])
+  @@index([relationshipType])
+  @@map("citizen_category_relationships")
+}
+
+// ============================================================================
+// SISTEMA DE BADGES/CONQUISTAS
+// ============================================================================
+model CitizenCategoryBadge {
+  id String @id @default(cuid())
+
+  // Relacionamento com categoria
+  categoryId String
+  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  // Dados do badge
+  code        String  @unique
+  name        String
+  description String?
+  icon        String?
+  color       String?
+
+  // Critérios para conquistar
+  criteria                 Json
+  requiredProtocolCount    Int?
+  requiredExperiencePoints Int?
+  requiredDays             Int?
+
+  // Configuração
+  isPublic Boolean @default(true)
+  active   Boolean @default(true)
+  priority Int     @default(5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([active])
+  @@map("citizen_category_badges")
+}
+
+// ============================================================================
+// SISTEMA DINÂMICO DE CATEGORIZAÇÃO
+// ============================================================================
+
+// Tags para Serviços
+model ServiceTag {
+  id        String            @id @default(cuid())
+  serviceId String
+  service   ServiceSimplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  tag    String
+  source String @default("MANUAL") // 'MANUAL', 'AUTO', 'AI'
+
+  createdAt DateTime @default(now())
+
+  @@unique([serviceId, tag])
+  @@index([serviceId])
+  @@index([tag])
+  @@map("service_tags")
+}
+
+// Regras de Match para Categorias
+model CitizenCategoryMatchRule {
+  id         String          @id @default(cuid())
+  categoryId String
+  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  ruleType String // 'EXACT', 'PATTERN', 'SEMANTIC', 'CUSTOM'
+
+  // Configuração da regra
+  pattern        String?
+  regex          String?
+  semanticConfig Json?
+  customLogic    Json?
+
+  // Score
+  confidence Int @default(80) // 0-100
+  priority   Int @default(5)
+
+  active      Boolean @default(true)
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([ruleType])
+  @@index([active])
+  @@map("citizen_category_match_rules")
+}
+
+// Sugestões de Match (Aguardando Aprovação)
+model CitizenCategoryMatchSuggestion {
+  id String @id @default(cuid())
+
+  serviceId String
+  service   ServiceSimplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  matchType     String // 'EXACT', 'PATTERN', 'SEMANTIC', 'MANUAL'
+  confidence    Int // 0-100
+  matchDetails  Json?
+  matchedRuleId String?
+
+  status      String    @default("PENDING") // 'PENDING', 'APPROVED', 'REJECTED', 'AUTO_ASSIGNED'
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  reviewNotes String?
+
+  wasAutoAssigned         Boolean @default(false)
+  assignedToCitizensCount Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceId, categoryId])
+  @@index([serviceId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([matchType])
+  @@map("citizen_category_match_suggestions")
+}
+
+// Vínculo Dinâmico Serviço → Categoria
+model ServiceCategoryAssignment {
+  id String @id @default(cuid())
+
+  serviceId String
+  service   ServiceSimplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  assignmentType String // 'AUTO', 'MANUAL', 'APPROVED_SUGGESTION'
+  confidence     Int? // Score quando auto-atribuído
+  matchRuleId    String? // Regra que gerou
+
+  assignedBy String?
+  assignedAt DateTime @default(now())
+
+  active   Boolean @default(true)
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceId, categoryId])
+  @@index([serviceId])
+  @@index([categoryId])
+  @@index([active])
+  @@index([assignmentType])
+  @@map("service_category_assignments")
+}
+
+// Dados de Aprendizado (Machine Learning)
+model CitizenCategoryLearningData {
+  id         String          @id @default(cuid())
+  categoryId String          @unique
+  category   CitizenCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  commonPatterns    Json     @default("[]")
+  commonTags        Json     @default("[]")
+  commonDepartments String[] @default([])
+  avgConfidence     Decimal? @db.Decimal(5, 2)
+
+  totalAutoAssignments   Int      @default(0)
+  totalManualAssignments Int      @default(0)
+  totalRejections        Int      @default(0)
+  successRate            Decimal? @db.Decimal(5, 2)
+
+  lastUpdated DateTime @default(now())
+
+  @@index([categoryId])
+  @@map("citizen_category_learning_data")
+}
+
+// Fila de Jobs em Background
+model BackgroundJob {
+  id      String @id @default(cuid())
+  type    String // 'ANALYZE_SERVICE_CATEGORIES', etc
+  payload Json
+
+  status      String    @default("PENDING") // 'PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'
+  result      Json?
+  error       String?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  processedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("background_jobs")
+}
 
 // ========================================
 // SISTEMA DE ASSINATURA DIGITAL MUNICIPAL
 // ========================================
 
 enum CertificateType {
-  SERVER    // Servidores públicos municipais
-  CITIZEN   // Cidadãos
-  SYSTEM    // Sistemas/APIs
+  SERVER // Servidores públicos municipais
+  CITIZEN // Cidadãos
+  SYSTEM // Sistemas/APIs
 }
 
 enum CertStatus {
-  ACTIVE    // Certificado ativo
-  REVOKED   // Certificado revogado
-  EXPIRED   // Certificado expirado
+  ACTIVE // Certificado ativo
+  REVOKED // Certificado revogado
+  EXPIRED // Certificado expirado
   SUSPENDED // Certificado suspenso temporariamente
 }
 
 enum RevocationReason {
-  UNSPECIFIED          // Não especificado
-  KEY_COMPROMISE       // Chave privada comprometida
-  CA_COMPROMISE        // Autoridade certificadora comprometida
-  AFFILIATION_CHANGED  // Mudança de lotação/desligamento
-  SUPERSEDED           // Substituído por novo certificado
-  CESSATION            // Cessação de operação
-  CERTIFICATE_HOLD     // Suspensão temporária
+  UNSPECIFIED // Não especificado
+  KEY_COMPROMISE // Chave privada comprometida
+  CA_COMPROMISE // Autoridade certificadora comprometida
+  AFFILIATION_CHANGED // Mudança de lotação/desligamento
+  SUPERSEDED // Substituído por novo certificado
+  CESSATION // Cessação de operação
+  CERTIFICATE_HOLD // Suspensão temporária
 }
 
 // Certificados Digitais
 model DigitalCertificate {
   id              String          @id @default(cuid())
-  userId          String?         // FK para User (servidor) - opcional
-  citizenId       String?         // FK para Citizen (cidadão) - opcional
+  userId          String? // FK para User (servidor) - opcional
+  citizenId       String? // FK para Citizen (cidadão) - opcional
   certificateType CertificateType // Tipo de certificado
 
   // Informações do Certificado X.509
-  serialNumber    String          @unique // Número de série único
-  commonName      String                  // Nome do titular (CN)
-  email           String                  // Email do titular
-  organization    String          @default("Prefeitura Municipal") // O=
-  department      String?                 // OU=
+  serialNumber String  @unique // Número de série único
+  commonName   String // Nome do titular (CN)
+  email        String // Email do titular
+  organization String  @default("Prefeitura Municipal") // O=
+  department   String? // OU=
 
   // Chaves Criptográficas (RSA)
-  publicKey            String  @db.Text // Chave pública (formato PEM)
-  privateKeyHash       String           // Hash SHA-256 da chave privada (para validação)
-  encryptedPrivateKey  String  @db.Text // Chave privada criptografada com AES-256-GCM
-  keySize              Int     @default(2048) // Tamanho da chave em bits (2048, 3072, 4096)
+  publicKey           String @db.Text // Chave pública (formato PEM)
+  privateKeyHash      String // Hash SHA-256 da chave privada (para validação)
+  encryptedPrivateKey String @db.Text // Chave privada criptografada com AES-256-GCM
+  keySize             Int    @default(2048) // Tamanho da chave em bits (2048, 3072, 4096)
 
   // Validade
-  issuedAt        DateTime        @default(now())
-  expiresAt       DateTime                         // Geralmente 1-2 anos
-  revokedAt       DateTime?
+  issuedAt         DateTime          @default(now())
+  expiresAt        DateTime // Geralmente 1-2 anos
+  revokedAt        DateTime?
   revocationReason RevocationReason?
 
   // Status
-  status          CertStatus      @default(ACTIVE)
-  isActive        Boolean         @default(true)
+  status   CertStatus @default(ACTIVE)
+  isActive Boolean    @default(true)
 
   // Metadados da CA
-  issuerCA        String          @default("CA-MUNICIPAL-001") // Identificador da CA emissora
-  certificateChain String         @db.Text // Cadeia completa de certificação (PEM)
-  thumbprint      String                   // SHA-256 fingerprint do certificado
+  issuerCA         String @default("CA-MUNICIPAL-001") // Identificador da CA emissora
+  certificateChain String @db.Text // Cadeia completa de certificação (PEM)
+  thumbprint       String // SHA-256 fingerprint do certificado
 
   // Auditoria
-  createdBy       String
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  user            User?           @relation("UserCertificates", fields: [userId], references: [id], onDelete: Cascade)
-  citizen         Citizen?        @relation("CitizenCertificates", fields: [citizenId], references: [id], onDelete: Cascade)
-  signatures      Signature[]
-  request         CertificateRequest? @relation("RequestedCertificate")
+  user       User?               @relation("UserCertificates", fields: [userId], references: [id], onDelete: Cascade)
+  citizen    Citizen?            @relation("CitizenCertificates", fields: [citizenId], references: [id], onDelete: Cascade)
+  signatures Signature[]
+  request    CertificateRequest? @relation("RequestedCertificate")
 
   @@index([userId])
   @@index([citizenId])
@@ -4943,36 +5367,36 @@ model DigitalCertificate {
 
 // Assinaturas Digitais em Documentos
 model Signature {
-  id                 String    @id @default(cuid())
-  documentId         String?   // FK para GeneratedDocument (opcional)
-  externalDocumentId String?   // FK para ExternalDocument (opcional)
-  certificateId      String    // FK para DigitalCertificate
+  id                 String  @id @default(cuid())
+  documentId         String? // FK para GeneratedDocument (opcional)
+  externalDocumentId String? // FK para ExternalDocument (opcional)
+  certificateId      String // FK para DigitalCertificate
 
   // Dados da Assinatura Criptográfica
-  signatureValue  String    @db.Text // Assinatura RSA em base64
-  signatureHash   String             // SHA-256 do documento no momento da assinatura
-  signatureAlgo   String    @default("SHA256withRSA") // Algoritmo usado
+  signatureValue String @db.Text // Assinatura RSA em base64
+  signatureHash  String // SHA-256 do documento no momento da assinatura
+  signatureAlgo  String @default("SHA256withRSA") // Algoritmo usado
 
   // Metadados da Assinatura
-  signedAt        DateTime  @default(now())
-  ipAddress       String                      // IP do assinante
-  userAgent       String?                     // User agent do navegador
-  geolocation     Json?                       // Lat/Long opcional para auditoria
-  visualPosition  Json?                       // Posição da assinatura visual no PDF (page, x, y, width, height)
+  signedAt       DateTime @default(now())
+  ipAddress      String // IP do assinante
+  userAgent      String? // User agent do navegador
+  geolocation    Json? // Lat/Long opcional para auditoria
+  visualPosition Json? // Posição da assinatura visual no PDF (page, x, y, width, height)
 
   // Validação
-  isValid         Boolean   @default(true)    // Flag de validade
-  validatedAt     DateTime?                   // Última vez que foi validada
-  validationCount Int       @default(0)       // Quantas vezes foi validada
+  isValid         Boolean   @default(true) // Flag de validade
+  validatedAt     DateTime? // Última vez que foi validada
+  validationCount Int       @default(0) // Quantas vezes foi validada
 
   // Auditoria
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  document         GeneratedDocument?  @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  externalDocument ExternalDocument?   @relation(fields: [externalDocumentId], references: [id], onDelete: Cascade)
-  certificate      DigitalCertificate  @relation(fields: [certificateId], references: [id], onDelete: Restrict)
+  document         GeneratedDocument? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  externalDocument ExternalDocument?  @relation(fields: [externalDocumentId], references: [id], onDelete: Cascade)
+  certificate      DigitalCertificate @relation(fields: [certificateId], references: [id], onDelete: Restrict)
 
   @@index([documentId])
   @@index([externalDocumentId])
@@ -4984,19 +5408,19 @@ model Signature {
 
 // Lista de Revogação de Certificados (CRL - Certificate Revocation List)
 model CertificateRevocationList {
-  id              String           @id @default(cuid())
-  serialNumber    String                      // Número de série do certificado revogado
-  certificateId   String?                     // FK opcional para DigitalCertificate
-  reason          RevocationReason             // Motivo da revogação
-  revokedAt       DateTime         @default(now())
-  revokedBy       String                       // userId de quem revogou
-  publishedAt     DateTime         @default(now())
+  id            String           @id @default(cuid())
+  serialNumber  String // Número de série do certificado revogado
+  certificateId String? // FK opcional para DigitalCertificate
+  reason        RevocationReason // Motivo da revogação
+  revokedAt     DateTime         @default(now())
+  revokedBy     String // userId de quem revogou
+  publishedAt   DateTime         @default(now())
 
   // Metadados
-  comments        String?          @db.Text    // Comentários sobre a revogação
+  comments String? @db.Text // Comentários sobre a revogação
 
   // Relacionamentos
-  revokedByUser   User             @relation("CRLRevokedBy", fields: [revokedBy], references: [id])
+  revokedByUser User @relation("CRLRevokedBy", fields: [revokedBy], references: [id])
 
   @@index([serialNumber])
   @@index([revokedAt])
@@ -5006,36 +5430,36 @@ model CertificateRevocationList {
 
 // Solicitações de Certificado Digital
 model CertificateRequest {
-  id              String           @id @default(cuid())
-  userId          String           // FK para User (solicitante)
+  id     String @id @default(cuid())
+  userId String // FK para User (solicitante)
 
   // Informações do Certificado Solicitado
-  commonName      String           // Nome do solicitante
-  email           String           // Email do solicitante
-  certificateType CertificateType  // Tipo de certificado solicitado
-  keySize         Int              @default(2048) // Tamanho da chave
+  commonName      String // Nome do solicitante
+  email           String // Email do solicitante
+  certificateType CertificateType // Tipo de certificado solicitado
+  keySize         Int             @default(2048) // Tamanho da chave
 
   // Status da Solicitação
-  status          CertificateRequestStatus @default(PENDING)
-  requestReason   String           @db.Text // Motivo/justificativa da solicitação
-  requestedAt     DateTime         @default(now())
+  status        CertificateRequestStatus @default(PENDING)
+  requestReason String                   @db.Text // Motivo/justificativa da solicitação
+  requestedAt   DateTime                 @default(now())
 
   // Aprovação/Rejeição
-  reviewedBy      String?          // userId do aprovador (prefeito/secretário)
-  reviewedAt      DateTime?
-  reviewComments  String?          @db.Text // Comentários do aprovador
+  reviewedBy     String? // userId do aprovador (prefeito/secretário)
+  reviewedAt     DateTime?
+  reviewComments String?   @db.Text // Comentários do aprovador
 
   // Certificado Gerado (se aprovado)
-  certificateId   String?          @unique // FK para DigitalCertificate
+  certificateId String? @unique // FK para DigitalCertificate
 
   // Auditoria
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  user            User             @relation("UserCertificateRequests", fields: [userId], references: [id], onDelete: Cascade)
-  reviewer        User?            @relation("CertificateRequestReviewer", fields: [reviewedBy], references: [id])
-  certificate     DigitalCertificate? @relation("RequestedCertificate", fields: [certificateId], references: [id])
+  user        User                @relation("UserCertificateRequests", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer    User?               @relation("CertificateRequestReviewer", fields: [reviewedBy], references: [id])
+  certificate DigitalCertificate? @relation("RequestedCertificate", fields: [certificateId], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -5045,10 +5469,10 @@ model CertificateRequest {
 }
 
 enum CertificateRequestStatus {
-  PENDING    // Aguardando aprovação
-  APPROVED   // Aprovado - certificado emitido
-  REJECTED   // Rejeitado
-  CANCELLED  // Cancelado pelo solicitante
+  PENDING // Aguardando aprovação
+  APPROVED // Aprovado - certificado emitido
+  REJECTED // Rejeitado
+  CANCELLED // Cancelado pelo solicitante
 }
 
 // ============================================
@@ -5057,23 +5481,23 @@ enum CertificateRequestStatus {
 
 // Conversação com o DigiBot
 model BotConversation {
-  id           String   @id @default(cuid())
-  citizenId    String
-  intent       String?
-  confidence   Float?
-  currentFlow  String?   // Fluxo atual (AGENDAR_CONSULTA, SOLICITAR_SERVICO, etc)
-  flowStep     Int       @default(0) // Passo atual do fluxo
-  flowData     Json?     // Dados coletados durante o fluxo
-  isActive     Boolean   @default(true)
-  closedAt     DateTime?
-  rating       Int?      // 1-5 estrelas
-  ratingComment String?  @db.Text
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  citizenId     String
+  intent        String?
+  confidence    Float?
+  currentFlow   String? // Fluxo atual (AGENDAR_CONSULTA, SOLICITAR_SERVICO, etc)
+  flowStep      Int       @default(0) // Passo atual do fluxo
+  flowData      Json? // Dados coletados durante o fluxo
+  isActive      Boolean   @default(true)
+  closedAt      DateTime?
+  rating        Int? // 1-5 estrelas
+  ratingComment String?   @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   // Relacionamentos
-  citizen      Citizen       @relation(fields: [citizenId], references: [id], onDelete: Cascade)
-  messages     BotMessage[]
+  citizen  Citizen      @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  messages BotMessage[]
 
   @@index([citizenId])
   @@index([currentFlow])
@@ -5084,19 +5508,19 @@ model BotConversation {
 
 // Mensagens da conversa com o bot
 model BotMessage {
-  id              String   @id @default(cuid())
-  conversationId  String
-  role            String   // 'user' | 'bot' | 'system'
-  content         String   @db.Text
-  messageType     String   @default("text") // 'text' | 'card' | 'form' | 'quick_reply' | 'interactive'
-  metadata        Json?    // Dados adicionais (cards, formulários, etc)
-  intent          String?  // Intent reconhecida (apenas para mensagens do usuário)
-  confidence      Float?   // Confiança do reconhecimento
-  wasTransferred  Boolean  @default(false) // Foi transferido para humano?
-  createdAt       DateTime @default(now())
+  id             String   @id @default(cuid())
+  conversationId String
+  role           String // 'user' | 'bot' | 'system'
+  content        String   @db.Text
+  messageType    String   @default("text") // 'text' | 'card' | 'form' | 'quick_reply' | 'interactive'
+  metadata       Json? // Dados adicionais (cards, formulários, etc)
+  intent         String? // Intent reconhecida (apenas para mensagens do usuário)
+  confidence     Float? // Confiança do reconhecimento
+  wasTransferred Boolean  @default(false) // Foi transferido para humano?
+  createdAt      DateTime @default(now())
 
   // Relacionamentos
-  conversation    BotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation BotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
   @@index([role])
@@ -5107,15 +5531,15 @@ model BotMessage {
 
 // Analytics do Bot
 model BotAnalytics {
-  id                String   @id @default(cuid())
-  date              DateTime @default(now()) @db.Date
-  intent            String
-  totalCount        Int      @default(0)
-  successCount      Int      @default(0)  // Resolvido sem transferência
-  transferCount     Int      @default(0)  // Transferido para humano
-  avgConfidence     Float?
-  avgResponseTime   Float?   // Tempo médio de resposta (ms)
-  uniqueCitizens    Int      @default(0)
+  id              String   @id @default(cuid())
+  date            DateTime @default(now()) @db.Date
+  intent          String
+  totalCount      Int      @default(0)
+  successCount    Int      @default(0) // Resolvido sem transferência
+  transferCount   Int      @default(0) // Transferido para humano
+  avgConfidence   Float?
+  avgResponseTime Float? // Tempo médio de resposta (ms)
+  uniqueCitizens  Int      @default(0)
 
   @@unique([date, intent])
   @@index([date])
@@ -5125,20 +5549,20 @@ model BotAnalytics {
 
 // Notificações proativas do sistema
 model ProactiveNotification {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   citizenId    String
-  type         String   // 'protocol_expiring' | 'protocol_approved' | 'appointment_reminder' | 'suggestion'
+  type         String // 'protocol_expiring' | 'protocol_approved' | 'appointment_reminder' | 'suggestion'
   title        String
-  message      String   @db.Text
-  metadata     Json?    // Dados adicionais
+  message      String    @db.Text
+  metadata     Json? // Dados adicionais
   scheduledFor DateTime // Quando deve ser enviada
   sentAt       DateTime?
-  isRead       Boolean  @default(false)
+  isRead       Boolean   @default(false)
   readAt       DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   // Relacionamentos
-  citizen      Citizen  @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  citizen Citizen @relation(fields: [citizenId], references: [id], onDelete: Cascade)
 
   @@index([citizenId])
   @@index([type])
@@ -5149,18 +5573,18 @@ model ProactiveNotification {
 
 // Uploads de arquivos durante conversas com o bot
 model BotUpload {
-  id             String   @id @default(cuid())
+  id             String    @id @default(cuid())
   citizenId      String
   conversationId String?
   fileName       String
   fileSize       Int
   mimeType       String
-  fileUrl        String   // URL do arquivo armazenado
-  uploadedAt     DateTime @default(now())
+  fileUrl        String // URL do arquivo armazenado
+  uploadedAt     DateTime  @default(now())
   expiresAt      DateTime? // Opcional: expiração do arquivo temporário
 
   // Relacionamentos
-  citizen        Citizen  @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  citizen Citizen @relation(fields: [citizenId], references: [id], onDelete: Cascade)
 
   @@index([citizenId])
   @@index([conversationId])
@@ -5180,15 +5604,15 @@ model FlowDefinition {
   version     String   @default("1.0.0")
   isActive    Boolean  @default(true)
   isDefault   Boolean  @default(false) // Fluxo padrão do sistema
-  municipioId String?  // Fluxo customizado por município
-  nodes       Json     // Array de nodos do fluxo
-  metadata    Json?    // Tags, categorias, ícones, etc
+  municipioId String? // Fluxo customizado por município
+  nodes       Json // Array de nodos do fluxo
+  metadata    Json? // Tags, categorias, ícones, etc
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  createdBy   String?  // ID do usuário que criou
+  createdBy   String? // ID do usuário que criou
 
   // Relacionamentos
-  executions  FlowExecution[]
+  executions FlowExecution[]
 
   @@index([municipioId])
   @@index([isActive])
@@ -5198,22 +5622,22 @@ model FlowDefinition {
 
 // Execuções de fluxos (estado de conversação)
 model FlowExecution {
-  id              String   @id @default(cuid())
-  citizenId       String
-  flowId          String
-  conversationId  String?  // Vincula com UltraZend Messages
-  currentNodeId   String   // ID do nodo atual
-  state           Json     // Estado completo: dados coletados, variáveis, etc
-  history         Json     // Histórico de navegação (array de node IDs)
-  status          String   // ACTIVE, COMPLETED, CANCELLED, ERROR
-  errorMessage    String?  @db.Text
-  startedAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  completedAt     DateTime?
+  id             String    @id @default(cuid())
+  citizenId      String
+  flowId         String
+  conversationId String? // Vincula com UltraZend Messages
+  currentNodeId  String // ID do nodo atual
+  state          Json // Estado completo: dados coletados, variáveis, etc
+  history        Json // Histórico de navegação (array de node IDs)
+  status         String // ACTIVE, COMPLETED, CANCELLED, ERROR
+  errorMessage   String?   @db.Text
+  startedAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  completedAt    DateTime?
 
   // Relacionamentos
-  citizen         Citizen         @relation(fields: [citizenId], references: [id], onDelete: Cascade)
-  flow            FlowDefinition  @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  citizen Citizen        @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  flow    FlowDefinition @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
   @@index([citizenId])
   @@index([flowId])
@@ -5229,35 +5653,35 @@ model FlowExecution {
 
 // Documentos externos enviados por usuários para assinatura digital
 model ExternalDocument {
-  id              String    @id @default(cuid())
+  id String @id @default(cuid())
 
   // Proprietário do documento
-  userId          String?   // Servidor/Admin que fez upload
-  citizenId       String?   // Cidadão que fez upload
+  userId    String? // Servidor/Admin que fez upload
+  citizenId String? // Cidadão que fez upload
 
   // Informações do arquivo
-  fileName        String
-  filePath        String    // Caminho no storage
-  fileSize        Int       // Tamanho em bytes
-  mimeType        String    @default("application/pdf")
-  documentHash    String    // SHA-256 para verificação de integridade
+  fileName     String
+  filePath     String // Caminho no storage
+  fileSize     Int // Tamanho em bytes
+  mimeType     String @default("application/pdf")
+  documentHash String // SHA-256 para verificação de integridade
 
   // Metadados
-  description     String?   @db.Text
-  uploadedAt      DateTime  @default(now())
-  isActive        Boolean   @default(true)
+  description String?  @db.Text
+  uploadedAt  DateTime @default(now())
+  isActive    Boolean  @default(true)
 
   // Assinatura Digital
-  isSigned        Boolean   @default(false)  // Se o documento foi assinado digitalmente
+  isSigned Boolean @default(false) // Se o documento foi assinado digitalmente
 
   // Auditoria
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  user            User?        @relation("UserExternalDocuments", fields: [userId], references: [id], onDelete: Cascade)
-  citizen         Citizen?     @relation("CitizenExternalDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
-  signatures      Signature[]
+  user       User?       @relation("UserExternalDocuments", fields: [userId], references: [id], onDelete: Cascade)
+  citizen    Citizen?    @relation("CitizenExternalDocuments", fields: [citizenId], references: [id], onDelete: Cascade)
+  signatures Signature[]
 
   @@index([userId])
   @@index([citizenId])

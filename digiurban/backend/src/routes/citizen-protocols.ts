@@ -16,6 +16,7 @@ import { applyWorkflowToProtocol } from '../services/service-workflow.service';
 import { createProtocolSLA } from '../services/protocol-sla.service';
 import { sanitizeDocumentId, mapUploadedFilesToDocuments } from '../utils/document-mapping';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
+import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
 import fs from 'fs';
 import path from 'path';
 
@@ -242,6 +243,25 @@ router.post('/', upload.any(), async (req, res) => {
         error: 'Serviço não encontrado'
         });
     }
+
+    // ✅ VALIDAÇÃO DE UNICIDADE: Verificar se cidadão pode criar este protocolo
+    console.log('🔍 Validando unicidade do protocolo...');
+    const uniquenessValidation = await validateProtocolUniqueness(
+      citizenId,
+      serviceId,
+      formData
+    );
+
+    if (!uniquenessValidation.canCreate) {
+      console.log(`   ❌ Validação falhou: ${uniquenessValidation.reason}`);
+      return res.status(400).json({
+        success: false,
+        error: uniquenessValidation.errorMessage || 'Não é possível criar este protocolo',
+        reason: uniquenessValidation.reason,
+        existingProtocolNumber: uniquenessValidation.existingProtocolNumber
+      });
+    }
+    console.log('   ✓ Validação de unicidade passou');
 
     // Gerar número do protocolo - Sistema centralizado com lock
     const protocolNumber = await generateProtocolNumberSafe();

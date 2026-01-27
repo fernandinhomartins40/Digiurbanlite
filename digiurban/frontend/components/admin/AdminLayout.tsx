@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import { useNotifications } from '@/hooks/useNotifications'
 import { AdminSidebar } from './AdminSidebar'
 import { AdminHeader } from './AdminHeader'
 import { Loader2 } from 'lucide-react'
@@ -16,6 +17,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
   const hasRedirected = useRef(false)
+
+  // ✅ NOVO: Conectar ao sistema de notificações em tempo real
+  const { connected } = useNotifications()
+
+  // Log de conexão SSE (apenas desenvolvimento)
+  useEffect(() => {
+    if (connected) {
+      console.log('✅ Sistema de notificações conectado')
+    }
+  }, [connected])
 
   // Páginas públicas que não precisam de autenticação
   const publicPaths = [

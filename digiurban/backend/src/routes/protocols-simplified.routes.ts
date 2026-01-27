@@ -15,6 +15,7 @@ import { protocolServiceSimplified } from '../services/protocol-simplified.servi
 import { protocolStatusEngine } from '../services/protocol-status.engine';
 import * as pendingService from '../services/protocol-pending.service';
 import { getWorkflowByServiceId } from '../services/service-workflow.service';
+import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
 import type { WorkflowStage } from '../types/workflow.types';
 
 const router = Router();
@@ -79,6 +80,25 @@ router.post('/', requireMinRole(UserRole.USER), async (req, res) => {
         }
         });
     }
+
+    // ✅ VALIDAÇÃO DE UNICIDADE: Verificar se cidadão pode criar este protocolo
+    console.log('🔍 [ADMIN] Validando unicidade do protocolo...');
+    const uniquenessValidation = await validateProtocolUniqueness(
+      citizen.id,
+      serviceId,
+      formData
+    );
+
+    if (!uniquenessValidation.canCreate) {
+      console.log(`   ❌ Validação falhou: ${uniquenessValidation.reason}`);
+      return res.status(400).json({
+        success: false,
+        error: uniquenessValidation.errorMessage || 'Não é possível criar este protocolo',
+        reason: uniquenessValidation.reason,
+        existingProtocolNumber: uniquenessValidation.existingProtocolNumber
+      });
+    }
+    console.log('   ✓ Validação de unicidade passou');
 
     // Criar protocolo com integração de módulo
     const result = await protocolModuleService.createProtocolWithModule({

@@ -4,6 +4,8 @@
 
 import { prisma } from '../lib/prisma';
 import { CitizenCategory, CitizenCategoryAssignment, Citizen } from '@prisma/client';
+import * as expandedService from './citizen-category-expanded.service';
+import * as relationshipsService from './citizen-category-relationships.service';
 
 // ============================================================================
 // INTERFACES
@@ -123,10 +125,12 @@ export async function getCategoriesByModuleType(moduleType: string): Promise<Cit
 // ============================================================================
 
 /**
- * Atribui uma categoria a um cidadão
+ * Atribui uma categoria a um cidadão (VERSÃO EXPANDIDA COM VALIDAÇÕES)
  */
 export async function assignCategoryToCitizen(params: AssignCategoryParams): Promise<CategoryAssignmentResult> {
   const { citizenId, categoryId, protocolId, assignedBy, metadata } = params;
+
+  console.log(`🏷️  [CategoryService] Atribuindo categoria ${categoryId} ao cidadão ${citizenId}`);
 
   // Verifica se cidadão existe
   const citizen = await prisma.citizen.findUnique({
@@ -214,7 +218,27 @@ export async function assignCategoryToCitizen(params: AssignCategoryParams): Pro
     }
   }
 
-  // Cria nova atribuição
+  // ═══════════════════════════════════════════════════════════════════
+  // VALIDAR RELACIONAMENTOS ANTES DE CRIAR
+  // ═══════════════════════════════════════════════════════════════════
+  const validation = await relationshipsService.validateCategoryAssignment(citizenId, category.code);
+
+  if (!validation.isValid && category.requiresApproval === false) {
+    // Se categoria não requer aprovação e tem violações, bloquear
+    console.warn(`⚠️  [CategoryService] Validação falhou para ${category.code}:`, validation.violations);
+    return {
+      success: false,
+      message: `Não é possível atribuir esta categoria: ${validation.violations.map(v => v.message).join('; ')}`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CALCULAR VALIDADE SE CATEGORIA REQUER
+  // ═══════════════════════════════════════════════════════════════════
+  const now = new Date();
+  const expiresAt = await expandedService.calculateExpiryDate(categoryId, now);
+
+  // Cria nova atribuição COM NOVOS CAMPOS
   assignment = await prisma.citizenCategoryAssignment.create({
     data: {
       citizenId,
@@ -223,22 +247,84 @@ export async function assignCategoryToCitizen(params: AssignCategoryParams): Pro
       assignedBy,
       metadata,
       active: true,
+      validFrom: now,
+      expiresAt,
+      protocolCount: protocolId ? 1 : 0,
+      lastProtocolDate: protocolId ? now : null,
+      experiencePoints: 10, // XP inicial
     },
   });
 
   isNew = true;
+
+  console.log(`✅ [CategoryService] Categoria "${category.name}" atribuída com sucesso`);
+
+  // ═══════════════════════════════════════════════════════════════════
+  // REGISTRAR NO HISTÓRICO SE TEM PROTOCOLO
+  // ═══════════════════════════════════════════════════════════════════
+  if (protocolId) {
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId },
+      select: { number: true, moduleType: true, title: true },
+    });
+
+    await expandedService.addProtocolToHistory({
+      assignmentId: assignment.id,
+      protocolId,
+      citizenId,
+      categoryId,
+      eventType: 'ASSIGNED',
+      protocolNumber: protocol?.number,
+      moduleType: protocol?.moduleType || undefined,
+      serviceName: protocol?.title,
+      metadata,
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // REGISTRAR NO LOG DE AUDITORIA
+  // ═══════════════════════════════════════════════════════════════════
+  await expandedService.logCategoryAction({
+    assignmentId: assignment.id,
+    citizenId,
+    categoryId,
+    action: 'ASSIGNED',
+    performedBy: assignedBy,
+    performedByType: assignedBy ? 'ADMIN' : 'SYSTEM',
+    reason: 'Categoria atribuída via protocolo',
+    newState: { active: true, expiresAt },
+    metadata: { protocolId, ...metadata },
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PROCESSAR RELACIONAMENTOS AUTOMÁTICOS (complementares, etc)
+  // ═══════════════════════════════════════════════════════════════════
+  const autoRelationships = await relationshipsService.processAutoRelationships(
+    citizenId,
+    category.code,
+    assignedBy
+  );
+
+  // ═══════════════════════════════════════════════════════════════════
+  // VERIFICAR E ATRIBUIR BADGES AUTOMÁTICOS
+  // ═══════════════════════════════════════════════════════════════════
+  const earnedBadges = await expandedService.checkAndAwardAutomaticBadges(assignment.id);
 
   return {
     success: true,
     assignment,
     message: `Categoria "${category.name}" atribuída com sucesso`,
     isNew,
+    relationshipsProcessed: autoRelationships,
+    badgesEarned: earnedBadges.map(b => b.name),
+    warnings: validation.warnings.map(w => w.message),
   };
 }
 
 /**
  * Atribui automaticamente categorias baseadas no tipo de serviço (protocolo)
  * Chamado após aprovação de protocolo
+ * VERSÃO 2.0: Com histórico de protocolos e validações completas
  */
 export async function autoAssignCategoriesByProtocol(
   protocolId: string,
@@ -246,37 +332,108 @@ export async function autoAssignCategoriesByProtocol(
   moduleType: string,
   assignedBy?: string
 ): Promise<CategoryAssignmentResult[]> {
+  console.log(`🏷️  [CategoryService] Auto-atribuindo categorias para moduleType: ${moduleType}`);
+
   // Busca categorias associadas ao moduleType
   const categories = await getCategoriesByModuleType(moduleType);
 
   if (categories.length === 0) {
+    console.log(`ℹ️  [CategoryService] Nenhuma categoria configurada para ${moduleType}`);
     return [];
   }
+
+  console.log(`📋 [CategoryService] Encontradas ${categories.length} categoria(s) para processar`);
+
+  // Buscar informações do protocolo
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: { number: true, moduleType: true, title: true },
+  });
 
   // Atribui cada categoria encontrada
   const results: CategoryAssignmentResult[] = [];
 
   for (const category of categories) {
-    const result = await assignCategoryToCitizen({
-      citizenId,
-      categoryId: category.id,
-      protocolId,
-      assignedBy,
-      metadata: {
-        autoAssigned: true,
-        moduleType,
-        assignedAt: new Date().toISOString(),
+    console.log(`🔄 [CategoryService] Processando categoria: ${category.name} (${category.code})`);
+
+    // Verificar se categoria JÁ EXISTE e está ATIVA
+    const existingAssignment = await prisma.citizenCategoryAssignment.findUnique({
+      where: {
+        citizenId_categoryId: {
+          citizenId,
+          categoryId: category.id,
+        },
       },
     });
 
-    // Adicionar a categoria no resultado
-    if (result.assignment) {
-      result.assignment.category = category;
-    }
+    if (existingAssignment && existingAssignment.active) {
+      // ═══════════════════════════════════════════════════════════════
+      // CATEGORIA JÁ EXISTE E ESTÁ ATIVA
+      // ADICIONAR PROTOCOLO AO HISTÓRICO
+      // ═══════════════════════════════════════════════════════════════
+      console.log(`♻️  [CategoryService] Categoria já existe, adicionando ao histórico`);
 
-    results.push(result);
+      // Adicionar ao histórico
+      await expandedService.addProtocolToHistory({
+        assignmentId: existingAssignment.id,
+        protocolId,
+        citizenId,
+        categoryId: category.id,
+        eventType: existingAssignment.isExpired ? 'RENEWED' : 'RENEWED',
+        protocolNumber: protocol?.number,
+        moduleType: protocol?.moduleType || undefined,
+        serviceName: protocol?.title,
+      });
+
+      // Se categoria estava expirada, renovar
+      if (existingAssignment.isExpired && category.hasValidity) {
+        console.log(`🔄 [CategoryService] Renovando categoria expirada`);
+        await expandedService.renewCategory(existingAssignment.id, assignedBy);
+      }
+
+      // Verificar badges e progressão
+      const earnedBadges = await expandedService.checkAndAwardAutomaticBadges(existingAssignment.id);
+      const progressionCheck = await expandedService.checkProgression(existingAssignment.id);
+
+      results.push({
+        success: true,
+        assignment: {
+          ...existingAssignment,
+          category,
+        } as any,
+        message: `Protocolo adicionado ao histórico da categoria "${category.name}"`,
+        isNew: false,
+        badgesEarned: earnedBadges.map(b => b.name),
+        progressionApplied: progressionCheck.canProgress,
+      });
+
+    } else {
+      // ═══════════════════════════════════════════════════════════════
+      // CATEGORIA NÃO EXISTE OU ESTÁ INATIVA
+      // CRIAR/REATIVAR
+      // ═══════════════════════════════════════════════════════════════
+      const result = await assignCategoryToCitizen({
+        citizenId,
+        categoryId: category.id,
+        protocolId,
+        assignedBy,
+        metadata: {
+          autoAssigned: true,
+          moduleType,
+          assignedAt: new Date().toISOString(),
+        },
+      });
+
+      // Adicionar a categoria no resultado
+      if (result.assignment) {
+        result.assignment.category = category;
+      }
+
+      results.push(result);
+    }
   }
 
+  console.log(`✅ [CategoryService] Processamento concluído: ${results.length} resultado(s)`);
   return results;
 }
 
@@ -585,4 +742,8 @@ export default {
   citizenHasCategory,
   getCitizensByMultipleCategories,
   getCategoryStats,
+
+  // Funcionalidades expandidas (re-exportadas)
+  ...expandedService,
+  ...relationshipsService,
 };

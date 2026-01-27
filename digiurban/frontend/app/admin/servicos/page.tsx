@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
+import { useCategorySuggestions } from '@/hooks/useCategorySuggestions'
+import { CategorySuggestionModal } from '@/components/admin/CategorySuggestionModal'
 import {
   Search,
   Plus,
@@ -22,6 +24,10 @@ import {
   FileText,
   CheckCircle2,
   XCircle,
+  Sparkles,
+  AlertCircle,
+  Tags,
+  RefreshCw,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -45,6 +51,26 @@ interface Service {
   color?: string | null
   createdAt: string
   updatedAt: string
+  // ✅ NOVO: Informações de categorização
+  categorizationStatus?: 'uncategorized' | 'pending' | 'categorized' | 'auto_categorized'
+  pendingSuggestionsCount?: number
+  categoriesCount?: number
+  matchSuggestions?: Array<{
+    id: string
+    category: {
+      code: string
+      name: string
+      icon?: string
+    }
+  }>
+  categoryAssignments?: Array<{
+    id: string
+    category: {
+      code: string
+      name: string
+      icon?: string
+    }
+  }>
 }
 
 interface Department {
@@ -69,6 +95,13 @@ export default function ServicesManagementPage() {
 
   const [showViewDialog, setShowViewDialog] = useState(false)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
+
+  // ✅ NOVO: Modal de sugestões de categorização
+  const [showSuggestionsModal, setShowSuggestionsModal] = useState(false)
+  const [selectedServiceForSuggestions, setSelectedServiceForSuggestions] = useState<string | null>(null)
+
+  // Hook para re-análise de serviços
+  const { analyzeService } = useCategorySuggestions()
 
   // Carregar serviços
   const loadServices = useCallback(async () => {
@@ -133,6 +166,56 @@ export default function ServicesManagementPage() {
         description: error?.message || 'Ocorreu um erro ao desativar o serviço.',
         variant: 'destructive',
       })
+    }
+  }
+
+  // ✅ NOVO: Re-analisar categorização de serviço
+  const handleReanalyzeService = async (serviceId: string) => {
+    try {
+      await analyzeService(serviceId)
+      await loadServices()
+
+      // Abrir modal com sugestões
+      setSelectedServiceForSuggestions(serviceId)
+      setShowSuggestionsModal(true)
+    } catch (error) {
+      console.error('Erro ao re-analisar serviço:', error)
+    }
+  }
+
+  // ✅ NOVO: Renderizar badge de status de categorização
+  const renderCategorizationStatus = (service: Service) => {
+    const status = service.categorizationStatus || 'uncategorized'
+
+    switch (status) {
+      case 'auto_categorized':
+        return (
+          <div className="flex items-center gap-1.5 text-xs text-purple-600">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span className="font-medium">{service.categoriesCount} auto</span>
+          </div>
+        )
+      case 'categorized':
+        return (
+          <div className="flex items-center gap-1.5 text-xs text-green-600">
+            <Tags className="h-3.5 w-3.5" />
+            <span className="font-medium">{service.categoriesCount} categoria(s)</span>
+          </div>
+        )
+      case 'pending':
+        return (
+          <div className="flex items-center gap-1.5 text-xs text-orange-600">
+            <AlertCircle className="h-3.5 w-3.5" />
+            <span className="font-medium">{service.pendingSuggestionsCount} pendente(s)</span>
+          </div>
+        )
+      default:
+        return (
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <XCircle className="h-3.5 w-3.5" />
+            <span>Sem categoria</span>
+          </div>
+        )
     }
   }
 
@@ -348,6 +431,25 @@ export default function ServicesManagementPage() {
                     </Badge>
                   </div>
 
+                  {/* ✅ NOVO: Status de Categorização */}
+                  <div className="flex items-center justify-between text-xs sm:text-sm pt-2 border-t">
+                    <span className="text-gray-600">Categorização:</span>
+                    {renderCategorizationStatus(service)}
+                  </div>
+
+                  {/* ✅ NOVO: Botão de re-análise se houver sugestões pendentes ou não categorizado */}
+                  {(service.categorizationStatus === 'pending' || service.categorizationStatus === 'uncategorized') && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleReanalyzeService(service.id)}
+                      className="w-full text-xs"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      {service.categorizationStatus === 'pending' ? 'Ver Sugestões' : 'Analisar Categorias'}
+                    </Button>
+                  )}
+
                   <div className="pt-3 flex flex-wrap gap-2">
                     <Button
                       size="sm"
@@ -504,6 +606,20 @@ export default function ServicesManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ✅ NOVO: Modal de Sugestões de Categorização */}
+      <CategorySuggestionModal
+        serviceId={selectedServiceForSuggestions}
+        isOpen={showSuggestionsModal}
+        onClose={() => {
+          setShowSuggestionsModal(false);
+          setSelectedServiceForSuggestions(null);
+        }}
+        onApproved={() => {
+          // Recarregar lista de serviços após aprovação
+          loadServices();
+        }}
+      />
     </div>
   )
 }
