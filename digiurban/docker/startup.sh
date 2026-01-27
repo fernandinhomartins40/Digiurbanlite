@@ -50,12 +50,22 @@ PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_US
 
 # Corrigir migrations com problemas (se existirem)
 echo "🔧 Verificando e corrigindo migrations..."
+
+# Script de correção geral
 if [ -f "/app/backend/fix-production-migrations.js" ]; then
   node /app/backend/fix-production-migrations.js || {
-    echo "⚠️ Aviso: Script de correção falhou, continuando..."
+    echo "⚠️ Aviso: Script de correção geral falhou, continuando..."
+  }
+fi
+
+# Script específico para categorização
+if [ -f "/app/backend/fix-categorization-migrations.js" ]; then
+  echo "🔧 Corrigindo sistema de categorização..."
+  node /app/backend/fix-categorization-migrations.js || {
+    echo "⚠️ Aviso: Script de categorização falhou, continuando..."
   }
 else
-  echo "   ℹ️ Script de correção não encontrado (OK)"
+  echo "   ℹ️ Script de categorização não encontrado (OK)"
 fi
 
 # Executar migrations PRIMEIRO (antes de gerar client)
