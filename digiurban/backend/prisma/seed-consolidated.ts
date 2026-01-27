@@ -18,6 +18,7 @@ import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { migrateDocumentsToTable } from './migrations-data/migrate-documents-to-table';
 import { seedEmailServer } from './seeds/email-server.seed';
+import { seedServiceWorkflows } from './seeds/service-workflows.seed';
 
 const prisma = new PrismaClient();
 
@@ -338,14 +339,13 @@ async function main() {
     }
 
     // ========================================================================
-    // 8. MODULE WORKFLOWS (REMOVIDO - Feature não implementada)
+    // 8. SERVICE WORKFLOWS
     // ========================================================================
-    // Workflows são opcionais e serão criados via interface admin quando necessário
-    // A infraestrutura está pronta (tabela module_workflows, APIs, etc)
-    // mas não pre-populamos workflows pois não há interface visual ainda
-    console.log('8️⃣  Module Workflows');
+    console.log('8️⃣  Service Workflows');
     console.log('   ─────────────────────────────');
-    console.log('   ⏭️  Pulado - Workflows serão criados via interface admin\n');
+
+    await seedServiceWorkflows();
+    console.log('   ✅ Workflows de serviços criados com sucesso\n');
 
     // ========================================================================
     // RESUMO FINAL
