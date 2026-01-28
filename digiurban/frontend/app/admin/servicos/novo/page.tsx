@@ -10,12 +10,14 @@ import { BasicInfoStep } from '@/components/admin/services/steps/BasicInfoStep'
 import { ServiceTypeStep } from '@/components/admin/services/steps/ServiceTypeStep'
 import { DataCaptureStep } from '@/components/admin/services/steps/DataCaptureStep'
 import { DocumentsStep } from '@/components/admin/services/steps/DocumentsStep'
+import { UniquenessConfigStep } from '@/components/admin/services/steps/UniquenessConfigStep'
 import {
   FileText,
   Database,
   Layers,
   CheckCircle,
   ArrowLeft,
+  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
@@ -47,6 +49,11 @@ interface ServiceFormData {
   // NOVO: Campos para serviços COM_DADOS (gerado automaticamente)
   moduleType: string // Gerado automaticamente baseado no nome
   formSchema: any // JSON Schema do formulário customizado
+
+  // NOVO: Configuração de unicidade (obrigatório)
+  allowMultipleActiveProtocols: boolean | null
+  uniquenessScope: string
+  uniquenessRules: any
 }
 
 export default function NewServicePage() {
@@ -74,6 +81,10 @@ export default function NewServicePage() {
     requiredDocuments: [],
     moduleType: '', // Gerado automaticamente
     formSchema: null, // Vazio por padrão
+    // Unicidade
+    allowMultipleActiveProtocols: null, // Obrigatório definir
+    uniquenessScope: '',
+    uniquenessRules: null,
   })
 
   const validateBasicStep = () => {
@@ -127,6 +138,19 @@ export default function NewServicePage() {
       description: 'Documentação necessária',
       icon: <FileText className="h-5 w-5" />,
       isOptional: true,
+    },
+    {
+      id: 'uniqueness',
+      title: 'Unicidade',
+      description: 'Configurar duplicatas',
+      icon: <ShieldCheck className="h-5 w-5" />,
+      isValid: () => {
+        // Obrigatório definir allowMultipleActiveProtocols
+        if (formData.allowMultipleActiveProtocols === null) return false
+        // Se não permite múltiplos, precisa de escopo
+        if (formData.allowMultipleActiveProtocols === false && !formData.uniquenessScope) return false
+        return true
+      },
     },
     {
       id: 'review',
@@ -246,6 +270,27 @@ export default function NewServicePage() {
       return
     }
 
+    // Validar configuração de unicidade (obrigatória)
+    if (formData.allowMultipleActiveProtocols === null) {
+      toast({
+        title: 'Configuração de unicidade obrigatória',
+        description: 'É obrigatório definir se o serviço permite múltiplos protocolos ativos.',
+        variant: 'destructive',
+      })
+      setCurrentStep(4) // Voltar para step de unicidade
+      return
+    }
+
+    if (formData.allowMultipleActiveProtocols === false && !formData.uniquenessScope) {
+      toast({
+        title: 'Escopo de unicidade obrigatório',
+        description: 'Quando o serviço não permite múltiplos protocolos, é obrigatório definir o escopo de validação.',
+        variant: 'destructive',
+      })
+      setCurrentStep(4) // Voltar para step de unicidade
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -278,6 +323,13 @@ export default function NewServicePage() {
         payload.moduleType = moduleType
         payload.formSchema = formData.formSchema
       }
+
+      // ✅ NOVO: Adicionar configuração de unicidade (obrigatória)
+      payload.allowMultipleActiveProtocols = formData.allowMultipleActiveProtocols
+      payload.uniquenessScope = formData.allowMultipleActiveProtocols === false ? formData.uniquenessScope : null
+      payload.uniquenessRules = formData.allowMultipleActiveProtocols === false && formData.uniquenessRules
+        ? formData.uniquenessRules
+        : null
 
       const response = await apiRequest('/api/services', {
         method: 'POST',
@@ -366,7 +418,14 @@ export default function NewServicePage() {
           onChange={handleFieldChange}
         />
 
-        {/* Step 5: Revisão */}
+        {/* Step 5: Configuração de Unicidade */}
+        <UniquenessConfigStep
+          formData={formData}
+          onChange={handleFieldChange}
+          errors={errors}
+        />
+
+        {/* Step 6: Revisão */}
         <div className="space-y-6">
           <div className="text-center">
             <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
@@ -421,6 +480,49 @@ export default function NewServicePage() {
                 </ul>
               </div>
             )}
+
+            <div className="p-4 border rounded-lg bg-purple-50 border-purple-200">
+              <h3 className="font-semibold mb-2 flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                Configuração de Unicidade
+              </h3>
+              <dl className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-gray-600">Permite múltiplos protocolos:</dt>
+                  <dd className="font-medium">
+                    {formData.allowMultipleActiveProtocols === true ? 'Sim' : 'Não'}
+                  </dd>
+                </div>
+                {formData.allowMultipleActiveProtocols === false && (
+                  <>
+                    <div className="flex justify-between">
+                      <dt className="text-gray-600">Escopo de validação:</dt>
+                      <dd className="font-medium">{formData.uniquenessScope}</dd>
+                    </div>
+                    {formData.uniquenessScope === 'CUSTOM' && formData.moduleType && (
+                      <div className="flex justify-between">
+                        <dt className="text-gray-600">Valida por moduleType:</dt>
+                        <dd className="font-medium text-xs bg-purple-100 px-2 py-1 rounded">
+                          {formData.name
+                            .toUpperCase()
+                            .normalize('NFD')
+                            .replace(/[\u0300-\u036f]/g, '')
+                            .replace(/[^A-Z0-9]/g, '_')
+                            .replace(/_+/g, '_')
+                            .replace(/^_|_$/g, '')}
+                        </dd>
+                      </div>
+                    )}
+                    {formData.uniquenessScope === 'CITIZEN_PER_FIELD' && formData.uniquenessRules?.field && (
+                      <div className="flex justify-between">
+                        <dt className="text-gray-600">Campo de validação:</dt>
+                        <dd className="font-medium">{formData.uniquenessRules.field}</dd>
+                      </div>
+                    )}
+                  </>
+                )}
+              </dl>
+            </div>
           </div>
         </div>
       </ServiceFormWizard>

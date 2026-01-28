@@ -192,6 +192,49 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
         });
     }
 
+    // ========== VALIDAÇÃO OBRIGATÓRIA DE UNICIDADE ==========
+    if (allowMultipleActiveProtocols === undefined || allowMultipleActiveProtocols === null) {
+      return res.status(400).json({
+        error: 'Bad request',
+        message: 'É obrigatório definir se o serviço permite múltiplos protocolos ativos. Configure o campo "allowMultipleActiveProtocols".'
+      });
+    }
+
+    // Se não permite múltiplos, validar campos relacionados
+    if (allowMultipleActiveProtocols === false) {
+      if (!uniquenessScope) {
+        return res.status(400).json({
+          error: 'Bad request',
+          message: 'Quando o serviço não permite múltiplos protocolos, é obrigatório definir o "uniquenessScope" (CITIZEN, CUSTOM ou CITIZEN_PER_FIELD).'
+        });
+      }
+
+      if (!['CITIZEN', 'CUSTOM', 'CITIZEN_PER_FIELD'].includes(uniquenessScope)) {
+        return res.status(400).json({
+          error: 'Bad request',
+          message: 'uniquenessScope deve ser CITIZEN, CUSTOM ou CITIZEN_PER_FIELD.'
+        });
+      }
+
+      // Se é CUSTOM, precisa de moduleType
+      if (uniquenessScope === 'CUSTOM' && !moduleType) {
+        return res.status(400).json({
+          error: 'Bad request',
+          message: 'Para uniquenessScope CUSTOM, é obrigatório definir um moduleType.'
+        });
+      }
+
+      // Se é CITIZEN_PER_FIELD, precisa de uniquenessRules com o campo
+      if (uniquenessScope === 'CITIZEN_PER_FIELD') {
+        if (!uniquenessRules || !uniquenessRules.field) {
+          return res.status(400).json({
+            error: 'Bad request',
+            message: 'Para uniquenessScope CITIZEN_PER_FIELD, é obrigatório definir uniquenessRules com o campo a ser validado.'
+          });
+        }
+      }
+    }
+
     // Verificar se departamento existe
     // ✅ Validar departamento global (sem tenantId)
     const department = await prisma.department.findFirst({
@@ -307,10 +350,10 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
           moduleType: serviceType === 'COM_DADOS' ? moduleType : null,
           formSchema: serviceType === 'COM_DADOS' ? formSchema : null,
 
-          // ✅ NOVO: Configuração de unicidade de protocolos
-          allowMultipleActiveProtocols: allowMultipleActiveProtocols !== undefined ? allowMultipleActiveProtocols : true,
-          uniquenessScope: uniquenessScope || null,
-          uniquenessRules: uniquenessRules || null
+          // ✅ NOVO: Configuração de unicidade de protocolos (agora obrigatório)
+          allowMultipleActiveProtocols: allowMultipleActiveProtocols,
+          uniquenessScope: allowMultipleActiveProtocols === false ? uniquenessScope : null,
+          uniquenessRules: allowMultipleActiveProtocols === false && uniquenessRules ? uniquenessRules : null
         },
         include: {
           department: {
@@ -501,7 +544,12 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
       formSchema,
       moduleType,
       enabledFields,
-      formFieldsConfig
+      formFieldsConfig,
+
+      // Campos de unicidade
+      allowMultipleActiveProtocols,
+      uniquenessScope,
+      uniquenessRules
         } = authReq.body;
 
     // DEBUG: Log dos campos de configuração recebidos
@@ -598,7 +646,12 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
         // Configuração de campos do formulário
         // IMPORTANTE: Aceitar null explicitamente para permitir limpeza
         ...(formFieldsConfig !== undefined && { formFieldsConfig }),
-        ...(enabledFields !== undefined && { enabledFields })
+        ...(enabledFields !== undefined && { enabledFields }),
+
+        // Campos de unicidade
+        ...(allowMultipleActiveProtocols !== undefined && { allowMultipleActiveProtocols }),
+        ...(uniquenessScope !== undefined && { uniquenessScope }),
+        ...(uniquenessRules !== undefined && { uniquenessRules })
         },
       include: {
         department: {
