@@ -172,33 +172,9 @@ async function validateCustomScope(
     return { canCreate: true };
   }
 
-  // Roteamento para validações customizadas por módulo
-  switch (moduleType) {
-    case 'CADASTRO_PRODUTOR':
-      return await validateCadastroProdutor(citizenId, serviceId, serviceName);
-
-    case 'CADASTRO_PROPRIEDADE':
-      return await validateCadastroPropriedade(
-        citizenId,
-        serviceId,
-        serviceName,
-        customData
-      );
-
-    case 'LICENCA_FUNCIONAMENTO':
-      return await validateLicencaFuncionamento(
-        citizenId,
-        serviceId,
-        serviceName,
-        customData
-      );
-
-    default:
-      console.warn(
-        `[UNIQUENESS] Módulo ${moduleType} sem validação customizada. Usando validação CITIZEN.`
-      );
-      return await validateCitizenScope(citizenId, serviceId, serviceName);
-  }
+  // Para todos os módulos com escopo CUSTOM, usar validação genérica por moduleType
+  // Isso garante que qualquer serviço do mesmo módulo seja verificado
+  return await validateByModuleType(citizenId, moduleType, serviceName);
 }
 
 /**
@@ -264,18 +240,19 @@ async function validateFieldScope(
 // ============================================================================
 
 /**
- * CADASTRO_PRODUTOR: 1 cadastro ativo por cidadão
+ * Validação genérica por moduleType
+ * Verifica se já existe um protocolo ativo do mesmo módulo para o cidadão
  */
-async function validateCadastroProdutor(
+async function validateByModuleType(
   citizenId: string,
-  serviceId: string,
+  moduleType: string,
   serviceName: string
 ): Promise<UniquenessValidationResult> {
-  // Buscar qualquer cadastro ativo de produtor (mesmo que seja outro serviço do módulo)
+  // Buscar qualquer protocolo ativo do mesmo moduleType
   const activeProtocol = await prisma.protocolSimplified.findFirst({
     where: {
       citizenId,
-      moduleType: 'CADASTRO_PRODUTOR',
+      moduleType: moduleType,
       status: {
         in: ['VINCULADO', 'PROGRESSO', 'PENDENCIA', 'ATUALIZACAO'],
       },
@@ -289,13 +266,25 @@ async function validateCadastroProdutor(
   if (activeProtocol) {
     return {
       canCreate: false,
-      reason: 'ACTIVE_PRODUCER_REGISTRATION',
-      errorMessage: `Você já possui um cadastro de produtor rural ativo (Protocolo: ${activeProtocol.number}). Aguarde a conclusão antes de solicitar novo cadastro.`,
+      reason: 'ACTIVE_MODULE_REGISTRATION',
+      errorMessage: `Você já possui uma solicitação ativa de "${serviceName}" (Protocolo: ${activeProtocol.number}). Aguarde a conclusão antes de solicitar novamente.`,
       existingProtocolNumber: activeProtocol.number,
     };
   }
 
   return { canCreate: true };
+}
+
+/**
+ * CADASTRO_PRODUTOR: 1 cadastro ativo por cidadão
+ * @deprecated Use validateByModuleType em vez disso
+ */
+async function validateCadastroProdutor(
+  citizenId: string,
+  serviceId: string,
+  serviceName: string
+): Promise<UniquenessValidationResult> {
+  return await validateByModuleType(citizenId, 'CADASTRO_PRODUTOR', serviceName);
 }
 
 /**
