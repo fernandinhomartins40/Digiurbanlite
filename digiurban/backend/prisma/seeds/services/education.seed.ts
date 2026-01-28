@@ -233,6 +233,13 @@ export const educationServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Users',
     color: '#6b21a8',
+    // Validação de unicidade: um professor só pode ter um cadastro ativo
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_PROFESSOR',
+      validationFunction: 'validateCadastroProfessor'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],

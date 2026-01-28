@@ -84,6 +84,13 @@ export const economicDevelopmentServices: ServiceDefinition[] = [
     category: 'Formalização',
     icon: 'Briefcase',
     color: '#10b981',
+    // Validação de unicidade: um cidadão só pode ter um cadastro MEI ativo
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_MEI',
+      validationFunction: 'validateCadastroMei'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
@@ -231,6 +238,13 @@ export const economicDevelopmentServices: ServiceDefinition[] = [
     category: 'Fornecimento',
     icon: 'Package',
     color: '#14b8a6',
+    // Validação de unicidade: uma empresa só pode ter um cadastro de fornecedor ativo
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_FORNECEDOR',
+      validationFunction: 'validateCadastroFornecedor'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_email', 'citizen_phone'],
@@ -325,6 +339,13 @@ export const economicDevelopmentServices: ServiceDefinition[] = [
     category: 'Emprego',
     icon: 'UserPlus',
     color: '#10b981',
+    // Validação de unicidade: um cidadão só pode ter um cadastro ativo no balcão de empregos
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_BALCAO_EMPREGOS',
+      validationFunction: 'validateCadastroBalcaoEmpregos'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone'],

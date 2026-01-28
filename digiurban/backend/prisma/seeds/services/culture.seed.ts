@@ -81,6 +81,13 @@ export const cultureServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Mic',
     color: '#6d28d9',
+    // Validação de unicidade: um artista só pode ter um cadastro ativo
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_ARTISTA',
+      validationFunction: 'validateCadastroArtista'
+    },
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -179,6 +186,8 @@ export const cultureServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Users',
     color: '#a855f7',
+    // Permite múltiplos: um cidadão pode cadastrar vários grupos artísticos diferentes
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -278,6 +287,8 @@ export const cultureServices: ServiceDefinition[] = [
     category: 'Eventos',
     icon: 'Calendar',
     color: '#c026d3',
+    // Permite múltiplos: um cidadão pode cadastrar vários eventos culturais
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -488,6 +499,13 @@ export const cultureServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Home',
     color: '#9333ea',
+    // Validação de unicidade: um ponto de cultura específico só pode ter um cadastro ativo
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_PONTO_CULTURA',
+      validationFunction: 'validateCadastroPontoCultura'
+    },
     formSchema: {
       type: 'object',
       citizenFields: [

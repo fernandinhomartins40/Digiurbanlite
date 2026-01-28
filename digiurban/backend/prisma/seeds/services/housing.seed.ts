@@ -406,6 +406,13 @@ export const housingServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Clipboard',
     color: '#06b6d4',
+    // Validação de unicidade: um cidadão só pode ter um cadastro ativo no déficit habitacional
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_DEFICIT_HABITACIONAL',
+      validationFunction: 'validateCadastroDeficitHabitacional'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_phone', 'citizen_email'],

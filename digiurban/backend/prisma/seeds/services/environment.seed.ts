@@ -206,6 +206,8 @@ export const environmentServices: ServiceDefinition[] = [
     category: 'Programas',
     icon: 'Recycle',
     color: '#059669',
+    // Permite múltiplos: cidadão pode participar de vários programas ambientais
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -432,6 +434,13 @@ export const environmentServices: ServiceDefinition[] = [
     category: 'Cadastros',
     icon: 'Trash2',
     color: '#b91c1c',
+    // Validação de unicidade: um cadastro de gerador de resíduos por cidadão/empresa
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_GERADOR_RESIDUOS',
+      validationFunction: 'validateCadastroGeradorResiduos'
+    },
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -858,6 +867,13 @@ export const environmentServices: ServiceDefinition[] = [
     category: 'Cadastros',
     icon: 'Sprout',
     color: '#65a30d',
+    // Validação de unicidade: um viveiro de mudas por cidadão
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_VIVEIRO_MUDAS',
+      validationFunction: 'validateCadastroViveiroMudas'
+    },
     formSchema: {
       type: 'object',
       citizenFields: [

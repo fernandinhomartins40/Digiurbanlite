@@ -188,6 +188,13 @@ export const healthServices: ServiceDefinition[] = [
     category: 'Programas',
     icon: 'Users',
     color: '#16a34a',
+    // Validação de unicidade: uma família só pode ter um cadastro ativo no Programa Saúde da Família
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'PROGRAMA_SAUDE_FAMILIA',
+      validationFunction: 'validateProgramaSaudeFamilia'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],

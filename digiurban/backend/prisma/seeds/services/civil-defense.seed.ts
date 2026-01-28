@@ -51,6 +51,13 @@ export const civilDefenseServices: ServiceDefinition[] = [
     category: 'Cadastros',
     icon: 'Users',
     color: '#f59e0b',
+    // Validação de unicidade: um cadastro de família em área de risco por cidadão
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_FAMILIA_RISCO',
+      validationFunction: 'validateCadastroFamiliaRisco'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood'],
@@ -142,6 +149,13 @@ export const civilDefenseServices: ServiceDefinition[] = [
     category: 'Voluntariado',
     icon: 'Heart',
     color: '#10b981',
+    // Validação de unicidade: um cadastro de voluntário por cidadão
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_VOLUNTARIO',
+      validationFunction: 'validateCadastroVoluntario'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_occupation'],

@@ -303,6 +303,8 @@ export const publicSafetyServices: ServiceDefinition[] = [
     category: 'Mapeamento',
     icon: 'MapPin',
     color: '#f87171',
+    // Permite múltiplos: um cidadão pode cadastrar vários pontos críticos diferentes
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -658,6 +660,8 @@ export const publicSafetyServices: ServiceDefinition[] = [
     category: 'Câmeras',
     icon: 'Camera',
     color: '#b91c1c',
+    // Permite múltiplos: um cidadão pode cadastrar várias câmeras de segurança
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_email', 'citizen_phone', 'citizen_address', 'citizen_addressnumber', 'citizen_neighborhood'],
@@ -738,6 +742,8 @@ export const publicSafetyServices: ServiceDefinition[] = [
     category: 'Segurança Colaborativa',
     icon: 'Users',
     color: '#7f1d1d',
+    // Permite múltiplos: um cidadão pode participar de vários grupos de vizinhança
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_phone', 'citizen_address', 'citizen_neighborhood'],

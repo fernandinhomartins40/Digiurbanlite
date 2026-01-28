@@ -22,6 +22,13 @@ export const technologyInnovationServices: ServiceDefinition[] = [
     category: 'Acesso Digital',
     icon: 'User',
     color: '#3b82f6',
+    // Validação de unicidade: um cidadão só pode ter uma solicitação de cadastro Login Único ativa
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_LOGIN_UNICO',
+      validationFunction: 'validateCadastroLoginUnico'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone'],
@@ -115,6 +122,13 @@ export const technologyInnovationServices: ServiceDefinition[] = [
     category: 'Inovação',
     icon: 'Rocket',
     color: '#f59e0b',
+    // Validação de unicidade: uma startup/empresa só pode ter um cadastro ativo
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_STARTUP',
+      validationFunction: 'validateCadastroStartup'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_email', 'citizen_phone'],
