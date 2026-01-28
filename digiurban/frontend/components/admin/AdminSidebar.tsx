@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
@@ -36,11 +36,7 @@ import {
   TrendingUp,
   Award,
   Mail,
-  Send,
-  Inbox,
   UserCircle,
-  MailOpen,
-  Trash2,
   ScrollText,
   X,
   DollarSign,
@@ -51,8 +47,7 @@ import {
   MessageCircle,
   Bot,
   FileSignature,
-  Sparkles,
-  Tags
+  Sparkles
 } from 'lucide-react'
 
 interface NavItem {
@@ -108,13 +103,6 @@ export function AdminSidebar() {
           icon: FileText,
           permissions: ['protocols:read'],
           badge: stats?.pendingProtocols?.toString()
-        },
-        {
-          title: 'Mensagens',
-          href: '/admin/mensagens',
-          icon: MessageCircle,
-          permissions: ['messages:read'],
-          badge: stats?.unreadMessages?.toString()
         }
       ]
     },
@@ -149,7 +137,7 @@ export function AdminSidebar() {
       ]
     },
     {
-      title: 'Gestão',
+      title: 'Serviços',
       items: [
         {
           title: 'Catálogo de Serviços',
@@ -158,11 +146,22 @@ export function AdminSidebar() {
           permissions: ['services:create', 'services:update']
         },
         {
-          title: 'Templates de Documentos',
-          href: '/admin/templates-documentos',
-          icon: ScrollText,
-          minRole: 'ADMIN'
+          title: 'Estatísticas',
+          href: '/admin/gerenciamento-servicos',
+          icon: TrendingUp,
+          permissions: ['services:read']
         },
+        {
+          title: 'Templates de Serviços',
+          href: '/admin/servicos/templates',
+          icon: Sparkles,
+          minRole: 'ADMIN'
+        }
+      ]
+    },
+    {
+      title: 'Gestão de Processos',
+      items: [
         {
           title: 'Workflows',
           href: '/admin/workflows',
@@ -177,10 +176,21 @@ export function AdminSidebar() {
           badge: 'NOVO'
         },
         {
-          title: 'Certificados Digitais',
-          href: '/admin/certificados-digitais',
-          icon: Award,
+          title: 'Templates de Documentos',
+          href: '/admin/templates-documentos',
+          icon: ScrollText,
           minRole: 'ADMIN'
+        }
+      ]
+    },
+    {
+      title: 'Documentos & Assinaturas',
+      items: [
+        {
+          title: 'Meus Documentos',
+          href: '/admin/meus-documentos',
+          icon: FileText,
+          minRole: 'USER'
         },
         {
           title: 'Assinaturas Digitais',
@@ -190,16 +200,10 @@ export function AdminSidebar() {
           badge: 'NOVO'
         },
         {
-          title: 'Estatísticas',
-          href: '/admin/gerenciamento-servicos',
-          icon: TrendingUp,
-          permissions: ['services:read']
-        },
-        {
-          title: 'Relatórios',
-          href: '/admin/relatorios',
-          icon: BarChart3,
-          permissions: ['reports:department', 'reports:full']
+          title: 'Certificados Digitais',
+          href: '/admin/certificados-digitais',
+          icon: Award,
+          minRole: 'ADMIN'
         }
       ]
     },
@@ -228,60 +232,65 @@ export function AdminSidebar() {
       ]
     },
     {
-      title: 'Email',
+      title: 'Comunicação',
       items: [
         {
-          title: 'Dashboard',
+          title: 'Mensagens',
+          href: '/admin/mensagens',
+          icon: MessageCircle,
+          permissions: ['messages:read'],
+          badge: stats?.unreadMessages?.toString()
+        },
+        {
+          title: 'Email',
           href: '/admin/email',
           icon: Mail,
-          minRole: 'ADMIN'
-        },
-        {
-          title: 'Caixa de Entrada',
-          href: '/admin/email/inbox',
-          icon: Inbox,
           minRole: 'COORDINATOR'
         },
         {
-          title: 'Escrever Email',
-          href: '/admin/email/compose',
-          icon: Send,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Enviados',
-          href: '/admin/email/sent',
-          icon: MailOpen,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Rascunhos',
-          href: '/admin/email/drafts',
-          icon: FileText,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Templates',
-          href: '/admin/email/templates',
-          icon: ScrollText,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Lixeira',
-          href: '/admin/email/trash',
-          icon: Trash2,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Contas',
+          title: 'Contas de Email',
           href: '/admin/email-accounts',
           icon: UserCircle,
           minRole: 'ADMIN'
+        }
+      ]
+    },
+    {
+      title: 'Análise & Relatórios',
+      items: [
+        {
+          title: 'Analytics',
+          href: '/admin/analytics',
+          icon: BarChart3,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Relatórios',
+          href: '/admin/relatorios',
+          icon: FileText,
+          permissions: ['reports:department', 'reports:full']
+        }
+      ]
+    },
+    {
+      title: 'Configurações',
+      items: [
+        {
+          title: 'Perfil',
+          href: '/admin/perfil',
+          icon: UserCircle,
+          minRole: 'USER'
         },
         {
           title: 'Configurações',
-          href: '/admin/email-service',
+          href: '/admin/configuracoes',
           icon: Settings,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Integrações',
+          href: '/admin/integracoes',
+          icon: Cpu,
           minRole: 'ADMIN'
         }
       ]
