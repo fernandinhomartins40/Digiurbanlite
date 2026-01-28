@@ -143,6 +143,7 @@ COPY digiurban/backend/scripts ./scripts
 COPY digiurban/backend/fix-production-migrations.js ./fix-production-migrations.js
 COPY digiurban/backend/fix-categorization-migrations.js ./fix-categorization-migrations.js
 COPY digiurban/backend/apply-uniqueness-migration.js ./apply-uniqueness-migration.js
+COPY digiurban/backend/update-service-uniqueness.js ./update-service-uniqueness.js
 
 # Copiar Playwright do builder e instalar browsers
 COPY --from=backend-builder /app/backend/node_modules/playwright ./node_modules/playwright

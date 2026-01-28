@@ -22,6 +22,13 @@ export const agricultureServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Tractor',
     color: '#16a34a',
+    // Validação de unicidade: não permite múltiplos cadastros ativos
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_PRODUTOR',
+      validationFunction: 'validateCadastroProdutor'
+    },
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -215,6 +222,8 @@ export const agricultureServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Map',
     color: '#059669',
+    // Permite múltiplas propriedades
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -462,6 +471,13 @@ export const agricultureServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Fish',
     color: '#0891b2',
+    // Validação de unicidade: um cadastro de piscicultura por cidadão
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_PISCICULTURA',
+      validationFunction: 'validateCadastroPiscicultura'
+    },
     formSchema: {
       type: 'object',
       citizenFields: [
@@ -508,6 +524,13 @@ export const agricultureServices: ServiceDefinition[] = [
     category: 'Cadastro',
     icon: 'Factory',
     color: '#ea580c',
+    // Validação de unicidade: uma agroindústria por cidadão
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_AGROINDUSTRIA',
+      validationFunction: 'validateCadastroAgroindustria'
+    },
     formSchema: {
       type: 'object',
       citizenFields: [

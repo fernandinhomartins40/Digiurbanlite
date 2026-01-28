@@ -69,4 +69,8 @@ export interface ServiceDefinition {
   color?: string;
   formSchema?: any;
   linkedCitizensConfig?: LinkedCitizenConfig;
+  // Campos de validação de unicidade de protocolos
+  allowMultipleActiveProtocols?: boolean;
+  uniquenessScope?: string;
+  uniquenessRules?: any;
 }

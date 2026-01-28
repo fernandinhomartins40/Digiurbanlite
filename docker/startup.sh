@@ -99,6 +99,16 @@ else
   echo "ℹ️ Database já tem dados, seed não necessário"
 fi
 
+# Atualizar configuração de unicidade dos serviços
+echo "🔧 Atualizando configuração de unicidade dos serviços..."
+if [ -f "/app/backend/update-service-uniqueness.js" ]; then
+  node /app/backend/update-service-uniqueness.js || {
+    echo "⚠️ Aviso: Falha ao atualizar configuração de unicidade"
+  }
+else
+  echo "⚠️ Script de atualização de unicidade não encontrado"
+fi
+
 echo "✅ Startup concluído!"
 echo "========================================="
 

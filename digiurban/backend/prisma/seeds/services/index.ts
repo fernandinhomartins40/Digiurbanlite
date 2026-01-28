@@ -118,6 +118,12 @@ export async function seedServices() {
             icon: serviceDef.icon,
             color: serviceDef.color,
             isActive: true,
+            // Campos de validação de unicidade
+            allowMultipleActiveProtocols: serviceDef.allowMultipleActiveProtocols !== undefined
+              ? serviceDef.allowMultipleActiveProtocols
+              : true,
+            uniquenessScope: serviceDef.uniquenessScope || null,
+            uniquenessRules: serviceDef.uniquenessRules || undefined,
           }
         });
         console.log(`   🔄 ${serviceDef.name} (atualizado)`);
@@ -143,6 +149,12 @@ export async function seedServices() {
             icon: serviceDef.icon,
             color: serviceDef.color,
             isActive: true,
+            // Campos de validação de unicidade
+            allowMultipleActiveProtocols: serviceDef.allowMultipleActiveProtocols !== undefined
+              ? serviceDef.allowMultipleActiveProtocols
+              : true,
+            uniquenessScope: serviceDef.uniquenessScope || null,
+            uniquenessRules: serviceDef.uniquenessRules || undefined,
           }
         });
         totalCreated++;

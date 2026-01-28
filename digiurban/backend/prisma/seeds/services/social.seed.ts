@@ -22,6 +22,13 @@ export const socialServices: ServiceDefinition[] = [
     category: 'Benefícios',
     icon: 'Users',
     color: '#dc2626',
+    // Validação de unicidade: apenas um cadastro único ativo por cidadão
+    allowMultipleActiveProtocols: false,
+    uniquenessScope: 'CUSTOM',
+    uniquenessRules: {
+      moduleType: 'CADASTRO_UNICO',
+      validationFunction: 'validateCadastroUnico'
+    },
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome'],
