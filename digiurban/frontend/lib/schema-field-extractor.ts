@@ -61,12 +61,7 @@ function detectMask(fieldId: string, format?: string): string | undefined {
   if (format === 'email') return undefined; // Email não precisa de máscara
   if (format === 'date') return 'date'; // Data brasileira DD/MM/YYYY
 
-  // Data
-  if (normalizedId.includes('birth') || normalizedId.includes('nascimento') || normalizedId.includes('data')) {
-    return 'date';
-  }
-
-  // CPF
+  // CPF (deve vir antes de "data" para não capturar dataCpf, etc)
   if (normalizedId.includes('cpf') && !normalizedId.includes('cnpj')) {
     return 'cpf';
   }
@@ -81,6 +76,23 @@ function detectMask(fieldId: string, format?: string): string | undefined {
     return 'cep';
   }
 
+  // Data - APENAS campos específicos de data
+  // ⚠️ IMPORTANTE: Ser muito específico para não capturar campos como "dataProcessamento", "dataCadastro", etc.
+  if (
+    normalizedId.includes('birthdate') ||
+    normalizedId.includes('birth_date') ||
+    normalizedId === 'datanascimento' ||
+    normalizedId === 'data_nascimento' ||
+    normalizedId === 'nascimento' ||
+    normalizedId === 'dtnascimento' ||
+    normalizedId === 'dt_nascimento' ||
+    normalizedId.includes('dateofbirth') ||
+    normalizedId.includes('date_of_birth') ||
+    normalizedId.startsWith('citizen_birth')
+  ) {
+    return 'date';
+  }
+
   return undefined;
 }
 
@@ -92,8 +104,14 @@ function convertJsonSchemaFieldToFormField(
   schema: any,
   required: boolean
 ): FormField {
-  const fieldType = mapJsonSchemaTypeToFieldType(schema.type, schema.format);
+  let fieldType = mapJsonSchemaTypeToFieldType(schema.type, schema.format);
   const mask = detectMask(fieldId, schema.format);
+
+  // ✅ IMPORTANTE: Se o campo tem enum (opções), sempre usar select
+  // Isso cobre casos como boolean com enum: ["Sim", "Não"]
+  if (schema.enum && Array.isArray(schema.enum) && schema.enum.length > 0) {
+    fieldType = 'select';
+  }
 
   return {
     id: fieldId,
@@ -123,7 +141,7 @@ const CITIZEN_FIELD_MAPPING: Record<string, { label: string; type: string; mask?
   citizen_name: { label: 'Nome Completo', type: 'text' },
   citizen_cpf: { label: 'CPF', type: 'text', mask: 'cpf' },
   citizen_rg: { label: 'RG', type: 'text' },
-  citizen_birthdate: { label: 'Data de Nascimento', type: 'date' }, // lowercase para match
+  citizen_birthdate: { label: 'Data de Nascimento', type: 'text', mask: 'date' }, // ✅ Usar text com máscara date
   citizen_phone: { label: 'Telefone', type: 'text', mask: 'phone' },
   citizen_phonesecondary: { label: 'Telefone Secundário', type: 'text', mask: 'phone' }, // lowercase
   citizen_email: { label: 'E-mail', type: 'email' },
