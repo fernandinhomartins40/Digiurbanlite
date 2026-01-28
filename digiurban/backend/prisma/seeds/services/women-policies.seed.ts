@@ -119,6 +119,8 @@ export const womenPoliciesServices: ServiceDefinition[] = [
     category: 'Capacitação',
     icon: 'GraduationCap',
     color: '#3b82f6',
+    // Permite múltiplos: pode se inscrever em vários cursos
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_occupation'],
@@ -184,6 +186,8 @@ export const womenPoliciesServices: ServiceDefinition[] = [
     category: 'Apoio',
     icon: 'Users',
     color: '#ec4899',
+    // Permite múltiplos: pode participar de vários grupos de apoio
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary'],
@@ -281,6 +285,8 @@ export const womenPoliciesServices: ServiceDefinition[] = [
     category: 'Eventos',
     icon: 'BookOpen',
     color: '#6366f1',
+    // Permite múltiplos: pode se inscrever em várias oficinas e workshops
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_email', 'citizen_phone'],

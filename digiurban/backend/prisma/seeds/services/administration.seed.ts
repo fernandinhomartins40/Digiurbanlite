@@ -276,6 +276,8 @@ export const administrationServices: ServiceDefinition[] = [
     category: 'RH',
     icon: 'UserCheck',
     color: '#3b82f6',
+    // Permite múltiplos: cidadão pode se inscrever em vários concursos
+    allowMultipleActiveProtocols: true,
     formSchema: {
       type: 'object',
       citizenFields: ['citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate', 'citizen_email', 'citizen_phone', 'citizen_phonesecondary', 'citizen_zipcode', 'citizen_address', 'citizen_addressnumber', 'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation'],

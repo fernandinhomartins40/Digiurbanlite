@@ -82,7 +82,7 @@ async function updateServiceUniqueness() {
       }
     }
 
-    // Serviços que DEVEM permitir múltiplos protocolos ativos
+    // Serviços que DEVEM permitir múltiplos protocolos ativos (14 serviços)
     const multipleServices = [
       { moduleType: 'CADASTRO_PROPRIEDADE_RURAL', name: 'Cadastro de Propriedade Rural' },
       { moduleType: 'PROGRAMA_AMBIENTAL', name: 'Cadastro em Programa Ambiental' },
@@ -92,7 +92,13 @@ async function updateServiceUniqueness() {
       { moduleType: 'CADASTRO_ATRACAO_TURISTICA', name: 'Cadastro de Atração Turística' },
       { moduleType: 'CADASTRO_PONTO_CRITICO', name: 'Cadastro de Ponto Crítico' },
       { moduleType: 'CADASTRO_CAMERAS_BAIRRO', name: 'Cadastro de Câmeras de Segurança de Bairro' },
-      { moduleType: 'GRUPO_WHATSAPP_VIZINHANCA', name: 'Cadastro em Grupo de WhatsApp de Segurança de Vizinhança' }
+      { moduleType: 'GRUPO_WHATSAPP_VIZINHANCA', name: 'Cadastro em Grupo de WhatsApp de Segurança de Vizinhança' },
+      // Novos serviços adicionados
+      { moduleType: 'INSCRICAO_CONCURSO', name: 'Inscrição em Concurso Público Municipal' },
+      { moduleType: 'REGISTRO_PROBLEMA_FOTO', name: 'Registro de Problema com Foto' },
+      { moduleType: 'CURSOS_QUALIFICACAO', name: 'Inscrição em Cursos de Qualificação Profissional' },
+      { moduleType: 'GRUPOS_APOIO', name: 'Inscrição em Grupos de Apoio' },
+      { moduleType: 'OFICINAS_WORKSHOPS', name: 'Inscrição em Oficinas e Workshops' }
     ];
 
     for (const config of multipleServices) {
