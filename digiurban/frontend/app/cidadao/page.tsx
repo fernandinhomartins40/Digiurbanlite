@@ -120,6 +120,13 @@ export default function CitizenDashboard() {
     }
   }, [citizen, authLoading, router]);
 
+  // Redirect para serviços em desktop
+  useEffect(() => {
+    if (!authLoading && citizen && !isMobileView && window.innerWidth >= 768) {
+      router.push('/cidadao/servicos');
+    }
+  }, [citizen, authLoading, isMobileView, router]);
+
   // Carregar mensagens quando uma conversa é selecionada
   useEffect(() => {
     if (selectedConversation) {
