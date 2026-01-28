@@ -233,7 +233,7 @@ export function ServiceFormField({ field, value, onChange, isPrefilled = false }
         </select>
       )}
 
-      {!field.mask && field.type === 'checkbox' && (
+      {!field.mask && (field.type === 'checkbox' || field.type === 'boolean') && (
         <div className="flex items-center gap-2">
           <input
             id={field.id}

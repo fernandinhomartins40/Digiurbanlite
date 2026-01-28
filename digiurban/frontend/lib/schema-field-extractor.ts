@@ -196,16 +196,31 @@ export function extractFieldsFromSchema(formSchema: any): FormField[] {
 
   // Formato Legado: { type: 'form', fields: [...], citizenFields: [...] }
   if (Array.isArray(formSchema.fields)) {
-    const customFields = formSchema.fields.map((field: any) => ({
-      id: field.id,
-      type: field.type,
-      label: field.label,
-      placeholder: field.placeholder,
-      required: field.required || false,
-      options: field.options,
-      mask: field.mask,
-      ...field, // Preservar outras propriedades
-    }));
+    const customFields = formSchema.fields.map((field: any) => {
+      let fieldType = field.type;
+
+      // ✅ Normalizar: boolean → checkbox (para compatibilidade)
+      if (fieldType === 'boolean') {
+        fieldType = 'checkbox';
+      }
+
+      // ✅ IMPORTANTE: Se campo tem options, sempre usar select
+      // Cobre casos de boolean/checkbox com opções ["Sim", "Não"]
+      if (field.options && Array.isArray(field.options) && field.options.length > 0) {
+        fieldType = 'select';
+      }
+
+      return {
+        id: field.id,
+        type: fieldType,
+        label: field.label,
+        placeholder: field.placeholder,
+        required: field.required || false,
+        options: field.options,
+        mask: field.mask,
+        ...field, // Preservar outras propriedades
+      };
+    });
 
     // Incluir citizenFields se existirem
     const citizenFields = formSchema.citizenFields
