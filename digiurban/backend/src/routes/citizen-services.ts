@@ -7,6 +7,7 @@ import { validateServiceFormData } from '../lib/json-schema-validator';
 import { DocumentUploadService } from '../services/document-upload.service';
 import { DocumentStatus } from '@prisma/client';
 import { normalizeDocumentConfigs } from '../utils/document-validation';
+import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
 
 // REMOVED: generateProtocolNumber - agora usa protocolModuleService.createProtocolWithModule
 // REMOVED: ModuleHandler - agora usa protocolModuleService.createProtocolWithModule
@@ -922,6 +923,25 @@ router.post('/:id/request', (req, res, next) => {
     console.log('  - serviceId:', serviceId);
     console.log('  - customFormData:', JSON.stringify(customFormData, null, 2));
     console.log('  - moduleFormData (com citizenId):', JSON.stringify(moduleFormData, null, 2));
+
+    // ✅ VALIDAÇÃO DE UNICIDADE: Verificar se cidadão pode criar este protocolo
+    console.log('🔍 Validando unicidade do protocolo...');
+    const uniquenessValidation = await validateProtocolUniqueness(
+      citizenId,
+      serviceId,
+      moduleFormData
+    );
+
+    if (!uniquenessValidation.canCreate) {
+      console.log(`   ❌ Validação falhou: ${uniquenessValidation.reason}`);
+      return res.status(400).json({
+        error: uniquenessValidation.errorMessage || 'Não é possível criar este protocolo',
+        reason: uniquenessValidation.reason,
+        existingProtocolNumber: uniquenessValidation.existingProtocolNumber
+      });
+    }
+
+    console.log('   ✓ Validação de unicidade passou');
 
     const result = await protocolModuleService.createProtocolWithModule({
       citizenId,
