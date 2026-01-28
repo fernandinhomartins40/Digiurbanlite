@@ -296,7 +296,56 @@ export function ProtocolMapEnhanced({
     })
   }, [protocols, selectedStatus, selectedDepartment, selectedCategory])
 
-  // Estatísticas
+  // Aplicar jitter (pequeno deslocamento) para protocolos na mesma coordenada
+  // Isso evita que marcadores fiquem empilhados no mapa
+  const protocolsWithJitter = useMemo(() => {
+    // Agrupar por coordenadas
+    const coordsMap = new Map<string, Protocol[]>()
+
+    filteredProtocols.forEach(p => {
+      const key = `${p.latitude},${p.longitude}`
+      if (!coordsMap.has(key)) {
+        coordsMap.set(key, [])
+      }
+      coordsMap.get(key)!.push(p)
+    })
+
+    // Aplicar jitter apenas para coordenadas duplicadas e não-GPS
+    const result: Protocol[] = []
+
+    coordsMap.forEach((protocolList, coords) => {
+      if (protocolList.length === 1) {
+        // Coordenada única - não precisa de jitter
+        result.push(protocolList[0])
+      } else {
+        // Múltiplos protocolos na mesma coordenada
+        protocolList.forEach((protocol, index) => {
+          // Aplicar jitter apenas se NÃO for GPS real
+          const isRealGPS = protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN'
+
+          if (!isRealGPS && index > 0) {
+            // Gerar deslocamento aleatório em círculo
+            // ±0.0005 graus ≈ 50 metros
+            const angle = (index / protocolList.length) * 2 * Math.PI
+            const radius = 0.0003 + (Math.random() * 0.0002) // 30-50m
+
+            result.push({
+              ...protocol,
+              latitude: protocol.latitude + (Math.cos(angle) * radius),
+              longitude: protocol.longitude + (Math.sin(angle) * radius)
+            })
+          } else {
+            // Primeiro protocolo ou GPS real - manter coordenada original
+            result.push(protocol)
+          }
+        })
+      }
+    })
+
+    return result
+  }, [filteredProtocols])
+
+  // Estatísticas (usar filteredProtocols para estatísticas reais, não as coordenadas com jitter)
   const stats = useMemo(() => {
     const byStatus = filteredProtocols.reduce((acc, p) => {
       acc[p.status] = (acc[p.status] || 0) + 1
@@ -360,8 +409,8 @@ export function ProtocolMapEnhanced({
   }
 
   const defaultCenter: [number, number] = [-15.7942, -47.8822]
-  const center: [number, number] = filteredProtocols.length > 0
-    ? [filteredProtocols[0].latitude, filteredProtocols[0].longitude]
+  const center: [number, number] = protocolsWithJitter.length > 0
+    ? [protocolsWithJitter[0].latitude, protocolsWithJitter[0].longitude]
     : defaultCenter
 
   return (
@@ -545,10 +594,10 @@ export function ProtocolMapEnhanced({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          <MapBounds protocols={filteredProtocols} />
+          <MapBounds protocols={protocolsWithJitter} />
 
           {/* Círculos de Abrangência de Serviço */}
-          {showServiceCircles && filteredProtocols.map((protocol) => {
+          {showServiceCircles && protocolsWithJitter.map((protocol) => {
             // CORREÇÃO: Usar department.name para categorização por secretaria
             const config = getCategoryConfig(protocol.department?.name)
             return (
@@ -590,7 +639,7 @@ export function ProtocolMapEnhanced({
                 })
               }}
             >
-              {filteredProtocols.map((protocol) => {
+              {protocolsWithJitter.map((protocol) => {
                 const isGPS = protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN'
                 // CORREÇÃO: Usar department.name para categorização por secretaria
                 const config = getCategoryConfig(protocol.department?.name)
@@ -681,7 +730,7 @@ export function ProtocolMapEnhanced({
             </MarkerClusterGroup>
           ) : (
             <>
-              {filteredProtocols.map((protocol) => {
+              {protocolsWithJitter.map((protocol) => {
                 const isGPS = protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN'
                 // CORREÇÃO: Usar department.name para categorização por secretaria
                 const config = getCategoryConfig(protocol.department?.name)
