@@ -750,7 +750,15 @@ router.post('/:id/request', (req, res, next) => {
 }, citizenAuthMiddleware, async (req, res) => {
   try {
     const { id: serviceId } = req.params;
-    const citizenId = (req as any).citizen?.id;
+    // ✅ SUPORTE ADMIN: Aceitar adminCitizenId quando admin cria protocolo para cidadão
+    let citizenId = (req as any).citizen?.id;
+    const adminCitizenId = req.body.adminCitizenId;
+
+    // Se é admin criando para cidadão, usar o adminCitizenId
+    if (adminCitizenId && (req as any).user) {
+      citizenId = adminCitizenId;
+      console.log('🔐 Admin criando protocolo para cidadão:', citizenId);
+    }
 
     if (!citizenId) {
       return res.status(401).json({ error: 'Cidad+úo n+úo autenticado' });

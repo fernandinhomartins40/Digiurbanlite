@@ -16,6 +16,13 @@ export const citizenAuthMiddleware = async (
   try {
     // ✅ Tentar obter token do cookie primeiro, depois do header (fallback)
     let token = (req as any).cookies?.digiurban_citizen_token;
+    let tokenType: 'citizen' | 'admin' = 'citizen';
+
+    // Se não tem token de cidadão, tentar token de admin
+    if (!token) {
+      token = (req as any).cookies?.digiurban_admin_token;
+      tokenType = 'admin';
+    }
 
     // Fallback para header Authorization (compatibilidade temporária)
     if (!token) {
@@ -39,47 +46,60 @@ export const citizenAuthMiddleware = async (
     }
 
     const decoded = jwt.verify(token, jwtSecret) as JWTPayload & {
-      citizenId: string;
+      citizenId?: string;
+      userId?: string;
       type: string;
     };
 
-    // Verificar se é um token de cidadão
-    if (decoded.type !== 'citizen') {
+    // ✅ SUPORTE ADMIN: Aceitar tanto cidadão quanto admin
+    if (decoded.type === 'citizen') {
+      // Single tenant: verificação de tenant removida
+
+      // Buscar o cidadão no banco com validação de segurança
+      const citizen: Citizen | null = await prisma.citizen.findFirst({
+        where: {
+          id: decoded.citizenId!,
+          isActive: true
+        }
+      });
+
+      if (!citizen) {
+        res.status(401).json({ error: 'Cidadão não encontrado ou inativo' });
+        return;
+      }
+
+      // Adicionar cidadão e informações à requisição com conversão de tipos
+      (req as any).citizen = {
+        id: citizen.id,
+        cpf: citizen.cpf,
+        name: citizen.name,
+        email: citizen.email,
+        phone: citizen.phone || undefined,
+        isActive: citizen.isActive,
+        createdAt: citizen.createdAt,
+        updatedAt: citizen.updatedAt,
+        lastLogin: citizen.lastLogin || undefined,
+        birthDate: citizen.birthDate || undefined
+      };
+      (req as any).citizenId = citizen.id;
+    } else if (decoded.type === 'admin') {
+      // Admin acessando em nome de cidadão
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.userId }
+      });
+
+      if (!user) {
+        res.status(401).json({ error: 'Usuário não encontrado' });
+        return;
+      }
+
+      // Adicionar user à requisição para identificar que é admin
+      (req as any).user = user;
+      (req as any).userId = user.id;
+    } else {
       res.status(401).json({ error: 'Token inválido para acesso cidadão' });
       return;
     }
-
-    // Single tenant: verificação de tenant removida
-
-    // Buscar o cidadão no banco com validação de segurança
-    const citizen: Citizen | null = await prisma.citizen.findFirst({
-      where: {
-        id: decoded.citizenId,
-        isActive: true
-      }
-      });
-
-    if (!citizen) {
-      res.status(401).json({ error: 'Cidadão não encontrado ou inativo' });
-      return;
-    }
-
-    // Adicionar cidadão e informações à requisição com conversão de tipos
-    // CRIADO: type assertion para compatibilidade
-    (req as any).citizen = {
-      id: citizen.id,
-      cpf: citizen.cpf,
-      name: citizen.name,
-      email: citizen.email,
-      phone: citizen.phone || undefined,
-      isActive: citizen.isActive,
-      createdAt: citizen.createdAt,
-      updatedAt: citizen.updatedAt,
-      lastLogin: citizen.lastLogin || undefined,
-      birthDate: citizen.birthDate || undefined
-    };
-    // CRIADO: type assertion para compatibilidade Express + funcionalidade
-    (req as any).citizenId = citizen.id;
 
     next();
   } catch (error: unknown) {
