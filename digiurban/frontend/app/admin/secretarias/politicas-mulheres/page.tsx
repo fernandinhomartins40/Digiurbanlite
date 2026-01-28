@@ -364,14 +364,43 @@ export default function SecretariaPoliticasMulheresPage() {
                   <CardDescription>{suggestion.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    variant="default"
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                    onClick={() => router.push(buildServiceCreationUrl('politicas-mulheres', suggestion))}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar este Serviço
-                  </Button>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {suggestion.estimatedDays} dias
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {suggestion.category}
+                      </Badge>
+                      {suggestion.requiresDocuments && (
+                        <Badge variant="secondary" className="text-xs">
+                          Requer Docs
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="text-xs text-muted-foreground">
+                      <strong>Campos incluídos:</strong>
+                      <ul className="mt-2 space-y-1">
+                        {suggestion.suggestedFields.slice(0, 4).map((field, idx) => (
+                          <li key={idx}>• {field.label}</li>
+                        ))}
+                        {suggestion.suggestedFields.length > 4 && (
+                          <li className="text-purple-700">+ {suggestion.suggestedFields.length - 4} campos adicionais</li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <Button
+                      variant="default"
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      onClick={() => router.push(buildServiceCreationUrl('politicas-mulheres', suggestion))}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar este Serviço
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

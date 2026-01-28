@@ -364,14 +364,43 @@ export default function SecretariaMobilidadeUrbanaPage() {
                   <CardDescription>{suggestion.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    variant="default"
-                    className="w-full bg-green-500 hover:bg-green-600"
-                    onClick={() => router.push(buildServiceCreationUrl('mobilidade-urbana', suggestion))}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar este Serviço
-                  </Button>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {suggestion.estimatedDays} dias
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {suggestion.category}
+                      </Badge>
+                      {suggestion.requiresDocuments && (
+                        <Badge variant="secondary" className="text-xs">
+                          Requer Docs
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="text-xs text-muted-foreground">
+                      <strong>Campos incluídos:</strong>
+                      <ul className="mt-2 space-y-1">
+                        {suggestion.suggestedFields.slice(0, 4).map((field, idx) => (
+                          <li key={idx}>• {field.label}</li>
+                        ))}
+                        {suggestion.suggestedFields.length > 4 && (
+                          <li className="text-green-600">+ {suggestion.suggestedFields.length - 4} campos adicionais</li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <Button
+                      variant="default"
+                      className="w-full bg-green-500 hover:bg-green-600"
+                      onClick={() => router.push(buildServiceCreationUrl('mobilidade-urbana', suggestion))}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar este Serviço
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

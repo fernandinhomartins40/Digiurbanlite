@@ -12,9 +12,9 @@ import {
   Plus,
   FileBarChart,
   Award,
-  Info,
-  Calendar,
   TrendingUp,
+  Calendar,
+  Info,
   FileCheck,
   ChevronRight,
 } from 'lucide-react';
@@ -364,14 +364,43 @@ export default function SecretariaTecnologiaInovacaoPage() {
                   <CardDescription>{suggestion.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    variant="default"
-                    className="w-full bg-cyan-600 hover:bg-cyan-700"
-                    onClick={() => router.push(buildServiceCreationUrl('tecnologia-inovacao', suggestion))}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar este Serviço
-                  </Button>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {suggestion.estimatedDays} dias
+                      </div>
+                      <Badge variant="outline" className="text-xs">
+                        {suggestion.category}
+                      </Badge>
+                      {suggestion.requiresDocuments && (
+                        <Badge variant="secondary" className="text-xs">
+                          Requer Docs
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="text-xs text-muted-foreground">
+                      <strong>Campos incluídos:</strong>
+                      <ul className="mt-2 space-y-1">
+                        {suggestion.suggestedFields.slice(0, 4).map((field, idx) => (
+                          <li key={idx}>• {field.label}</li>
+                        ))}
+                        {suggestion.suggestedFields.length > 4 && (
+                          <li className="text-cyan-600">+ {suggestion.suggestedFields.length - 4} campos adicionais</li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <Button
+                      variant="default"
+                      className="w-full bg-cyan-600 hover:bg-cyan-700"
+                      onClick={() => router.push(buildServiceCreationUrl('tecnologia-inovacao', suggestion))}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Criar este Serviço
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -392,6 +421,39 @@ export default function SecretariaTecnologiaInovacaoPage() {
             )}
           </div>
         )}
+
+        {/* Info sobre serviços COM_DADOS */}
+        <Card className="mt-6 border-cyan-200 bg-cyan-50/50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Info className="h-5 w-5 text-cyan-600" />
+              Como funcionam os Serviços COM_DADOS?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">🎯 Recursos:</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>✅ Formulários dinâmicos e customizáveis</li>
+                  <li>✅ Validação automática de campos</li>
+                  <li>✅ Dados armazenados em JSON estruturado</li>
+                  <li>✅ Workflows e SLA configuráveis</li>
+                  <li>✅ Aprovação/Rejeição integrada</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">💡 Como usar as sugestões:</h4>
+                <ul className="space-y-1 text-muted-foreground">
+                  <li>• Clique em "Criar este Serviço" para pré-preencher o formulário</li>
+                  <li>• Todos os campos sugeridos serão incluídos automaticamente</li>
+                  <li>• Você pode editar e personalizar conforme necessário</li>
+                  <li>• Após criar, a próxima sugestão aparecerá automaticamente</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <ServiceSelectorModal
