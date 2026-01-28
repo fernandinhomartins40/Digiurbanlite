@@ -64,7 +64,7 @@ export function JSONSchemaForm({ schema, formData, onChange, prefilledData = {} 
     }
 
     // Select para enum
-    if (fieldSchema.enum && Array.isArray(fieldSchema.enum)) {
+    if (fieldSchema.enum && Array.isArray(fieldSchema.enum) && fieldSchema.enum.length > 0) {
       return (
         <div key={fieldName} className="space-y-2">
           <Label htmlFor={fieldName} className={isPrefilled ? 'text-gray-600' : ''}>
@@ -79,13 +79,16 @@ export function JSONSchemaForm({ schema, formData, onChange, prefilledData = {} 
               <SelectValue placeholder={`Selecione ${label.toLowerCase()}`} />
             </SelectTrigger>
             <SelectContent>
-              {fieldSchema.enum.map((option: string) => (
-                <SelectItem key={option} value={option}>
+              {fieldSchema.enum.map((option: string, index: number) => (
+                <SelectItem key={`${fieldName}-${index}-${option}`} value={option}>
                   {option}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
+          {fieldSchema.description && (
+            <p className="text-xs text-gray-500">{fieldSchema.description}</p>
+          )}
         </div>
       );
     }

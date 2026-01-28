@@ -135,6 +135,19 @@ export function ServiceFormField({ field, value, onChange, isPrefilled = false }
         />
       )}
 
+      {field.mask === 'date' && (
+        <MaskedInput
+          id={field.id}
+          type="date"
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          onBlur={handleBlur}
+          className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
+          placeholder="DD/MM/AAAA"
+          required={field.required}
+        />
+      )}
+
       {/* Tipos de campo sem máscara */}
       {!field.mask && field.type === 'email' && (
         <Input
@@ -146,18 +159,6 @@ export function ServiceFormField({ field, value, onChange, isPrefilled = false }
           className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
           placeholder={field.placeholder}
           required={field.required}
-        />
-      )}
-
-      {!field.mask && field.type === 'date' && (
-        <Input
-          id={field.id}
-          type="date"
-          required={field.required}
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={handleBlur}
-          className={isPrefilled ? 'border-green-300 bg-green-50/30' : ''}
         />
       )}
 
@@ -220,11 +221,15 @@ export function ServiceFormField({ field, value, onChange, isPrefilled = false }
           }`}
         >
           <option value="">Selecione...</option>
-          {field.options && field.options.map((option: string) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
+          {field.options && Array.isArray(field.options) && field.options.length > 0 ? (
+            field.options.map((option: string, index: number) => (
+              <option key={`${field.id}-option-${index}`} value={option}>
+                {option}
+              </option>
+            ))
+          ) : (
+            <option value="" disabled>Nenhuma opção disponível</option>
+          )}
         </select>
       )}
 

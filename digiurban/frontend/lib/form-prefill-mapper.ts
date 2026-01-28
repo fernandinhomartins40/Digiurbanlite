@@ -90,7 +90,10 @@ interface FormField {
 
 /**
  * Função para formatar data no formato brasileiro (DD/MM/YYYY)
- * ✅ Usa para pré-preenchimento de campos de data
+ * ✅ Usado para pré-preenchimento de campos de data com máscara brasileira
+ *
+ * IMPORTANTE: Usamos input de texto com máscara brasileira DD/MM/YYYY
+ * para uma melhor experiência do usuário brasileiro
  */
 function formatBrazilianDate(dateString: string): string {
   try {
@@ -100,12 +103,40 @@ function formatBrazilianDate(dateString: string): string {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
 
-    // Formatar no padrão brasileiro DD/MM/YYYY
+    // Formatar no padrão brasileiro: DD/MM/YYYY
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
 
     return `${day}/${month}/${year}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Função para converter data brasileira (DD/MM/YYYY) para formato ISO (YYYY-MM-DD)
+ * Usado quando precisamos enviar a data para o backend
+ */
+export function brazilianDateToISO(brazilianDate: string): string {
+  try {
+    if (!brazilianDate) return '';
+
+    // Remove caracteres não numéricos
+    const numbers = brazilianDate.replace(/\D/g, '');
+
+    if (numbers.length !== 8) return '';
+
+    // Extrai dia, mês e ano
+    const day = numbers.substring(0, 2);
+    const month = numbers.substring(2, 4);
+    const year = numbers.substring(4, 8);
+
+    // Valida a data
+    const date = new Date(`${year}-${month}-${day}`);
+    if (isNaN(date.getTime())) return '';
+
+    return `${year}-${month}-${day}`;
   } catch {
     return '';
   }
@@ -232,7 +263,9 @@ const FIELD_MAPPINGS: Record<string, (citizen: CitizenData) => any> = {
 
   // ============================================================================
   // DATA DE NASCIMENTO - Todas as variações
-  // ✅ IMPORTANTE: Usa formatBrazilianDate (DD/MM/YYYY) para campos de data
+  // ✅ IMPORTANTE: Retorna formato ISO (YYYY-MM-DD) para input type="date"
+  // ✅ NAVEGADORES BRASILEIROS (pt-BR) exibem automaticamente DD/MM/YYYY
+  // ✅ Seguindo padrão W3C e melhores práticas de acessibilidade
   // ============================================================================
   // IDs citizen_* (novos campos do cidadão)
   'citizen_birthdate': (c) => c.birthDate ? formatBrazilianDate(c.birthDate) : '',

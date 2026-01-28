@@ -59,6 +59,12 @@ function detectMask(fieldId: string, format?: string): string | undefined {
   const normalizedId = fieldId.toLowerCase();
 
   if (format === 'email') return undefined; // Email não precisa de máscara
+  if (format === 'date') return 'date'; // Data brasileira DD/MM/YYYY
+
+  // Data
+  if (normalizedId.includes('birth') || normalizedId.includes('nascimento') || normalizedId.includes('data')) {
+    return 'date';
+  }
 
   // CPF
   if (normalizedId.includes('cpf') && !normalizedId.includes('cnpj')) {
