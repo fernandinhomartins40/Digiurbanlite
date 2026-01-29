@@ -1,0 +1,191 @@
+{
+  "project": "Selectors de Cadastros de Saúde",
+  "version": "1.0.0",
+  "created": "2026-01-29",
+  "status": "Completo",
+  "stats": {
+    "totalFiles": 12,
+    "components": 5,
+    "documentation": 3,
+    "utilities": 3,
+    "examples": 1,
+    "totalLines": 3367,
+    "codeLines": 2247,
+    "docLines": 1120
+  },
+  "files": {
+    "components": [
+      {
+        "name": "UnidadeSaudeSelector.tsx",
+        "lines": 256,
+        "description": "Seletor de unidades de saúde",
+        "api": "/api/apps/saude/cadastros/unidades",
+        "features": ["busca por nome/CNES", "filtro por tipo", "badge colorido"]
+      },
+      {
+        "name": "ProfissionalSaudeSelector.tsx",
+        "lines": 287,
+        "description": "Seletor de profissionais de saúde",
+        "api": "/api/apps/saude/cadastros/profissionais",
+        "features": ["busca por nome/CPF/registro", "filtro por categoria", "badge de status"]
+      },
+      {
+        "name": "EspecialidadeSelector.tsx",
+        "lines": 300,
+        "description": "Seletor de especialidades médicas",
+        "api": "/api/apps/saude/cadastros/especialidades",
+        "features": ["seleção única ou múltipla", "busca por nome", "badge por área"]
+      },
+      {
+        "name": "SalaSelector.tsx",
+        "lines": 337,
+        "description": "Seletor de salas/consultórios",
+        "api": "/api/apps/saude/cadastros/salas",
+        "features": ["requer unidadeId", "filtro por tipo", "exibe equipamentos"]
+      },
+      {
+        "name": "TurnoSelector.tsx",
+        "lines": 275,
+        "description": "Seletor de turnos de trabalho",
+        "api": "/api/apps/saude/cadastros/turnos",
+        "features": ["dropdown interface", "ícones por período", "badge colorido"]
+      }
+    ],
+    "utilities": [
+      {
+        "name": "index.ts",
+        "lines": 15,
+        "description": "Exportações centralizadas"
+      },
+      {
+        "name": "constants.ts",
+        "lines": 320,
+        "description": "Constantes, enums e funções utilitárias"
+      },
+      {
+        "name": "types.test.ts",
+        "lines": 220,
+        "description": "Validação de tipos TypeScript"
+      }
+    ],
+    "documentation": [
+      {
+        "name": "README.md",
+        "lines": 287,
+        "description": "Documentação completa dos componentes"
+      },
+      {
+        "name": "ESTRUTURA.md",
+        "lines": 345,
+        "description": "Estrutura do projeto e fluxos de uso"
+      },
+      {
+        "name": "INDEX.md",
+        "lines": 488,
+        "description": "Índice e guia visual"
+      }
+    ],
+    "examples": [
+      {
+        "name": "ExemploUso.tsx",
+        "lines": 245,
+        "description": "Componente demonstrativo completo"
+      }
+    ],
+    "validation": [
+      {
+        "name": ".validation.json",
+        "description": "Este arquivo de validação"
+      }
+    ]
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "lucide-react": "latest",
+    "shadcn-ui": {
+      "components": [
+        "Input",
+        "Button",
+        "Card",
+        "CardContent",
+        "Badge",
+        "Label"
+      ]
+    },
+    "tailwindcss": "^3.0.0"
+  },
+  "features": {
+    "typescript": true,
+    "accessibility": true,
+    "responsive": true,
+    "debounce": true,
+    "errorHandling": true,
+    "loadingStates": true,
+    "documentation": "completa",
+    "examples": true
+  },
+  "patterns": {
+    "design": "Padrão consistente baseado em CidadaoSelector",
+    "debounce": "500ms em todas as buscas",
+    "minChars": "3 caracteres (2 para EspecialidadeSelector)",
+    "colors": "Badges coloridos por categoria/status",
+    "icons": "Ícones específicos por tipo (Lucide React)"
+  },
+  "apis": {
+    "baseUrl": "/api/apps/saude/cadastros",
+    "endpoints": [
+      {
+        "path": "/unidades",
+        "method": "GET",
+        "params": ["search", "tipo"]
+      },
+      {
+        "path": "/profissionais",
+        "method": "GET",
+        "params": ["search", "categoria", "status"]
+      },
+      {
+        "path": "/especialidades",
+        "method": "GET",
+        "params": ["search"]
+      },
+      {
+        "path": "/salas",
+        "method": "GET",
+        "params": ["unidadeId", "tipo", "search"]
+      },
+      {
+        "path": "/turnos",
+        "method": "GET",
+        "params": ["ativo"]
+      }
+    ]
+  },
+  "validation": {
+    "typescript": "Passar tsc --noEmit",
+    "interfaces": "Todas exportadas",
+    "props": "Bem documentadas",
+    "examples": "Funcionais e testados"
+  },
+  "checklist": {
+    "components": true,
+    "documentation": true,
+    "examples": true,
+    "types": true,
+    "constants": true,
+    "exports": true,
+    "readme": true,
+    "structure": true,
+    "index": true
+  },
+  "notes": [
+    "Todos os componentes seguem o padrão do CidadaoSelector",
+    "SalaSelector requer unidadeId obrigatório",
+    "EspecialidadeSelector suporta seleção múltipla",
+    "TurnoSelector usa dropdown em vez de autocomplete",
+    "Todas as interfaces são exportadas para reuso",
+    "Documentação completa em 3 arquivos Markdown",
+    "Componente de exemplo totalmente funcional",
+    "Constantes centralizadas para fácil manutenção"
+  ]
+}

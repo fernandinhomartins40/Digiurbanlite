@@ -225,6 +225,13 @@ model Citizen {
   imunizacoes         ImunizacaoCidadao[]      @relation("CitizenImmunizations")
   passageirosTFD      PassageiroViagemTFD[]    @relation("CitizenTFDPassengers")
 
+  // ✅ NOVOS: Alinhamento com PEC e-SUS
+  problemasCondicoes  ProblemaCondicao[]       @relation("CitizenProblems")
+  alergiasReacoes     AlergiaReacao[]          @relation("CitizenAllergiesReactions")
+  preNatal            AcompanhamentoPreNatal?  @relation("CitizenPreNatal")
+  visitasDomiciliares VisitaDomiciliar[]       @relation("CitizenHomeVisits")
+  participacoesAtividades ParticipanteAtividade[] @relation("CitizenActivityParticipations")
+
   @@unique([cpf])
   @@map("citizens")
 }
@@ -2298,15 +2305,23 @@ enum HousingAttendanceStatus {
 // TABELAS DE APOIO PARA SELECTS DINÂMICOS
 // ========================================
 
-// Unidades de Saúde (UBS, UPA, Hospitais, etc.)
+// Unidades de Saúde (UBS, UPA, Hospitais, etc.) - ATUALIZADO
 model UnidadeSaude {
   id             String   @id @default(cuid())
   nome           String
   tipo           String // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
+  cnes           String?  // ✅ NOVO: Cadastro Nacional de Estabelecimentos de Saúde
+  cnpj           String?  // ✅ NOVO: CNPJ da unidade
   endereco       String?
   bairro         String?
+  cidade         String?  // ✅ NOVO
+  estado         String?  // ✅ NOVO
+  cep            String?  // ✅ NOVO
   telefone       String?
+  email          String?  // ✅ NOVO
   horario        String?
+  horarioAbertura String? // ✅ NOVO: Ex: "07:00"
+  horarioFechamento String? // ✅ NOVO: Ex: "17:00"
   especialidades Json? // Array de especialidades disponíveis
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
@@ -2321,8 +2336,14 @@ model UnidadeSaude {
   transferenciasDestino TransferenciaEstoque[] @relation("StockTransferDestination")
   alertasEstoque       AlertaEstoque[]
 
+  // ✅ NOVOS: Relacionamentos com cadastros
+  salas                SalaConsultorio[]
+  configuracao         ConfiguracaoAtendimento?
+  atividadesColetivas  AtividadeColetiva[] @relation("UnidadeAtividadesColetivas")
+
   @@index([tipo, isActive])
   @@index([isActive])
+  @@index([cnes])
   @@map("unidades_saude")
 }
 
@@ -2534,19 +2555,24 @@ model TipoObraServico {
   @@map("tipos_obra_servico")
 }
 
-// Especialidades Médicas
+// Especialidades Médicas (ATUALIZADO)
 model EspecialidadeMedica {
   id                  String   @id @default(cuid())
   nome                String   @unique
   descricao           String?
   area                String? // 'Clínica Médica', 'Cirúrgica', 'Diagnóstica'
   tempoMedioConsulta  Int? // Minutos
+  cor                 String?  // ✅ NOVO: Cor para visualização em agendas (ex: "#3B82F6")
   requisitosPaciente  String? // 'Encaminhamento', 'Livre'
   examesComuns        Json? // Array de exames
   unidadesQueOferecem Json? // IDs das unidades (pode ser calculado)
   isActive            Boolean  @default(true)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  // ✅ NOVO: Relacionamentos
+  agendas             AgendaMedica[]
+  solicitacoesTFD     SolicitacaoTFD[]
 
   @@index([area, isActive])
   @@index([isActive])
@@ -2773,19 +2799,25 @@ model ProgramaAmbiental {
 // PROFISSIONAIS
 // ========================================
 
-// Profissionais de Saúde
+// Profissionais de Saúde (ATUALIZADO)
 model ProfissionalSaude {
   id                   String   @id @default(cuid())
   nome                 String
   cpf                  String   @unique
-  registroProfissional String   @unique // CRM, CRO, CRP, etc.
-  especialidade        String?
-  categoria            String // 'Médico', 'Enfermeiro', 'Dentista', 'Psicólogo'
+  rg                   String?  // ✅ NOVO
+  registroProfissional String   @unique // CRM, CRO, CRP, CRN, CRF, COREN, etc.
+  tipoRegistro         String?  // ✅ NOVO: 'CRM', 'COREN', 'CRO', 'CRP', 'CRF', 'CRN', etc.
+  especialidade        String?  // Especialidade principal (mantido para compatibilidade)
+  especialidades       Json?    // ✅ NOVO: Array de IDs de especialidades (múltiplas)
+  categoria            String // 'Médico', 'Enfermeiro', 'Dentista', 'Psicólogo', 'Nutricionista', 'Farmacêutico'
   unidadesAtendimento  Json? // Array de IDs das unidades
+  telefone             String?  // ✅ NOVO
+  email                String?  // ✅ NOVO
   horarioAtendimento   Json? // Horários estruturados
   diasSemana           Json? // Array de dias
   tempoMedioConsulta   Int? // Minutos
   aceitaAgendamento    Boolean  @default(true)
+  status               StatusProfissional @default(ATIVO) // ✅ NOVO: Enum de status
   isActive             Boolean  @default(true)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -2794,10 +2826,26 @@ model ProfissionalSaude {
   indisponibilidades IndisponibilidadeAgenda[]
   imunizacoes        ImunizacaoCidadao[]
 
+  // ✅ NOVOS: Alinhamento com PEC e-SUS
+  atendimentosOdonto AtendimentoOdontologico[] @relation("DentistaAtendimentos")
+  visitasDomiciliares VisitaDomiciliar[]       @relation("ACSVisitas")
+  atividadesColetivas AtividadeColetiva[]      @relation("ProfissionalAtividadesColetivas")
+
   @@index([categoria, isActive])
   @@index([especialidade, isActive])
   @@index([isActive])
+  @@index([status])
+  @@index([cpf])
   @@map("profissionais_saude")
+}
+
+// ✅ NOVO: Enum de Status do Profissional
+enum StatusProfissional {
+  ATIVO
+  INATIVO
+  FERIAS
+  AFASTADO
+  LICENCA
 }
 
 // Professores e Instrutores
@@ -2940,25 +2988,40 @@ model WorkflowHistory {
 // MICROSISTEMAS - SECRETARIA DE SAÚDE
 // ============================================================================
 
-// MS-02: Agenda Médica Inteligente
+// MS-02: Agenda Médica Inteligente (ATUALIZADO)
 model AgendaMedica {
   id               String   @id @default(cuid())
   profissionalId   String
   unidadeId        String
-  diaSemana        Int // 1-7
+  especialidadeId  String?  // ✅ NOVO: Especialidade vinculada à agenda
+  salaId           String?  // ✅ NOVO: Sala/consultório onde ocorre o atendimento
+  turnoId          String?  // ✅ NOVO: Turno de trabalho vinculado
+
+  diaSemana        Int // 0=Domingo, 1=Segunda, ..., 6=Sábado
   horaInicio       String // "08:00"
   horaFim          String // "12:00"
-  tempoPorConsulta Int // minutos
-  vagasDisponiveis Int
+  tempoPorConsulta Int // minutos (duração de cada consulta)
+  vagasDisponiveis Int // vagas por horário
+
+  // ✅ NOVOS: Vigência da agenda
+  dataInicio       DateTime? // Data de início da vigência
+  dataFim          DateTime? // Data de fim da vigência
+
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  // Relacionamentos
+  especialidade      EspecialidadeMedica? @relation(fields: [especialidadeId], references: [id])
+  sala               SalaConsultorio?     @relation(fields: [salaId], references: [id])
+  turno              TurnoTrabalho?       @relation(fields: [turnoId], references: [id])
   consultas          ConsultaAgendada[]
   indisponibilidades IndisponibilidadeAgenda[]
 
   @@index([profissionalId, diaSemana])
   @@index([unidadeId, isActive])
+  @@index([especialidadeId, isActive])
+  @@index([salaId, diaSemana])
   @@map("agendas_medicas")
 }
 
@@ -3095,6 +3158,7 @@ enum ClassificacaoRisco {
   NAO_URGENTE
 }
 
+// ✅ FASE 1.1: CONSULTA MÉDICA COM MÉTODO SOAP
 model ConsultaMedica {
   id                  String            @id @default(cuid())
   atendimentoId       String            @unique
@@ -3102,30 +3166,492 @@ model ConsultaMedica {
   medicoId            String
   profissionalSaudeId String?
 
-  queixaPrincipal      String
-  historiaDoenca       String?
-  historicoFamiliar    String?
-  antecedentesPessoais String?
-  exameFisico          String?
+  // ========================================
+  // S - SUBJETIVO (Informações do Paciente)
+  // ========================================
+  motivoConsulta       String?  @db.Text // Queixa principal
+  historiaAtual        String?  @db.Text // História da doença atual (HDA)
+  historiaPregressa    String?  @db.Text // Antecedentes pessoais
+  historiaFamiliar     String?  @db.Text // Antecedentes familiares
+  historiaSocial       String?  @db.Text // Hábitos, ocupação, condições sociais
 
-  hipoteseDiagnostica String?
-  diagnosticos        Json
+  // ========================================
+  // O - OBJETIVO (Exame Físico e Sinais)
+  // ========================================
+  sinaisVitais         Json?    // { pressaoArterial, temperatura, fc, fr, saturacaoO2 }
+  exameFisicoGeral     String?  @db.Text // Inspeção geral, estado geral
+  exameFisicoSistemas  Json?    // { cardiovascular, respiratorio, abdomen, neurologico, etc }
+  antropometria        Json?    // { peso, altura, imc, circunferencias }
 
-  conduta     String?
-  orientacoes String?
+  // ========================================
+  // A - AVALIAÇÃO (Diagnóstico)
+  // ========================================
+  hipoteseDiagnostica  String?  @db.Text // Raciocínio clínico
+  diagnosticoPrincipal String?  // CID10 ou CIAP2 principal
+  diagnosticosSecund   Json?    // Array de CIDs/CIAPs secundários
+  problemas            ProblemaCondicao[] // Lista de problemas identificados
 
-  retornoNecessario Boolean @default(false)
-  prazoRetornoDias  Int?
+  // ========================================
+  // P - PLANO (Conduta e Tratamento)
+  // ========================================
+  condutaTerapeutica   String?  @db.Text // Tratamento proposto
+  orientacoes          String?  @db.Text // Orientações ao paciente
+  prescricoes          Prescricao[]
+  examesSolicitados    ExameSolicitado[]
+  encaminhamentos      Encaminhamento[]
+  atestados            Atestado[]
 
-  observacoes String?
-  dataHora    DateTime @default(now())
+  // Retorno
+  retornoNecessario    Boolean  @default(false)
+  prazoRetornoDias     Int?
+  dataRetorno          DateTime?
 
-  prescricoes      Prescricao[]
-  exameSolicitados ExameSolicitado[]
-  atestados        Atestado[]
-  encaminhamentos  Encaminhamento[]
+  // Observações gerais
+  observacoes          String?  @db.Text
+  dataHora             DateTime @default(now())
+
+  // Relacionamento com Pré-Natal (se for consulta obstétrica)
+  consultaPreNatal     ConsultaPreNatal?
 
   @@map("consultas_medicas")
+}
+
+// ✅ FASE 1.2: LISTA DE PROBLEMAS E CONDIÇÕES (CIAP2/CID10)
+model ProblemaCondicao {
+  id                   String   @id @default(cuid())
+  citizenId            String
+
+  // Codificação
+  tipo                 TipoClassificacao  // CIAP2 ou CID10
+  codigo               String   // Ex: K86 (CIAP2), I10 (CID10)
+  descricao            String   // Descrição do problema
+
+  // Status
+  status               StatusProblema     // ATIVO, LATENTE, RESOLVIDO
+  dataInicio           DateTime
+  dataResolucao        DateTime?
+
+  // Classificação
+  gravidade            GravidadeProblema? // LEVE, MODERADO, GRAVE
+  prioridade           Int      @default(0) // 0-10
+
+  // Vínculo com consultas
+  consultaOrigemId     String?  // Consulta onde foi identificado
+  consultaResolucaoId  String?  // Consulta onde foi resolvido
+  consultas            ConsultaMedica[] // Consultas que trataram este problema
+
+  // Observações
+  observacoes          String?  @db.Text
+
+  // Audit
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  createdBy            String?  // Profissional que registrou
+
+  // Relacionamento
+  citizen              Citizen  @relation(fields: [citizenId], references: [id])
+
+  @@index([citizenId, status])
+  @@index([codigo])
+  @@index([tipo])
+  @@map("problemas_condicoes")
+}
+
+enum TipoClassificacao {
+  CIAP2
+  CID10
+}
+
+enum StatusProblema {
+  ATIVO
+  LATENTE
+  RESOLVIDO
+}
+
+enum GravidadeProblema {
+  LEVE
+  MODERADO
+  GRAVE
+}
+
+// ✅ FASE 1.3: ALERGIAS E REAÇÕES ADVERSAS
+model AlergiaReacao {
+  id                   String   @id @default(cuid())
+  citizenId            String
+
+  tipo                 TipoAlergia
+  substancia           String   // Nome do medicamento, alimento ou substância
+  reacao               String   @db.Text // Descrição da reação apresentada
+  gravidade            GravidadeAlergia
+
+  dataIdentificacao    DateTime @default(now())
+  ativo                Boolean  @default(true)
+  observacoes          String?  @db.Text
+
+  // Auditoria
+  registradoPor        String?  // ID do profissional
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relacionamento
+  citizen              Citizen  @relation(fields: [citizenId], references: [id])
+
+  @@index([citizenId, ativo])
+  @@index([tipo])
+  @@map("alergias_reacoes")
+}
+
+enum TipoAlergia {
+  MEDICAMENTO
+  ALIMENTO
+  AMBIENTAL
+  CONTATO
+  LATEX
+  OUTRA
+}
+
+enum GravidadeAlergia {
+  LEVE
+  MODERADA
+  GRAVE
+  ANAFILAXIA
+}
+
+// ============================================================================
+// FASE 2: MÓDULOS ESPECIALIZADOS
+// ============================================================================
+
+// ✅ FASE 2.1: ATENDIMENTO ODONTOLÓGICO
+model AtendimentoOdontologico {
+  id                   String   @id @default(cuid())
+  atendimentoId        String   @unique
+  dentistaId           String
+
+  // Odontograma (32 dentes)
+  odontograma          Json     // Estrutura: { "11": { condicao: "HIGIDO", procedimentos: [] }, "12": {...}, ... }
+
+  // Avaliação
+  queixaPrincipal      String?  @db.Text
+  exameBucal           String?  @db.Text
+  indicesCPOD          Json?    // { cariados, perdidos, obturados, dentes }
+  diagnostico          String?  @db.Text
+  planoTratamento      String?  @db.Text
+
+  // Procedimentos realizados
+  procedimentos        ProcedimentoOdonto[]
+
+  // Orientações
+  orientacoes          String?  @db.Text
+  observacoes          String?  @db.Text
+  dataHora             DateTime @default(now())
+
+  // Relacionamentos
+  atendimento          AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
+  dentista             ProfissionalSaude @relation("DentistaAtendimentos", fields: [dentistaId], references: [id])
+
+  @@map("atendimentos_odontologicos")
+}
+
+model ProcedimentoOdonto {
+  id                   String   @id @default(cuid())
+  atendimentoOdontoId  String
+
+  codigoSIGTAP         String   // Código SIGTAP do procedimento
+  descricao            String
+  dente                String?  // Número do dente (11-48, FDI)
+  face                 String?  // Oclusal, Mesial, Distal, Vestibular, Lingual/Palatina
+  quantidade           Int      @default(1)
+
+  observacoes          String?
+  dataHora             DateTime @default(now())
+
+  // Relacionamento
+  atendimento          AtendimentoOdontologico @relation(fields: [atendimentoOdontoId], references: [id])
+
+  @@index([atendimentoOdontoId])
+  @@index([codigoSIGTAP])
+  @@map("procedimentos_odonto")
+}
+
+// ✅ FASE 2.2: ACOMPANHAMENTO PRÉ-NATAL
+model AcompanhamentoPreNatal {
+  id                   String   @id @default(cuid())
+  citizenId            String   @unique // Uma gestação ativa por cidadã
+
+  // Dados da Gestação
+  dum                  DateTime // Data da Última Menstruação
+  dpp                  DateTime // Data Provável do Parto (calculada)
+  idadeGestacional     String?  // Calculada: "12s 3d"
+  gravidez             Int      @default(1) // Gesta
+  partos               Int      @default(0) // Para
+  abortos              Int      @default(0)
+  cesarianas           Int      @default(0)
+  nascidosVivos        Int      @default(0)
+  nascidosMortos       Int      @default(0)
+
+  // Classificação de Risco
+  riscoGestacional     RiscoGestacional @default(HABITUAL)
+  fatoresRisco         Json?    // Array de fatores de risco
+
+  // Status
+  status               StatusPreNatal   @default(EM_ANDAMENTO)
+  dataInicio           DateTime @default(now())
+  dataFim              DateTime?
+
+  // Dados Clínicos Iniciais
+  grupoSanguineo       String?  // A, B, AB, O
+  fatorRh              String?  // Positivo, Negativo
+  pesoInicial          Float?
+  alturaInicial        Float?
+  imcInicial           Float?
+
+  // Consultas e Exames
+  consultas            ConsultaPreNatal[]
+  exames               ExamePreNatal[]
+
+  // Desfecho
+  tipoDesfecho         TipoDesfecho?
+  dataDesfecho         DateTime?
+  observacoesDesfecho  String?  @db.Text
+
+  // Observações
+  observacoes          String?  @db.Text
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relacionamento
+  citizen              Citizen  @relation(fields: [citizenId], references: [id])
+
+  @@index([status])
+  @@index([riscoGestacional])
+  @@map("acompanhamento_pre_natal")
+}
+
+model ConsultaPreNatal {
+  id                   String   @id @default(cuid())
+  preNatalId           String
+  consultaMedicaId     String?  @unique // Vínculo com consulta médica geral
+
+  // Dados da Consulta
+  idadeGestacional     String   // No momento: "12s 3d"
+  peso                 Float?
+  pressaoArterial      String?
+  alturaUterina        Int?     // em cm
+  bcf                  Int?     // Batimentos Cardíacos Fetais
+  movimentosFetais     Boolean?
+  edema                String?  // Ausente, Membros Inferiores, Generalizado
+  apresentacaoFetal    String?  // Cefálica, Pélvica, Transversa
+
+  // Queixas e Orientações
+  queixas              String?  @db.Text
+  orientacoes          String?  @db.Text
+  conduta              String?  @db.Text
+
+  // Próxima Consulta
+  proximaConsulta      DateTime?
+
+  dataConsulta         DateTime @default(now())
+  profissionalId       String
+
+  // Relacionamentos
+  preNatal             AcompanhamentoPreNatal @relation(fields: [preNatalId], references: [id])
+  consultaMedica       ConsultaMedica? @relation(fields: [consultaMedicaId], references: [id])
+
+  @@index([preNatalId])
+  @@map("consultas_pre_natal")
+}
+
+model ExamePreNatal {
+  id                   String   @id @default(cuid())
+  preNatalId           String
+
+  tipoExame            TipoExamePreNatal
+  dataRealizacao       DateTime?
+  dataSolicitacao      DateTime @default(now())
+  resultado            String?  @db.Text
+  observacoes          String?  @db.Text
+
+  // Anexos (resultados em PDF)
+  anexoUrl             String?
+
+  // Relacionamento
+  preNatal             AcompanhamentoPreNatal @relation(fields: [preNatalId], references: [id])
+
+  @@index([preNatalId])
+  @@index([tipoExame])
+  @@map("exames_pre_natal")
+}
+
+enum RiscoGestacional {
+  HABITUAL
+  ALTO_RISCO
+}
+
+enum StatusPreNatal {
+  EM_ANDAMENTO
+  FINALIZADO
+  INTERROMPIDO
+}
+
+enum TipoDesfecho {
+  PARTO_NORMAL
+  CESAREA
+  ABORTO
+  INTERRUPCAO
+}
+
+enum TipoExamePreNatal {
+  HEMOGRAMA
+  GLICEMIA
+  TIPO_SANGUINEO
+  VDRL
+  HIV
+  TOXOPLASMOSE
+  HEPATITE_B
+  HEPATITE_C
+  URINA_ROTINA
+  UROCULTURA
+  ULTRASSOM
+  OUTRO
+}
+
+// ✅ FASE 2.3: VISITA DOMICILIAR (ACS)
+model VisitaDomiciliar {
+  id                   String   @id @default(cuid())
+  acsId                String   // Agente Comunitário de Saúde
+  citizenId            String?  // Cidadão visitado (opcional)
+  domicilioId          String?  // Se houver cadastro domiciliar
+
+  dataVisita           DateTime
+  turno                TurnoVisita?
+
+  tipoVisita           TipoVisita
+  motivoVisita         String   @db.Text
+
+  // Atividades realizadas
+  atividadesRealizadas Json     // Array de atividades
+
+  // Acompanhamentos
+  acompanhamentosRealizados Json? // { hipertensao: true, diabetes: true, gestacao: false }
+
+  // Encaminhamentos
+  encaminhamentoUBS    Boolean  @default(false)
+  motivoEncaminhamento String?  @db.Text
+
+  // Desfecho
+  desfecho             String?  @db.Text
+  observacoes          String?  @db.Text
+
+  // Geolocalização
+  latitude             Float?
+  longitude            Float?
+
+  createdAt            DateTime @default(now())
+
+  // Relacionamento
+  acs                  ProfissionalSaude @relation("ACSVisitas", fields: [acsId], references: [id])
+  citizen              Citizen? @relation(fields: [citizenId], references: [id])
+
+  @@index([acsId, dataVisita])
+  @@index([citizenId])
+  @@index([tipoVisita])
+  @@map("visitas_domiciliares")
+}
+
+enum TurnoVisita {
+  MANHA
+  TARDE
+  NOITE
+}
+
+enum TipoVisita {
+  CADASTRAMENTO
+  ACOMPANHAMENTO
+  BUSCA_ATIVA
+  CONTROLE_AMBIENTAL
+  EDUCACAO_SAUDE
+  CONVOCACAO
+}
+
+// ✅ FASE 2.4: ATIVIDADE COLETIVA
+model AtividadeColetiva {
+  id                   String   @id @default(cuid())
+  unidadeId            String
+  profissionalId       String
+
+  titulo               String
+  tipo                 TipoAtividadeColetiva
+  tema                 String?  @db.Text
+  publicoAlvo          String?
+
+  dataRealizacao       DateTime
+  horaInicio           String   // "14:00"
+  horaFim              String?  // "16:00"
+
+  localRealizacao      String?  // Sala, espaço externo, comunidade
+
+  numParticipantes     Int      @default(0)
+  participantes        ParticipanteAtividade[]
+
+  // Atividades e temas abordados
+  atividadesRealizadas Json?    // Array de atividades
+  temas                Json?    // Temas abordados
+
+  // Avaliação
+  avaliacaoPratica     String?  @db.Text
+  observacoes          String?  @db.Text
+
+  createdAt            DateTime @default(now())
+
+  // Relacionamentos
+  unidade              UnidadeSaude @relation("UnidadeAtividadesColetivas", fields: [unidadeId], references: [id])
+  profissional         ProfissionalSaude @relation("ProfissionalAtividadesColetivas", fields: [profissionalId], references: [id])
+
+  @@index([unidadeId, dataRealizacao])
+  @@index([tipo])
+  @@map("atividades_coletivas")
+}
+
+model ParticipanteAtividade {
+  id                   String   @id @default(cuid())
+  atividadeId          String
+  citizenId            String?
+
+  // Se não for cidadão cadastrado
+  nome                 String?
+  cpf                  String?
+
+  // Avaliações realizadas
+  avaliacaoAlterada    Boolean  @default(false)
+  pesoAferido          Float?
+  alturaAferida        Float?
+  pressaoArterial      String?
+  glicemia             Float?
+
+  observacoes          String?
+
+  // Relacionamentos
+  atividade            AtividadeColetiva @relation(fields: [atividadeId], references: [id])
+  citizen              Citizen? @relation(fields: [citizenId], references: [id])
+
+  @@index([atividadeId])
+  @@map("participantes_atividade")
+}
+
+enum TipoAtividadeColetiva {
+  REUNIAO_EQUIPE
+  GRUPO_EDUCACAO_SAUDE
+  GRUPO_HIPERTENSOS
+  GRUPO_DIABETICOS
+  GRUPO_GESTANTES
+  GRUPO_TABAGISMO
+  GRUPO_SAUDE_MENTAL
+  GRUPO_IDOSOS
+  ATIVIDADE_FISICA
+  AVALIACAO_ALTERADA
+  PALESTRA
+  OFICINA
+  OUTRO
 }
 
 model Prescricao {
@@ -3340,7 +3866,8 @@ model SolicitacaoTFD {
   citizenId      String
   acompanhanteId String?
 
-  especialidade           String
+  especialidadeId         String?  // ✅ NOVO: ID da especialidade vinculada
+  especialidade           String   // Mantido para compatibilidade (pode ser removido após migração)
   procedimento            String
   cid10                   String?
   justificativa           String
@@ -3383,6 +3910,9 @@ model SolicitacaoTFD {
   protocol ProtocolSimplified @relation("TFDProtocol", fields: [protocolId], references: [id], onDelete: Cascade)
   viagens  ViagemTFD[]
 
+  // ✅ NOVO: Relacionamento com especialidade
+  especialidadeMedica EspecialidadeMedica? @relation(fields: [especialidadeId], references: [id])
+
   // Apps Saúde - TFD
   documentos          DocumentoTFD[]
   pareceresRegulacao  ParecerRegulacaoTFD[]
@@ -3394,6 +3924,7 @@ model SolicitacaoTFD {
   @@index([status])
   @@index([workflowId])
   @@index([protocolId])
+  @@index([especialidadeId])
   @@map("solicitacoes_tfd")
 }
 
@@ -6019,4 +6550,256 @@ enum StatusPrestacao {
   EM_ANALISE
   APROVADA
   REJEITADA
+}
+
+// ============================================================================
+// CADASTROS COMPLEMENTARES - SISTEMA DE ATENDIMENTO
+// ============================================================================
+
+// ✅ NOVA TABELA: Salas/Consultórios
+model SalaConsultorio {
+  id             String          @id @default(cuid())
+  nome           String          // "Consultório 1", "Sala de Curativos", "Sala de Enfermagem"
+  numero         String?         // Número da sala/identificação
+  tipo           TipoSala        // Tipo de sala
+  unidadeId      String
+  andar          String?         // Andar onde está localizada
+  capacidade     Int?            // Capacidade de pessoas
+  equipamentos   Json?           // Array de equipamentos disponíveis
+  ativa          Boolean         @default(true)
+  observacoes    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  // Relacionamentos
+  unidade        UnidadeSaude    @relation(fields: [unidadeId], references: [id])
+  agendas        AgendaMedica[]
+
+  @@index([unidadeId, ativa])
+  @@index([tipo, ativa])
+  @@map("salas_consultorios")
+}
+
+// ✅ NOVO: Enum de Tipo de Sala
+enum TipoSala {
+  CONSULTORIO      // Consultório médico
+  ENFERMAGEM       // Sala de enfermagem
+  CURATIVO         // Sala de curativos
+  VACINA           // Sala de vacinação
+  PROCEDIMENTO     // Sala de procedimentos
+  ODONTOLOGIA      // Consultório odontológico
+  PSICOLOGIA       // Sala de psicologia
+  NUTRICAO         // Sala de nutrição
+  FARMACIA         // Farmácia
+  TRIAGEM          // Sala de triagem
+  OUTRO            // Outros tipos
+}
+
+// ✅ NOVA TABELA: Turnos de Trabalho
+model TurnoTrabalho {
+  id               String             @id @default(cuid())
+  nome             String             @unique // "Manhã", "Tarde", "Noite", "Integral"
+  descricao        String?
+  horaInicio       String             // "08:00"
+  horaFim          String             // "12:00"
+  diasSemana       Json?              // Array de dias da semana (opcional, se vazio = todos os dias)
+  cor              String?            // Cor para visualização (ex: "#10B981")
+  ativo            Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  // Relacionamentos
+  agendas          AgendaMedica[]
+
+  @@index([ativo])
+  @@map("turnos_trabalho")
+}
+
+// ✅ NOVA TABELA: Configurações de Atendimento por Unidade
+model ConfiguracaoAtendimento {
+  id                          String        @id @default(cuid())
+  unidadeId                   String        @unique
+
+  // Configurações de Senhas e Filas
+  prefixoSenha                String        @default("A")  // Prefixo para senhas (A, B, C, etc.)
+  reiniciarSenhaDiariamente   Boolean       @default(true)
+  senhaInicial                Int           @default(1)    // Número inicial das senhas
+
+  // Horários de Funcionamento
+  horaAberturaAtendimento     String        @default("07:00")
+  horaFechamentoAtendimento   String        @default("17:00")
+  diasFuncionamento           Json?         // Array de dias da semana (1-7, se vazio = todos)
+
+  // Configurações de Triagem
+  triagemObrigatoria          Boolean       @default(true)
+  tempoMedioTriagem           Int           @default(10)   // Minutos
+
+  // Configurações de Agendamento
+  permitirAgendamento         Boolean       @default(true)
+  limiteAgendamentoDias       Int           @default(30)   // Quantos dias de antecedência permitir
+  permitirCancelamento        Boolean       @default(true)
+  limiteCancelamentoHoras     Int           @default(24)   // Horas antes da consulta
+
+  // Configurações de Atendimento
+  tempoMedioConsulta          Int           @default(30)   // Minutos
+  permitirEncaixe             Boolean       @default(true)
+  limiteEncaixesDia           Int           @default(5)
+
+  // Notificações
+  enviarSMSLembrete           Boolean       @default(false)
+  horasAntesLembrete          Int           @default(24)
+  enviarEmailConfirmacao      Boolean       @default(false)
+
+  // Configurações de Prioridade
+  priorizarIdosos             Boolean       @default(true)
+  priorizarGestantes          Boolean       @default(true)
+  priorizarDeficientes        Boolean       @default(true)
+  idadeMinimaPrioridade       Int           @default(60)
+
+  // Outras configurações
+  observacoes                 String?
+  createdAt                   DateTime      @default(now())
+  updatedAt                   DateTime      @updatedAt
+
+  // Relacionamento
+  unidade                     UnidadeSaude  @relation(fields: [unidadeId], references: [id])
+
+  @@map("configuracoes_atendimento")
+}
+
+// ============================================
+// INTEGRAÇÃO COM PEC e-SUS APS
+// ============================================
+
+// ✅ CONFIGURAÇÃO DE INTEGRAÇÃO e-SUS
+model ConfiguracaoESUS {
+  id                      String   @id @default(cuid())
+  municipioId             String   @unique // Vinculado ao município
+
+  // Configurações de Integração
+  integracaoAtiva         Boolean  @default(false)
+  tipoIntegracao          TipoIntegracaoESUS @default(NENHUMA)
+
+  // Credenciais API REST (PEC v5.3.19+)
+  urlPEC                  String?  // URL da instalação PEC (ex: https://esus.cidade.gov.br)
+  usuarioAPI              String?  // Usuário gerado pelo administrador PEC
+  senhaAPI                String?  // Senha (será criptografada no backend)
+
+  // Configurações LEDI (Thrift/XML)
+  formatoLEDI             FormatoLEDI?
+  versaoLEDI              String?  // Ex: "6.3.8"
+  diretorioExportacao     String?  // Caminho para salvar arquivos LEDI
+
+  // Mapeamentos
+  cnesUnidadePrincipal    String?  // CNES da unidade principal
+  mapeamentoUnidades      Json?    // {digiurbanId: cnes}
+  mapeamentoProfissionais Json?    // {digiurbanId: cns}
+
+  // Sincronização
+  sincronizacaoAutomatica Boolean  @default(false)
+  intervaloSincMinutos    Int      @default(60)
+  ultimaSincronizacao     DateTime?
+  proximaSincronizacao    DateTime?
+
+  // Logs e Auditoria
+  logTransmissoes         Boolean  @default(true)
+  retentarEnviosFalhos    Boolean  @default(true)
+  maxTentativas           Int      @default(3)
+
+  // Observações
+  observacoes             String?
+
+  // Audit
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  createdBy               String?
+
+  // Relacionamentos
+  transmissoes            TransmissaoESUS[]
+
+  @@index([integracaoAtiva])
+  @@map("configuracoes_esus")
+}
+
+// ✅ REGISTRO DE TRANSMISSÕES e-SUS
+model TransmissaoESUS {
+  id                  String   @id @default(cuid())
+  configuracaoId      String
+
+  // Identificação
+  tipo                TipoFichaESUS
+  formato             FormatoLEDI?
+
+  // Dados de Origem
+  fichaId             String   // ID do registro DigiUrban (atendimentoId, consultaId, etc)
+  entidadeOrigem      String?  // Nome da entidade (AtendimentoMedico, ConsultaMedica, etc)
+  nomeArquivo         String?  // Nome do arquivo gerado (se LEDI)
+
+  // Conteúdo (para auditoria)
+  payloadJSON         Json?    // Dados serializados antes da conversão
+  conteudoLEDI        String?  @db.Text // Conteúdo LEDI (XML ou Base64 do Thrift)
+
+  // Status e Resposta
+  status              StatusTransmissao @default(PENDENTE)
+  dataEnvio           DateTime @default(now())
+  dataConfirmacao     DateTime?
+
+  // Resposta do PEC
+  codigoResposta      Int?
+  mensagemResposta    String?
+  erros               Json?    // Erros de validação retornados pelo PEC
+
+  // Retry
+  tentativas          Int      @default(0)
+  proximaTentativa    DateTime?
+  ultimaFalha         DateTime?
+
+  // Audit
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relacionamentos
+  configuracao        ConfiguracaoESUS @relation(fields: [configuracaoId], references: [id])
+
+  @@index([configuracaoId, status])
+  @@index([dataEnvio])
+  @@index([fichaId])
+  @@index([status, proximaTentativa])
+  @@map("transmissoes_esus")
+}
+
+// ✅ ENUMS de Integração e-SUS
+enum TipoIntegracaoESUS {
+  API_REST          // Envio via API REST (PEC v5.3.19+)
+  LEDI_THRIFT       // Arquivo Thrift
+  LEDI_XML          // Arquivo XML
+  NENHUMA
+}
+
+enum FormatoLEDI {
+  THRIFT
+  XML
+}
+
+enum TipoFichaESUS {
+  CADASTRO_INDIVIDUAL
+  CADASTRO_DOMICILIAR
+  ATENDIMENTO_INDIVIDUAL
+  ATENDIMENTO_ODONTOLOGICO
+  ATENDIMENTO_DOMICILIAR
+  VISITA_DOMICILIAR
+  ATIVIDADE_COLETIVA
+  PROCEDIMENTOS
+  VACINACAO
+}
+
+enum StatusTransmissao {
+  PENDENTE
+  ENVIANDO
+  SUCESSO
+  ERRO_VALIDACAO
+  ERRO_CONEXAO
+  ERRO_AUTENTICACAO
+  AGUARDANDO_RETRY
+  CANCELADO
 }

@@ -230,7 +230,7 @@ export default function SecretariaSaudePage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* App 1: Sistema Integrado de Atendimento */}
           <Card
             className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-all cursor-pointer group"
@@ -349,6 +349,47 @@ export default function SecretariaSaudePage() {
                 <Button className="w-full bg-purple-600 hover:bg-purple-700 mt-4 group-hover:shadow-lg transition-all">
                   <ChevronRight className="h-4 w-4 mr-2" />
                   Acessar Sistema
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* App 4: Cadastros e Configurações */}
+          <Card
+            className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/saude/cadastros')}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-3 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                  <IdCard className="h-8 w-8 text-orange-600" />
+                </div>
+                <Badge className="bg-orange-600">Configuração</Badge>
+              </div>
+              <CardTitle className="text-lg group-hover:text-orange-700 transition-colors">
+                Cadastros e Configurações
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Unidades, profissionais, especialidades, salas, turnos, agendas e configurações de atendimento
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  <span>Unidades de saúde (UBS, UPA, Hospital)</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  <span>Profissionais e especialidades</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  <span>Agendas médicas e configurações</span>
+                </div>
+                <Button className="w-full bg-orange-600 hover:bg-orange-700 mt-4 group-hover:shadow-lg transition-all">
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                  Acessar Cadastros
                 </Button>
               </div>
             </CardContent>
