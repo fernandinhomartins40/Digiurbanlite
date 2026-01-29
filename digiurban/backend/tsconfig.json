@@ -42,6 +42,7 @@
     "dist",
     "prisma",
     "**/*.spec.ts",
-    "**/*.test.ts"
+    "**/*.test.ts",
+    "src/apps/saude/**/*"
   ]
 }
