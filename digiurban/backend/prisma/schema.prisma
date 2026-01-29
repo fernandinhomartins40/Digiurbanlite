@@ -91,6 +91,24 @@ model User {
   certificateRequests         CertificateRequest[] @relation("UserCertificateRequests")
   reviewedCertificateRequests CertificateRequest[] @relation("CertificateRequestReviewer")
 
+  // Apps Saúde - Registros médicos
+  allergyRecords      AlergiasCidadao[]         @relation("UserAllergyRecords")
+  comorbidityRecords  ComorbidadesCidadao[]     @relation("UserComorbidityRecords")
+  attachmentUploads   AnexoProntuario[]         @relation("UserAttachmentUploads")
+
+  // Apps Saúde - Farmácia
+  medicationLots              LoteMedicamento[]          @relation("UserMedicationLots")
+  stockTransferRequester      TransferenciaEstoque[]     @relation("UserStockTransferRequester")
+  stockTransferConfirmer      TransferenciaEstoque[]     @relation("UserStockTransferConfirmer")
+
+  // Apps Saúde - TFD
+  tfdDocuments                DocumentoTFD[]              @relation("UserTFDDocuments")
+  tfdRegulations              ParecerRegulacaoTFD[]       @relation("UserTFDRegulations")
+  tfdManagementApprovals      AprovacaoGestaoTFD[]        @relation("UserTFDManagementApprovals")
+  tfdExternalSchedules        AgendamentoExternoTFD[]     @relation("UserTFDExternalSchedules")
+  tfdExpenseReports           PrestacaoContasTFD[]        @relation("UserTFDExpenseReports")
+  tfdExpenseApprovals         PrestacaoContasTFD[]        @relation("UserTFDExpenseApprovals")
+
   @@map("users")
 }
 
@@ -199,6 +217,13 @@ model Citizen {
 
   // Documentos externos para assinatura
   externalDocuments ExternalDocument[] @relation("CitizenExternalDocuments")
+
+  // Apps Saúde
+  alergias            AlergiasCidadao[]        @relation("CitizenAllergies")
+  comorbidades        ComorbidadesCidadao[]    @relation("CitizenComorbidities")
+  anexosProntuario    AnexoProntuario[]        @relation("CitizenMedicalAttachments")
+  imunizacoes         ImunizacaoCidadao[]      @relation("CitizenImmunizations")
+  passageirosTFD      PassageiroViagemTFD[]    @relation("CitizenTFDPassengers")
 
   @@unique([cpf])
   @@map("citizens")
@@ -2287,6 +2312,15 @@ model UnidadeSaude {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // Relacionamentos - Apps Saúde
+  filas                FilaAtendimento[]
+  chamadas             ChamadaPainel[]
+  imunizacoes          ImunizacaoCidadao[]
+  lotesMedicamentos    LoteMedicamento[]
+  transferenciasOrigem TransferenciaEstoque[] @relation("StockTransferOrigin")
+  transferenciasDestino TransferenciaEstoque[] @relation("StockTransferDestination")
+  alertasEstoque       AlertaEstoque[]
+
   @@index([tipo, isActive])
   @@index([isActive])
   @@map("unidades_saude")
@@ -2756,6 +2790,10 @@ model ProfissionalSaude {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
+  // Apps Saúde - Relacionamentos
+  indisponibilidades IndisponibilidadeAgenda[]
+  imunizacoes        ImunizacaoCidadao[]
+
   @@index([categoria, isActive])
   @@index([especialidade, isActive])
   @@index([isActive])
@@ -2916,7 +2954,8 @@ model AgendaMedica {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  consultas ConsultaAgendada[]
+  consultas          ConsultaAgendada[]
+  indisponibilidades IndisponibilidadeAgenda[]
 
   @@index([profissionalId, diaSemana])
   @@index([unidadeId, isActive])
@@ -2935,6 +2974,9 @@ model ConsultaAgendada {
   canceladoPor   String?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+
+  // Apps Saúde - Relacionamentos
+  fila FilaAtendimento?
 
   @@index([agendaId, dataHora])
   @@index([citizenId])
@@ -2982,6 +3024,9 @@ model AtendimentoMedico {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Apps Saúde - Relacionamentos
+  anexos AnexoProntuario[]
 
   @@index([citizenId])
   @@index([unidadeId, dataAtendimento])
@@ -3237,6 +3282,11 @@ model Medicamento {
 
   estoques EstoqueMedicamento[]
 
+  // Apps Saúde - Farmácia
+  lotes              LoteMedicamento[]
+  transferencias     TransferenciaEstoque[]
+  alertas            AlertaEstoque[]
+
   @@index([nome])
   @@index([isRename])
   @@map("medicamentos")
@@ -3333,6 +3383,13 @@ model SolicitacaoTFD {
   protocol ProtocolSimplified @relation("TFDProtocol", fields: [protocolId], references: [id], onDelete: Cascade)
   viagens  ViagemTFD[]
 
+  // Apps Saúde - TFD
+  documentos          DocumentoTFD[]
+  pareceresRegulacao  ParecerRegulacaoTFD[]
+  aprovacoesGestao    AprovacaoGestaoTFD[]
+  agendamentosExternos AgendamentoExternoTFD[]
+  passageiros         PassageiroViagemTFD[]
+
   @@index([citizenId])
   @@index([status])
   @@index([workflowId])
@@ -3380,7 +3437,6 @@ model ViagemTFD {
   veiculo     VeiculoTFD?   @relation(fields: [veiculoId], references: [id])
   motoristaId String?
   motorista   MotoristaTFD? @relation(fields: [motoristaId], references: [id])
-  passageiros Json
 
   kmInicial          Int?
   kmFinal            Int?
@@ -3400,6 +3456,10 @@ model ViagemTFD {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Apps Saúde - TFD
+  passageiros      PassageiroViagemTFD[]
+  prestacaoContas  PrestacaoContasTFD?
 
   @@index([solicitacaoTFDId])
   @@index([veiculoId])
@@ -5529,4 +5589,434 @@ model ExternalDocument {
   @@index([uploadedAt])
   @@index([isActive])
   @@map("external_documents")
+}
+
+// ============================================================================
+// NOVOS MODELOS - APPS SECRETARIA DE SAÚDE
+// ============================================================================
+
+// ============================================================================
+// APP-SAUDE-01: Sistema Integrado de Atendimento - NOVOS MODELOS
+// ============================================================================
+
+model FilaAtendimento {
+  id                String   @id @default(cuid())
+  unidadeId         String
+  consultaId        String   @unique
+  ordem             Int
+  prioridade        Int      @default(0)  // 0=Normal, 1=Preferencial, 2=Urgente
+  status            FilaStatus @default(AGUARDANDO)
+  chamadaEm         DateTime?
+  atendidoEm        DateTime?
+  consultorio       String?
+  observacoes       String?
+  createdAt         DateTime @default(now())
+
+  unidade           UnidadeSaude @relation(fields: [unidadeId], references: [id])
+  consulta          ConsultaAgendada @relation(fields: [consultaId], references: [id])
+  chamadas          ChamadaPainel[]
+
+  @@index([unidadeId])
+  @@index([status])
+  @@index([ordem])
+  @@map("fila_atendimento")
+}
+
+enum FilaStatus {
+  AGUARDANDO
+  CHAMADO
+  EM_ATENDIMENTO
+  FINALIZADO
+  CANCELADO
+}
+
+model ChamadaPainel {
+  id                String   @id @default(cuid())
+  unidadeId         String
+  filaId            String
+  consultorio       String
+  nomePaciente      String
+  mensagem          String?
+  exibidoEm         DateTime @default(now())
+
+  unidade           UnidadeSaude @relation(fields: [unidadeId], references: [id])
+  fila              FilaAtendimento @relation(fields: [filaId], references: [id])
+
+  @@index([unidadeId])
+  @@index([exibidoEm])
+  @@map("chamada_painel")
+}
+
+model IndisponibilidadeAgenda {
+  id                String   @id @default(cuid())
+  agendaId          String
+  profissionalId    String
+  dataInicio        DateTime
+  dataFim           DateTime
+  motivo            String
+  tipoIndisponibilidade TipoIndisponibilidade
+  createdAt         DateTime @default(now())
+
+  agenda            AgendaMedica @relation(fields: [agendaId], references: [id])
+  profissional      ProfissionalSaude @relation(fields: [profissionalId], references: [id])
+
+  @@index([agendaId])
+  @@index([profissionalId])
+  @@index([dataInicio])
+  @@map("indisponibilidade_agenda")
+}
+
+enum TipoIndisponibilidade {
+  FERIAS
+  LICENCA
+  TREINAMENTO
+  REUNIAO
+  OUTRO
+}
+
+model AlergiasCidadao {
+  id                String   @id @default(cuid())
+  citizenId         String
+  alergia           String
+  gravidade         GravidadeAlergia
+  observacoes       String?
+  dataRegistro      DateTime @default(now())
+  usuarioRegistro   String
+
+  citizen           Citizen @relation("CitizenAllergies", fields: [citizenId], references: [id])
+  usuario           User @relation("UserAllergyRecords", fields: [usuarioRegistro], references: [id])
+
+  @@index([citizenId])
+  @@map("alergias_cidadao")
+}
+
+enum GravidadeAlergia {
+  LEVE
+  MODERADA
+  GRAVE
+}
+
+model ComorbidadesCidadao {
+  id                String   @id @default(cuid())
+  citizenId         String
+  cid10             String
+  descricao         String
+  dataInicio        DateTime?
+  dataFim           DateTime?
+  ativo             Boolean  @default(true)
+  observacoes       String?
+  dataRegistro      DateTime @default(now())
+  usuarioRegistro   String
+
+  citizen           Citizen @relation("CitizenComorbidities", fields: [citizenId], references: [id])
+  usuario           User @relation("UserComorbidityRecords", fields: [usuarioRegistro], references: [id])
+
+  @@index([citizenId])
+  @@index([ativo])
+  @@map("comorbidades_cidadao")
+}
+
+model AnexoProntuario {
+  id                String   @id @default(cuid())
+  citizenId         String
+  atendimentoId     String?
+  tipoDocumento     TipoDocumentoAnexo
+  nomeArquivo       String
+  caminhoArquivo    String
+  tamanho           Int
+  mimeType          String
+  descricao         String?
+  dataUpload        DateTime @default(now())
+  usuarioUpload     String
+
+  citizen           Citizen @relation("CitizenMedicalAttachments", fields: [citizenId], references: [id])
+  atendimento       AtendimentoMedico? @relation(fields: [atendimentoId], references: [id])
+  usuario           User @relation("UserAttachmentUploads", fields: [usuarioUpload], references: [id])
+
+  @@index([citizenId])
+  @@index([atendimentoId])
+  @@map("anexo_prontuario")
+}
+
+enum TipoDocumentoAnexo {
+  EXAME
+  LAUDO
+  RECEITA
+  ATESTADO
+  ENCAMINHAMENTO
+  IMAGEM
+  OUTRO
+}
+
+model ImunizacaoCidadao {
+  id                String   @id @default(cuid())
+  citizenId         String
+  vacina            String
+  dose              String
+  lote              String?
+  dataAplicacao     DateTime
+  unidadeId         String?
+  profissionalId    String?
+  observacoes       String?
+
+  citizen           Citizen @relation("CitizenImmunizations", fields: [citizenId], references: [id])
+  unidade           UnidadeSaude? @relation(fields: [unidadeId], references: [id])
+  profissional      ProfissionalSaude? @relation(fields: [profissionalId], references: [id])
+
+  @@index([citizenId])
+  @@index([dataAplicacao])
+  @@map("imunizacao_cidadao")
+}
+
+// ============================================================================
+// APP-SAUDE-02: Farmácia Municipal - NOVOS MODELOS
+// ============================================================================
+
+model LoteMedicamento {
+  id                String   @id @default(cuid())
+  medicamentoId     String
+  lote              String
+  dataFabricacao    DateTime
+  dataValidade      DateTime
+  quantidade        Int
+  unidadeId         String
+  fornecedor        String?
+  notaFiscal        String?
+  dataEntrada       DateTime @default(now())
+  usuarioRegistro   String
+
+  medicamento       Medicamento @relation(fields: [medicamentoId], references: [id])
+  unidade           UnidadeSaude @relation(fields: [unidadeId], references: [id])
+  usuario           User @relation("UserMedicationLots", fields: [usuarioRegistro], references: [id])
+
+  @@index([medicamentoId])
+  @@index([unidadeId])
+  @@index([dataValidade])
+  @@map("lote_medicamento")
+}
+
+model TransferenciaEstoque {
+  id                String   @id @default(cuid())
+  medicamentoId     String
+  unidadeOrigemId   String
+  unidadeDestinoId  String
+  quantidade        Int
+  motivo            String?
+  status            StatusTransferencia @default(PENDENTE)
+  dataSolicitacao   DateTime @default(now())
+  dataConfirmacao   DateTime?
+  usuarioSolicitante String
+  usuarioConfirmante String?
+
+  medicamento       Medicamento @relation(fields: [medicamentoId], references: [id])
+  unidadeOrigem     UnidadeSaude @relation("StockTransferOrigin", fields: [unidadeOrigemId], references: [id])
+  unidadeDestino    UnidadeSaude @relation("StockTransferDestination", fields: [unidadeDestinoId], references: [id])
+  usuarioSolic      User @relation("UserStockTransferRequester", fields: [usuarioSolicitante], references: [id])
+  usuarioConf       User? @relation("UserStockTransferConfirmer", fields: [usuarioConfirmante], references: [id])
+
+  @@index([medicamentoId])
+  @@index([unidadeOrigemId])
+  @@index([unidadeDestinoId])
+  @@index([status])
+  @@map("transferencia_estoque")
+}
+
+enum StatusTransferencia {
+  PENDENTE
+  APROVADA
+  REJEITADA
+  FINALIZADA
+}
+
+model AlertaEstoque {
+  id                String   @id @default(cuid())
+  medicamentoId     String
+  unidadeId         String
+  tipoAlerta        TipoAlertaEstoque
+  mensagem          String
+  quantidadeAtual   Int
+  quantidadeMinima  Int?
+  dataVencimento    DateTime?
+  visualizado       Boolean  @default(false)
+  dataGeracao       DateTime @default(now())
+
+  medicamento       Medicamento @relation(fields: [medicamentoId], references: [id])
+  unidade           UnidadeSaude @relation(fields: [unidadeId], references: [id])
+
+  @@index([medicamentoId])
+  @@index([unidadeId])
+  @@index([tipoAlerta])
+  @@index([visualizado])
+  @@map("alerta_estoque")
+}
+
+enum TipoAlertaEstoque {
+  ESTOQUE_BAIXO
+  ESTOQUE_CRITICO
+  VENCIMENTO_PROXIMO
+  VENCIDO
+}
+
+// ============================================================================
+// APP-SAUDE-03: TFD - NOVOS MODELOS
+// ============================================================================
+
+model DocumentoTFD {
+  id                String   @id @default(cuid())
+  solicitacaoId     String
+  tipoDocumento     TipoDocumentoTFD
+  nomeArquivo       String
+  caminhoArquivo    String
+  tamanho           Int
+  mimeType          String
+  dataUpload        DateTime @default(now())
+  usuarioUpload     String
+
+  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  usuario           User @relation("UserTFDDocuments", fields: [usuarioUpload], references: [id])
+
+  @@index([solicitacaoId])
+  @@map("documento_tfd")
+}
+
+enum TipoDocumentoTFD {
+  LAUDO_MEDICO
+  PEDIDO_MEDICO
+  EXAMES
+  RG
+  CPF
+  CARTAO_SUS
+  COMPROVANTE_RESIDENCIA
+  OUTRO
+}
+
+model ParecerRegulacaoTFD {
+  id                String   @id @default(cuid())
+  solicitacaoId     String
+  medicoReguladorId String
+  parecer           String   @db.Text
+  status            StatusParecer
+  observacoes       String?
+  dataParecer       DateTime @default(now())
+
+  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  medicoRegulador   User @relation("UserTFDRegulations", fields: [medicoReguladorId], references: [id])
+
+  @@index([solicitacaoId])
+  @@index([status])
+  @@map("parecer_regulacao_tfd")
+}
+
+enum StatusParecer {
+  APROVADO
+  REPROVADO
+  PENDENTE_DOCUMENTACAO
+}
+
+model AprovacaoGestaoTFD {
+  id                String   @id @default(cuid())
+  solicitacaoId     String
+  gestorId          String
+  decisao           DecisaoGestao
+  justificativa     String?
+  recursosAprovados Json?  // { transporte: true, hospedagem: false, alimentacao: true }
+  dataAprovacao     DateTime @default(now())
+
+  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  gestor            User @relation("UserTFDManagementApprovals", fields: [gestorId], references: [id])
+
+  @@index([solicitacaoId])
+  @@index([decisao])
+  @@map("aprovacao_gestao_tfd")
+}
+
+enum DecisaoGestao {
+  APROVADO
+  REPROVADO
+  APROVADO_PARCIAL
+}
+
+model AgendamentoExternoTFD {
+  id                String   @id @default(cuid())
+  solicitacaoId     String
+  hospitalDestino   String
+  especialidade     String
+  dataHoraConsulta  DateTime
+  endereco          String?
+  telefoneContato   String?
+  confirmado        Boolean  @default(false)
+  observacoes       String?
+  dataAgendamento   DateTime @default(now())
+  usuarioAgendamento String
+
+  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  usuario           User @relation("UserTFDExternalSchedules", fields: [usuarioAgendamento], references: [id])
+
+  @@index([solicitacaoId])
+  @@index([dataHoraConsulta])
+  @@map("agendamento_externo_tfd")
+}
+
+model PassageiroViagemTFD {
+  id                String   @id @default(cuid())
+  viagemId          String
+  solicitacaoId     String
+  citizenId         String
+  acompanhante      Boolean  @default(false)
+  nomeAcompanhante  String?
+  cpfAcompanhante   String?
+  statusEmbarque    StatusEmbarque @default(AGUARDANDO)
+  observacoes       String?
+
+  viagem            ViagemTFD @relation(fields: [viagemId], references: [id])
+  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  citizen           Citizen @relation("CitizenTFDPassengers", fields: [citizenId], references: [id])
+
+  @@index([viagemId])
+  @@index([solicitacaoId])
+  @@index([citizenId])
+  @@map("passageiro_viagem_tfd")
+}
+
+enum StatusEmbarque {
+  AGUARDANDO
+  EMBARCADO
+  AUSENTE
+  CANCELADO
+}
+
+model PrestacaoContasTFD {
+  id                String   @id @default(cuid())
+  viagemId          String   @unique
+  combustivelLitros Float
+  combustivelValor  Float
+  pedagioQuantidade Int
+  pedagioValor      Float
+  alimentacaoValor  Float?
+  hospedagemDiarias Int?
+  hospedagemValor   Float?
+  outrosCustos      Json?
+  valorTotal        Float
+  comprovantesAnexados Json?  // Array de caminhos de arquivos
+  status            StatusPrestacao @default(PENDENTE)
+  observacoes       String?
+  dataPrestacao     DateTime @default(now())
+  usuarioPrestacao  String
+  dataAprovacao     DateTime?
+  usuarioAprovacao  String?
+
+  viagem            ViagemTFD @relation(fields: [viagemId], references: [id])
+  usuarioPrest      User @relation("UserTFDExpenseReports", fields: [usuarioPrestacao], references: [id])
+  usuarioAprov      User? @relation("UserTFDExpenseApprovals", fields: [usuarioAprovacao], references: [id])
+
+  @@index([viagemId])
+  @@index([status])
+  @@map("prestacao_contas_tfd")
+}
+
+enum StatusPrestacao {
+  PENDENTE
+  EM_ANALISE
+  APROVADA
+  REJEITADA
 }

@@ -432,6 +432,38 @@ try { console.log('   → service-workflows (novo)...'); app.use('/api/service-w
 // ✅ Notificações SSE
 try { console.log('   → notifications (SSE)...'); app.use('/api/notifications', require('./routes/notifications.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ notifications:', e); }
 
+// ============================================================
+// 🏥 ROTAS DE SAÚDE - APPS INTEGRADOS
+// ============================================================
+console.log('🏥 Carregando rotas dos Apps de Saúde...');
+try {
+  console.log('   → APP-SAUDE-01: Sistema Integrado de Atendimento...');
+  const saudeAtendimentoRoutes = require('./routes/saude-atendimento.routes').default;
+  app.use('/api/saude/atendimento', saudeAtendimentoRoutes);
+  console.log('   ✅ APP-SAUDE-01 carregado (~52 endpoints)');
+} catch (e) {
+  console.error('❌ Erro ao carregar APP-SAUDE-01:', e);
+}
+
+try {
+  console.log('   → APP-SAUDE-02: Farmácia Municipal...');
+  const saudeFarmaciaRoutes = require('./routes/saude-farmacia.routes').default;
+  app.use('/api/saude/farmacia', saudeFarmaciaRoutes);
+  console.log('   ✅ APP-SAUDE-02 carregado (~28 endpoints)');
+} catch (e) {
+  console.error('❌ Erro ao carregar APP-SAUDE-02:', e);
+}
+
+try {
+  console.log('   → APP-SAUDE-03: TFD (Tratamento Fora do Domicílio)...');
+  const saudeTFDRoutes = require('./routes/saude-tfd.routes').default;
+  app.use('/api/saude/tfd', saudeTFDRoutes);
+  console.log('   ✅ APP-SAUDE-03 carregado (~52 endpoints)');
+} catch (e) {
+  console.error('❌ Erro ao carregar APP-SAUDE-03:', e);
+}
+console.log('✅ Apps de Saúde carregados com sucesso! Total: ~132 endpoints');
+
 console.log('✅ Todas as rotas carregadas com sucesso!');
 
 // ============================================================

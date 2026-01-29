@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      color: #333;
+      padding: 40px;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #0066cc;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #0066cc;
+      margin: 0;
+      font-size: 24pt;
+    }
+    .info-box {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .info-row {
+      margin: 8px 0;
+    }
+    .info-label {
+      font-weight: bold;
+      display: inline-block;
+      min-width: 180px;
+    }
+    .encaminhamento-content {
+      background: white;
+      border: 3px solid #0066cc;
+      border-radius: 10px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .prioridade {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .prioridade-urgencia { background: #ffebee; color: #c62828; border: 2px solid #c62828; }
+    .prioridade-prioridade { background: #fff3e0; color: #e65100; border: 2px solid #e65100; }
+    .prioridade-rotina { background: #e8f5e9; color: #2e7d32; border: 2px solid #2e7d32; }
+    .assinatura {
+      margin-top: 80px;
+      text-align: center;
+    }
+    .assinatura-linha {
+      border-top: 2px solid #333;
+      width: 350px;
+      margin: 0 auto 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔄 ENCAMINHAMENTO MÉDICO</h1>
+    <p>{{tipoEncaminhamentoTexto}}</p>
+  </div>
+
+  <div class="info-box">
+    <h3 style="margin: 0 0 15px 0; color: #0066cc;">Dados do Paciente</h3>
+    <div class="info-row">
+      <span class="info-label">Nome:</span>
+      <span>{{pacienteNome}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">CPF:</span>
+      <span>{{formatCPF pacienteCpf}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Data de Nascimento:</span>
+      <span>{{formatDate pacienteDataNascimento}}</span>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <h3 style="margin: 0 0 15px 0; color: #0066cc;">Profissional Solicitante</h3>
+    <div class="info-row">
+      <span class="info-label">Nome:</span>
+      <span>{{profissionalNome}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">CRM:</span>
+      <span>{{profissionalCrm}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Especialidade:</span>
+      <span>{{profissionalEspecialidade}}</span>
+    </div>
+  </div>
+
+  <div class="encaminhamento-content">
+    <h3 style="color: #0066cc;">ENCAMINHAMENTO PARA:</h3>
+    <p style="font-size: 16pt; font-weight: bold; margin: 15px 0;">{{especialidadeDestino}}</p>
+
+    <div style="margin: 20px 0;">
+      <span class="prioridade prioridade-{{prioridadeClass}}">{{prioridadeTexto}}</span>
+    </div>
+
+    <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h4 style="margin: 0 0 10px 0;">Diagnóstico</h4>
+      <p>{{diagnostico}}</p>
+      {{#if cid10}}
+      <p style="margin-top: 10px;"><strong>CID-10:</strong> {{cid10}}</p>
+      {{/if}}
+    </div>
+
+    <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h4 style="margin: 0 0 10px 0;">Justificativa</h4>
+      <p>{{justificativa}}</p>
+    </div>
+
+    {{#if observacoes}}
+    <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+      <h4 style="margin: 0 0 10px 0;">Observações</h4>
+      <p>{{observacoes}}</p>
+    </div>
+    {{/if}}
+  </div>
+
+  <div style="background: #e3f2fd; border: 2px solid #0066cc; padding: 15px; text-align: center; margin: 20px 0;">
+    <div>🔐 <strong>Código de Validação</strong></div>
+    <div style="font-family: 'Courier New', monospace; font-size: 18pt; font-weight: bold; color: #0066cc; margin: 10px 0;">
+      {{validationCode}}
+    </div>
+  </div>
+
+  <div class="assinatura">
+    <div class="assinatura-linha"></div>
+    <div>
+      <strong>{{profissionalNome}}</strong><br>
+      {{profissionalCrm}}<br>
+      {{formatDate dataEmissao}}
+    </div>
+  </div>
+</body>
+</html>

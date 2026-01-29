@@ -122,7 +122,8 @@
       "Bash(tree:*)",
       "Bash(git mv:*)",
       "Bash(Assinatura\" no frontend do admin, mesmo após serem assinados com sucesso.\n\nCausa raiz: O método getGeneratedDocuments\\(\\) no document-generator.service\nestava retornando todos os campos do documento EXCETO o campo isSigned.\nIsso fazia com que o frontend recebesse isSigned como undefined, e a\ncondição !doc.isSigned avaliava como true, mostrando todos os documentos\ncomo pendentes.\n\nSolução: Adicionar o campo isSigned à resposta da API, garantindo que o\nfrontend receba o status correto de assinatura do documento.\n\nArquivos alterados:\n- document-generator.service.ts: Adicionado isSigned à resposta \\(linha 697\\)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(cut:*)"
     ],
     "deny": [],
     "ask": []

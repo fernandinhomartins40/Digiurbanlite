@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      color: #333;
+      padding: 40px;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #0066cc;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #0066cc;
+      margin: 0;
+      font-size: 28pt;
+    }
+    .header p {
+      margin: 5px 0;
+      font-size: 11pt;
+      color: #666;
+    }
+    .info-box {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+    .info-row {
+      margin: 8px 0;
+    }
+    .info-label {
+      font-weight: bold;
+      display: inline-block;
+      min-width: 180px;
+    }
+    .atestado-content {
+      background: white;
+      border: 3px solid #0066cc;
+      border-radius: 10px;
+      padding: 30px;
+      margin: 30px 0;
+      text-align: justify;
+      font-size: 14pt;
+      line-height: 2;
+    }
+    .destaque {
+      background: #fff3cd;
+      border-left: 5px solid #ffc107;
+      padding: 20px;
+      margin: 20px 0;
+      font-size: 15pt;
+      font-weight: bold;
+      text-align: center;
+    }
+    .cid-info {
+      background: #e3f2fd;
+      border: 2px solid #0066cc;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+    .assinatura {
+      margin-top: 80px;
+      text-align: center;
+    }
+    .assinatura-linha {
+      border-top: 2px solid #333;
+      width: 350px;
+      margin: 0 auto 10px;
+    }
+    .codigo-validacao {
+      background: #e3f2fd;
+      border: 2px solid #0066cc;
+      padding: 15px;
+      text-align: center;
+      margin: 30px 0;
+      font-size: 11pt;
+    }
+    .codigo-validacao .codigo {
+      font-family: 'Courier New', monospace;
+      font-size: 18pt;
+      font-weight: bold;
+      color: #0066cc;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🏥 ATESTADO MÉDICO</h1>
+    <p>{{tipoAtestadoTexto}}</p>
+  </div>
+
+  <div class="info-box">
+    <h3 style="margin: 0 0 15px 0; color: #0066cc;">Dados do Profissional</h3>
+    <div class="info-row">
+      <span class="info-label">Nome:</span>
+      <span>{{profissionalNome}}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">CRM:</span>
+      <span>{{profissionalCrm}}</span>
+    </div>
+    {{#if profissionalEspecialidade}}
+    <div class="info-row">
+      <span class="info-label">Especialidade:</span>
+      <span>{{profissionalEspecialidade}}</span>
+    </div>
+    {{/if}}
+    <div class="info-row">
+      <span class="info-label">Unidade de Saúde:</span>
+      <span>{{unidadeSaude}}</span>
+    </div>
+  </div>
+
+  <div class="atestado-content">
+    <p style="text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 30px;">
+      ATESTO PARA OS DEVIDOS FINS
+    </p>
+
+    <p>
+      Que o(a) Sr(a). <strong style="text-decoration: underline;">{{pacienteNome}}</strong>,
+      portador(a) do CPF <strong>{{formatCPF pacienteCpf}}</strong>,
+      {{#if pacienteDataNascimento}}
+      nascido(a) em <strong>{{formatDate pacienteDataNascimento}}</strong>,
+      {{/if}}
+      {{#if pacienteEndereco}}
+      residente em <strong>{{pacienteEndereco}}</strong>,
+      {{/if}}
+      esteve sob meus cuidados médicos nesta data.
+    </p>
+
+    {{#if eq tipoAtestado "MEDICO"}}
+    <p style="margin-top: 30px;">
+      Necessitando de afastamento de suas atividades laborais por motivo de saúde,
+      pelo período de <strong style="font-size: 18pt; color: #0066cc;">{{diasAfastamento}}
+      {{#if eq diasAfastamento 1}}dia{{else}}dias{{/if}}</strong>,
+      compreendido entre <strong>{{formatDate dataInicio}}</strong> e
+      <strong>{{formatDate dataFim}}</strong>.
+    </p>
+    {{/if}}
+
+    {{#if eq tipoAtestado "COMPARECIMENTO"}}
+    <p style="margin-top: 30px;">
+      Compareceu à consulta médica nesta data, permanecendo sob cuidados médicos
+      das <strong>{{horarioInicio}}</strong> às <strong>{{horarioFim}}</strong>.
+    </p>
+    {{/if}}
+
+    {{#if eq tipoAtestado "ACOMPANHANTE"}}
+    <p style="margin-top: 30px;">
+      Necessitando de acompanhante durante o período de
+      <strong style="font-size: 18pt; color: #0066cc;">{{diasAfastamento}}
+      {{#if eq diasAfastamento 1}}dia{{else}}dias{{/if}}</strong>,
+      compreendido entre <strong>{{formatDate dataInicio}}</strong> e
+      <strong>{{formatDate dataFim}}</strong>.
+    </p>
+    {{/if}}
+
+    {{#if observacoes}}
+    <p style="margin-top: 30px; background: #f5f5f5; padding: 15px; border-radius: 5px;">
+      <strong>Observações:</strong><br>
+      {{observacoes}}
+    </p>
+    {{/if}}
+  </div>
+
+  {{#if eq tipoAtestado "MEDICO"}}
+  <div class="destaque">
+    ⏱️ Afastamento: {{diasAfastamento}} {{#if eq diasAfastamento 1}}dia{{else}}dias{{/if}}<br>
+    📅 Período: {{formatDate dataInicio}} a {{formatDate dataFim}}
+  </div>
+  {{/if}}
+
+  {{#if cid10}}
+  <div class="cid-info">
+    <strong>CID-10:</strong> {{cid10}}<br>
+    <span style="font-size: 10pt; color: #666;">
+      Código Internacional de Doenças - 10ª Revisão
+    </span>
+  </div>
+  {{/if}}
+
+  <div class="codigo-validacao">
+    <div>🔐 <strong>Código de Validação</strong></div>
+    <div class="codigo">{{validationCode}}</div>
+    <div style="font-size: 9pt; color: #666;">
+      Verifique a autenticidade deste documento em:<br>
+      https://digiurban.com.br/validar-documento
+    </div>
+  </div>
+
+  <p style="text-align: center; margin-top: 40px;">
+    {{unidadeSaude}}, {{formatDate dataEmissao}}
+  </p>
+
+  <div class="assinatura">
+    <div class="assinatura-linha"></div>
+    <div style="margin-top: 10px;">
+      <strong style="font-size: 14pt;">{{profissionalNome}}</strong><br>
+      <span style="font-size: 12pt;">{{profissionalCrm}}</span><br>
+      {{#if profissionalEspecialidade}}
+      <span style="font-size: 11pt;">{{profissionalEspecialidade}}</span><br>
+      {{/if}}
+    </div>
+  </div>
+
+  <div style="font-size: 9pt; color: #666; text-align: center; margin-top: 60px; border-top: 1px solid #e0e0e0; padding-top: 20px;">
+    <p>Documento gerado eletronicamente pelo Sistema DigiUrban Saúde</p>
+    <p>Este documento possui validade jurídica conforme MP 2.200-2/2001 e Lei 14.063/2020</p>
+  </div>
+</body>
+</html>
