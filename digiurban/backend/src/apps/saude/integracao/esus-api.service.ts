@@ -98,7 +98,7 @@ export class ESusApiService {
       this.logger.log('Autenticação bem-sucedida');
       return cookie;
     } catch (error) {
-      this.logger.error(`Erro na autenticação: ${error.message}`);
+      this.logger.error(`Erro na autenticação: ${error instanceof Error ? error instanceof Error ? error.message : 'Erro desconhecido' : 'Erro desconhecido'}`);
       throw error;
     }
   }
@@ -163,7 +163,7 @@ export class ESusApiService {
         throw new Error(`Erro HTTP ${statusCode}: ${errorText}`);
       }
     } catch (error) {
-      this.logger.error(`Erro ao enviar ficha: ${error.message}`);
+      this.logger.error(`Erro ao enviar ficha: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
       throw error;
     }
   }
@@ -237,8 +237,8 @@ export class ESusApiService {
       await this.prisma.transmissaoESUS.update({
         where: { id: transmissao.id },
         data: {
-          status: error.message.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
-          mensagemResposta: error.message,
+          status: error instanceof Error ? error.message : 'Erro desconhecido'.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
+          mensagemResposta: error instanceof Error ? error.message : 'Erro desconhecido',
           tentativas: transmissao.tentativas + 1,
           ultimaFalha: new Date(),
           proximaTentativa:
@@ -297,8 +297,8 @@ export class ESusApiService {
       await this.prisma.transmissaoESUS.update({
         where: { id: transmissao.id },
         data: {
-          status: error.message.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
-          mensagemResposta: error.message,
+          status: error instanceof Error ? error.message : 'Erro desconhecido'.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
+          mensagemResposta: error instanceof Error ? error.message : 'Erro desconhecido',
           tentativas: transmissao.tentativas + 1,
           ultimaFalha: new Date(),
           proximaTentativa:
@@ -357,8 +357,8 @@ export class ESusApiService {
       await this.prisma.transmissaoESUS.update({
         where: { id: transmissao.id },
         data: {
-          status: error.message.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
-          mensagemResposta: error.message,
+          status: error instanceof Error ? error.message : 'Erro desconhecido'.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
+          mensagemResposta: error instanceof Error ? error.message : 'Erro desconhecido',
           tentativas: transmissao.tentativas + 1,
           ultimaFalha: new Date(),
           proximaTentativa:
@@ -417,8 +417,8 @@ export class ESusApiService {
       await this.prisma.transmissaoESUS.update({
         where: { id: transmissao.id },
         data: {
-          status: error.message.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
-          mensagemResposta: error.message,
+          status: error instanceof Error ? error.message : 'Erro desconhecido'.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
+          mensagemResposta: error instanceof Error ? error.message : 'Erro desconhecido',
           tentativas: transmissao.tentativas + 1,
           ultimaFalha: new Date(),
           proximaTentativa:
@@ -477,8 +477,8 @@ export class ESusApiService {
       await this.prisma.transmissaoESUS.update({
         where: { id: transmissao.id },
         data: {
-          status: error.message.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
-          mensagemResposta: error.message,
+          status: error instanceof Error ? error.message : 'Erro desconhecido'.includes('autenticação') ? 'ERRO_AUTENTICACAO' : 'ERRO_CONEXAO',
+          mensagemResposta: error instanceof Error ? error.message : 'Erro desconhecido',
           tentativas: transmissao.tentativas + 1,
           ultimaFalha: new Date(),
           proximaTentativa:
@@ -553,7 +553,7 @@ export class ESusApiService {
 
         sucesso++;
       } catch (error) {
-        this.logger.error(`Erro ao processar transmissão ${transmissao.id}: ${error.message}`);
+        this.logger.error(`Erro ao processar transmissão ${transmissao.id}: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         erros++;
       }
 

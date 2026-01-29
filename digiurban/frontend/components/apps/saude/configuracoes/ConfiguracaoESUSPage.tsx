@@ -34,37 +34,7 @@ import {
   Eye,
   EyeOff
 } from "lucide-react"
-
-interface ConfiguracaoESUS {
-  id?: string
-  integracaoAtiva: boolean
-  tipoIntegracao: 'API_REST' | 'LEDI_THRIFT' | 'LEDI_XML' | 'NENHUMA'
-
-  // API REST
-  urlPEC?: string
-  usuarioAPI?: string
-  senhaAPI?: string
-
-  // LEDI
-  formatoLEDI?: 'THRIFT' | 'XML'
-  versaoLEDI?: string
-  diretorioExportacao?: string
-
-  // Mapeamentos
-  cnesUnidadePrincipal?: string
-
-  // Sincronização
-  sincronizacaoAutomatica: boolean
-  intervaloSincMinutos: number
-  ultimaSincronizacao?: string
-
-  // Logs
-  logTransmissoes: boolean
-  retentarEnviosFalhos: boolean
-  maxTentativas: number
-
-  observacoes?: string
-}
+import type { ConfiguracaoESUS, TipoIntegracaoESUS, FormatoLEDI } from "@/types/saude"
 
 interface StatusConexao {
   status: 'success' | 'error' | 'warning' | 'info'
@@ -80,7 +50,7 @@ export default function ConfiguracaoESUSPage() {
 
   const [config, setConfig] = useState<ConfiguracaoESUS>({
     integracaoAtiva: false,
-    tipoIntegracao: 'NENHUMA',
+    tipoIntegracao: 'NENHUMA' as TipoIntegracaoESUS,
     sincronizacaoAutomatica: false,
     intervaloSincMinutos: 60,
     logTransmissoes: true,

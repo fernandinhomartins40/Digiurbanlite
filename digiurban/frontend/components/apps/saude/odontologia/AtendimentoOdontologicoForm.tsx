@@ -15,16 +15,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select"
-import { Plus, Save, Tooth, X } from "lucide-react"
-
-interface Procedimento {
-  id: string
-  codigoSIGTAP: string
-  descricao: string
-  dente?: string
-  face?: string
-  quantidade: number
-}
+import { Plus, Save, X } from "lucide-react"
+import type { ProcedimentoOdonto, Odontograma, CondicaoDente, FaceDente } from "@/types/saude"
 
 interface AtendimentoOdontologicoFormProps {
   atendimentoId: string
@@ -37,19 +29,33 @@ export default function AtendimentoOdontologicoForm({
 }: AtendimentoOdontologicoFormProps) {
   const [loading, setLoading] = useState(false)
   const [denteSelecionado, setDenteSelecionado] = useState<string | null>(null)
-  const [procedimentos, setProcedimentos] = useState<Procedimento[]>([])
+  const [procedimentos, setProcedimentos] = useState<ProcedimentoOdonto[]>([])
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    queixaPrincipal: string
+    exameBucal: string
+    diagnostico: string
+    planoTratamento: string
+    orientacoes: string
+    observacoes: string
+    odontograma: Odontograma
+  }>({
     queixaPrincipal: '',
     exameBucal: '',
     diagnostico: '',
     planoTratamento: '',
     orientacoes: '',
     observacoes: '',
-    odontograma: {} as Record<string, any>
+    odontograma: {}
   })
 
-  const [novoProcedimento, setNovoProcedimento] = useState({
+  const [novoProcedimento, setNovoProcedimento] = useState<{
+    codigoSIGTAP: string
+    descricao: string
+    dente: string
+    face: string
+    quantidade: number
+  }>({
     codigoSIGTAP: '',
     descricao: '',
     dente: '',
@@ -90,7 +96,7 @@ export default function AtendimentoOdontologicoForm({
         ...prev.odontograma,
         [dente]: {
           ...prev.odontograma[dente],
-          condicao
+          condicao: condicao as CondicaoDente
         }
       }
     }))
@@ -102,9 +108,13 @@ export default function AtendimentoOdontologicoForm({
       return
     }
 
-    const procedimento: Procedimento = {
+    const procedimento: ProcedimentoOdonto = {
       id: `proc-${Date.now()}`,
-      ...novoProcedimento
+      codigoSIGTAP: novoProcedimento.codigoSIGTAP,
+      descricao: novoProcedimento.descricao,
+      dente: novoProcedimento.dente || undefined,
+      face: (novoProcedimento.face as FaceDente) || undefined,
+      quantidade: novoProcedimento.quantidade
     }
 
     setProcedimentos(prev => [...prev, procedimento])
@@ -147,7 +157,6 @@ export default function AtendimentoOdontologicoForm({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Tooth className="h-5 w-5" />
             Odontograma
           </CardTitle>
           <CardDescription>

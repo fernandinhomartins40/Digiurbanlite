@@ -24,17 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus, AlertTriangle, Edit2, Trash2, ShieldAlert } from "lucide-react"
-
-interface AlergiaReacao {
-  id: string
-  tipo: 'MEDICAMENTO' | 'ALIMENTO' | 'AMBIENTAL' | 'CONTATO' | 'LATEX' | 'OUTRA'
-  substancia: string
-  reacao: string
-  gravidade: 'LEVE' | 'MODERADA' | 'GRAVE' | 'ANAFILAXIA'
-  dataIdentificacao: Date
-  ativo: boolean
-  observacoes?: string
-}
+import type { AlergiaReacao, TipoAlergia, GravidadeAlergia } from "@/types/saude"
 
 interface AlergiasReacoesCardProps {
   citizenId: string
@@ -47,11 +37,17 @@ export default function AlergiasReacoesCard({ citizenId, showAlert = true }: Ale
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editando, setEditando] = useState<AlergiaReacao | null>(null)
 
-  const [formData, setFormData] = useState({
-    tipo: 'MEDICAMENTO' as AlergiaReacao['tipo'],
+  const [formData, setFormData] = useState<{
+    tipo: TipoAlergia
+    substancia: string
+    reacao: string
+    gravidade: GravidadeAlergia
+    observacoes: string
+  }>({
+    tipo: 'MEDICAMENTO',
     substancia: '',
     reacao: '',
-    gravidade: 'LEVE' as AlergiaReacao['gravidade'],
+    gravidade: 'LEVE',
     observacoes: ''
   })
 
@@ -161,7 +157,7 @@ export default function AlergiasReacoesCard({ citizenId, showAlert = true }: Ale
   }
 
   const getGravidadeColor = (gravidade: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       'LEVE': 'bg-yellow-100 text-yellow-800 border-yellow-300',
       'MODERADA': 'bg-orange-100 text-orange-800 border-orange-300',
       'GRAVE': 'bg-red-100 text-red-800 border-red-300',
@@ -171,7 +167,7 @@ export default function AlergiasReacoesCard({ citizenId, showAlert = true }: Ale
   }
 
   const getTipoLabel = (tipo: string) => {
-    const labels = {
+    const labels: Record<string, string> = {
       'MEDICAMENTO': 'Medicamento',
       'ALIMENTO': 'Alimento',
       'AMBIENTAL': 'Ambiental',

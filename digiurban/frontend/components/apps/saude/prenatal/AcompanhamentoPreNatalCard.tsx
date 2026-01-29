@@ -9,37 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, Baby, Activity, FileText, AlertTriangle, CheckCircle } from "lucide-react"
-
-interface PreNatal {
-  id: string
-  dum: Date
-  dpp: Date
-  idadeGestacional: string
-  gravidez: number
-  partos: number
-  abortos: number
-  cesarianas: number
-  riscoGestacional: 'HABITUAL' | 'ALTO_RISCO'
-  status: 'EM_ANDAMENTO' | 'FINALIZADO' | 'INTERROMPIDO'
-  grupoSanguineo?: string
-  fatorRh?: string
-  pesoInicial?: number
-  alturaInicial?: number
-  imcInicial?: number
-}
-
-interface ConsultaPreNatal {
-  id: string
-  dataConsulta: Date
-  idadeGestacional: string
-  peso?: number
-  pressaoArterial?: string
-  alturaUterina?: number
-  bcf?: number
-  movimentosFetais?: boolean
-  queixas?: string
-  proximaConsulta?: Date
-}
+import type { PreNatal, ConsultaPreNatal, RiscoGestacional, StatusPreNatal } from "@/types/saude"
 
 interface AcompanhamentoPreNatalCardProps {
   citizenId: string
@@ -51,7 +21,17 @@ export default function AcompanhamentoPreNatalCard({ citizenId }: Acompanhamento
   const [loading, setLoading] = useState(true)
   const [iniciando, setIniciando] = useState(false)
 
-  const [novoPreNatal, setNovoPreNatal] = useState({
+  const [novoPreNatal, setNovoPreNatal] = useState<{
+    dum: string
+    gravidez: number
+    partos: number
+    abortos: number
+    cesarianas: number
+    grupoSanguineo: string
+    fatorRh: string
+    pesoInicial: string
+    alturaInicial: string
+  }>({
     dum: '',
     gravidez: 1,
     partos: 0,

@@ -164,7 +164,7 @@ export class ESusConfigService {
       return {
         sucesso: false,
         erro: 'Erro ao conectar ao PEC',
-        detalhes: error.message,
+        detalhes: error instanceof Error ? error.message : 'Erro desconhecido',
       };
     }
   }
@@ -195,7 +195,7 @@ export class ESusConfigService {
     // Marcar como ENVIANDO
     await this.prisma.transmissaoESUS.updateMany({
       where: {
-        id: { in: registrosPendentes.map((r) => r.id) },
+        id: { in: registrosPendentes.map((r: any) => r.id) },
       },
       data: {
         status: 'ENVIANDO',
@@ -293,7 +293,7 @@ export class ESusConfigService {
       limit,
       totalPages: Math.ceil(total / limit),
       stats: stats.reduce(
-        (acc, item) => {
+        (acc: any, item: any) => {
           acc[item.status] = item._count;
           return acc;
         },

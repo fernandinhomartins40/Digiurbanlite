@@ -24,19 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus, CheckCircle, AlertCircle, XCircle, Calendar, Edit2, Trash2 } from "lucide-react"
-
-interface ProblemaCondicao {
-  id: string
-  tipo: 'CIAP2' | 'CID10'
-  codigo: string
-  descricao: string
-  status: 'ATIVO' | 'LATENTE' | 'RESOLVIDO'
-  gravidade?: 'LEVE' | 'MODERADO' | 'GRAVE'
-  prioridade: number
-  dataInicio: Date
-  dataResolucao?: Date
-  observacoes?: string
-}
+import type { ProblemaCondicao, TipoClassificacao, StatusProblema, GravidadeProblema } from "@/types/saude"
 
 interface ListaProblemasCondicoesProps {
   citizenId: string
@@ -48,12 +36,20 @@ export default function ListaProblemasCondicoes({ citizenId }: ListaProblemasCon
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editando, setEditando] = useState<ProblemaCondicao | null>(null)
 
-  const [formData, setFormData] = useState({
-    tipo: 'CIAP2' as 'CIAP2' | 'CID10',
+  const [formData, setFormData] = useState<{
+    tipo: TipoClassificacao
+    codigo: string
+    descricao: string
+    status: StatusProblema
+    gravidade: GravidadeProblema
+    prioridade: number
+    observacoes: string
+  }>({
+    tipo: 'CIAP2',
     codigo: '',
     descricao: '',
-    status: 'ATIVO' as 'ATIVO' | 'LATENTE' | 'RESOLVIDO',
-    gravidade: 'LEVE' as 'LEVE' | 'MODERADO' | 'GRAVE',
+    status: 'ATIVO',
+    gravidade: 'LEVE',
     prioridade: 0,
     observacoes: ''
   })
@@ -169,7 +165,7 @@ export default function ListaProblemasCondicoes({ citizenId }: ListaProblemasCon
   }
 
   const getStatusColor = (status: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       'ATIVO': 'bg-red-100 text-red-800 border-red-300',
       'LATENTE': 'bg-yellow-100 text-yellow-800 border-yellow-300',
       'RESOLVIDO': 'bg-green-100 text-green-800 border-green-300',
@@ -178,7 +174,7 @@ export default function ListaProblemasCondicoes({ citizenId }: ListaProblemasCon
   }
 
   const getStatusIcon = (status: string) => {
-    const icons = {
+    const icons: Record<string, React.ReactElement> = {
       'ATIVO': <AlertCircle className="h-4 w-4" />,
       'LATENTE': <CheckCircle className="h-4 w-4" />,
       'RESOLVIDO': <CheckCircle className="h-4 w-4" />,
@@ -187,7 +183,7 @@ export default function ListaProblemasCondicoes({ citizenId }: ListaProblemasCon
   }
 
   const getGravidadeColor = (gravidade?: string) => {
-    const colors = {
+    const colors: Record<string, string> = {
       'LEVE': 'text-green-600',
       'MODERADO': 'text-yellow-600',
       'GRAVE': 'text-red-600',

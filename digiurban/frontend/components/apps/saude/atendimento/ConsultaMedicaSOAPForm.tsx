@@ -10,43 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Save, FileText, Stethoscope, Activity, ClipboardList, Pill } from "lucide-react"
-
-interface ConsultaSOAP {
-  // S - SUBJETIVO
-  motivoConsulta?: string
-  historiaAtual?: string
-  historiaPregressa?: string
-  historiaFamiliar?: string
-  historiaSocial?: string
-
-  // O - OBJETIVO
-  sinaisVitais?: {
-    pressaoArterial?: string
-    temperatura?: number
-    frequenciaCardiaca?: number
-    frequenciaRespiratoria?: number
-    saturacaoO2?: number
-  }
-  exameFisicoGeral?: string
-  exameFisicoSistemas?: any
-  antropometria?: {
-    peso?: number
-    altura?: number
-    imc?: number
-  }
-
-  // A - AVALIAÇÃO
-  hipoteseDiagnostica?: string
-  diagnosticoPrincipal?: string
-  diagnosticosSecund?: string[]
-
-  // P - PLANO
-  condutaTerapeutica?: string
-  orientacoes?: string
-  retornoNecessario?: boolean
-  prazoRetornoDias?: number
-  observacoes?: string
-}
+import type { ConsultaSOAP } from "@/types/saude"
 
 interface ConsultaMedicaSOAPFormProps {
   atendimentoId: string
@@ -60,10 +24,11 @@ export default function ConsultaMedicaSOAPForm({
   initialData
 }: ConsultaMedicaSOAPFormProps) {
   const [loading, setLoading] = useState(false)
-  const [data, setData] = useState<ConsultaSOAP>(initialData || {
+  const [data, setData] = useState<ConsultaSOAP>({
     sinaisVitais: {},
     antropometria: {},
-    retornoNecessario: false
+    retornoNecessario: false,
+    ...initialData
   })
 
   const calcularIMC = () => {
@@ -121,7 +86,7 @@ export default function ConsultaMedicaSOAPForm({
                 <ClipboardList className="h-4 w-4 mr-2" />
                 P - Plano
               </TabsTrigger>
-            </Tabs>
+            </TabsList>
 
             {/* S - SUBJETIVO */}
             <TabsContent value="subjetivo" className="space-y-4">

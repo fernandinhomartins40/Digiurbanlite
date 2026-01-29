@@ -157,12 +157,12 @@ export class LEDIConverterService {
 
     // Extrair CIAPs e CIDs dos problemas
     const ciaps = consulta.problemas
-      .filter(p => p.tipo === 'CIAP2')
-      .map(p => p.codigo);
+      .filter((p: any) => p.tipo === 'CIAP2')
+      .map((p: any) => p.codigo);
 
     const cids = consulta.problemas
-      .filter(p => p.tipo === 'CID10')
-      .map(p => p.codigo);
+      .filter((p: any) => p.tipo === 'CID10')
+      .map((p: any) => p.codigo);
 
     return {
       headerTransport: {
@@ -217,7 +217,7 @@ export class LEDIConverterService {
   }
 
   private getTipoAtendimento(tipo: string): number {
-    const tipos = {
+    const tipos: Record<string, number> = {
       'AGENDADO': 1,
       'DEMANDA_ESPONTANEA': 2,
       'URGENCIA': 3,
@@ -304,7 +304,7 @@ export class LEDIConverterService {
         tipoConsulta: 1, // Primeira consulta odontológica programática
 
         // Procedimentos (códigos SIGTAP)
-        procedimentos: atendimento.procedimentos.map(p => ({
+        procedimentos: atendimento.procedimentos.map((p: any) => ({
           codigoSigtap: p.codigoSIGTAP,
           dente: p.dente,
           face: p.face,
@@ -401,7 +401,7 @@ export class LEDIConverterService {
   }
 
   private getMotivoVisita(tipoVisita: string): number {
-    const motivos = {
+    const motivos: Record<string, number> = {
       'CADASTRAMENTO': 1,
       'ACOMPANHAMENTO': 2,
       'BUSCA_ATIVA': 3,
@@ -463,8 +463,8 @@ export class LEDIConverterService {
 
         // Participantes com avaliação alterada
         participantesAvaliacaoAlterada: atividade.participantes
-          .filter(p => p.avaliacaoAlterada)
-          .map(p => ({
+          .filter((p: any) => p.avaliacaoAlterada)
+          .map((p: any) => ({
             cpf: p.citizen ? this.formatCPF(p.citizen.cpf) : null,
             nome: p.citizen ? p.citizen.name : p.nome,
             peso: p.pesoAferido,
@@ -484,7 +484,7 @@ export class LEDIConverterService {
   }
 
   private getTipoAtividadeColetiva(tipo: string): number {
-    const tipos = {
+    const tipos: Record<string, number> = {
       'GRUPO_EDUCACAO_SAUDE': 1,
       'GRUPO_HIPERTENSOS': 2,
       'GRUPO_DIABETICOS': 3,
