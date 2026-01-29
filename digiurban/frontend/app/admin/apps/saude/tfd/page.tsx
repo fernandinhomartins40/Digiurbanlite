@@ -144,7 +144,8 @@ export default function DashboardTFDPage() {
           >
             <FileText className="h-4 w-4 mr-2" />
             Ver Todas Solicitações
-        </Button>
+          </Button>
+        </div>
       </div>
 
       {/* Cards de Estatísticas Gerais */}

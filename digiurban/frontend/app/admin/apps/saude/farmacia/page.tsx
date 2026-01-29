@@ -99,15 +99,6 @@ export default function FarmaciaPage() {
           </Button>
         </div>
       </div>
-        <div className="flex gap-2">
-          <Link href="/admin/apps/saude/farmacia/dispensacao">
-            <Button>
-              <FileText className="h-4 w-4 mr-2" />
-              Nova Dispensação
-            </Button>
-          </Link>
-        </div>
-      </div>
 
       {/* Estatísticas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
