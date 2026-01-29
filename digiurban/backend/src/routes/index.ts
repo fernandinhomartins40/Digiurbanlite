@@ -151,6 +151,7 @@ export const loadSecretariasRoutes = () => {
 
   // Secretarias
   const secretariasSaudeRoutes = require('./secretarias-saude').default;
+  const saudeRoutes = require('./saude').default; // Rotas do App Sistema de Atendimento
   const secretariasEducacaoRoutes = require('./secretarias-educacao').default;
   const secretariasAssistenciaSocialRoutes = require('./secretarias-assistencia-social').default;
   const secretariasCulturaRoutes = require('./secretarias-cultura').default;
@@ -167,6 +168,7 @@ export const loadSecretariasRoutes = () => {
   const adminSecretariasRoutes = require('./admin-secretarias').default;
 
   router.use('/secretarias/saude', secretariasSaudeRoutes);
+  router.use('/saude', saudeRoutes); // App Sistema de Atendimento
   router.use('/admin/secretarias/educacao', secretariasEducacaoRoutes);
   router.use('/secretarias/assistencia-social', secretariasAssistenciaSocialRoutes);
   router.use('/secretarias/cultura', secretariasCulturaRoutes);
