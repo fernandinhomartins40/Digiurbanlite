@@ -27,6 +27,9 @@ import {
   IdCard,
   Info,
   ChevronRight,
+  Activity,
+  Pill,
+  Truck,
 } from 'lucide-react';
 import { ServiceSelectorModal } from '@/components/admin/ServiceSelectorModal';
 import { useRouter } from 'next/navigation';
@@ -211,6 +214,146 @@ export default function SecretariaSaudePage() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* APPS DE SAÚDE - SISTEMAS ESPECIALIZADOS                        */}
+      {/* ═══════════════════════════════════════════════════════════════ */}
+      <div>
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
+            <Activity className="h-6 w-6 text-red-600" />
+            Apps de Saúde
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos para gestão de saúde municipal
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* App 1: Sistema Integrado de Atendimento */}
+          <Card
+            className="border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/saude/atendimento')}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                  <Stethoscope className="h-8 w-8 text-blue-600" />
+                </div>
+                <Badge className="bg-blue-600">Sistema Completo</Badge>
+              </div>
+              <CardTitle className="text-lg group-hover:text-blue-700 transition-colors">
+                Sistema de Atendimento
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Triagem, fila de atendimento, consultas médicas, prontuários eletrônicos, prescrições e exames
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Activity className="h-3 w-3" />
+                  <span>Triagem por classificação de risco</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <FileText className="h-3 w-3" />
+                  <span>Prontuário eletrônico completo</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
+                  <span>Agendamento de consultas</span>
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 mt-4 group-hover:shadow-lg transition-all">
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                  Acessar Sistema
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* App 2: Farmácia Municipal */}
+          <Card
+            className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/saude/farmacia')}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+                  <Pill className="h-8 w-8 text-green-600" />
+                </div>
+                <Badge className="bg-green-600">Gestão de Estoque</Badge>
+              </div>
+              <CardTitle className="text-lg group-hover:text-green-700 transition-colors">
+                Farmácia Municipal
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Controle de estoque, dispensação de medicamentos, alertas de vencimento e estatísticas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Pill className="h-3 w-3" />
+                  <span>Dispensação de medicamentos</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>Alertas de estoque baixo</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <FileBarChart className="h-3 w-3" />
+                  <span>Relatórios e estatísticas</span>
+                </div>
+                <Button className="w-full bg-green-600 hover:bg-green-700 mt-4 group-hover:shadow-lg transition-all">
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                  Acessar Sistema
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* App 3: TFD - Tratamento Fora do Domicílio */}
+          <Card
+            className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/saude/tfd')}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                  <Truck className="h-8 w-8 text-purple-600" />
+                </div>
+                <Badge className="bg-purple-600">Workflow Completo</Badge>
+              </div>
+              <CardTitle className="text-lg group-hover:text-purple-700 transition-colors">
+                TFD - Tratamento Fora do Domicílio
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Solicitações, regulação médica, gestão de viagens, frota de veículos e aprovações
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <FileCheck className="h-3 w-3" />
+                  <span>Análise documental e regulação</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Truck className="h-3 w-3" />
+                  <span>Gestão de viagens e frota</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  <span>Aprovação de gestão municipal</span>
+                </div>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 mt-4 group-hover:shadow-lg transition-all">
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                  Acessar Sistema
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Ações Rápidas */}
