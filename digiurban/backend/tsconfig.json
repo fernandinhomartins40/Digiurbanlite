@@ -43,6 +43,7 @@
     "prisma",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "src/apps/saude/**/*"
+    "src/apps/saude/**/*",
+    "src/_deprecated/**/*"
   ]
 }

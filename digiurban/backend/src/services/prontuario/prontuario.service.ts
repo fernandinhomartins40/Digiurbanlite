@@ -1,4 +1,4 @@
-import { PrismaClient, TipoAtendimento, AtendimentoStatus, ClassificacaoRisco } from '@prisma/client';
+import { PrismaClient, TipoAtendimento, AtendimentoStatus, ClassificacaoManchester } from '@prisma/client';
 import workflowInstanceService from '../workflow/workflow-instance.service';
 
 const prisma = new PrismaClient();
@@ -19,7 +19,7 @@ export interface RealizarTriagemDTO {
   saturacaoOxigenio?: number;
   peso?: number;
   altura?: number;
-  classificacaoRisco: ClassificacaoRisco;
+  classificacaoRisco: ClassificacaoManchester;
   queixaPrincipal: string;
   observacoes?: string;
 }
@@ -188,7 +188,7 @@ export class ProntuarioService {
   /**
    * Converter classificação de risco em prioridade numérica
    */
-  private getPrioridadeByRisco(risco: ClassificacaoRisco): number {
+  private getPrioridadeByRisco(risco: ClassificacaoManchester): number {
     const prioridades = {
       VERMELHO: 5,
       LARANJA: 4,

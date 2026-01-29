@@ -92,22 +92,34 @@ model User {
   reviewedCertificateRequests CertificateRequest[] @relation("CertificateRequestReviewer")
 
   // Apps Saúde - Registros médicos
-  allergyRecords      AlergiasCidadao[]         @relation("UserAllergyRecords")
-  comorbidityRecords  ComorbidadesCidadao[]     @relation("UserComorbidityRecords")
-  attachmentUploads   AnexoProntuario[]         @relation("UserAttachmentUploads")
+  allergyRecords     AlergiasCidadao[]     @relation("UserAllergyRecords")
+  comorbidityRecords ComorbidadesCidadao[] @relation("UserComorbidityRecords")
+  attachmentUploads  AnexoProntuario[]     @relation("UserAttachmentUploads")
 
   // Apps Saúde - Farmácia
-  medicationLots              LoteMedicamento[]          @relation("UserMedicationLots")
-  stockTransferRequester      TransferenciaEstoque[]     @relation("UserStockTransferRequester")
-  stockTransferConfirmer      TransferenciaEstoque[]     @relation("UserStockTransferConfirmer")
+  medicationLots         LoteMedicamento[]      @relation("UserMedicationLots")
+  stockTransferRequester TransferenciaEstoque[] @relation("UserStockTransferRequester")
+  stockTransferConfirmer TransferenciaEstoque[] @relation("UserStockTransferConfirmer")
 
   // Apps Saúde - TFD
-  tfdDocuments                DocumentoTFD[]              @relation("UserTFDDocuments")
-  tfdRegulations              ParecerRegulacaoTFD[]       @relation("UserTFDRegulations")
-  tfdManagementApprovals      AprovacaoGestaoTFD[]        @relation("UserTFDManagementApprovals")
-  tfdExternalSchedules        AgendamentoExternoTFD[]     @relation("UserTFDExternalSchedules")
-  tfdExpenseReports           PrestacaoContasTFD[]        @relation("UserTFDExpenseReports")
-  tfdExpenseApprovals         PrestacaoContasTFD[]        @relation("UserTFDExpenseApprovals")
+  tfdDocuments           DocumentoTFD[]          @relation("UserTFDDocuments")
+  tfdRegulations         ParecerRegulacaoTFD[]   @relation("UserTFDRegulations")
+  tfdManagementApprovals AprovacaoGestaoTFD[]    @relation("UserTFDManagementApprovals")
+  tfdExternalSchedules   AgendamentoExternoTFD[] @relation("UserTFDExternalSchedules")
+  tfdExpenseReports      PrestacaoContasTFD[]    @relation("UserTFDExpenseReports")
+  tfdExpenseApprovals    PrestacaoContasTFD[]    @relation("UserTFDExpenseApprovals")
+
+  // ✅ FLUXO DE ATENDIMENTO PEC e-SUS
+  equipesVinculadas      ProfissionalEquipe[]            @relation("ProfissionalEquipes")
+  microareasResponsavel  Microarea[]                     @relation("ACSMicroarea")
+  filaAtendimentos       FilaAtendimento[]               @relation("ProfissionalFilaAtendimentos")
+  escutasIniciais        EscutaInicial[]                 @relation("ProfissionalEscutasIniciais")
+  encaminhamentosEscuta  EscutaInicial[]                 @relation("EncaminhamentosEscutaInicial")
+  triagens               TriagemEnfermagem[]             @relation("EnfermeiroTriagens")
+  encaminhamentosTriagem TriagemEnfermagem[]             @relation("EncaminhamentosTriagem")
+  atividadesColetivas    ProfissionalAtividade[]         @relation("ProfissionalAtividades")
+  configuracaoAgenda     ConfiguracaoAgenda[]            @relation("ProfissionalAgendas")
+  indisponibilidades     IndisponibilidadeProfissional[] @relation("ProfissionalIndisponibilidades")
 
   @@map("users")
 }
@@ -219,20 +231,29 @@ model Citizen {
   externalDocuments ExternalDocument[] @relation("CitizenExternalDocuments")
 
   // Apps Saúde
-  alergias            AlergiasCidadao[]        @relation("CitizenAllergies")
-  comorbidades        ComorbidadesCidadao[]    @relation("CitizenComorbidities")
-  anexosProntuario    AnexoProntuario[]        @relation("CitizenMedicalAttachments")
-  imunizacoes         ImunizacaoCidadao[]      @relation("CitizenImmunizations")
-  passageirosTFD      PassageiroViagemTFD[]    @relation("CitizenTFDPassengers")
+  alergias         AlergiasCidadao[]     @relation("CitizenAllergies")
+  comorbidades     ComorbidadesCidadao[] @relation("CitizenComorbidities")
+  anexosProntuario AnexoProntuario[]     @relation("CitizenMedicalAttachments")
+  imunizacoes      ImunizacaoCidadao[]   @relation("CitizenImmunizations")
+  passageirosTFD   PassageiroViagemTFD[] @relation("CitizenTFDPassengers")
 
   // ✅ NOVOS: Alinhamento com PEC e-SUS
-  problemasCondicoes  ProblemaCondicao[]       @relation("CitizenProblems")
-  alergiasReacoes     AlergiaReacao[]          @relation("CitizenAllergiesReactions")
-  preNatal            AcompanhamentoPreNatal?  @relation("CitizenPreNatal")
-  visitasDomiciliares VisitaDomiciliar[]       @relation("CitizenHomeVisits")
+  problemasCondicoes      ProblemaCondicao[]      @relation("CitizenProblems")
+  alergiasReacoes         AlergiaReacao[]         @relation("CitizenAllergiesReactions")
+  preNatal                AcompanhamentoPreNatal? @relation("CitizenPreNatal")
+  visitasDomiciliares     VisitaDomiciliar[]      @relation("CitizenHomeVisits")
   participacoesAtividades ParticipanteAtividade[] @relation("CitizenActivityParticipations")
 
+  // ✅ FLUXO DE ATENDIMENTO PEC e-SUS
+  equipeId         String?
+  equipe           EquipeSaude?      @relation("CitizenEquipe", fields: [equipeId], references: [id])
+  microareaId      String?
+  microarea        Microarea?        @relation("CitizenMicroarea", fields: [microareaId], references: [id])
+  filaAtendimentos FilaAtendimento[] @relation("CitizenFilaAtendimentos")
+
   @@unique([cpf])
+  @@index([equipeId])
+  @@index([microareaId])
   @@map("citizens")
 }
 
@@ -2307,39 +2328,45 @@ enum HousingAttendanceStatus {
 
 // Unidades de Saúde (UBS, UPA, Hospitais, etc.) - ATUALIZADO
 model UnidadeSaude {
-  id             String   @id @default(cuid())
-  nome           String
-  tipo           String // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
-  cnes           String?  // ✅ NOVO: Cadastro Nacional de Estabelecimentos de Saúde
-  cnpj           String?  // ✅ NOVO: CNPJ da unidade
-  endereco       String?
-  bairro         String?
-  cidade         String?  // ✅ NOVO
-  estado         String?  // ✅ NOVO
-  cep            String?  // ✅ NOVO
-  telefone       String?
-  email          String?  // ✅ NOVO
-  horario        String?
-  horarioAbertura String? // ✅ NOVO: Ex: "07:00"
+  id                String   @id @default(cuid())
+  nome              String
+  tipo              String // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
+  cnes              String? // ✅ NOVO: Cadastro Nacional de Estabelecimentos de Saúde
+  cnpj              String? // ✅ NOVO: CNPJ da unidade
+  endereco          String?
+  bairro            String?
+  cidade            String? // ✅ NOVO
+  estado            String? // ✅ NOVO
+  cep               String? // ✅ NOVO
+  telefone          String?
+  email             String? // ✅ NOVO
+  horario           String?
+  horarioAbertura   String? // ✅ NOVO: Ex: "07:00"
   horarioFechamento String? // ✅ NOVO: Ex: "17:00"
-  especialidades Json? // Array de especialidades disponíveis
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  especialidades    Json? // Array de especialidades disponíveis
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relacionamentos - Apps Saúde
-  filas                FilaAtendimento[]
-  chamadas             ChamadaPainel[]
-  imunizacoes          ImunizacaoCidadao[]
-  lotesMedicamentos    LoteMedicamento[]
-  transferenciasOrigem TransferenciaEstoque[] @relation("StockTransferOrigin")
+  chamadas              ChamadaPainel[]
+  imunizacoes           ImunizacaoCidadao[]
+  lotesMedicamentos     LoteMedicamento[]
+  transferenciasOrigem  TransferenciaEstoque[] @relation("StockTransferOrigin")
   transferenciasDestino TransferenciaEstoque[] @relation("StockTransferDestination")
-  alertasEstoque       AlertaEstoque[]
+  alertasEstoque        AlertaEstoque[]
 
   // ✅ NOVOS: Relacionamentos com cadastros
-  salas                SalaConsultorio[]
-  configuracao         ConfiguracaoAtendimento?
-  atividadesColetivas  AtividadeColetiva[] @relation("UnidadeAtividadesColetivas")
+  salas               SalaConsultorio[]
+  configuracao        ConfiguracaoAtendimento?
+  atividadesColetivas AtividadeColetiva[]      @relation("UnidadeAtividadesColetivas")
+
+  // ✅ FLUXO DE ATENDIMENTO PEC e-SUS
+  equipes            EquipeSaude[]
+  filaAtendimentos   FilaAtendimento[]
+  escutasIniciais    EscutaInicial[]
+  triagens           TriagemEnfermagem[]
+  configuracaoAgenda ConfiguracaoAgenda[]
 
   @@index([tipo, isActive])
   @@index([isActive])
@@ -2562,7 +2589,7 @@ model EspecialidadeMedica {
   descricao           String?
   area                String? // 'Clínica Médica', 'Cirúrgica', 'Diagnóstica'
   tempoMedioConsulta  Int? // Minutos
-  cor                 String?  // ✅ NOVO: Cor para visualização em agendas (ex: "#3B82F6")
+  cor                 String? // ✅ NOVO: Cor para visualização em agendas (ex: "#3B82F6")
   requisitosPaciente  String? // 'Encaminhamento', 'Livre'
   examesComuns        Json? // Array de exames
   unidadesQueOferecem Json? // IDs das unidades (pode ser calculado)
@@ -2571,8 +2598,8 @@ model EspecialidadeMedica {
   updatedAt           DateTime @updatedAt
 
   // ✅ NOVO: Relacionamentos
-  agendas             AgendaMedica[]
-  solicitacoesTFD     SolicitacaoTFD[]
+  agendas         AgendaMedica[]
+  solicitacoesTFD SolicitacaoTFD[]
 
   @@index([area, isActive])
   @@index([isActive])
@@ -2801,35 +2828,35 @@ model ProgramaAmbiental {
 
 // Profissionais de Saúde (ATUALIZADO)
 model ProfissionalSaude {
-  id                   String   @id @default(cuid())
+  id                   String             @id @default(cuid())
   nome                 String
-  cpf                  String   @unique
-  rg                   String?  // ✅ NOVO
-  registroProfissional String   @unique // CRM, CRO, CRP, CRN, CRF, COREN, etc.
-  tipoRegistro         String?  // ✅ NOVO: 'CRM', 'COREN', 'CRO', 'CRP', 'CRF', 'CRN', etc.
-  especialidade        String?  // Especialidade principal (mantido para compatibilidade)
-  especialidades       Json?    // ✅ NOVO: Array de IDs de especialidades (múltiplas)
+  cpf                  String             @unique
+  rg                   String? // ✅ NOVO
+  registroProfissional String             @unique // CRM, CRO, CRP, CRN, CRF, COREN, etc.
+  tipoRegistro         String? // ✅ NOVO: 'CRM', 'COREN', 'CRO', 'CRP', 'CRF', 'CRN', etc.
+  especialidade        String? // Especialidade principal (mantido para compatibilidade)
+  especialidades       Json? // ✅ NOVO: Array de IDs de especialidades (múltiplas)
   categoria            String // 'Médico', 'Enfermeiro', 'Dentista', 'Psicólogo', 'Nutricionista', 'Farmacêutico'
   unidadesAtendimento  Json? // Array de IDs das unidades
-  telefone             String?  // ✅ NOVO
-  email                String?  // ✅ NOVO
+  telefone             String? // ✅ NOVO
+  email                String? // ✅ NOVO
   horarioAtendimento   Json? // Horários estruturados
   diasSemana           Json? // Array de dias
   tempoMedioConsulta   Int? // Minutos
-  aceitaAgendamento    Boolean  @default(true)
+  aceitaAgendamento    Boolean            @default(true)
   status               StatusProfissional @default(ATIVO) // ✅ NOVO: Enum de status
-  isActive             Boolean  @default(true)
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  isActive             Boolean            @default(true)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 
   // Apps Saúde - Relacionamentos
   indisponibilidades IndisponibilidadeAgenda[]
   imunizacoes        ImunizacaoCidadao[]
 
   // ✅ NOVOS: Alinhamento com PEC e-SUS
-  atendimentosOdonto AtendimentoOdontologico[] @relation("DentistaAtendimentos")
-  visitasDomiciliares VisitaDomiciliar[]       @relation("ACSVisitas")
-  atividadesColetivas AtividadeColetiva[]      @relation("ProfissionalAtividadesColetivas")
+  atendimentosOdonto  AtendimentoOdontologico[] @relation("DentistaAtendimentos")
+  visitasDomiciliares VisitaDomiciliar[]        @relation("ACSVisitas")
+  atividadesColetivas ProfissionalAtividade[]
 
   @@index([categoria, isActive])
   @@index([especialidade, isActive])
@@ -2990,12 +3017,12 @@ model WorkflowHistory {
 
 // MS-02: Agenda Médica Inteligente (ATUALIZADO)
 model AgendaMedica {
-  id               String   @id @default(cuid())
-  profissionalId   String
-  unidadeId        String
-  especialidadeId  String?  // ✅ NOVO: Especialidade vinculada à agenda
-  salaId           String?  // ✅ NOVO: Sala/consultório onde ocorre o atendimento
-  turnoId          String?  // ✅ NOVO: Turno de trabalho vinculado
+  id              String  @id @default(cuid())
+  profissionalId  String
+  unidadeId       String
+  especialidadeId String? // ✅ NOVO: Especialidade vinculada à agenda
+  salaId          String? // ✅ NOVO: Sala/consultório onde ocorre o atendimento
+  turnoId         String? // ✅ NOVO: Turno de trabalho vinculado
 
   diaSemana        Int // 0=Domingo, 1=Segunda, ..., 6=Sábado
   horaInicio       String // "08:00"
@@ -3004,17 +3031,17 @@ model AgendaMedica {
   vagasDisponiveis Int // vagas por horário
 
   // ✅ NOVOS: Vigência da agenda
-  dataInicio       DateTime? // Data de início da vigência
-  dataFim          DateTime? // Data de fim da vigência
+  dataInicio DateTime? // Data de início da vigência
+  dataFim    DateTime? // Data de fim da vigência
 
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  especialidade      EspecialidadeMedica? @relation(fields: [especialidadeId], references: [id])
-  sala               SalaConsultorio?     @relation(fields: [salaId], references: [id])
-  turno              TurnoTrabalho?       @relation(fields: [turnoId], references: [id])
+  especialidade      EspecialidadeMedica?      @relation(fields: [especialidadeId], references: [id])
+  sala               SalaConsultorio?          @relation(fields: [salaId], references: [id])
+  turno              TurnoTrabalho?            @relation(fields: [turnoId], references: [id])
   consultas          ConsultaAgendada[]
   indisponibilidades IndisponibilidadeAgenda[]
 
@@ -3039,7 +3066,8 @@ model ConsultaAgendada {
   updatedAt      DateTime       @updatedAt
 
   // Apps Saúde - Relacionamentos
-  fila FilaAtendimento?
+  fila              FilaAtendimento? @relation(fields: [filaAtendimentoId], references: [id])
+  filaAtendimentoId String?
 
   @@index([agendaId, dataHora])
   @@index([citizenId])
@@ -3072,7 +3100,7 @@ model AtendimentoMedico {
   horarioCheckin DateTime?
 
   triagemId      String?
-  triagem        TriagemEnfermagem?
+  triagem        TriagemEnfermagem? @relation(fields: [triagemEnfermagemId], references: [id])
   horarioTriagem DateTime?
 
   consultaId      String?
@@ -3089,21 +3117,20 @@ model AtendimentoMedico {
   updatedAt DateTime @updatedAt
 
   // Apps Saúde - Relacionamentos
-  anexos AnexoProntuario[]
+  anexos                  AnexoProntuario[]
   atendimentoOdontologico AtendimentoOdontologico? @relation("AtendimentoOdonto")
+
+  // ✅ FLUXO DE ATENDIMENTO PEC e-SUS
+  filaAtendimentoId   String?          @unique
+  filaAtendimento     FilaAtendimento? @relation("FilaAtendimento", fields: [filaAtendimentoId], references: [id])
+  triagemEnfermagemId String?
 
   @@index([citizenId])
   @@index([unidadeId, dataAtendimento])
   @@index([status])
   @@index([workflowId])
+  @@index([filaAtendimentoId])
   @@map("atendimentos_medicos")
-}
-
-enum TipoAtendimento {
-  AGENDADO
-  DEMANDA_ESPONTANEA
-  URGENCIA
-  RETORNO
 }
 
 enum AtendimentoStatus {
@@ -3121,44 +3148,6 @@ enum AtendimentoStatus {
   CANCELADO
 }
 
-model TriagemEnfermagem {
-  id            String            @id @default(cuid())
-  atendimentoId String            @unique
-  atendimento   AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
-  enfermeiroId  String
-
-  pressaoArterial        String?
-  temperatura            Float?
-  frequenciaCardiaca     Int?
-  frequenciaRespiratoria Int?
-  saturacaoO2            Int?
-  peso                   Float?
-  altura                 Float?
-  glicemia               Float?
-
-  classificacaoRisco ClassificacaoRisco
-  corProtocolo       String
-
-  queixaPrincipal String
-  historiaAtual   String?
-  alergias        String?
-  medicamentosUso String?
-  comorbidades    String?
-
-  observacoes String?
-  dataHora    DateTime @default(now())
-
-  @@map("triagem_enfermagem")
-}
-
-enum ClassificacaoRisco {
-  EMERGENCIA
-  MUITO_URGENTE
-  URGENTE
-  POUCO_URGENTE
-  NAO_URGENTE
-}
-
 // ✅ FASE 1.1: CONSULTA MÉDICA COM MÉTODO SOAP
 model ConsultaMedica {
   id                  String            @id @default(cuid())
@@ -3170,87 +3159,87 @@ model ConsultaMedica {
   // ========================================
   // S - SUBJETIVO (Informações do Paciente)
   // ========================================
-  motivoConsulta       String?  @db.Text // Queixa principal
-  historiaAtual        String?  @db.Text // História da doença atual (HDA)
-  historiaPregressa    String?  @db.Text // Antecedentes pessoais
-  historiaFamiliar     String?  @db.Text // Antecedentes familiares
-  historiaSocial       String?  @db.Text // Hábitos, ocupação, condições sociais
+  motivoConsulta    String? @db.Text // Queixa principal
+  historiaAtual     String? @db.Text // História da doença atual (HDA)
+  historiaPregressa String? @db.Text // Antecedentes pessoais
+  historiaFamiliar  String? @db.Text // Antecedentes familiares
+  historiaSocial    String? @db.Text // Hábitos, ocupação, condições sociais
 
   // ========================================
   // O - OBJETIVO (Exame Físico e Sinais)
   // ========================================
-  sinaisVitais         Json?    // { pressaoArterial, temperatura, fc, fr, saturacaoO2 }
-  exameFisicoGeral     String?  @db.Text // Inspeção geral, estado geral
-  exameFisicoSistemas  Json?    // { cardiovascular, respiratorio, abdomen, neurologico, etc }
-  antropometria        Json?    // { peso, altura, imc, circunferencias }
+  sinaisVitais        Json? // { pressaoArterial, temperatura, fc, fr, saturacaoO2 }
+  exameFisicoGeral    String? @db.Text // Inspeção geral, estado geral
+  exameFisicoSistemas Json? // { cardiovascular, respiratorio, abdomen, neurologico, etc }
+  antropometria       Json? // { peso, altura, imc, circunferencias }
 
   // ========================================
   // A - AVALIAÇÃO (Diagnóstico)
   // ========================================
-  hipoteseDiagnostica  String?  @db.Text // Raciocínio clínico
-  diagnosticoPrincipal String?  // CID10 ou CIAP2 principal
-  diagnosticosSecund   Json?    // Array de CIDs/CIAPs secundários
+  hipoteseDiagnostica  String?            @db.Text // Raciocínio clínico
+  diagnosticoPrincipal String? // CID10 ou CIAP2 principal
+  diagnosticosSecund   Json? // Array de CIDs/CIAPs secundários
   problemas            ProblemaCondicao[] // Lista de problemas identificados
 
   // ========================================
   // P - PLANO (Conduta e Tratamento)
   // ========================================
-  condutaTerapeutica   String?  @db.Text // Tratamento proposto
-  orientacoes          String?  @db.Text // Orientações ao paciente
-  prescricoes          Prescricao[]
-  examesSolicitados    ExameSolicitado[]
-  encaminhamentos      Encaminhamento[]
-  atestados            Atestado[]
+  condutaTerapeutica String?           @db.Text // Tratamento proposto
+  orientacoes        String?           @db.Text // Orientações ao paciente
+  prescricoes        Prescricao[]
+  examesSolicitados  ExameSolicitado[]
+  encaminhamentos    Encaminhamento[]
+  atestados          Atestado[]
 
   // Retorno
-  retornoNecessario    Boolean  @default(false)
-  prazoRetornoDias     Int?
-  dataRetorno          DateTime?
+  retornoNecessario Boolean   @default(false)
+  prazoRetornoDias  Int?
+  dataRetorno       DateTime?
 
   // Observações gerais
-  observacoes          String?  @db.Text
-  dataHora             DateTime @default(now())
+  observacoes String?  @db.Text
+  dataHora    DateTime @default(now())
 
   // Relacionamento com Pré-Natal (se for consulta obstétrica)
-  consultaPreNatal     ConsultaPreNatal?
+  consultaPreNatal ConsultaPreNatal?
 
   @@map("consultas_medicas")
 }
 
 // ✅ FASE 1.2: LISTA DE PROBLEMAS E CONDIÇÕES (CIAP2/CID10)
 model ProblemaCondicao {
-  id                   String   @id @default(cuid())
-  citizenId            String
+  id        String @id @default(cuid())
+  citizenId String
 
   // Codificação
-  tipo                 TipoClassificacao  // CIAP2 ou CID10
-  codigo               String   // Ex: K86 (CIAP2), I10 (CID10)
-  descricao            String   // Descrição do problema
+  tipo      TipoClassificacao // CIAP2 ou CID10
+  codigo    String // Ex: K86 (CIAP2), I10 (CID10)
+  descricao String // Descrição do problema
 
   // Status
-  status               StatusProblema     // ATIVO, LATENTE, RESOLVIDO
-  dataInicio           DateTime
-  dataResolucao        DateTime?
+  status        StatusProblema // ATIVO, LATENTE, RESOLVIDO
+  dataInicio    DateTime
+  dataResolucao DateTime?
 
   // Classificação
-  gravidade            GravidadeProblema? // LEVE, MODERADO, GRAVE
-  prioridade           Int      @default(0) // 0-10
+  gravidade  GravidadeProblema? // LEVE, MODERADO, GRAVE
+  prioridade Int                @default(0) // 0-10
 
   // Vínculo com consultas
-  consultaOrigemId     String?  // Consulta onde foi identificado
-  consultaResolucaoId  String?  // Consulta onde foi resolvido
-  consultas            ConsultaMedica[] // Consultas que trataram este problema
+  consultaOrigemId    String? // Consulta onde foi identificado
+  consultaResolucaoId String? // Consulta onde foi resolvido
+  consultas           ConsultaMedica[] // Consultas que trataram este problema
 
   // Observações
-  observacoes          String?  @db.Text
+  observacoes String? @db.Text
 
   // Audit
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-  createdBy            String?  // Profissional que registrou
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String? // Profissional que registrou
 
   // Relacionamento
-  citizen              Citizen  @relation("CitizenProblems", fields: [citizenId], references: [id])
+  citizen Citizen @relation("CitizenProblems", fields: [citizenId], references: [id])
 
   @@index([citizenId, status])
   @@index([codigo])
@@ -3277,25 +3266,25 @@ enum GravidadeProblema {
 
 // ✅ FASE 1.3: ALERGIAS E REAÇÕES ADVERSAS
 model AlergiaReacao {
-  id                   String   @id @default(cuid())
-  citizenId            String
+  id        String @id @default(cuid())
+  citizenId String
 
-  tipo                 TipoAlergia
-  substancia           String   // Nome do medicamento, alimento ou substância
-  reacao               String   @db.Text // Descrição da reação apresentada
-  gravidade            GravidadeAlergia
+  tipo       TipoAlergia
+  substancia String // Nome do medicamento, alimento ou substância
+  reacao     String           @db.Text // Descrição da reação apresentada
+  gravidade  GravidadeAlergia
 
-  dataIdentificacao    DateTime @default(now())
-  ativo                Boolean  @default(true)
-  observacoes          String?  @db.Text
+  dataIdentificacao DateTime @default(now())
+  ativo             Boolean  @default(true)
+  observacoes       String?  @db.Text
 
   // Auditoria
-  registradoPor        String?  // ID do profissional
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  registradoPor String? // ID do profissional
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relacionamento
-  citizen              Citizen  @relation("CitizenAllergiesReactions", fields: [citizenId], references: [id])
+  citizen Citizen @relation("CitizenAllergiesReactions", fields: [citizenId], references: [id])
 
   @@index([citizenId, ativo])
   @@index([tipo])
@@ -3324,50 +3313,50 @@ enum GravidadeAlergia {
 
 // ✅ FASE 2.1: ATENDIMENTO ODONTOLÓGICO
 model AtendimentoOdontologico {
-  id                   String   @id @default(cuid())
-  atendimentoId        String   @unique
-  dentistaId           String
+  id            String @id @default(cuid())
+  atendimentoId String @unique
+  dentistaId    String
 
   // Odontograma (32 dentes)
-  odontograma          Json     // Estrutura: { "11": { condicao: "HIGIDO", procedimentos: [] }, "12": {...}, ... }
+  odontograma Json // Estrutura: { "11": { condicao: "HIGIDO", procedimentos: [] }, "12": {...}, ... }
 
   // Avaliação
-  queixaPrincipal      String?  @db.Text
-  exameBucal           String?  @db.Text
-  indicesCPOD          Json?    // { cariados, perdidos, obturados, dentes }
-  diagnostico          String?  @db.Text
-  planoTratamento      String?  @db.Text
+  queixaPrincipal String? @db.Text
+  exameBucal      String? @db.Text
+  indicesCPOD     Json? // { cariados, perdidos, obturados, dentes }
+  diagnostico     String? @db.Text
+  planoTratamento String? @db.Text
 
   // Procedimentos realizados
-  procedimentos        ProcedimentoOdonto[]
+  procedimentos ProcedimentoOdonto[]
 
   // Orientações
-  orientacoes          String?  @db.Text
-  observacoes          String?  @db.Text
-  dataHora             DateTime @default(now())
+  orientacoes String?  @db.Text
+  observacoes String?  @db.Text
+  dataHora    DateTime @default(now())
 
   // Relacionamentos
-  atendimento          AtendimentoMedico @relation("AtendimentoOdonto", fields: [atendimentoId], references: [id])
-  dentista             ProfissionalSaude @relation("DentistaAtendimentos", fields: [dentistaId], references: [id])
+  atendimento AtendimentoMedico @relation("AtendimentoOdonto", fields: [atendimentoId], references: [id])
+  dentista    ProfissionalSaude @relation("DentistaAtendimentos", fields: [dentistaId], references: [id])
 
   @@map("atendimentos_odontologicos")
 }
 
 model ProcedimentoOdonto {
-  id                   String   @id @default(cuid())
-  atendimentoOdontoId  String
+  id                  String @id @default(cuid())
+  atendimentoOdontoId String
 
-  codigoSIGTAP         String   // Código SIGTAP do procedimento
-  descricao            String
-  dente                String?  // Número do dente (11-48, FDI)
-  face                 String?  // Oclusal, Mesial, Distal, Vestibular, Lingual/Palatina
-  quantidade           Int      @default(1)
+  codigoSIGTAP String // Código SIGTAP do procedimento
+  descricao    String
+  dente        String? // Número do dente (11-48, FDI)
+  face         String? // Oclusal, Mesial, Distal, Vestibular, Lingual/Palatina
+  quantidade   Int     @default(1)
 
-  observacoes          String?
-  dataHora             DateTime @default(now())
+  observacoes String?
+  dataHora    DateTime @default(now())
 
   // Relacionamento
-  atendimento          AtendimentoOdontologico @relation(fields: [atendimentoOdontoId], references: [id])
+  atendimento AtendimentoOdontologico @relation(fields: [atendimentoOdontoId], references: [id])
 
   @@index([atendimentoOdontoId])
   @@index([codigoSIGTAP])
@@ -3376,52 +3365,52 @@ model ProcedimentoOdonto {
 
 // ✅ FASE 2.2: ACOMPANHAMENTO PRÉ-NATAL
 model AcompanhamentoPreNatal {
-  id                   String   @id @default(cuid())
-  citizenId            String   @unique // Uma gestação ativa por cidadã
+  id        String @id @default(cuid())
+  citizenId String @unique // Uma gestação ativa por cidadã
 
   // Dados da Gestação
-  dum                  DateTime // Data da Última Menstruação
-  dpp                  DateTime // Data Provável do Parto (calculada)
-  idadeGestacional     String?  // Calculada: "12s 3d"
-  gravidez             Int      @default(1) // Gesta
-  partos               Int      @default(0) // Para
-  abortos              Int      @default(0)
-  cesarianas           Int      @default(0)
-  nascidosVivos        Int      @default(0)
-  nascidosMortos       Int      @default(0)
+  dum              DateTime // Data da Última Menstruação
+  dpp              DateTime // Data Provável do Parto (calculada)
+  idadeGestacional String? // Calculada: "12s 3d"
+  gravidez         Int      @default(1) // Gesta
+  partos           Int      @default(0) // Para
+  abortos          Int      @default(0)
+  cesarianas       Int      @default(0)
+  nascidosVivos    Int      @default(0)
+  nascidosMortos   Int      @default(0)
 
   // Classificação de Risco
-  riscoGestacional     RiscoGestacional @default(HABITUAL)
-  fatoresRisco         Json?    // Array de fatores de risco
+  riscoGestacional RiscoGestacional @default(HABITUAL)
+  fatoresRisco     Json? // Array de fatores de risco
 
   // Status
-  status               StatusPreNatal   @default(EM_ANDAMENTO)
-  dataInicio           DateTime @default(now())
-  dataFim              DateTime?
+  status     StatusPreNatal @default(EM_ANDAMENTO)
+  dataInicio DateTime       @default(now())
+  dataFim    DateTime?
 
   // Dados Clínicos Iniciais
-  grupoSanguineo       String?  // A, B, AB, O
-  fatorRh              String?  // Positivo, Negativo
-  pesoInicial          Float?
-  alturaInicial        Float?
-  imcInicial           Float?
+  grupoSanguineo String? // A, B, AB, O
+  fatorRh        String? // Positivo, Negativo
+  pesoInicial    Float?
+  alturaInicial  Float?
+  imcInicial     Float?
 
   // Consultas e Exames
-  consultas            ConsultaPreNatal[]
-  exames               ExamePreNatal[]
+  consultas ConsultaPreNatal[]
+  exames    ExamePreNatal[]
 
   // Desfecho
-  tipoDesfecho         TipoDesfecho?
-  dataDesfecho         DateTime?
-  observacoesDesfecho  String?  @db.Text
+  tipoDesfecho        TipoDesfecho?
+  dataDesfecho        DateTime?
+  observacoesDesfecho String?       @db.Text
 
   // Observações
-  observacoes          String?  @db.Text
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  observacoes String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relacionamento
-  citizen              Citizen  @relation("CitizenPreNatal", fields: [citizenId], references: [id])
+  citizen Citizen @relation("CitizenPreNatal", fields: [citizenId], references: [id])
 
   @@index([status])
   @@index([riscoGestacional])
@@ -3429,54 +3418,54 @@ model AcompanhamentoPreNatal {
 }
 
 model ConsultaPreNatal {
-  id                   String   @id @default(cuid())
-  preNatalId           String
-  consultaMedicaId     String?  @unique // Vínculo com consulta médica geral
+  id               String  @id @default(cuid())
+  preNatalId       String
+  consultaMedicaId String? @unique // Vínculo com consulta médica geral
 
   // Dados da Consulta
-  idadeGestacional     String   // No momento: "12s 3d"
-  peso                 Float?
-  pressaoArterial      String?
-  alturaUterina        Int?     // em cm
-  bcf                  Int?     // Batimentos Cardíacos Fetais
-  movimentosFetais     Boolean?
-  edema                String?  // Ausente, Membros Inferiores, Generalizado
-  apresentacaoFetal    String?  // Cefálica, Pélvica, Transversa
+  idadeGestacional  String // No momento: "12s 3d"
+  peso              Float?
+  pressaoArterial   String?
+  alturaUterina     Int? // em cm
+  bcf               Int? // Batimentos Cardíacos Fetais
+  movimentosFetais  Boolean?
+  edema             String? // Ausente, Membros Inferiores, Generalizado
+  apresentacaoFetal String? // Cefálica, Pélvica, Transversa
 
   // Queixas e Orientações
-  queixas              String?  @db.Text
-  orientacoes          String?  @db.Text
-  conduta              String?  @db.Text
+  queixas     String? @db.Text
+  orientacoes String? @db.Text
+  conduta     String? @db.Text
 
   // Próxima Consulta
-  proximaConsulta      DateTime?
+  proximaConsulta DateTime?
 
-  dataConsulta         DateTime @default(now())
-  profissionalId       String
+  dataConsulta   DateTime @default(now())
+  profissionalId String
 
   // Relacionamentos
-  preNatal             AcompanhamentoPreNatal @relation(fields: [preNatalId], references: [id])
-  consultaMedica       ConsultaMedica? @relation(fields: [consultaMedicaId], references: [id])
+  preNatal       AcompanhamentoPreNatal @relation(fields: [preNatalId], references: [id])
+  consultaMedica ConsultaMedica?        @relation(fields: [consultaMedicaId], references: [id])
 
   @@index([preNatalId])
   @@map("consultas_pre_natal")
 }
 
 model ExamePreNatal {
-  id                   String   @id @default(cuid())
-  preNatalId           String
+  id         String @id @default(cuid())
+  preNatalId String
 
-  tipoExame            TipoExamePreNatal
-  dataRealizacao       DateTime?
-  dataSolicitacao      DateTime @default(now())
-  resultado            String?  @db.Text
-  observacoes          String?  @db.Text
+  tipoExame       TipoExamePreNatal
+  dataRealizacao  DateTime?
+  dataSolicitacao DateTime          @default(now())
+  resultado       String?           @db.Text
+  observacoes     String?           @db.Text
 
   // Anexos (resultados em PDF)
-  anexoUrl             String?
+  anexoUrl String?
 
   // Relacionamento
-  preNatal             AcompanhamentoPreNatal @relation(fields: [preNatalId], references: [id])
+  preNatal AcompanhamentoPreNatal @relation(fields: [preNatalId], references: [id])
 
   @@index([preNatalId])
   @@index([tipoExame])
@@ -3518,40 +3507,40 @@ enum TipoExamePreNatal {
 
 // ✅ FASE 2.3: VISITA DOMICILIAR (ACS)
 model VisitaDomiciliar {
-  id                   String   @id @default(cuid())
-  acsId                String   // Agente Comunitário de Saúde
-  citizenId            String?  // Cidadão visitado (opcional)
-  domicilioId          String?  // Se houver cadastro domiciliar
+  id          String  @id @default(cuid())
+  acsId       String // Agente Comunitário de Saúde
+  citizenId   String? // Cidadão visitado (opcional)
+  domicilioId String? // Se houver cadastro domiciliar
 
-  dataVisita           DateTime
-  turno                TurnoVisita?
+  dataVisita DateTime
+  turno      TurnoVisita?
 
-  tipoVisita           TipoVisita
-  motivoVisita         String   @db.Text
+  tipoVisita   TipoVisita
+  motivoVisita String     @db.Text
 
   // Atividades realizadas
-  atividadesRealizadas Json     // Array de atividades
+  atividadesRealizadas Json // Array de atividades
 
   // Acompanhamentos
   acompanhamentosRealizados Json? // { hipertensao: true, diabetes: true, gestacao: false }
 
   // Encaminhamentos
-  encaminhamentoUBS    Boolean  @default(false)
-  motivoEncaminhamento String?  @db.Text
+  encaminhamentoUBS    Boolean @default(false)
+  motivoEncaminhamento String? @db.Text
 
   // Desfecho
-  desfecho             String?  @db.Text
-  observacoes          String?  @db.Text
+  desfecho    String? @db.Text
+  observacoes String? @db.Text
 
   // Geolocalização
-  latitude             Float?
-  longitude            Float?
+  latitude  Float?
+  longitude Float?
 
-  createdAt            DateTime @default(now())
+  createdAt DateTime @default(now())
 
   // Relacionamento
-  acs                  ProfissionalSaude @relation("ACSVisitas", fields: [acsId], references: [id])
-  citizen              Citizen? @relation("CitizenHomeVisits", fields: [citizenId], references: [id])
+  acs     ProfissionalSaude @relation("ACSVisitas", fields: [acsId], references: [id])
+  citizen Citizen?          @relation("CitizenHomeVisits", fields: [citizenId], references: [id])
 
   @@index([acsId, dataVisita])
   @@index([citizenId])
@@ -3575,85 +3564,6 @@ enum TipoVisita {
 }
 
 // ✅ FASE 2.4: ATIVIDADE COLETIVA
-model AtividadeColetiva {
-  id                   String   @id @default(cuid())
-  unidadeId            String
-  profissionalId       String
-
-  titulo               String
-  tipo                 TipoAtividadeColetiva
-  tema                 String?  @db.Text
-  publicoAlvo          String?
-
-  dataRealizacao       DateTime
-  horaInicio           String   // "14:00"
-  horaFim              String?  // "16:00"
-
-  localRealizacao      String?  // Sala, espaço externo, comunidade
-
-  numParticipantes     Int      @default(0)
-  participantes        ParticipanteAtividade[]
-
-  // Atividades e temas abordados
-  atividadesRealizadas Json?    // Array de atividades
-  temas                Json?    // Temas abordados
-
-  // Avaliação
-  avaliacaoPratica     String?  @db.Text
-  observacoes          String?  @db.Text
-
-  createdAt            DateTime @default(now())
-
-  // Relacionamentos
-  unidade              UnidadeSaude @relation("UnidadeAtividadesColetivas", fields: [unidadeId], references: [id])
-  profissional         ProfissionalSaude @relation("ProfissionalAtividadesColetivas", fields: [profissionalId], references: [id])
-
-  @@index([unidadeId, dataRealizacao])
-  @@index([tipo])
-  @@map("atividades_coletivas")
-}
-
-model ParticipanteAtividade {
-  id                   String   @id @default(cuid())
-  atividadeId          String
-  citizenId            String?
-
-  // Se não for cidadão cadastrado
-  nome                 String?
-  cpf                  String?
-
-  // Avaliações realizadas
-  avaliacaoAlterada    Boolean  @default(false)
-  pesoAferido          Float?
-  alturaAferida        Float?
-  pressaoArterial      String?
-  glicemia             Float?
-
-  observacoes          String?
-
-  // Relacionamentos
-  atividade            AtividadeColetiva @relation(fields: [atividadeId], references: [id])
-  citizen              Citizen? @relation("CitizenActivityParticipations", fields: [citizenId], references: [id])
-
-  @@index([atividadeId])
-  @@map("participantes_atividade")
-}
-
-enum TipoAtividadeColetiva {
-  REUNIAO_EQUIPE
-  GRUPO_EDUCACAO_SAUDE
-  GRUPO_HIPERTENSOS
-  GRUPO_DIABETICOS
-  GRUPO_GESTANTES
-  GRUPO_TABAGISMO
-  GRUPO_SAUDE_MENTAL
-  GRUPO_IDOSOS
-  ATIVIDADE_FISICA
-  AVALIACAO_ALTERADA
-  PALESTRA
-  OFICINA
-  OUTRO
-}
 
 model Prescricao {
   id           String         @id @default(cuid())
@@ -3810,9 +3720,9 @@ model Medicamento {
   estoques EstoqueMedicamento[]
 
   // Apps Saúde - Farmácia
-  lotes              LoteMedicamento[]
-  transferencias     TransferenciaEstoque[]
-  alertas            AlertaEstoque[]
+  lotes          LoteMedicamento[]
+  transferencias TransferenciaEstoque[]
+  alertas        AlertaEstoque[]
 
   @@index([nome])
   @@index([isRename])
@@ -3867,8 +3777,8 @@ model SolicitacaoTFD {
   citizenId      String
   acompanhanteId String?
 
-  especialidadeId         String?  // ✅ NOVO: ID da especialidade vinculada
-  especialidade           String   // Mantido para compatibilidade (pode ser removido após migração)
+  especialidadeId         String? // ✅ NOVO: ID da especialidade vinculada
+  especialidade           String // Mantido para compatibilidade (pode ser removido após migração)
   procedimento            String
   cid10                   String?
   justificativa           String
@@ -3915,11 +3825,11 @@ model SolicitacaoTFD {
   especialidadeMedica EspecialidadeMedica? @relation(fields: [especialidadeId], references: [id])
 
   // Apps Saúde - TFD
-  documentos          DocumentoTFD[]
-  pareceresRegulacao  ParecerRegulacaoTFD[]
-  aprovacoesGestao    AprovacaoGestaoTFD[]
+  documentos           DocumentoTFD[]
+  pareceresRegulacao   ParecerRegulacaoTFD[]
+  aprovacoesGestao     AprovacaoGestaoTFD[]
   agendamentosExternos AgendamentoExternoTFD[]
-  passageiros         PassageiroViagemTFD[]
+  passageiros          PassageiroViagemTFD[]
 
   @@index([citizenId])
   @@index([status])
@@ -3990,8 +3900,8 @@ model ViagemTFD {
   updatedAt DateTime @updatedAt
 
   // Apps Saúde - TFD
-  passageiros      PassageiroViagemTFD[]
-  prestacaoContas  PrestacaoContasTFD?
+  passageiros     PassageiroViagemTFD[]
+  prestacaoContas PrestacaoContasTFD?
 
   @@index([solicitacaoTFDId])
   @@index([veiculoId])
@@ -6131,48 +6041,17 @@ model ExternalDocument {
 // APP-SAUDE-01: Sistema Integrado de Atendimento - NOVOS MODELOS
 // ============================================================================
 
-model FilaAtendimento {
-  id                String   @id @default(cuid())
-  unidadeId         String
-  consultaId        String   @unique
-  ordem             Int
-  prioridade        Int      @default(0)  // 0=Normal, 1=Preferencial, 2=Urgente
-  status            FilaStatus @default(AGUARDANDO)
-  chamadaEm         DateTime?
-  atendidoEm        DateTime?
-  consultorio       String?
-  observacoes       String?
-  createdAt         DateTime @default(now())
-
-  unidade           UnidadeSaude @relation(fields: [unidadeId], references: [id])
-  consulta          ConsultaAgendada @relation(fields: [consultaId], references: [id])
-  chamadas          ChamadaPainel[]
-
-  @@index([unidadeId])
-  @@index([status])
-  @@index([ordem])
-  @@map("fila_atendimento")
-}
-
-enum FilaStatus {
-  AGUARDANDO
-  CHAMADO
-  EM_ATENDIMENTO
-  FINALIZADO
-  CANCELADO
-}
-
 model ChamadaPainel {
-  id                String   @id @default(cuid())
-  unidadeId         String
-  filaId            String
-  consultorio       String
-  nomePaciente      String
-  mensagem          String?
-  exibidoEm         DateTime @default(now())
+  id           String   @id @default(cuid())
+  unidadeId    String
+  filaId       String
+  consultorio  String
+  nomePaciente String
+  mensagem     String?
+  exibidoEm    DateTime @default(now())
 
-  unidade           UnidadeSaude @relation(fields: [unidadeId], references: [id])
-  fila              FilaAtendimento @relation(fields: [filaId], references: [id])
+  unidade UnidadeSaude    @relation(fields: [unidadeId], references: [id])
+  fila    FilaAtendimento @relation(fields: [filaId], references: [id])
 
   @@index([unidadeId])
   @@index([exibidoEm])
@@ -6180,17 +6059,17 @@ model ChamadaPainel {
 }
 
 model IndisponibilidadeAgenda {
-  id                String   @id @default(cuid())
-  agendaId          String
-  profissionalId    String
-  dataInicio        DateTime
-  dataFim           DateTime
-  motivo            String
+  id                    String                @id @default(cuid())
+  agendaId              String
+  profissionalId        String
+  dataInicio            DateTime
+  dataFim               DateTime
+  motivo                String
   tipoIndisponibilidade TipoIndisponibilidade
-  createdAt         DateTime @default(now())
+  createdAt             DateTime              @default(now())
 
-  agenda            AgendaMedica @relation(fields: [agendaId], references: [id])
-  profissional      ProfissionalSaude @relation(fields: [profissionalId], references: [id])
+  agenda       AgendaMedica      @relation(fields: [agendaId], references: [id])
+  profissional ProfissionalSaude @relation(fields: [profissionalId], references: [id])
 
   @@index([agendaId])
   @@index([profissionalId])
@@ -6207,35 +6086,35 @@ enum TipoIndisponibilidade {
 }
 
 model AlergiasCidadao {
-  id                String   @id @default(cuid())
-  citizenId         String
-  alergia           String
-  gravidade         GravidadeAlergia
-  observacoes       String?
-  dataRegistro      DateTime @default(now())
-  usuarioRegistro   String
+  id              String           @id @default(cuid())
+  citizenId       String
+  alergia         String
+  gravidade       GravidadeAlergia
+  observacoes     String?
+  dataRegistro    DateTime         @default(now())
+  usuarioRegistro String
 
-  citizen           Citizen @relation("CitizenAllergies", fields: [citizenId], references: [id])
-  usuario           User @relation("UserAllergyRecords", fields: [usuarioRegistro], references: [id])
+  citizen Citizen @relation("CitizenAllergies", fields: [citizenId], references: [id])
+  usuario User    @relation("UserAllergyRecords", fields: [usuarioRegistro], references: [id])
 
   @@index([citizenId])
   @@map("alergias_cidadao")
 }
 
 model ComorbidadesCidadao {
-  id                String   @id @default(cuid())
-  citizenId         String
-  cid10             String
-  descricao         String
-  dataInicio        DateTime?
-  dataFim           DateTime?
-  ativo             Boolean  @default(true)
-  observacoes       String?
-  dataRegistro      DateTime @default(now())
-  usuarioRegistro   String
+  id              String    @id @default(cuid())
+  citizenId       String
+  cid10           String
+  descricao       String
+  dataInicio      DateTime?
+  dataFim         DateTime?
+  ativo           Boolean   @default(true)
+  observacoes     String?
+  dataRegistro    DateTime  @default(now())
+  usuarioRegistro String
 
-  citizen           Citizen @relation("CitizenComorbidities", fields: [citizenId], references: [id])
-  usuario           User @relation("UserComorbidityRecords", fields: [usuarioRegistro], references: [id])
+  citizen Citizen @relation("CitizenComorbidities", fields: [citizenId], references: [id])
+  usuario User    @relation("UserComorbidityRecords", fields: [usuarioRegistro], references: [id])
 
   @@index([citizenId])
   @@index([ativo])
@@ -6243,21 +6122,21 @@ model ComorbidadesCidadao {
 }
 
 model AnexoProntuario {
-  id                String   @id @default(cuid())
-  citizenId         String
-  atendimentoId     String?
-  tipoDocumento     TipoDocumentoAnexo
-  nomeArquivo       String
-  caminhoArquivo    String
-  tamanho           Int
-  mimeType          String
-  descricao         String?
-  dataUpload        DateTime @default(now())
-  usuarioUpload     String
+  id             String             @id @default(cuid())
+  citizenId      String
+  atendimentoId  String?
+  tipoDocumento  TipoDocumentoAnexo
+  nomeArquivo    String
+  caminhoArquivo String
+  tamanho        Int
+  mimeType       String
+  descricao      String?
+  dataUpload     DateTime           @default(now())
+  usuarioUpload  String
 
-  citizen           Citizen @relation("CitizenMedicalAttachments", fields: [citizenId], references: [id])
-  atendimento       AtendimentoMedico? @relation(fields: [atendimentoId], references: [id])
-  usuario           User @relation("UserAttachmentUploads", fields: [usuarioUpload], references: [id])
+  citizen     Citizen            @relation("CitizenMedicalAttachments", fields: [citizenId], references: [id])
+  atendimento AtendimentoMedico? @relation(fields: [atendimentoId], references: [id])
+  usuario     User               @relation("UserAttachmentUploads", fields: [usuarioUpload], references: [id])
 
   @@index([citizenId])
   @@index([atendimentoId])
@@ -6275,19 +6154,19 @@ enum TipoDocumentoAnexo {
 }
 
 model ImunizacaoCidadao {
-  id                String   @id @default(cuid())
-  citizenId         String
-  vacina            String
-  dose              String
-  lote              String?
-  dataAplicacao     DateTime
-  unidadeId         String?
-  profissionalId    String?
-  observacoes       String?
+  id             String   @id @default(cuid())
+  citizenId      String
+  vacina         String
+  dose           String
+  lote           String?
+  dataAplicacao  DateTime
+  unidadeId      String?
+  profissionalId String?
+  observacoes    String?
 
-  citizen           Citizen @relation("CitizenImmunizations", fields: [citizenId], references: [id])
-  unidade           UnidadeSaude? @relation(fields: [unidadeId], references: [id])
-  profissional      ProfissionalSaude? @relation(fields: [profissionalId], references: [id])
+  citizen      Citizen            @relation("CitizenImmunizations", fields: [citizenId], references: [id])
+  unidade      UnidadeSaude?      @relation(fields: [unidadeId], references: [id])
+  profissional ProfissionalSaude? @relation(fields: [profissionalId], references: [id])
 
   @@index([citizenId])
   @@index([dataAplicacao])
@@ -6299,21 +6178,21 @@ model ImunizacaoCidadao {
 // ============================================================================
 
 model LoteMedicamento {
-  id                String   @id @default(cuid())
-  medicamentoId     String
-  lote              String
-  dataFabricacao    DateTime
-  dataValidade      DateTime
-  quantidade        Int
-  unidadeId         String
-  fornecedor        String?
-  notaFiscal        String?
-  dataEntrada       DateTime @default(now())
-  usuarioRegistro   String
+  id              String   @id @default(cuid())
+  medicamentoId   String
+  lote            String
+  dataFabricacao  DateTime
+  dataValidade    DateTime
+  quantidade      Int
+  unidadeId       String
+  fornecedor      String?
+  notaFiscal      String?
+  dataEntrada     DateTime @default(now())
+  usuarioRegistro String
 
-  medicamento       Medicamento @relation(fields: [medicamentoId], references: [id])
-  unidade           UnidadeSaude @relation(fields: [unidadeId], references: [id])
-  usuario           User @relation("UserMedicationLots", fields: [usuarioRegistro], references: [id])
+  medicamento Medicamento  @relation(fields: [medicamentoId], references: [id])
+  unidade     UnidadeSaude @relation(fields: [unidadeId], references: [id])
+  usuario     User         @relation("UserMedicationLots", fields: [usuarioRegistro], references: [id])
 
   @@index([medicamentoId])
   @@index([unidadeId])
@@ -6322,23 +6201,23 @@ model LoteMedicamento {
 }
 
 model TransferenciaEstoque {
-  id                String   @id @default(cuid())
-  medicamentoId     String
-  unidadeOrigemId   String
-  unidadeDestinoId  String
-  quantidade        Int
-  motivo            String?
-  status            StatusTransferencia @default(PENDENTE)
-  dataSolicitacao   DateTime @default(now())
-  dataConfirmacao   DateTime?
+  id                 String              @id @default(cuid())
+  medicamentoId      String
+  unidadeOrigemId    String
+  unidadeDestinoId   String
+  quantidade         Int
+  motivo             String?
+  status             StatusTransferencia @default(PENDENTE)
+  dataSolicitacao    DateTime            @default(now())
+  dataConfirmacao    DateTime?
   usuarioSolicitante String
   usuarioConfirmante String?
 
-  medicamento       Medicamento @relation(fields: [medicamentoId], references: [id])
-  unidadeOrigem     UnidadeSaude @relation("StockTransferOrigin", fields: [unidadeOrigemId], references: [id])
-  unidadeDestino    UnidadeSaude @relation("StockTransferDestination", fields: [unidadeDestinoId], references: [id])
-  usuarioSolic      User @relation("UserStockTransferRequester", fields: [usuarioSolicitante], references: [id])
-  usuarioConf       User? @relation("UserStockTransferConfirmer", fields: [usuarioConfirmante], references: [id])
+  medicamento    Medicamento  @relation(fields: [medicamentoId], references: [id])
+  unidadeOrigem  UnidadeSaude @relation("StockTransferOrigin", fields: [unidadeOrigemId], references: [id])
+  unidadeDestino UnidadeSaude @relation("StockTransferDestination", fields: [unidadeDestinoId], references: [id])
+  usuarioSolic   User         @relation("UserStockTransferRequester", fields: [usuarioSolicitante], references: [id])
+  usuarioConf    User?        @relation("UserStockTransferConfirmer", fields: [usuarioConfirmante], references: [id])
 
   @@index([medicamentoId])
   @@index([unidadeOrigemId])
@@ -6355,19 +6234,19 @@ enum StatusTransferencia {
 }
 
 model AlertaEstoque {
-  id                String   @id @default(cuid())
-  medicamentoId     String
-  unidadeId         String
-  tipoAlerta        TipoAlertaEstoque
-  mensagem          String
-  quantidadeAtual   Int
-  quantidadeMinima  Int?
-  dataVencimento    DateTime?
-  visualizado       Boolean  @default(false)
-  dataGeracao       DateTime @default(now())
+  id               String            @id @default(cuid())
+  medicamentoId    String
+  unidadeId        String
+  tipoAlerta       TipoAlertaEstoque
+  mensagem         String
+  quantidadeAtual  Int
+  quantidadeMinima Int?
+  dataVencimento   DateTime?
+  visualizado      Boolean           @default(false)
+  dataGeracao      DateTime          @default(now())
 
-  medicamento       Medicamento @relation(fields: [medicamentoId], references: [id])
-  unidade           UnidadeSaude @relation(fields: [unidadeId], references: [id])
+  medicamento Medicamento  @relation(fields: [medicamentoId], references: [id])
+  unidade     UnidadeSaude @relation(fields: [unidadeId], references: [id])
 
   @@index([medicamentoId])
   @@index([unidadeId])
@@ -6388,18 +6267,18 @@ enum TipoAlertaEstoque {
 // ============================================================================
 
 model DocumentoTFD {
-  id                String   @id @default(cuid())
-  solicitacaoId     String
-  tipoDocumento     TipoDocumentoTFD
-  nomeArquivo       String
-  caminhoArquivo    String
-  tamanho           Int
-  mimeType          String
-  dataUpload        DateTime @default(now())
-  usuarioUpload     String
+  id             String           @id @default(cuid())
+  solicitacaoId  String
+  tipoDocumento  TipoDocumentoTFD
+  nomeArquivo    String
+  caminhoArquivo String
+  tamanho        Int
+  mimeType       String
+  dataUpload     DateTime         @default(now())
+  usuarioUpload  String
 
-  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
-  usuario           User @relation("UserTFDDocuments", fields: [usuarioUpload], references: [id])
+  solicitacao SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  usuario     User           @relation("UserTFDDocuments", fields: [usuarioUpload], references: [id])
 
   @@index([solicitacaoId])
   @@map("documento_tfd")
@@ -6417,16 +6296,16 @@ enum TipoDocumentoTFD {
 }
 
 model ParecerRegulacaoTFD {
-  id                String   @id @default(cuid())
+  id                String        @id @default(cuid())
   solicitacaoId     String
   medicoReguladorId String
-  parecer           String   @db.Text
+  parecer           String        @db.Text
   status            StatusParecer
   observacoes       String?
-  dataParecer       DateTime @default(now())
+  dataParecer       DateTime      @default(now())
 
-  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
-  medicoRegulador   User @relation("UserTFDRegulations", fields: [medicoReguladorId], references: [id])
+  solicitacao     SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  medicoRegulador User           @relation("UserTFDRegulations", fields: [medicoReguladorId], references: [id])
 
   @@index([solicitacaoId])
   @@index([status])
@@ -6440,16 +6319,16 @@ enum StatusParecer {
 }
 
 model AprovacaoGestaoTFD {
-  id                String   @id @default(cuid())
+  id                String        @id @default(cuid())
   solicitacaoId     String
   gestorId          String
   decisao           DecisaoGestao
   justificativa     String?
-  recursosAprovados Json?  // { transporte: true, hospedagem: false, alimentacao: true }
-  dataAprovacao     DateTime @default(now())
+  recursosAprovados Json? // { transporte: true, hospedagem: false, alimentacao: true }
+  dataAprovacao     DateTime      @default(now())
 
-  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
-  gestor            User @relation("UserTFDManagementApprovals", fields: [gestorId], references: [id])
+  solicitacao SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  gestor      User           @relation("UserTFDManagementApprovals", fields: [gestorId], references: [id])
 
   @@index([solicitacaoId])
   @@index([decisao])
@@ -6463,20 +6342,20 @@ enum DecisaoGestao {
 }
 
 model AgendamentoExternoTFD {
-  id                String   @id @default(cuid())
-  solicitacaoId     String
-  hospitalDestino   String
-  especialidade     String
-  dataHoraConsulta  DateTime
-  endereco          String?
-  telefoneContato   String?
-  confirmado        Boolean  @default(false)
-  observacoes       String?
-  dataAgendamento   DateTime @default(now())
+  id                 String   @id @default(cuid())
+  solicitacaoId      String
+  hospitalDestino    String
+  especialidade      String
+  dataHoraConsulta   DateTime
+  endereco           String?
+  telefoneContato    String?
+  confirmado         Boolean  @default(false)
+  observacoes        String?
+  dataAgendamento    DateTime @default(now())
   usuarioAgendamento String
 
-  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
-  usuario           User @relation("UserTFDExternalSchedules", fields: [usuarioAgendamento], references: [id])
+  solicitacao SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  usuario     User           @relation("UserTFDExternalSchedules", fields: [usuarioAgendamento], references: [id])
 
   @@index([solicitacaoId])
   @@index([dataHoraConsulta])
@@ -6484,19 +6363,19 @@ model AgendamentoExternoTFD {
 }
 
 model PassageiroViagemTFD {
-  id                String   @id @default(cuid())
-  viagemId          String
-  solicitacaoId     String
-  citizenId         String
-  acompanhante      Boolean  @default(false)
-  nomeAcompanhante  String?
-  cpfAcompanhante   String?
-  statusEmbarque    StatusEmbarque @default(AGUARDANDO)
-  observacoes       String?
+  id               String         @id @default(cuid())
+  viagemId         String
+  solicitacaoId    String
+  citizenId        String
+  acompanhante     Boolean        @default(false)
+  nomeAcompanhante String?
+  cpfAcompanhante  String?
+  statusEmbarque   StatusEmbarque @default(AGUARDANDO)
+  observacoes      String?
 
-  viagem            ViagemTFD @relation(fields: [viagemId], references: [id])
-  solicitacao       SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
-  citizen           Citizen @relation("CitizenTFDPassengers", fields: [citizenId], references: [id])
+  viagem      ViagemTFD      @relation(fields: [viagemId], references: [id])
+  solicitacao SolicitacaoTFD @relation(fields: [solicitacaoId], references: [id])
+  citizen     Citizen        @relation("CitizenTFDPassengers", fields: [citizenId], references: [id])
 
   @@index([viagemId])
   @@index([solicitacaoId])
@@ -6512,28 +6391,28 @@ enum StatusEmbarque {
 }
 
 model PrestacaoContasTFD {
-  id                String   @id @default(cuid())
-  viagemId          String   @unique
-  combustivelLitros Float
-  combustivelValor  Float
-  pedagioQuantidade Int
-  pedagioValor      Float
-  alimentacaoValor  Float?
-  hospedagemDiarias Int?
-  hospedagemValor   Float?
-  outrosCustos      Json?
-  valorTotal        Float
-  comprovantesAnexados Json?  // Array de caminhos de arquivos
-  status            StatusPrestacao @default(PENDENTE)
-  observacoes       String?
-  dataPrestacao     DateTime @default(now())
-  usuarioPrestacao  String
-  dataAprovacao     DateTime?
-  usuarioAprovacao  String?
+  id                   String          @id @default(cuid())
+  viagemId             String          @unique
+  combustivelLitros    Float
+  combustivelValor     Float
+  pedagioQuantidade    Int
+  pedagioValor         Float
+  alimentacaoValor     Float?
+  hospedagemDiarias    Int?
+  hospedagemValor      Float?
+  outrosCustos         Json?
+  valorTotal           Float
+  comprovantesAnexados Json? // Array de caminhos de arquivos
+  status               StatusPrestacao @default(PENDENTE)
+  observacoes          String?
+  dataPrestacao        DateTime        @default(now())
+  usuarioPrestacao     String
+  dataAprovacao        DateTime?
+  usuarioAprovacao     String?
 
-  viagem            ViagemTFD @relation(fields: [viagemId], references: [id])
-  usuarioPrest      User @relation("UserTFDExpenseReports", fields: [usuarioPrestacao], references: [id])
-  usuarioAprov      User? @relation("UserTFDExpenseApprovals", fields: [usuarioAprovacao], references: [id])
+  viagem       ViagemTFD @relation(fields: [viagemId], references: [id])
+  usuarioPrest User      @relation("UserTFDExpenseReports", fields: [usuarioPrestacao], references: [id])
+  usuarioAprov User?     @relation("UserTFDExpenseApprovals", fields: [usuarioAprovacao], references: [id])
 
   @@index([viagemId])
   @@index([status])
@@ -6553,22 +6432,22 @@ enum StatusPrestacao {
 
 // ✅ NOVA TABELA: Salas/Consultórios
 model SalaConsultorio {
-  id             String          @id @default(cuid())
-  nome           String          // "Consultório 1", "Sala de Curativos", "Sala de Enfermagem"
-  numero         String?         // Número da sala/identificação
-  tipo           TipoSala        // Tipo de sala
-  unidadeId      String
-  andar          String?         // Andar onde está localizada
-  capacidade     Int?            // Capacidade de pessoas
-  equipamentos   Json?           // Array de equipamentos disponíveis
-  ativa          Boolean         @default(true)
-  observacoes    String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id           String   @id @default(cuid())
+  nome         String // "Consultório 1", "Sala de Curativos", "Sala de Enfermagem"
+  numero       String? // Número da sala/identificação
+  tipo         TipoSala // Tipo de sala
+  unidadeId    String
+  andar        String? // Andar onde está localizada
+  capacidade   Int? // Capacidade de pessoas
+  equipamentos Json? // Array de equipamentos disponíveis
+  ativa        Boolean  @default(true)
+  observacoes  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relacionamentos
-  unidade        UnidadeSaude    @relation(fields: [unidadeId], references: [id])
-  agendas        AgendaMedica[]
+  unidade UnidadeSaude   @relation(fields: [unidadeId], references: [id])
+  agendas AgendaMedica[]
 
   @@index([unidadeId, ativa])
   @@index([tipo, ativa])
@@ -6577,34 +6456,34 @@ model SalaConsultorio {
 
 // ✅ NOVO: Enum de Tipo de Sala
 enum TipoSala {
-  CONSULTORIO      // Consultório médico
-  ENFERMAGEM       // Sala de enfermagem
-  CURATIVO         // Sala de curativos
-  VACINA           // Sala de vacinação
-  PROCEDIMENTO     // Sala de procedimentos
-  ODONTOLOGIA      // Consultório odontológico
-  PSICOLOGIA       // Sala de psicologia
-  NUTRICAO         // Sala de nutrição
-  FARMACIA         // Farmácia
-  TRIAGEM          // Sala de triagem
-  OUTRO            // Outros tipos
+  CONSULTORIO // Consultório médico
+  ENFERMAGEM // Sala de enfermagem
+  CURATIVO // Sala de curativos
+  VACINA // Sala de vacinação
+  PROCEDIMENTO // Sala de procedimentos
+  ODONTOLOGIA // Consultório odontológico
+  PSICOLOGIA // Sala de psicologia
+  NUTRICAO // Sala de nutrição
+  FARMACIA // Farmácia
+  TRIAGEM // Sala de triagem
+  OUTRO // Outros tipos
 }
 
 // ✅ NOVA TABELA: Turnos de Trabalho
 model TurnoTrabalho {
-  id               String             @id @default(cuid())
-  nome             String             @unique // "Manhã", "Tarde", "Noite", "Integral"
-  descricao        String?
-  horaInicio       String             // "08:00"
-  horaFim          String             // "12:00"
-  diasSemana       Json?              // Array de dias da semana (opcional, se vazio = todos os dias)
-  cor              String?            // Cor para visualização (ex: "#10B981")
-  ativo            Boolean            @default(true)
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  id         String   @id @default(cuid())
+  nome       String   @unique // "Manhã", "Tarde", "Noite", "Integral"
+  descricao  String?
+  horaInicio String // "08:00"
+  horaFim    String // "12:00"
+  diasSemana Json? // Array de dias da semana (opcional, se vazio = todos os dias)
+  cor        String? // Cor para visualização (ex: "#10B981")
+  ativo      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relacionamentos
-  agendas          AgendaMedica[]
+  agendas AgendaMedica[]
 
   @@index([ativo])
   @@map("turnos_trabalho")
@@ -6612,52 +6491,52 @@ model TurnoTrabalho {
 
 // ✅ NOVA TABELA: Configurações de Atendimento por Unidade
 model ConfiguracaoAtendimento {
-  id                          String        @id @default(cuid())
-  unidadeId                   String        @unique
+  id        String @id @default(cuid())
+  unidadeId String @unique
 
   // Configurações de Senhas e Filas
-  prefixoSenha                String        @default("A")  // Prefixo para senhas (A, B, C, etc.)
-  reiniciarSenhaDiariamente   Boolean       @default(true)
-  senhaInicial                Int           @default(1)    // Número inicial das senhas
+  prefixoSenha              String  @default("A") // Prefixo para senhas (A, B, C, etc.)
+  reiniciarSenhaDiariamente Boolean @default(true)
+  senhaInicial              Int     @default(1) // Número inicial das senhas
 
   // Horários de Funcionamento
-  horaAberturaAtendimento     String        @default("07:00")
-  horaFechamentoAtendimento   String        @default("17:00")
-  diasFuncionamento           Json?         // Array de dias da semana (1-7, se vazio = todos)
+  horaAberturaAtendimento   String @default("07:00")
+  horaFechamentoAtendimento String @default("17:00")
+  diasFuncionamento         Json? // Array de dias da semana (1-7, se vazio = todos)
 
   // Configurações de Triagem
-  triagemObrigatoria          Boolean       @default(true)
-  tempoMedioTriagem           Int           @default(10)   // Minutos
+  triagemObrigatoria Boolean @default(true)
+  tempoMedioTriagem  Int     @default(10) // Minutos
 
   // Configurações de Agendamento
-  permitirAgendamento         Boolean       @default(true)
-  limiteAgendamentoDias       Int           @default(30)   // Quantos dias de antecedência permitir
-  permitirCancelamento        Boolean       @default(true)
-  limiteCancelamentoHoras     Int           @default(24)   // Horas antes da consulta
+  permitirAgendamento     Boolean @default(true)
+  limiteAgendamentoDias   Int     @default(30) // Quantos dias de antecedência permitir
+  permitirCancelamento    Boolean @default(true)
+  limiteCancelamentoHoras Int     @default(24) // Horas antes da consulta
 
   // Configurações de Atendimento
-  tempoMedioConsulta          Int           @default(30)   // Minutos
-  permitirEncaixe             Boolean       @default(true)
-  limiteEncaixesDia           Int           @default(5)
+  tempoMedioConsulta Int     @default(30) // Minutos
+  permitirEncaixe    Boolean @default(true)
+  limiteEncaixesDia  Int     @default(5)
 
   // Notificações
-  enviarSMSLembrete           Boolean       @default(false)
-  horasAntesLembrete          Int           @default(24)
-  enviarEmailConfirmacao      Boolean       @default(false)
+  enviarSMSLembrete      Boolean @default(false)
+  horasAntesLembrete     Int     @default(24)
+  enviarEmailConfirmacao Boolean @default(false)
 
   // Configurações de Prioridade
-  priorizarIdosos             Boolean       @default(true)
-  priorizarGestantes          Boolean       @default(true)
-  priorizarDeficientes        Boolean       @default(true)
-  idadeMinimaPrioridade       Int           @default(60)
+  priorizarIdosos       Boolean @default(true)
+  priorizarGestantes    Boolean @default(true)
+  priorizarDeficientes  Boolean @default(true)
+  idadeMinimaPrioridade Int     @default(60)
 
   // Outras configurações
-  observacoes                 String?
-  createdAt                   DateTime      @default(now())
-  updatedAt                   DateTime      @updatedAt
+  observacoes String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relacionamento
-  unidade                     UnidadeSaude  @relation(fields: [unidadeId], references: [id])
+  unidade UnidadeSaude @relation(fields: [unidadeId], references: [id])
 
   @@map("configuracoes_atendimento")
 }
@@ -6668,49 +6547,49 @@ model ConfiguracaoAtendimento {
 
 // ✅ CONFIGURAÇÃO DE INTEGRAÇÃO e-SUS
 model ConfiguracaoESUS {
-  id                      String   @id @default(cuid())
-  municipioId             String   @unique // Vinculado ao município
+  id          String @id @default(cuid())
+  municipioId String @unique // Vinculado ao município
 
   // Configurações de Integração
-  integracaoAtiva         Boolean  @default(false)
-  tipoIntegracao          TipoIntegracaoESUS @default(NENHUMA)
+  integracaoAtiva Boolean            @default(false)
+  tipoIntegracao  TipoIntegracaoESUS @default(NENHUMA)
 
   // Credenciais API REST (PEC v5.3.19+)
-  urlPEC                  String?  // URL da instalação PEC (ex: https://esus.cidade.gov.br)
-  usuarioAPI              String?  // Usuário gerado pelo administrador PEC
-  senhaAPI                String?  // Senha (será criptografada no backend)
+  urlPEC     String? // URL da instalação PEC (ex: https://esus.cidade.gov.br)
+  usuarioAPI String? // Usuário gerado pelo administrador PEC
+  senhaAPI   String? // Senha (será criptografada no backend)
 
   // Configurações LEDI (Thrift/XML)
-  formatoLEDI             FormatoLEDI?
-  versaoLEDI              String?  // Ex: "6.3.8"
-  diretorioExportacao     String?  // Caminho para salvar arquivos LEDI
+  formatoLEDI         FormatoLEDI?
+  versaoLEDI          String? // Ex: "6.3.8"
+  diretorioExportacao String? // Caminho para salvar arquivos LEDI
 
   // Mapeamentos
-  cnesUnidadePrincipal    String?  // CNES da unidade principal
-  mapeamentoUnidades      Json?    // {digiurbanId: cnes}
-  mapeamentoProfissionais Json?    // {digiurbanId: cns}
+  cnesUnidadePrincipal    String? // CNES da unidade principal
+  mapeamentoUnidades      Json? // {digiurbanId: cnes}
+  mapeamentoProfissionais Json? // {digiurbanId: cns}
 
   // Sincronização
-  sincronizacaoAutomatica Boolean  @default(false)
-  intervaloSincMinutos    Int      @default(60)
+  sincronizacaoAutomatica Boolean   @default(false)
+  intervaloSincMinutos    Int       @default(60)
   ultimaSincronizacao     DateTime?
   proximaSincronizacao    DateTime?
 
   // Logs e Auditoria
-  logTransmissoes         Boolean  @default(true)
-  retentarEnviosFalhos    Boolean  @default(true)
-  maxTentativas           Int      @default(3)
+  logTransmissoes      Boolean @default(true)
+  retentarEnviosFalhos Boolean @default(true)
+  maxTentativas        Int     @default(3)
 
   // Observações
-  observacoes             String?
+  observacoes String?
 
   // Audit
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
-  createdBy               String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
 
   // Relacionamentos
-  transmissoes            TransmissaoESUS[]
+  transmissoes TransmissaoESUS[]
 
   @@index([integracaoAtiva])
   @@map("configuracoes_esus")
@@ -6718,43 +6597,43 @@ model ConfiguracaoESUS {
 
 // ✅ REGISTRO DE TRANSMISSÕES e-SUS
 model TransmissaoESUS {
-  id                  String   @id @default(cuid())
-  configuracaoId      String
+  id             String @id @default(cuid())
+  configuracaoId String
 
   // Identificação
-  tipo                TipoFichaESUS
-  formato             FormatoLEDI?
+  tipo    TipoFichaESUS
+  formato FormatoLEDI?
 
   // Dados de Origem
-  fichaId             String   // ID do registro DigiUrban (atendimentoId, consultaId, etc)
-  entidadeOrigem      String?  // Nome da entidade (AtendimentoMedico, ConsultaMedica, etc)
-  nomeArquivo         String?  // Nome do arquivo gerado (se LEDI)
+  fichaId        String // ID do registro DigiUrban (atendimentoId, consultaId, etc)
+  entidadeOrigem String? // Nome da entidade (AtendimentoMedico, ConsultaMedica, etc)
+  nomeArquivo    String? // Nome do arquivo gerado (se LEDI)
 
   // Conteúdo (para auditoria)
-  payloadJSON         Json?    // Dados serializados antes da conversão
-  conteudoLEDI        String?  @db.Text // Conteúdo LEDI (XML ou Base64 do Thrift)
+  payloadJSON  Json? // Dados serializados antes da conversão
+  conteudoLEDI String? @db.Text // Conteúdo LEDI (XML ou Base64 do Thrift)
 
   // Status e Resposta
-  status              StatusTransmissao @default(PENDENTE)
-  dataEnvio           DateTime @default(now())
-  dataConfirmacao     DateTime?
+  status          StatusTransmissao @default(PENDENTE)
+  dataEnvio       DateTime          @default(now())
+  dataConfirmacao DateTime?
 
   // Resposta do PEC
-  codigoResposta      Int?
-  mensagemResposta    String?
-  erros               Json?    // Erros de validação retornados pelo PEC
+  codigoResposta   Int?
+  mensagemResposta String?
+  erros            Json? // Erros de validação retornados pelo PEC
 
   // Retry
-  tentativas          Int      @default(0)
-  proximaTentativa    DateTime?
-  ultimaFalha         DateTime?
+  tentativas       Int       @default(0)
+  proximaTentativa DateTime?
+  ultimaFalha      DateTime?
 
   // Audit
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  configuracao        ConfiguracaoESUS @relation(fields: [configuracaoId], references: [id])
+  configuracao ConfiguracaoESUS @relation(fields: [configuracaoId], references: [id])
 
   @@index([configuracaoId, status])
   @@index([dataEnvio])
@@ -6765,9 +6644,9 @@ model TransmissaoESUS {
 
 // ✅ ENUMS de Integração e-SUS
 enum TipoIntegracaoESUS {
-  API_REST          // Envio via API REST (PEC v5.3.19+)
-  LEDI_THRIFT       // Arquivo Thrift
-  LEDI_XML          // Arquivo XML
+  API_REST // Envio via API REST (PEC v5.3.19+)
+  LEDI_THRIFT // Arquivo Thrift
+  LEDI_XML // Arquivo XML
   NENHUMA
 }
 
@@ -6797,4 +6676,573 @@ enum StatusTransmissao {
   ERRO_AUTENTICACAO
   AGUARDANDO_RETRY
   CANCELADO
+}
+
+// ============================================================================
+// FLUXO DE ATENDIMENTO PEC e-SUS - NOVAS TABELAS
+// ============================================================================
+
+// ✅ EQUIPES DE SAÚDE (PSF/ESF)
+model EquipeSaude {
+  id String @id @default(cuid())
+
+  // Identificação
+  ine  String     @unique // Identificação Nacional de Equipes
+  nome String
+  tipo TipoEquipe
+
+  // Vinculação
+  unidadeId String
+  unidade   UnidadeSaude @relation(fields: [unidadeId], references: [id])
+
+  // Status
+  ativo Boolean @default(true)
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relacionamentos
+  microareas      Microarea[]
+  profissionais   ProfissionalEquipe[]
+  citizens        Citizen[]            @relation("CitizenEquipe")
+  filaAtendimento FilaAtendimento[]
+  escutasIniciais EscutaInicial[]
+
+  @@index([unidadeId])
+  @@index([ativo])
+  @@map("equipes_saude")
+}
+
+enum TipoEquipe {
+  eAP // Equipe de Atenção Primária
+  eSF // Equipe Saúde da Família
+  eAB // Equipe Atenção Básica
+  NASF // Núcleo Apoio Saúde Família
+  eCR // Equipe Consultório de Rua
+  eAD // Equipe Atenção Domiciliar
+}
+
+// ✅ VÍNCULO PROFISSIONAL-EQUIPE
+model ProfissionalEquipe {
+  id String @id @default(cuid())
+
+  profissionalId String
+  profissional   User   @relation("ProfissionalEquipes", fields: [profissionalId], references: [id])
+
+  equipeId String
+  equipe   EquipeSaude @relation(fields: [equipeId], references: [id])
+
+  // Função na equipe
+  cbo    String // Código CBO do profissional
+  funcao String? // Descrição da função
+
+  // Período
+  dataInicio DateTime  @default(now())
+  dataFim    DateTime?
+  ativo      Boolean   @default(true)
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profissionalId, equipeId, dataInicio])
+  @@index([profissionalId])
+  @@index([equipeId])
+  @@index([ativo])
+  @@map("profissionais_equipes")
+}
+
+// ✅ MICROÁREAS (TERRITORIALIZAÇÃO)
+model Microarea {
+  id String @id @default(cuid())
+
+  // Identificação
+  numero    String
+  descricao String?
+
+  // Vinculação
+  equipeId String
+  equipe   EquipeSaude @relation(fields: [equipeId], references: [id])
+
+  // ACS Responsável
+  acsId String?
+  acs   User?   @relation("ACSMicroarea", fields: [acsId], references: [id])
+
+  // Status
+  ativo Boolean @default(true)
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  citizens Citizen[] @relation("CitizenMicroarea")
+
+  @@unique([equipeId, numero])
+  @@index([equipeId])
+  @@index([acsId])
+  @@map("microareas")
+}
+
+// ✅ FILA DE ATENDIMENTO (LISTA DE PACIENTES)
+model FilaAtendimento {
+  id String @id @default(cuid())
+
+  // Cidadão
+  citizenId String
+  citizen   Citizen @relation("CitizenFilaAtendimentos", fields: [citizenId], references: [id])
+
+  // Profissional responsável
+  profissionalId String
+  profissional   User   @relation("ProfissionalFilaAtendimentos", fields: [profissionalId], references: [id])
+
+  // Equipe (se aplicável)
+  equipeId String?
+  equipe   EquipeSaude? @relation(fields: [equipeId], references: [id])
+
+  // Tipo e motivo
+  tipoAtendimento TipoAtendimento
+  motivoBusca     String
+
+  // Status do fluxo
+  status     StatusFila     @default(AGUARDANDO)
+  prioridade PrioridadeFila @default(NORMAL)
+
+  // Datas e horários
+  dataHoraChegada DateTime  @default(now())
+  dataHoraInicio  DateTime?
+  dataHoraFim     DateTime?
+
+  // Flags especiais
+  vacinacao Boolean @default(false)
+
+  // Observações
+  observacoes String?
+
+  // Unidade
+  unidadeId String
+  unidade   UnidadeSaude @relation(fields: [unidadeId], references: [id])
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relacionamentos
+  escutaInicial     EscutaInicial?
+  triagem           TriagemEnfermagem?
+  atendimento       AtendimentoMedico? @relation("FilaAtendimento")
+  consultaAgendadas ConsultaAgendada[]
+  chamadaPainels    ChamadaPainel[]
+
+  @@index([citizenId])
+  @@index([profissionalId])
+  @@index([equipeId])
+  @@index([unidadeId])
+  @@index([status])
+  @@index([dataHoraChegada])
+  @@index([prioridade])
+  @@map("fila_atendimento")
+}
+
+enum TipoAtendimento {
+  AGENDADO
+  DEMANDA_ESPONTANEA
+  URGENCIA
+  RETORNO
+  RENOVACAO_RECEITA
+  VACINACAO
+  PROCEDIMENTO
+}
+
+enum StatusFila {
+  AGUARDANDO // Paciente chegou, aguardando primeiro atendimento
+  EM_ESCUTA_INICIAL // Em acolhimento/escuta inicial
+  EM_TRIAGEM // Em triagem de enfermagem
+  AGUARDANDO_MEDICO // Triado, aguardando médico
+  EM_CONSULTA // Em consulta médica
+  EM_PROCEDIMENTO // Em sala de procedimentos
+  EM_VACINACAO // Em vacinação
+  FINALIZADO // Atendimento concluído
+  NAO_AGUARDOU // Desistiu da espera
+  RETORNOU // Retornou após não aguardar
+}
+
+enum PrioridadeFila {
+  NORMAL
+  URGENTE
+  MUITO_URGENTE
+  EMERGENCIA
+}
+
+// ✅ ESCUTA INICIAL / ACOLHIMENTO
+model EscutaInicial {
+  id String @id @default(cuid())
+
+  // Vinculação com fila
+  filaAtendimentoId String          @unique
+  filaAtendimento   FilaAtendimento @relation(fields: [filaAtendimentoId], references: [id])
+
+  // Profissional que realizou (geralmente enfermeiro/técnico)
+  profissionalId String
+  profissional   User   @relation("ProfissionalEscutasIniciais", fields: [profissionalId], references: [id])
+
+  // Equipe
+  equipeId String?
+  equipe   EquipeSaude? @relation(fields: [equipeId], references: [id])
+
+  // === SUBJETIVO ===
+  motivoBusca          String
+  historiaBreve        String?
+  tempoEvolucao        String?
+  tentativasAnteriores String?
+
+  // === OBJETIVO (OPCIONAL) ===
+  pressaoArterial    String?
+  temperatura        Float?
+  frequenciaCardiaca Int?
+  observacoesVisuais String?
+
+  // === CLASSIFICAÇÃO ===
+  // Risco Biológico
+  riscoEsperado RiscoEsperado
+
+  // Vulnerabilidade Social
+  vulnerabilidadeSocial VulnerabilidadeSocial
+
+  // === CONDUTA ===
+  condutaDefinida CondutaEscutaInicial
+
+  // Se encaminhado para profissional
+  profissionalEncaminhadoId String?
+  profissionalEncaminhado   User?   @relation("EncaminhamentosEscutaInicial", fields: [profissionalEncaminhadoId], references: [id])
+
+  // Se agendamento
+  dataAgendamento DateTime?
+
+  // Orientações fornecidas
+  orientacoes String?
+
+  // Unidade
+  unidadeId String
+  unidade   UnidadeSaude @relation(fields: [unidadeId], references: [id])
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([filaAtendimentoId])
+  @@index([profissionalId])
+  @@index([unidadeId])
+  @@index([riscoEsperado])
+  @@index([condutaDefinida])
+  @@map("escutas_iniciais")
+}
+
+enum RiscoEsperado {
+  EMERGENCIA // 🔴 Atendimento imediato
+  MUITO_URGENTE // 🟠
+  URGENTE // 🟡
+  POUCO_URGENTE // 🟢
+  NAO_URGENTE // ⚪
+}
+
+enum VulnerabilidadeSocial {
+  ALTA
+  MEDIA
+  BAIXA
+}
+
+enum CondutaEscutaInicial {
+  RESOLVIDO_NA_ESCUTA // Orientações foram suficientes
+  ENCAMINHADO_ATENDIMENTO_DIA // Vai para triagem/médico hoje
+  PROCEDIMENTO_UBS // Curativo, inalação, etc.
+  AGENDAMENTO_CONSULTA // Agendar para outro dia
+  ENCAMINHAMENTO_EXTERNO // Especialidade, urgência externa
+}
+
+// ✅ TRIAGEM DE ENFERMAGEM
+model TriagemEnfermagem {
+  id String @id @default(cuid())
+
+  // Vinculação com fila
+  filaAtendimentoId String          @unique
+  filaAtendimento   FilaAtendimento @relation(fields: [filaAtendimentoId], references: [id])
+
+  // Enfermeiro responsável
+  enfermeiroId String
+  enfermeiro   User   @relation("EnfermeiroTriagens", fields: [enfermeiroId], references: [id])
+
+  // === SINAIS VITAIS ===
+  pressaoArterial        String? // Formato: 120/80
+  temperatura            Float? // °C
+  frequenciaCardiaca     Int? // bpm
+  frequenciaRespiratoria Int? // irpm
+  saturacaoO2            Float? // %
+  dor                    Int? // Escala 0-10
+
+  // === ANTROPOMETRIA ===
+  peso                    Float? // kg
+  altura                  Float? // cm
+  imc                     Float? // Calculado automaticamente
+  perimetroCefalico       Float? // cm (crianças)
+  circunferenciaAbdominal Float? // cm
+
+  // === GLICEMIA CAPILAR ===
+  glicemiaCapilar Float? // mg/dL
+  momentoGlicemia MomentoGlicemia?
+
+  // === AVALIAÇÃO DE ENFERMAGEM ===
+  queixaPrincipal     String
+  historiaDoencaAtual String?
+  alergiasConhecidas  String?
+  medicamentosUso     String?
+  comorbidades        String?
+
+  // === CLASSIFICAÇÃO DE RISCO (MANCHESTER) ===
+  classificacaoRisco     ClassificacaoManchester
+  discriminadorUtilizado String? // Qual discriminador foi usado
+
+  // === ENCAMINHAMENTO ===
+  profissionalEncaminhadoId String?
+  profissionalEncaminhado   User?   @relation("EncaminhamentosTriagem", fields: [profissionalEncaminhadoId], references: [id])
+
+  observacoes String?
+
+  // Unidade
+  unidadeId String
+  unidade   UnidadeSaude @relation(fields: [unidadeId], references: [id])
+
+  // Audit
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  atendimentoMedicos AtendimentoMedico[]
+
+  @@index([filaAtendimentoId])
+  @@index([enfermeiroId])
+  @@index([unidadeId])
+  @@index([classificacaoRisco])
+  @@map("triagens_enfermagem")
+}
+
+enum MomentoGlicemia {
+  JEJUM
+  POS_PRANDIAL
+  ALEATORIA
+}
+
+enum ClassificacaoManchester {
+  EMERGENCIA // 🔴 Imediato (0min)
+  MUITO_URGENTE // 🟠 10 minutos
+  URGENTE // 🟡 60 minutos
+  POUCO_URGENTE // 🟢 120 minutos
+  NAO_URGENTE // 🔵 240 minutos
+}
+
+// ✅ ATIVIDADE COLETIVA
+model AtividadeColetiva {
+  id String @id @default(cuid())
+
+  // Identificação
+  tipo      TipoAtividadeColetiva
+  tema      String
+  descricao String?
+
+  // Data e local
+  dataHora DateTime
+  duracao  Int? // minutos
+  local    String
+
+  // Unidade
+  unidadeId String
+  unidade   UnidadeSaude @relation("UnidadeAtividadesColetivas", fields: [unidadeId], references: [id])
+
+  // Público-alvo
+  publicoAlvo         String?
+  faixaEtariaInicio   Int?
+  faixaEtariaFim      Int?
+  numeroParticipantes Int     @default(0)
+
+  // Práticas em saúde
+  praticasSaude String[] // Array de práticas abordadas
+
+  // Status
+  status StatusAtividade @default(PLANEJADA)
+
+  // Avaliações realizadas
+  avaliacoesRealizadas Boolean @default(false)
+
+  // Observações
+  observacoes String?
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relacionamentos
+  profissionais ProfissionalAtividade[]
+  participantes ParticipanteAtividade[]
+
+  @@index([unidadeId])
+  @@index([dataHora])
+  @@index([tipo])
+  @@index([status])
+  @@map("atividades_coletivas")
+}
+
+enum TipoAtividadeColetiva {
+  GRUPO_HIPERTENSOS
+  GRUPO_DIABETICOS
+  GRUPO_GESTANTES
+  GRUPO_IDOSOS
+  GRUPO_CRIANCAS
+  GRUPO_SAUDE_MENTAL
+  EDUCACAO_SAUDE
+  PRATICAS_CORPORAIS
+  PLANEJAMENTO_FAMILIAR
+  GRUPO_TABAGISMO
+  OUTRO
+}
+
+enum StatusAtividade {
+  PLANEJADA
+  REALIZADA
+  CANCELADA
+}
+
+// ✅ PROFISSIONAIS NA ATIVIDADE COLETIVA
+model ProfissionalAtividade {
+  id String @id @default(cuid())
+
+  atividadeId String
+  atividade   AtividadeColetiva @relation(fields: [atividadeId], references: [id])
+
+  profissionalId String
+  profissional   User   @relation("ProfissionalAtividades", fields: [profissionalId], references: [id])
+
+  funcao String? // Coordenador, facilitador, apoio
+
+  createdAt           DateTime           @default(now())
+  profissionalSaude   ProfissionalSaude? @relation(fields: [profissionalSaudeId], references: [id])
+  profissionalSaudeId String?
+
+  @@unique([atividadeId, profissionalId])
+  @@index([atividadeId])
+  @@index([profissionalId])
+  @@map("profissionais_atividades")
+}
+
+// ✅ PARTICIPANTES DA ATIVIDADE COLETIVA
+model ParticipanteAtividade {
+  id String @id @default(cuid())
+
+  atividadeId String
+  atividade   AtividadeColetiva @relation(fields: [atividadeId], references: [id])
+
+  citizenId String
+  citizen   Citizen @relation("CitizenActivityParticipations", fields: [citizenId], references: [id])
+
+  // Avaliações realizadas
+  pressaoArterial   String?
+  glicemia          Float?
+  peso              Float?
+  avaliacaoAlterada Boolean @default(false)
+
+  observacoes String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([atividadeId, citizenId])
+  @@index([atividadeId])
+  @@index([citizenId])
+  @@map("participantes_atividades")
+}
+
+// ✅ CONFIGURAÇÃO DE AGENDA
+model ConfiguracaoAgenda {
+  id String @id @default(cuid())
+
+  // Profissional
+  profissionalId String
+  profissional   User   @relation("ProfissionalAgendas", fields: [profissionalId], references: [id])
+
+  // Unidade
+  unidadeId String
+  unidade   UnidadeSaude @relation(fields: [unidadeId], references: [id])
+
+  // Dia da semana (0 = Domingo, 6 = Sábado)
+  diaSemana Int
+
+  // Turnos
+  turno TurnoAgenda
+
+  // Horários
+  horaInicio String // Formato: HH:mm
+  horaFim    String // Formato: HH:mm
+
+  // Duração por consulta (minutos)
+  duracaoConsulta Int @default(20)
+
+  // Tipos de atendimento aceitos
+  tiposAceitos TipoAtendimento[]
+
+  // Quantidade de vagas
+  vagasTotais      Int
+  vagasDisponiveis Int? // Pode ser calculado dinamicamente
+
+  // Agendamento online
+  permiteOnline Boolean @default(false)
+
+  // Status
+  ativo Boolean @default(true)
+
+  // Audit
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([profissionalId, unidadeId, diaSemana, turno])
+  @@index([profissionalId])
+  @@index([unidadeId])
+  @@index([ativo])
+  @@map("configuracoes_agenda")
+}
+
+enum TurnoAgenda {
+  MANHA
+  TARDE
+  NOITE
+}
+
+// ✅ INDISPONIBILIDADE DE PROFISSIONAL
+model IndisponibilidadeProfissional {
+  id String @id @default(cuid())
+
+  profissionalId String
+  profissional   User   @relation("ProfissionalIndisponibilidades", fields: [profissionalId], references: [id])
+
+  tipo TipoIndisponibilidadeProfissional
+
+  dataInicio DateTime
+  dataFim    DateTime
+
+  motivo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profissionalId])
+  @@index([dataInicio, dataFim])
+  @@map("indisponibilidades_profissionais")
+}
+
+enum TipoIndisponibilidadeProfissional {
+  FERIAS
+  LICENCA
+  ATESTADO
+  TREINAMENTO
+  REUNIAO
+  OUTRO
 }
