@@ -11,9 +11,10 @@ import {
   Clock,
   AlertCircle,
   ClipboardList,
-  ArrowRight,
+  UserPlus,
   CheckCircle2,
 } from 'lucide-react';
+import { ListaAtendimentosPage } from '@/components/apps/saude/fila-atendimento/ListaAtendimentosPage';
 
 export default function AtendimentoPage() {
   const router = useRouter();
@@ -30,6 +31,32 @@ export default function AtendimentoPage() {
   const loadStats = async () => {
     try {
       // TODO: Conectar com API real /api/saude/fila-atendimento/stats
+      const response = await fetch('/api/saude/fila-atendimento');
+      if (response.ok) {
+        const fila = await response.json();
+
+        setStats({
+          filaTotal: fila.length,
+          filaAguardando: fila.filter((f: any) => f.status === 'AGUARDANDO').length,
+          filaEmAtendimento: fila.filter((f: any) =>
+            ['EM_ESCUTA_INICIAL', 'EM_TRIAGEM', 'EM_CONSULTA'].includes(f.status)
+          ).length,
+          filaUrgente: fila.filter((f: any) =>
+            ['URGENTE', 'MUITO_URGENTE', 'EMERGENCIA'].includes(f.prioridade)
+          ).length,
+          tempoMedioEspera: 0,
+        });
+      } else {
+        setStats({
+          filaTotal: 0,
+          filaAguardando: 0,
+          filaEmAtendimento: 0,
+          filaUrgente: 0,
+          tempoMedioEspera: 0,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
       setStats({
         filaTotal: 0,
         filaAguardando: 0,
@@ -37,8 +64,6 @@ export default function AtendimentoPage() {
         filaUrgente: 0,
         tempoMedioEspera: 0,
       });
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
     } finally {
       setLoading(false);
     }
@@ -70,14 +95,6 @@ export default function AtendimentoPage() {
             Fluxo completo: Recepção → Escuta Inicial → Triagem → Consulta
           </p>
         </div>
-        <Button
-          onClick={() => router.push('/admin/apps/saude/atendimento/fila')}
-          size="lg"
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <ClipboardList className="h-5 w-5 mr-2" />
-          Abrir Fila de Atendimento
-        </Button>
       </div>
 
       {/* Estatísticas em Tempo Real */}
@@ -127,204 +144,8 @@ export default function AtendimentoPage() {
         </Card>
       </div>
 
-      {/* Fluxo do PEC e-SUS */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Fluxo de Atendimento PEC e-SUS</CardTitle>
-          <CardDescription>
-            Sistema implementado seguindo o padrão nacional do Ministério da Saúde
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Passo 1 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-3">
-                <span className="text-2xl font-bold text-blue-600">1</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-1">Recepção</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Adicionar paciente na fila de atendimento
-              </p>
-              <Badge>Implementado</Badge>
-            </div>
-
-            <ArrowRight className="hidden md:block self-center text-gray-400" />
-
-            {/* Passo 2 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-3">
-                <span className="text-2xl font-bold text-purple-600">2</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-1">Escuta Inicial</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Acolhimento e classificação de vulnerabilidade
-              </p>
-              <Badge>Implementado</Badge>
-            </div>
-
-            <ArrowRight className="hidden md:block self-center text-gray-400" />
-
-            {/* Passo 3 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mb-3">
-                <span className="text-2xl font-bold text-orange-600">3</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-1">Triagem</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Sinais vitais + Protocolo de Manchester
-              </p>
-              <Badge>Implementado</Badge>
-            </div>
-
-            <ArrowRight className="hidden md:block self-center text-gray-400" />
-
-            {/* Passo 4 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-3">
-                <span className="text-2xl font-bold text-green-600">4</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-1">Consulta</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Atendimento médico com registro SOAP
-              </p>
-              <Badge>Implementado</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Protocolo de Manchester */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Protocolo de Manchester</CardTitle>
-          <CardDescription>
-            5 níveis de classificação de risco implementados
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-red-50 border border-red-200">
-              <div className="w-4 h-4 rounded-full bg-red-500 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-sm text-red-900">Emergência</p>
-                <p className="text-xs text-red-700">Imediato</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 border border-orange-200">
-              <div className="w-4 h-4 rounded-full bg-orange-500 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-sm text-orange-900">Muito Urgente</p>
-                <p className="text-xs text-orange-700">10 min</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-              <div className="w-4 h-4 rounded-full bg-yellow-500 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-sm text-yellow-900">Urgente</p>
-                <p className="text-xs text-yellow-700">60 min</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
-              <div className="w-4 h-4 rounded-full bg-green-500 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-sm text-green-900">Pouco Urgente</p>
-                <p className="text-xs text-green-700">120 min</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
-              <div className="w-4 h-4 rounded-full bg-blue-500 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-sm text-blue-900">Não Urgente</p>
-                <p className="text-xs text-blue-700">240 min</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Resumo de Funcionalidades */}
-      <Card className="border-2 border-green-200 bg-green-50/50">
-        <CardHeader>
-          <CardTitle className="text-green-900 flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            Funcionalidades Implementadas
-          </CardTitle>
-          <CardDescription className="text-green-700">
-            Sistema completo alinhado com PEC e-SUS
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div>
-              <h4 className="font-semibold text-green-900 mb-2">Fluxo de Atendimento</h4>
-              <ul className="space-y-1 text-sm text-green-800">
-                <li>✓ Fila de atendimento em tempo real</li>
-                <li>✓ Escuta inicial com classificação</li>
-                <li>✓ Triagem de enfermagem completa</li>
-                <li>✓ Consulta médica com SOAP</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-green-900 mb-2">Prontuário Eletrônico</h4>
-              <ul className="space-y-1 text-sm text-green-800">
-                <li>✓ Folha de rosto completa</li>
-                <li>✓ Registro SOAP estruturado</li>
-                <li>✓ Módulo de vacinação</li>
-                <li>✓ Solicitação de exames</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-green-900 mb-2">Programas Especiais</h4>
-              <ul className="space-y-1 text-sm text-green-800">
-                <li>✓ Pré-natal com gráficos</li>
-                <li>✓ Puericultura (0-10 anos)</li>
-                <li>✓ Saúde do idoso (IVCF)</li>
-                <li>✓ Odontologia (odontograma FDI)</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-green-900 mb-2">Gestão PSF</h4>
-              <ul className="space-y-1 text-sm text-green-800">
-                <li>✓ Equipes com INE</li>
-                <li>✓ Microáreas</li>
-                <li>✓ Visitas domiciliares</li>
-                <li>✓ Atividades coletivas</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-green-900 mb-2">Backend Completo</h4>
-              <ul className="space-y-1 text-sm text-green-800">
-                <li>✓ 11 modelos Prisma</li>
-                <li>✓ 6 serviços implementados</li>
-                <li>✓ 5 APIs REST</li>
-                <li>✓ 0 erros TypeScript</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-green-900 mb-2">Frontend Moderno</h4>
-              <ul className="space-y-1 text-sm text-green-800">
-                <li>✓ 31 componentes</li>
-                <li>✓ Odontograma interativo</li>
-                <li>✓ Gráficos pré-natal SVG</li>
-                <li>✓ Auto-refresh (30s)</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Botão de Ação Principal */}
-      <div className="flex justify-center">
-        <Button
-          onClick={() => router.push('/admin/apps/saude/atendimento/fila')}
-          size="lg"
-          className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6"
-        >
-          <ClipboardList className="h-6 w-6 mr-3" />
-          Iniciar Atendimento
-        </Button>
-      </div>
+      {/* Fila de Atendimento - Componente Funcional */}
+      <ListaAtendimentosPage />
     </div>
   );
 }
