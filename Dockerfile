@@ -38,6 +38,12 @@ RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 # Copiar código do backend
 COPY digiurban/backend ./
 
+# Debug: Listar arquivos copiados
+RUN echo "=== Verificando arquivos copiados ===" && \
+    ls -la src/services/atendimento/ && \
+    echo "=== Conteúdo do index.ts ===" && \
+    cat src/services/atendimento/index.ts
+
 # Gerar Prisma Client (sem criar banco - apenas gerar tipos)
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
@@ -152,6 +158,7 @@ COPY --from=backend-builder /app/backend/dist ./dist
 COPY --from=backend-builder /app/backend/prisma ./prisma
 COPY --from=backend-builder /app/backend/src/data ./dist/data
 COPY --from=backend-builder /app/backend/src/seeds ./src/seeds
+COPY --from=backend-builder /app/backend/templates ./templates
 # ❌ REMOVIDO: bot/flows migrado para UltraZend Messages Server
 # COPY --from=backend-builder /app/backend/src/services/bot/flows ./dist/services/bot/flows
 COPY --from=backend-builder /app/backend/package.json ./
