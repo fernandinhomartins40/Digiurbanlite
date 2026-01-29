@@ -3090,6 +3090,7 @@ model AtendimentoMedico {
 
   // Apps Saúde - Relacionamentos
   anexos AnexoProntuario[]
+  atendimentoOdontologico AtendimentoOdontologico? @relation("AtendimentoOdonto")
 
   @@index([citizenId])
   @@index([unidadeId, dataAtendimento])
@@ -3249,7 +3250,7 @@ model ProblemaCondicao {
   createdBy            String?  // Profissional que registrou
 
   // Relacionamento
-  citizen              Citizen  @relation(fields: [citizenId], references: [id])
+  citizen              Citizen  @relation("CitizenProblems", fields: [citizenId], references: [id])
 
   @@index([citizenId, status])
   @@index([codigo])
@@ -3294,7 +3295,7 @@ model AlergiaReacao {
   updatedAt            DateTime @updatedAt
 
   // Relacionamento
-  citizen              Citizen  @relation(fields: [citizenId], references: [id])
+  citizen              Citizen  @relation("CitizenAllergiesReactions", fields: [citizenId], references: [id])
 
   @@index([citizenId, ativo])
   @@index([tipo])
@@ -3346,7 +3347,7 @@ model AtendimentoOdontologico {
   dataHora             DateTime @default(now())
 
   // Relacionamentos
-  atendimento          AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
+  atendimento          AtendimentoMedico @relation("AtendimentoOdonto", fields: [atendimentoId], references: [id])
   dentista             ProfissionalSaude @relation("DentistaAtendimentos", fields: [dentistaId], references: [id])
 
   @@map("atendimentos_odontologicos")
@@ -3420,7 +3421,7 @@ model AcompanhamentoPreNatal {
   updatedAt            DateTime @updatedAt
 
   // Relacionamento
-  citizen              Citizen  @relation(fields: [citizenId], references: [id])
+  citizen              Citizen  @relation("CitizenPreNatal", fields: [citizenId], references: [id])
 
   @@index([status])
   @@index([riscoGestacional])
@@ -3550,7 +3551,7 @@ model VisitaDomiciliar {
 
   // Relacionamento
   acs                  ProfissionalSaude @relation("ACSVisitas", fields: [acsId], references: [id])
-  citizen              Citizen? @relation(fields: [citizenId], references: [id])
+  citizen              Citizen? @relation("CitizenHomeVisits", fields: [citizenId], references: [id])
 
   @@index([acsId, dataVisita])
   @@index([citizenId])
@@ -3632,7 +3633,7 @@ model ParticipanteAtividade {
 
   // Relacionamentos
   atividade            AtividadeColetiva @relation(fields: [atividadeId], references: [id])
-  citizen              Citizen? @relation(fields: [citizenId], references: [id])
+  citizen              Citizen? @relation("CitizenActivityParticipations", fields: [citizenId], references: [id])
 
   @@index([atividadeId])
   @@map("participantes_atividade")
@@ -6219,12 +6220,6 @@ model AlergiasCidadao {
 
   @@index([citizenId])
   @@map("alergias_cidadao")
-}
-
-enum GravidadeAlergia {
-  LEVE
-  MODERADA
-  GRAVE
 }
 
 model ComorbidadesCidadao {
