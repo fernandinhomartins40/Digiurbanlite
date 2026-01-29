@@ -38,16 +38,18 @@ RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 # Copiar código do backend
 COPY digiurban/backend ./
 
-# Debug: Listar arquivos copiados
-RUN echo "=== Verificando arquivos copiados ===" && \
-    ls -la src/services/atendimento/ && \
-    echo "=== Conteúdo do index.ts ===" && \
-    cat src/services/atendimento/index.ts
-
 # Gerar Prisma Client (sem criar banco - apenas gerar tipos)
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
 RUN npx prisma generate
+
+# Debug: Listar arquivos copiados ANTES da compilação
+RUN echo "=== DEBUG: Verificando arquivos copiados ===" && \
+    ls -la src/services/atendimento/ && \
+    echo "=== DEBUG: Conteúdo do index.ts ===" && \
+    cat src/services/atendimento/index.ts && \
+    echo "=== DEBUG: Verificando se atestado.service.ts existe ===" && \
+    test -f src/services/atendimento/atestado.service.ts && echo "EXISTE" || echo "NÃO EXISTE"
 
 # Build TypeScript com validação integrada
 RUN rm -rf dist/.tsbuildinfo dist/* && \
