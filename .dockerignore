@@ -34,10 +34,13 @@ ultrazend-smtp-server/logs/
 **/dist
 **/build
 
-# Scripts de teste
-**/*test*.js
-**/*test*.ts
+# Scripts de teste (com word boundaries para não bloquear atestado.service.ts)
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
 **/test-*.js
+**/test-*.ts
 **/verify-*.js
 **/check-*.js
 **/fix-*.js
