@@ -450,7 +450,7 @@ export class ProntuarioService {
         consulta: {
           include: {
             prescricoes: true,
-            exameSolicitados: true,
+            examesSolicitados: true,
             atestados: true,
           },
         },
@@ -469,7 +469,7 @@ export class ProntuarioService {
         consulta: {
           include: {
             prescricoes: true,
-            exameSolicitados: true,
+            examesSolicitados: true,
             atestados: true,
           },
         },

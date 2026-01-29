@@ -166,7 +166,7 @@ export class AtendimentoService {
         consulta: {
           include: {
             prescricoes: true,
-            exameSolicitados: true,
+            examesSolicitados: true,
             atestados: true,
             encaminhamentos: true,
           },
@@ -378,12 +378,12 @@ export class AtendimentoService {
       data: {
         atendimentoId: data.atendimentoId,
         medicoId: data.profissionalId,
-        queixaPrincipal: atendimento.triagem?.queixaPrincipal || '',
-        antecedentesPessoais: data.anamnese,
-        exameFisico: data.exameClinico,
+        motivoConsulta: atendimento.triagem?.queixaPrincipal || '',
+        historiaPregressa: data.anamnese,
+        exameFisicoGeral: data.exameClinico,
         hipoteseDiagnostica: data.diagnosticoPrincipal,
-        diagnosticos: diagnosticos as any,
-        conduta: data.conduta,
+        diagnosticosSecund: diagnosticos as any,
+        condutaTerapeutica: data.conduta,
         observacoes: data.observacoes,
       },
     });
@@ -419,8 +419,8 @@ export class AtendimentoService {
         where: { id },
       });
 
-      const diagnosticosAtuais = (consulta?.diagnosticos as any) || {};
-      updateData.diagnosticos = {
+      const diagnosticosAtuais = (consulta?.diagnosticosSecund as any) || {};
+      updateData.diagnosticosSecund = {
         principal: {
           descricao: data.diagnosticoPrincipal || diagnosticosAtuais.principal?.descricao || '',
           cid10: data.cid10Principal || diagnosticosAtuais.principal?.cid10 || '',
@@ -448,7 +448,7 @@ export class AtendimentoService {
           },
         },
         prescricoes: true,
-        exameSolicitados: true,
+        examesSolicitados: true,
         atestados: true,
         encaminhamentos: true,
       },
@@ -501,8 +501,8 @@ export class AtendimentoService {
     // Diagnósticos mais frequentes (CID-10)
     const cidsCount: Record<string, { cid: string; count: number }> = {};
     atendimentos.forEach((a) => {
-      if (a.consulta?.diagnosticos) {
-        const diagnosticos = a.consulta.diagnosticos as any;
+      if (a.consulta?.diagnosticosSecund) {
+        const diagnosticos = a.consulta.diagnosticosSecund as any;
         if (diagnosticos.principal?.cid10) {
           const cid = diagnosticos.principal.cid10;
           if (!cidsCount[cid]) {

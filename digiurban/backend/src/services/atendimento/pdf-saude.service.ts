@@ -307,7 +307,7 @@ export class PDFSaudeService {
       where: { id: consultaId },
       include: {
         atendimento: true,
-        exameSolicitados: {
+        examesSolicitados: {
           where: {
             id: { in: exameIds }
           }
@@ -319,9 +319,14 @@ export class PDFSaudeService {
       throw new Error('Consulta não encontrada');
     }
 
+    // Buscar atendimento
+    const atendimento = await prisma.atendimentoMedico.findUnique({
+      where: { id: consulta.atendimentoId }
+    });
+
     // Buscar cidadão separadamente
     const citizen = await prisma.citizen.findUnique({
-      where: { id: consulta.atendimento.citizenId }
+      where: { id: atendimento?.citizenId || '' }
     });
 
     const profissional = await prisma.user.findFirst({
@@ -329,7 +334,7 @@ export class PDFSaudeService {
     });
 
     const unidade = await prisma.unidadeSaude.findFirst({
-      where: { id: consulta.atendimento.unidadeId }
+      where: { id: atendimento?.unidadeId || '' }
     });
 
     // Mapear prioridade para classe CSS
@@ -351,8 +356,8 @@ export class PDFSaudeService {
       unidadeSaude: unidade?.nome || '-',
       dataSolicitacao: new Date(),
       hipoteseDiagnostica: consulta.hipoteseDiagnostica || '',
-      cid10: (consulta.diagnosticos as any)?.principal?.cid10 || '',
-      exames: consulta.exameSolicitados.map(exame => {
+      cid10: (consulta.diagnosticosSecund as any)?.principal?.cid10 || '',
+      exames: consulta.examesSolicitados.map((exame: any) => {
         const prioridadeInfo = getPrioridadeInfo(exame.prioridade);
         return {
           nome: exame.tipoExame,

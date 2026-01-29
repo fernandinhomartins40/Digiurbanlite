@@ -74,7 +74,7 @@ export class ProntuarioService {
       include: {
         consulta: {
           select: {
-            diagnosticos: true,
+            diagnosticosSecund: true,
           },
         },
       },
@@ -127,7 +127,7 @@ export class ProntuarioService {
         tipo: h.tipo,
         unidade: h.unidadeId,
         profissional: h.profissionalId || undefined,
-        diagnostico: (h.consulta?.diagnosticos as any)?.principal?.descricao || undefined,
+        diagnostico: (h.consulta?.diagnosticosSecund as any)?.principal?.descricao || undefined,
       })),
     };
   }
