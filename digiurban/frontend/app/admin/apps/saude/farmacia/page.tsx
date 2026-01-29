@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,10 +17,13 @@ import {
   Calendar,
   FileText,
   ArrowRight,
+  Pill,
+  Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FarmaciaPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<any>(null);
   const [alertas, setAlertas] = useState<any[]>([]);
   const [estoqueBaixo, setEstoqueBaixo] = useState<any[]>([]);
@@ -78,6 +82,23 @@ export default function FarmaciaPage() {
             Gestão de estoque e dispensação de medicamentos
           </p>
         </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => router.push('/admin/apps/saude/farmacia/dispensacao/nova')}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Pill className="h-4 w-4 mr-2" />
+            Nova Dispensação
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/admin/apps/saude/farmacia/estoque/novo')}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar ao Estoque
+          </Button>
+        </div>
+      </div>
         <div className="flex gap-2">
           <Link href="/admin/apps/saude/farmacia/dispensacao">
             <Button>

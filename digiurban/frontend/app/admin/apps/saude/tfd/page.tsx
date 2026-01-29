@@ -19,6 +19,7 @@ import {
   FileText,
   MapPin,
   DollarSign,
+  Truck,
 } from 'lucide-react';
 
 interface TFDStats {
@@ -122,20 +123,27 @@ export default function DashboardTFDPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FileBarChart className="h-8 w-8 text-orange-600" />
+            <FileBarChart className="h-8 w-8 text-purple-600" />
             TFD - Tratamento Fora do Domicílio
           </h1>
           <p className="text-muted-foreground mt-1">
             Gestão completa de tratamentos médicos em outras cidades
           </p>
         </div>
-        <Button
-          size="lg"
-          className="bg-orange-600 hover:bg-orange-700"
-          onClick={() => router.push('/admin/servicos?search=TFD')}
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Nova Solicitação (via Protocolo)
+        <div className="flex gap-2">
+          <Button
+            className="bg-purple-600 hover:bg-purple-700"
+            onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes/nova')}
+          >
+            <Truck className="h-4 w-4 mr-2" />
+            Nova Solicitação TFD
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes')}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Ver Todas Solicitações
         </Button>
       </div>
 

@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { obterEstatisticasAtendimento } from '@/lib/api/atendimento-api';
-import { Activity, Users, Clock, TrendingUp } from 'lucide-react';
+import { Activity, Users, Clock, TrendingUp, UserPlus, Stethoscope, ClipboardList } from 'lucide-react';
 
 export default function AtendimentoPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,11 +46,29 @@ export default function AtendimentoPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Atendimento Médico</h1>
-        <p className="text-gray-500 mt-1">
-          Sistema integrado de atendimento, triagem e consultas
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Atendimento Médico</h1>
+          <p className="text-gray-500 mt-1">
+            Sistema integrado de atendimento, triagem e consultas
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => router.push('/admin/apps/saude/atendimento/chegada')}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Nova Chegada
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => router.push('/admin/apps/saude/atendimento/fila')}
+          >
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Ver Fila
+          </Button>
+        </div>
       </div>
 
       {/* Cards de Estatísticas */}

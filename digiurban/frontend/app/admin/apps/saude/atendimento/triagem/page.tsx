@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,9 +20,10 @@ import { Activity, AlertTriangle, Heart, Thermometer, Wind } from 'lucide-react'
 
 export default function TriagemPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    atendimentoId: '',
+    atendimentoId: searchParams.get('atendimentoId') || '',
     pressaoArterial: '',
     frequenciaCardiaca: '',
     frequenciaRespiratoria: '',
