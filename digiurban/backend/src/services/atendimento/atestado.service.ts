@@ -12,6 +12,8 @@ import {
 
 const prisma = new PrismaClient();
 
+// Service para gerenciar atestados médicos
+
 export class AtestadoService {
   /**
    * Emitir atestado médico
