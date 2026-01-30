@@ -485,6 +485,15 @@ try {
   console.error('❌ Erro ao carregar rotas de secretaria de saúde:', e);
 }
 
+try {
+  console.log('   → Cadastros de Saúde (Unidades, Profissionais, Especialidades, etc)...');
+  const saudeCadastrosRoutes = require('./routes/saude-cadastros.routes').default;
+  app.use('/api/apps/saude/cadastros', saudeCadastrosRoutes);
+  console.log('   ✅ Rotas de cadastros de saúde carregadas');
+} catch (e) {
+  console.error('❌ Erro ao carregar rotas de cadastros de saúde:', e);
+}
+
 console.log('✅ Apps de Saúde carregados com sucesso! Total: ~132 endpoints');
 
 console.log('✅ Todas as rotas carregadas com sucesso!');
