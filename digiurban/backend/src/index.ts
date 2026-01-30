@@ -462,6 +462,29 @@ try {
 } catch (e) {
   console.error('❌ Erro ao carregar APP-SAUDE-03:', e);
 }
+
+// ============================================================
+// 🏥 ROTAS PRINCIPAIS DO SISTEMA DE ATENDIMENTO (PEC e-SUS)
+// ============================================================
+console.log('🏥 Carregando rotas principais do Sistema de Atendimento...');
+try {
+  console.log('   → Fila de Atendimento, Escuta Inicial, Triagem...');
+  const saudeMainRoutes = require('./routes/saude').default;
+  app.use('/api/saude', saudeMainRoutes);
+  console.log('   ✅ Rotas principais de saúde carregadas (fila, escuta, triagem, equipes, etc)');
+} catch (e) {
+  console.error('❌ Erro ao carregar rotas principais de saúde:', e);
+}
+
+try {
+  console.log('   → Dashboard e Stats da Secretaria de Saúde...');
+  const secretariasSaudeRoutes = require('./routes/secretarias-saude').default;
+  app.use('/api/secretarias/saude', secretariasSaudeRoutes);
+  console.log('   ✅ Rotas de secretaria de saúde carregadas (dashboard, stats)');
+} catch (e) {
+  console.error('❌ Erro ao carregar rotas de secretaria de saúde:', e);
+}
+
 console.log('✅ Apps de Saúde carregados com sucesso! Total: ~132 endpoints');
 
 console.log('✅ Todas as rotas carregadas com sucesso!');
