@@ -43,14 +43,6 @@ ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
 RUN npx prisma generate
 
-# Debug: Listar arquivos copiados ANTES da compilação
-RUN echo "=== DEBUG: Verificando arquivos copiados ===" && \
-    ls -la src/services/atendimento/ && \
-    echo "=== DEBUG: Conteúdo do index.ts ===" && \
-    cat src/services/atendimento/index.ts && \
-    echo "=== DEBUG: Verificando se atestado.service.ts existe ===" && \
-    test -f src/services/atendimento/atestado.service.ts && echo "EXISTE" || echo "NÃO EXISTE"
-
 # Build TypeScript com validação integrada
 RUN rm -rf dist/.tsbuildinfo dist/* && \
     npm run build && \
