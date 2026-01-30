@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
 
 const router = Router();
+const prisma = new PrismaClient();
 
 // ============================================================
 // ROTAS DE ESTATÍSTICAS DOS CADASTROS
@@ -12,11 +14,23 @@ const router = Router();
  */
 router.get('/unidades/stats', async (req: Request, res: Response) => {
   try {
-    // TODO: Buscar dados reais do banco de dados
+    const [total, ativas, porTipo] = await Promise.all([
+      prisma.unidadeSaude.count(),
+      prisma.unidadeSaude.count({ where: { isActive: true } }),
+      prisma.unidadeSaude.groupBy({
+        by: ['tipo'],
+        _count: true,
+        where: { isActive: true },
+      }),
+    ]);
+
     res.json({
-      total: 0,
-      ativas: 0,
-      porTipo: [],
+      total,
+      ativas,
+      porTipo: porTipo.map((item) => ({
+        tipo: item.tipo,
+        quantidade: item._count,
+      })),
     });
   } catch (error: any) {
     console.error('Erro ao buscar stats de unidades:', error);
@@ -30,11 +44,23 @@ router.get('/unidades/stats', async (req: Request, res: Response) => {
  */
 router.get('/profissionais/stats', async (req: Request, res: Response) => {
   try {
-    // TODO: Buscar dados reais do banco de dados
+    const [total, ativos, porCategoria] = await Promise.all([
+      prisma.profissionalSaude.count(),
+      prisma.profissionalSaude.count({ where: { isActive: true } }),
+      prisma.profissionalSaude.groupBy({
+        by: ['categoria'],
+        _count: true,
+        where: { isActive: true },
+      }),
+    ]);
+
     res.json({
-      total: 0,
-      ativos: 0,
-      porCategoria: [],
+      total,
+      ativos,
+      porCategoria: porCategoria.map((item) => ({
+        categoria: item.categoria,
+        quantidade: item._count,
+      })),
     });
   } catch (error: any) {
     console.error('Erro ao buscar stats de profissionais:', error);
@@ -48,11 +74,12 @@ router.get('/profissionais/stats', async (req: Request, res: Response) => {
  */
 router.get('/especialidades/stats', async (req: Request, res: Response) => {
   try {
-    // TODO: Buscar dados reais do banco de dados
-    res.json({
-      total: 0,
-      ativas: 0,
-    });
+    const [total, ativas] = await Promise.all([
+      prisma.especialidadeMedica.count(),
+      prisma.especialidadeMedica.count({ where: { isActive: true } }),
+    ]);
+
+    res.json({ total, ativas });
   } catch (error: any) {
     console.error('Erro ao buscar stats de especialidades:', error);
     res.status(500).json({ error: error.message });
@@ -65,11 +92,23 @@ router.get('/especialidades/stats', async (req: Request, res: Response) => {
  */
 router.get('/salas/stats', async (req: Request, res: Response) => {
   try {
-    // TODO: Buscar dados reais do banco de dados
+    const [total, ativas, porTipo] = await Promise.all([
+      prisma.salaConsultorio.count(),
+      prisma.salaConsultorio.count({ where: { ativa: true } }),
+      prisma.salaConsultorio.groupBy({
+        by: ['tipo'],
+        _count: true,
+        where: { ativa: true },
+      }),
+    ]);
+
     res.json({
-      total: 0,
-      ativas: 0,
-      porTipo: [],
+      total,
+      ativas,
+      porTipo: porTipo.map((item) => ({
+        tipo: item.tipo,
+        quantidade: item._count,
+      })),
     });
   } catch (error: any) {
     console.error('Erro ao buscar stats de salas:', error);
@@ -83,11 +122,12 @@ router.get('/salas/stats', async (req: Request, res: Response) => {
  */
 router.get('/turnos/stats', async (req: Request, res: Response) => {
   try {
-    // TODO: Buscar dados reais do banco de dados
-    res.json({
-      total: 0,
-      ativos: 0,
-    });
+    const [total, ativos] = await Promise.all([
+      prisma.turnoTrabalho.count(),
+      prisma.turnoTrabalho.count({ where: { ativo: true } }),
+    ]);
+
+    res.json({ total, ativos });
   } catch (error: any) {
     console.error('Erro ao buscar stats de turnos:', error);
     res.status(500).json({ error: error.message });
@@ -100,11 +140,12 @@ router.get('/turnos/stats', async (req: Request, res: Response) => {
  */
 router.get('/agendas/stats', async (req: Request, res: Response) => {
   try {
-    // TODO: Buscar dados reais do banco de dados
-    res.json({
-      total: 0,
-      ativas: 0,
-    });
+    const [total, ativas] = await Promise.all([
+      prisma.agendaMedica.count(),
+      prisma.agendaMedica.count({ where: { isActive: true } }),
+    ]);
+
+    res.json({ total, ativas });
   } catch (error: any) {
     console.error('Erro ao buscar stats de agendas:', error);
     res.status(500).json({ error: error.message });
@@ -123,8 +164,30 @@ router.get('/unidades', async (req: Request, res: Response) => {
   try {
     const { search, tipo, isActive } = req.query;
 
-    // TODO: Buscar dados reais do banco de dados com filtros
-    res.json([]);
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { nome: { contains: search as string, mode: 'insensitive' } },
+        { cnes: { contains: search as string, mode: 'insensitive' } },
+        { endereco: { contains: search as string, mode: 'insensitive' } },
+      ];
+    }
+
+    if (tipo) {
+      where.tipo = tipo;
+    }
+
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true';
+    }
+
+    const unidades = await prisma.unidadeSaude.findMany({
+      where,
+      orderBy: { nome: 'asc' },
+    });
+
+    res.json(unidades);
   } catch (error: any) {
     console.error('Erro ao buscar unidades:', error);
     res.status(500).json({ error: error.message });
@@ -139,8 +202,15 @@ router.get('/unidades/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // TODO: Buscar dados reais do banco de dados
-    res.status(404).json({ error: 'Unidade não encontrada' });
+    const unidade = await prisma.unidadeSaude.findUnique({
+      where: { id },
+    });
+
+    if (!unidade) {
+      return res.status(404).json({ error: 'Unidade não encontrada' });
+    }
+
+    res.json(unidade);
   } catch (error: any) {
     console.error('Erro ao buscar unidade:', error);
     res.status(500).json({ error: error.message });
@@ -153,10 +223,28 @@ router.get('/unidades/:id', async (req: Request, res: Response) => {
  */
 router.post('/unidades', async (req: Request, res: Response) => {
   try {
-    const data = req.body;
+    const { nome, tipo, cnes, endereco, bairro, cep, telefone, email, horarioFuncionamento } = req.body;
 
-    // TODO: Salvar no banco de dados
-    res.status(201).json({ message: 'Unidade criada com sucesso', id: 'temp-id' });
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    const unidade = await prisma.unidadeSaude.create({
+      data: {
+        nome,
+        tipo: tipo || 'UBS',
+        cnes: cnes || null,
+        endereco: endereco || null,
+        bairro: bairro || null,
+        cep: cep || null,
+        telefone: telefone || null,
+        email: email || null,
+        horario: horarioFuncionamento || null,
+        isActive: true,
+      },
+    });
+
+    res.status(201).json(unidade);
   } catch (error: any) {
     console.error('Erro ao criar unidade:', error);
     res.status(500).json({ error: error.message });
@@ -170,10 +258,25 @@ router.post('/unidades', async (req: Request, res: Response) => {
 router.put('/unidades/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const data = req.body;
+    const { nome, tipo, cnes, endereco, bairro, cep, telefone, email, horarioFuncionamento, isActive } = req.body;
 
-    // TODO: Atualizar no banco de dados
-    res.json({ message: 'Unidade atualizada com sucesso' });
+    const unidade = await prisma.unidadeSaude.update({
+      where: { id },
+      data: {
+        nome,
+        tipo,
+        cnes,
+        endereco,
+        bairro,
+        cep,
+        telefone,
+        email,
+        horario: horarioFuncionamento,
+        isActive,
+      },
+    });
+
+    res.json(unidade);
   } catch (error: any) {
     console.error('Erro ao atualizar unidade:', error);
     res.status(500).json({ error: error.message });
@@ -188,7 +291,12 @@ router.delete('/unidades/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // TODO: Remover do banco de dados
+    // Soft delete
+    await prisma.unidadeSaude.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
     res.json({ message: 'Unidade removida com sucesso' });
   } catch (error: any) {
     console.error('Erro ao remover unidade:', error);
@@ -207,8 +315,31 @@ router.delete('/unidades/:id', async (req: Request, res: Response) => {
 router.get('/profissionais', async (req: Request, res: Response) => {
   try {
     const { search, categoria, isActive, unidadeId } = req.query;
-    // TODO: Buscar dados reais do banco de dados com filtros
-    res.json([]);
+
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { nome: { contains: search as string, mode: 'insensitive' } },
+        { cpf: { contains: search as string, mode: 'insensitive' } },
+        { registroProfissional: { contains: search as string, mode: 'insensitive' } },
+      ];
+    }
+
+    if (categoria) {
+      where.categoria = categoria;
+    }
+
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true';
+    }
+
+    const profissionais = await prisma.profissionalSaude.findMany({
+      where,
+      orderBy: { nome: 'asc' },
+    });
+
+    res.json(profissionais);
   } catch (error: any) {
     console.error('Erro ao buscar profissionais:', error);
     res.status(500).json({ error: error.message });
@@ -222,8 +353,16 @@ router.get('/profissionais', async (req: Request, res: Response) => {
 router.get('/profissionais/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Buscar dados reais do banco de dados
-    res.status(404).json({ error: 'Profissional não encontrado' });
+
+    const profissional = await prisma.profissionalSaude.findUnique({
+      where: { id },
+    });
+
+    if (!profissional) {
+      return res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+
+    res.json(profissional);
   } catch (error: any) {
     console.error('Erro ao buscar profissional:', error);
     res.status(500).json({ error: error.message });
@@ -236,11 +375,49 @@ router.get('/profissionais/:id', async (req: Request, res: Response) => {
  */
 router.post('/profissionais', async (req: Request, res: Response) => {
   try {
-    const data = req.body;
-    // TODO: Salvar no banco de dados
-    res.status(201).json({ message: 'Profissional criado com sucesso', id: 'temp-id' });
+    const {
+      nome,
+      cpf,
+      cns,
+      categoria,
+      especialidade,
+      conselho,
+      numeroConselho,
+      ufConselho,
+      telefone,
+      email,
+      cbo,
+    } = req.body;
+
+    if (!nome || !cpf) {
+      return res.status(400).json({ error: 'Nome e CPF são obrigatórios' });
+    }
+
+    // Montar registro profissional
+    const registroProfissional = numeroConselho
+      ? `${conselho || 'REG'} ${numeroConselho}/${ufConselho || 'BR'}`
+      : `TEMP-${Date.now()}`;
+
+    const profissional = await prisma.profissionalSaude.create({
+      data: {
+        nome,
+        cpf: cpf.replace(/\D/g, ''),
+        registroProfissional,
+        tipoRegistro: conselho || null,
+        categoria: categoria || 'Médico',
+        especialidade: especialidade || null,
+        telefone: telefone || null,
+        email: email || null,
+        isActive: true,
+      },
+    });
+
+    res.status(201).json(profissional);
   } catch (error: any) {
     console.error('Erro ao criar profissional:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'CPF ou registro profissional já cadastrado' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -252,9 +429,39 @@ router.post('/profissionais', async (req: Request, res: Response) => {
 router.put('/profissionais/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const data = req.body;
-    // TODO: Atualizar no banco de dados
-    res.json({ message: 'Profissional atualizado com sucesso' });
+    const {
+      nome,
+      cpf,
+      categoria,
+      especialidade,
+      conselho,
+      numeroConselho,
+      ufConselho,
+      telefone,
+      email,
+      isActive,
+    } = req.body;
+
+    const registroProfissional = numeroConselho
+      ? `${conselho || 'REG'} ${numeroConselho}/${ufConselho || 'BR'}`
+      : undefined;
+
+    const profissional = await prisma.profissionalSaude.update({
+      where: { id },
+      data: {
+        nome,
+        cpf: cpf ? cpf.replace(/\D/g, '') : undefined,
+        registroProfissional,
+        tipoRegistro: conselho,
+        categoria,
+        especialidade,
+        telefone,
+        email,
+        isActive,
+      },
+    });
+
+    res.json(profissional);
   } catch (error: any) {
     console.error('Erro ao atualizar profissional:', error);
     res.status(500).json({ error: error.message });
@@ -268,7 +475,13 @@ router.put('/profissionais/:id', async (req: Request, res: Response) => {
 router.delete('/profissionais/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Remover do banco de dados
+
+    // Soft delete
+    await prisma.profissionalSaude.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
     res.json({ message: 'Profissional removido com sucesso' });
   } catch (error: any) {
     console.error('Erro ao remover profissional:', error);
@@ -287,8 +500,26 @@ router.delete('/profissionais/:id', async (req: Request, res: Response) => {
 router.get('/especialidades', async (req: Request, res: Response) => {
   try {
     const { search, isActive } = req.query;
-    // TODO: Buscar dados reais do banco de dados com filtros
-    res.json([]);
+
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { nome: { contains: search as string, mode: 'insensitive' } },
+        { descricao: { contains: search as string, mode: 'insensitive' } },
+      ];
+    }
+
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true';
+    }
+
+    const especialidades = await prisma.especialidadeMedica.findMany({
+      where,
+      orderBy: { nome: 'asc' },
+    });
+
+    res.json(especialidades);
   } catch (error: any) {
     console.error('Erro ao buscar especialidades:', error);
     res.status(500).json({ error: error.message });
@@ -302,8 +533,16 @@ router.get('/especialidades', async (req: Request, res: Response) => {
 router.get('/especialidades/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Buscar dados reais do banco de dados
-    res.status(404).json({ error: 'Especialidade não encontrada' });
+
+    const especialidade = await prisma.especialidadeMedica.findUnique({
+      where: { id },
+    });
+
+    if (!especialidade) {
+      return res.status(404).json({ error: 'Especialidade não encontrada' });
+    }
+
+    res.json(especialidade);
   } catch (error: any) {
     console.error('Erro ao buscar especialidade:', error);
     res.status(500).json({ error: error.message });
@@ -316,11 +555,26 @@ router.get('/especialidades/:id', async (req: Request, res: Response) => {
  */
 router.post('/especialidades', async (req: Request, res: Response) => {
   try {
-    const data = req.body;
-    // TODO: Salvar no banco de dados
-    res.status(201).json({ message: 'Especialidade criada com sucesso', id: 'temp-id' });
+    const { nome, cbo, descricao } = req.body;
+
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    const especialidade = await prisma.especialidadeMedica.create({
+      data: {
+        nome,
+        descricao: descricao || null,
+        isActive: true,
+      },
+    });
+
+    res.status(201).json(especialidade);
   } catch (error: any) {
     console.error('Erro ao criar especialidade:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Especialidade já cadastrada' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -332,9 +586,18 @@ router.post('/especialidades', async (req: Request, res: Response) => {
 router.put('/especialidades/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const data = req.body;
-    // TODO: Atualizar no banco de dados
-    res.json({ message: 'Especialidade atualizada com sucesso' });
+    const { nome, descricao, isActive } = req.body;
+
+    const especialidade = await prisma.especialidadeMedica.update({
+      where: { id },
+      data: {
+        nome,
+        descricao,
+        isActive,
+      },
+    });
+
+    res.json(especialidade);
   } catch (error: any) {
     console.error('Erro ao atualizar especialidade:', error);
     res.status(500).json({ error: error.message });
@@ -348,7 +611,13 @@ router.put('/especialidades/:id', async (req: Request, res: Response) => {
 router.delete('/especialidades/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Remover do banco de dados
+
+    // Soft delete
+    await prisma.especialidadeMedica.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
     res.json({ message: 'Especialidade removida com sucesso' });
   } catch (error: any) {
     console.error('Erro ao remover especialidade:', error);
@@ -367,8 +636,49 @@ router.delete('/especialidades/:id', async (req: Request, res: Response) => {
 router.get('/salas', async (req: Request, res: Response) => {
   try {
     const { search, tipo, isActive, unidadeId } = req.query;
-    // TODO: Buscar dados reais do banco de dados com filtros
-    res.json([]);
+
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { nome: { contains: search as string, mode: 'insensitive' } },
+        { numero: { contains: search as string, mode: 'insensitive' } },
+      ];
+    }
+
+    if (tipo) {
+      where.tipo = tipo;
+    }
+
+    if (isActive !== undefined) {
+      where.ativa = isActive === 'true';
+    }
+
+    if (unidadeId) {
+      where.unidadeId = unidadeId;
+    }
+
+    const salas = await prisma.salaConsultorio.findMany({
+      where,
+      include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+      },
+      orderBy: { nome: 'asc' },
+    });
+
+    // Transformar para o formato esperado pelo frontend
+    const salasFormatadas = salas.map((sala) => ({
+      ...sala,
+      unidadeNome: sala.unidade.nome,
+      isActive: sala.ativa,
+    }));
+
+    res.json(salasFormatadas);
   } catch (error: any) {
     console.error('Erro ao buscar salas:', error);
     res.status(500).json({ error: error.message });
@@ -382,8 +692,19 @@ router.get('/salas', async (req: Request, res: Response) => {
 router.get('/salas/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Buscar dados reais do banco de dados
-    res.status(404).json({ error: 'Sala não encontrada' });
+
+    const sala = await prisma.salaConsultorio.findUnique({
+      where: { id },
+      include: {
+        unidade: true,
+      },
+    });
+
+    if (!sala) {
+      return res.status(404).json({ error: 'Sala não encontrada' });
+    }
+
+    res.json(sala);
   } catch (error: any) {
     console.error('Erro ao buscar sala:', error);
     res.status(500).json({ error: error.message });
@@ -396,9 +717,38 @@ router.get('/salas/:id', async (req: Request, res: Response) => {
  */
 router.post('/salas', async (req: Request, res: Response) => {
   try {
-    const data = req.body;
-    // TODO: Salvar no banco de dados
-    res.status(201).json({ message: 'Sala criada com sucesso', id: 'temp-id' });
+    const { nome, numero, tipo, capacidade, equipamentos, unidadeId } = req.body;
+
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    // Se não tem unidadeId, pegar a primeira unidade ativa
+    let finalUnidadeId = unidadeId;
+    if (!finalUnidadeId) {
+      const primeiraUnidade = await prisma.unidadeSaude.findFirst({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      if (!primeiraUnidade) {
+        return res.status(400).json({ error: 'Nenhuma unidade de saúde disponível' });
+      }
+      finalUnidadeId = primeiraUnidade.id;
+    }
+
+    const sala = await prisma.salaConsultorio.create({
+      data: {
+        nome,
+        numero: numero || null,
+        tipo: tipo || 'CONSULTORIO',
+        capacidade: capacidade ? parseInt(capacidade) : null,
+        equipamentos: equipamentos ? [equipamentos] : undefined,
+        unidadeId: finalUnidadeId,
+        ativa: true,
+      },
+    });
+
+    res.status(201).json(sala);
   } catch (error: any) {
     console.error('Erro ao criar sala:', error);
     res.status(500).json({ error: error.message });
@@ -412,9 +762,21 @@ router.post('/salas', async (req: Request, res: Response) => {
 router.put('/salas/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const data = req.body;
-    // TODO: Atualizar no banco de dados
-    res.json({ message: 'Sala atualizada com sucesso' });
+    const { nome, numero, tipo, capacidade, equipamentos, ativa } = req.body;
+
+    const sala = await prisma.salaConsultorio.update({
+      where: { id },
+      data: {
+        nome,
+        numero,
+        tipo,
+        capacidade: capacidade ? parseInt(capacidade) : null,
+        equipamentos: equipamentos ? [equipamentos] : undefined,
+        ativa,
+      },
+    });
+
+    res.json(sala);
   } catch (error: any) {
     console.error('Erro ao atualizar sala:', error);
     res.status(500).json({ error: error.message });
@@ -428,7 +790,13 @@ router.put('/salas/:id', async (req: Request, res: Response) => {
 router.delete('/salas/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Remover do banco de dados
+
+    // Soft delete
+    await prisma.salaConsultorio.update({
+      where: { id },
+      data: { ativa: false },
+    });
+
     res.json({ message: 'Sala removida com sucesso' });
   } catch (error: any) {
     console.error('Erro ao remover sala:', error);
@@ -447,8 +815,33 @@ router.delete('/salas/:id', async (req: Request, res: Response) => {
 router.get('/turnos', async (req: Request, res: Response) => {
   try {
     const { search, isActive } = req.query;
-    // TODO: Buscar dados reais do banco de dados com filtros
-    res.json([]);
+
+    const where: any = {};
+
+    if (search) {
+      where.OR = [
+        { nome: { contains: search as string, mode: 'insensitive' } },
+        { descricao: { contains: search as string, mode: 'insensitive' } },
+      ];
+    }
+
+    if (isActive !== undefined) {
+      where.ativo = isActive === 'true';
+    }
+
+    const turnos = await prisma.turnoTrabalho.findMany({
+      where,
+      orderBy: { nome: 'asc' },
+    });
+
+    // Transformar para o formato esperado pelo frontend
+    const turnosFormatados = turnos.map((turno) => ({
+      ...turno,
+      isActive: turno.ativo,
+      periodo: turno.nome, // Mapear nome como período
+    }));
+
+    res.json(turnosFormatados);
   } catch (error: any) {
     console.error('Erro ao buscar turnos:', error);
     res.status(500).json({ error: error.message });
@@ -462,8 +855,16 @@ router.get('/turnos', async (req: Request, res: Response) => {
 router.get('/turnos/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Buscar dados reais do banco de dados
-    res.status(404).json({ error: 'Turno não encontrado' });
+
+    const turno = await prisma.turnoTrabalho.findUnique({
+      where: { id },
+    });
+
+    if (!turno) {
+      return res.status(404).json({ error: 'Turno não encontrado' });
+    }
+
+    res.json(turno);
   } catch (error: any) {
     console.error('Erro ao buscar turno:', error);
     res.status(500).json({ error: error.message });
@@ -476,11 +877,28 @@ router.get('/turnos/:id', async (req: Request, res: Response) => {
  */
 router.post('/turnos', async (req: Request, res: Response) => {
   try {
-    const data = req.body;
-    // TODO: Salvar no banco de dados
-    res.status(201).json({ message: 'Turno criado com sucesso', id: 'temp-id' });
+    const { nome, periodo, horaInicio, horaFim, cargaHoraria } = req.body;
+
+    if (!nome || !horaInicio || !horaFim) {
+      return res.status(400).json({ error: 'Nome, horário de início e fim são obrigatórios' });
+    }
+
+    const turno = await prisma.turnoTrabalho.create({
+      data: {
+        nome,
+        descricao: periodo || null,
+        horaInicio,
+        horaFim,
+        ativo: true,
+      },
+    });
+
+    res.status(201).json(turno);
   } catch (error: any) {
     console.error('Erro ao criar turno:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Turno já cadastrado' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -492,9 +910,20 @@ router.post('/turnos', async (req: Request, res: Response) => {
 router.put('/turnos/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const data = req.body;
-    // TODO: Atualizar no banco de dados
-    res.json({ message: 'Turno atualizado com sucesso' });
+    const { nome, descricao, horaInicio, horaFim, ativo } = req.body;
+
+    const turno = await prisma.turnoTrabalho.update({
+      where: { id },
+      data: {
+        nome,
+        descricao,
+        horaInicio,
+        horaFim,
+        ativo,
+      },
+    });
+
+    res.json(turno);
   } catch (error: any) {
     console.error('Erro ao atualizar turno:', error);
     res.status(500).json({ error: error.message });
@@ -508,7 +937,13 @@ router.put('/turnos/:id', async (req: Request, res: Response) => {
 router.delete('/turnos/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Remover do banco de dados
+
+    // Soft delete
+    await prisma.turnoTrabalho.update({
+      where: { id },
+      data: { ativo: false },
+    });
+
     res.json({ message: 'Turno removido com sucesso' });
   } catch (error: any) {
     console.error('Erro ao remover turno:', error);
@@ -527,8 +962,50 @@ router.delete('/turnos/:id', async (req: Request, res: Response) => {
 router.get('/agendas', async (req: Request, res: Response) => {
   try {
     const { search, profissionalId, unidadeId, isActive } = req.query;
-    // TODO: Buscar dados reais do banco de dados com filtros
-    res.json([]);
+
+    const where: any = {};
+
+    if (profissionalId) {
+      where.profissionalId = profissionalId;
+    }
+
+    if (unidadeId) {
+      where.unidadeId = unidadeId;
+    }
+
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true';
+    }
+
+    const agendas = await prisma.agendaMedica.findMany({
+      where,
+      include: {
+        especialidade: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        sala: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Transformar para o formato esperado pelo frontend
+    const agendasFormatadas = agendas.map((agenda) => ({
+      ...agenda,
+      profissionalNome: 'Profissional', // TODO: Buscar nome do profissional
+      unidadeNome: 'Unidade', // TODO: Buscar nome da unidade
+      salaNome: agenda.sala?.nome,
+      tipo: agenda.especialidade?.nome || 'Geral',
+    }));
+
+    res.json(agendasFormatadas);
   } catch (error: any) {
     console.error('Erro ao buscar agendas:', error);
     res.status(500).json({ error: error.message });
@@ -542,8 +1019,21 @@ router.get('/agendas', async (req: Request, res: Response) => {
 router.get('/agendas/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Buscar dados reais do banco de dados
-    res.status(404).json({ error: 'Agenda não encontrada' });
+
+    const agenda = await prisma.agendaMedica.findUnique({
+      where: { id },
+      include: {
+        especialidade: true,
+        sala: true,
+        turno: true,
+      },
+    });
+
+    if (!agenda) {
+      return res.status(404).json({ error: 'Agenda não encontrada' });
+    }
+
+    res.json(agenda);
   } catch (error: any) {
     console.error('Erro ao buscar agenda:', error);
     res.status(500).json({ error: error.message });
@@ -556,9 +1046,67 @@ router.get('/agendas/:id', async (req: Request, res: Response) => {
  */
 router.post('/agendas', async (req: Request, res: Response) => {
   try {
-    const data = req.body;
-    // TODO: Salvar no banco de dados
-    res.status(201).json({ message: 'Agenda criada com sucesso', id: 'temp-id' });
+    const {
+      nome,
+      tipo,
+      dataInicio,
+      dataFim,
+      horaInicio,
+      horaFim,
+      vagasPorDia,
+      duracaoConsulta,
+      profissionalId,
+      unidadeId,
+      especialidadeId,
+      salaId,
+    } = req.body;
+
+    if (!nome || !dataInicio) {
+      return res.status(400).json({ error: 'Nome e data de início são obrigatórios' });
+    }
+
+    // Buscar primeira unidade e profissional se não fornecidos
+    let finalUnidadeId = unidadeId;
+    let finalProfissionalId = profissionalId;
+
+    if (!finalUnidadeId) {
+      const primeiraUnidade = await prisma.unidadeSaude.findFirst({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      if (primeiraUnidade) finalUnidadeId = primeiraUnidade.id;
+    }
+
+    if (!finalProfissionalId) {
+      const primeiroProfissional = await prisma.profissionalSaude.findFirst({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      if (primeiroProfissional) finalProfissionalId = primeiroProfissional.id;
+    }
+
+    if (!finalUnidadeId || !finalProfissionalId) {
+      return res.status(400).json({ error: 'Unidade e profissional são necessários' });
+    }
+
+    const agenda = await prisma.agendaMedica.create({
+      data: {
+        profissionalId: finalProfissionalId,
+        unidadeId: finalUnidadeId,
+        especialidadeId: especialidadeId || null,
+        salaId: salaId || null,
+        diaSemana: new Date(dataInicio).getDay(),
+        horaInicio: horaInicio || '08:00',
+        horaFim: horaFim || '17:00',
+        tempoPorConsulta: duracaoConsulta ? parseInt(duracaoConsulta) : 30,
+        vagasDisponiveis: vagasPorDia ? parseInt(vagasPorDia) : 20,
+        dataInicio: new Date(dataInicio),
+        dataFim: dataFim ? new Date(dataFim) : null,
+        isActive: true,
+      },
+    });
+
+    res.status(201).json(agenda);
   } catch (error: any) {
     console.error('Erro ao criar agenda:', error);
     res.status(500).json({ error: error.message });
@@ -572,9 +1120,34 @@ router.post('/agendas', async (req: Request, res: Response) => {
 router.put('/agendas/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const data = req.body;
-    // TODO: Atualizar no banco de dados
-    res.json({ message: 'Agenda atualizada com sucesso' });
+    const {
+      horaInicio,
+      horaFim,
+      tempoPorConsulta,
+      vagasDisponiveis,
+      dataInicio,
+      dataFim,
+      isActive,
+      especialidadeId,
+      salaId,
+    } = req.body;
+
+    const agenda = await prisma.agendaMedica.update({
+      where: { id },
+      data: {
+        horaInicio,
+        horaFim,
+        tempoPorConsulta: tempoPorConsulta ? parseInt(tempoPorConsulta) : undefined,
+        vagasDisponiveis: vagasDisponiveis ? parseInt(vagasDisponiveis) : undefined,
+        dataInicio: dataInicio ? new Date(dataInicio) : undefined,
+        dataFim: dataFim ? new Date(dataFim) : undefined,
+        especialidadeId,
+        salaId,
+        isActive,
+      },
+    });
+
+    res.json(agenda);
   } catch (error: any) {
     console.error('Erro ao atualizar agenda:', error);
     res.status(500).json({ error: error.message });
@@ -588,7 +1161,13 @@ router.put('/agendas/:id', async (req: Request, res: Response) => {
 router.delete('/agendas/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO: Remover do banco de dados
+
+    // Soft delete
+    await prisma.agendaMedica.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
     res.json({ message: 'Agenda removida com sucesso' });
   } catch (error: any) {
     console.error('Erro ao remover agenda:', error);
