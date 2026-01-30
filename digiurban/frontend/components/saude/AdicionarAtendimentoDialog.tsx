@@ -200,7 +200,7 @@ export function AdicionarAtendimentoDialog({
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[500px] p-0">
-                <Command>
+                <Command shouldFilter={false}>
                   <CommandInput
                     placeholder="Buscar por nome, CPF ou CNS..."
                     value={searchTerm}
@@ -226,7 +226,7 @@ export function AdicionarAtendimentoDialog({
                     {cidadaos.map((cidadao) => (
                       <CommandItem
                         key={cidadao.id}
-                        value={cidadao.id}
+                        value={`${cidadao.name} ${cidadao.cpf}`}
                         onSelect={() => {
                           setSelectedCidadao(cidadao);
                           setOpenCidadao(false);
