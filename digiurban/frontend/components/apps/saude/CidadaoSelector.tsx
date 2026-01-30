@@ -53,10 +53,14 @@ export function CidadaoSelector({
   const searchCidadaos = async (term: string) => {
     setSearching(true);
     try {
-      const response = await fetch(`/api/citizens/search?q=${encodeURIComponent(term)}`);
+      const response = await fetch(`/api/admin/citizens/search?q=${encodeURIComponent(term)}`, {
+        credentials: 'include',
+      });
       if (response.ok) {
         const data = await response.json();
-        setResults(data.citizens || []);
+        // Suportar ambos os formatos de resposta
+        const citizensList = data.citizens || data.data?.citizens || data.data || [];
+        setResults(Array.isArray(citizensList) ? citizensList : []);
         setShowResults(true);
       }
     } catch (error) {
