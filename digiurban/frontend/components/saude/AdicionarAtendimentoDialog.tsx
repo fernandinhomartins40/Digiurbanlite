@@ -80,14 +80,18 @@ export function AdicionarAtendimentoDialog({
     try {
       setSearching(true);
       const response = await fetch(
-        `/api/citizens/search?term=${encodeURIComponent(term)}&limit=10`
+        `/api/admin/citizens/search?q=${encodeURIComponent(term)}&limit=10`,
+        { credentials: 'include' }
       );
       if (response.ok) {
         const data = await response.json();
-        setCidadaos(data);
+        // Suportar múltiplos formatos de resposta
+        const citizensList = data.citizens || data.data?.citizens || data.data || [];
+        setCidadaos(Array.isArray(citizensList) ? citizensList : []);
       }
     } catch (error) {
       console.error('Erro ao buscar cidadãos:', error);
+      setCidadaos([]);
     } finally {
       setSearching(false);
     }
