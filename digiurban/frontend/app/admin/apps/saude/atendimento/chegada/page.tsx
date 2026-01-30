@@ -15,15 +15,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CidadaoSelector } from '@/components/apps/saude/CidadaoSelector';
-import { UserPlus, Stethoscope, ArrowRight, Clock } from 'lucide-react';
+import { useUnidade } from '@/contexts/UnidadeContext';
+import { SeletorUnidade } from '@/components/saude/SeletorUnidade';
+import { UserPlus, Stethoscope, ArrowRight, Clock, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function ChegadaAtendimentoPage() {
   const router = useRouter();
+  const { unidadeSelecionada } = useUnidade();
   const [loading, setLoading] = useState(false);
   const [selectedCidadao, setSelectedCidadao] = useState<any>(null);
   const [formData, setFormData] = useState({
-    unidadeSaudeId: '',
     tipoAtendimento: 'CONSULTA',
     motivoChegada: '',
     acompanhante: '',
@@ -42,6 +45,11 @@ export default function ChegadaAtendimentoPage() {
       return;
     }
 
+    if (!unidadeSelecionada?.id) {
+      alert('Selecione uma unidade antes de continuar');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -52,7 +60,7 @@ export default function ChegadaAtendimentoPage() {
         credentials: 'include',
         body: JSON.stringify({
           cidadaoId: selectedCidadao.id,
-          unidadeSaudeId: formData.unidadeSaudeId || 'unidade-default', // TODO: Usar unidade do usuário logado
+          unidadeSaudeId: unidadeSelecionada.id, // ✅ Usando unidade do contexto
           tipoAtendimento: formData.tipoAtendimento,
           motivoChegada: formData.motivoChegada,
           acompanhante: formData.acompanhante || undefined,
@@ -80,6 +88,18 @@ export default function ChegadaAtendimentoPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Seletor de Unidade */}
+      <SeletorUnidade />
+
+      {!unidadeSelecionada && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Selecione uma unidade para registrar chegada de paciente
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -88,7 +108,8 @@ export default function ChegadaAtendimentoPage() {
             Chegada de Paciente
           </h1>
           <p className="text-gray-500 mt-1">
-            Registre a chegada do paciente para iniciar atendimento
+            Registre a chegada do paciente em{' '}
+            <span className="font-semibold">{unidadeSelecionada?.nome || '...'}</span>
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
@@ -231,7 +252,7 @@ export default function ChegadaAtendimentoPage() {
           </Button>
           <Button
             type="submit"
-            disabled={loading || !selectedCidadao}
+            disabled={loading || !selectedCidadao || !unidadeSelecionada}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {loading ? (

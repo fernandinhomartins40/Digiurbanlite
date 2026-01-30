@@ -4,43 +4,76 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useUnidade } from '@/contexts/UnidadeContext';
+import { SeletorUnidade } from '@/components/saude/SeletorUnidade';
 import {
   obterFilaUnidade,
   chamarProximo,
 } from '@/lib/api/atendimento-api';
-import { Users, Phone, AlertCircle } from 'lucide-react';
+import { Users, Phone, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function FilaAtendimentoPage() {
+  const { unidadeSelecionada } = useUnidade();
   const [fila, setFila] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unidadeId, setUnidadeId] = useState('');
+  const [atualizando, setAtualizando] = useState(false);
 
+  // Recarregar fila quando unidade mudar
   useEffect(() => {
-    // TODO: Obter unidadeId do contexto do usuário
-    const mockUnidadeId = 'unidade-padrao';
-    setUnidadeId(mockUnidadeId);
-    loadFila(mockUnidadeId);
+    if (unidadeSelecionada?.id) {
+      loadFila(unidadeSelecionada.id);
 
-    // Atualizar a cada 30 segundos
-    const interval = setInterval(() => loadFila(mockUnidadeId), 30000);
-    return () => clearInterval(interval);
-  }, []);
+      // Atualizar a cada 30 segundos
+      const interval = setInterval(() => {
+        loadFila(unidadeSelecionada.id);
+      }, 30000);
 
-  const loadFila = async (uid: string) => {
+      // Listener para mudança de unidade
+      const handleUnidadeChanged = () => {
+        if (unidadeSelecionada?.id) {
+          loadFila(unidadeSelecionada.id);
+        }
+      };
+
+      window.addEventListener('unidade-changed', handleUnidadeChanged);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('unidade-changed', handleUnidadeChanged);
+      };
+    }
+  }, [unidadeSelecionada]);
+
+  const loadFila = async (unidadeId: string) => {
     try {
-      const data = await obterFilaUnidade(uid);
+      if (loading) {
+        // Primeira carga
+        setLoading(true);
+      } else {
+        // Atualização
+        setAtualizando(true);
+      }
+
+      const data = await obterFilaUnidade(unidadeId);
       setFila(data);
     } catch (error) {
       console.error('Erro ao carregar fila:', error);
+      setFila([]);
     } finally {
       setLoading(false);
+      setAtualizando(false);
     }
   };
 
   const handleChamarProximo = async (consultorio: string) => {
+    if (!unidadeSelecionada?.id) {
+      alert('Selecione uma unidade primeiro');
+      return;
+    }
+
     try {
-      await chamarProximo(unidadeId, consultorio);
-      loadFila(unidadeId);
+      await chamarProximo(unidadeSelecionada.id, consultorio);
+      await loadFila(unidadeSelecionada.id);
     } catch (error) {
       console.error('Erro ao chamar próximo:', error);
       alert('Erro ao chamar próximo paciente');
@@ -79,27 +112,46 @@ export default function FilaAtendimentoPage() {
     );
   }
 
+  if (!unidadeSelecionada) {
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Fila de Atendimento</h1>
+          <p className="text-gray-500 mt-1">
+            Selecione uma unidade para visualizar a fila
+          </p>
+        </div>
+        <SeletorUnidade />
+      </div>
+    );
+  }
+
   const filaAguardando = fila.filter((f) => f.status === 'AGUARDANDO');
   const filaEmAtendimento = fila.filter((f) => f.status === 'EM_ATENDIMENTO');
 
   return (
     <div className="p-6 space-y-6">
+      {/* Seletor de Unidade */}
+      <SeletorUnidade />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Fila de Atendimento</h1>
           <p className="text-gray-500 mt-1">
-            Gerencie a fila de espera em tempo real
+            Fila exclusiva de <span className="font-semibold">{unidadeSelecionada.nome}</span>
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => loadFila(unidadeId)}
+            onClick={() => loadFila(unidadeSelecionada.id)}
             variant="outline"
+            disabled={atualizando}
           >
-            Atualizar
+            <RefreshCw className={`h-4 w-4 mr-2 ${atualizando ? 'animate-spin' : ''}`} />
+            {atualizando ? 'Atualizando...' : 'Atualizar'}
           </Button>
-          <Button onClick={() => handleChamarProximo('1')}>
+          <Button onClick={() => handleChamarProximo('1')} disabled={filaAguardando.length === 0}>
             <Phone className="h-4 w-4 mr-2" />
             Chamar Próximo
           </Button>
@@ -117,6 +169,9 @@ export default function FilaAtendimentoPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filaAguardando.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              pacientes na fila
+            </p>
           </CardContent>
         </Card>
 
@@ -129,6 +184,9 @@ export default function FilaAtendimentoPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filaEmAtendimento.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              em consulta agora
+            </p>
           </CardContent>
         </Card>
 
@@ -141,6 +199,9 @@ export default function FilaAtendimentoPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{fila.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              atendimentos hoje
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -152,15 +213,21 @@ export default function FilaAtendimentoPage() {
         </CardHeader>
         <CardContent>
           {filaAguardando.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Nenhum paciente na fila de espera
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <div className="text-gray-500 font-medium">
+                Nenhum paciente na fila de espera
+              </div>
+              <div className="text-sm text-gray-400 mt-1">
+                A fila está vazia no momento
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
               {filaAguardando.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
