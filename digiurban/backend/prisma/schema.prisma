@@ -2368,6 +2368,9 @@ model UnidadeSaude {
   triagens           TriagemEnfermagem[]
   configuracaoAgenda ConfiguracaoAgenda[]
 
+  // ✅ NOVO: Vínculo com múltiplos profissionais
+  vinculosProfissionais ProfissionalUnidade[]
+
   @@index([tipo, isActive])
   @@index([isActive])
   @@index([cnes])
@@ -2858,6 +2861,9 @@ model ProfissionalSaude {
   visitasDomiciliares VisitaDomiciliar[]        @relation("ACSVisitas")
   atividadesColetivas ProfissionalAtividade[]
 
+  // ✅ NOVO: Vínculo com múltiplas unidades
+  vinculosUnidades ProfissionalUnidade[]
+
   @@index([categoria, isActive])
   @@index([especialidade, isActive])
   @@index([isActive])
@@ -2873,6 +2879,71 @@ enum StatusProfissional {
   FERIAS
   AFASTADO
   LICENCA
+}
+
+// ✅ NOVO: Tabela intermediária para profissionais trabalhando em múltiplas unidades
+model ProfissionalUnidade {
+  id                  String    @id @default(cuid())
+  profissionalId      String
+  unidadeId           String
+  dataInicio          DateTime  @default(now())
+  dataFim             DateTime?
+  ativo               Boolean   @default(true)
+  cargaHoraria        Int? // Horas semanais nesta unidade
+  percentualDedicacao Int? // 0-100% dedicação nesta unidade
+  observacoes         String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  // Relacionamentos
+  profissional ProfissionalSaude @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+  unidade      UnidadeSaude      @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  // Auditoria
+  auditorias AuditoriaVinculo[]
+
+  @@unique([profissionalId, unidadeId, dataInicio])
+  @@index([profissionalId, ativo])
+  @@index([unidadeId, ativo])
+  @@index([ativo])
+  @@map("profissional_unidade")
+}
+
+// ✅ NOVO: Auditoria de vínculos profissional-unidade
+model AuditoriaVinculo {
+  id                 String               @id @default(cuid())
+  vinculoId          String?
+  tipo               TipoAuditoriaVinculo
+  profissionalId     String
+  profissionalNome   String // Denormalizado para histórico
+  unidadeOrigemId    String?
+  unidadeOrigemNome  String? // Denormalizado
+  unidadeDestinoId   String?
+  unidadeDestinoNome String? // Denormalizado
+  userId             String? // Quem fez a ação
+  userName           String? // Denormalizado
+  motivo             String?
+  detalhes           Json? // Detalhes adicionais (carga horária, datas, etc)
+  createdAt          DateTime             @default(now())
+
+  // Relacionamento (nullable pois vínculo pode ser deletado)
+  vinculo ProfissionalUnidade? @relation(fields: [vinculoId], references: [id], onDelete: SetNull)
+
+  @@index([profissionalId])
+  @@index([unidadeOrigemId])
+  @@index([unidadeDestinoId])
+  @@index([tipo])
+  @@index([createdAt])
+  @@map("auditoria_vinculo")
+}
+
+enum TipoAuditoriaVinculo {
+  CRIACAO
+  ATIVACAO
+  DESATIVACAO
+  TRANSFERENCIA
+  ALTERACAO_CARGA_HORARIA
+  ALTERACAO_PERIODO
 }
 
 // Professores e Instrutores

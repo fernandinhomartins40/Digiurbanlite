@@ -334,12 +334,53 @@ router.get('/profissionais', async (req: Request, res: Response) => {
       where.isActive = isActive === 'true';
     }
 
+    // ✅ NOVO: Filtrar por unidade através da tabela de vínculos
+    if (unidadeId) {
+      where.vinculosUnidades = {
+        some: {
+          unidadeId: unidadeId as string,
+          ativo: true,
+          OR: [
+            { dataFim: null },
+            { dataFim: { gte: new Date() } },
+          ],
+        },
+      };
+    }
+
     const profissionais = await prisma.profissionalSaude.findMany({
       where,
+      include: {
+        // Incluir unidades vinculadas
+        vinculosUnidades: {
+          where: {
+            ativo: true,
+            OR: [
+              { dataFim: null },
+              { dataFim: { gte: new Date() } },
+            ],
+          },
+          include: {
+            unidade: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: { nome: 'asc' },
     });
 
-    res.json(profissionais);
+    // Transformar para incluir array de unidades
+    const profissionaisFormatados = profissionais.map((prof) => ({
+      ...prof,
+      unidades: prof.vinculosUnidades.map((v) => v.unidade),
+    }));
+
+    res.json(profissionaisFormatados);
   } catch (error: any) {
     console.error('Erro ao buscar profissionais:', error);
     res.status(500).json({ error: error.message });
@@ -1089,6 +1130,30 @@ router.post('/agendas', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Unidade e profissional são necessários' });
     }
 
+    // ✅ NOVO: Validar se o profissional está vinculado à unidade
+    const vinculo = await prisma.profissionalUnidade.findFirst({
+      where: {
+        profissionalId: finalProfissionalId,
+        unidadeId: finalUnidadeId,
+        ativo: true,
+        OR: [
+          { dataFim: null },
+          { dataFim: { gte: new Date() } },
+        ],
+      },
+      include: {
+        profissional: { select: { nome: true } },
+        unidade: { select: { nome: true } },
+      },
+    });
+
+    if (!vinculo) {
+      return res.status(400).json({
+        error: 'Profissional não está vinculado a esta unidade',
+        detalhes: 'O profissional precisa estar vinculado à unidade antes de criar uma agenda',
+      });
+    }
+
     const agenda = await prisma.agendaMedica.create({
       data: {
         profissionalId: finalProfissionalId,
@@ -1171,6 +1236,373 @@ router.delete('/agendas/:id', async (req: Request, res: Response) => {
     res.json({ message: 'Agenda removida com sucesso' });
   } catch (error: any) {
     console.error('Erro ao remover agenda:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
+// ROTAS DE VÍNCULOS PROFISSIONAL-UNIDADE
+// ============================================================
+
+/**
+ * GET /api/apps/saude/cadastros/vinculos
+ * Listar vínculos profissional-unidade
+ */
+router.get('/vinculos', async (req: Request, res: Response) => {
+  try {
+    const { profissionalId, unidadeId, ativo } = req.query;
+
+    const where: any = {};
+
+    if (profissionalId) {
+      where.profissionalId = profissionalId;
+    }
+
+    if (unidadeId) {
+      where.unidadeId = unidadeId;
+    }
+
+    if (ativo !== undefined) {
+      where.ativo = ativo === 'true';
+      if (where.ativo) {
+        where.OR = [
+          { dataFim: null },
+          { dataFim: { gte: new Date() } },
+        ];
+      }
+    }
+
+    const vinculos = await prisma.profissionalUnidade.findMany({
+      where,
+      include: {
+        profissional: {
+          select: {
+            id: true,
+            nome: true,
+            categoria: true,
+            especialidade: true,
+          },
+        },
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+          },
+        },
+      },
+      orderBy: [{ profissional: { nome: 'asc' } }, { dataInicio: 'desc' }],
+    });
+
+    res.json(vinculos);
+  } catch (error: any) {
+    console.error('Erro ao buscar vínculos:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/vinculos/:id
+ * Buscar vínculo específico
+ */
+router.get('/vinculos/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const vinculo = await prisma.profissionalUnidade.findUnique({
+      where: { id },
+      include: {
+        profissional: true,
+        unidade: true,
+      },
+    });
+
+    if (!vinculo) {
+      return res.status(404).json({ error: 'Vínculo não encontrado' });
+    }
+
+    res.json(vinculo);
+  } catch (error: any) {
+    console.error('Erro ao buscar vínculo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/apps/saude/cadastros/vinculos
+ * Criar novo vínculo profissional-unidade
+ */
+router.post('/vinculos', async (req: Request, res: Response) => {
+  try {
+    const {
+      profissionalId,
+      unidadeId,
+      dataInicio,
+      dataFim,
+      cargaHoraria,
+      percentualDedicacao,
+      observacoes,
+      userId,
+      userName,
+    } = req.body;
+
+    if (!profissionalId || !unidadeId) {
+      return res.status(400).json({ error: 'Profissional e unidade são obrigatórios' });
+    }
+
+    // Verificar se profissional existe
+    const profissional = await prisma.profissionalSaude.findUnique({
+      where: { id: profissionalId },
+      select: { id: true, nome: true },
+    });
+
+    if (!profissional) {
+      return res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+
+    // Verificar se unidade existe
+    const unidade = await prisma.unidadeSaude.findUnique({
+      where: { id: unidadeId },
+      select: { id: true, nome: true },
+    });
+
+    if (!unidade) {
+      return res.status(404).json({ error: 'Unidade não encontrada' });
+    }
+
+    // Verificar se já existe vínculo ativo
+    const vinculoExistente = await prisma.profissionalUnidade.findFirst({
+      where: {
+        profissionalId,
+        unidadeId,
+        ativo: true,
+        OR: [
+          { dataFim: null },
+          { dataFim: { gte: new Date() } },
+        ],
+      },
+    });
+
+    if (vinculoExistente) {
+      return res.status(400).json({
+        error: 'Já existe um vínculo ativo entre este profissional e unidade',
+      });
+    }
+
+    // Validar percentual de dedicação
+    if (percentualDedicacao !== undefined && (percentualDedicacao < 0 || percentualDedicacao > 100)) {
+      return res.status(400).json({ error: 'Percentual de dedicação deve estar entre 0 e 100' });
+    }
+
+    // Criar vínculo
+    const vinculo = await prisma.profissionalUnidade.create({
+      data: {
+        profissionalId,
+        unidadeId,
+        dataInicio: dataInicio ? new Date(dataInicio) : new Date(),
+        dataFim: dataFim ? new Date(dataFim) : null,
+        ativo: true,
+        cargaHoraria: cargaHoraria ? parseInt(cargaHoraria) : null,
+        percentualDedicacao: percentualDedicacao ? parseInt(percentualDedicacao) : null,
+        observacoes: observacoes || null,
+      },
+      include: {
+        profissional: { select: { nome: true } },
+        unidade: { select: { nome: true } },
+      },
+    });
+
+    // Criar auditoria
+    await prisma.auditoriaVinculo.create({
+      data: {
+        vinculoId: vinculo.id,
+        tipo: 'CRIACAO',
+        profissionalId,
+        profissionalNome: profissional.nome,
+        unidadeDestinoId: unidadeId,
+        unidadeDestinoNome: unidade.nome,
+        userId: userId || null,
+        userName: userName || null,
+        motivo: observacoes || 'Vínculo criado',
+        detalhes: {
+          cargaHoraria,
+          percentualDedicacao,
+          dataInicio: vinculo.dataInicio,
+          dataFim: vinculo.dataFim,
+        },
+      },
+    });
+
+    res.status(201).json(vinculo);
+  } catch (error: any) {
+    console.error('Erro ao criar vínculo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /api/apps/saude/cadastros/vinculos/:id
+ * Atualizar vínculo profissional-unidade
+ */
+router.put('/vinculos/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const {
+      dataFim,
+      cargaHoraria,
+      percentualDedicacao,
+      observacoes,
+      ativo,
+      userId,
+      userName,
+      motivo,
+    } = req.body;
+
+    // Buscar vínculo atual
+    const vinculoAtual = await prisma.profissionalUnidade.findUnique({
+      where: { id },
+      include: {
+        profissional: { select: { nome: true } },
+        unidade: { select: { nome: true } },
+      },
+    });
+
+    if (!vinculoAtual) {
+      return res.status(404).json({ error: 'Vínculo não encontrado' });
+    }
+
+    // Validar percentual de dedicação
+    if (percentualDedicacao !== undefined && (percentualDedicacao < 0 || percentualDedicacao > 100)) {
+      return res.status(400).json({ error: 'Percentual de dedicação deve estar entre 0 e 100' });
+    }
+
+    // Determinar tipo de auditoria
+    let tipoAuditoria: 'ATIVACAO' | 'DESATIVACAO' | 'ALTERACAO_CARGA_HORARIA' | 'ALTERACAO_PERIODO' = 'ALTERACAO_PERIODO';
+
+    if (ativo !== undefined && ativo !== vinculoAtual.ativo) {
+      tipoAuditoria = ativo ? 'ATIVACAO' : 'DESATIVACAO';
+    } else if (cargaHoraria !== undefined && cargaHoraria !== vinculoAtual.cargaHoraria) {
+      tipoAuditoria = 'ALTERACAO_CARGA_HORARIA';
+    }
+
+    // Atualizar vínculo
+    const vinculo = await prisma.profissionalUnidade.update({
+      where: { id },
+      data: {
+        dataFim: dataFim !== undefined ? (dataFim ? new Date(dataFim) : null) : undefined,
+        cargaHoraria: cargaHoraria !== undefined ? parseInt(cargaHoraria) : undefined,
+        percentualDedicacao: percentualDedicacao !== undefined ? parseInt(percentualDedicacao) : undefined,
+        observacoes: observacoes !== undefined ? observacoes : undefined,
+        ativo: ativo !== undefined ? ativo : undefined,
+      },
+      include: {
+        profissional: { select: { nome: true } },
+        unidade: { select: { nome: true } },
+      },
+    });
+
+    // Criar auditoria
+    await prisma.auditoriaVinculo.create({
+      data: {
+        vinculoId: vinculo.id,
+        tipo: tipoAuditoria,
+        profissionalId: vinculo.profissionalId,
+        profissionalNome: vinculo.profissional.nome,
+        unidadeDestinoId: vinculo.unidadeId,
+        unidadeDestinoNome: vinculo.unidade.nome,
+        userId: userId || null,
+        userName: userName || null,
+        motivo: motivo || `Vínculo atualizado: ${tipoAuditoria}`,
+        detalhes: {
+          cargaHorariaAnterior: vinculoAtual.cargaHoraria,
+          cargaHorariaNova: vinculo.cargaHoraria,
+          percentualDedicacaoAnterior: vinculoAtual.percentualDedicacao,
+          percentualDedicacaoNovo: vinculo.percentualDedicacao,
+          ativoAnterior: vinculoAtual.ativo,
+          ativoNovo: vinculo.ativo,
+        },
+      },
+    });
+
+    res.json(vinculo);
+  } catch (error: any) {
+    console.error('Erro ao atualizar vínculo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/apps/saude/cadastros/vinculos/:id
+ * Desativar vínculo profissional-unidade
+ */
+router.delete('/vinculos/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { userId, userName, motivo } = req.body;
+
+    // Buscar vínculo
+    const vinculoAtual = await prisma.profissionalUnidade.findUnique({
+      where: { id },
+      include: {
+        profissional: { select: { nome: true } },
+        unidade: { select: { nome: true } },
+      },
+    });
+
+    if (!vinculoAtual) {
+      return res.status(404).json({ error: 'Vínculo não encontrado' });
+    }
+
+    // Desativar vínculo (soft delete)
+    const vinculo = await prisma.profissionalUnidade.update({
+      where: { id },
+      data: {
+        ativo: false,
+        dataFim: new Date(),
+      },
+    });
+
+    // Criar auditoria
+    await prisma.auditoriaVinculo.create({
+      data: {
+        vinculoId: id,
+        tipo: 'DESATIVACAO',
+        profissionalId: vinculoAtual.profissionalId,
+        profissionalNome: vinculoAtual.profissional.nome,
+        unidadeOrigemId: vinculoAtual.unidadeId,
+        unidadeOrigemNome: vinculoAtual.unidade.nome,
+        userId: userId || null,
+        userName: userName || null,
+        motivo: motivo || 'Vínculo desativado',
+        detalhes: {
+          dataDesativacao: new Date(),
+        },
+      },
+    });
+
+    res.json({ message: 'Vínculo desativado com sucesso', vinculo });
+  } catch (error: any) {
+    console.error('Erro ao remover vínculo:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/vinculos/auditoria/:vinculoId
+ * Buscar histórico de auditoria de um vínculo
+ */
+router.get('/vinculos/auditoria/:vinculoId', async (req: Request, res: Response) => {
+  try {
+    const { vinculoId } = req.params;
+
+    const auditorias = await prisma.auditoriaVinculo.findMany({
+      where: { vinculoId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(auditorias);
+  } catch (error: any) {
+    console.error('Erro ao buscar auditoria:', error);
     res.status(500).json({ error: error.message });
   }
 });
