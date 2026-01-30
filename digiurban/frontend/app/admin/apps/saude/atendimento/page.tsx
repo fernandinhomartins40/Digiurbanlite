@@ -2,320 +2,507 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useUnidade } from '@/contexts/UnidadeContext';
+import { Input } from '@/components/ui/input';
 import {
-  Building2,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useUnidade } from '@/contexts/UnidadeContext';
+import { SeletorUnidade } from '@/components/saude/SeletorUnidade';
+import {
+  UserPlus,
   Users,
   Clock,
   AlertCircle,
-  ArrowRight,
+  Stethoscope,
+  RefreshCw,
+  Search,
+  Eye,
   Activity,
-  MapPin,
-  Phone,
+  CheckCircle,
 } from 'lucide-react';
 
-interface UnidadeComStats {
+interface AtendimentoNaLista {
   id: string;
-  nome: string;
-  tipo: string;
-  cnes?: string;
-  endereco?: string;
-  telefone?: string;
-  stats: {
-    aguardando: number;
-    emAtendimento: number;
-    totalDia: number;
-    urgencias: number;
+  status: string;
+  prioridade: string;
+  ordem: number;
+  cidadao: {
+    id: string;
+    name: string;
+    cpf?: string;
+    cns?: string;
   };
+  tipoAtendimento: string;
+  motivoChegada?: string;
+  profissional?: {
+    id: string;
+    nome: string;
+  };
+  criadoEm: string;
+  iniciadoEm?: string;
+  chamadaEm?: string;
 }
 
-export default function AtendimentoPage() {
+export default function ListaAtendimentosPage() {
   const router = useRouter();
-  const { selecionarUnidade } = useUnidade();
-  const [unidades, setUnidades] = useState<UnidadeComStats[]>([]);
+  const { unidadeSelecionada } = useUnidade();
+  const [atendimentos, setAtendimentos] = useState<AtendimentoNaLista[]>([]);
   const [loading, setLoading] = useState(true);
+  const [atualizando, setAtualizando] = useState(false);
+  const [filtroStatus, setFiltroStatus] = useState<string>('TODOS');
+  const [filtroBusca, setFiltroBusca] = useState('');
 
+  // Recarregar lista quando unidade mudar
   useEffect(() => {
-    loadUnidadesComStats();
-    // Auto-refresh a cada 30 segundos
-    const interval = setInterval(loadUnidadesComStats, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    if (unidadeSelecionada?.id) {
+      loadAtendimentos(unidadeSelecionada.id);
 
-  const loadUnidadesComStats = async () => {
+      // Atualizar a cada 30 segundos
+      const interval = setInterval(() => {
+        loadAtendimentos(unidadeSelecionada.id, true);
+      }, 30000);
+
+      const handleUnidadeChanged = () => {
+        if (unidadeSelecionada?.id) {
+          loadAtendimentos(unidadeSelecionada.id);
+        }
+      };
+
+      window.addEventListener('unidade-changed', handleUnidadeChanged);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('unidade-changed', handleUnidadeChanged);
+      };
+    }
+  }, [unidadeSelecionada]);
+
+  const loadAtendimentos = async (unidadeId: string, silencioso = false) => {
     try {
-      // Buscar unidades ativas
-      const unidadesResponse = await fetch('/api/apps/saude/cadastros/unidades?isActive=true', {
-        credentials: 'include',
-      });
+      if (!silencioso) {
+        setLoading(true);
+      } else {
+        setAtualizando(true);
+      }
 
-      if (!unidadesResponse.ok) {
-        console.error('Erro ao carregar unidades');
-        setUnidades([]);
+      const response = await fetch(
+        `/api/saude/fila-atendimento?unidadeId=${unidadeId}`,
+        { credentials: 'include' }
+      );
+
+      if (!response.ok) {
+        console.error('Erro ao carregar lista de atendimentos');
+        setAtendimentos([]);
         return;
       }
 
-      const unidadesData = await unidadesResponse.json();
+      const data = await response.json();
 
-      // Para cada unidade, buscar estatísticas da fila
-      const unidadesComStats = await Promise.all(
-        unidadesData.map(async (unidade: any) => {
-          try {
-            const filaResponse = await fetch(
-              `/api/saude/fila-atendimento?unidadeId=${unidade.id}`,
-              { credentials: 'include' }
-            );
+      // Mapear dados da API para formato da lista
+      const atendimentosFormatados = data.map((item: any) => ({
+        id: item.consulta?.id || item.id,
+        status: item.status,
+        prioridade: item.prioridade,
+        ordem: item.ordem,
+        cidadao: {
+          id: item.consulta?.citizen?.id || '',
+          name: item.consulta?.citizen?.name || 'Paciente',
+          cpf: item.consulta?.citizen?.cpf,
+          cns: item.consulta?.citizen?.cns,
+        },
+        tipoAtendimento: item.consulta?.tipoAtendimento || 'CONSULTA',
+        motivoChegada: item.consulta?.motivoChegada,
+        profissional: item.consulta?.profissional,
+        criadoEm: item.criadoEm,
+        iniciadoEm: item.iniciadoEm,
+        chamadaEm: item.chamadaEm,
+      }));
 
-            let stats = {
-              aguardando: 0,
-              emAtendimento: 0,
-              totalDia: 0,
-              urgencias: 0,
-            };
-
-            if (filaResponse.ok) {
-              const fila = await filaResponse.json();
-              stats = {
-                aguardando: fila.filter((f: any) => f.status === 'AGUARDANDO').length,
-                emAtendimento: fila.filter((f: any) =>
-                  ['EM_ESCUTA_INICIAL', 'EM_TRIAGEM', 'EM_CONSULTA', 'EM_ATENDIMENTO'].includes(f.status)
-                ).length,
-                totalDia: fila.length,
-                urgencias: fila.filter((f: any) =>
-                  ['URGENTE', 'MUITO_URGENTE', 'EMERGENCIA'].includes(f.prioridade)
-                ).length,
-              };
-            }
-
-            return {
-              ...unidade,
-              stats,
-            };
-          } catch (error) {
-            console.error(`Erro ao carregar stats da unidade ${unidade.id}:`, error);
-            return {
-              ...unidade,
-              stats: {
-                aguardando: 0,
-                emAtendimento: 0,
-                totalDia: 0,
-                urgencias: 0,
-              },
-            };
-          }
-        })
-      );
-
-      setUnidades(unidadesComStats);
+      setAtendimentos(atendimentosFormatados);
     } catch (error) {
-      console.error('Erro ao carregar unidades:', error);
-      setUnidades([]);
+      console.error('Erro ao carregar atendimentos:', error);
+      setAtendimentos([]);
     } finally {
       setLoading(false);
+      setAtualizando(false);
     }
   };
 
-  const handleSelecionarUnidade = (unidade: UnidadeComStats) => {
-    // Salvar no contexto
-    selecionarUnidade({
-      id: unidade.id,
-      nome: unidade.nome,
-      tipo: unidade.tipo,
-      cnes: unidade.cnes,
-    });
-
-    // Redirecionar para fila
-    router.push('/admin/apps/saude/atendimento/fila');
-  };
-
-  const getTipoColor = (tipo: string) => {
-    const colors: Record<string, string> = {
-      UBS: 'bg-blue-100 text-blue-700',
-      UPA: 'bg-red-100 text-red-700',
-      Hospital: 'bg-purple-100 text-purple-700',
-      Clínica: 'bg-green-100 text-green-700',
-      Posto: 'bg-yellow-100 text-yellow-700',
+  const getStatusConfig = (status: string, prioridade: string) => {
+    // Cores baseadas no PEC e-SUS
+    const configs: Record<string, { cor: string; label: string; icon: any }> = {
+      AGUARDANDO: { cor: 'bg-yellow-100 text-yellow-800 border-yellow-300', label: 'Aguardando', icon: Clock },
+      EM_ESCUTA_INICIAL: { cor: 'bg-green-100 text-green-800 border-green-300', label: 'Em Escuta Inicial', icon: Activity },
+      EM_TRIAGEM: { cor: 'bg-green-100 text-green-800 border-green-300', label: 'Em Triagem', icon: Stethoscope },
+      AGUARDANDO_MEDICO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Aguardando Médico', icon: Clock },
+      EM_CONSULTA: { cor: 'bg-green-100 text-green-800 border-green-300', label: 'Em Consulta', icon: Stethoscope },
+      CHAMADO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Chamado', icon: Activity },
+      CONSULTA_CONCLUIDA: { cor: 'bg-indigo-100 text-indigo-800 border-indigo-300', label: 'Consulta Concluída', icon: CheckCircle },
+      FINALIZADO: { cor: 'bg-gray-100 text-gray-800 border-gray-300', label: 'Finalizado', icon: CheckCircle },
     };
-    return colors[tipo] || 'bg-gray-100 text-gray-700';
+
+    // Sobrescrever cor se for urgência/emergência
+    if (['EMERGENCIA', 'MUITO_URGENTE'].includes(prioridade)) {
+      return { cor: 'bg-red-100 text-red-800 border-red-300', label: configs[status]?.label || status, icon: AlertCircle };
+    }
+    if (prioridade === 'URGENTE') {
+      return { cor: 'bg-orange-100 text-orange-800 border-orange-300', label: configs[status]?.label || status, icon: AlertCircle };
+    }
+
+    return configs[status] || { cor: 'bg-gray-100 text-gray-800 border-gray-300', label: status, icon: Users };
   };
+
+  const getPrioridadeBadge = (prioridade: string) => {
+    const cores: Record<string, string> = {
+      EMERGENCIA: 'bg-red-600 text-white',
+      MUITO_URGENTE: 'bg-red-500 text-white',
+      URGENTE: 'bg-orange-500 text-white',
+      POUCO_URGENTE: 'bg-blue-500 text-white',
+      NAO_URGENTE: 'bg-gray-500 text-white',
+      NORMAL: 'bg-gray-400 text-white',
+    };
+
+    const labels: Record<string, string> = {
+      EMERGENCIA: '🔴 Emergência',
+      MUITO_URGENTE: '🔴 Muito Urgente',
+      URGENTE: '🟠 Urgente',
+      POUCO_URGENTE: '🟢 Pouco Urgente',
+      NAO_URGENTE: '⚪ Não Urgente',
+      NORMAL: 'Normal',
+    };
+
+    return (
+      <Badge className={cores[prioridade] || cores.NORMAL}>
+        {labels[prioridade] || prioridade}
+      </Badge>
+    );
+  };
+
+  const handleAcao = (atendimento: AtendimentoNaLista, acao: string) => {
+    switch (acao) {
+      case 'escuta-inicial':
+        router.push(`/admin/apps/saude/atendimento/escuta-inicial/${atendimento.id}`);
+        break;
+      case 'triagem':
+        router.push(`/admin/apps/saude/atendimento/triagem?atendimentoId=${atendimento.id}`);
+        break;
+      case 'consulta':
+        router.push(`/admin/apps/saude/atendimento/consulta?atendimentoId=${atendimento.id}`);
+        break;
+      case 'prontuario':
+        router.push(`/admin/apps/saude/atendimento/prontuario/${atendimento.cidadao.id}`);
+        break;
+    }
+  };
+
+  const getAcoesDisponiveis = (status: string) => {
+    const acoes: Record<string, { label: string; acao: string; variante: any }[]> = {
+      AGUARDANDO: [
+        { label: 'Escuta Inicial', acao: 'escuta-inicial', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
+      ],
+      EM_ESCUTA_INICIAL: [
+        { label: 'Continuar Escuta', acao: 'escuta-inicial', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
+      ],
+      EM_TRIAGEM: [
+        { label: 'Continuar Triagem', acao: 'triagem', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
+      ],
+      AGUARDANDO_MEDICO: [
+        { label: 'Iniciar Consulta', acao: 'consulta', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
+      ],
+      EM_CONSULTA: [
+        { label: 'Continuar Consulta', acao: 'consulta', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
+      ],
+    };
+
+    return acoes[status] || [{ label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' }];
+  };
+
+  // Filtros
+  const atendimentosFiltrados = atendimentos.filter((atendimento) => {
+    // Filtro por status
+    if (filtroStatus !== 'TODOS' && atendimento.status !== filtroStatus) {
+      return false;
+    }
+
+    // Filtro por busca (nome, CPF, CNS)
+    if (filtroBusca) {
+      const busca = filtroBusca.toLowerCase();
+      const nome = atendimento.cidadao.name.toLowerCase();
+      const cpf = atendimento.cidadao.cpf?.replace(/\D/g, '') || '';
+      const cns = atendimento.cidadao.cns || '';
+
+      if (!nome.includes(busca) && !cpf.includes(busca) && !cns.includes(busca)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Estatísticas
+  const stats = {
+    total: atendimentos.length,
+    aguardando: atendimentos.filter((a) => a.status === 'AGUARDANDO').length,
+    emAtendimento: atendimentos.filter((a) =>
+      ['EM_ESCUTA_INICIAL', 'EM_TRIAGEM', 'EM_CONSULTA'].includes(a.status)
+    ).length,
+    urgencias: atendimentos.filter((a) =>
+      ['EMERGENCIA', 'MUITO_URGENTE', 'URGENTE'].includes(a.prioridade)
+    ).length,
+  };
+
+  if (!unidadeSelecionada) {
+    return (
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Lista de Atendimentos</h1>
+          <p className="text-gray-500 mt-1">
+            Selecione uma unidade para visualizar a lista de atendimentos
+          </p>
+        </div>
+        <SeletorUnidade />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Carregando unidades de saúde...</div>
+          <div className="text-gray-500">Carregando lista de atendimentos...</div>
         </div>
-      </div>
-    );
-  }
-
-  if (unidades.length === 0) {
-    return (
-      <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Sistema de Atendimento</h1>
-          <p className="text-gray-500 mt-1">Selecione uma unidade para iniciar</p>
-        </div>
-
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-6 text-center">
-            <Building2 className="h-12 w-12 text-amber-600 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-amber-900 mb-2">
-              Nenhuma unidade de saúde cadastrada
-            </h3>
-            <p className="text-amber-700 mb-4">
-              Cadastre unidades de saúde antes de usar o sistema de atendimento
-            </p>
-            <Button
-              onClick={() => router.push('/admin/apps/saude/cadastros/unidades')}
-              variant="outline"
-              className="border-amber-300"
-            >
-              Ir para Cadastros
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
   return (
     <div className="p-6 space-y-6">
+      {/* Seletor de Unidade */}
+      <SeletorUnidade />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Building2 className="h-8 w-8 text-blue-600" />
-            Sistema de Atendimento
+            <Users className="h-8 w-8 text-blue-600" />
+            Lista de Atendimentos
           </h1>
           <p className="text-gray-500 mt-1">
-            Selecione uma unidade de saúde para acessar a fila de atendimento
+            Pacientes em atendimento em{' '}
+            <span className="font-semibold">{unidadeSelecionada.nome}</span>
           </p>
         </div>
-
-        <Button
-          variant="outline"
-          onClick={() => router.push('/admin/apps/saude/cadastros')}
-        >
-          Gerenciar Cadastros
-        </Button>
-      </div>
-
-      {/* Cards de Unidades */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {unidades.map((unidade) => (
-          <Card
-            key={unidade.id}
-            className="hover:shadow-lg transition-all cursor-pointer border-2 hover:border-blue-400"
-            onClick={() => handleSelecionarUnidade(unidade)}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => loadAtendimentos(unidadeSelecionada.id)}
+            variant="outline"
+            disabled={atualizando}
           >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Building2 className="h-5 w-5 text-blue-600" />
-                    <Badge className={getTipoColor(unidade.tipo)}>
-                      {unidade.tipo}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-xl">{unidade.nome}</CardTitle>
-                  {unidade.cnes && (
-                    <CardDescription className="mt-1">
-                      CNES: {unidade.cnes}
-                    </CardDescription>
-                  )}
-                </div>
-                <ArrowRight className="h-5 w-5 text-gray-400" />
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              {/* Informações de Contato */}
-              {(unidade.endereco || unidade.telefone) && (
-                <div className="space-y-2 text-sm text-gray-600 pb-4 border-b">
-                  {unidade.endereco && (
-                    <div className="flex items-start gap-2">
-                      <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <span className="line-clamp-2">{unidade.endereco}</span>
-                    </div>
-                  )}
-                  {unidade.telefone && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 flex-shrink-0" />
-                      <span>{unidade.telefone}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Estatísticas da Fila */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="h-4 w-4" />
-                    <span>Aguardando</span>
-                  </div>
-                  <span className="text-lg font-bold text-blue-600">
-                    {unidade.stats.aguardando}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Activity className="h-4 w-4" />
-                    <span>Em Atendimento</span>
-                  </div>
-                  <span className="text-lg font-bold text-green-600">
-                    {unidade.stats.emAtendimento}
-                  </span>
-                </div>
-
-                {unidade.stats.urgencias > 0 && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <AlertCircle className="h-4 w-4" />
-                      <span>Urgências</span>
-                    </div>
-                    <span className="text-lg font-bold text-red-600">
-                      {unidade.stats.urgencias}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock className="h-4 w-4" />
-                    <span>Total do Dia</span>
-                  </div>
-                  <span className="text-lg font-bold text-gray-700">
-                    {unidade.stats.totalDia}
-                  </span>
-                </div>
-              </div>
-
-              {/* Botão de Ação */}
-              <Button
-                className="w-full mt-4"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelecionarUnidade(unidade);
-                }}
-              >
-                Acessar Fila de Atendimento
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+            <RefreshCw className={`h-4 w-4 mr-2 ${atualizando ? 'animate-spin' : ''}`} />
+            {atualizando ? 'Atualizando...' : 'Atualizar'}
+          </Button>
+          <Button
+            onClick={() => router.push('/admin/apps/saude/atendimento/adicionar')}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Adicionar à Lista
+          </Button>
+        </div>
       </div>
+
+      {/* Estatísticas Rápidas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <p className="text-xs text-muted-foreground mt-1">pacientes na lista</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Aguardando</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{stats.aguardando}</div>
+            <p className="text-xs text-muted-foreground mt-1">aguardando atendimento</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Em Atendimento</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{stats.emAtendimento}</div>
+            <p className="text-xs text-muted-foreground mt-1">em atendimento agora</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Urgências</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{stats.urgencias}</div>
+            <p className="text-xs text-muted-foreground mt-1">casos urgentes</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filtros */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar por nome, CPF ou CNS..."
+                  value={filtroBusca}
+                  onChange={(e) => setFiltroBusca(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="w-full md:w-64">
+              <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODOS">Todos os status</SelectItem>
+                  <SelectItem value="AGUARDANDO">Aguardando</SelectItem>
+                  <SelectItem value="EM_ESCUTA_INICIAL">Em Escuta Inicial</SelectItem>
+                  <SelectItem value="EM_TRIAGEM">Em Triagem</SelectItem>
+                  <SelectItem value="AGUARDANDO_MEDICO">Aguardando Médico</SelectItem>
+                  <SelectItem value="EM_CONSULTA">Em Consulta</SelectItem>
+                  <SelectItem value="CONSULTA_CONCLUIDA">Consulta Concluída</SelectItem>
+                  <SelectItem value="FINALIZADO">Finalizado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Lista de Atendimentos */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            Pacientes ({atendimentosFiltrados.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {atendimentosFiltrados.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <div className="text-gray-500 font-medium">Nenhum paciente na lista</div>
+              <div className="text-sm text-gray-400 mt-1">
+                {filtroBusca || filtroStatus !== 'TODOS'
+                  ? 'Tente ajustar os filtros'
+                  : 'Adicione pacientes à lista para começar'}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {atendimentosFiltrados.map((atendimento) => {
+                const statusConfig = getStatusConfig(atendimento.status, atendimento.prioridade);
+                const Icon = statusConfig.icon;
+                const acoes = getAcoesDisponiveis(atendimento.status);
+
+                return (
+                  <div
+                    key={atendimento.id}
+                    className={`flex items-center justify-between p-4 border-2 rounded-lg hover:shadow-md transition-all ${statusConfig.cor}`}
+                  >
+                    <div className="flex-1 flex items-center gap-4">
+                      {/* Número da Ordem */}
+                      <div className="flex flex-col items-center">
+                        <div className="text-2xl font-bold text-gray-700">
+                          #{atendimento.ordem}
+                        </div>
+                        <div className="text-xs text-gray-500">Ordem</div>
+                      </div>
+
+                      {/* Dados do Paciente */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="font-semibold text-lg">{atendimento.cidadao.name}</div>
+                          {getPrioridadeBadge(atendimento.prioridade)}
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          {atendimento.cidadao.cpf && (
+                            <div>CPF: {atendimento.cidadao.cpf}</div>
+                          )}
+                          {atendimento.motivoChegada && (
+                            <div className="italic">Motivo: {atendimento.motivoChegada}</div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Status */}
+                      <div className="flex flex-col items-center gap-2">
+                        <Badge className={`${statusConfig.cor} border-2`}>
+                          <Icon className="h-3 w-3 mr-1" />
+                          {statusConfig.label}
+                        </Badge>
+                        {atendimento.criadoEm && (
+                          <div className="text-xs text-gray-500">
+                            {new Date(atendimento.criadoEm).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Ações */}
+                    <div className="flex items-center gap-2 ml-4">
+                      {acoes.map((acao) => (
+                        <Button
+                          key={acao.acao}
+                          onClick={() => handleAcao(atendimento, acao.acao)}
+                          variant={acao.variante as any}
+                          size="sm"
+                        >
+                          {acao.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Rodapé */}
       <div className="text-center text-sm text-gray-500 pt-6 border-t">
         <p>
-          Atualização automática a cada 30 segundos • Sistema compatível com PEC e-SUS
+          Atualização automática a cada 30 segundos • Sistema compatível com PEC e-SUS APS
         </p>
       </div>
     </div>

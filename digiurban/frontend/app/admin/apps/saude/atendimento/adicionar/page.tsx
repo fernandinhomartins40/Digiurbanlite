@@ -17,17 +17,17 @@ import {
 import { CidadaoSelector } from '@/components/apps/saude/CidadaoSelector';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { SeletorUnidade } from '@/components/saude/SeletorUnidade';
-import { UserPlus, Stethoscope, ArrowRight, Clock, AlertCircle } from 'lucide-react';
+import { UserPlus, Stethoscope, ArrowRight, Clock, AlertCircle, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-export default function ChegadaAtendimentoPage() {
+export default function AdicionarCidadaoListaPage() {
   const router = useRouter();
   const { unidadeSelecionada } = useUnidade();
   const [loading, setLoading] = useState(false);
   const [selectedCidadao, setSelectedCidadao] = useState<any>(null);
   const [formData, setFormData] = useState({
-    tipoAtendimento: 'CONSULTA',
+    tipoAtendimento: 'DEMANDA_ESPONTANEA',
     motivoChegada: '',
     acompanhante: '',
     observacoes: '',
@@ -60,7 +60,7 @@ export default function ChegadaAtendimentoPage() {
         credentials: 'include',
         body: JSON.stringify({
           cidadaoId: selectedCidadao.id,
-          unidadeSaudeId: unidadeSelecionada.id, // ✅ Usando unidade do contexto
+          unidadeSaudeId: unidadeSelecionada.id,
           tipoAtendimento: formData.tipoAtendimento,
           motivoChegada: formData.motivoChegada,
           acompanhante: formData.acompanhante || undefined,
@@ -74,13 +74,13 @@ export default function ChegadaAtendimentoPage() {
 
       const atendimento = await response.json();
 
-      alert('Paciente registrado com sucesso! Redirecionando para triagem...');
+      alert('Cidadão adicionado à lista com sucesso!');
 
-      // Redirecionar para triagem com o ID do atendimento
-      router.push(`/admin/apps/saude/atendimento/triagem?atendimentoId=${atendimento.id}`);
+      // Redirecionar para lista de atendimentos
+      router.push('/admin/apps/saude/atendimento');
     } catch (error: any) {
-      console.error('Erro ao registrar chegada:', error);
-      alert(`Erro ao registrar chegada: ${error.message}`);
+      console.error('Erro ao adicionar cidadão à lista:', error);
+      alert(`Erro ao adicionar cidadão à lista: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -95,7 +95,7 @@ export default function ChegadaAtendimentoPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Selecione uma unidade para registrar chegada de paciente
+            Selecione uma unidade para adicionar cidadão à lista de atendimentos
           </AlertDescription>
         </Alert>
       )}
@@ -105,19 +105,19 @@ export default function ChegadaAtendimentoPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
             <UserPlus className="h-8 w-8 text-blue-600" />
-            Chegada de Paciente
+            Adicionar Cidadão à Lista de Atendimentos
           </h1>
           <p className="text-gray-500 mt-1">
-            Registre a chegada do paciente em{' '}
+            Registre o cidadão na lista de atendimentos em{' '}
             <span className="font-semibold">{unidadeSelecionada?.nome || '...'}</span>
           </p>
         </div>
-        <Button variant="outline" onClick={() => router.back()}>
-          Voltar
+        <Button variant="outline" onClick={() => router.push('/admin/apps/saude/atendimento')}>
+          Voltar para Lista
         </Button>
       </div>
 
-      {/* Fluxo do Atendimento */}
+      {/* Fluxo do Atendimento PEC e-SUS */}
       <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
         <CardContent className="p-4">
           <div className="flex items-center justify-between text-sm">
@@ -126,8 +126,18 @@ export default function ChegadaAtendimentoPage() {
                 <UserPlus className="h-4 w-4" />
               </div>
               <div>
-                <div className="font-semibold text-blue-900">1. Chegada</div>
+                <div className="font-semibold text-blue-900">1. Adicionar à Lista</div>
                 <div className="text-xs text-blue-700">Você está aqui</div>
+              </div>
+            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400" />
+            <div className="flex items-center gap-2 opacity-50">
+              <div className="p-2 bg-gray-300 rounded-full">
+                <Activity className="h-4 w-4 text-gray-600" />
+              </div>
+              <div>
+                <div className="font-semibold text-gray-600">2. Escuta Inicial</div>
+                <div className="text-xs text-gray-500">Próximo passo</div>
               </div>
             </div>
             <ArrowRight className="h-5 w-5 text-gray-400" />
@@ -136,8 +146,8 @@ export default function ChegadaAtendimentoPage() {
                 <Stethoscope className="h-4 w-4 text-gray-600" />
               </div>
               <div>
-                <div className="font-semibold text-gray-600">2. Triagem</div>
-                <div className="text-xs text-gray-500">Próximo passo</div>
+                <div className="font-semibold text-gray-600">3. Triagem</div>
+                <div className="text-xs text-gray-500">Se necessário</div>
               </div>
             </div>
             <ArrowRight className="h-5 w-5 text-gray-400" />
@@ -146,8 +156,8 @@ export default function ChegadaAtendimentoPage() {
                 <Clock className="h-4 w-4 text-gray-600" />
               </div>
               <div>
-                <div className="font-semibold text-gray-600">3. Fila</div>
-                <div className="text-xs text-gray-500">Aguardar médico</div>
+                <div className="font-semibold text-gray-600">4. Consulta</div>
+                <div className="text-xs text-gray-500">SOAP</div>
               </div>
             </div>
           </div>
@@ -158,16 +168,16 @@ export default function ChegadaAtendimentoPage() {
         {/* Seleção de Cidadão */}
         <Card>
           <CardHeader>
-            <CardTitle>Dados do Paciente</CardTitle>
+            <CardTitle>Dados do Cidadão</CardTitle>
             <CardDescription>
-              Busque o paciente por CPF, CNS ou nome completo
+              Busque o cidadão por CPF, CNS ou nome completo
             </CardDescription>
           </CardHeader>
           <CardContent>
             <CidadaoSelector
               onSelect={setSelectedCidadao}
               selectedCidadao={selectedCidadao}
-              label="Paciente"
+              label="Cidadão"
               required
             />
           </CardContent>
@@ -178,7 +188,7 @@ export default function ChegadaAtendimentoPage() {
           <CardHeader>
             <CardTitle>Informações do Atendimento</CardTitle>
             <CardDescription>
-              Preencha as informações iniciais do atendimento
+              Preencha as informações conforme PEC e-SUS APS
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -193,18 +203,20 @@ export default function ChegadaAtendimentoPage() {
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CONSULTA">📋 Consulta Médica</SelectItem>
-                  <SelectItem value="URGENCIA">🚨 Urgência/Emergência</SelectItem>
+                  <SelectItem value="AGENDADO">📅 Agendado</SelectItem>
+                  <SelectItem value="DEMANDA_ESPONTANEA">🚶 Demanda Espontânea</SelectItem>
+                  <SelectItem value="URGENCIA">🚨 Urgência</SelectItem>
                   <SelectItem value="RETORNO">🔄 Retorno</SelectItem>
-                  <SelectItem value="PREVENTIVO">✅ Consulta Preventiva</SelectItem>
                   <SelectItem value="VACINA">💉 Vacinação</SelectItem>
-                  <SelectItem value="CURATIVO">🩹 Curativo</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Conforme Manual PEC e-SUS APS
+              </p>
             </div>
 
             <div>
-              <Label htmlFor="motivoChegada">Motivo da Chegada *</Label>
+              <Label htmlFor="motivoChegada">Motivo da Busca *</Label>
               <Textarea
                 id="motivoChegada"
                 value={formData.motivoChegada}
@@ -214,7 +226,7 @@ export default function ChegadaAtendimentoPage() {
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Descreva brevemente o motivo principal da procura pelo atendimento
+                Descreva brevemente o motivo da busca pelo atendimento
               </p>
             </div>
 
@@ -256,10 +268,10 @@ export default function ChegadaAtendimentoPage() {
             className="bg-blue-600 hover:bg-blue-700"
           >
             {loading ? (
-              'Registrando...'
+              'Adicionando à Lista...'
             ) : (
               <>
-                Registrar e Ir para Triagem
+                Adicionar à Lista de Atendimentos
                 <ArrowRight className="ml-2 h-4 w-4" />
               </>
             )}
