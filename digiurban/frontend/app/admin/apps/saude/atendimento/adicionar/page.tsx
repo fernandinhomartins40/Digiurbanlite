@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,12 +26,36 @@ export default function AdicionarCidadaoListaPage() {
   const { unidadeSelecionada } = useUnidade();
   const [loading, setLoading] = useState(false);
   const [selectedCidadao, setSelectedCidadao] = useState<any>(null);
+  const [profissionais, setProfissionais] = useState<any[]>([]);
   const [formData, setFormData] = useState({
+    profissionalId: '',
     tipoAtendimento: 'DEMANDA_ESPONTANEA',
     motivoChegada: '',
     acompanhante: '',
     observacoes: '',
   });
+
+  // Carregar profissionais da unidade
+  useEffect(() => {
+    if (unidadeSelecionada?.id) {
+      loadProfissionais(unidadeSelecionada.id);
+    }
+  }, [unidadeSelecionada]);
+
+  const loadProfissionais = async (unidadeId: string) => {
+    try {
+      const response = await fetch(
+        `/api/apps/saude/cadastros/profissionais?unidadeId=${unidadeId}&isActive=true`,
+        { credentials: 'include' }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setProfissionais(data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar profissionais:', error);
+    }
+  };
 
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -53,18 +77,18 @@ export default function AdicionarCidadaoListaPage() {
     setLoading(true);
 
     try {
-      // Criar atendimento
-      const response = await fetch('/api/apps/saude/atendimento/atendimentos', {
+      // Adicionar cidadão à fila de atendimento
+      const response = await fetch('/api/saude/fila-atendimento', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          cidadaoId: selectedCidadao.id,
-          unidadeSaudeId: unidadeSelecionada.id,
+          citizenId: selectedCidadao.id,
+          unidadeId: unidadeSelecionada.id,
+          profissionalId: formData.profissionalId,
           tipoAtendimento: formData.tipoAtendimento,
-          motivoChegada: formData.motivoChegada,
-          acompanhante: formData.acompanhante || undefined,
-          observacoes: formData.observacoes || undefined,
+          motivoBusca: formData.motivoChegada,
+          vacinacao: formData.tipoAtendimento === 'VACINA',
         }),
       });
 
@@ -216,6 +240,35 @@ export default function AdicionarCidadaoListaPage() {
             </div>
 
             <div>
+              <Label htmlFor="profissional">Profissional *</Label>
+              <Select
+                value={formData.profissionalId}
+                onValueChange={(value) => handleChange('profissionalId', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o profissional" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profissionais.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      Nenhum profissional disponível
+                    </SelectItem>
+                  ) : (
+                    profissionais.map((prof) => (
+                      <SelectItem key={prof.id} value={prof.id}>
+                        {prof.nome} - {prof.categoria}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Profissional que irá atender o cidadão
+              </p>
+            </div>
+
+            <div>
               <Label htmlFor="motivoChegada">Motivo da Busca *</Label>
               <Textarea
                 id="motivoChegada"
@@ -264,7 +317,7 @@ export default function AdicionarCidadaoListaPage() {
           </Button>
           <Button
             type="submit"
-            disabled={loading || !selectedCidadao || !unidadeSelecionada}
+            disabled={loading || !selectedCidadao || !unidadeSelecionada || !formData.profissionalId}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {loading ? (
