@@ -8,10 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
-import { Check, ChevronsUpDown, Search, Loader2 } from 'lucide-react';
+import { User, X, Search, Loader2 } from 'lucide-react';
 import { TipoAtendimentoFila } from '@/types/saude';
 
 interface Cidadao {
@@ -55,7 +53,6 @@ export function AdicionarAtendimentoDialog({
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [equipes, setEquipes] = useState<EquipeSaude[]>([]);
 
-  const [openCidadao, setOpenCidadao] = useState(false);
   const [selectedCidadao, setSelectedCidadao] = useState<Cidadao | null>(null);
   const [selectedProfissional, setSelectedProfissional] = useState('');
   const [selectedEquipe, setSelectedEquipe] = useState<EquipeSaude | null>(null);
@@ -65,6 +62,9 @@ export function AdicionarAtendimentoDialog({
 
   useEffect(() => {
     if (open) {
+      // Reset estados quando abre o modal
+      setSearchTerm('');
+      setCidadaos([]);
       loadProfissionais();
       loadEquipes();
     }
@@ -72,7 +72,12 @@ export function AdicionarAtendimentoDialog({
 
   useEffect(() => {
     if (searchTerm.length >= 3) {
-      searchCidadaos(searchTerm);
+      const timer = setTimeout(() => {
+        searchCidadaos(searchTerm);
+      }, 400);
+      return () => clearTimeout(timer);
+    } else {
+      setCidadaos([]);
     }
   }, [searchTerm]);
 
@@ -178,86 +183,82 @@ export function AdicionarAtendimentoDialog({
           {/* Buscar Cidadão */}
           <div className="space-y-2">
             <Label>Cidadão *</Label>
-            <Popover open={openCidadao} onOpenChange={setOpenCidadao}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openCidadao}
-                  className="w-full justify-between"
-                >
-                  {selectedCidadao ? (
-                    <span className="flex items-center gap-2">
-                      <span className="font-medium">{selectedCidadao.name}</span>
-                      <span className="text-xs text-gray-500">
-                        CPF: {selectedCidadao.cpf}
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="text-gray-500">Buscar cidadão...</span>
-                  )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[500px] p-0">
-                <Command shouldFilter={false}>
-                  <CommandInput
-                    placeholder="Buscar por nome, CPF ou CNS..."
+
+            {!selectedCidadao ? (
+              <div className="relative">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Digite o nome, CPF ou CNS do cidadão (mín. 3 caracteres)"
                     value={searchTerm}
-                    onValueChange={setSearchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10"
+                    autoComplete="off"
                   />
-                  <CommandEmpty>
-                    {searching ? (
-                      <div className="flex items-center justify-center gap-2 py-6">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Buscando...</span>
-                      </div>
-                    ) : searchTerm.length < 3 ? (
-                      <div className="py-6 text-center text-sm">
-                        Digite pelo menos 3 caracteres para buscar
-                      </div>
-                    ) : (
-                      <div className="py-6 text-center text-sm">
-                        Nenhum cidadão encontrado
-                      </div>
-                    )}
-                  </CommandEmpty>
-                  <CommandGroup>
+                  {searching && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+                  )}
+                </div>
+
+                {/* Resultados da Busca */}
+                {cidadaos.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
                     {cidadaos.map((cidadao) => (
-                      <CommandItem
+                      <button
                         key={cidadao.id}
-                        value={`${cidadao.name} ${cidadao.cpf}`}
-                        onSelect={() => {
+                        type="button"
+                        onClick={() => {
                           setSelectedCidadao(cidadao);
-                          setOpenCidadao(false);
+                          setSearchTerm('');
+                          setCidadaos([]);
                         }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                       >
-                        <Check
-                          className={cn(
-                            'mr-2 h-4 w-4',
-                            selectedCidadao?.id === cidadao.id
-                              ? 'opacity-100'
-                              : 'opacity-0'
-                          )}
-                        />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{cidadao.name}</span>
-                          <div className="flex gap-3 text-xs text-gray-500">
-                            <span>CPF: {cidadao.cpf}</span>
-                            {cidadao.cns && <span>CNS: {cidadao.cns}</span>}
-                            {cidadao.birthDate && (
-                              <span>
-                                Nasc: {new Date(cidadao.birthDate).toLocaleDateString('pt-BR')}
-                              </span>
-                            )}
-                          </div>
+                        <div className="font-medium text-gray-900">{cidadao.name}</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          CPF: {cidadao.cpf}
+                          {cidadao.cns && ` • CNS: ${cidadao.cns}`}
                         </div>
-                      </CommandItem>
+                      </button>
                     ))}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                  </div>
+                )}
+
+                {/* Sem resultados */}
+                {searchTerm.length >= 3 && !searching && cidadaos.length === 0 && (
+                  <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 border border-gray-200 mt-2">
+                    Nenhum cidadão encontrado com este termo
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-green-100 rounded-full">
+                      <User className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900">{selectedCidadao.name}</h4>
+                      <div className="mt-1 space-y-1 text-sm text-gray-600">
+                        <div>CPF: {selectedCidadao.cpf}</div>
+                        {selectedCidadao.cns && <div>CNS: {selectedCidadao.cns}</div>}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCidadao(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Profissional */}
