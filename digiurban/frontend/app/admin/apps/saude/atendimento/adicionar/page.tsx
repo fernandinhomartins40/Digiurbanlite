@@ -241,28 +241,31 @@ export default function AdicionarCidadaoListaPage() {
 
             <div>
               <Label htmlFor="profissional">Profissional *</Label>
-              <Select
-                value={formData.profissionalId}
-                onValueChange={(value) => handleChange('profissionalId', value)}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o profissional" />
-                </SelectTrigger>
-                <SelectContent>
-                  {profissionais.length === 0 ? (
-                    <SelectItem value="" disabled>
-                      Nenhum profissional disponível
-                    </SelectItem>
-                  ) : (
-                    profissionais.map((prof) => (
+              {profissionais.length === 0 ? (
+                <div className="flex items-center gap-2 p-3 border rounded-md bg-amber-50 border-amber-200">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm text-amber-700">
+                    Nenhum profissional vinculado a esta unidade
+                  </span>
+                </div>
+              ) : (
+                <Select
+                  value={formData.profissionalId}
+                  onValueChange={(value) => handleChange('profissionalId', value)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o profissional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {profissionais.map((prof) => (
                       <SelectItem key={prof.id} value={prof.id}>
                         {prof.nome} - {prof.categoria}
                       </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
                 Profissional que irá atender o cidadão
               </p>
