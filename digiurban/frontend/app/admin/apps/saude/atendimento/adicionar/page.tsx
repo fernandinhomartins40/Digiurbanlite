@@ -27,20 +27,49 @@ export default function AdicionarCidadaoListaPage() {
   const [loading, setLoading] = useState(false);
   const [selectedCidadao, setSelectedCidadao] = useState<any>(null);
   const [profissionais, setProfissionais] = useState<any[]>([]);
+  const [unidadeDetalhes, setUnidadeDetalhes] = useState<any>(null);
   const [formData, setFormData] = useState({
     profissionalId: '',
+    equipeId: '',
     tipoAtendimento: 'DEMANDA_ESPONTANEA',
     motivoChegada: '',
     acompanhante: '',
     observacoes: '',
   });
 
-  // Carregar profissionais da unidade
+  // Carregar detalhes da unidade e profissionais
   useEffect(() => {
     if (unidadeSelecionada?.id) {
+      loadUnidadeDetalhes(unidadeSelecionada.id);
       loadProfissionais(unidadeSelecionada.id);
     }
   }, [unidadeSelecionada]);
+
+  // Auto-detectar equipe quando cidadão for selecionado (modo ESF)
+  useEffect(() => {
+    if (selectedCidadao && unidadeDetalhes?.fluxoAtendimento === 'ESF') {
+      if (selectedCidadao.equipeId) {
+        setFormData((prev) => ({ ...prev, equipeId: selectedCidadao.equipeId, profissionalId: '' }));
+      } else {
+        // Cidadão sem equipe vinculada em unidade ESF
+        setFormData((prev) => ({ ...prev, equipeId: '', profissionalId: '' }));
+      }
+    }
+  }, [selectedCidadao, unidadeDetalhes]);
+
+  const loadUnidadeDetalhes = async (unidadeId: string) => {
+    try {
+      const response = await fetch(`/api/apps/saude/cadastros/unidades/${unidadeId}`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUnidadeDetalhes(data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar detalhes da unidade:', error);
+    }
+  };
 
   const loadProfissionais = async (unidadeId: string) => {
     try {
@@ -74,31 +103,71 @@ export default function AdicionarCidadaoListaPage() {
       return;
     }
 
+    // Validações específicas por tipo de fluxo
+    const fluxo = unidadeDetalhes?.fluxoAtendimento || 'TRADICIONAL';
+
+    if (fluxo === 'ESF') {
+      // Em modo ESF, precisa ter equipe vinculada
+      if (!formData.equipeId && !selectedCidadao.equipeId) {
+        alert(
+          'Este cidadão não está vinculado a nenhuma equipe ESF. ' +
+          'Por favor, vincule o cidadão a uma equipe antes de adicionar à lista.'
+        );
+        return;
+      }
+    } else {
+      // Em modo TRADICIONAL, precisa selecionar profissional
+      if (!formData.profissionalId) {
+        alert('Selecione um profissional de saúde');
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
+      // Preparar dados baseado no fluxo
+      const requestBody: any = {
+        citizenId: selectedCidadao.id,
+        unidadeId: unidadeSelecionada.id,
+        tipoAtendimento: formData.tipoAtendimento,
+        motivoBusca: formData.motivoChegada,
+        vacinacao: formData.tipoAtendimento === 'VACINA',
+      };
+
+      // Se ESF, enviar equipeId; se TRADICIONAL, enviar profissionalId
+      if (fluxo === 'ESF') {
+        requestBody.equipeId = formData.equipeId || selectedCidadao.equipeId;
+        // Em ESF, ainda precisa de um profissional (pode ser o enfermeiro da equipe)
+        // Mas será definido automaticamente ou no acolhimento
+        requestBody.profissionalId = formData.profissionalId || profissionais[0]?.id;
+      } else {
+        requestBody.profissionalId = formData.profissionalId;
+      }
+
       // Adicionar cidadão à fila de atendimento
       const response = await fetch('/api/saude/fila-atendimento', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          citizenId: selectedCidadao.id,
-          unidadeId: unidadeSelecionada.id,
-          profissionalId: formData.profissionalId,
-          tipoAtendimento: formData.tipoAtendimento,
-          motivoBusca: formData.motivoChegada,
-          vacinacao: formData.tipoAtendimento === 'VACINA',
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao adicionar à fila');
       }
 
       const atendimento = await response.json();
 
-      alert('Cidadão adicionado à lista com sucesso!');
+      // Mensagem de sucesso diferente por tipo de fluxo
+      if (fluxo === 'ESF') {
+        alert(`Cidadão adicionado à fila da equipe com sucesso!\nPróximo passo: Acolhimento`);
+      } else if (unidadeDetalhes?.tipo === 'UPA') {
+        alert(`Cidadão adicionado à fila com sucesso!\nPróximo passo: Classificação de Risco (Manchester)`);
+      } else {
+        alert(`Cidadão adicionado à fila com sucesso!\nPróximo passo: Acolhimento`);
+      }
 
       // Redirecionar para lista de atendimentos
       router.push('/admin/apps/saude/atendimento');
@@ -207,6 +276,79 @@ export default function AdicionarCidadaoListaPage() {
           </CardContent>
         </Card>
 
+        {/* Informação ESF */}
+        {selectedCidadao && unidadeDetalhes?.fluxoAtendimento === 'ESF' && (
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader>
+              <CardTitle className="text-green-900 flex items-center gap-2">
+                <Badge className="bg-green-600">ESF</Badge>
+                Atendimento Territorializado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedCidadao.equipeId ? (
+                <div className="space-y-2">
+                  <p className="text-green-800">
+                    ✓ Este cidadão está vinculado a uma <strong>Equipe de Saúde da Família</strong>
+                  </p>
+                  {selectedCidadao.equipe && (
+                    <div className="bg-white border border-green-200 rounded p-3">
+                      <div className="font-semibold text-green-900">
+                        {selectedCidadao.equipe.nome}
+                      </div>
+                      <div className="text-sm text-green-700">
+                        INE: {selectedCidadao.equipe.ine}
+                      </div>
+                    </div>
+                  )}
+                  {selectedCidadao.microarea && (
+                    <div className="text-sm text-green-700">
+                      Microárea: {selectedCidadao.microarea.numero}
+                      {selectedCidadao.microarea.acs && (
+                        <span> - ACS: {selectedCidadao.microarea.acs.nome}</span>
+                      )}
+                    </div>
+                  )}
+                  <p className="text-sm text-green-700 mt-2">
+                    O atendimento será direcionado automaticamente para a equipe responsável.
+                  </p>
+                </div>
+              ) : (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Atenção:</strong> Este cidadão não está vinculado a nenhuma equipe ESF.
+                    <br />
+                    Em unidades com ESF, o cidadão deve estar vinculado a uma equipe com base no seu território de residência.
+                    <br />
+                    <strong>Ação necessária:</strong> Vincule o cidadão a uma equipe antes de adicionar à lista.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Informação UPA */}
+        {selectedCidadao && unidadeDetalhes?.tipo === 'UPA' && (
+          <Card className="border-red-200 bg-red-50">
+            <CardHeader>
+              <CardTitle className="text-red-900 flex items-center gap-2">
+                <Badge className="bg-red-600">UPA</Badge>
+                Protocolo de Manchester
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-red-800">
+                Após adicionar à lista, o paciente passará pela <strong>Classificação de Risco</strong> (Protocolo de Manchester).
+              </p>
+              <p className="text-sm text-red-700 mt-2">
+                O atendimento será priorizado com base na cor da classificação: 🔴 Vermelho, 🟠 Laranja, 🟡 Amarelo, 🟢 Verde, 🔵 Azul
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Dados do Atendimento */}
         <Card>
           <CardHeader>
@@ -239,37 +381,59 @@ export default function AdicionarCidadaoListaPage() {
               </p>
             </div>
 
-            <div>
-              <Label htmlFor="profissional">Profissional *</Label>
-              {profissionais.length === 0 ? (
-                <div className="flex items-center gap-2 p-3 border rounded-md bg-amber-50 border-amber-200">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <span className="text-sm text-amber-700">
-                    Nenhum profissional vinculado a esta unidade
-                  </span>
+            {/* Seleção de Profissional - Apenas em modo TRADICIONAL */}
+            {unidadeDetalhes?.fluxoAtendimento !== 'ESF' && (
+              <div>
+                <Label htmlFor="profissional">
+                  Profissional *
+                  {unidadeDetalhes?.tipo === 'UPA' && (
+                    <Badge className="ml-2 bg-red-100 text-red-800">UPA - Individual</Badge>
+                  )}
+                </Label>
+                {profissionais.length === 0 ? (
+                  <div className="flex items-center gap-2 p-3 border rounded-md bg-amber-50 border-amber-200">
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                    <span className="text-sm text-amber-700">
+                      Nenhum profissional vinculado a esta unidade
+                    </span>
+                  </div>
+                ) : (
+                  <Select
+                    value={formData.profissionalId}
+                    onValueChange={(value) => handleChange('profissionalId', value)}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o profissional" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {profissionais.map((prof) => (
+                        <SelectItem key={prof.id} value={prof.id}>
+                          {prof.nome} - {prof.categoria}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Profissional que irá atender o cidadão
+                </p>
+              </div>
+            )}
+
+            {/* Em modo ESF, mostrar informação */}
+            {unidadeDetalhes?.fluxoAtendimento === 'ESF' && selectedCidadao?.equipeId && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge className="bg-green-600">Atendimento por Equipe</Badge>
                 </div>
-              ) : (
-                <Select
-                  value={formData.profissionalId}
-                  onValueChange={(value) => handleChange('profissionalId', value)}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o profissional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {profissionais.map((prof) => (
-                      <SelectItem key={prof.id} value={prof.id}>
-                        {prof.nome} - {prof.categoria}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                Profissional que irá atender o cidadão
-              </p>
-            </div>
+                <p className="text-sm text-green-800">
+                  O cidadão será atendido pela <strong>equipe ESF vinculada</strong>.
+                  <br />
+                  O profissional específico (enfermeiro ou médico) será definido durante o acolhimento.
+                </p>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="motivoChegada">Motivo da Busca *</Label>

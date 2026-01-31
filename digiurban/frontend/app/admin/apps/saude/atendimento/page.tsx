@@ -136,19 +136,43 @@ export default function ListaAtendimentosPage() {
   };
 
   const getStatusConfig = (status: string, prioridade: string) => {
-    // Cores baseadas no PEC e-SUS
+    // Cores baseadas no PEC e-SUS com novos status SUS
     const configs: Record<string, { cor: string; label: string; icon: any }> = {
+      // Status iniciais
       AGUARDANDO: { cor: 'bg-yellow-100 text-yellow-800 border-yellow-300', label: 'Aguardando', icon: Clock },
+
+      // UPA - Classificação de Risco
+      EM_CLASSIFICACAO_RISCO: { cor: 'bg-red-50 text-red-800 border-red-300', label: 'Em Classificação Risco', icon: AlertCircle },
+      AGUARDANDO_ATENDIMENTO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Aguardando Atendimento', icon: Clock },
+
+      // UBS - Acolhimento
+      EM_ACOLHIMENTO: { cor: 'bg-green-50 text-green-800 border-green-300', label: 'Em Acolhimento', icon: Activity },
+      RESOLVIDO_ACOLHIMENTO: { cor: 'bg-teal-100 text-teal-800 border-teal-300', label: 'Resolvido no Acolhimento', icon: CheckCircle },
+
+      // Fluxo comum (depreciados mas mantidos para compatibilidade)
       EM_ESCUTA_INICIAL: { cor: 'bg-green-100 text-green-800 border-green-300', label: 'Em Escuta Inicial', icon: Activity },
       EM_TRIAGEM: { cor: 'bg-green-100 text-green-800 border-green-300', label: 'Em Triagem', icon: Stethoscope },
       AGUARDANDO_MEDICO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Aguardando Médico', icon: Clock },
-      EM_CONSULTA: { cor: 'bg-green-100 text-green-800 border-green-300', label: 'Em Consulta', icon: Stethoscope },
+
+      // Atendimento
+      EM_CONSULTA: { cor: 'bg-purple-100 text-purple-800 border-purple-300', label: 'Em Consulta', icon: Stethoscope },
+      EM_PROCEDIMENTO: { cor: 'bg-indigo-100 text-indigo-800 border-indigo-300', label: 'Em Procedimento', icon: Activity },
+      EM_VACINACAO: { cor: 'bg-pink-100 text-pink-800 border-pink-300', label: 'Em Vacinação', icon: Activity },
+
+      // Finalizações
+      FINALIZADO: { cor: 'bg-gray-100 text-gray-800 border-gray-300', label: 'Finalizado', icon: CheckCircle },
+      ENCAMINHADO_EXTERNO: { cor: 'bg-orange-100 text-orange-800 border-orange-300', label: 'Encaminhado Externo', icon: AlertCircle },
+      INTERNADO: { cor: 'bg-red-100 text-red-800 border-red-300', label: 'Internado', icon: AlertCircle },
+      NAO_AGUARDOU: { cor: 'bg-gray-200 text-gray-700 border-gray-400', label: 'Não Aguardou', icon: Clock },
+      RETORNOU: { cor: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Retornou', icon: RefreshCw },
+      TRANSFERIDO: { cor: 'bg-cyan-100 text-cyan-800 border-cyan-300', label: 'Transferido', icon: Activity },
+
+      // Outros
       CHAMADO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Chamado', icon: Activity },
       CONSULTA_CONCLUIDA: { cor: 'bg-indigo-100 text-indigo-800 border-indigo-300', label: 'Consulta Concluída', icon: CheckCircle },
-      FINALIZADO: { cor: 'bg-gray-100 text-gray-800 border-gray-300', label: 'Finalizado', icon: CheckCircle },
     };
 
-    // Sobrescrever cor se for urgência/emergência
+    // Sobrescrever cor se for urgência/emergência (Protocolo de Manchester)
     if (['EMERGENCIA', 'MUITO_URGENTE'].includes(prioridade)) {
       return { cor: 'bg-red-100 text-red-800 border-red-300', label: configs[status]?.label || status, icon: AlertCircle };
     }
@@ -187,6 +211,12 @@ export default function ListaAtendimentosPage() {
 
   const handleAcao = (atendimento: AtendimentoNaLista, acao: string) => {
     switch (acao) {
+      case 'classificacao-risco':
+        router.push(`/admin/apps/saude/atendimento/${atendimento.id}/classificacao-risco`);
+        break;
+      case 'acolhimento':
+        router.push(`/admin/apps/saude/atendimento/${atendimento.id}/acolhimento`);
+        break;
       case 'escuta-inicial':
         router.push(`/admin/apps/saude/atendimento/escuta-inicial/${atendimento.id}`);
         break;
@@ -204,10 +234,30 @@ export default function ListaAtendimentosPage() {
 
   const getAcoesDisponiveis = (status: string) => {
     const acoes: Record<string, { label: string; acao: string; variante: any }[]> = {
+      // UPA - Iniciar Classificação de Risco
       AGUARDANDO: [
-        { label: 'Escuta Inicial', acao: 'escuta-inicial', variante: 'default' },
+        { label: 'Classificação Risco (UPA)', acao: 'classificacao-risco', variante: 'default' },
+        { label: 'Acolhimento (UBS)', acao: 'acolhimento', variante: 'default' },
         { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
+
+      // Em classificação ou acolhimento
+      EM_CLASSIFICACAO_RISCO: [
+        { label: 'Continuar Classificação', acao: 'classificacao-risco', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
+      ],
+      EM_ACOLHIMENTO: [
+        { label: 'Continuar Acolhimento', acao: 'acolhimento', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
+      ],
+
+      // Aguardando atendimento (após triagem/acolhimento)
+      AGUARDANDO_ATENDIMENTO: [
+        { label: 'Iniciar Consulta', acao: 'consulta', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
+      ],
+
+      // Depreciados mas mantidos
       EM_ESCUTA_INICIAL: [
         { label: 'Continuar Escuta', acao: 'escuta-inicial', variante: 'default' },
         { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
