@@ -2601,8 +2601,9 @@ model EspecialidadeMedica {
   updatedAt           DateTime @updatedAt
 
   // ✅ NOVO: Relacionamentos
-  agendas         AgendaMedica[]
-  solicitacoesTFD SolicitacaoTFD[]
+  agendas                    AgendaMedica[]
+  solicitacoesTFD            SolicitacaoTFD[]
+  vinculosProfissionais      ProfissionalEspecialidade[]
 
   @@index([area, isActive])
   @@index([isActive])
@@ -2864,6 +2865,9 @@ model ProfissionalSaude {
   // ✅ NOVO: Vínculo com múltiplas unidades
   vinculosUnidades ProfissionalUnidade[]
 
+  // ✅ NOVO: Vínculo com múltiplas especialidades (N:N)
+  vinculosEspecialidades ProfissionalEspecialidade[]
+
   @@index([categoria, isActive])
   @@index([especialidade, isActive])
   @@index([isActive])
@@ -2944,6 +2948,30 @@ enum TipoAuditoriaVinculo {
   TRANSFERENCIA
   ALTERACAO_CARGA_HORARIA
   ALTERACAO_PERIODO
+}
+
+// ✅ NOVO: Relacionamento N:N entre Profissional e Especialidade
+model ProfissionalEspecialidade {
+  id              String   @id @default(cuid())
+  profissionalId  String
+  especialidadeId String
+  isPrincipal     Boolean  @default(false) // Especialidade principal do profissional
+  dataInicio      DateTime @default(now())
+  dataFim         DateTime?
+  ativo           Boolean  @default(true)
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relacionamentos
+  profissional  ProfissionalSaude   @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+  especialidade EspecialidadeMedica @relation(fields: [especialidadeId], references: [id], onDelete: Cascade)
+
+  @@unique([profissionalId, especialidadeId])
+  @@index([profissionalId, ativo])
+  @@index([especialidadeId, ativo])
+  @@index([isPrincipal, ativo])
+  @@map("profissional_especialidade")
 }
 
 // Professores e Instrutores

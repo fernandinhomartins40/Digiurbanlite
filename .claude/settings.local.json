@@ -125,7 +125,10 @@
       "Bash(npm run lint:*)",
       "Bash(cut:*)",
       "Bash(for file in *.ts)",
-      "Bash(do echo \"$file\")"
+      "Bash(do echo \"$file\")",
+      "Bash(for dir in profissionais especialidades salas turnos agendas)",
+      "Bash(do echo \"=== $dir/page.tsx ===\")",
+      "Bash([ -f \"digiurban/frontend/app/admin/apps/saude/cadastros/$dir/page.tsx\" ])"
     ],
     "deny": [],
     "ask": []

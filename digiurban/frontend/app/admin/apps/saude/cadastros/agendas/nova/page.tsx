@@ -33,6 +33,18 @@ interface Especialidade {
   nome: string;
 }
 
+interface VinculoInfo {
+  temVinculo: boolean;
+  cargaHoraria?: number;
+  unidadeNome?: string;
+}
+
+interface EspecialidadeProfissional {
+  id: string;
+  nome: string;
+  isPrincipal: boolean;
+}
+
 export default function NovaAgenda() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -60,12 +72,16 @@ export default function NovaAgenda() {
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [salas, setSalas] = useState<Sala[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidade[]>([]);
+  const [especialidadesProfissional, setEspecialidadesProfissional] = useState<EspecialidadeProfissional[]>([]);
 
   // Estados de carregamento
   const [loadingUnidades, setLoadingUnidades] = useState(true);
   const [loadingProfissionais, setLoadingProfissionais] = useState(false);
   const [loadingSalas, setLoadingSalas] = useState(false);
   const [loadingEspecialidades, setLoadingEspecialidades] = useState(true);
+
+  // Estados de validação
+  const [vinculoInfo, setVinculoInfo] = useState<VinculoInfo>({ temVinculo: false });
 
   // Carregar unidades ao montar
   useEffect(() => {
@@ -84,6 +100,18 @@ export default function NovaAgenda() {
       setFormData(prev => ({ ...prev, profissionalId: '', salaId: '' }));
     }
   }, [formData.unidadeId]);
+
+  // Validar vínculo e carregar especialidades quando profissional mudar
+  useEffect(() => {
+    if (formData.profissionalId && formData.unidadeId) {
+      validateVinculo(formData.profissionalId, formData.unidadeId);
+      fetchEspecialidadesProfissional(formData.profissionalId);
+    } else {
+      setVinculoInfo({ temVinculo: false });
+      setEspecialidadesProfissional([]);
+      setFormData(prev => ({ ...prev, especialidadeId: '' }));
+    }
+  }, [formData.profissionalId, formData.unidadeId]);
 
   const fetchUnidades = async () => {
     try {
@@ -155,10 +183,68 @@ export default function NovaAgenda() {
     }
   };
 
+  const validateVinculo = async (profissionalId: string, unidadeId: string) => {
+    try {
+      const response = await fetch(
+        `/api/apps/saude/cadastros/vinculos?profissionalId=${profissionalId}&unidadeId=${unidadeId}`,
+        { credentials: 'include' }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const vinculoAtivo = data.find((v: any) => v.ativo && v.unidade.id === unidadeId);
+
+        if (vinculoAtivo) {
+          setVinculoInfo({
+            temVinculo: true,
+            cargaHoraria: vinculoAtivo.cargaHoraria,
+            unidadeNome: vinculoAtivo.unidade.nome,
+          });
+        } else {
+          setVinculoInfo({ temVinculo: false });
+          setError('ATENÇÃO: Profissional não possui vínculo ativo com esta unidade!');
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao validar vínculo:', error);
+    }
+  };
+
+  const fetchEspecialidadesProfissional = async (profissionalId: string) => {
+    try {
+      const response = await fetch(
+        `/api/apps/saude/cadastros/profissionais/${profissionalId}/especialidades`,
+        { credentials: 'include' }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const especialidadesAtivas = data
+          .filter((v: any) => v.ativo)
+          .map((v: any) => ({
+            id: v.especialidade.id,
+            nome: v.especialidade.nome,
+            isPrincipal: v.isPrincipal,
+          }));
+
+        setEspecialidadesProfissional(especialidadesAtivas);
+
+        // Auto-selecionar especialidade principal se existir
+        const principal = especialidadesAtivas.find((e: any) => e.isPrincipal);
+        if (principal && !formData.especialidadeId) {
+          setFormData(prev => ({ ...prev, especialidadeId: principal.id }));
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao buscar especialidades do profissional:', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
+    // Validações básicas
     if (!formData.nome || !formData.dataInicio) {
       setError('Nome e data de início são obrigatórios');
       return;
@@ -171,6 +257,27 @@ export default function NovaAgenda() {
 
     if (!formData.profissionalId) {
       setError('Selecione um profissional');
+      return;
+    }
+
+    // ✅ VALIDAÇÃO CRÍTICA: Verificar vínculo profissional-unidade
+    if (!vinculoInfo.temVinculo) {
+      setError(
+        'ERRO: O profissional selecionado não possui vínculo ativo com a unidade. ' +
+        'Acesse "Vínculos Profissional-Unidade" para criar o vínculo antes de criar a agenda.'
+      );
+      return;
+    }
+
+    // Validação de datas
+    if (formData.dataFim && formData.dataInicio > formData.dataFim) {
+      setError('Data de término não pode ser anterior à data de início');
+      return;
+    }
+
+    // Validação de horários
+    if (formData.horaFim && formData.horaInicio >= formData.horaFim) {
+      setError('Horário de término deve ser posterior ao horário de início');
       return;
     }
 
@@ -260,7 +367,7 @@ export default function NovaAgenda() {
                     onValueChange={(value) => setFormData({ ...formData, profissionalId: value })}
                     disabled={!formData.unidadeId || loadingProfissionais}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={!vinculoInfo.temVinculo && formData.profissionalId ? 'border-red-500' : ''}>
                       <SelectValue
                         placeholder={
                           !formData.unidadeId
@@ -283,6 +390,16 @@ export default function NovaAgenda() {
                     <p className="text-sm text-amber-600 mt-1">
                       Nenhum profissional vinculado a esta unidade
                     </p>
+                  )}
+                  {vinculoInfo.temVinculo && formData.profissionalId && (
+                    <div className="mt-1 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                      ✓ Vínculo ativo confirmado - {vinculoInfo.cargaHoraria}h/semana
+                    </div>
+                  )}
+                  {!vinculoInfo.temVinculo && formData.profissionalId && formData.unidadeId && (
+                    <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                      ✗ Profissional não possui vínculo ativo com esta unidade
+                    </div>
                   )}
                 </div>
 
@@ -315,25 +432,43 @@ export default function NovaAgenda() {
                   </Select>
                 </div>
 
-                {/* Especialidade */}
-                <div>
+                {/* Especialidade - FILTRADA POR PROFISSIONAL */}
+                <div className="col-span-2">
                   <Label htmlFor="especialidade">Especialidade</Label>
                   <Select
                     value={formData.especialidadeId}
                     onValueChange={(value) => setFormData({ ...formData, especialidadeId: value })}
-                    disabled={loadingEspecialidades}
+                    disabled={!formData.profissionalId || especialidadesProfissional.length === 0}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione (opcional)" />
+                      <SelectValue
+                        placeholder={
+                          !formData.profissionalId
+                            ? 'Selecione um profissional primeiro'
+                            : especialidadesProfissional.length === 0
+                            ? 'Profissional sem especialidades cadastradas'
+                            : 'Selecione a especialidade'
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {especialidades.map((esp) => (
+                      {especialidadesProfissional.map((esp) => (
                         <SelectItem key={esp.id} value={esp.id}>
-                          {esp.nome}
+                          {esp.nome} {esp.isPrincipal && '⭐ (Principal)'}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {especialidadesProfissional.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Mostrando apenas especialidades vinculadas ao profissional
+                    </p>
+                  )}
+                  {formData.profissionalId && especialidadesProfissional.length === 0 && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Profissional não possui especialidades cadastradas
+                    </p>
+                  )}
                 </div>
 
                 <div className="col-span-2">
@@ -432,11 +567,36 @@ export default function NovaAgenda() {
                 <Button type="button" variant="outline" onClick={() => router.back()}>
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  disabled={loading || (formData.profissionalId && !vinculoInfo.temVinculo)}
+                  className={
+                    formData.profissionalId && !vinculoInfo.temVinculo
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                  }
+                >
                   <Save className="h-4 w-4 mr-2" />
                   {loading ? 'Salvando...' : 'Salvar Agenda'}
                 </Button>
               </div>
+
+              {formData.profissionalId && !vinculoInfo.temVinculo && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Para criar uma agenda, o profissional deve estar vinculado à unidade.
+                    <br />
+                    <a
+                      href="/admin/apps/saude/cadastros/vinculos"
+                      className="underline font-semibold hover:text-red-800"
+                      target="_blank"
+                    >
+                      Clique aqui para gerenciar vínculos
+                    </a>
+                  </AlertDescription>
+                </Alert>
+              )}
             </form>
           </CardContent>
         </Card>

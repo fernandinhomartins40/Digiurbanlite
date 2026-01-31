@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   Plus,
   Activity,
+  Link2,
 } from 'lucide-react';
 
 interface Stats {
@@ -110,6 +111,15 @@ export default function CadastrosDashboard() {
       href: '/admin/apps/saude/cadastros/agendas',
       stats: stats?.agendas,
       badge: `${stats?.agendas?.ativas || 0} ativas`,
+    },
+    {
+      title: 'Vínculos Profissional-Unidade',
+      description: 'Gerenciar vínculos entre profissionais e unidades',
+      icon: Link2,
+      color: 'bg-cyan-500',
+      href: '/admin/apps/saude/cadastros/vinculos',
+      stats: null,
+      badge: 'Novo',
     },
     {
       title: 'Configurações',

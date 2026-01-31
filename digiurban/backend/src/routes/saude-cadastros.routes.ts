@@ -1607,4 +1607,225 @@ router.get('/vinculos/auditoria/:vinculoId', async (req: Request, res: Response)
   }
 });
 
+// ============================================================
+// ROTAS DE ESPECIALIDADES POR PROFISSIONAL
+// ============================================================
+
+/**
+ * GET /api/apps/saude/cadastros/profissionais/:id/especialidades
+ * Listar especialidades de um profissional
+ */
+router.get('/profissionais/:id/especialidades', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const vinculos = await prisma.profissionalEspecialidade.findMany({
+      where: { profissionalId: id },
+      include: {
+        especialidade: {
+          select: {
+            id: true,
+            nome: true,
+            descricao: true,
+          },
+        },
+      },
+      orderBy: [
+        { isPrincipal: 'desc' },
+        { ativo: 'desc' },
+        { dataInicio: 'desc' },
+      ],
+    });
+
+    res.json(vinculos);
+  } catch (error: any) {
+    console.error('Erro ao buscar especialidades do profissional:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/apps/saude/cadastros/profissionais/:id/especialidades
+ * Adicionar especialidade a um profissional
+ */
+router.post('/profissionais/:id/especialidades', async (req: Request, res: Response) => {
+  try {
+    const { id: profissionalId } = req.params;
+    const { especialidadeId, isPrincipal, dataInicio, observacoes } = req.body;
+
+    if (!especialidadeId) {
+      return res.status(400).json({ error: 'especialidadeId é obrigatório' });
+    }
+
+    // Verificar se profissional existe
+    const profissional = await prisma.profissionalSaude.findUnique({
+      where: { id: profissionalId },
+    });
+
+    if (!profissional) {
+      return res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+
+    // Verificar se especialidade existe
+    const especialidade = await prisma.especialidadeMedica.findUnique({
+      where: { id: especialidadeId },
+    });
+
+    if (!especialidade) {
+      return res.status(404).json({ error: 'Especialidade não encontrada' });
+    }
+
+    // Verificar se já existe vínculo ativo
+    const vinculoExistente = await prisma.profissionalEspecialidade.findUnique({
+      where: {
+        profissionalId_especialidadeId: {
+          profissionalId,
+          especialidadeId,
+        },
+      },
+    });
+
+    if (vinculoExistente && vinculoExistente.ativo) {
+      return res.status(400).json({
+        error: 'Já existe um vínculo ativo com esta especialidade',
+      });
+    }
+
+    // Se marcado como principal, desmarcar outras
+    if (isPrincipal) {
+      await prisma.profissionalEspecialidade.updateMany({
+        where: {
+          profissionalId,
+          ativo: true,
+          isPrincipal: true,
+        },
+        data: {
+          isPrincipal: false,
+        },
+      });
+    }
+
+    // Criar ou reativar vínculo
+    const vinculo = vinculoExistente
+      ? await prisma.profissionalEspecialidade.update({
+          where: { id: vinculoExistente.id },
+          data: {
+            ativo: true,
+            isPrincipal: isPrincipal || false,
+            dataInicio: dataInicio ? new Date(dataInicio) : new Date(),
+            dataFim: null,
+            observacoes,
+          },
+          include: {
+            especialidade: true,
+          },
+        })
+      : await prisma.profissionalEspecialidade.create({
+          data: {
+            profissionalId,
+            especialidadeId,
+            isPrincipal: isPrincipal || false,
+            dataInicio: dataInicio ? new Date(dataInicio) : new Date(),
+            observacoes,
+          },
+          include: {
+            especialidade: true,
+          },
+        });
+
+    res.status(201).json(vinculo);
+  } catch (error: any) {
+    console.error('Erro ao adicionar especialidade:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PATCH /api/apps/saude/cadastros/profissionais/:profissionalId/especialidades/:id
+ * Atualizar especialidade (ex: marcar como principal)
+ */
+router.patch(
+  '/profissionais/:profissionalId/especialidades/:id',
+  async (req: Request, res: Response) => {
+    try {
+      const { profissionalId, id } = req.params;
+      const { isPrincipal, observacoes } = req.body;
+
+      const vinculo = await prisma.profissionalEspecialidade.findUnique({
+        where: { id },
+      });
+
+      if (!vinculo || vinculo.profissionalId !== profissionalId) {
+        return res.status(404).json({ error: 'Vínculo não encontrado' });
+      }
+
+      // Se marcado como principal, desmarcar outras
+      if (isPrincipal === true) {
+        await prisma.profissionalEspecialidade.updateMany({
+          where: {
+            profissionalId,
+            ativo: true,
+            isPrincipal: true,
+            id: { not: id },
+          },
+          data: {
+            isPrincipal: false,
+          },
+        });
+      }
+
+      const vinculoAtualizado = await prisma.profissionalEspecialidade.update({
+        where: { id },
+        data: {
+          isPrincipal: isPrincipal !== undefined ? isPrincipal : vinculo.isPrincipal,
+          observacoes: observacoes !== undefined ? observacoes : vinculo.observacoes,
+        },
+        include: {
+          especialidade: true,
+        },
+      });
+
+      res.json(vinculoAtualizado);
+    } catch (error: any) {
+      console.error('Erro ao atualizar especialidade:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+/**
+ * DELETE /api/apps/saude/cadastros/profissionais/:profissionalId/especialidades/:id
+ * Remover especialidade de um profissional
+ */
+router.delete(
+  '/profissionais/:profissionalId/especialidades/:id',
+  async (req: Request, res: Response) => {
+    try {
+      const { profissionalId, id } = req.params;
+
+      const vinculo = await prisma.profissionalEspecialidade.findUnique({
+        where: { id },
+      });
+
+      if (!vinculo || vinculo.profissionalId !== profissionalId) {
+        return res.status(404).json({ error: 'Vínculo não encontrado' });
+      }
+
+      // Soft delete
+      await prisma.profissionalEspecialidade.update({
+        where: { id },
+        data: {
+          ativo: false,
+          dataFim: new Date(),
+        },
+      });
+
+      res.json({ message: 'Especialidade removida com sucesso' });
+    } catch (error: any) {
+      console.error('Erro ao remover especialidade:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
 export default router;

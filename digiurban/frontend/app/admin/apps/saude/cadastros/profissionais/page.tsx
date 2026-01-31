@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Plus, Edit, Trash2, ArrowLeft, Search, UserCog } from 'lucide-react';
+import { Plus, Edit, Trash2, ArrowLeft, Search, UserCog, Link2, Stethoscope } from 'lucide-react';
 
 export default function ProfissionaisListagem() {
   const router = useRouter();
@@ -140,15 +140,32 @@ export default function ProfissionaisListagem() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => router.push(`/admin/apps/saude/cadastros/profissionais/${item.id}`)}
+                            title="Editar"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id)}>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => router.push(`/admin/apps/saude/cadastros/profissionais/${item.id}/vinculos`)}
+                            title="Vínculos com Unidades"
+                          >
+                            <Link2 className="h-4 w-4 text-blue-600" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => router.push(`/admin/apps/saude/cadastros/profissionais/${item.id}/especialidades`)}
+                            title="Especialidades"
+                          >
+                            <Stethoscope className="h-4 w-4 text-purple-600" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleDelete(item.id)} title="Desativar">
                             <Trash2 className="h-4 w-4 text-red-600" />
                           </Button>
                         </div>
