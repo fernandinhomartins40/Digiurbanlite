@@ -1828,4 +1828,796 @@ router.delete(
   }
 );
 
+// ============================================================
+// ROTAS DE EQUIPES ESF
+// ============================================================
+
+/**
+ * GET /api/apps/saude/cadastros/equipes
+ * Listar todas as equipes ESF
+ */
+router.get('/equipes', async (req: Request, res: Response) => {
+  try {
+    const { unidadeId, ativo } = req.query;
+
+    const where: any = {};
+    if (unidadeId) where.unidadeId = unidadeId as string;
+    if (ativo !== undefined) where.ativo = ativo === 'true';
+
+    const equipes = await prisma.equipeSaude.findMany({
+      where,
+      include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+          },
+        },
+        profissionais: {
+          where: { ativo: true },
+          include: {
+            profissional: {
+              select: {
+                id: true,
+                nome: true,
+                categoria: true,
+              },
+            },
+          },
+        },
+        microareas: {
+          where: { ativo: true },
+          include: {
+            _count: {
+              select: {
+                citizens: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            citizens: true,
+            profissionais: true,
+            microareas: true,
+          },
+        },
+      },
+      orderBy: [{ ativo: 'desc' }, { nome: 'asc' }],
+    });
+
+    res.json(equipes);
+  } catch (error: any) {
+    console.error('Erro ao buscar equipes:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/equipes/:id
+ * Buscar equipe específica
+ */
+router.get('/equipes/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const equipe = await prisma.equipeSaude.findUnique({
+      where: { id },
+      include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+            fluxoAtendimento: true,
+          },
+        },
+        profissionais: {
+          include: {
+            profissional: {
+              select: {
+                id: true,
+                nome: true,
+                categoria: true,
+                cbo: true,
+              },
+            },
+          },
+          orderBy: { ativo: 'desc' },
+        },
+        microareas: {
+          include: {
+            acs: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+            _count: {
+              select: {
+                citizens: true,
+              },
+            },
+          },
+          orderBy: { numero: 'asc' },
+        },
+        _count: {
+          select: {
+            citizens: true,
+            profissionais: true,
+            microareas: true,
+          },
+        },
+      },
+    });
+
+    if (!equipe) {
+      return res.status(404).json({ error: 'Equipe não encontrada' });
+    }
+
+    res.json(equipe);
+  } catch (error: any) {
+    console.error('Erro ao buscar equipe:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/apps/saude/cadastros/equipes
+ * Criar nova equipe ESF
+ */
+router.post('/equipes', async (req: Request, res: Response) => {
+  try {
+    const { ine, nome, tipo, unidadeId, createdBy } = req.body;
+
+    // Validações
+    if (!ine || !nome || !tipo || !unidadeId) {
+      return res.status(400).json({
+        error: 'Campos obrigatórios: ine, nome, tipo, unidadeId',
+      });
+    }
+
+    // Verificar se INE já existe
+    const ineExistente = await prisma.equipeSaude.findUnique({
+      where: { ine },
+    });
+
+    if (ineExistente) {
+      return res.status(400).json({
+        error: 'Já existe uma equipe com este INE',
+      });
+    }
+
+    // Verificar se unidade existe
+    const unidade = await prisma.unidadeSaude.findUnique({
+      where: { id: unidadeId },
+    });
+
+    if (!unidade) {
+      return res.status(404).json({ error: 'Unidade de saúde não encontrada' });
+    }
+
+    const equipe = await prisma.equipeSaude.create({
+      data: {
+        ine,
+        nome,
+        tipo,
+        unidadeId,
+        createdBy,
+        ativo: true,
+      },
+      include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json(equipe);
+  } catch (error: any) {
+    console.error('Erro ao criar equipe:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /api/apps/saude/cadastros/equipes/:id
+ * Atualizar equipe ESF
+ */
+router.put('/equipes/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { ine, nome, tipo, ativo } = req.body;
+
+    const equipeExistente = await prisma.equipeSaude.findUnique({
+      where: { id },
+    });
+
+    if (!equipeExistente) {
+      return res.status(404).json({ error: 'Equipe não encontrada' });
+    }
+
+    // Se está mudando o INE, verificar se já não existe
+    if (ine && ine !== equipeExistente.ine) {
+      const ineExistente = await prisma.equipeSaude.findUnique({
+        where: { ine },
+      });
+
+      if (ineExistente) {
+        return res.status(400).json({
+          error: 'Já existe uma equipe com este INE',
+        });
+      }
+    }
+
+    const equipe = await prisma.equipeSaude.update({
+      where: { id },
+      data: {
+        ...(ine && { ine }),
+        ...(nome && { nome }),
+        ...(tipo && { tipo }),
+        ...(ativo !== undefined && { ativo }),
+      },
+      include: {
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+          },
+        },
+        _count: {
+          select: {
+            profissionais: true,
+            microareas: true,
+            citizens: true,
+          },
+        },
+      },
+    });
+
+    res.json(equipe);
+  } catch (error: any) {
+    console.error('Erro ao atualizar equipe:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/apps/saude/cadastros/equipes/:id
+ * Desativar equipe ESF (soft delete)
+ */
+router.delete('/equipes/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const equipe = await prisma.equipeSaude.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            citizens: true,
+            profissionais: true,
+          },
+        },
+      },
+    });
+
+    if (!equipe) {
+      return res.status(404).json({ error: 'Equipe não encontrada' });
+    }
+
+    // Verificar se tem cidadãos vinculados
+    if (equipe._count.citizens > 0) {
+      return res.status(400).json({
+        error: `Não é possível desativar equipe com ${equipe._count.citizens} cidadão(s) vinculado(s)`,
+      });
+    }
+
+    // Soft delete
+    await prisma.equipeSaude.update({
+      where: { id },
+      data: { ativo: false },
+    });
+
+    res.json({ message: 'Equipe desativada com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao desativar equipe:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/equipes/:id/profissionais
+ * Listar profissionais da equipe
+ */
+router.get('/equipes/:id/profissionais', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const profissionais = await prisma.profissionalEquipe.findMany({
+      where: { equipeId: id },
+      include: {
+        profissional: {
+          select: {
+            id: true,
+            nome: true,
+            categoria: true,
+            cbo: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: [{ ativo: 'desc' }, { dataInicio: 'desc' }],
+    });
+
+    res.json(profissionais);
+  } catch (error: any) {
+    console.error('Erro ao buscar profissionais da equipe:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/apps/saude/cadastros/equipes/:id/profissionais
+ * Adicionar profissional à equipe
+ */
+router.post('/equipes/:id/profissionais', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { profissionalId, cbo, funcao } = req.body;
+
+    if (!profissionalId || !cbo) {
+      return res.status(400).json({
+        error: 'Campos obrigatórios: profissionalId, cbo',
+      });
+    }
+
+    // Verificar se equipe existe
+    const equipe = await prisma.equipeSaude.findUnique({
+      where: { id },
+    });
+
+    if (!equipe) {
+      return res.status(404).json({ error: 'Equipe não encontrada' });
+    }
+
+    // Verificar se profissional existe
+    const profissional = await prisma.user.findUnique({
+      where: { id: profissionalId },
+    });
+
+    if (!profissional) {
+      return res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+
+    // Verificar se já não está vinculado ativamente
+    const vinculoExistente = await prisma.profissionalEquipe.findFirst({
+      where: {
+        profissionalId,
+        equipeId: id,
+        ativo: true,
+      },
+    });
+
+    if (vinculoExistente) {
+      return res.status(400).json({
+        error: 'Profissional já está vinculado ativamente a esta equipe',
+      });
+    }
+
+    const vinculo = await prisma.profissionalEquipe.create({
+      data: {
+        profissionalId,
+        equipeId: id,
+        cbo,
+        funcao,
+        ativo: true,
+      },
+      include: {
+        profissional: {
+          select: {
+            id: true,
+            nome: true,
+            categoria: true,
+            cbo: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json(vinculo);
+  } catch (error: any) {
+    console.error('Erro ao adicionar profissional à equipe:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/apps/saude/cadastros/equipes/:equipeId/profissionais/:vinculoId
+ * Remover profissional da equipe
+ */
+router.delete(
+  '/equipes/:equipeId/profissionais/:vinculoId',
+  async (req: Request, res: Response) => {
+    try {
+      const { vinculoId } = req.params;
+
+      const vinculo = await prisma.profissionalEquipe.findUnique({
+        where: { id: vinculoId },
+      });
+
+      if (!vinculo) {
+        return res.status(404).json({ error: 'Vínculo não encontrado' });
+      }
+
+      // Soft delete
+      await prisma.profissionalEquipe.update({
+        where: { id: vinculoId },
+        data: {
+          ativo: false,
+          dataFim: new Date(),
+        },
+      });
+
+      res.json({ message: 'Profissional removido da equipe com sucesso' });
+    } catch (error: any) {
+      console.error('Erro ao remover profissional da equipe:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// ============================================================
+// ROTAS DE MICROÁREAS
+// ============================================================
+
+/**
+ * GET /api/apps/saude/cadastros/microareas
+ * Listar todas as microáreas
+ */
+router.get('/microareas', async (req: Request, res: Response) => {
+  try {
+    const { equipeId, ativo } = req.query;
+
+    const where: any = {};
+    if (equipeId) where.equipeId = equipeId as string;
+    if (ativo !== undefined) where.ativo = ativo === 'true';
+
+    const microareas = await prisma.microarea.findMany({
+      where,
+      include: {
+        equipe: {
+          select: {
+            id: true,
+            nome: true,
+            ine: true,
+            tipo: true,
+          },
+        },
+        acs: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
+        },
+        _count: {
+          select: {
+            citizens: true,
+          },
+        },
+      },
+      orderBy: [{ equipeId: 'asc' }, { numero: 'asc' }],
+    });
+
+    res.json(microareas);
+  } catch (error: any) {
+    console.error('Erro ao buscar microáreas:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/equipes/:equipeId/microareas
+ * Listar microáreas de uma equipe específica
+ */
+router.get('/equipes/:equipeId/microareas', async (req: Request, res: Response) => {
+  try {
+    const { equipeId } = req.params;
+
+    const microareas = await prisma.microarea.findMany({
+      where: { equipeId },
+      include: {
+        acs: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
+        },
+        _count: {
+          select: {
+            citizens: true,
+          },
+        },
+      },
+      orderBy: { numero: 'asc' },
+    });
+
+    res.json(microareas);
+  } catch (error: any) {
+    console.error('Erro ao buscar microáreas da equipe:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/microareas/:id
+ * Buscar microárea específica
+ */
+router.get('/microareas/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const microarea = await prisma.microarea.findUnique({
+      where: { id },
+      include: {
+        equipe: {
+          select: {
+            id: true,
+            nome: true,
+            ine: true,
+            tipo: true,
+            unidade: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+          },
+        },
+        acs: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            categoria: true,
+          },
+        },
+        citizens: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            phone: true,
+          },
+          where: { isActive: true },
+          orderBy: { name: 'asc' },
+        },
+      },
+    });
+
+    if (!microarea) {
+      return res.status(404).json({ error: 'Microárea não encontrada' });
+    }
+
+    res.json(microarea);
+  } catch (error: any) {
+    console.error('Erro ao buscar microárea:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/apps/saude/cadastros/equipes/:equipeId/microareas
+ * Criar nova microárea para uma equipe
+ */
+router.post('/equipes/:equipeId/microareas', async (req: Request, res: Response) => {
+  try {
+    const { equipeId } = req.params;
+    const { numero, descricao, acsId } = req.body;
+
+    if (!numero) {
+      return res.status(400).json({
+        error: 'Campo obrigatório: numero',
+      });
+    }
+
+    // Verificar se equipe existe
+    const equipe = await prisma.equipeSaude.findUnique({
+      where: { id: equipeId },
+    });
+
+    if (!equipe) {
+      return res.status(404).json({ error: 'Equipe não encontrada' });
+    }
+
+    // Verificar se já existe microárea com este número na equipe
+    const microareaExistente = await prisma.microarea.findFirst({
+      where: {
+        equipeId,
+        numero,
+      },
+    });
+
+    if (microareaExistente) {
+      return res.status(400).json({
+        error: `Já existe uma microárea com o número ${numero} nesta equipe`,
+      });
+    }
+
+    // Se foi informado ACS, verificar se existe
+    if (acsId) {
+      const acs = await prisma.user.findUnique({
+        where: { id: acsId },
+      });
+
+      if (!acs) {
+        return res.status(404).json({ error: 'ACS não encontrado' });
+      }
+    }
+
+    const microarea = await prisma.microarea.create({
+      data: {
+        equipeId,
+        numero,
+        descricao,
+        acsId,
+        ativo: true,
+      },
+      include: {
+        equipe: {
+          select: {
+            id: true,
+            nome: true,
+            ine: true,
+          },
+        },
+        acs: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json(microarea);
+  } catch (error: any) {
+    console.error('Erro ao criar microárea:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /api/apps/saude/cadastros/microareas/:id
+ * Atualizar microárea
+ */
+router.put('/microareas/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { numero, descricao, acsId, ativo } = req.body;
+
+    const microareaExistente = await prisma.microarea.findUnique({
+      where: { id },
+    });
+
+    if (!microareaExistente) {
+      return res.status(404).json({ error: 'Microárea não encontrada' });
+    }
+
+    // Se está mudando o número, verificar se não existe outro com o mesmo na equipe
+    if (numero && numero !== microareaExistente.numero) {
+      const numeroExistente = await prisma.microarea.findFirst({
+        where: {
+          equipeId: microareaExistente.equipeId,
+          numero,
+          id: { not: id },
+        },
+      });
+
+      if (numeroExistente) {
+        return res.status(400).json({
+          error: `Já existe uma microárea com o número ${numero} nesta equipe`,
+        });
+      }
+    }
+
+    // Se está mudando o ACS, verificar se existe
+    if (acsId && acsId !== microareaExistente.acsId) {
+      const acs = await prisma.user.findUnique({
+        where: { id: acsId },
+      });
+
+      if (!acs) {
+        return res.status(404).json({ error: 'ACS não encontrado' });
+      }
+    }
+
+    const microarea = await prisma.microarea.update({
+      where: { id },
+      data: {
+        ...(numero && { numero }),
+        ...(descricao !== undefined && { descricao }),
+        ...(acsId !== undefined && { acsId }),
+        ...(ativo !== undefined && { ativo }),
+      },
+      include: {
+        equipe: {
+          select: {
+            id: true,
+            nome: true,
+            ine: true,
+          },
+        },
+        acs: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
+        _count: {
+          select: {
+            citizens: true,
+          },
+        },
+      },
+    });
+
+    res.json(microarea);
+  } catch (error: any) {
+    console.error('Erro ao atualizar microárea:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/apps/saude/cadastros/microareas/:id
+ * Desativar microárea (soft delete)
+ */
+router.delete('/microareas/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const microarea = await prisma.microarea.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: {
+            citizens: true,
+          },
+        },
+      },
+    });
+
+    if (!microarea) {
+      return res.status(404).json({ error: 'Microárea não encontrada' });
+    }
+
+    // Verificar se tem cidadãos vinculados
+    if (microarea._count.citizens > 0) {
+      return res.status(400).json({
+        error: `Não é possível desativar microárea com ${microarea._count.citizens} cidadão(s) vinculado(s)`,
+      });
+    }
+
+    // Soft delete
+    await prisma.microarea.update({
+      where: { id },
+      data: { ativo: false },
+    });
+
+    res.json({ message: 'Microárea desativada com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao desativar microárea:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

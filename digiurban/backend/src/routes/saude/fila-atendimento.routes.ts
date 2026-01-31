@@ -70,4 +70,56 @@ router.get('/estatisticas', async (req, res) => {
   }
 });
 
+// GET /api/saude/fila-atendimento/:id - Buscar fila específica
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const fila = await filaAtendimentoService.buscarPorId(id);
+    if (!fila) {
+      return res.status(404).json({ error: 'Registro não encontrado' });
+    }
+    res.json(fila);
+  } catch (error) {
+    console.error('Erro ao buscar fila:', error);
+    res.status(500).json({ error: 'Erro ao buscar registro' });
+  }
+});
+
+// POST /api/saude/fila-atendimento/:id/classificacao-risco - Classificação de Risco (UPA)
+router.post('/:id/classificacao-risco', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { classificacaoRisco, queixaPrincipal, sinaisVitais } = req.body;
+
+    const fila = await filaAtendimentoService.classificarRisco(id, {
+      classificacaoRisco,
+      queixaPrincipal,
+      sinaisVitais,
+    });
+
+    res.json(fila);
+  } catch (error: any) {
+    console.error('Erro ao classificar risco:', error);
+    res.status(500).json({ error: error.message || 'Erro ao classificar risco' });
+  }
+});
+
+// POST /api/saude/fila-atendimento/:id/acolhimento - Acolhimento (UBS)
+router.post('/:id/acolhimento', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { condutaAcolhimento, observacoes } = req.body;
+
+    const fila = await filaAtendimentoService.realizarAcolhimento(id, {
+      condutaAcolhimento,
+      observacoes,
+    });
+
+    res.json(fila);
+  } catch (error: any) {
+    console.error('Erro ao realizar acolhimento:', error);
+    res.status(500).json({ error: error.message || 'Erro ao realizar acolhimento' });
+  }
+});
+
 export default router;

@@ -2331,6 +2331,7 @@ model UnidadeSaude {
   id                String   @id @default(cuid())
   nome              String
   tipo              String // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
+  fluxoAtendimento  FluxoAtendimento @default(TRADICIONAL) // ✅ NOVO: Tipo de fluxo de atendimento
   cnes              String? // ✅ NOVO: Cadastro Nacional de Estabelecimentos de Saúde
   cnpj              String? // ✅ NOVO: CNPJ da unidade
   endereco          String?
@@ -6814,6 +6815,12 @@ model EquipeSaude {
   @@map("equipes_saude")
 }
 
+enum FluxoAtendimento {
+  TRADICIONAL // UPA ou UBS sem ESF - profissional individual
+  ESF         // UBS com ESF - atendimento por equipe
+  MISTO       // UBS mista - ambos os modelos
+}
+
 enum TipoEquipe {
   eAP // Equipe de Atenção Primária
   eSF // Equipe Saúde da Família
@@ -6909,6 +6916,17 @@ model FilaAtendimento {
   status     StatusFila     @default(AGUARDANDO)
   prioridade PrioridadeFila @default(NORMAL)
 
+  // ✅ NOVO: Classificação de Risco (UPA - Protocolo de Manchester)
+  classificacaoRisco     ClassificacaoRisco? // Cor Manchester
+  dataClassificacaoRisco DateTime?           // Quando foi classificado
+  queixaPrincipal        String?             // Queixa principal do paciente
+  sinaisVitais           Json?               // PA, FC, FR, Temp, SatO2, Glicemia
+
+  // ✅ NOVO: Acolhimento (UBS)
+  condutaAcolhimento   CondutaAcolhimento? // Decisão do acolhimento
+  dataAcolhimento      DateTime?           // Quando foi acolhido
+  resolvidoAcolhimento Boolean             @default(false) // Se foi resolvido no acolhimento
+
   // Datas e horários
   dataHoraChegada DateTime  @default(now())
   dataHoraInicio  DateTime?
@@ -6957,16 +6975,32 @@ enum TipoAtendimento {
 }
 
 enum StatusFila {
+  // Status iniciais
   AGUARDANDO // Paciente chegou, aguardando primeiro atendimento
-  EM_ESCUTA_INICIAL // Em acolhimento/escuta inicial
-  EM_TRIAGEM // Em triagem de enfermagem
-  AGUARDANDO_MEDICO // Triado, aguardando médico
+
+  // UPA - Classificação de Risco (Manchester)
+  EM_CLASSIFICACAO_RISCO // Em classificação de risco (UPA)
+  AGUARDANDO_ATENDIMENTO // Classificado, aguardando atendimento
+
+  // UBS - Acolhimento
+  EM_ACOLHIMENTO // Em acolhimento (UBS)
+  RESOLVIDO_ACOLHIMENTO // Resolvido no acolhimento
+
+  // Fluxo comum
+  EM_ESCUTA_INICIAL // Em escuta inicial (depreciado - usar EM_ACOLHIMENTO)
+  EM_TRIAGEM // Em triagem de enfermagem (depreciado - usar EM_CLASSIFICACAO_RISCO)
+  AGUARDANDO_MEDICO // Aguardando médico (depreciado - usar AGUARDANDO_ATENDIMENTO)
   EM_CONSULTA // Em consulta médica
   EM_PROCEDIMENTO // Em sala de procedimentos
   EM_VACINACAO // Em vacinação
+
+  // Finalizações
   FINALIZADO // Atendimento concluído
+  ENCAMINHADO_EXTERNO // Encaminhado para outra unidade/especialista
+  INTERNADO // Paciente internado
   NAO_AGUARDOU // Desistiu da espera
   RETORNOU // Retornou após não aguardar
+  TRANSFERIDO // Transferido para outro serviço
 }
 
 enum PrioridadeFila {
@@ -6974,6 +7008,26 @@ enum PrioridadeFila {
   URGENTE
   MUITO_URGENTE
   EMERGENCIA
+}
+
+// ✅ NOVO: Classificação de Risco (Protocolo de Manchester)
+enum ClassificacaoRisco {
+  VERMELHO // Emergência - 0 minutos
+  LARANJA  // Muito urgente - 10 minutos
+  AMARELO  // Urgente - 60 minutos
+  VERDE    // Pouco urgente - 120 minutos
+  AZUL     // Não urgente - 240 minutos
+}
+
+// ✅ NOVO: Conduta do Acolhimento
+enum CondutaAcolhimento {
+  RESOLVER_ACOLHIMENTO    // Resolver no próprio acolhimento
+  ENCAMINHAR_MEDICO       // Encaminhar para consulta médica
+  ENCAMINHAR_ENFERMEIRO   // Encaminhar para enfermeiro
+  ENCAMINHAR_PROCEDIMENTO // Encaminhar para procedimento
+  AGENDAR_CONSULTA        // Agendar consulta futura
+  ENCAMINHAR_EXTERNO      // Encaminhar para outra unidade
+  ORIENTACAO              // Apenas orientação
 }
 
 // ✅ ESCUTA INICIAL / ACOLHIMENTO

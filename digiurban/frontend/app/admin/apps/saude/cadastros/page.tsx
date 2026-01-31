@@ -17,6 +17,7 @@ import {
   Plus,
   Activity,
   Link2,
+  Users,
 } from 'lucide-react';
 
 interface Stats {
@@ -111,6 +112,15 @@ export default function CadastrosDashboard() {
       href: '/admin/apps/saude/cadastros/agendas',
       stats: stats?.agendas,
       badge: `${stats?.agendas?.ativas || 0} ativas`,
+    },
+    {
+      title: 'Equipes ESF',
+      description: 'Equipes de Saúde da Família e territorialização',
+      icon: Users,
+      color: 'bg-teal-500',
+      href: '/admin/apps/saude/cadastros/equipes',
+      stats: null,
+      badge: 'ESF',
     },
     {
       title: 'Vínculos Profissional-Unidade',
