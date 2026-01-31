@@ -77,8 +77,8 @@ export default function VinculosProfissionalUnidadePage() {
   const [modalOpen, setModalOpen] = useState(false);
 
   // Filtros
-  const [filtroUnidade, setFiltroUnidade] = useState<string>('');
-  const [filtroProfissional, setFiltroProfissional] = useState<string>('');
+  const [filtroUnidade, setFiltroUnidade] = useState<string>('_ALL_');
+  const [filtroProfissional, setFiltroProfissional] = useState<string>('_ALL_');
   const [filtroStatus, setFiltroStatus] = useState<string>('ATIVOS');
 
   // Formulário de novo vínculo
@@ -213,8 +213,8 @@ export default function VinculosProfissionalUnidadePage() {
 
   // Filtrar vínculos
   const vinculosFiltrados = vinculos.filter((v) => {
-    const matchUnidade = !filtroUnidade || v.unidade.id === filtroUnidade;
-    const matchProfissional = !filtroProfissional || v.profissional.id === filtroProfissional;
+    const matchUnidade = filtroUnidade === '_ALL_' || v.unidade.id === filtroUnidade;
+    const matchProfissional = filtroProfissional === '_ALL_' || v.profissional.id === filtroProfissional;
     const matchStatus =
       filtroStatus === 'TODOS' ||
       (filtroStatus === 'ATIVOS' && v.ativo) ||
@@ -349,7 +349,7 @@ export default function VinculosProfissionalUnidadePage() {
                   <SelectValue placeholder="Todas as unidades" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="_ALL_">Todas</SelectItem>
                   {unidades.map((u) => (
                     <SelectItem key={u.id} value={u.id}>
                       {u.nome}
@@ -366,7 +366,7 @@ export default function VinculosProfissionalUnidadePage() {
                   <SelectValue placeholder="Todos os profissionais" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="_ALL_">Todos</SelectItem>
                   {profissionais.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.nome}
