@@ -350,37 +350,12 @@ router.get('/profissionais', async (req: Request, res: Response) => {
 
     const profissionais = await prisma.profissionalSaude.findMany({
       where,
-      include: {
-        // Incluir unidades vinculadas
-        vinculosUnidades: {
-          where: {
-            ativo: true,
-            OR: [
-              { dataFim: null },
-              { dataFim: { gte: new Date() } },
-            ],
-          },
-          include: {
-            unidade: {
-              select: {
-                id: true,
-                nome: true,
-                tipo: true,
-              },
-            },
-          },
-        },
-      },
       orderBy: { nome: 'asc' },
     });
 
-    // Transformar para incluir array de unidades
-    const profissionaisFormatados = profissionais.map((prof) => ({
-      ...prof,
-      unidades: prof.vinculosUnidades.map((v) => v.unidade),
-    }));
-
-    res.json(profissionaisFormatados);
+    // NOTA: vinculosUnidades foi removido do ProfissionalSaude
+    // Use o novo sistema DadosSaude + User para vínculos
+    res.json(profissionais);
   } catch (error: any) {
     console.error('Erro ao buscar profissionais:', error);
     res.status(500).json({ error: error.message });
