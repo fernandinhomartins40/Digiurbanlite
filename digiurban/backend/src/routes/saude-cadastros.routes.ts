@@ -1142,7 +1142,7 @@ router.post('/agendas', async (req: Request, res: Response) => {
         ],
       },
       include: {
-        profissional: { select: { nome: true } },
+        profissional: { select: { name: true } },
         unidade: { select: { nome: true } },
       },
     });
@@ -1278,9 +1278,14 @@ router.get('/vinculos', async (req: Request, res: Response) => {
         profissional: {
           select: {
             id: true,
-            nome: true,
-            categoria: true,
-            especialidade: true,
+            name: true,
+            email: true,
+            dadosSaude: {
+              select: {
+                categoria: true,
+                especialidades: true,
+              },
+            },
           },
         },
         unidade: {
@@ -1291,7 +1296,7 @@ router.get('/vinculos', async (req: Request, res: Response) => {
           },
         },
       },
-      orderBy: [{ profissional: { nome: 'asc' } }, { dataInicio: 'desc' }],
+      orderBy: [{ profissional: { name: 'asc' } }, { dataInicio: 'desc' }],
     });
 
     res.json(vinculos);
@@ -1351,9 +1356,9 @@ router.post('/vinculos', async (req: Request, res: Response) => {
     }
 
     // Verificar se profissional existe
-    const profissional = await prisma.profissionalSaude.findUnique({
+    const profissional = await prisma.user.findUnique({
       where: { id: profissionalId },
-      select: { id: true, nome: true },
+      select: { id: true, name: true },
     });
 
     if (!profissional) {
@@ -1407,7 +1412,7 @@ router.post('/vinculos', async (req: Request, res: Response) => {
         observacoes: observacoes || null,
       },
       include: {
-        profissional: { select: { nome: true } },
+        profissional: { select: { name: true } },
         unidade: { select: { nome: true } },
       },
     });
@@ -1418,7 +1423,7 @@ router.post('/vinculos', async (req: Request, res: Response) => {
         vinculoId: vinculo.id,
         tipo: 'CRIACAO',
         profissionalId,
-        profissionalNome: profissional.nome,
+        profissionalNome: profissional.name,
         unidadeDestinoId: unidadeId,
         unidadeDestinoNome: unidade.nome,
         userId: userId || null,
@@ -1462,7 +1467,7 @@ router.put('/vinculos/:id', async (req: Request, res: Response) => {
     const vinculoAtual = await prisma.profissionalUnidade.findUnique({
       where: { id },
       include: {
-        profissional: { select: { nome: true } },
+        profissional: { select: { name: true } },
         unidade: { select: { nome: true } },
       },
     });
@@ -1496,7 +1501,7 @@ router.put('/vinculos/:id', async (req: Request, res: Response) => {
         ativo: ativo !== undefined ? ativo : undefined,
       },
       include: {
-        profissional: { select: { nome: true } },
+        profissional: { select: { name: true } },
         unidade: { select: { nome: true } },
       },
     });
@@ -1507,7 +1512,7 @@ router.put('/vinculos/:id', async (req: Request, res: Response) => {
         vinculoId: vinculo.id,
         tipo: tipoAuditoria,
         profissionalId: vinculo.profissionalId,
-        profissionalNome: vinculo.profissional.nome,
+        profissionalNome: vinculo.profissional.name,
         unidadeDestinoId: vinculo.unidadeId,
         unidadeDestinoNome: vinculo.unidade.nome,
         userId: userId || null,
@@ -1544,7 +1549,7 @@ router.delete('/vinculos/:id', async (req: Request, res: Response) => {
     const vinculoAtual = await prisma.profissionalUnidade.findUnique({
       where: { id },
       include: {
-        profissional: { select: { nome: true } },
+        profissional: { select: { name: true } },
         unidade: { select: { nome: true } },
       },
     });
@@ -1568,7 +1573,7 @@ router.delete('/vinculos/:id', async (req: Request, res: Response) => {
         vinculoId: id,
         tipo: 'DESATIVACAO',
         profissionalId: vinculoAtual.profissionalId,
-        profissionalNome: vinculoAtual.profissional.nome,
+        profissionalNome: vinculoAtual.profissional.name,
         unidadeOrigemId: vinculoAtual.unidadeId,
         unidadeOrigemNome: vinculoAtual.unidade.nome,
         userId: userId || null,
@@ -2351,6 +2356,97 @@ router.get('/equipes/:equipeId/microareas', async (req: Request, res: Response) 
 });
 
 /**
+ * POST /api/apps/saude/cadastros/microareas
+ * Criar nova microárea
+ */
+router.post('/microareas', async (req: Request, res: Response) => {
+  try {
+    const { numero, descricao, equipeId, acsId, ativo } = req.body;
+
+    // Validar campos obrigatórios
+    if (!numero || !equipeId) {
+      return res.status(400).json({ error: 'Número e equipeId são obrigatórios' });
+    }
+
+    // Verificar se a equipe existe
+    const equipe = await prisma.equipeSaude.findUnique({
+      where: { id: equipeId },
+    });
+
+    if (!equipe) {
+      return res.status(404).json({ error: 'Equipe não encontrada' });
+    }
+
+    // Verificar se já existe microárea com esse número nesta equipe
+    const microareaExistente = await prisma.microarea.findFirst({
+      where: {
+        numero,
+        equipeId,
+      },
+    });
+
+    if (microareaExistente) {
+      return res.status(400).json({ error: 'Já existe uma microárea com este número nesta equipe' });
+    }
+
+    // Verificar se ACS existe (se fornecido)
+    if (acsId) {
+      const acs = await prisma.user.findUnique({
+        where: { id: acsId },
+        include: { dadosSaude: true },
+      });
+
+      if (!acs || !acs.dadosSaude || acs.dadosSaude.categoria !== 'ACS') {
+        return res.status(400).json({ error: 'ACS não encontrado ou não é um ACS válido' });
+      }
+    }
+
+    // Criar microárea
+    const microarea = await prisma.microarea.create({
+      data: {
+        numero,
+        descricao,
+        equipeId,
+        acsId,
+        ativo: ativo !== undefined ? ativo : true,
+      },
+      include: {
+        equipe: {
+          select: {
+            id: true,
+            nome: true,
+            ine: true,
+            unidade: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
+          },
+        },
+        acs: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        _count: {
+          select: {
+            citizens: true,
+          },
+        },
+      },
+    });
+
+    res.status(201).json(microarea);
+  } catch (error: any) {
+    console.error('Erro ao criar microárea:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/apps/saude/cadastros/microareas/:id
  * Buscar microárea específica
  */
@@ -2608,6 +2704,258 @@ router.delete('/microareas/:id', async (req: Request, res: Response) => {
     res.json({ message: 'Microárea desativada com sucesso' });
   } catch (error: any) {
     console.error('Erro ao desativar microárea:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
+// ROTAS DE DADOS DE SAÚDE (DadosSaude)
+// ============================================================
+
+/**
+ * GET /api/apps/saude/cadastros/dados-saude
+ * Listar servidores com dados de saúde
+ */
+router.get('/dados-saude', async (req: Request, res: Response) => {
+  try {
+    const { categoria, ativo } = req.query;
+
+    const where: any = {
+      dadosSaude: {
+        isNot: null,
+      },
+    };
+
+    if (categoria) {
+      where.dadosSaude = {
+        ...where.dadosSaude,
+        categoria: categoria as string,
+      };
+    }
+
+    if (ativo !== undefined) {
+      where.dadosSaude = {
+        ...where.dadosSaude,
+        ativo: ativo === 'true',
+      };
+    }
+
+    const servidores = await prisma.user.findMany({
+      where,
+      include: {
+        dadosSaude: true,
+        _count: {
+          select: {
+            vinculosUnidades: true,
+            equipesVinculadas: true,
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    // Mapear para incluir departmentName
+    const servidoresComDepartamento = servidores.map((servidor: any) => ({
+      ...servidor,
+      departmentName: servidor.department?.name || 'Sem departamento',
+    }));
+
+    res.json(servidoresComDepartamento);
+  } catch (error: any) {
+    console.error('Erro ao listar dados de saúde:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/dados-saude/:id
+ * Buscar dados de saúde de um servidor específico
+ */
+router.get('/dados-saude/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const servidor = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        dadosSaude: true,
+        _count: {
+          select: {
+            vinculosUnidades: true,
+            equipesVinculadas: true,
+          },
+        },
+      },
+    });
+
+    if (!servidor) {
+      return res.status(404).json({ error: 'Servidor não encontrado' });
+    }
+
+    res.json(servidor);
+  } catch (error: any) {
+    console.error('Erro ao buscar dados de saúde:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/apps/saude/cadastros/dados-saude
+ * Criar vínculo de saúde para um servidor
+ */
+router.post('/dados-saude', async (req: Request, res: Response) => {
+  try {
+    const {
+      userId,
+      categoria,
+      registroProfissional,
+      tipoRegistro,
+      ufRegistro,
+      cns,
+      especialidades,
+      cbo,
+      aceitaAgendamento,
+      tempoMedioConsulta,
+      observacoes,
+    } = req.body;
+
+    // Validar campos obrigatórios
+    if (!userId || !categoria) {
+      return res.status(400).json({ error: 'userId e categoria são obrigatórios' });
+    }
+
+    // Verificar se o servidor existe
+    const servidor = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { dadosSaude: true },
+    });
+
+    if (!servidor) {
+      return res.status(404).json({ error: 'Servidor não encontrado' });
+    }
+
+    if (servidor.dadosSaude) {
+      return res.status(400).json({ error: 'Servidor já possui dados de saúde vinculados' });
+    }
+
+    // Criar DadosSaude
+    const dadosSaude = await prisma.dadosSaude.create({
+      data: {
+        userId,
+        categoria,
+        registroProfissional,
+        tipoRegistro,
+        ufRegistro,
+        cns,
+        especialidades,
+        cbo,
+        ativo: true,
+        aceitaAgendamento: aceitaAgendamento !== undefined ? aceitaAgendamento : true,
+        tempoMedioConsulta: tempoMedioConsulta || 30,
+        observacoes,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    res.status(201).json(dadosSaude);
+  } catch (error: any) {
+    console.error('Erro ao criar dados de saúde:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /api/apps/saude/cadastros/dados-saude/:id
+ * Atualizar dados de saúde de um servidor
+ */
+router.put('/dados-saude/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const {
+      categoria,
+      registroProfissional,
+      tipoRegistro,
+      ufRegistro,
+      cns,
+      especialidades,
+      cbo,
+      ativo,
+      aceitaAgendamento,
+      tempoMedioConsulta,
+      observacoes,
+      motivoInativacao,
+    } = req.body;
+
+    // Buscar DadosSaude pelo userId
+    const dadosSaudeExistente = await prisma.dadosSaude.findUnique({
+      where: { userId: id },
+    });
+
+    if (!dadosSaudeExistente) {
+      return res.status(404).json({ error: 'Dados de saúde não encontrados' });
+    }
+
+    // Atualizar
+    const dadosSaude = await prisma.dadosSaude.update({
+      where: { userId: id },
+      data: {
+        categoria,
+        registroProfissional,
+        tipoRegistro,
+        ufRegistro,
+        cns,
+        especialidades,
+        cbo,
+        ativo,
+        aceitaAgendamento,
+        tempoMedioConsulta,
+        observacoes,
+        motivoInativacao,
+        dataInativacao: ativo === false ? new Date() : null,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    res.json(dadosSaude);
+  } catch (error: any) {
+    console.error('Erro ao atualizar dados de saúde:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * DELETE /api/apps/saude/cadastros/dados-saude/:id
+ * Desativar dados de saúde de um servidor
+ */
+router.delete('/dados-saude/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const dadosSaudeExistente = await prisma.dadosSaude.findUnique({
+      where: { userId: id },
+    });
+
+    if (!dadosSaudeExistente) {
+      return res.status(404).json({ error: 'Dados de saúde não encontrados' });
+    }
+
+    // Soft delete
+    await prisma.dadosSaude.update({
+      where: { userId: id },
+      data: {
+        ativo: false,
+        dataInativacao: new Date(),
+        motivoInativacao: 'Desativado via sistema',
+      },
+    });
+
+    res.json({ message: 'Dados de saúde desativados com sucesso' });
+  } catch (error: any) {
+    console.error('Erro ao desativar dados de saúde:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -7,17 +7,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Building2,
-  UserCog,
   Stethoscope,
   DoorOpen,
   Clock,
   Calendar,
   Settings,
   ArrowLeft,
-  Plus,
   Activity,
   Link2,
   Users,
+  MapPin,
+  UserPlus,
+  UserCog,
 } from 'lucide-react';
 
 interface Stats {
@@ -58,87 +59,118 @@ export default function CadastrosDashboard() {
     }
   };
 
-  const cadastros = [
+  const sections = [
     {
-      title: 'Unidades de Saúde',
-      description: 'UBS, UPA, Hospitais e Clínicas',
-      icon: Building2,
-      color: 'bg-blue-500',
-      href: '/admin/apps/saude/cadastros/unidades',
-      stats: stats?.unidades,
-      badge: `${stats?.unidades?.ativas || 0} ativas`,
+      title: '🏗️ Infraestrutura',
+      description: 'Estrutura física e recursos',
+      cards: [
+        {
+          title: 'Unidades de Saúde',
+          description: 'UBS, UPA, Hospitais e Clínicas',
+          icon: Building2,
+          color: 'bg-blue-500',
+          href: '/admin/apps/saude/cadastros/unidades',
+          badge: `${stats?.unidades?.ativas || 0} ativas`,
+        },
+        {
+          title: 'Salas e Consultórios',
+          description: 'Salas de atendimento e consultórios',
+          icon: DoorOpen,
+          color: 'bg-orange-500',
+          href: '/admin/apps/saude/cadastros/salas',
+          badge: `${stats?.salas?.ativas || 0} ativas`,
+        },
+        {
+          title: 'Especialidades Médicas',
+          description: 'Cardiologia, Pediatria, etc.',
+          icon: Stethoscope,
+          color: 'bg-purple-500',
+          href: '/admin/apps/saude/cadastros/especialidades',
+          badge: `${stats?.especialidades?.ativas || 0} ativas`,
+        },
+      ],
     },
     {
-      title: 'Profissionais de Saúde',
-      description: 'Médicos, Enfermeiros e demais profissionais',
-      icon: UserCog,
-      color: 'bg-green-500',
-      href: '/admin/apps/saude/cadastros/profissionais',
-      stats: stats?.profissionais,
-      badge: `${stats?.profissionais?.ativos || 0} ativos`,
+      title: '👥 Estratégia Saúde da Família (ESF)',
+      description: 'Equipes, microáreas e territorialização',
+      cards: [
+        {
+          title: 'Equipes ESF',
+          description: 'Equipes de Saúde da Família',
+          icon: Users,
+          color: 'bg-teal-500',
+          href: '/admin/apps/saude/cadastros/equipes',
+          badge: 'ESF',
+        },
+        {
+          title: 'Microáreas',
+          description: 'Territorialização e ACS responsáveis',
+          icon: MapPin,
+          color: 'bg-purple-500',
+          href: '/admin/apps/saude/cadastros/microareas',
+          badge: 'Novo',
+        },
+      ],
     },
     {
-      title: 'Especialidades Médicas',
-      description: 'Cardiologia, Pediatria, etc.',
-      icon: Stethoscope,
-      color: 'bg-purple-500',
-      href: '/admin/apps/saude/cadastros/especialidades',
-      stats: stats?.especialidades,
-      badge: `${stats?.especialidades?.ativas || 0} ativas`,
+      title: '👨‍⚕️ Recursos Humanos',
+      description: 'Gestão de profissionais e vínculos',
+      cards: [
+        {
+          title: 'Servidores de Saúde',
+          description: 'Vincular servidores aos serviços de saúde',
+          icon: UserPlus,
+          color: 'bg-green-500',
+          href: '/admin/apps/saude/cadastros/servidores-saude',
+          badge: 'Novo',
+        },
+        {
+          title: 'Vínculos Profissional-Unidade',
+          description: 'Gerenciar vínculos entre profissionais e unidades',
+          icon: Link2,
+          color: 'bg-cyan-500',
+          href: '/admin/apps/saude/cadastros/vinculos',
+          badge: 'Vínculos',
+        },
+        {
+          title: 'Profissionais (Legado)',
+          description: 'Sistema antigo - em processo de descontinuação',
+          icon: UserCog,
+          color: 'bg-gray-400',
+          href: '/admin/apps/saude/cadastros/profissionais',
+          badge: `${stats?.profissionais?.ativos || 0} ativos`,
+        },
+      ],
     },
     {
-      title: 'Salas e Consultórios',
-      description: 'Salas de atendimento e consultórios',
-      icon: DoorOpen,
-      color: 'bg-orange-500',
-      href: '/admin/apps/saude/cadastros/salas',
-      stats: stats?.salas,
-      badge: `${stats?.salas?.ativas || 0} ativas`,
-    },
-    {
-      title: 'Turnos de Trabalho',
-      description: 'Manhã, Tarde, Noite',
-      icon: Clock,
-      color: 'bg-yellow-500',
-      href: '/admin/apps/saude/cadastros/turnos',
-      stats: stats?.turnos,
-      badge: `${stats?.turnos?.ativos || 0} ativos`,
-    },
-    {
-      title: 'Agendas Médicas',
-      description: 'Configuração de agendas e horários',
-      icon: Calendar,
-      color: 'bg-pink-500',
-      href: '/admin/apps/saude/cadastros/agendas',
-      stats: stats?.agendas,
-      badge: `${stats?.agendas?.ativas || 0} ativas`,
-    },
-    {
-      title: 'Equipes ESF',
-      description: 'Equipes de Saúde da Família e territorialização',
-      icon: Users,
-      color: 'bg-teal-500',
-      href: '/admin/apps/saude/cadastros/equipes',
-      stats: null,
-      badge: 'ESF',
-    },
-    {
-      title: 'Vínculos Profissional-Unidade',
-      description: 'Gerenciar vínculos entre profissionais e unidades',
-      icon: Link2,
-      color: 'bg-cyan-500',
-      href: '/admin/apps/saude/cadastros/vinculos',
-      stats: null,
-      badge: 'Novo',
-    },
-    {
-      title: 'Configurações',
-      description: 'Configurações de atendimento por unidade',
-      icon: Settings,
-      color: 'bg-gray-500',
-      href: '/admin/apps/saude/cadastros/configuracoes',
-      stats: null,
-      badge: 'Por unidade',
+      title: '⚙️ Operação e Agendamento',
+      description: 'Configurações de atendimento',
+      cards: [
+        {
+          title: 'Turnos de Trabalho',
+          description: 'Manhã, Tarde, Noite',
+          icon: Clock,
+          color: 'bg-yellow-500',
+          href: '/admin/apps/saude/cadastros/turnos',
+          badge: `${stats?.turnos?.ativos || 0} ativos`,
+        },
+        {
+          title: 'Agendas Médicas',
+          description: 'Configuração de agendas e horários',
+          icon: Calendar,
+          color: 'bg-pink-500',
+          href: '/admin/apps/saude/cadastros/agendas',
+          badge: `${stats?.agendas?.ativas || 0} ativas`,
+        },
+        {
+          title: 'Configurações',
+          description: 'Configurações de atendimento por unidade',
+          icon: Settings,
+          color: 'bg-gray-500',
+          href: '/admin/apps/saude/cadastros/configuracoes',
+          badge: 'Por unidade',
+        },
+      ],
     },
   ];
 
@@ -162,6 +194,22 @@ export default function CadastrosDashboard() {
           </Badge>
         </div>
 
+        {/* Info Card */}
+        <Card className="mb-6 bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <Activity className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-1">Nova Organização de Cadastros</h3>
+                <p className="text-sm text-blue-800">
+                  Os cadastros foram reorganizados em 4 seções lógicas: Infraestrutura (locais físicos),
+                  ESF (equipes e territorialização), RH (servidores e vínculos) e Operação (agendas e configurações).
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Stats Overview */}
         {loading ? (
           <div className="text-center py-12">
@@ -170,66 +218,55 @@ export default function CadastrosDashboard() {
           </div>
         ) : (
           <>
-            {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {cadastros.map((cadastro) => (
-                <Card
-                  key={cadastro.title}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => router.push(cadastro.href)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className={`p-3 rounded-lg ${cadastro.color} bg-opacity-10`}>
-                        <cadastro.icon className={`h-6 w-6 ${cadastro.color.replace('bg-', 'text-')}`} />
-                      </div>
-                      <Badge variant="secondary">{cadastro.badge}</Badge>
-                    </div>
-                    <CardTitle className="mt-4">{cadastro.title}</CardTitle>
-                    <p className="text-sm text-gray-600">{cadastro.description}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <Button variant="outline" className="w-full" onClick={() => router.push(cadastro.href)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Gerenciar
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {/* Sections */}
+            {sections.map((section) => (
+              <div key={section.title} className="mb-8">
+                <div className="mb-4">
+                  <h2 className="text-2xl font-bold text-gray-900">{section.title}</h2>
+                  <p className="text-gray-600">{section.description}</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {section.cards.map((card) => (
+                    <Card
+                      key={card.title}
+                      className="hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => router.push(card.href)}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className={`p-3 rounded-lg ${card.color} bg-opacity-10`}>
+                            <card.icon className={`h-6 w-6 ${card.color.replace('bg-', 'text-')}`} />
+                          </div>
+                          <Badge variant="secondary">{card.badge}</Badge>
+                        </div>
+                        <CardTitle className="mt-4">{card.title}</CardTitle>
+                        <p className="text-sm text-gray-600">{card.description}</p>
+                      </CardHeader>
+                      <CardContent>
+                        <Button variant="outline" className="w-full">
+                          Gerenciar
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
 
             {/* Quick Actions */}
-            <Card className="mt-6">
+            <Card className="mt-6 bg-purple-50 border-purple-200">
               <CardHeader>
-                <CardTitle>Ações Rápidas</CardTitle>
+                <CardTitle>🚀 Fluxo Recomendado para Novos Cadastros</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button
-                    variant="outline"
-                    className="justify-start"
-                    onClick={() => router.push('/admin/apps/saude/cadastros/unidades/nova')}
-                  >
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Nova Unidade de Saúde
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="justify-start"
-                    onClick={() => router.push('/admin/apps/saude/cadastros/profissionais/novo')}
-                  >
-                    <UserCog className="h-4 w-4 mr-2" />
-                    Novo Profissional
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="justify-start"
-                    onClick={() => router.push('/admin/apps/saude/cadastros/agendas/nova')}
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Nova Agenda Médica
-                  </Button>
-                </div>
+                <ol className="text-sm text-purple-900 space-y-2">
+                  <li><strong>1. Infraestrutura:</strong> Cadastre as unidades de saúde, salas e especialidades</li>
+                  <li><strong>2. ESF:</strong> Crie as equipes de Saúde da Família e defina as microáreas</li>
+                  <li><strong>3. RH:</strong> Vincule os servidores existentes do Digiurban aos serviços de saúde</li>
+                  <li><strong>4. Vínculos:</strong> Associe os profissionais às unidades e equipes onde atuam</li>
+                  <li><strong>5. Operação:</strong> Configure turnos de trabalho e crie as agendas médicas</li>
+                </ol>
               </CardContent>
             </Card>
           </>

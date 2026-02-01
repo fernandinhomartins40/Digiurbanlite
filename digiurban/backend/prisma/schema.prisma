@@ -61,6 +61,9 @@ model User {
   // ✅ NOVO: Múltiplos departamentos (N:N)
   userDepartments UserDepartment[]
 
+  // ✅ NOVO: Dados específicos de saúde (1:1)
+  dadosSaude DadosSaude? @relation("UserDadosSaude")
+
   // Chamados administrativos
   requestedTickets AdminTicket[] @relation("TicketRequester")
   assignedTickets  AdminTicket[] @relation("TicketAssigned")
@@ -120,6 +123,7 @@ model User {
   atividadesColetivas    ProfissionalAtividade[]         @relation("ProfissionalAtividades")
   configuracaoAgenda     ConfiguracaoAgenda[]            @relation("ProfissionalAgendas")
   indisponibilidades     IndisponibilidadeProfissional[] @relation("ProfissionalIndisponibilidades")
+  vinculosUnidades       ProfissionalUnidade[]           @relation("UserProfissionalUnidades")
 
   @@map("users")
 }
@@ -143,6 +147,55 @@ model UserDepartment {
   @@index([departmentId])
   @@index([userId, isPrimary])
   @@map("user_departments")
+}
+
+// ✅ NOVO: Dados específicos de saúde vinculados ao servidor (User)
+// Substitui o modelo ProfissionalSaude duplicado
+model DadosSaude {
+  id String @id @default(cuid())
+
+  // Relacionamento 1:1 com User (servidor do município)
+  userId String @unique
+  user   User   @relation("UserDadosSaude", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Categoria profissional
+  categoria String // 'Médico', 'Enfermeiro', 'ACS', 'Dentista', 'Psicólogo', 'Nutricionista', 'Farmacêutico', 'Fisioterapeuta', etc.
+
+  // Registro profissional (CRM, COREN, CRO, CRP, CRN, CRF, etc.)
+  registroProfissional String? @unique
+  tipoRegistro         String? // 'CRM', 'COREN', 'CRO', 'CRP', 'CRF', 'CRN', 'CREFITO', etc.
+  ufRegistro           String? // UF do conselho
+
+  // Cartão Nacional de Saúde (CNS)
+  cns String? @unique
+
+  // Especialidades (JSON array de IDs) - apenas para médicos
+  especialidades Json? // Array de IDs de EspecialidadeMedica
+
+  // CBO - Classificação Brasileira de Ocupações
+  cbo String? // Código CBO principal
+
+  // Status
+  ativo            Boolean   @default(true)
+  motivoInativacao String?
+  dataInativacao   DateTime?
+
+  // Configurações específicas de atendimento
+  aceitaAgendamento  Boolean @default(true)
+  tempoMedioConsulta Int?    @default(30) // Minutos
+
+  // Observações
+  observacoes String?
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  @@index([userId])
+  @@index([categoria])
+  @@index([ativo])
+  @@map("dados_saude")
 }
 
 model Department {
@@ -2328,7 +2381,7 @@ enum HousingAttendanceStatus {
 
 // Unidades de Saúde (UBS, UPA, Hospitais, etc.) - ATUALIZADO
 model UnidadeSaude {
-  id                String   @id @default(cuid())
+  id                String           @id @default(cuid())
   nome              String
   tipo              String // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
   fluxoAtendimento  FluxoAtendimento @default(TRADICIONAL) // ✅ NOVO: Tipo de fluxo de atendimento
@@ -2345,9 +2398,9 @@ model UnidadeSaude {
   horarioAbertura   String? // ✅ NOVO: Ex: "07:00"
   horarioFechamento String? // ✅ NOVO: Ex: "17:00"
   especialidades    Json? // Array de especialidades disponíveis
-  isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  isActive          Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   // Relacionamentos - Apps Saúde
   chamadas              ChamadaPainel[]
@@ -2602,9 +2655,9 @@ model EspecialidadeMedica {
   updatedAt           DateTime @updatedAt
 
   // ✅ NOVO: Relacionamentos
-  agendas                    AgendaMedica[]
-  solicitacoesTFD            SolicitacaoTFD[]
-  vinculosProfissionais      ProfissionalEspecialidade[]
+  agendas               AgendaMedica[]
+  solicitacoesTFD       SolicitacaoTFD[]
+  vinculosProfissionais ProfissionalEspecialidade[]
 
   @@index([area, isActive])
   @@index([isActive])
@@ -2863,9 +2916,6 @@ model ProfissionalSaude {
   visitasDomiciliares VisitaDomiciliar[]        @relation("ACSVisitas")
   atividadesColetivas ProfissionalAtividade[]
 
-  // ✅ NOVO: Vínculo com múltiplas unidades
-  vinculosUnidades ProfissionalUnidade[]
-
   // ✅ NOVO: Vínculo com múltiplas especialidades (N:N)
   vinculosEspecialidades ProfissionalEspecialidade[]
 
@@ -2901,8 +2951,8 @@ model ProfissionalUnidade {
   updatedAt           DateTime  @updatedAt
 
   // Relacionamentos
-  profissional ProfissionalSaude @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
-  unidade      UnidadeSaude      @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  profissional User         @relation("UserProfissionalUnidades", fields: [profissionalId], references: [id], onDelete: Cascade)
+  unidade      UnidadeSaude @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
 
   // Auditoria
   auditorias AuditoriaVinculo[]
@@ -2953,16 +3003,16 @@ enum TipoAuditoriaVinculo {
 
 // ✅ NOVO: Relacionamento N:N entre Profissional e Especialidade
 model ProfissionalEspecialidade {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   profissionalId  String
   especialidadeId String
-  isPrincipal     Boolean  @default(false) // Especialidade principal do profissional
-  dataInicio      DateTime @default(now())
+  isPrincipal     Boolean   @default(false) // Especialidade principal do profissional
+  dataInicio      DateTime  @default(now())
   dataFim         DateTime?
-  ativo           Boolean  @default(true)
+  ativo           Boolean   @default(true)
   observacoes     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relacionamentos
   profissional  ProfissionalSaude   @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
@@ -6817,8 +6867,8 @@ model EquipeSaude {
 
 enum FluxoAtendimento {
   TRADICIONAL // UPA ou UBS sem ESF - profissional individual
-  ESF         // UBS com ESF - atendimento por equipe
-  MISTO       // UBS mista - ambos os modelos
+  ESF // UBS com ESF - atendimento por equipe
+  MISTO // UBS mista - ambos os modelos
 }
 
 enum TipoEquipe {
@@ -6918,13 +6968,13 @@ model FilaAtendimento {
 
   // ✅ NOVO: Classificação de Risco (UPA - Protocolo de Manchester)
   classificacaoRisco     ClassificacaoRisco? // Cor Manchester
-  dataClassificacaoRisco DateTime?           // Quando foi classificado
-  queixaPrincipal        String?             // Queixa principal do paciente
-  sinaisVitais           Json?               // PA, FC, FR, Temp, SatO2, Glicemia
+  dataClassificacaoRisco DateTime? // Quando foi classificado
+  queixaPrincipal        String? // Queixa principal do paciente
+  sinaisVitais           Json? // PA, FC, FR, Temp, SatO2, Glicemia
 
   // ✅ NOVO: Acolhimento (UBS)
   condutaAcolhimento   CondutaAcolhimento? // Decisão do acolhimento
-  dataAcolhimento      DateTime?           // Quando foi acolhido
+  dataAcolhimento      DateTime? // Quando foi acolhido
   resolvidoAcolhimento Boolean             @default(false) // Se foi resolvido no acolhimento
 
   // Datas e horários
@@ -7013,21 +7063,21 @@ enum PrioridadeFila {
 // ✅ NOVO: Classificação de Risco (Protocolo de Manchester)
 enum ClassificacaoRisco {
   VERMELHO // Emergência - 0 minutos
-  LARANJA  // Muito urgente - 10 minutos
-  AMARELO  // Urgente - 60 minutos
-  VERDE    // Pouco urgente - 120 minutos
-  AZUL     // Não urgente - 240 minutos
+  LARANJA // Muito urgente - 10 minutos
+  AMARELO // Urgente - 60 minutos
+  VERDE // Pouco urgente - 120 minutos
+  AZUL // Não urgente - 240 minutos
 }
 
 // ✅ NOVO: Conduta do Acolhimento
 enum CondutaAcolhimento {
-  RESOLVER_ACOLHIMENTO    // Resolver no próprio acolhimento
-  ENCAMINHAR_MEDICO       // Encaminhar para consulta médica
-  ENCAMINHAR_ENFERMEIRO   // Encaminhar para enfermeiro
+  RESOLVER_ACOLHIMENTO // Resolver no próprio acolhimento
+  ENCAMINHAR_MEDICO // Encaminhar para consulta médica
+  ENCAMINHAR_ENFERMEIRO // Encaminhar para enfermeiro
   ENCAMINHAR_PROCEDIMENTO // Encaminhar para procedimento
-  AGENDAR_CONSULTA        // Agendar consulta futura
-  ENCAMINHAR_EXTERNO      // Encaminhar para outra unidade
-  ORIENTACAO              // Apenas orientação
+  AGENDAR_CONSULTA // Agendar consulta futura
+  ENCAMINHAR_EXTERNO // Encaminhar para outra unidade
+  ORIENTACAO // Apenas orientação
 }
 
 // ✅ ESCUTA INICIAL / ACOLHIMENTO
