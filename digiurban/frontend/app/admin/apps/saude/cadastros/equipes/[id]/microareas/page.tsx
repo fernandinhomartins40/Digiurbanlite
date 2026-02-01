@@ -263,21 +263,24 @@ export default function MicroareasEquipePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="acs">Agente Comunitário de Saúde (ACS)</Label>
+                  <Label htmlFor="acs">Agente Comunitário de Saúde (ACS) - Opcional</Label>
                   <Select
                     value={formData.acsId}
                     onValueChange={(value) => setFormData({ ...formData, acsId: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um ACS..." />
+                      <SelectValue placeholder="Deixe vazio para sem ACS ou selecione um ACS" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Sem ACS</SelectItem>
-                      {acsDisponiveis.map((acs) => (
-                        <SelectItem key={acs.id} value={acs.id}>
-                          {acs.nome}
-                        </SelectItem>
-                      ))}
+                      {acsDisponiveis.length === 0 ? (
+                        <div className="p-2 text-sm text-gray-500">Nenhum ACS disponível</div>
+                      ) : (
+                        acsDisponiveis.map((acs) => (
+                          <SelectItem key={acs.id} value={acs.id}>
+                            {acs.nome}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

@@ -305,25 +305,28 @@ export default function EditarMicroarea() {
 
               {/* ACS Responsável */}
               <div>
-                <Label htmlFor="acsId">Agente Comunitário de Saúde (ACS)</Label>
+                <Label htmlFor="acsId">Agente Comunitário de Saúde (ACS) - Opcional</Label>
                 <Select
                   value={formData.acsId}
                   onValueChange={(value) => setFormData({ ...formData, acsId: value })}
                 >
                   <SelectTrigger id="acsId">
-                    <SelectValue placeholder="Selecione o ACS responsável (opcional)" />
+                    <SelectValue placeholder="Deixe vazio para sem ACS ou selecione um ACS" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem ACS designado</SelectItem>
-                    {acsDisponiveis.map((acs) => (
-                      <SelectItem key={acs.id} value={acs.id}>
-                        {acs.name} - {acs.email}
-                      </SelectItem>
-                    ))}
+                    {acsDisponiveis.length === 0 ? (
+                      <div className="p-2 text-sm text-gray-500">Nenhum ACS disponível</div>
+                    ) : (
+                      acsDisponiveis.map((acs) => (
+                        <SelectItem key={acs.id} value={acs.id}>
+                          {acs.name} - {acs.email}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-gray-500 mt-1">
-                  ACS que realizará as visitas domiciliares neste território
+                  ACS que realizará as visitas domiciliares neste território. Deixe vazio se ainda não tiver ACS designado.
                 </p>
               </div>
 

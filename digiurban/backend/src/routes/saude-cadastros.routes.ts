@@ -2719,6 +2719,12 @@ router.get('/dados-saude', async (req: Request, res: Response) => {
       where,
       include: {
         dadosSaude: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: {
           select: {
             vinculosUnidades: true,
