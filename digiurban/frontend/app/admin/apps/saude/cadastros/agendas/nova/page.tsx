@@ -569,9 +569,9 @@ export default function NovaAgenda() {
                 </Button>
                 <Button
                   type="submit"
-                  disabled={loading || (formData.profissionalId && !vinculoInfo.temVinculo)}
+                  disabled={loading || (!!formData.profissionalId && !vinculoInfo.temVinculo)}
                   className={
-                    formData.profissionalId && !vinculoInfo.temVinculo
+                    !!formData.profissionalId && !vinculoInfo.temVinculo
                       ? 'opacity-50 cursor-not-allowed'
                       : ''
                   }

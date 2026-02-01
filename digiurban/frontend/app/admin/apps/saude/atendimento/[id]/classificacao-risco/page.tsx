@@ -22,7 +22,7 @@ interface FilaAtendimento {
   dataHoraChegada: string;
 }
 
-const cores Manchester = [
+const coresManchester = [
   {
     cor: 'VERMELHO',
     nome: 'Emergência',
@@ -241,7 +241,7 @@ export default function ClassificacaoRiscoPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {coresManchest er.map((item) => (
+                {coresManchester.map((item) => (
                   <div
                     key={item.cor}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${

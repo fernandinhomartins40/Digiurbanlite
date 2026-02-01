@@ -129,8 +129,7 @@ export class FilaAtendimentoService {
         profissional: {
           select: {
             id: true,
-            nome: true,
-            categoria: true,
+            name: true,
           },
         },
         equipe: {

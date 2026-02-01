@@ -715,7 +715,7 @@ router.get('/salas', async (req: Request, res: Response) => {
     // Transformar para o formato esperado pelo frontend
     const salasFormatadas = salas.map((sala) => ({
       ...sala,
-      unidadeNome: sala.unidade.nome,
+      unidade: sala.unidade,
       isActive: sala.ativa,
     }));
 
@@ -1042,8 +1042,8 @@ router.get('/agendas', async (req: Request, res: Response) => {
       ...agenda,
       profissionalNome: 'Profissional', // TODO: Buscar nome do profissional
       unidadeNome: 'Unidade', // TODO: Buscar nome da unidade
-      salaNome: agenda.sala?.nome,
-      tipo: agenda.especialidade?.nome || 'Geral',
+      especialidade: agenda.especialidade,
+      sala: agenda.sala,
     }));
 
     res.json(agendasFormatadas);
@@ -1860,8 +1860,7 @@ router.get('/equipes', async (req: Request, res: Response) => {
             profissional: {
               select: {
                 id: true,
-                nome: true,
-                categoria: true,
+                name: true,
               },
             },
           },
@@ -1918,9 +1917,7 @@ router.get('/equipes/:id', async (req: Request, res: Response) => {
             profissional: {
               select: {
                 id: true,
-                nome: true,
-                categoria: true,
-                cbo: true,
+                name: true,
               },
             },
           },
@@ -1931,7 +1928,7 @@ router.get('/equipes/:id', async (req: Request, res: Response) => {
             acs: {
               select: {
                 id: true,
-                nome: true,
+                name: true,
               },
             },
             _count: {
@@ -2146,9 +2143,7 @@ router.get('/equipes/:id/profissionais', async (req: Request, res: Response) => 
         profissional: {
           select: {
             id: true,
-            nome: true,
-            categoria: true,
-            cbo: true,
+            name: true,
             email: true,
           },
         },
@@ -2223,9 +2218,7 @@ router.post('/equipes/:id/profissionais', async (req: Request, res: Response) =>
         profissional: {
           select: {
             id: true,
-            nome: true,
-            categoria: true,
-            cbo: true,
+            name: true,
           },
         },
       },
@@ -2303,7 +2296,7 @@ router.get('/microareas', async (req: Request, res: Response) => {
         acs: {
           select: {
             id: true,
-            nome: true,
+            name: true,
             email: true,
           },
         },
@@ -2337,7 +2330,7 @@ router.get('/equipes/:equipeId/microareas', async (req: Request, res: Response) 
         acs: {
           select: {
             id: true,
-            nome: true,
+            name: true,
             email: true,
           },
         },
@@ -2385,9 +2378,8 @@ router.get('/microareas/:id', async (req: Request, res: Response) => {
         acs: {
           select: {
             id: true,
-            nome: true,
+            name: true,
             email: true,
-            categoria: true,
           },
         },
         citizens: {
@@ -2482,7 +2474,7 @@ router.post('/equipes/:equipeId/microareas', async (req: Request, res: Response)
         acs: {
           select: {
             id: true,
-            nome: true,
+            name: true,
           },
         },
       },
@@ -2559,7 +2551,7 @@ router.put('/microareas/:id', async (req: Request, res: Response) => {
         acs: {
           select: {
             id: true,
-            nome: true,
+            name: true,
           },
         },
         _count: {
