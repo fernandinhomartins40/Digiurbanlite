@@ -32,18 +32,16 @@ RUN npm install --legacy-peer-deps
 # Copiar código do backend
 COPY digiurban/backend ./
 
-# Gerar Prisma Client (sem criar banco - apenas gerar tipos)
+# Gerar Prisma Client e Build TypeScript
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
-RUN npx prisma generate
-
-# Build TypeScript (limpar cache incremental primeiro)
-RUN rm -rf dist/.tsbuildinfo dist/* && npm run build
-
-# Validar que arquivos críticos foram compilados
-RUN test -f dist/index.js || (echo "❌ ERRO: index.js não foi compilado!" && exit 1)
-RUN test -f dist/routes/citizen-services.js || (echo "❌ ERRO: citizen-services.js não foi compilado!" && exit 1)
-RUN echo "✅ Build do TypeScript concluído com sucesso"
+RUN npx prisma generate && \
+    rm -rf dist/.tsbuildinfo dist/* && \
+    npm run build && \
+    ls -la dist && \
+    if [ ! -f "dist/index.js" ]; then echo "❌ ERRO: index.js não foi compilado!"; exit 1; fi && \
+    if [ ! -f "dist/routes/citizen-services.js" ]; then echo "❌ ERRO: citizen-services.js não foi compilado!"; exit 1; fi && \
+    echo "✅ Build do TypeScript concluído com sucesso"
 
 # ========== STAGE 2: Build Frontend ==========
 FROM node:18-bookworm-slim AS frontend-builder
