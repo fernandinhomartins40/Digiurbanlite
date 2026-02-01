@@ -2695,25 +2695,25 @@ router.get('/dados-saude', async (req: Request, res: Response) => {
   try {
     const { categoria, ativo } = req.query;
 
-    const where: any = {
-      dadosSaude: {
-        isNot: null,
-      },
-    };
+    // Construir filtro de dadosSaude
+    const dadosSaudeFilter: any = {};
 
     if (categoria) {
-      where.dadosSaude = {
-        ...where.dadosSaude,
-        categoria: categoria as string,
-      };
+      dadosSaudeFilter.categoria = categoria as string;
     }
 
     if (ativo !== undefined) {
-      where.dadosSaude = {
-        ...where.dadosSaude,
-        ativo: ativo === 'true',
-      };
+      dadosSaudeFilter.ativo = ativo === 'true';
     }
+
+    const where: any = {
+      dadosSaude: {
+        isNot: null,
+        ...(Object.keys(dadosSaudeFilter).length > 0 && {
+          is: dadosSaudeFilter,
+        }),
+      },
+    };
 
     const servidores = await prisma.user.findMany({
       where,
