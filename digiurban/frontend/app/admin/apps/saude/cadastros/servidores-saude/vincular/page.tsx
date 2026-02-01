@@ -80,13 +80,21 @@ export default function VincularServidor() {
   const loadServidores = async () => {
     try {
       // Buscar servidores que NÃO têm DadosSaude ainda
-      const response = await fetch('/api/users?departmentId=saude&semDadosSaude=true', {
+      const response = await fetch('/api/apps/saude/cadastros/dados-saude?semDadosSaude=true', {
         credentials: 'include',
       });
+
+      if (!response.ok) {
+        console.error('Erro ao carregar servidores:', response.status);
+        setServidores([]);
+        return;
+      }
+
       const data = await response.json();
-      setServidores(data);
+      setServidores(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao carregar servidores:', error);
+      setServidores([]);
     }
   };
 

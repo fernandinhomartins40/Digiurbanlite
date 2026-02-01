@@ -2690,30 +2690,48 @@ router.delete('/microareas/:id', async (req: Request, res: Response) => {
 /**
  * GET /api/apps/saude/cadastros/dados-saude
  * Listar servidores com dados de saúde
+ * Query params:
+ * - categoria: filtrar por categoria (MEDICO, ENFERMEIRO, etc)
+ * - ativo: filtrar por status ativo (true/false)
+ * - semDadosSaude: retorna servidores SEM dados de saúde (true/false)
+ * - departmentId: filtrar por departamento
  */
 router.get('/dados-saude', async (req: Request, res: Response) => {
   try {
-    const { categoria, ativo } = req.query;
+    const { categoria, ativo, semDadosSaude, departmentId } = req.query;
 
-    // Construir filtro de dadosSaude
-    const dadosSaudeFilter: any = {};
+    const where: any = {};
 
-    if (categoria) {
-      dadosSaudeFilter.categoria = categoria as string;
-    }
+    // Se semDadosSaude=true, retornar apenas servidores SEM dadosSaude
+    if (semDadosSaude === 'true') {
+      where.dadosSaude = { is: null };
 
-    if (ativo !== undefined) {
-      dadosSaudeFilter.ativo = ativo === 'true';
-    }
+      // Filtro adicional por departamento
+      if (departmentId) {
+        where.departmentId = departmentId as string;
+      }
 
-    const where: any = {
-      dadosSaude: {
+      // Retornar apenas servidores ativos
+      where.isActive = true;
+    } else {
+      // Construir filtro de dadosSaude
+      const dadosSaudeFilter: any = {};
+
+      if (categoria) {
+        dadosSaudeFilter.categoria = categoria as string;
+      }
+
+      if (ativo !== undefined) {
+        dadosSaudeFilter.ativo = ativo === 'true';
+      }
+
+      where.dadosSaude = {
         isNot: null,
         ...(Object.keys(dadosSaudeFilter).length > 0 && {
           is: dadosSaudeFilter,
         }),
-      },
-    };
+      };
+    }
 
     const servidores = await prisma.user.findMany({
       where,
