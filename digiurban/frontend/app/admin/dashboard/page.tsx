@@ -1,9 +1,5 @@
 'use client'
 
-// ✅ CRÍTICO: Desabilitar cache desta página para sempre buscar dados frescos
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 import { useState, useEffect } from 'react'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
