@@ -14,7 +14,6 @@ export default function NovaEspecialidade() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
-    cbo: '',
     descricao: '',
     isActive: true,
   });
@@ -79,16 +78,6 @@ export default function NovaEspecialidade() {
                     onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                     placeholder="Ex: Clínico Geral, Pediatria, Cardiologia"
                     required
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="cbo">Código CBO</Label>
-                  <Input
-                    id="cbo"
-                    value={formData.cbo}
-                    onChange={(e) => setFormData({ ...formData, cbo: e.target.value })}
-                    placeholder="Código da Classificação Brasileira de Ocupações"
                   />
                 </div>
 

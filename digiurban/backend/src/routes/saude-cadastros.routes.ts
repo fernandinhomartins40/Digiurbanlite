@@ -223,16 +223,20 @@ router.get('/unidades/:id', async (req: Request, res: Response) => {
  */
 router.post('/unidades', async (req: Request, res: Response) => {
   try {
-    const { nome, tipo, cnes, endereco, bairro, cep, telefone, email, horarioFuncionamento } = req.body;
+    const { nome, tipo, cnes, endereco, bairro, cep, telefone, email, horarioFuncionamento, isActive } = req.body;
 
     if (!nome) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
     }
 
+    if (!tipo) {
+      return res.status(400).json({ error: 'Tipo é obrigatório' });
+    }
+
     const unidade = await prisma.unidadeSaude.create({
       data: {
         nome,
-        tipo: tipo || 'UBS',
+        tipo,
         cnes: cnes || null,
         endereco: endereco || null,
         bairro: bairro || null,
@@ -240,7 +244,7 @@ router.post('/unidades', async (req: Request, res: Response) => {
         telefone: telefone || null,
         email: email || null,
         horario: horarioFuncionamento || null,
-        isActive: true,
+        isActive: isActive !== undefined ? isActive : true,
       },
     });
 
@@ -260,20 +264,25 @@ router.put('/unidades/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { nome, tipo, cnes, endereco, bairro, cep, telefone, email, horarioFuncionamento, isActive } = req.body;
 
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    const updateData: any = {};
+    if (nome !== undefined) updateData.nome = nome;
+    if (tipo !== undefined) updateData.tipo = tipo;
+    if (cnes !== undefined) updateData.cnes = cnes || null;
+    if (endereco !== undefined) updateData.endereco = endereco || null;
+    if (bairro !== undefined) updateData.bairro = bairro || null;
+    if (cep !== undefined) updateData.cep = cep || null;
+    if (telefone !== undefined) updateData.telefone = telefone || null;
+    if (email !== undefined) updateData.email = email || null;
+    if (horarioFuncionamento !== undefined) updateData.horario = horarioFuncionamento || null;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
     const unidade = await prisma.unidadeSaude.update({
       where: { id },
-      data: {
-        nome,
-        tipo,
-        cnes,
-        endereco,
-        bairro,
-        cep,
-        telefone,
-        email,
-        horario: horarioFuncionamento,
-        isActive,
-      },
+      data: updateData,
     });
 
     res.json(unidade);
@@ -571,7 +580,7 @@ router.get('/especialidades/:id', async (req: Request, res: Response) => {
  */
 router.post('/especialidades', async (req: Request, res: Response) => {
   try {
-    const { nome, cbo, descricao } = req.body;
+    const { nome, descricao, isActive } = req.body;
 
     if (!nome) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
@@ -581,7 +590,7 @@ router.post('/especialidades', async (req: Request, res: Response) => {
       data: {
         nome,
         descricao: descricao || null,
-        isActive: true,
+        isActive: isActive !== undefined ? isActive : true,
       },
     });
 
@@ -604,18 +613,26 @@ router.put('/especialidades/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { nome, descricao, isActive } = req.body;
 
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    const updateData: any = {};
+    if (nome !== undefined) updateData.nome = nome;
+    if (descricao !== undefined) updateData.descricao = descricao || null;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
     const especialidade = await prisma.especialidadeMedica.update({
       where: { id },
-      data: {
-        nome,
-        descricao,
-        isActive,
-      },
+      data: updateData,
     });
 
     res.json(especialidade);
   } catch (error: any) {
     console.error('Erro ao atualizar especialidade:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Nome de especialidade já cadastrado' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -691,6 +708,7 @@ router.get('/salas', async (req: Request, res: Response) => {
     const salasFormatadas = salas.map((sala) => ({
       ...sala,
       unidade: sala.unidade,
+      unidadeNome: sala.unidade.nome,
       isActive: sala.ativa,
     }));
 
@@ -712,7 +730,14 @@ router.get('/salas/:id', async (req: Request, res: Response) => {
     const sala = await prisma.salaConsultorio.findUnique({
       where: { id },
       include: {
-        unidade: true,
+        unidade: {
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+            endereco: true,
+          },
+        },
       },
     });
 
@@ -733,23 +758,38 @@ router.get('/salas/:id', async (req: Request, res: Response) => {
  */
 router.post('/salas', async (req: Request, res: Response) => {
   try {
-    const { nome, numero, tipo, capacidade, equipamentos, unidadeId } = req.body;
+    const { nome, numero, tipo, capacidade, equipamentos, unidadeId, ativa } = req.body;
 
     if (!nome) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
     }
 
-    // Se não tem unidadeId, pegar a primeira unidade ativa
-    let finalUnidadeId = unidadeId;
-    if (!finalUnidadeId) {
-      const primeiraUnidade = await prisma.unidadeSaude.findFirst({
-        where: { isActive: true },
-        select: { id: true },
-      });
-      if (!primeiraUnidade) {
-        return res.status(400).json({ error: 'Nenhuma unidade de saúde disponível' });
+    if (!unidadeId) {
+      return res.status(400).json({ error: 'Unidade de Saúde é obrigatória' });
+    }
+
+    // Verificar se a unidade existe
+    const unidadeExists = await prisma.unidadeSaude.findUnique({
+      where: { id: unidadeId },
+      select: { id: true },
+    });
+
+    if (!unidadeExists) {
+      return res.status(400).json({ error: 'Unidade de saúde não encontrada' });
+    }
+
+    // Processar equipamentos: se vier como string, transformar em array
+    let equipamentosArray = null;
+    if (equipamentos) {
+      if (typeof equipamentos === 'string' && equipamentos.trim()) {
+        // Dividir por vírgula, ponto e vírgula ou quebra de linha
+        equipamentosArray = equipamentos
+          .split(/[,;\n]/)
+          .map((e: string) => e.trim())
+          .filter((e: string) => e.length > 0);
+      } else if (Array.isArray(equipamentos)) {
+        equipamentosArray = equipamentos.filter((e) => e && e.trim());
       }
-      finalUnidadeId = primeiraUnidade.id;
     }
 
     const sala = await prisma.salaConsultorio.create({
@@ -758,9 +798,9 @@ router.post('/salas', async (req: Request, res: Response) => {
         numero: numero || null,
         tipo: tipo || 'CONSULTORIO',
         capacidade: capacidade ? parseInt(capacidade) : null,
-        equipamentos: equipamentos ? [equipamentos] : undefined,
-        unidadeId: finalUnidadeId,
-        ativa: true,
+        equipamentos: equipamentosArray || undefined,
+        unidadeId,
+        ativa: ativa !== undefined ? ativa : true,
       },
     });
 
@@ -778,18 +818,46 @@ router.post('/salas', async (req: Request, res: Response) => {
 router.put('/salas/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { nome, numero, tipo, capacidade, equipamentos, ativa } = req.body;
+    const { nome, numero, tipo, capacidade, equipamentos, ativa, unidadeId } = req.body;
+
+    // Verificar se a unidade existe caso seja fornecida
+    if (unidadeId) {
+      const unidadeExists = await prisma.unidadeSaude.findUnique({
+        where: { id: unidadeId },
+        select: { id: true },
+      });
+
+      if (!unidadeExists) {
+        return res.status(400).json({ error: 'Unidade de saúde não encontrada' });
+      }
+    }
+
+    // Processar equipamentos: se vier como string, transformar em array
+    let equipamentosArray = null;
+    if (equipamentos) {
+      if (typeof equipamentos === 'string' && equipamentos.trim()) {
+        // Dividir por vírgula, ponto e vírgula ou quebra de linha
+        equipamentosArray = equipamentos
+          .split(/[,;\n]/)
+          .map((e: string) => e.trim())
+          .filter((e: string) => e.length > 0);
+      } else if (Array.isArray(equipamentos)) {
+        equipamentosArray = equipamentos.filter((e) => e && e.trim());
+      }
+    }
+
+    const updateData: any = {};
+    if (nome !== undefined) updateData.nome = nome;
+    if (numero !== undefined) updateData.numero = numero;
+    if (tipo !== undefined) updateData.tipo = tipo;
+    if (capacidade !== undefined) updateData.capacidade = capacidade ? parseInt(capacidade) : null;
+    if (equipamentos !== undefined) updateData.equipamentos = equipamentosArray || undefined;
+    if (ativa !== undefined) updateData.ativa = ativa;
+    if (unidadeId !== undefined) updateData.unidadeId = unidadeId;
 
     const sala = await prisma.salaConsultorio.update({
       where: { id },
-      data: {
-        nome,
-        numero,
-        tipo,
-        capacidade: capacidade ? parseInt(capacidade) : null,
-        equipamentos: equipamentos ? [equipamentos] : undefined,
-        ativa,
-      },
+      data: updateData,
     });
 
     res.json(sala);
@@ -893,7 +961,7 @@ router.get('/turnos/:id', async (req: Request, res: Response) => {
  */
 router.post('/turnos', async (req: Request, res: Response) => {
   try {
-    const { nome, periodo, horaInicio, horaFim, cargaHoraria } = req.body;
+    const { nome, periodo, horaInicio, horaFim, isActive } = req.body;
 
     if (!nome || !horaInicio || !horaFim) {
       return res.status(400).json({ error: 'Nome, horário de início e fim são obrigatórios' });
@@ -905,7 +973,7 @@ router.post('/turnos', async (req: Request, res: Response) => {
         descricao: periodo || null,
         horaInicio,
         horaFim,
-        ativo: true,
+        ativo: isActive !== undefined ? isActive : true,
       },
     });
 
@@ -928,20 +996,32 @@ router.put('/turnos/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { nome, descricao, horaInicio, horaFim, ativo } = req.body;
 
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (!horaInicio || !horaFim) {
+      return res.status(400).json({ error: 'Horário de início e fim são obrigatórios' });
+    }
+
+    const updateData: any = {};
+    if (nome !== undefined) updateData.nome = nome;
+    if (descricao !== undefined) updateData.descricao = descricao || null;
+    if (horaInicio !== undefined) updateData.horaInicio = horaInicio;
+    if (horaFim !== undefined) updateData.horaFim = horaFim;
+    if (ativo !== undefined) updateData.ativo = ativo;
+
     const turno = await prisma.turnoTrabalho.update({
       where: { id },
-      data: {
-        nome,
-        descricao,
-        horaInicio,
-        horaFim,
-        ativo,
-      },
+      data: updateData,
     });
 
     res.json(turno);
   } catch (error: any) {
     console.error('Erro ao atualizar turno:', error);
+    if (error.code === 'P2002') {
+      return res.status(400).json({ error: 'Nome de turno já cadastrado' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
@@ -1075,41 +1155,27 @@ router.post('/agendas', async (req: Request, res: Response) => {
       unidadeId,
       especialidadeId,
       salaId,
+      isActive,
     } = req.body;
 
-    if (!nome || !dataInicio) {
-      return res.status(400).json({ error: 'Nome e data de início são obrigatórios' });
+    // Validações obrigatórias
+    if (!dataInicio) {
+      return res.status(400).json({ error: 'Data de início é obrigatória' });
     }
 
-    // Buscar primeira unidade e profissional se não fornecidos
-    let finalUnidadeId = unidadeId;
-    let finalProfissionalId = profissionalId;
-
-    if (!finalUnidadeId) {
-      const primeiraUnidade = await prisma.unidadeSaude.findFirst({
-        where: { isActive: true },
-        select: { id: true },
-      });
-      if (primeiraUnidade) finalUnidadeId = primeiraUnidade.id;
+    if (!profissionalId) {
+      return res.status(400).json({ error: 'Profissional é obrigatório' });
     }
 
-    if (!finalProfissionalId) {
-      const primeiroProfissional = await prisma.profissionalSaude.findFirst({
-        where: { isActive: true },
-        select: { id: true },
-      });
-      if (primeiroProfissional) finalProfissionalId = primeiroProfissional.id;
+    if (!unidadeId) {
+      return res.status(400).json({ error: 'Unidade é obrigatória' });
     }
 
-    if (!finalUnidadeId || !finalProfissionalId) {
-      return res.status(400).json({ error: 'Unidade e profissional são necessários' });
-    }
-
-    // ✅ NOVO: Validar se o profissional está vinculado à unidade
+    // Validar se o profissional está vinculado à unidade
     const vinculo = await prisma.profissionalUnidade.findFirst({
       where: {
-        profissionalId: finalProfissionalId,
-        unidadeId: finalUnidadeId,
+        profissionalId,
+        unidadeId,
         ativo: true,
         OR: [
           { dataFim: null },
@@ -1131,8 +1197,8 @@ router.post('/agendas', async (req: Request, res: Response) => {
 
     const agenda = await prisma.agendaMedica.create({
       data: {
-        profissionalId: finalProfissionalId,
-        unidadeId: finalUnidadeId,
+        profissionalId,
+        unidadeId,
         especialidadeId: especialidadeId || null,
         salaId: salaId || null,
         diaSemana: new Date(dataInicio).getDay(),
@@ -1142,7 +1208,7 @@ router.post('/agendas', async (req: Request, res: Response) => {
         vagasDisponiveis: vagasPorDia ? parseInt(vagasPorDia) : 20,
         dataInicio: new Date(dataInicio),
         dataFim: dataFim ? new Date(dataFim) : null,
-        isActive: true,
+        isActive: isActive !== undefined ? isActive : true,
       },
     });
 
@@ -1172,19 +1238,29 @@ router.put('/agendas/:id', async (req: Request, res: Response) => {
       salaId,
     } = req.body;
 
+    if (!dataInicio) {
+      return res.status(400).json({ error: 'Data de início é obrigatória' });
+    }
+
+    const updateData: any = {};
+    if (horaInicio !== undefined) updateData.horaInicio = horaInicio;
+    if (horaFim !== undefined) updateData.horaFim = horaFim;
+    if (tempoPorConsulta !== undefined) updateData.tempoPorConsulta = parseInt(tempoPorConsulta);
+    if (vagasDisponiveis !== undefined) updateData.vagasDisponiveis = parseInt(vagasDisponiveis);
+    if (dataInicio !== undefined) updateData.dataInicio = new Date(dataInicio);
+    if (dataFim !== undefined) updateData.dataFim = dataFim ? new Date(dataFim) : null;
+    if (especialidadeId !== undefined) updateData.especialidadeId = especialidadeId || null;
+    if (salaId !== undefined) updateData.salaId = salaId || null;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    // Atualizar diaSemana se dataInicio mudou
+    if (dataInicio) {
+      updateData.diaSemana = new Date(dataInicio).getDay();
+    }
+
     const agenda = await prisma.agendaMedica.update({
       where: { id },
-      data: {
-        horaInicio,
-        horaFim,
-        tempoPorConsulta: tempoPorConsulta ? parseInt(tempoPorConsulta) : undefined,
-        vagasDisponiveis: vagasDisponiveis ? parseInt(vagasDisponiveis) : undefined,
-        dataInicio: dataInicio ? new Date(dataInicio) : undefined,
-        dataFim: dataFim ? new Date(dataFim) : undefined,
-        especialidadeId,
-        salaId,
-        isActive,
-      },
+      data: updateData,
     });
 
     res.json(agenda);
@@ -1946,7 +2022,7 @@ router.get('/equipes/:id', async (req: Request, res: Response) => {
  */
 router.post('/equipes', async (req: Request, res: Response) => {
   try {
-    const { ine, nome, tipo, unidadeId, createdBy } = req.body;
+    const { ine, nome, tipo, unidadeId, createdBy, ativo } = req.body;
 
     // Validações
     if (!ine || !nome || !tipo || !unidadeId) {
@@ -1982,7 +2058,7 @@ router.post('/equipes', async (req: Request, res: Response) => {
         tipo,
         unidadeId,
         createdBy,
-        ativo: true,
+        ativo: ativo !== undefined ? ativo : true,
       },
       include: {
         unidade: {
@@ -2011,6 +2087,19 @@ router.put('/equipes/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { ine, nome, tipo, ativo } = req.body;
 
+    // Validações obrigatórias
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    if (!ine) {
+      return res.status(400).json({ error: 'INE é obrigatório' });
+    }
+
+    if (!tipo) {
+      return res.status(400).json({ error: 'Tipo é obrigatório' });
+    }
+
     const equipeExistente = await prisma.equipeSaude.findUnique({
       where: { id },
     });
@@ -2032,14 +2121,15 @@ router.put('/equipes/:id', async (req: Request, res: Response) => {
       }
     }
 
+    const updateData: any = {};
+    if (ine !== undefined) updateData.ine = ine;
+    if (nome !== undefined) updateData.nome = nome;
+    if (tipo !== undefined) updateData.tipo = tipo;
+    if (ativo !== undefined) updateData.ativo = ativo;
+
     const equipe = await prisma.equipeSaude.update({
       where: { id },
-      data: {
-        ...(ine && { ine }),
-        ...(nome && { nome }),
-        ...(tipo && { tipo }),
-        ...(ativo !== undefined && { ativo }),
-      },
+      data: updateData,
       include: {
         unidade: {
           select: {
@@ -2484,7 +2574,7 @@ router.get('/microareas/:id', async (req: Request, res: Response) => {
 router.post('/equipes/:equipeId/microareas', async (req: Request, res: Response) => {
   try {
     const { equipeId } = req.params;
-    const { numero, descricao, acsId } = req.body;
+    const { numero, descricao, acsId, ativo } = req.body;
 
     if (!numero) {
       return res.status(400).json({
@@ -2530,9 +2620,9 @@ router.post('/equipes/:equipeId/microareas', async (req: Request, res: Response)
       data: {
         equipeId,
         numero,
-        descricao,
-        acsId,
-        ativo: true,
+        descricao: descricao || null,
+        acsId: acsId || null,
+        ativo: ativo !== undefined ? ativo : true,
       },
       include: {
         equipe: {
@@ -2567,6 +2657,10 @@ router.put('/microareas/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { numero, descricao, acsId, ativo } = req.body;
 
+    if (!numero) {
+      return res.status(400).json({ error: 'Número é obrigatório' });
+    }
+
     const microareaExistente = await prisma.microarea.findUnique({
       where: { id },
     });
@@ -2592,8 +2686,8 @@ router.put('/microareas/:id', async (req: Request, res: Response) => {
       }
     }
 
-    // Se está mudando o ACS, verificar se existe
-    if (acsId && acsId !== microareaExistente.acsId) {
+    // Se está mudando o ACS, verificar se existe (permitir null para remover ACS)
+    if (acsId !== undefined && acsId !== null && acsId !== microareaExistente.acsId) {
       const acs = await prisma.user.findUnique({
         where: { id: acsId },
       });
@@ -2603,14 +2697,15 @@ router.put('/microareas/:id', async (req: Request, res: Response) => {
       }
     }
 
+    const updateData: any = {};
+    if (numero !== undefined) updateData.numero = numero;
+    if (descricao !== undefined) updateData.descricao = descricao || null;
+    if (acsId !== undefined) updateData.acsId = acsId;
+    if (ativo !== undefined) updateData.ativo = ativo;
+
     const microarea = await prisma.microarea.update({
       where: { id },
-      data: {
-        ...(numero && { numero }),
-        ...(descricao !== undefined && { descricao }),
-        ...(acsId !== undefined && { acsId }),
-        ...(ativo !== undefined && { ativo }),
-      },
+      data: updateData,
       include: {
         equipe: {
           select: {

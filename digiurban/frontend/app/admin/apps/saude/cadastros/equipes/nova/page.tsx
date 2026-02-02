@@ -30,6 +30,7 @@ export default function NovaEquipeESF() {
     nome: '',
     tipo: 'eSF',
     unidadeId: '',
+    ativo: true,
   });
 
   useEffect(() => {
