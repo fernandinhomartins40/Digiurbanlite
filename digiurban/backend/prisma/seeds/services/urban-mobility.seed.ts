@@ -247,7 +247,7 @@ export const urbanMobilityServices: ServiceDefinition[] = [
     departmentCode: 'MOBILIDADE_URBANA',
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
-    moduleType: 'RECLAMACAO_TRANSPORTE',
+    moduleType: 'RECLAMACAO_TRANSPORTE_PUBLICO',
     requiresDocuments: false,
     estimatedDays: 5,
     priority: 3,

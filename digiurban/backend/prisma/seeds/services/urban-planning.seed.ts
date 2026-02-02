@@ -353,7 +353,7 @@ export const urbanPlanningServices: ServiceDefinition[] = [
     departmentCode: 'PLANEJAMENTO_URBANO',
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.CAPTURA_COMPLETA,
-    moduleType: 'ALVARA_FUNCIONAMENTO',
+    moduleType: 'ALVARA_FUNCIONAMENTO_PLANEJAMENTO',
     requiresDocuments: true,
     requiredDocuments: ['CNPJ', 'Contrato Social', 'Laudo Técnico', 'Comprovante de Endereço'],
     estimatedDays: 15,

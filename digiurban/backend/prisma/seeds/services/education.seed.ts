@@ -413,7 +413,7 @@ export const educationServices: ServiceDefinition[] = [
     departmentCode: 'EDUCACAO',
     serviceType: 'COM_DADOS',
     serviceSubtype: ServiceSubtype.SOLICITACAO_SIMPLES,
-    moduleType: 'RECLAMACAO_TRANSPORTE',
+    moduleType: 'RECLAMACAO_TRANSPORTE_ESCOLAR',
     requiresDocuments: false,
     estimatedDays: 3,
     priority: 4,
