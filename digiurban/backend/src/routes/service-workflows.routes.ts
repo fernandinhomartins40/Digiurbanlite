@@ -227,6 +227,31 @@ router.delete('/service/:serviceId', adminAuthMiddleware, requireMinRole(UserRol
 });
 
 /**
+ * DELETE /api/service-workflows/delete-all
+ * Deletar TODOS os workflows
+ */
+router.delete('/delete-all', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req, res) => {
+  try {
+    const deletedCount = await serviceWorkflowService.deleteAllServiceWorkflows();
+
+    return res.json({
+      success: true,
+      data: {
+        deletedCount
+      },
+      message: `${deletedCount} workflow(s) deletado(s) com sucesso`
+    });
+  } catch (error) {
+    console.error('Erro ao deletar todos os workflows:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao deletar workflows',
+      details: error instanceof Error ? error.message : 'Erro desconhecido'
+    });
+  }
+});
+
+/**
  * POST /api/service-workflows/seed-all
  * Criar/atualizar workflows para todos os serviços
  * - Serviços COM_DADOS (com moduleType): workflows ESPECÍFICOS (79 workflows)

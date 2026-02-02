@@ -186,6 +186,14 @@ export async function deleteServiceWorkflow(serviceId: string) {
   });
 }
 
+/**
+ * Deleta todos os workflows
+ */
+export async function deleteAllServiceWorkflows() {
+  const result = await prisma.serviceWorkflow.deleteMany({});
+  return result.count;
+}
+
 // ============================================================================
 // APLICAÇÃO DE WORKFLOW A PROTOCOLOS
 // ============================================================================

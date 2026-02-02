@@ -53,6 +53,7 @@ export default function WorkflowsPage() {
   const [stats, setStats] = useState<any>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [creatingDefaults, setCreatingDefaults] = useState(false)
+  const [deletingAll, setDeletingAll] = useState(false)
 
   useEffect(() => {
     loadWorkflows()
@@ -156,6 +157,49 @@ export default function WorkflowsPage() {
         description: error instanceof Error ? error.message : 'Erro desconhecido',
         variant: 'destructive'
       })
+    }
+  }
+
+  const handleDeleteAll = async () => {
+    if (!confirm('⚠️ ATENÇÃO! Isso irá DELETAR TODOS OS WORKFLOWS do sistema. Esta ação NÃO PODE SER DESFEITA. Tem certeza?')) {
+      return
+    }
+
+    // Segunda confirmação para ação crítica
+    const confirmation = prompt('Digite "DELETAR TUDO" (sem aspas) para confirmar:')
+    if (confirmation !== 'DELETAR TUDO') {
+      toast({
+        title: 'Operação cancelada',
+        description: 'Texto de confirmação incorreto',
+        variant: 'default'
+      })
+      return
+    }
+
+    try {
+      setDeletingAll(true)
+      const response = await apiRequest('/service-workflows/delete-all', {
+        method: 'DELETE'
+      })
+
+      if (response.success) {
+        const { deletedCount } = response.data || {}
+        toast({
+          title: '✅ Todos os workflows foram deletados',
+          description: `${deletedCount || 0} workflow(s) removido(s) do sistema`,
+          duration: 5000
+        })
+        loadWorkflows()
+        loadStats()
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro ao deletar workflows',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive'
+      })
+    } finally {
+      setDeletingAll(false)
     }
   }
 
@@ -281,7 +325,7 @@ export default function WorkflowsPage() {
           <Button
             variant="outline"
             onClick={handleCreateDefaults}
-            disabled={loading || creatingDefaults}
+            disabled={loading || creatingDefaults || deletingAll}
             className="w-full sm:w-auto"
           >
             {creatingDefaults ? (
@@ -294,6 +338,25 @@ export default function WorkflowsPage() {
                 <Zap className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span className="hidden md:inline">Criar Workflows Padrão</span>
                 <span className="md:hidden">Workflows Padrão</span>
+              </>
+            )}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDeleteAll}
+            disabled={loading || creatingDefaults || deletingAll || workflows.length === 0}
+            className="w-full sm:w-auto"
+          >
+            {deletingAll ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                Deletando...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="hidden md:inline">Deletar Todos</span>
+                <span className="md:hidden">Deletar Todos</span>
               </>
             )}
           </Button>
