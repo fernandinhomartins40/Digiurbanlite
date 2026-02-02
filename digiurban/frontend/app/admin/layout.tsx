@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { AdminLayoutContent } from './layout-content'
+import './animations.css'
 
 export const metadata: Metadata = {
   title: {
