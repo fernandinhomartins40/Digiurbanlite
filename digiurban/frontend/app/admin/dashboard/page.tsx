@@ -1,5 +1,9 @@
 'use client'
 
+// ✅ CRÍTICO: Desabilitar cache desta página para sempre buscar dados frescos
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 import { useState, useEffect } from 'react'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -179,12 +183,27 @@ export default function AdminDashboard() {
     }
   }
 
-  // Carregar protocolos pendentes ao montar
+  // Carregar protocolos pendentes ao montar e sempre que retornar à página
   useEffect(() => {
     // ✅ Só executar quando autenticação estiver COMPLETA (loading: false) E tiver user/stats
     if (!loading && user?.role === 'ADMIN' && stats) {
+      // ✅ CRÍTICO: Sempre recarregar ao montar/retornar à página
       loadPendingProtocols()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user?.role, stats])
+
+  // ✅ NOVO: Recarregar dados quando a página ganha foco (usuário volta para a tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && !loading && user?.role === 'ADMIN' && stats) {
+        console.log('🔄 Página ganhou foco, recarregando dados...')
+        loadPendingProtocols()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user?.role, stats])
 

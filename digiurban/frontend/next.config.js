@@ -14,7 +14,8 @@ const withPWA = require('@ducanh2912/next-pwa').default({
     disableDevLogs: true,
     runtimeCaching: [
       {
-        urlPattern: /^https?:\/\/.*\/api\/.*/,
+        // ✅ CORRIGIDO: NÃO cachear rotas administrativas autenticadas
+        urlPattern: /^https?:\/\/.*\/api\/(?!admin|auth|protocols|chamados).*/,
         handler: 'NetworkFirst',
         options: {
           cacheName: 'api-cache',
@@ -27,6 +28,11 @@ const withPWA = require('@ducanh2912/next-pwa').default({
             statuses: [0, 200],
           },
         },
+      },
+      {
+        // ✅ NOVO: Rotas admin sempre buscar do servidor (NetworkOnly)
+        urlPattern: /^https?:\/\/.*\/api\/(admin|auth|protocols|chamados).*/,
+        handler: 'NetworkOnly',
       },
       {
         urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
