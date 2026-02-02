@@ -6,12 +6,15 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   buildExcludes: [/middleware-manifest\.json$/],
   scope: '/',
   sw: 'sw.js',
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  cacheOnFrontEndNav: false, // ✅ CORRIGIDO: Desabilitar cache de navegação de páginas
+  aggressiveFrontEndNavCaching: false, // ✅ CORRIGIDO: Desabilitar cache agressivo de navegação
   reloadOnOnline: true,
   swcMinify: true,
   workboxOptions: {
     disableDevLogs: true,
+    // ✅ NOVO: Não cachear páginas HTML administrativas
+    navigateFallback: undefined, // Desabilitar fallback de navegação
+    navigateFallbackDenylist: [/^\/admin/, /^\/_next\/data/], // Não cachear rotas admin
     runtimeCaching: [
       {
         // ✅ CORRIGIDO: NÃO cachear rotas administrativas autenticadas
@@ -32,6 +35,16 @@ const withPWA = require('@ducanh2912/next-pwa').default({
       {
         // ✅ NOVO: Rotas admin sempre buscar do servidor (NetworkOnly)
         urlPattern: /^https?:\/\/.*\/api\/(admin|auth|protocols|chamados).*/,
+        handler: 'NetworkOnly',
+      },
+      {
+        // ✅ NOVO: Páginas HTML admin nunca cachear
+        urlPattern: /^https?:\/\/.*\/admin.*/,
+        handler: 'NetworkOnly',
+      },
+      {
+        // ✅ NOVO: Dados Next.js (_next/data) do admin nunca cachear
+        urlPattern: /^\/_next\/data\/.*\/admin.*/,
         handler: 'NetworkOnly',
       },
       {
