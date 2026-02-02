@@ -125,6 +125,18 @@ model User {
   indisponibilidades     IndisponibilidadeProfissional[] @relation("ProfissionalIndisponibilidades")
   vinculosUnidades       ProfissionalUnidade[]           @relation("UserProfissionalUnidades")
 
+  // ✅ SISTEMA UNIFICADO DE VINCULAÇÃO V2.0
+  assignments              EmployeeAssignment[]  @relation("ServidorVinculos")
+  subordinados             EmployeeHierarchy[]   @relation("Subordinados")
+  supervisores             EmployeeHierarchy[]   @relation("Supervisores")
+  unidadesResponsavel      OrganizationalUnit[]  @relation("ResponsavelUnidade")
+  equipesCoordena          Team[]                @relation("CoordenadorEquipe")
+  equipesParticipa         TeamMember[]          @relation("MembroEquipes")
+  healthData               HealthProfessionalData? @relation("UserHealthData")
+  educationData            EducationProfessionalData? @relation("UserEducationData")
+  engineeringData          EngineeringProfessionalData? @relation("UserEngineeringData")
+  socialAssistanceData     SocialAssistanceProfessionalData? @relation("UserSocialAssistanceData")
+
   @@map("users")
 }
 
@@ -217,6 +229,13 @@ model Department {
 
   // Chamados administrativos
   tickets AdminTicket[]
+
+  // ✅ SISTEMA UNIFICADO DE VINCULAÇÃO V2.0
+  organizationalUnits OrganizationalUnit[] @relation("DepartmentOrganizationalUnits")
+  positions           Position[]           @relation("DepartmentPositions")
+  functions           Function[]           @relation("DepartmentFunctions")
+  assignments         EmployeeAssignment[] @relation("DepartmentAssignments")
+  teams               Team[]               @relation("DepartmentTeams")
 
   @@map("departments")
 }
@@ -7448,4 +7467,553 @@ enum TipoIndisponibilidadeProfissional {
   TREINAMENTO
   REUNIAO
   OUTRO
+}
+
+// ============================================
+// SISTEMA UNIFICADO DE VINCULAÇÃO DE SERVIDORES
+// Versão 2.0 - Sistema único para todas as secretarias
+// ============================================
+
+// ============================================
+// ESTRUTURA ORGANIZACIONAL
+// ============================================
+
+model OrganizationalUnit {
+  id    String @id @default(cuid())
+  nome  String
+  sigla String?
+  tipo  TipoUnidadeOrganizacional // SECRETARIA, DIRETORIA, COORDENADORIA, DIVISAO, SETOR
+  nivel Int // Nível hierárquico (1=Secretaria, 2=Diretoria, etc)
+
+  departmentId String
+  department   Department @relation("DepartmentOrganizationalUnits", fields: [departmentId], references: [id])
+
+  // Hierarquia (auto-relacionamento)
+  parentId String?
+  parent   OrganizationalUnit?  @relation("UnidadeHierarquia", fields: [parentId], references: [id])
+  children OrganizationalUnit[] @relation("UnidadeHierarquia")
+
+  // Responsável pela unidade
+  responsavelId String?
+  responsavel   User?   @relation("ResponsavelUnidade", fields: [responsavelId], references: [id])
+
+  // Dados complementares
+  descricao     String?
+  competencias  Json? // Array de competências da unidade
+  endereco      String?
+  telefone      String?
+  email         String?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relacionamentos
+  positions   Position[]
+  assignments EmployeeAssignment[]
+  teams       Team[]
+  hierarchies EmployeeHierarchy[]
+
+  @@unique([departmentId, sigla])
+  @@index([departmentId, tipo, isActive])
+  @@index([parentId])
+  @@map("organizational_units")
+}
+
+enum TipoUnidadeOrganizacional {
+  SECRETARIA
+  DIRETORIA
+  COORDENADORIA
+  DIVISAO
+  SETOR
+  NUCLEO
+  GERENCIA
+  UNIDADE_ESPECIAL
+  DEPARTAMENTO
+  ASSESSORIA
+}
+
+// ============================================
+// CARGOS E FUNÇÕES
+// ============================================
+
+model Position {
+  id        String  @id @default(cuid())
+  nome      String
+  descricao String?
+  cbo       String? // Classificação Brasileira de Ocupações
+
+  tipo      TipoCargo   // EFETIVO, COMISSIONADO, TEMPORARIO, ESTAGIARIO
+  categoria String? // "Médico", "Professor", "Engenheiro", etc
+  nivel     NivelCargo? // BASICO, TECNICO, SUPERIOR, GERENCIAL, DIRECAO
+
+  requisitos  Json? // Escolaridade, experiência, certificações
+  atribuicoes Json? // Array de atribuições do cargo
+
+  departmentId String
+  department   Department @relation("DepartmentPositions", fields: [departmentId], references: [id])
+
+  organizationalUnitId String?
+  organizationalUnit   OrganizationalUnit? @relation(fields: [organizationalUnitId], references: [id])
+
+  cargaHorariaPadrao Int?     @default(40) // Horas semanais padrão
+  salarioBase        Decimal? @db.Decimal(10, 2) // Salário base do cargo
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relacionamentos
+  assignments EmployeeAssignment[]
+
+  @@unique([departmentId, nome])
+  @@index([departmentId, tipo, isActive])
+  @@index([organizationalUnitId])
+  @@map("positions")
+}
+
+enum TipoCargo {
+  EFETIVO
+  COMISSIONADO
+  TEMPORARIO
+  CONTRATADO
+  ESTAGIARIO
+  VOLUNTARIO
+}
+
+enum NivelCargo {
+  OPERACIONAL
+  TECNICO
+  ANALISTA
+  ESPECIALISTA
+  COORDENACAO
+  GERENCIA
+  DIRECAO
+  SECRETARIADO
+}
+
+model Function {
+  id        String  @id @default(cuid())
+  nome      String
+  descricao String?
+
+  tipo    TipoFuncao // GRATIFICADA, COMISSIONADA, DESIGNACAO
+  simbolo String? // FG-1, CC-2, etc
+  valor   Decimal?   @db.Decimal(10, 2) // Valor da gratificação
+
+  departmentId String
+  department   Department @relation("DepartmentFunctions", fields: [departmentId], references: [id])
+
+  requisitos  Json?
+  atribuicoes Json?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relacionamentos
+  assignments EmployeeAssignment[]
+
+  @@unique([departmentId, simbolo])
+  @@index([departmentId, tipo, isActive])
+  @@map("functions")
+}
+
+enum TipoFuncao {
+  GRATIFICADA // Função gratificada
+  COMISSIONADA // Cargo em comissão
+  DESIGNACAO // Designação temporária
+  REPRESENTACAO // Representação institucional
+}
+
+// ============================================
+// VÍNCULOS FUNCIONAIS (SISTEMA UNIFICADO)
+// ============================================
+
+model EmployeeAssignment {
+  id String @id @default(cuid())
+
+  userId String
+  user   User   @relation("ServidorVinculos", fields: [userId], references: [id], onDelete: Cascade)
+
+  departmentId String
+  department   Department @relation("DepartmentAssignments", fields: [departmentId], references: [id])
+
+  organizationalUnitId String?
+  organizationalUnit   OrganizationalUnit? @relation(fields: [organizationalUnitId], references: [id])
+
+  positionId String?
+  position   Position? @relation(fields: [positionId], references: [id])
+
+  functionId String?
+  function   Function? @relation(fields: [functionId], references: [id])
+
+  tipo     TipoVinculo     // LOTACAO, CEDENCIA, REQUISICAO, REMOCAO
+  situacao SituacaoVinculo // ATIVO, AFASTADO, LICENCA, SUSPENSO
+
+  isPrimary Boolean @default(false) // Vínculo principal do servidor
+
+  dataInicio DateTime
+  dataFim    DateTime?
+
+  cargaHoraria        Int? // Horas semanais
+  percentualDedicacao Int? // 0-100%
+
+  observacoes      String?
+  documentoVinculo String? // Portaria, decreto, etc
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relacionamentos
+  auditorias AssignmentAudit[]
+
+  @@unique([userId, organizationalUnitId, positionId, dataInicio])
+  @@index([userId, isPrimary, situacao])
+  @@index([departmentId, situacao])
+  @@index([organizationalUnitId, situacao])
+  @@index([positionId])
+  @@index([situacao])
+  @@map("employee_assignments")
+}
+
+enum TipoVinculo {
+  LOTACAO // Lotação regular
+  CEDENCIA // Cedido a outro órgão
+  REQUISICAO // Requisitado de outro órgão
+  REMOCAO // Remoção interna
+  DISPOSICAO // À disposição
+}
+
+enum SituacaoVinculo {
+  ATIVO
+  AFASTADO // Afastamento temporário
+  LICENCA // Licença médica/prêmio
+  SUSPENSO // Suspensão disciplinar
+  CEDIDO // Cedido a outro órgão
+  INATIVO
+}
+
+// ============================================
+// HIERARQUIA ORGANIZACIONAL
+// ============================================
+
+model EmployeeHierarchy {
+  id String @id @default(cuid())
+
+  subordinadoId String
+  subordinado   User   @relation("Subordinados", fields: [subordinadoId], references: [id], onDelete: Cascade)
+
+  supervisorId String
+  supervisor   User   @relation("Supervisores", fields: [supervisorId], references: [id], onDelete: Cascade)
+
+  tipo TipoHierarquia // HIERARQUICO, FUNCIONAL, TECNICO
+
+  organizationalUnitId String?
+  organizationalUnit   OrganizationalUnit? @relation(fields: [organizationalUnitId], references: [id])
+
+  dataInicio DateTime @default(now())
+  dataFim    DateTime?
+  ativo      Boolean  @default(true)
+
+  observacoes String?
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  @@unique([subordinadoId, supervisorId, tipo, dataInicio])
+  @@index([subordinadoId, ativo])
+  @@index([supervisorId, ativo])
+  @@index([organizationalUnitId])
+  @@map("employee_hierarchies")
+}
+
+enum TipoHierarquia {
+  HIERARQUICO // Chefe-subordinado direto
+  FUNCIONAL // Coordenação funcional
+  TECNICO // Supervisão técnica
+  MATRICIAL // Alocação matricial em projetos
+}
+
+// ============================================
+// DADOS PROFISSIONAIS ESPECÍFICOS POR ÁREA
+// ============================================
+
+model HealthProfessionalData {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation("UserHealthData", fields: [userId], references: [id], onDelete: Cascade)
+
+  categoria String // MEDICO, ENFERMEIRO, ACS, DENTISTA, etc
+
+  registroProfissional String? @unique
+  tipoRegistro         String? // CRM, COREN, CRO, CRP
+  ufRegistro           String?
+
+  cns String? @unique
+  cbo String?
+
+  especialidades Json? // Array de IDs de especialidades
+
+  aceitaAgendamento  Boolean @default(true)
+  tempoMedioConsulta Int?    @default(30)
+
+  ativo            Boolean   @default(true)
+  motivoInativacao String?
+  dataInativacao   DateTime?
+
+  observacoes String?
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  @@index([userId])
+  @@index([categoria, ativo])
+  @@map("health_professional_data")
+}
+
+model EducationProfessionalData {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation("UserEducationData", fields: [userId], references: [id], onDelete: Cascade)
+
+  categoria String // PROFESSOR, COORDENADOR, DIRETOR, ASSISTENTE
+
+  registroProfissional String? // Registro no conselho
+  formacao             String? // Licenciatura em Matemática, etc
+  posGraduacao         Json? // Array de especializações
+
+  disciplinas Json? // Array de disciplinas que leciona
+  nivelEnsino Json? // INFANTIL, FUNDAMENTAL_I, FUNDAMENTAL_II, MEDIO
+
+  ativo Boolean @default(true)
+
+  observacoes String?
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  @@index([userId])
+  @@index([categoria, ativo])
+  @@map("education_professional_data")
+}
+
+model EngineeringProfessionalData {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation("UserEngineeringData", fields: [userId], references: [id], onDelete: Cascade)
+
+  categoria String // ENGENHEIRO_CIVIL, ARQUITETO, TOPOGRAFO, etc
+
+  registroProfissional String? @unique // CREA, CAU
+  tipoRegistro         String? // CREA, CAU
+  ufRegistro           String?
+
+  especialidades Json? // Array de especialidades
+
+  ativo Boolean @default(true)
+
+  observacoes String?
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  @@index([userId])
+  @@index([categoria, ativo])
+  @@map("engineering_professional_data")
+}
+
+model SocialAssistanceProfessionalData {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user   User   @relation("UserSocialAssistanceData", fields: [userId], references: [id], onDelete: Cascade)
+
+  categoria String // ASSISTENTE_SOCIAL, PSICOLOGO, EDUCADOR_SOCIAL, etc
+
+  registroProfissional String? @unique // CRESS, CRP
+  tipoRegistro         String? // CRESS, CRP
+  ufRegistro           String?
+
+  areasAtuacao Json? // Array de áreas de atuação
+
+  ativo Boolean @default(true)
+
+  observacoes String?
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  @@index([userId])
+  @@index([categoria, ativo])
+  @@map("social_assistance_professional_data")
+}
+
+// ============================================
+// EQUIPES E PROJETOS
+// ============================================
+
+model Team {
+  id String @id @default(cuid())
+
+  nome       String
+  sigla      String?
+  tipo       TipoTeam // PERMANENTE, TEMPORARIA, PROJETO, GRUPO_TRABALHO
+  finalidade String?
+
+  departmentId String
+  department   Department @relation("DepartmentTeams", fields: [departmentId], references: [id])
+
+  organizationalUnitId String?
+  organizationalUnit   OrganizationalUnit? @relation(fields: [organizationalUnitId], references: [id])
+
+  coordenadorId String?
+  coordenador   User?   @relation("CoordenadorEquipe", fields: [coordenadorId], references: [id])
+
+  dataInicio DateTime @default(now())
+  dataFim    DateTime?
+
+  ativo Boolean @default(true)
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  // Relacionamentos
+  membros TeamMember[]
+
+  @@unique([departmentId, sigla])
+  @@index([departmentId, ativo])
+  @@index([organizationalUnitId])
+  @@map("teams")
+}
+
+enum TipoTeam {
+  PERMANENTE // Equipe permanente
+  TEMPORARIA // Equipe temporária
+  PROJETO // Equipe de projeto
+  GRUPO_TRABALHO // Grupo de trabalho
+  COMISSAO // Comissão
+  CONSELHO // Conselho
+}
+
+model TeamMember {
+  id String @id @default(cuid())
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("MembroEquipes", fields: [userId], references: [id], onDelete: Cascade)
+
+  papel       String? // "Coordenador", "Membro", "Secretário", etc
+  atribuicoes String?
+
+  dataInicio DateTime @default(now())
+  dataFim    DateTime?
+  ativo      Boolean  @default(true)
+
+  // Auditoria
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String?
+
+  @@unique([teamId, userId, dataInicio])
+  @@index([userId, ativo])
+  @@index([teamId, ativo])
+  @@map("team_members")
+}
+
+// ============================================
+// AUDITORIA UNIFICADA
+// ============================================
+
+model AssignmentAudit {
+  id String @id @default(cuid())
+
+  assignmentId String?
+  assignment   EmployeeAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+
+  tipo TipoOperacaoVinculo // CRIACAO, ATIVACAO, DESATIVACAO, TRANSFERENCIA, etc
+
+  userId   String
+  userName String // Denormalizado
+  userCPF  String?
+
+  departmentId   String?
+  departmentName String?
+
+  unitOrigemId   String?
+  unitOrigemName String?
+  unitDestinoId  String?
+  unitDestinoName String?
+
+  positionOrigemId    String?
+  positionOrigemName  String?
+  positionDestinoId   String?
+  positionDestinoName String?
+
+  executorId   String? // Quem executou a ação
+  executorName String?
+
+  aprovadorId   String? // Quem aprovou
+  aprovadorName String?
+
+  documentoLegal String? // Portaria, decreto
+  motivo         String?
+  detalhes       Json?
+
+  dataEfetivacao DateTime? // Data de efetivação da mudança
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, tipo, createdAt])
+  @@index([assignmentId])
+  @@index([tipo, createdAt])
+  @@map("assignment_audits")
+}
+
+enum TipoOperacaoVinculo {
+  CRIACAO
+  ATIVACAO
+  DESATIVACAO
+  TRANSFERENCIA
+  REMOCAO
+  PROMOCAO
+  DESIGNACAO
+  EXONERACAO
+  ALTERACAO_CARGA_HORARIA
+  ALTERACAO_FUNCAO
+  AFASTAMENTO
+  RETORNO
+  CEDENCIA
+  REQUISICAO
 }

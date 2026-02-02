@@ -496,6 +496,51 @@ try {
 
 console.log('✅ Apps de Saúde carregados com sucesso! Total: ~132 endpoints');
 
+// ============================================================
+// 🏛️ SISTEMA UNIFICADO DE VINCULAÇÃO DE SERVIDORES V2.0
+// ============================================================
+console.log('🏛️ Carregando Sistema Unificado de Vinculação de Servidores...');
+try {
+  console.log('   → Unidades Organizacionais...');
+  const organizationalUnitsRoutes = require('./routes/organizational-units.routes').default;
+  app.use('/api/organizational-units', organizationalUnitsRoutes);
+  console.log('   ✅ organizational-units carregado');
+
+  console.log('   → Cargos...');
+  const positionsRoutes = require('./routes/positions.routes').default;
+  app.use('/api/positions', positionsRoutes);
+  console.log('   ✅ positions carregado');
+
+  console.log('   → Funções Gratificadas/Comissionadas...');
+  const functionsRoutes = require('./routes/functions.routes').default;
+  app.use('/api/functions', functionsRoutes);
+  console.log('   ✅ functions carregado');
+
+  console.log('   → Vínculos Funcionais...');
+  const employeeAssignmentsRoutes = require('./routes/employee-assignments.routes').default;
+  app.use('/api/employee-assignments', employeeAssignmentsRoutes);
+  console.log('   ✅ employee-assignments carregado');
+
+  console.log('   → Hierarquia Organizacional...');
+  const employeeHierarchiesRoutes = require('./routes/employee-hierarchies.routes').default;
+  app.use('/api/employee-hierarchies', employeeHierarchiesRoutes);
+  console.log('   ✅ employee-hierarchies carregado');
+
+  console.log('   → Equipes e Grupos de Trabalho...');
+  const teamsRoutes = require('./routes/teams.routes').default;
+  app.use('/api/teams', teamsRoutes);
+  console.log('   ✅ teams carregado');
+
+  console.log('   → Dados Profissionais Específicos...');
+  const professionalDataRoutes = require('./routes/professional-data.routes').default;
+  app.use('/api/professional-data', professionalDataRoutes);
+  console.log('   ✅ professional-data carregado');
+
+  console.log('✅ Sistema Unificado de Vinculação V2.0 carregado! Total: ~85 novos endpoints');
+} catch (e) {
+  console.error('❌ Erro ao carregar Sistema Unificado de Vinculação:', e);
+}
+
 console.log('✅ Todas as rotas carregadas com sucesso!');
 
 // ============================================================
