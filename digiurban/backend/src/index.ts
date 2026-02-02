@@ -541,6 +541,18 @@ try {
   console.error('❌ Erro ao carregar Sistema Unificado de Vinculação:', e);
 }
 
+// ============================================================
+// 🔗 ROTAS ADAPTADORAS: Saúde → Sistema Unificado V2.0
+// ============================================================
+console.log('🔗 Carregando Rotas Adaptadoras (Saúde → Sistema Unificado)...');
+try {
+  const saudeUnifiedAdapterRoutes = require('./routes/saude-unified-adapter.routes').default;
+  app.use('/api/saude', saudeUnifiedAdapterRoutes);
+  console.log('✅ Rotas adaptadoras de saúde carregadas! Total: ~10 endpoints');
+} catch (e) {
+  console.error('❌ Erro ao carregar rotas adaptadoras:', e);
+}
+
 console.log('✅ Todas as rotas carregadas com sucesso!');
 
 // ============================================================

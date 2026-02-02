@@ -2421,6 +2421,10 @@ model UnidadeSaude {
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
+  // ✅ NOVO: Vínculo com Sistema Unificado V2.0
+  organizationalUnitId String?             @unique
+  organizationalUnit   OrganizationalUnit? @relation("UnidadeSaudeOrgUnit", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
   // Relacionamentos - Apps Saúde
   chamadas              ChamadaPainel[]
   imunizacoes           ImunizacaoCidadao[]
@@ -2447,6 +2451,7 @@ model UnidadeSaude {
   @@index([tipo, isActive])
   @@index([isActive])
   @@index([cnes])
+  @@index([organizationalUnitId])
   @@map("unidades_saude")
 }
 
@@ -6864,6 +6869,10 @@ model EquipeSaude {
   unidadeId String
   unidade   UnidadeSaude @relation(fields: [unidadeId], references: [id])
 
+  // ✅ NOVO: Vínculo com Sistema Unificado V2.0
+  teamId String? @unique
+  team   Team?   @relation("EquipeSaudeTeam", fields: [teamId], references: [id], onDelete: SetNull)
+
   // Status
   ativo Boolean @default(true)
 
@@ -6881,6 +6890,7 @@ model EquipeSaude {
 
   @@index([unidadeId])
   @@index([ativo])
+  @@index([teamId])
   @@map("equipes_saude")
 }
 
@@ -7518,6 +7528,9 @@ model OrganizationalUnit {
   teams       Team[]
   hierarchies EmployeeHierarchy[]
 
+  // ✅ NOVO: Relacionamento com UnidadeSaude (apps específicos)
+  unidadeSaude UnidadeSaude? @relation("UnidadeSaudeOrgUnit")
+
   @@unique([departmentId, sigla])
   @@index([departmentId, tipo, isActive])
   @@index([parentId])
@@ -7775,7 +7788,8 @@ model HealthProfessionalData {
   aceitaAgendamento  Boolean @default(true)
   tempoMedioConsulta Int?    @default(30)
 
-  ativo            Boolean   @default(true)
+  // Status profissional com enum detalhado
+  status           StatusProfissionalSaude @default(ATIVO)
   motivoInativacao String?
   dataInativacao   DateTime?
 
@@ -7787,7 +7801,8 @@ model HealthProfessionalData {
   createdBy String?
 
   @@index([userId])
-  @@index([categoria, ativo])
+  @@index([categoria, status])
+  @@index([status])
   @@map("health_professional_data")
 }
 
@@ -7877,6 +7892,19 @@ model SocialAssistanceProfessionalData {
 }
 
 // ============================================
+// ENUMS PARA DADOS PROFISSIONAIS
+// ============================================
+
+enum StatusProfissionalSaude {
+  ATIVO
+  INATIVO
+  FERIAS
+  AFASTADO
+  LICENCA
+  APOSENTADO
+}
+
+// ============================================
 // EQUIPES E PROJETOS
 // ============================================
 
@@ -7909,6 +7937,9 @@ model Team {
 
   // Relacionamentos
   membros TeamMember[]
+
+  // ✅ NOVO: Relacionamento com EquipeSaude (apps específicos)
+  equipeSaude EquipeSaude? @relation("EquipeSaudeTeam")
 
   @@unique([departmentId, sigla])
   @@index([departmentId, ativo])
