@@ -17,6 +17,8 @@ import * as pendingService from '../services/protocol-pending.service';
 import { getWorkflowByServiceId } from '../services/service-workflow.service';
 import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
 import type { WorkflowStage } from '../types/workflow.types';
+import * as protocolAssignmentService from '../services/protocolAssignmentService';
+import { runRevertExpiredDelegationsManually } from '../jobs/revertExpiredDelegations.job';
 
 const router = Router();
 
@@ -752,121 +754,299 @@ router.post('/:id/comments', async (req: Request, res: Response) => {
 
 /**
  * PATCH /api/protocols-simplified/:id/assign
+ * ✅ REFATORADO: Integração com Sistema Unificado V2.0
  * Atribui protocolo a um usuário com validações completas
  */
 router.patch('/:id/assign', requireMinRole(UserRole.MANAGER), async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthenticatedRequest;
     const { id } = req.params;
-    const { assignedUserId, comment } = req.body;
+    const { assignedUserId, motivo, comment } = req.body;
 
     if (!assignedUserId) {
       return res.status(400).json({
         success: false,
         error: 'assignedUserId é obrigatório'
-        });
-    }
-
-    // Buscar protocolo com departamento
-    const protocol = await prisma.protocolSimplified.findUnique({
-      where: { id },
-      include: {
-        department: true,
-        service: true,
-        citizen: true
-      }
-    });
-
-    if (!protocol) {
-      return res.status(404).json({
-        success: false,
-        error: 'Protocolo não encontrado'
       });
     }
 
-    // ✅ VALIDAR: servidor pertence ao departamento correto
-    const assignedUser = await prisma.user.findFirst({
-      where: {
-        id: assignedUserId,
-        departmentId: protocol.departmentId,
-        isActive: true,
-        role: { in: [UserRole.USER, UserRole.COORDINATOR, UserRole.MANAGER] }
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true
-      }
-    });
-
-    if (!assignedUser) {
-      return res.status(400).json({
-        success: false,
-        error: 'Servidor não encontrado ou não pertence ao departamento responsável pelo protocolo'
-      });
-    }
-
-    // ✅ Verificar se MANAGER está atribuindo para seu próprio departamento
-    if (authReq.user.role === UserRole.MANAGER && protocol.departmentId !== authReq.user.departmentId) {
-      return res.status(403).json({
-        success: false,
-        error: 'Você só pode atribuir protocolos do seu departamento'
-      });
-    }
-
-    // Atualizar protocolo
-    const updatedProtocol = await prisma.protocolSimplified.update({
-      where: { id },
-      data: { assignedUserId },
-      include: {
-        assignedUser: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-          }
-        },
-        citizen: true,
-        service: true,
-        department: true
-      }
-    });
-
-    // ✅ Registrar histórico
-    await prisma.protocolHistorySimplified.create({
-      data: {
-        protocolId: id,
-        action: 'ATRIBUIDO',
-        comment: comment || `Protocolo atribuído para ${assignedUser.name} (${assignedUser.role})`,
-        userId: authReq.userId
-      }
-    });
-
-    // ✅ CRIAR NOTIFICAÇÃO para cidadão (informando sobre atribuição)
-    // Nota: O servidor atribuído receberá notificação por outro meio (email, sistema interno)
-    await prisma.notification.create({
-      data: {
-        citizenId: protocol.citizenId,
-        title: 'Protocolo em Andamento',
-        message: `Seu protocolo ${protocol.number} foi atribuído para o servidor ${assignedUser.name} e está sendo processado`,
-        type: 'INFO',
-        protocolId: protocol.id
-      }
+    // ✅ NOVO: Usar serviço de atribuição integrado
+    const result = await protocolAssignmentService.assignProtocolToServer({
+      protocolId: id,
+      assignedUserId,
+      assignedById: authReq.userId!,
+      assignedByName: authReq.user.name,
+      motivo,
+      comment
     });
 
     return res.json({
       success: true,
-      data: updatedProtocol,
-      message: `Protocolo atribuído com sucesso para ${assignedUser.name}`
-        });
+      data: result.protocol,
+      assignment: result.assignment,
+      employeeAssignment: result.employeeAssignment,
+      message: `Protocolo atribuído com sucesso para ${result.protocol.assignedUser?.name}`
+    });
   } catch (error: any) {
     console.error('Erro ao atribuir protocolo:', error);
+
+    // ✅ NOVO: Tratamento de erros específicos (FERIAS, AFASTADO)
+    if (error.code && error.code.startsWith('SERVIDOR_')) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+        code: error.code,
+        suggestedDelegates: error.suggestedDelegates || []
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: error.message || 'Erro ao atribuir protocolo'
-        });
+    });
+  }
+});
+
+// ========================================
+// ✅ NOVO: DELEGAÇÃO TEMPORÁRIA
+// ========================================
+
+/**
+ * POST /api/protocols-simplified/:id/delegate
+ * Delegar protocolo temporariamente (férias, afastamento)
+ */
+router.post('/:id/delegate', requireMinRole(UserRole.MANAGER), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = req.params;
+    const { delegadoParaUserId, motivoDelegacao, ativaAte, comentario } = req.body;
+
+    if (!delegadoParaUserId || !motivoDelegacao || !ativaAte) {
+      return res.status(400).json({
+        success: false,
+        error: 'delegadoParaUserId, motivoDelegacao e ativaAte são obrigatórios'
+      });
+    }
+
+    const assignment = await protocolAssignmentService.delegateProtocol({
+      protocolId: id,
+      delegadoParaUserId,
+      delegadoPorUserId: authReq.userId!,
+      delegadoPorName: authReq.user.name,
+      motivoDelegacao,
+      ativaAte: new Date(ativaAte),
+      comentario
+    });
+
+    return res.json({
+      success: true,
+      data: assignment,
+      message: 'Protocolo delegado com sucesso'
+    });
+  } catch (error: any) {
+    console.error('Erro ao delegar protocolo:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao delegar protocolo'
+    });
+  }
+});
+
+// ========================================
+// ✅ NOVO: ENCAMINHAMENTO INTERDEPARTAMENTAL
+// ========================================
+
+/**
+ * POST /api/protocols-simplified/:id/forward
+ * Encaminhar protocolo para outro servidor/departamento
+ */
+router.post('/:id/forward', requireMinRole(UserRole.MANAGER), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = req.params;
+    const {
+      forwardToUserId,
+      forwardToDepartmentId,
+      tipoEncaminhamento,
+      motivo,
+      prazoResposta,
+      comentario
+    } = req.body;
+
+    if (!forwardToUserId || !tipoEncaminhamento || !motivo) {
+      return res.status(400).json({
+        success: false,
+        error: 'forwardToUserId, tipoEncaminhamento e motivo são obrigatórios'
+      });
+    }
+
+    if (!['ENCAMINHADO', 'CONSULTA'].includes(tipoEncaminhamento)) {
+      return res.status(400).json({
+        success: false,
+        error: 'tipoEncaminhamento deve ser ENCAMINHADO ou CONSULTA'
+      });
+    }
+
+    const assignment = await protocolAssignmentService.forwardProtocol({
+      protocolId: id,
+      forwardToUserId,
+      forwardToDepartmentId,
+      forwardedById: authReq.userId!,
+      forwardedByName: authReq.user.name,
+      tipoEncaminhamento,
+      motivo,
+      prazoResposta: prazoResposta ? new Date(prazoResposta) : undefined,
+      comentario
+    });
+
+    return res.json({
+      success: true,
+      data: assignment,
+      message: `Protocolo ${tipoEncaminhamento === 'ENCAMINHADO' ? 'encaminhado' : 'enviado para consulta'} com sucesso`
+    });
+  } catch (error: any) {
+    console.error('Erro ao encaminhar protocolo:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao encaminhar protocolo'
+    });
+  }
+});
+
+// ========================================
+// ✅ NOVO: ATRIBUIÇÃO PARA EQUIPE
+// ========================================
+
+/**
+ * POST /api/protocols-simplified/:id/assign-team
+ * Atribuir protocolo para uma equipe completa
+ */
+router.post('/:id/assign-team', requireMinRole(UserRole.MANAGER), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = req.params;
+    const { teamId, comentario } = req.body;
+
+    if (!teamId) {
+      return res.status(400).json({
+        success: false,
+        error: 'teamId é obrigatório'
+      });
+    }
+
+    const result = await protocolAssignmentService.assignProtocolToTeam({
+      protocolId: id,
+      teamId,
+      assignedById: authReq.userId!,
+      assignedByName: authReq.user.name,
+      comentario
+    });
+
+    return res.json({
+      success: true,
+      data: result,
+      message: `Protocolo atribuído para equipe ${result.team.nome} (${result.assignments.length} membros)`
+    });
+  } catch (error: any) {
+    console.error('Erro ao atribuir protocolo para equipe:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao atribuir protocolo para equipe'
+    });
+  }
+});
+
+// ========================================
+// ✅ NOVO: HISTÓRICO DE ATRIBUIÇÕES
+// ========================================
+
+/**
+ * GET /api/protocols-simplified/:id/assignments
+ * Listar histórico de atribuições de um protocolo
+ */
+router.get('/:id/assignments', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const result = await protocolAssignmentService.getProtocolAssignments(id);
+
+    return res.json({
+      success: true,
+      data: result
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar histórico de atribuições:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao buscar histórico de atribuições'
+    });
+  }
+});
+
+// ========================================
+// ✅ NOVO: MÉTRICAS DE CARGA DE TRABALHO
+// ========================================
+
+/**
+ * GET /api/protocols-simplified/workload-stats
+ * Obter métricas de carga de trabalho dos servidores
+ */
+router.get('/workload-stats', async (req: Request, res: Response) => {
+  try {
+    const { departmentId } = req.query;
+
+    const stats = await protocolAssignmentService.getWorkloadStats(
+      departmentId as string | undefined
+    );
+
+    return res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar métricas de carga:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao buscar métricas de carga'
+    });
+  }
+});
+
+// ========================================
+// ✅ NOVO: SUGESTÃO INTELIGENTE DE ATRIBUIÇÃO
+// ========================================
+
+/**
+ * GET /api/protocols-simplified/:id/suggest-assignee
+ * Sugerir melhor servidor para atribuição
+ */
+router.get('/:id/suggest-assignee', requireMinRole(UserRole.MANAGER), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { departmentId } = req.query;
+
+    if (!departmentId) {
+      return res.status(400).json({
+        success: false,
+        error: 'departmentId é obrigatório'
+      });
+    }
+
+    const suggestions = await protocolAssignmentService.suggestAssignee(
+      id,
+      departmentId as string
+    );
+
+    return res.json({
+      success: true,
+      data: suggestions
+    });
+  } catch (error: any) {
+    console.error('Erro ao sugerir servidores:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao sugerir servidores'
+    });
   }
 });
 
@@ -2199,6 +2379,32 @@ router.post('/:id/send-payment-info', requireMinRole(UserRole.USER), async (req,
     return res.status(500).json({
       success: false,
       error: error.message || 'Erro ao enviar informações de pagamento'
+    });
+  }
+});
+
+// ========================================
+// ✅ NOVO: JOB MANUAL - REVERTER DELEGAÇÕES
+// ========================================
+
+/**
+ * POST /api/protocols-simplified/jobs/revert-delegations
+ * Executar job de reversão de delegações manualmente (apenas ADMIN)
+ */
+router.post('/jobs/revert-delegations', requireMinRole(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const result = await runRevertExpiredDelegationsManually();
+
+    return res.json({
+      success: true,
+      data: result,
+      message: `Job executado com sucesso. ${result.processedCount} delegações processadas.`
+    });
+  } catch (error: any) {
+    console.error('Erro ao executar job:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao executar job'
     });
   }
 });

@@ -137,6 +137,11 @@ model User {
   engineeringData          EngineeringProfessionalData? @relation("UserEngineeringData")
   socialAssistanceData     SocialAssistanceProfessionalData? @relation("UserSocialAssistanceData")
 
+  // ✅ NOVO: Sistema de Atribuição de Protocolos (Sistema Unificado V2.0)
+  protocolAssignments    ProtocolServerAssignment[] @relation("UserProtocolAssignments")
+  protocolsAssignedBy    ProtocolServerAssignment[] @relation("ProtocolAssignedBy")
+  currentProtocols       ProtocolSimplified[]       @relation("CurrentProtocolAssignment")
+
   @@map("users")
 }
 
@@ -591,6 +596,11 @@ model ProtocolSimplified {
   // ✅ FASE 1: Workflow tracking
   currentStageId String? // Stage atual em execução
 
+  // ✅ NOVO: Sistema de Atribuição Avançado (Sistema Unificado V2.0)
+  currentAssignedUserId String? // Servidor principal atual (denormalizado para performance)
+  organizationalUnitId String? // Unidade organizacional responsável
+  teamId String? // Equipe responsável (para protocolos de múltiplos servidores)
+
   // Timestamps
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -603,6 +613,12 @@ model ProtocolSimplified {
   department   Department        @relation(fields: [departmentId], references: [id])
   assignedUser User?             @relation("AssignedUserSimplified", fields: [assignedUserId], references: [id])
   createdBy    User?             @relation("CreatedByUserSimplified", fields: [createdById], references: [id])
+
+  // ✅ NOVO: Relacionamentos com Sistema Unificado V2.0
+  currentAssignedUser  User?               @relation("CurrentProtocolAssignment", fields: [currentAssignedUserId], references: [id])
+  organizationalUnit   OrganizationalUnit? @relation("ProtocolOrganizationalUnits", fields: [organizationalUnitId], references: [id])
+  team                 Team?               @relation("ProtocolTeams", fields: [teamId], references: [id])
+  serverAssignments    ProtocolServerAssignment[] @relation("ProtocolServerAssignments")
 
   // Relacionamentos núcleo do protocolo
   history                 ProtocolHistorySimplified[]
@@ -7531,6 +7547,10 @@ model OrganizationalUnit {
   // ✅ NOVO: Relacionamento com UnidadeSaude (apps específicos)
   unidadeSaude UnidadeSaude? @relation("UnidadeSaudeOrgUnit")
 
+  // ✅ NOVO: Sistema de Atribuição de Protocolos
+  protocolAssignments ProtocolServerAssignment[] @relation("ProtocolUnitAssignments")
+  protocols           ProtocolSimplified[]       @relation("ProtocolOrganizationalUnits")
+
   @@unique([departmentId, sigla])
   @@index([departmentId, tipo, isActive])
   @@index([parentId])
@@ -7694,6 +7714,9 @@ model EmployeeAssignment {
 
   // Relacionamentos
   auditorias AssignmentAudit[]
+
+  // ✅ NOVO: Sistema de Atribuição de Protocolos
+  protocolAssignments ProtocolServerAssignment[] @relation("ProtocolEmployeeAssignments")
 
   @@unique([userId, organizationalUnitId, positionId, dataInicio])
   @@index([userId, isPrimary, situacao])
@@ -7941,6 +7964,9 @@ model Team {
   // ✅ NOVO: Relacionamento com EquipeSaude (apps específicos)
   equipeSaude EquipeSaude? @relation("EquipeSaudeTeam")
 
+  // ✅ NOVO: Sistema de Atribuição de Protocolos
+  protocols ProtocolSimplified[] @relation("ProtocolTeams")
+
   @@unique([departmentId, sigla])
   @@index([departmentId, ativo])
   @@index([organizationalUnitId])
@@ -8047,4 +8073,94 @@ enum TipoOperacaoVinculo {
   RETORNO
   CEDENCIA
   REQUISICAO
+}
+
+// ========================================
+// ✅ SISTEMA DE ATRIBUIÇÃO DE PROTOCOLOS
+// Integração com Sistema Unificado V2.0
+// ========================================
+
+model ProtocolServerAssignment {
+  id String @id @default(cuid())
+
+  protocolId String
+  protocol   ProtocolSimplified @relation("ProtocolServerAssignments", fields: [protocolId], references: [id], onDelete: Cascade)
+
+  // Servidor atribuído
+  userId String
+  user   User   @relation("UserProtocolAssignments", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Tipo de atribuição
+  tipo TipoAtribuicaoProtocolo // PRINCIPAL, DELEGADO, ENCAMINHADO, CONSULTA
+
+  // Status da atribuição
+  situacao SituacaoAtribuicao @default(ATIVA) // ATIVA, CONCLUIDA, CANCELADA, SUBSTITUIDA
+
+  // Quem atribuiu
+  assignedById   String?
+  assignedByName String? // Denormalizado
+  assignedBy     User?   @relation("ProtocolAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
+
+  // Contexto
+  motivo            String? // Por que foi atribuído
+  prioridade        Int?    // Se diferentes servidores têm prioridades diferentes
+  percentualCarga   Int?    // % de dedicação esperada
+  prazoResposta     DateTime? // Prazo para este servidor responder
+
+  // Delegação temporária
+  isDelegacao       Boolean   @default(false)
+  delegadoPor       String?   // userId do servidor original
+  ativaAte          DateTime? // Data de retorno da delegação
+  motivoDelegacao   String?   // FERIAS, AFASTAMENTO, SOBRECARGA
+
+  // Encaminhamento interdepartamental
+  departmentOrigemId   String?
+  departmentOrigemName String?
+  departmentDestinoId  String?
+  departmentDestinoName String?
+  isInterdepartamental Boolean @default(false)
+
+  // ✅ INTEGRAÇÃO COM SISTEMA UNIFICADO V2.0
+  employeeAssignmentId String? // Referência ao vínculo funcional do servidor
+  employeeAssignment   EmployeeAssignment? @relation("ProtocolEmployeeAssignments", fields: [employeeAssignmentId], references: [id], onDelete: SetNull)
+
+  organizationalUnitId String? // Unidade organizacional responsável
+  organizationalUnit   OrganizationalUnit? @relation("ProtocolUnitAssignments", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
+  // Comunicação
+  comentario     String?
+  lido           Boolean   @default(false)
+  lidoEm         DateTime?
+  respondeEm     DateTime?
+  respostaTexto  String?
+
+  // Timestamps
+  dataInicio DateTime @default(now())
+  dataFim    DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([protocolId, situacao])
+  @@index([userId, situacao])
+  @@index([tipo, situacao])
+  @@index([isDelegacao, ativaAte])
+  @@index([employeeAssignmentId])
+  @@index([organizationalUnitId])
+  @@map("protocol_server_assignments")
+}
+
+enum TipoAtribuicaoProtocolo {
+  PRINCIPAL       // Servidor principal responsável
+  DELEGADO        // Substituto temporário (férias, afastamento)
+  ENCAMINHADO     // Encaminhado para outro departamento
+  CONSULTA        // Apenas para consulta/parecer
+  APOIO           // Servidor de apoio (não principal)
+}
+
+enum SituacaoAtribuicao {
+  ATIVA        // Atribuição ativa
+  CONCLUIDA    // Servidor concluiu sua parte
+  CANCELADA    // Atribuição cancelada
+  SUBSTITUIDA  // Foi substituído por outro servidor
+  PENDENTE     // Aguardando aceite do servidor
 }

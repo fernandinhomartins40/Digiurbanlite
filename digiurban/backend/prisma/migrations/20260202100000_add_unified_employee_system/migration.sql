@@ -479,3 +479,12 @@ ALTER TABLE "team_members" ADD CONSTRAINT "team_members_userId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "assignment_audits" ADD CONSTRAINT "assignment_audits_assignmentId_fkey" FOREIGN KEY ("assignmentId") REFERENCES "employee_assignments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Integração com Apps de Saúde
+-- Adicionar constraints únicos nas colunas já existentes
+ALTER TABLE "unidades_saude" ADD CONSTRAINT "unidades_saude_organizationalUnitId_key" UNIQUE ("organizationalUnitId");
+ALTER TABLE "equipes_saude" ADD CONSTRAINT "equipes_saude_teamId_key" UNIQUE ("teamId");
+
+-- Adicionar foreign keys para integração
+ALTER TABLE "unidades_saude" ADD CONSTRAINT "unidades_saude_organizationalUnitId_fkey" FOREIGN KEY ("organizationalUnitId") REFERENCES "organizational_units"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "equipes_saude" ADD CONSTRAINT "equipes_saude_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "teams"("id") ON DELETE SET NULL ON UPDATE CASCADE;
