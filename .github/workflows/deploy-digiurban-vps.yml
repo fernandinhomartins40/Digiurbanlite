@@ -187,6 +187,13 @@ jobs:
 
             echo "=== Todos os arquivos críticos validados ==="
 
+            # Verificar conteúdo do Dockerfile (debug)
+            echo "=== DEBUG: Verificando Dockerfile ==="
+            echo "Linha 50 do Dockerfile:"
+            sed -n '50p' digiurban/Dockerfile
+            echo "Linha 52 do Dockerfile:"
+            sed -n '52p' digiurban/Dockerfile
+
             # Build da imagem sem cache (BUILD_TIMESTAMP vem do export acima)
             echo "Construindo nova imagem..."
             docker-compose -f docker-compose.vps.yml build --no-cache --pull
