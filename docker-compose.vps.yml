@@ -143,9 +143,10 @@ services:
   digiurban:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: digiurban/Dockerfile
       args:
         - BUILD_TIMESTAMP=${BUILD_TIMESTAMP:-0}
+        - CACHE_BUST=${CACHE_BUST:-0}
         - DATABASE_URL=${DATABASE_URL}
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api}
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3001}
