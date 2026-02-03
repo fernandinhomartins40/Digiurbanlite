@@ -64,9 +64,10 @@ export default function LandingPage() {
               <Image
                 src="/selo-palmital-pr.png"
                 alt="Selo Palmital PR"
-                width={60}
+                width={209}
                 height={60}
                 className="h-10 sm:h-12 w-auto"
+                priority
               />
               <div className="flex gap-2 sm:gap-3">
                 <Link
