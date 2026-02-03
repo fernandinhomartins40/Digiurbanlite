@@ -132,7 +132,7 @@ export function ForwardProtocolDialog({
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/protocols-simplified/${protocolId}/forward`, {
+      const response = await fetch(`/api/protocols/${protocolId}/forward`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

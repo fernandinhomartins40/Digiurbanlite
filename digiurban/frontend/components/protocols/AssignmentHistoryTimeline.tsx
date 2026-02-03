@@ -73,7 +73,7 @@ export function AssignmentHistoryTimeline({ protocolId }: AssignmentHistoryTimel
   const fetchAssignments = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/protocols-simplified/${protocolId}/assignments`, {
+      const response = await fetch(`/api/protocols/${protocolId}/assignments`, {
         credentials: 'include'
       });
 

@@ -67,7 +67,7 @@ export function DelegateProtocolDialog({
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await fetch('/api/protocols-simplified/workload-stats', {
+      const response = await fetch('/api/protocols/workload-stats', {
         credentials: 'include'
       });
 
@@ -92,7 +92,7 @@ export function DelegateProtocolDialog({
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/protocols-simplified/${protocolId}/delegate`, {
+      const response = await fetch(`/api/protocols/${protocolId}/delegate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -113,7 +113,7 @@ export function AssignTeamDialog({
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/protocols-simplified/${protocolId}/assign-team`, {
+      const response = await fetch(`/api/protocols/${protocolId}/assign-team`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

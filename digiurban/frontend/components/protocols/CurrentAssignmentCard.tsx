@@ -55,7 +55,7 @@ export function CurrentAssignmentCard({ protocolId, onReassign }: CurrentAssignm
   const loadCurrentAssignment = async () => {
     try {
       setLoading(true)
-      const response = await apiRequest(`/api/protocols-simplified/${protocolId}/assignments`)
+      const response = await apiRequest(`/api/protocols/${protocolId}/assignments`)
 
       if (response.success && response.data?.assignments?.length > 0) {
         // Pegar a atribuição mais recente que não tenha sido encerrada

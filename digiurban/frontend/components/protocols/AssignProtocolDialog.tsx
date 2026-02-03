@@ -87,8 +87,8 @@ export function AssignProtocolDialog({
     try {
       setLoadingServers(true);
       const url = departmentId
-        ? `/api/protocols-simplified/workload-stats?departmentId=${departmentId}`
-        : '/api/protocols-simplified/workload-stats';
+        ? `/api/protocols/workload-stats?departmentId=${departmentId}`
+        : '/api/protocols/workload-stats';
 
       const response = await fetch(url, { credentials: 'include' });
 
@@ -113,8 +113,8 @@ export function AssignProtocolDialog({
     try {
       setLoadingSuggestions(true);
       const url = departmentId
-        ? `/api/protocols-simplified/${protocolId}/suggest-assignee?departmentId=${departmentId}`
-        : `/api/protocols-simplified/${protocolId}/suggest-assignee`;
+        ? `/api/protocols/${protocolId}/suggest-assignee?departmentId=${departmentId}`
+        : `/api/protocols/${protocolId}/suggest-assignee`;
 
       const response = await fetch(url, { credentials: 'include' });
 
@@ -142,7 +142,7 @@ export function AssignProtocolDialog({
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/protocols-simplified/${protocolId}/assign`, {
+      const response = await fetch(`/api/protocols/${protocolId}/assign`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
