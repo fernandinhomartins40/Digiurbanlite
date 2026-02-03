@@ -988,23 +988,29 @@ router.get('/:id/assignments', async (req: Request, res: Response) => {
 // ========================================
 
 /**
- * GET /api/protocols-simplified/workload-stats
+ * GET /api/protocols/workload-stats
  * Obter métricas de carga de trabalho dos servidores
  */
 router.get('/workload-stats', async (req: Request, res: Response) => {
   try {
+    console.log('🔍 [WORKLOAD-STATS] Rota acessada!');
+    console.log('🔍 [WORKLOAD-STATS] Query params:', req.query);
+    console.log('🔍 [WORKLOAD-STATS] User:', (req as any).user?.id);
+
     const { departmentId } = req.query;
 
+    console.log('🔍 [WORKLOAD-STATS] Buscando stats para departmentId:', departmentId);
     const stats = await protocolAssignmentService.getWorkloadStats(
       departmentId as string | undefined
     );
 
+    console.log('🔍 [WORKLOAD-STATS] Stats obtidas:', stats);
     return res.json({
       success: true,
       data: stats
     });
   } catch (error: any) {
-    console.error('Erro ao buscar métricas de carga:', error);
+    console.error('❌ [WORKLOAD-STATS] Erro ao buscar métricas de carga:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'Erro ao buscar métricas de carga'

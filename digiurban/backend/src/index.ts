@@ -363,7 +363,9 @@ try { console.log('   → document-templates...'); app.use('/api', require('./ro
 // 2. Rotas genéricas POR ÚLTIMO (/:id captura tudo)
 try {
   const protocolsSimplifiedRoutes = require('./routes/protocols-simplified.routes').default;
+  console.log('   → protocols-simplified (workload-stats, assignments, etc)...');
   app.use('/api/protocols', protocolsSimplifiedRoutes);
+  console.log('   ✓ Rotas montadas em: /api/protocols/workload-stats, /api/protocols/:id/assign, etc');
   console.log('✅ Rotas de protocolos carregadas!');
 } catch (error) {
   console.error('❌ Erro ao carregar rotas de protocolos:', error);

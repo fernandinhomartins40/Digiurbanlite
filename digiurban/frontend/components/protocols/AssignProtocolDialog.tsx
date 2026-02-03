@@ -81,7 +81,7 @@ export function AssignProtocolDialog({
 
   const fetchWorkloadStats = async () => {
     if (!departmentId) {
-      console.warn('departmentId não fornecido, buscando todos os servidores');
+      console.warn('⚠️ [ASSIGN-DIALOG] departmentId não fornecido, buscando todos os servidores');
     }
 
     try {
@@ -90,19 +90,23 @@ export function AssignProtocolDialog({
         ? `/api/protocols/workload-stats?departmentId=${departmentId}`
         : '/api/protocols/workload-stats';
 
+      console.log('🌐 [ASSIGN-DIALOG] Fazendo requisição para:', url);
       const response = await fetch(url, { credentials: 'include' });
+      console.log('📊 [ASSIGN-DIALOG] Status da resposta:', response.status, response.statusText);
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Servidores carregados:', data.data);
+        console.log('✅ [ASSIGN-DIALOG] Servidores carregados:', data.data);
+        console.log('✅ [ASSIGN-DIALOG] Total de servidores:', data.data?.servidores?.length || 0);
         setServers(data.data.servidores || []);
       } else {
+        console.error('❌ [ASSIGN-DIALOG] Resposta com erro. Status:', response.status);
         const error = await response.json();
-        console.error('Erro na resposta:', error);
+        console.error('❌ [ASSIGN-DIALOG] Detalhes do erro:', error);
         toast.error('Erro ao carregar servidores: ' + (error.error || 'Erro desconhecido'));
       }
     } catch (error) {
-      console.error('Erro ao buscar carga de trabalho:', error);
+      console.error('❌ [ASSIGN-DIALOG] Exceção ao buscar carga de trabalho:', error);
       toast.error('Erro ao conectar com o servidor');
     } finally {
       setLoadingServers(false);
