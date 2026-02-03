@@ -26,6 +26,155 @@ const router = Router();
 router.use(adminAuthMiddleware);
 
 // ========================================
+// ⚠️ ROTAS ESPECÍFICAS - DEVEM VIR ANTES DAS ROTAS PARAMETRIZADAS
+// ========================================
+// IMPORTANTE: Estas rotas devem estar ANTES de qualquer rota com /:id
+// para evitar que "workload-stats", "department", etc sejam tratados como IDs
+
+/**
+ * GET /api/protocols/workload-stats
+ * Obter métricas de carga de trabalho dos servidores
+ */
+router.get('/workload-stats', async (req: Request, res: Response) => {
+  try {
+    console.log('🔍 [WORKLOAD-STATS] Rota acessada!');
+    console.log('🔍 [WORKLOAD-STATS] Query params:', req.query);
+    console.log('🔍 [WORKLOAD-STATS] User:', (req as any).user?.id);
+
+    const { departmentId } = req.query;
+
+    console.log('🔍 [WORKLOAD-STATS] Buscando stats para departmentId:', departmentId);
+    const stats = await protocolAssignmentService.getWorkloadStats(
+      departmentId as string | undefined
+    );
+
+    console.log('🔍 [WORKLOAD-STATS] Stats obtidas:', stats);
+    return res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error: any) {
+    console.error('❌ [WORKLOAD-STATS] Erro ao buscar métricas de carga:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao buscar métricas de carga'
+    });
+  }
+});
+
+/**
+ * GET /api/protocols/department/:departmentId
+ * Lista protocolos por departamento
+ */
+router.get('/department/:departmentId', async (req: Request, res: Response) => {
+  try {
+    const { departmentId } = req.params;
+    const filters = req.query as any;
+
+    const protocols = await protocolServiceSimplified.listByDepartment(
+      departmentId,
+      filters
+    );
+
+    return res.json({
+      success: true,
+      data: protocols,
+      count: protocols.length
+    });
+  } catch (error: any) {
+    console.error('Erro ao listar protocolos:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao listar protocolos'
+    });
+  }
+});
+
+/**
+ * GET /api/protocols/module/:departmentId/:moduleType
+ * Lista protocolos por módulo
+ */
+router.get('/module/:departmentId/:moduleType', async (req: Request, res: Response) => {
+  try {
+    const { departmentId, moduleType } = req.params;
+
+    const protocols = await protocolServiceSimplified.listByModule(
+      departmentId,
+      moduleType
+    );
+
+    return res.json({
+      success: true,
+      data: protocols,
+      count: protocols.length
+    });
+  } catch (error: any) {
+    console.error('Erro ao listar protocolos:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao listar protocolos'
+    });
+  }
+});
+
+/**
+ * GET /api/protocols/module/:moduleType/pending
+ * Listar protocolos pendentes de um módulo específico
+ */
+router.get(
+  '/module/:moduleType/pending',
+  requireMinRole(UserRole.USER),
+  async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { moduleType } = req.params;
+      const { page = 1, limit = 20 } = req.query;
+
+      const result = await protocolModuleService.getPendingProtocolsByModule(
+        moduleType,
+        Number(page),
+        Number(limit)
+      );
+
+      return res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      console.error('Get pending protocols error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao buscar protocolos pendentes'
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/protocols/citizen/:citizenId
+ * Lista protocolos do cidadão
+ */
+router.get('/citizen/:citizenId', async (req: Request, res: Response) => {
+  try {
+    const { citizenId } = req.params;
+
+    const protocols = await protocolServiceSimplified.listByCitizen(citizenId);
+
+    return res.json({
+      success: true,
+      data: protocols,
+      count: protocols.length
+    });
+  } catch (error: any) {
+    console.error('Erro ao listar protocolos:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao listar protocolos'
+    });
+  }
+});
+
+// ========================================
 // CRIAR PROTOCOLO (INTEGRADO COM MÓDULOS)
 // ========================================
 
@@ -986,37 +1135,7 @@ router.get('/:id/assignments', async (req: Request, res: Response) => {
 // ========================================
 // ✅ NOVO: MÉTRICAS DE CARGA DE TRABALHO
 // ========================================
-
-/**
- * GET /api/protocols/workload-stats
- * Obter métricas de carga de trabalho dos servidores
- */
-router.get('/workload-stats', async (req: Request, res: Response) => {
-  try {
-    console.log('🔍 [WORKLOAD-STATS] Rota acessada!');
-    console.log('🔍 [WORKLOAD-STATS] Query params:', req.query);
-    console.log('🔍 [WORKLOAD-STATS] User:', (req as any).user?.id);
-
-    const { departmentId } = req.query;
-
-    console.log('🔍 [WORKLOAD-STATS] Buscando stats para departmentId:', departmentId);
-    const stats = await protocolAssignmentService.getWorkloadStats(
-      departmentId as string | undefined
-    );
-
-    console.log('🔍 [WORKLOAD-STATS] Stats obtidas:', stats);
-    return res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error: any) {
-    console.error('❌ [WORKLOAD-STATS] Erro ao buscar métricas de carga:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Erro ao buscar métricas de carga'
-    });
-  }
-});
+// MOVIDO PARA O TOPO DO ARQUIVO (linha ~30) para evitar conflito com /:id
 
 // ========================================
 // ✅ NOVO: SUGESTÃO INTELIGENTE DE ATRIBUIÇÃO
@@ -1059,118 +1178,7 @@ router.get('/:id/suggest-assignee', requireMinRole(UserRole.MANAGER), async (req
 // ========================================
 // LISTAR PROTOCOLOS
 // ========================================
-
-/**
- * GET /api/protocols-simplified/department/:departmentId
- * Lista protocolos por departamento
- */
-router.get('/department/:departmentId', async (req: Request, res: Response) => {
-  try {
-    const { departmentId } = req.params;
-    const filters = req.query as any;
-
-    const protocols = await protocolServiceSimplified.listByDepartment(
-      departmentId,
-      filters
-    );
-
-    return res.json({
-      success: true,
-      data: protocols,
-      count: protocols.length
-        });
-  } catch (error: any) {
-    console.error('Erro ao listar protocolos:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Erro ao listar protocolos'
-        });
-  }
-});
-
-/**
- * GET /api/protocols-simplified/module/:departmentId/:moduleType
- * Lista protocolos por módulo
- */
-router.get('/module/:departmentId/:moduleType', async (req: Request, res: Response) => {
-  try {
-    const { departmentId, moduleType } = req.params;
-
-    const protocols = await protocolServiceSimplified.listByModule(
-      departmentId,
-      moduleType
-    );
-
-    return res.json({
-      success: true,
-      data: protocols,
-      count: protocols.length
-        });
-  } catch (error: any) {
-    console.error('Erro ao listar protocolos:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Erro ao listar protocolos'
-        });
-  }
-});
-
-/**
- * GET /api/protocols-simplified/module/:moduleType/pending (NOVO)
- * Listar protocolos pendentes de um módulo específico
- */
-router.get(
-  '/module/:moduleType/pending',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const authReq = req as AuthenticatedRequest;
-      const { moduleType } = req.params;
-      const { page = 1, limit = 20 } = req.query;
-
-      const result = await protocolModuleService.getPendingProtocolsByModule(
-        moduleType,
-        Number(page),
-        Number(limit)
-      );
-
-      return res.json({
-        success: true,
-        ...result
-        });
-    } catch (error) {
-      console.error('Get pending protocols error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao buscar protocolos pendentes'
-        });
-    }
-  }
-);
-
-/**
- * GET /api/protocols-simplified/citizen/:citizenId
- * Lista protocolos do cidadão
- */
-router.get('/citizen/:citizenId', async (req: Request, res: Response) => {
-  try {
-    const { citizenId } = req.params;
-
-    const protocols = await protocolServiceSimplified.listByCitizen(citizenId);
-
-    return res.json({
-      success: true,
-      data: protocols,
-      count: protocols.length
-        });
-  } catch (error: any) {
-    console.error('Erro ao listar protocolos:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Erro ao listar protocolos'
-        });
-  }
-});
+// MOVIDAS PARA O TOPO DO ARQUIVO (linha ~30) para evitar conflito com /:id
 
 // ========================================
 // HISTÓRICO
