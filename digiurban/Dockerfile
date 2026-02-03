@@ -36,6 +36,14 @@ COPY digiurban/backend ./
 # Isso permite imports como '@shared/*' ou '../shared/*'
 COPY digiurban/shared ./src/shared
 
+# Debug: Verificar se os arquivos foram copiados corretamente
+RUN echo "📁 Verificando estrutura de arquivos:" && \
+    ls -la src/ && \
+    echo "📁 Conteúdo de src/shared:" && \
+    ls -la src/shared/ && \
+    echo "📄 Verificando tsconfig.docker.json:" && \
+    cat tsconfig.docker.json || echo "❌ tsconfig.docker.json NÃO ENCONTRADO!"
+
 # Gerar Prisma Client e Build TypeScript
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
