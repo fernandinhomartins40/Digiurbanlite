@@ -645,4 +645,34 @@ router.post('/social-assistance', authenticateToken, async (req: Request, res: R
   }
 });
 
+/**
+ * GET /api/professional-data/health/stats
+ * Estatísticas de profissionais de saúde do sistema unificado
+ */
+router.get('/health/stats', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const [total, ativos, porCategoria] = await Promise.all([
+      prisma.healthProfessionalData.count(),
+      prisma.healthProfessionalData.count({ where: { status: 'ATIVO' } }),
+      prisma.healthProfessionalData.groupBy({
+        by: ['categoria'],
+        _count: true,
+        where: { status: 'ATIVO' },
+      }),
+    ]);
+
+    res.json({
+      total,
+      ativos,
+      porCategoria: porCategoria.map((item) => ({
+        categoria: item.categoria,
+        quantidade: item._count,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Erro ao buscar stats de profissionais de saúde:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

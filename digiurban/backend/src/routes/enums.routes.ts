@@ -126,30 +126,6 @@ router.get('/:source', async (req, res) => {
         });
         break;
 
-      case 'MS_PROFISSIONAIS_SAUDE':
-      case 'PROFISSIONAIS_SAUDE':
-        data = await prisma.profissionalSaude.findMany({
-          where: {
-            isActive: true,
-            nome: search ? { contains: search as string, mode: 'insensitive' } : undefined
-          },
-          select: {
-            id: true,
-            nome: true,
-            especialidade: true,
-            categoria: true,
-            registroProfissional: true
-          },
-          take: parseInt(limit as string),
-          orderBy: { nome: 'asc' }
-        });
-        data = data.map(p => ({
-          id: p.id,
-          nome: `${p.nome} - ${p.especialidade || p.categoria}`,
-          especialidade: p.especialidade
-        }));
-        break;
-
       case 'MS_MEDICAMENTOS':
       case 'MEDICAMENTOS':
         data = await prisma.medicamento.findMany({

@@ -39,32 +39,32 @@ export async function seed04EquipesSaude() {
   // Buscar unidades
   const esfJardim = await prisma.organizationalUnit.findFirst({
     where: { sigla: 'ESF-JDESPERANCA', departmentId: departamentoSaude.id },
-    include: { UnidadeSaude: true }
+    include: { unidadeSaude: true }
   });
 
   const esfParque = await prisma.organizationalUnit.findFirst({
     where: { sigla: 'ESF-PQFLORES', departmentId: departamentoSaude.id },
-    include: { UnidadeSaude: true }
+    include: { unidadeSaude: true }
   });
 
   const ubsCentral = await prisma.organizationalUnit.findFirst({
     where: { sigla: 'UBS-CENTRAL', departmentId: departamentoSaude.id },
-    include: { UnidadeSaude: true }
+    include: { unidadeSaude: true }
   });
 
   const ubsNorte = await prisma.organizationalUnit.findFirst({
     where: { sigla: 'UBS-NORTE', departmentId: departamentoSaude.id },
-    include: { UnidadeSaude: true }
+    include: { unidadeSaude: true }
   });
 
   const upaCentro = await prisma.organizationalUnit.findFirst({
     where: { sigla: 'UPA-CENTRO', departmentId: departamentoSaude.id },
-    include: { UnidadeSaude: true }
+    include: { unidadeSaude: true }
   });
 
   const caps = await prisma.organizationalUnit.findFirst({
     where: { sigla: 'CAPS-CENTRO', departmentId: departamentoSaude.id },
-    include: { UnidadeSaude: true }
+    include: { unidadeSaude: true }
   });
 
   console.log('✅ Unidades organizacionais encontradas\n');

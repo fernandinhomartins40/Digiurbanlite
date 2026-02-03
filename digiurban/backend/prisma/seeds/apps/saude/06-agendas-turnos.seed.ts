@@ -114,25 +114,29 @@ export async function seed06AgendasTurnos() {
     if (!unidade) continue;
 
     for (const sala of config.salas) {
-      const salaCriada = await prisma.salaConsultorio.upsert({
+      // Buscar sala existente
+      let salaCriada = await prisma.salaConsultorio.findFirst({
         where: {
-          unidadeId_numero: {
-            unidadeId: unidade.id,
-            numero: sala.numero,
-          }
-        },
-        update: {},
-        create: {
-          nome: sala.nome,
-          numero: sala.numero,
-          tipo: sala.tipo,
           unidadeId: unidade.id,
-          andar: sala.andar,
-          capacidade: 1,
-          equipamentos: sala.equipamentos,
-          ativa: true,
+          numero: sala.numero,
         }
       });
+
+      // Criar se não existir
+      if (!salaCriada) {
+        salaCriada = await prisma.salaConsultorio.create({
+          data: {
+            nome: sala.nome,
+            numero: sala.numero,
+            tipo: sala.tipo,
+            unidadeId: unidade.id,
+            andar: sala.andar,
+            capacidade: 1,
+            equipamentos: sala.equipamentos,
+            ativa: true,
+          }
+        });
+      }
 
       salasCriadas.push(salaCriada);
     }
@@ -416,7 +420,7 @@ export async function seed06AgendasTurnos() {
           vagasTotais: agenda.vagasTotais,
           vagasDisponiveis: agenda.vagasTotais,
           permiteOnline: agenda.permiteOnline,
-          tiposAceitos: ['CONSULTA', 'RETORNO'],
+          tiposAceitos: ['AGENDADO', 'RETORNO'],
           ativo: true,
         }
       });

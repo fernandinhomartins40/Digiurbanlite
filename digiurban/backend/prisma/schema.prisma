@@ -142,6 +142,12 @@ model User {
   protocolsAssignedBy    ProtocolServerAssignment[] @relation("ProtocolAssignedBy")
   currentProtocols       ProtocolSimplified[]       @relation("CurrentProtocolAssignment")
 
+  // ✅ Apps Saúde - Relacionamentos que migraram de ProfissionalSaude
+  atendimentosOdonto        AtendimentoOdontologico[] @relation("DentistaAtendimentos")
+  visitasDomiciliares       VisitaDomiciliar[]        @relation("ACSVisitas")
+  indisponibilidadesAgenda  IndisponibilidadeAgenda[]
+  imunizacoes               ImunizacaoCidadao[]
+
   @@map("users")
 }
 
@@ -2745,9 +2751,8 @@ model EspecialidadeMedica {
   updatedAt           DateTime @updatedAt
 
   // ✅ NOVO: Relacionamentos
-  agendas               AgendaMedica[]
-  solicitacoesTFD       SolicitacaoTFD[]
-  vinculosProfissionais ProfissionalEspecialidade[]
+  agendas         AgendaMedica[]
+  solicitacoesTFD SolicitacaoTFD[]
 
   @@index([area, isActive])
   @@index([isActive])
@@ -2974,58 +2979,6 @@ model ProgramaAmbiental {
 // PROFISSIONAIS
 // ========================================
 
-// Profissionais de Saúde (ATUALIZADO)
-model ProfissionalSaude {
-  id                   String             @id @default(cuid())
-  nome                 String
-  cpf                  String             @unique
-  rg                   String? // ✅ NOVO
-  registroProfissional String             @unique // CRM, CRO, CRP, CRN, CRF, COREN, etc.
-  tipoRegistro         String? // ✅ NOVO: 'CRM', 'COREN', 'CRO', 'CRP', 'CRF', 'CRN', etc.
-  especialidade        String? // Especialidade principal (mantido para compatibilidade)
-  especialidades       Json? // ✅ NOVO: Array de IDs de especialidades (múltiplas)
-  categoria            String // 'Médico', 'Enfermeiro', 'Dentista', 'Psicólogo', 'Nutricionista', 'Farmacêutico'
-  unidadesAtendimento  Json? // Array de IDs das unidades
-  telefone             String? // ✅ NOVO
-  email                String? // ✅ NOVO
-  horarioAtendimento   Json? // Horários estruturados
-  diasSemana           Json? // Array de dias
-  tempoMedioConsulta   Int? // Minutos
-  aceitaAgendamento    Boolean            @default(true)
-  status               StatusProfissional @default(ATIVO) // ✅ NOVO: Enum de status
-  isActive             Boolean            @default(true)
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-
-  // Apps Saúde - Relacionamentos
-  indisponibilidades IndisponibilidadeAgenda[]
-  imunizacoes        ImunizacaoCidadao[]
-
-  // ✅ NOVOS: Alinhamento com PEC e-SUS
-  atendimentosOdonto  AtendimentoOdontologico[] @relation("DentistaAtendimentos")
-  visitasDomiciliares VisitaDomiciliar[]        @relation("ACSVisitas")
-  atividadesColetivas ProfissionalAtividade[]
-
-  // ✅ NOVO: Vínculo com múltiplas especialidades (N:N)
-  vinculosEspecialidades ProfissionalEspecialidade[]
-
-  @@index([categoria, isActive])
-  @@index([especialidade, isActive])
-  @@index([isActive])
-  @@index([status])
-  @@index([cpf])
-  @@map("profissionais_saude")
-}
-
-// ✅ NOVO: Enum de Status do Profissional
-enum StatusProfissional {
-  ATIVO
-  INATIVO
-  FERIAS
-  AFASTADO
-  LICENCA
-}
-
 // ✅ NOVO: Tabela intermediária para profissionais trabalhando em múltiplas unidades
 model ProfissionalUnidade {
   id                  String    @id @default(cuid())
@@ -3089,30 +3042,6 @@ enum TipoAuditoriaVinculo {
   TRANSFERENCIA
   ALTERACAO_CARGA_HORARIA
   ALTERACAO_PERIODO
-}
-
-// ✅ NOVO: Relacionamento N:N entre Profissional e Especialidade
-model ProfissionalEspecialidade {
-  id              String    @id @default(cuid())
-  profissionalId  String
-  especialidadeId String
-  isPrincipal     Boolean   @default(false) // Especialidade principal do profissional
-  dataInicio      DateTime  @default(now())
-  dataFim         DateTime?
-  ativo           Boolean   @default(true)
-  observacoes     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  // Relacionamentos
-  profissional  ProfissionalSaude   @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
-  especialidade EspecialidadeMedica @relation(fields: [especialidadeId], references: [id], onDelete: Cascade)
-
-  @@unique([profissionalId, especialidadeId])
-  @@index([profissionalId, ativo])
-  @@index([especialidadeId, ativo])
-  @@index([isPrincipal, ativo])
-  @@map("profissional_especialidade")
 }
 
 // Professores e Instrutores
@@ -3577,7 +3506,7 @@ model AtendimentoOdontologico {
 
   // Relacionamentos
   atendimento AtendimentoMedico @relation("AtendimentoOdonto", fields: [atendimentoId], references: [id])
-  dentista    ProfissionalSaude @relation("DentistaAtendimentos", fields: [dentistaId], references: [id])
+  dentista    User              @relation("DentistaAtendimentos", fields: [dentistaId], references: [id])
 
   @@map("atendimentos_odontologicos")
 }
@@ -3779,8 +3708,8 @@ model VisitaDomiciliar {
   createdAt DateTime @default(now())
 
   // Relacionamento
-  acs     ProfissionalSaude @relation("ACSVisitas", fields: [acsId], references: [id])
-  citizen Citizen?          @relation("CitizenHomeVisits", fields: [citizenId], references: [id])
+  acs     User     @relation("ACSVisitas", fields: [acsId], references: [id])
+  citizen Citizen? @relation("CitizenHomeVisits", fields: [citizenId], references: [id])
 
   @@index([acsId, dataVisita])
   @@index([citizenId])
@@ -6308,8 +6237,8 @@ model IndisponibilidadeAgenda {
   tipoIndisponibilidade TipoIndisponibilidade
   createdAt             DateTime              @default(now())
 
-  agenda       AgendaMedica      @relation(fields: [agendaId], references: [id])
-  profissional ProfissionalSaude @relation(fields: [profissionalId], references: [id])
+  agenda       AgendaMedica @relation(fields: [agendaId], references: [id])
+  profissional User         @relation(fields: [profissionalId], references: [id])
 
   @@index([agendaId])
   @@index([profissionalId])
@@ -6404,9 +6333,9 @@ model ImunizacaoCidadao {
   profissionalId String?
   observacoes    String?
 
-  citizen      Citizen            @relation("CitizenImmunizations", fields: [citizenId], references: [id])
-  unidade      UnidadeSaude?      @relation(fields: [unidadeId], references: [id])
-  profissional ProfissionalSaude? @relation(fields: [profissionalId], references: [id])
+  citizen      Citizen       @relation("CitizenImmunizations", fields: [citizenId], references: [id])
+  unidade      UnidadeSaude? @relation(fields: [unidadeId], references: [id])
+  profissional User?         @relation(fields: [profissionalId], references: [id])
 
   @@index([citizenId])
   @@index([dataAplicacao])
@@ -7423,9 +7352,7 @@ model ProfissionalAtividade {
 
   funcao String? // Coordenador, facilitador, apoio
 
-  createdAt           DateTime           @default(now())
-  profissionalSaude   ProfissionalSaude? @relation(fields: [profissionalSaudeId], references: [id])
-  profissionalSaudeId String?
+  createdAt DateTime @default(now())
 
   @@unique([atividadeId, profissionalId])
   @@index([atividadeId])

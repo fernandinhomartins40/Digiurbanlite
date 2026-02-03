@@ -38,10 +38,10 @@ export async function seed03VinculosProfissionais() {
   const unidadesOrg = await prisma.organizationalUnit.findMany({
     where: {
       departmentId: departamentoSaude.id,
-      tipo: 'UNIDADE_SAUDE',
+      tipo: 'SETOR',
     },
     include: {
-      UnidadeSaude: true,
+      unidadeSaude: true,
     }
   });
 
@@ -96,7 +96,6 @@ export async function seed03VinculosProfissionais() {
     // Médicos
     {
       nome: 'Médico - Clínico Geral',
-      codigo: 'MED-CLINICO',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -104,7 +103,6 @@ export async function seed03VinculosProfissionais() {
     },
     {
       nome: 'Médico - Pediatra',
-      codigo: 'MED-PEDIATRA',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -112,7 +110,6 @@ export async function seed03VinculosProfissionais() {
     },
     {
       nome: 'Médico - Ginecologista',
-      codigo: 'MED-GINECO',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -120,7 +117,6 @@ export async function seed03VinculosProfissionais() {
     },
     {
       nome: 'Médico - Cardiologista',
-      codigo: 'MED-CARDIO',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -128,7 +124,6 @@ export async function seed03VinculosProfissionais() {
     },
     {
       nome: 'Médico - Psiquiatra',
-      codigo: 'MED-PSIQ',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -136,7 +131,6 @@ export async function seed03VinculosProfissionais() {
     },
     {
       nome: 'Médico - Ortopedista',
-      codigo: 'MED-ORTO',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -144,7 +138,6 @@ export async function seed03VinculosProfissionais() {
     },
     {
       nome: 'Médico - Dermatologista',
-      codigo: 'MED-DERMA',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -152,7 +145,6 @@ export async function seed03VinculosProfissionais() {
     },
     {
       nome: 'Médico - Neurologista',
-      codigo: 'MED-NEURO',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -161,7 +153,6 @@ export async function seed03VinculosProfissionais() {
     // Enfermagem
     {
       nome: 'Enfermeiro',
-      codigo: 'ENFERMEIRO',
       tipo: 'EFETIVO' as const,
       nivel: 'TECNICO' as const,
       categoria: 'SAUDE',
@@ -169,7 +160,6 @@ export async function seed03VinculosProfissionais() {
     },
     {
       nome: 'Técnico de Enfermagem',
-      codigo: 'TEC-ENFERMAGEM',
       tipo: 'EFETIVO' as const,
       nivel: 'OPERACIONAL' as const,
       categoria: 'SAUDE',
@@ -178,7 +168,6 @@ export async function seed03VinculosProfissionais() {
     // Odontologia
     {
       nome: 'Cirurgião-Dentista',
-      codigo: 'DENTISTA',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -187,7 +176,6 @@ export async function seed03VinculosProfissionais() {
     // Psicologia
     {
       nome: 'Psicólogo',
-      codigo: 'PSICOLOGO',
       tipo: 'EFETIVO' as const,
       nivel: 'ESPECIALISTA' as const,
       categoria: 'SAUDE',
@@ -196,7 +184,6 @@ export async function seed03VinculosProfissionais() {
     // ACS
     {
       nome: 'Agente Comunitário de Saúde',
-      codigo: 'ACS',
       tipo: 'EFETIVO' as const,
       nivel: 'OPERACIONAL' as const,
       categoria: 'SAUDE',
@@ -209,15 +196,14 @@ export async function seed03VinculosProfissionais() {
   for (const cargoData of cargos) {
     const cargo = await prisma.position.upsert({
       where: {
-        departmentId_codigo: {
+        departmentId_nome: {
           departmentId: departamentoSaude.id,
-          codigo: cargoData.codigo,
+          nome: cargoData.nome,
         }
       },
       update: {},
       create: {
         nome: cargoData.nome,
-        codigo: cargoData.codigo,
         tipo: cargoData.tipo,
         nivel: cargoData.nivel,
         departmentId: departamentoSaude.id,
@@ -227,7 +213,7 @@ export async function seed03VinculosProfissionais() {
       }
     });
 
-    cargosCriados.set(cargoData.codigo, cargo);
+    cargosCriados.set(cargoData.nome, cargo);
     console.log(`   ✅ Cargo: ${cargoData.nome}`);
   }
 

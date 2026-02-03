@@ -132,7 +132,11 @@
       "Bash(Get-Date -Format \"yyyyMMddHHmmss\")",
       "Bash(xxd:*)",
       "Bash(rsync:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(identify:*)",
+      "Bash(npm run db:seed:saude:*)",
+      "Bash(tar czf:*)",
+      "Bash(do sed -i 's/UnidadeSaude: true/unidadeSaude: true/g' \"$file\")"
     ],
     "deny": [],
     "ask": []

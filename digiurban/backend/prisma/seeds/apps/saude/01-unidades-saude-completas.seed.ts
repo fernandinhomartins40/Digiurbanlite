@@ -59,7 +59,7 @@ export async function seed01UnidadesSaudeCompletas() {
         departmentId: departamentoSaude.id,
         sigla: 'SMS',
       }
-    },
+    } as any,
     update: {},
     create: {
       nome: 'Secretaria Municipal de Saúde',
@@ -88,7 +88,7 @@ export async function seed01UnidadesSaudeCompletas() {
         departmentId: departamentoSaude.id,
         sigla: 'DAB',
       }
-    },
+    } as any,
     update: {},
     create: {
       nome: 'Diretoria de Atenção Básica',
@@ -114,7 +114,7 @@ export async function seed01UnidadesSaudeCompletas() {
         departmentId: departamentoSaude.id,
         sigla: 'DUE',
       }
-    },
+    } as any,
     update: {},
     create: {
       nome: 'Diretoria de Urgência e Emergência',
@@ -140,7 +140,7 @@ export async function seed01UnidadesSaudeCompletas() {
         departmentId: departamentoSaude.id,
         sigla: 'DSM',
       }
-    },
+    } as any,
     update: {},
     create: {
       nome: 'Diretoria de Saúde Mental',
@@ -432,12 +432,12 @@ export async function seed01UnidadesSaudeCompletas() {
           departmentId: departamentoSaude.id,
           sigla: unidadeData.sigla,
         }
-      },
+      } as any,
       update: {},
       create: {
         nome: unidadeData.nome,
         sigla: unidadeData.sigla,
-        tipo: 'UNIDADE_SAUDE',
+        tipo: 'SETOR',
         nivel: 3,
         departmentId: departamentoSaude.id,
         parentId: unidadeData.diretoriaId,

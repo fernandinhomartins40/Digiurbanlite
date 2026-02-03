@@ -668,18 +668,7 @@ export async function seed02ServidoresSaude() {
         name: servidor.name,
         email: servidor.email,
         password: senhaHash,
-        cpf: servidor.cpf,
-        rg: servidor.rg,
-        birthdate: servidor.birthdate,
-        phone: servidor.phone,
-        gender: servidor.gender,
-        address: servidor.address,
-        addressNumber: servidor.addressNumber,
-        neighborhood: servidor.neighborhood,
-        city: servidor.city,
-        state: servidor.state,
-        zipcode: servidor.zipcode,
-        role: 'user',
+        role: 'USER',
         isActive: true,
       }
     });
@@ -699,7 +688,6 @@ export async function seed02ServidoresSaude() {
         especialidades: servidor.especialidades,
         aceitaAgendamento: servidor.aceitaAgendamento,
         tempoMedioConsulta: servidor.tempoMedioConsulta,
-        status: 'ATIVO',
       }
     });
 

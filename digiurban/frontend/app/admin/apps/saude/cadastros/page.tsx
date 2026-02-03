@@ -44,7 +44,7 @@ export default function CadastrosDashboard() {
       setLoading(true);
       const [unidades, profissionais, especialidades, salas, turnos, agendas] = await Promise.all([
         fetch('/api/apps/saude/cadastros/unidades/stats', { credentials: 'include' }).then((r) => r.json()),
-        fetch('/api/apps/saude/cadastros/profissionais/stats', { credentials: 'include' }).then((r) => r.json()),
+        fetch('/api/professional-data/health/stats', { credentials: 'include' }).then((r) => r.json()),
         fetch('/api/apps/saude/cadastros/especialidades/stats', { credentials: 'include' }).then((r) => r.json()),
         fetch('/api/apps/saude/cadastros/salas/stats', { credentials: 'include' }).then((r) => r.json()),
         fetch('/api/apps/saude/cadastros/turnos/stats', { credentials: 'include' }).then((r) => r.json()),
@@ -131,14 +131,6 @@ export default function CadastrosDashboard() {
           color: 'bg-cyan-500',
           href: '/admin/apps/saude/cadastros/vinculos',
           badge: 'Vínculos',
-        },
-        {
-          title: 'Profissionais (Legado)',
-          description: 'Sistema antigo - em processo de descontinuação',
-          icon: UserCog,
-          color: 'bg-gray-400',
-          href: '/admin/apps/saude/cadastros/profissionais',
-          badge: `${stats?.profissionais?.ativos || 0} ativos`,
         },
       ],
     },
