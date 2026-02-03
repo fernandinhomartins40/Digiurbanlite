@@ -80,19 +80,30 @@ export function AssignProtocolDialog({
   }, [open, departmentId]);
 
   const fetchWorkloadStats = async () => {
+    if (!departmentId) {
+      console.warn('departmentId não fornecido, buscando todos os servidores');
+    }
+
     try {
       setLoadingServers(true);
-      const response = await fetch(
-        `/api/protocols-simplified/workload-stats?departmentId=${departmentId}`,
-        { credentials: 'include' }
-      );
+      const url = departmentId
+        ? `/api/protocols-simplified/workload-stats?departmentId=${departmentId}`
+        : '/api/protocols-simplified/workload-stats';
+
+      const response = await fetch(url, { credentials: 'include' });
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Servidores carregados:', data.data);
         setServers(data.data.servidores || []);
+      } else {
+        const error = await response.json();
+        console.error('Erro na resposta:', error);
+        toast.error('Erro ao carregar servidores: ' + (error.error || 'Erro desconhecido'));
       }
     } catch (error) {
       console.error('Erro ao buscar carga de trabalho:', error);
+      toast.error('Erro ao conectar com o servidor');
     } finally {
       setLoadingServers(false);
     }
@@ -101,14 +112,19 @@ export function AssignProtocolDialog({
   const fetchSuggestions = async () => {
     try {
       setLoadingSuggestions(true);
-      const response = await fetch(
-        `/api/protocols-simplified/${protocolId}/suggest-assignee?departmentId=${departmentId}`,
-        { credentials: 'include' }
-      );
+      const url = departmentId
+        ? `/api/protocols-simplified/${protocolId}/suggest-assignee?departmentId=${departmentId}`
+        : `/api/protocols-simplified/${protocolId}/suggest-assignee`;
+
+      const response = await fetch(url, { credentials: 'include' });
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Sugestões carregadas:', data.data);
         setSuggestions(data.data.sugestoes || []);
+      } else {
+        const error = await response.json();
+        console.error('Erro ao buscar sugestões:', error);
       }
     } catch (error) {
       console.error('Erro ao buscar sugestões:', error);
@@ -210,6 +226,16 @@ export function AssignProtocolDialog({
               {loadingServers ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : servers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-gray-600 font-medium">Nenhum servidor disponível</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {departmentId
+                      ? 'Não há servidores cadastrados neste departamento'
+                      : 'Não há servidores cadastrados no sistema'}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2">
