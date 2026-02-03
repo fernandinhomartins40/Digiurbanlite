@@ -32,6 +32,9 @@ RUN npm install --legacy-peer-deps
 # Copiar código do backend
 COPY digiurban/backend ./
 
+# Copiar arquivos compartilhados (shared)
+COPY digiurban/shared ../shared
+
 # Gerar Prisma Client e Build TypeScript
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
