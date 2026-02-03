@@ -1104,7 +1104,7 @@ router.get('/vinculos', async (req: Request, res: Response) => {
             id: true,
             name: true,
             email: true,
-            dadosSaude: {
+            healthData: {
               select: {
                 categoria: true,
                 especialidades: true,
@@ -2010,10 +2010,10 @@ router.post('/microareas', async (req: Request, res: Response) => {
     if (acsId) {
       const acs = await prisma.user.findUnique({
         where: { id: acsId },
-        include: { dadosSaude: true },
+        include: { healthData: true },
       });
 
-      if (!acs || !acs.dadosSaude || acs.dadosSaude.categoria !== 'ACS') {
+      if (!acs || !acs.healthData || acs.healthData.categoria !== 'ACS') {
         return res.status(400).json({ error: 'ACS não encontrado ou não é um ACS válido' });
       }
     }
