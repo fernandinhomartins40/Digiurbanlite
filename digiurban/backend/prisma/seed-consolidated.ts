@@ -348,6 +348,38 @@ async function main() {
     console.log('   ✅ Workflows de serviços criados com sucesso\n');
 
     // ========================================================================
+    // 9. SISTEMA UNIFICADO DE VINCULAÇÕES V2.0
+    // ========================================================================
+    console.log('9️⃣  Sistema Unificado de Vinculações V2.0');
+    console.log('   ─────────────────────────────');
+    console.log('   📦 Importando sistema unificado...');
+
+    try {
+      const { default: seedUnifiedSystem } = await import('./seeds/unified-system.seed');
+      await seedUnifiedSystem();
+      console.log('   ✅ Sistema Unificado criado com sucesso\n');
+    } catch (error: any) {
+      console.error('   ⚠️  Erro ao importar sistema unificado:', error.message);
+      console.log('   ℹ️  Continuando sem o sistema unificado...\n');
+    }
+
+    // ========================================================================
+    // 10. SEEDS DOS APPS DE SAÚDE (INTEGRADO AO SISTEMA UNIFICADO)
+    // ========================================================================
+    console.log('🔟 Seeds dos Apps de Saúde');
+    console.log('   ─────────────────────────────');
+    console.log('   📦 Importando seeds de saúde...');
+
+    try {
+      const { default: masterSeedSaude } = await import('./seeds/apps/saude/master-seed-saude');
+      await masterSeedSaude();
+      console.log('   ✅ Seeds de Saúde criados com sucesso\n');
+    } catch (error: any) {
+      console.error('   ⚠️  Erro ao importar seeds de saúde:', error.message);
+      console.log('   ℹ️  Continuando sem os seeds de saúde...\n');
+    }
+
+    // ========================================================================
     // RESUMO FINAL
     // ========================================================================
     console.log('\n╔════════════════════════════════════════════════════════╗');
