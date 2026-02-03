@@ -16,7 +16,7 @@ import {
   calculateExpirationDate,
   isExpired,
   getReverseRelationship
-} from '../../../shared/utils/family.utils'
+} from '../shared/utils/family.utils'
 
 import {
   FamilyRelationship,
@@ -28,9 +28,9 @@ import {
   RespondToInviteRequest,
   FamilyData,
   ValidationWarning
-} from '../../../shared/types/family.types'
+} from '../shared/types/family.types'
 
-import { FAMILY_VALIDATION_RULES, FAMILY_MESSAGES } from '../../../shared/constants/family.constants'
+import { FAMILY_VALIDATION_RULES, FAMILY_MESSAGES } from '../shared/constants/family.constants'
 
 // ============================================================================
 // INTERFACES LOCAIS

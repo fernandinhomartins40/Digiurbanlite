@@ -32,15 +32,16 @@ RUN npm install --legacy-peer-deps
 # Copiar código do backend
 COPY digiurban/backend ./
 
-# Copiar arquivos compartilhados (shared)
-COPY digiurban/shared ../shared
+# Copiar arquivos compartilhados (shared) para dentro do src
+# Isso permite imports como '@shared/*' ou '../shared/*'
+COPY digiurban/shared ./src/shared
 
 # Gerar Prisma Client e Build TypeScript
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
 RUN npx prisma generate && \
     rm -rf dist/.tsbuildinfo dist/* && \
-    npm run build && \
+    npx tsc -p tsconfig.docker.json && \
     ls -la dist && \
     if [ ! -f "dist/index.js" ]; then echo "❌ ERRO: index.js não foi compilado!"; exit 1; fi && \
     if [ ! -f "dist/routes/citizen-services.js" ]; then echo "❌ ERRO: citizen-services.js não foi compilado!"; exit 1; fi && \
