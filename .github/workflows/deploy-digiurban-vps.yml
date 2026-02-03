@@ -147,25 +147,46 @@ jobs:
             echo "🧹 Removendo containers parados..."
             docker container prune -f || true
 
-            # Remover imagens antigas do DigiUrban (força rebuild completo)
-            echo "🗑️ Removendo imagens antigas do DigiUrban..."
-            docker images | grep -E "digiurban|backend-builder|frontend-builder" | awk '{print $3}' | tail -n +2 | xargs -r docker rmi -f 2>/dev/null || echo "Nenhuma imagem antiga encontrada"
+            # ===== LIMPEZA NUCLEAR DE CACHE =====
+            echo "=== 🔥 LIMPEZA NUCLEAR DE CACHE DOCKER ==="
 
-            # Remover imagens não utilizadas (NÃO remove volumes)
+            # 1. Remover TODAS as imagens relacionadas ao DigiUrban
+            echo "🗑️ Removendo TODAS as imagens do DigiUrban..."
+            docker images | grep -i digiurban | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+            docker images | grep -i backend-builder | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+            docker images | grep -i frontend-builder | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+            docker images | grep -i runner | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+
+            # 2. Remover imagens base do Node.js (força download novo)
+            echo "🗑️ Removendo imagens base do Node.js..."
+            docker images | grep "node.*18-bookworm-slim" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+
+            # 3. Limpar build cache do Docker
+            echo "🗑️ Limpando build cache do Docker..."
+            docker builder prune -af --filter "until=1h" || true
+
+            # 4. Remover imagens órfãs (dangling)
             echo "🗑️ Removendo imagens órfãs..."
             docker image prune -af || true
 
-            # Verificar que volumes AINDA existem após limpeza
+            # 5. Verificar que volumes AINDA existem após limpeza
             echo "✅ Verificando integridade dos volumes após limpeza:"
             docker volume ls | grep -E "postgres_data|digiurban_uploads|messages_uploads|smtp_data|digiurban_backups" || echo "⚠️ AVISO: Alguns volumes não foram encontrados!"
 
-            # Garantir BUILD_TIMESTAMP como variável de ambiente ANTES do build
-            export BUILD_TIMESTAMP=$(date +%s)
+            # 6. Gerar BUILD_TIMESTAMP único
+            export BUILD_TIMESTAMP=$(date +%s%N)
+            export CACHE_BUST=$(echo $RANDOM | md5sum | head -c 20)
             echo "BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"
+            echo "CACHE_BUST=${CACHE_BUST}"
+
+            # 7. Forçar pull das imagens base
+            echo "📥 Forçando pull de imagens base..."
+            docker pull node:18-bookworm-slim
 
             # ===== VALIDAÇÃO PRÉ-BUILD: Verificar arquivos críticos =====
             echo "=== Validando arquivos críticos antes do build ==="
 
+            # Validar estrutura de arquivos backend
             if [ ! -f "digiurban/backend/src/routes/citizen-services.ts" ]; then
               echo "❌ ERRO: citizen-services.ts não encontrado!"
               exit 1
@@ -185,18 +206,72 @@ jobs:
             fi
             echo "✓ Rota citizen-services registrada no index.ts"
 
-            echo "=== Todos os arquivos críticos validados ==="
+            # Validar tsconfig.docker.json
+            if [ ! -f "digiurban/backend/tsconfig.docker.json" ]; then
+              echo "❌ ERRO: tsconfig.docker.json não encontrado!"
+              exit 1
+            fi
+            echo "✓ tsconfig.docker.json encontrado"
 
-            # Verificar conteúdo do Dockerfile (debug)
-            echo "=== DEBUG: Verificando Dockerfile ==="
-            echo "Linha 50 do Dockerfile:"
+            # Verificar conteúdo do tsconfig.docker.json
+            echo "📋 Conteúdo do tsconfig.docker.json:"
+            cat digiurban/backend/tsconfig.docker.json
+
+            # Validar estrutura shared
+            if [ ! -d "digiurban/shared" ]; then
+              echo "❌ ERRO: Diretório shared não encontrado!"
+              exit 1
+            fi
+            echo "✓ Diretório shared encontrado"
+
+            echo "📁 Estrutura do diretório shared:"
+            ls -la digiurban/shared/
+
+            # Validar arquivos shared críticos
+            if [ ! -f "digiurban/shared/types/family.types.ts" ]; then
+              echo "❌ ERRO: family.types.ts não encontrado!"
+              exit 1
+            fi
+            echo "✓ family.types.ts encontrado"
+
+            echo "=== ✅ Todos os arquivos críticos validados ==="
+
+            # ===== VALIDAÇÃO DO DOCKERFILE =====
+            echo "=== 📋 VALIDAÇÃO DO DOCKERFILE ==="
+
+            # Gerar hash do Dockerfile para garantir que estamos usando a versão correta
+            DOCKERFILE_HASH=$(md5sum digiurban/Dockerfile | awk '{print $1}')
+            echo "Hash do Dockerfile: ${DOCKERFILE_HASH}"
+
+            echo "Verificando linhas críticas do Dockerfile:"
+            echo "--- Linha 37 (COPY shared):"
+            sed -n '37p' digiurban/Dockerfile
+            echo "--- Linha 50 (DATABASE_URL):"
             sed -n '50p' digiurban/Dockerfile
-            echo "Linha 52 do Dockerfile:"
+            echo "--- Linha 52 (Build command):"
             sed -n '52p' digiurban/Dockerfile
 
-            # Build da imagem sem cache (BUILD_TIMESTAMP vem do export acima)
-            echo "Construindo nova imagem..."
-            docker-compose -f docker-compose.vps.yml build --no-cache --pull
+            # Verificar se linha 52 contém o comando correto
+            if grep -q "npx tsc -p tsconfig.docker.json" digiurban/Dockerfile; then
+              echo "✅ Dockerfile contém comando correto (npx tsc -p tsconfig.docker.json)"
+            else
+              echo "❌ ERRO: Dockerfile NÃO contém comando correto!"
+              echo "Conteúdo da linha 52:"
+              sed -n '52p' digiurban/Dockerfile
+              exit 1
+            fi
+
+            # ===== BUILD SEM CACHE COM MÚLTIPLAS GARANTIAS =====
+            echo "=== 🔨 CONSTRUINDO IMAGEM (BUILD COMPLETO SEM CACHE) ==="
+
+            # Adicionar CACHE_BUST como build arg adicional
+            docker-compose -f docker-compose.vps.yml build \
+              --no-cache \
+              --pull \
+              --progress=plain \
+              --build-arg BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
+              --build-arg CACHE_BUST=${CACHE_BUST} \
+              --build-arg BUILDKIT_INLINE_CACHE=0
 
             # Parar containers existentes antes de iniciar
             echo "Parando containers existentes..."

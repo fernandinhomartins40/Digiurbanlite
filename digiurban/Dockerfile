@@ -6,9 +6,11 @@
 FROM node:18-bookworm-slim AS backend-builder
 WORKDIR /app/backend
 
-# Build timestamp para invalidar cache
+# Build timestamp e cache bust para invalidar cache
 ARG BUILD_TIMESTAMP
-RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
+ARG CACHE_BUST
+RUN echo "Build timestamp: ${BUILD_TIMESTAMP}" && \
+    echo "Cache bust: ${CACHE_BUST}"
 
 # Instalar dependências do sistema (Debian equivalentes ao Alpine)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,7 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ⚡ CACHE BUSTER: Força invalidação de cache antes de copiar código
-RUN echo "Backend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
+RUN echo "Backend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}" && \
+    echo "Additional cache bust: ${CACHE_BUST:-none}"
 
 # Copiar package files do backend
 COPY digiurban/backend/package.json digiurban/backend/package-lock.json ./
@@ -59,9 +62,11 @@ RUN npx prisma generate && \
 FROM node:18-bookworm-slim AS frontend-builder
 WORKDIR /app/frontend
 
-# Build timestamp para invalidar cache
+# Build timestamp e cache bust para invalidar cache
 ARG BUILD_TIMESTAMP
-RUN echo "Build timestamp: ${BUILD_TIMESTAMP}"
+ARG CACHE_BUST
+RUN echo "Build timestamp: ${BUILD_TIMESTAMP}" && \
+    echo "Cache bust: ${CACHE_BUST}"
 
 # Instalar dependências para jscanify/canvas (Debian)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -77,7 +82,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ⚡ CACHE BUSTER
-RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}"
+RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}" && \
+    echo "Additional cache bust: ${CACHE_BUST:-none}"
 
 # ✅ CRÍTICO: API URL para produção
 ARG NEXT_PUBLIC_API_URL=/api
