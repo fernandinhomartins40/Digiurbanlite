@@ -54,6 +54,11 @@ ultrazend-smtp-server/logs/
 **/list-*.js
 **/get-*.js
 
+# ExceÃ§Ãµes: scripts necessÃ¡rios para migrations em produÃ§Ã£o
+!digiurban/backend/fix-production-migrations.js
+!digiurban/backend/fix-categorization-migrations.js
+!digiurban/backend/update-service-uniqueness.js
+
 # Documentação
 **/*.md
 !**/README.md
