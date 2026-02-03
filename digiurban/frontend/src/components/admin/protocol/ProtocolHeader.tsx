@@ -24,8 +24,20 @@ import {
   Loader2,
   ArrowLeft,
   MessageSquare,
-  Download
+  Download,
+  MoreVertical,
+  UserPlus,
+  UserCheck,
+  ArrowRightLeft,
+  Users
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 
 interface StageValidation {
   canProgress: boolean
@@ -47,8 +59,10 @@ interface ProtocolHeaderProps {
     status: string
     metadata?: any
   }
+  departmentId?: string
   onActionComplete: () => void
   onBack: () => void
+  onAssignAction?: (action: 'assign' | 'delegate' | 'forward' | 'team') => void
 }
 
 export function ProtocolHeader({
@@ -58,8 +72,10 @@ export function ProtocolHeader({
   status,
   citizenName,
   currentStage,
+  departmentId,
   onActionComplete,
-  onBack
+  onBack,
+  onAssignAction
 }: ProtocolHeaderProps) {
   const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
@@ -401,6 +417,37 @@ export function ProtocolHeader({
               <Download className="h-4 w-4 mr-2" />
               Exportar
             </Button>
+
+            {/* Dropdown de Atribuições */}
+            {onAssignAction && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <MoreVertical className="h-4 w-4 mr-2" />
+                    Atribuir
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => onAssignAction('assign')}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    <span>Atribuir Servidor</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAssignAction('delegate')}>
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    <span>Delegar Temporário</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => onAssignAction('forward')}>
+                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                    <span>Encaminhar</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onAssignAction('team')}>
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Atribuir Equipe</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>

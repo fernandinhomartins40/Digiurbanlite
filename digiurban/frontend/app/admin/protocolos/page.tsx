@@ -20,9 +20,25 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle2,
-  Clock
+  Clock,
+  MoreVertical,
+  UserPlus,
+  UserCheck,
+  ArrowRightLeft,
+  Users
 } from 'lucide-react'
 import { getPriorityLabel, getPriorityBadgeClass } from '@/lib/protocol-helpers'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
+import { AssignProtocolDialog } from '@/components/protocols/AssignProtocolDialog'
+import { DelegateProtocolDialog } from '@/components/protocols/DelegateProtocolDialog'
+import { ForwardProtocolDialog } from '@/components/protocols/ForwardProtocolDialog'
+import { AssignTeamDialog } from '@/components/protocols/AssignTeamDialog'
 
 interface Protocol {
   id: string
@@ -99,6 +115,13 @@ export default function ProtocolsPage() {
   const [assignComment, setAssignComment] = useState('')
   const [selectedAssignee, setSelectedAssignee] = useState('')
   const [showServiceSelectorModal, setShowServiceSelectorModal] = useState(false)
+
+  // Estados para os novos diálogos de atribuição
+  const [showAssignServerDialog, setShowAssignServerDialog] = useState(false)
+  const [showDelegateDialog, setShowDelegateDialog] = useState(false)
+  const [showForwardDialog, setShowForwardDialog] = useState(false)
+  const [showAssignTeamDialog, setShowAssignTeamDialog] = useState(false)
+  const [activeProtocolId, setActiveProtocolId] = useState<string | null>(null)
 
   // Carregar protocolos
   const loadProtocols = async () => {
@@ -332,16 +355,65 @@ export default function ProtocolsPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col w-full sm:w-auto shrink-0">
+                  <div className="flex flex-row gap-2 w-full sm:w-auto shrink-0">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => router.push(`/admin/protocolos/${protocol.id}`)}
-                      className="w-full sm:w-auto"
+                      className="flex-1 sm:flex-initial"
                     >
                       <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       <span className="text-xs sm:text-sm">Detalhes</span>
                     </Button>
+
+                    {hasPermission('protocols:assign') && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="outline">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setActiveProtocolId(protocol.id)
+                              setShowAssignServerDialog(true)
+                            }}
+                          >
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            <span>Atribuir Servidor</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setActiveProtocolId(protocol.id)
+                              setShowDelegateDialog(true)
+                            }}
+                          >
+                            <UserCheck className="mr-2 h-4 w-4" />
+                            <span>Delegar Temporário</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setActiveProtocolId(protocol.id)
+                              setShowForwardDialog(true)
+                            }}
+                          >
+                            <ArrowRightLeft className="mr-2 h-4 w-4" />
+                            <span>Encaminhar</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setActiveProtocolId(protocol.id)
+                              setShowAssignTeamDialog(true)
+                            }}
+                          >
+                            <Users className="mr-2 h-4 w-4" />
+                            <span>Atribuir Equipe</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -412,6 +484,59 @@ export default function ProtocolsPage() {
         open={showServiceSelectorModal}
         onOpenChange={setShowServiceSelectorModal}
       />
+
+      {/* Diálogos de Atribuição de Protocolos */}
+      {activeProtocolId && (
+        <>
+          <AssignProtocolDialog
+            open={showAssignServerDialog}
+            onOpenChange={setShowAssignServerDialog}
+            protocolId={activeProtocolId}
+            departmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id}
+            onSuccess={() => {
+              setShowAssignServerDialog(false)
+              setActiveProtocolId(null)
+              loadProtocols()
+            }}
+          />
+
+          <DelegateProtocolDialog
+            open={showDelegateDialog}
+            onOpenChange={setShowDelegateDialog}
+            protocolId={activeProtocolId}
+            departmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id}
+            onSuccess={() => {
+              setShowDelegateDialog(false)
+              setActiveProtocolId(null)
+              loadProtocols()
+            }}
+          />
+
+          <ForwardProtocolDialog
+            open={showForwardDialog}
+            onOpenChange={setShowForwardDialog}
+            protocolId={activeProtocolId}
+            currentDepartmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id}
+            onSuccess={() => {
+              setShowForwardDialog(false)
+              setActiveProtocolId(null)
+              loadProtocols()
+            }}
+          />
+
+          <AssignTeamDialog
+            open={showAssignTeamDialog}
+            onOpenChange={setShowAssignTeamDialog}
+            protocolId={activeProtocolId}
+            departmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id}
+            onSuccess={() => {
+              setShowAssignTeamDialog(false)
+              setActiveProtocolId(null)
+              loadProtocols()
+            }}
+          />
+        </>
+      )}
 
       {/* Dialog de Visualização */}
       <Dialog open={!!selectedProtocol && !showAssignDialog} onOpenChange={(open) => !open && setSelectedProtocol(null)}>

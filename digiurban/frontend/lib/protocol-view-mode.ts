@@ -191,6 +191,9 @@ export function getContextualTabs(
   // Sempre mostrar comunicação
   tabs.push('comunicacao')
 
+  // Sempre mostrar histórico de atribuições
+  tabs.push('atribuicoes')
+
   return tabs
 }
 
@@ -251,6 +254,7 @@ export const TAB_LABELS: Record<string, { label: string; icon: string }> = {
   dados: { label: 'Dados', icon: 'FormInput' },
   pendencias: { label: 'Pendências', icon: 'AlertCircle' },
   comunicacao: { label: 'Comunicação', icon: 'MessageSquare' },
+  atribuicoes: { label: 'Atribuições', icon: 'Users' },
   payment: { label: 'Pagamento', icon: 'CreditCard' },
 
   // Modo Completing

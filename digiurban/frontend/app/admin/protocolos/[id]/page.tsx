@@ -39,6 +39,12 @@ import { useToast } from '@/hooks/use-toast'
 import { StageStatus } from '@/types/protocol-enhancements'
 import { Clock, FileText, AlertCircle, MessageSquare, Users } from 'lucide-react'
 import { CardContent } from '@/components/ui/card'
+import { AssignProtocolDialog } from '@/components/protocols/AssignProtocolDialog'
+import { DelegateProtocolDialog } from '@/components/protocols/DelegateProtocolDialog'
+import { ForwardProtocolDialog } from '@/components/protocols/ForwardProtocolDialog'
+import { AssignTeamDialog } from '@/components/protocols/AssignTeamDialog'
+import { AssignmentHistoryTimeline } from '@/components/protocols/AssignmentHistoryTimeline'
+import { CurrentAssignmentCard } from '@/components/protocols/CurrentAssignmentCard'
 
 export default function ProtocolDetailPage() {
   const params = useParams()
@@ -59,6 +65,12 @@ export default function ProtocolDetailPage() {
   const [validation, setValidation] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('')
+
+  // Estados para diálogos de atribuição
+  const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const [showDelegateDialog, setShowDelegateDialog] = useState(false)
+  const [showForwardDialog, setShowForwardDialog] = useState(false)
+  const [showAssignTeamDialog, setShowAssignTeamDialog] = useState(false)
 
   // Detectar modo de visualização
   const viewModeResult = useMemo(() => {
@@ -295,7 +307,26 @@ export default function ProtocolDetailPage() {
     documentos: documents.filter(d => d.status === 'PENDING').length,
     pendencias: openPendings.length,
     comunicacao: unreadMessages,
-    'documentos-gerados': generatedDocuments.filter(d => !d.isSigned).length // Mostra apenas não assinados
+    'documentos-gerados': generatedDocuments.filter(d => !d.isSigned).length, // Mostra apenas não assinados
+    atribuicoes: 0 // Será atualizado dinamicamente
+  }
+
+  // Handler para ações de atribuição
+  const handleAssignAction = (action: 'assign' | 'delegate' | 'forward' | 'team') => {
+    switch (action) {
+      case 'assign':
+        setShowAssignDialog(true)
+        break
+      case 'delegate':
+        setShowDelegateDialog(true)
+        break
+      case 'forward':
+        setShowForwardDialog(true)
+        break
+      case 'team':
+        setShowAssignTeamDialog(true)
+        break
+    }
   }
 
   return (
@@ -308,8 +339,10 @@ export default function ProtocolDetailPage() {
         status={protocol.status}
         citizenName={protocol.citizen?.name}
         currentStage={currentStage}
+        departmentId={protocol.department?.id}
         onActionComplete={loadProtocolData}
         onBack={() => router.push('/admin/protocolos')}
+        onAssignAction={handleAssignAction}
       />
 
       {/* Conteúdo Principal */}
@@ -428,6 +461,15 @@ export default function ProtocolDetailPage() {
                 </TabsContent>
               )}
 
+              {/* Tab: Atribuições (Histórico de Atribuições) */}
+              <TabsContent value="atribuicoes" className="mt-0">
+                <Card>
+                  <CardContent className="pt-6">
+                    <AssignmentHistoryTimeline protocolId={protocolId} />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               {/* Tab: Pagamento */}
               {availableTabs.includes('payment') && (
                 <TabsContent value="payment" className="mt-0">
@@ -445,6 +487,12 @@ export default function ProtocolDetailPage() {
 
           {/* Sidebar Compacta (1/4) */}
           <div className="space-y-4">
+            {/* Card de Atribuição Atual */}
+            <CurrentAssignmentCard
+              protocolId={protocolId}
+              onReassign={() => handleAssignAction('assign')}
+            />
+
             {/* SLA Compacto */}
             <CompactSLACard
               sla={sla}
@@ -509,6 +557,51 @@ export default function ProtocolDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Diálogos de Atribuição de Protocolos */}
+      <AssignProtocolDialog
+        open={showAssignDialog}
+        onOpenChange={setShowAssignDialog}
+        protocolId={protocolId}
+        departmentId={protocol.department?.id}
+        onSuccess={() => {
+          setShowAssignDialog(false)
+          loadProtocolData()
+        }}
+      />
+
+      <DelegateProtocolDialog
+        open={showDelegateDialog}
+        onOpenChange={setShowDelegateDialog}
+        protocolId={protocolId}
+        departmentId={protocol.department?.id}
+        onSuccess={() => {
+          setShowDelegateDialog(false)
+          loadProtocolData()
+        }}
+      />
+
+      <ForwardProtocolDialog
+        open={showForwardDialog}
+        onOpenChange={setShowForwardDialog}
+        protocolId={protocolId}
+        currentDepartmentId={protocol.department?.id}
+        onSuccess={() => {
+          setShowForwardDialog(false)
+          loadProtocolData()
+        }}
+      />
+
+      <AssignTeamDialog
+        open={showAssignTeamDialog}
+        onOpenChange={setShowAssignTeamDialog}
+        protocolId={protocolId}
+        departmentId={protocol.department?.id}
+        onSuccess={() => {
+          setShowAssignTeamDialog(false)
+          loadProtocolData()
+        }}
+      />
     </div>
   )
 }

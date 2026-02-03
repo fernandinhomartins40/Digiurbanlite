@@ -130,7 +130,8 @@
       "Bash(do echo \"=== $dir/page.tsx ===\")",
       "Bash([ -f \"digiurban/frontend/app/admin/apps/saude/cadastros/$dir/page.tsx\" ])",
       "Bash(Get-Date -Format \"yyyyMMddHHmmss\")",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Bash(rsync:*)"
     ],
     "deny": [],
     "ask": []
