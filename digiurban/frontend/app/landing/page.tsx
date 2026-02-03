@@ -60,14 +60,23 @@ export default function LandingPage() {
               <a href="#seguranca" className="text-sm font-medium text-gray-600 hover:text-[#0f6fbe] transition-colors">Segurança</a>
             </div>
 
-            <div className="flex gap-2 sm:gap-3">
-              <Link
-                href="/cidadao/login"
-                className="bg-[#0fffbf] hover:bg-[#0de6a9] text-[#193642] px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm hover:shadow-md"
-              >
-                <span className="hidden sm:inline">Acessar Portal</span>
-                <span className="sm:hidden">Entrar</span>
-              </Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Image
+                src="/selo-palmital-pr.png"
+                alt="Selo Palmital PR"
+                width={60}
+                height={60}
+                className="h-10 sm:h-12 w-auto"
+              />
+              <div className="flex gap-2 sm:gap-3">
+                <Link
+                  href="/cidadao/login"
+                  className="bg-[#0fffbf] hover:bg-[#0de6a9] text-[#193642] px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all shadow-sm hover:shadow-md"
+                >
+                  <span className="hidden sm:inline">Acessar Portal</span>
+                  <span className="sm:hidden">Entrar</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
