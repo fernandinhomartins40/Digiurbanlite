@@ -281,6 +281,7 @@ model Citizen {
   transferRequests    CitizenTransferRequest[]
   familyAsMember      FamilyComposition[]      @relation("FamilyMember")
   familyAsHead        FamilyComposition[]      @relation("FamilyHead")
+  familyInvites       FamilyInvite[]           @relation("FamilyInvites")
   notifications       Notification[]
   protocolsSimplified ProtocolSimplified[]
   documents           CitizenDocument[]        @relation("CitizenDocuments")
@@ -446,6 +447,7 @@ model FamilyComposition {
   memberId     String
   relationship FamilyRelationship
   isDependent  Boolean            @default(false)
+  status       FamilyLinkStatus   @default(PENDING)
 
   // Campos calculados adicionados na Sprint 2
   monthlyIncome Decimal? // Renda mensal do membro
@@ -459,7 +461,41 @@ model FamilyComposition {
   head      Citizen  @relation("FamilyHead", fields: [headId], references: [id], onDelete: Cascade)
 
   @@unique([headId, memberId])
+  @@index([status])
   @@map("family_compositions")
+}
+
+model FamilyInvite {
+  id           String             @id @default(cuid())
+  headId       String             // Quem está convidando
+  email        String             // Email do convidado
+  cpf          String?            // CPF (opcional)
+  phone        String?            // Telefone (opcional)
+  name         String?            // Nome do convidado
+  relationship FamilyRelationship // Relacionamento proposto
+  isDependent  Boolean            @default(false)
+  status       InviteStatus       @default(PENDING)
+  token        String             @unique
+  expiresAt    DateTime
+
+  // Mensagem personalizada (opcional)
+  message String?
+
+  // Campos adicionais opcionais
+  monthlyIncome Decimal?
+  occupation    String?
+  education     String?
+  hasDisability Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  head      Citizen  @relation("FamilyInvites", fields: [headId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([email])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("family_invites")
 }
 
 // ========================================
@@ -2313,6 +2349,20 @@ enum FamilyRelationship {
   GRANDSON // Neto
   GRANDDAUGHTER // Neta
   OTHER // Outro
+}
+
+enum FamilyLinkStatus {
+  PENDING // Aguardando confirmação do membro
+  ACTIVE // Ambos confirmaram
+  REJECTED // Membro rejeitou
+}
+
+enum InviteStatus {
+  PENDING // Aguardando resposta
+  ACCEPTED // Aceito e vínculo criado
+  REJECTED // Rejeitado pelo convidado
+  EXPIRED // Expirou (7 dias)
+  CANCELLED // Cancelado pelo remetente
 }
 
 enum CulturalAttendanceType {

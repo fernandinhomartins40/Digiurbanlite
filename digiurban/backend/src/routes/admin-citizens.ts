@@ -688,7 +688,7 @@ router.get(
   })
 );
 
-// POST /api/admin/citizens/:id/family - Adicionar membro
+// POST /api/admin/citizens/:id/family - Adicionar membro (REFATORADO - USA SERVIÇO CENTRALIZADO)
 router.post(
   '/:id/family',
   requirePermission('citizens:update'),
@@ -697,125 +697,63 @@ router.post(
     const { id } = authReq.params;
     const { memberId, relationship, isDependent, monthlyIncome, occupation, education, hasDisability } = authReq.body;
 
-    if (!memberId || !relationship) {
-      res.status(400).json({
+    // Importar serviço centralizado
+    const { familyService } = require('../services/family.service');
+
+    const result = await familyService.addFamilyMember(id, {
+      memberId,
+      relationship,
+      isDependent: isDependent || false,
+      monthlyIncome,
+      occupation,
+      education,
+      hasDisability
+    });
+
+    if (!result.success) {
+      const statusCode = result.error?.includes('não encontrado') ? 404 : 400;
+      res.status(statusCode).json({
         success: false,
-        error: 'memberId e relationship são obrigatórios'
-        });
+        error: result.error
+      });
       return;
     }
-
-    // Validar que o cidadão responsável existe
-    const citizen = await prisma.citizen.findFirst({
-      where: {
-        id
-        }
-        });
-
-    if (!citizen) {
-      res.status(404).json({
-        success: false,
-        error: 'Cidadão responsável não encontrado'
-        });
-      return;
-    }
-
-    // Validar que o membro existe
-    const memberCitizen = await prisma.citizen.findFirst({
-      where: {
-        id: memberId
-        }
-        });
-
-    if (!memberCitizen) {
-      res.status(404).json({
-        success: false,
-        error: 'Cidadão membro não encontrado'
-        });
-      return;
-    }
-
-    // Verificar se já não existe
-    const existing = await prisma.familyComposition.findFirst({
-      where: {
-        headId: id,
-        memberId
-        }
-        });
-
-    if (existing) {
-      res.status(400).json({
-        success: false,
-        error: 'Este membro já está na composição familiar'
-        });
-      return;
-    }
-
-    const member = await prisma.familyComposition.create({
-      data: {
-        headId: id,
-        memberId,
-        relationship,
-        isDependent: isDependent || false,
-        // Novos campos Sprint 2
-        monthlyIncome,
-        occupation,
-        education,
-        hasDisability
-        },
-      include: {
-        member: {
-          select: {
-            id: true,
-            name: true,
-            cpf: true,
-            email: true,
-            phone: true,
-            birthDate: true
-        }
-      }
-        }
-        });
 
     res.status(201).json({
       success: true,
       message: 'Membro adicionado com sucesso',
-      data: { member }
-        });
+      data: {
+        member: result.data,
+        warnings: result.warnings
+      }
+    });
   })
 );
 
-// DELETE /api/admin/citizens/:id/family/:memberId - Remover membro
+// DELETE /api/admin/citizens/:id/family/:memberId - Remover membro (REFATORADO)
 router.delete(
   '/:id/family/:memberId',
   requirePermission('citizens:update'),
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
-    const { id, memberId } = authReq.params;
+    const { memberId } = authReq.params;
 
-    const member = await prisma.familyComposition.findFirst({
-      where: {
-        id: memberId,
-        headId: id
-        }
-        });
+    const { familyService } = require('../services/family.service');
 
-    if (!member) {
+    const result = await familyService.removeFamilyMember(memberId);
+
+    if (!result.success) {
       res.status(404).json({
         success: false,
-        error: 'Membro não encontrado'
-        });
+        error: result.error
+      });
       return;
     }
-
-    await prisma.familyComposition.delete({
-      where: { id: memberId }
-        });
 
     res.json({
       success: true,
       message: 'Membro removido com sucesso'
-        });
+    });
   })
 );
 

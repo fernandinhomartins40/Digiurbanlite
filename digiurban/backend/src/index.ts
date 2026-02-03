@@ -388,6 +388,7 @@ try { console.log('   → citizen-protocols...'); app.use('/api/citizen/protocol
 // DIA 3: DISABLED - arquivo não existe
 // try { console.log('   → citizen-programs...'); app.use('/api/citizen', require('./routes/citizen-programs').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-programs:', e); }
 try { console.log('   → citizen-family...'); app.use('/api/citizen/family', require('./routes/citizen-family').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-family:', e); }
+try { console.log('   → family-invites...'); app.use('/api/citizen/family', require('./routes/family-invites').default); console.log('   ✓'); } catch (e) { console.error('❌ family-invites:', e); }
 try { console.log('   → citizen-documents...'); app.use('/api/citizen/documents', require('./routes/citizen-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-documents:', e); }
 try { console.log('   → citizen-personal-documents...'); app.use('/api/citizen/personal-documents', require('./routes/citizen-personal-documents').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-personal-documents:', e); }
 try { console.log('   → citizen-notifications...'); app.use('/api/citizen/notifications', require('./routes/citizen-notifications').default); console.log('   ✓'); } catch (e) { console.error('❌ citizen-notifications:', e); }

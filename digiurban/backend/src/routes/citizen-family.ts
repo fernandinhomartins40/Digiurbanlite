@@ -1,23 +1,32 @@
-import { Router, Response } from 'express';
-import { prisma } from '../lib/prisma';
-import { z } from 'zod';
-import { AuthenticatedRequest, SuccessResponse, ErrorResponse, TenantCitizenAuthenticatedRequest, createSuccessResponse, createErrorResponse, createNotFoundResponse } from '../types';
-import * as bcrypt from 'bcryptjs';
-import { citizenAuthMiddleware } from '../middleware/citizen-auth';
-import { validateCPF } from '../utils/validators';
-import { familyStatsService } from '../services/family-stats.service';
+/**
+ * ROTAS: Citizen Family Composition (REFATORADO)
+ * Gerenciamento de composição familiar pelo cidadão
+ *
+ * IMPORTANTE: Cidadãos devem estar cadastrados antes de serem adicionados à família
+ * Não há mais criação automática de cadastros
+ */
 
-// FASE 2 - Interface para família
-// WhereClause interface removida - usando WhereCondition do sistema centralizado
+import { Router, Response } from 'express'
+import { z } from 'zod'
+import { familyService } from '../services/family.service'
+import { citizenAuthMiddleware } from '../middleware/citizen-auth'
+import {
+  TenantCitizenAuthenticatedRequest,
+  createSuccessResponse,
+  createErrorResponse
+} from '../types'
 
-const router = Router();
+const router = Router()
 
-// Schemas de validação
+// Middleware de autenticação
+router.use(citizenAuthMiddleware as any)
+
+// ============================================================================
+// SCHEMAS DE VALIDAÇÃO
+// ============================================================================
+
 const addMemberSchema = z.object({
-  cpf: z.string().min(11, 'CPF deve ter 11 dígitos'),
-  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email inválido').optional(),
-  phone: z.string().optional(),
+  memberId: z.string().min(1, 'ID do membro é obrigatório'),
   relationship: z.enum([
     'SPOUSE',
     'SON',
@@ -30,635 +39,257 @@ const addMemberSchema = z.object({
     'GRANDMOTHER',
     'GRANDSON',
     'GRANDDAUGHTER',
-    'OTHER',
+    'OTHER'
   ]),
   isDependent: z.boolean().default(false),
-  birthDate: z.string().optional(),
-  // Novos campos Sprint 2
-  monthlyIncome: z.number().optional(),
-  occupation: z.string().optional(),
-  education: z.string().optional(),
-  hasDisability: z.boolean().optional(),
-  address: z
-    .object({
-      street: z.string(),
-      number: z.string(),
-      neighborhood: z.string(),
-      city: z.string(),
-      state: z.string(),
-      zipCode: z.string()
-        })
-    .optional()
-        });
-
-const updateRelationshipSchema = z.object({
-  relationship: z.enum([
-    'SPOUSE',
-    'SON',
-    'DAUGHTER',
-    'FATHER',
-    'MOTHER',
-    'BROTHER',
-    'SISTER',
-    'GRANDFATHER',
-    'GRANDMOTHER',
-    'GRANDSON',
-    'GRANDDAUGHTER',
-    'OTHER',
-  ]),
-  isDependent: z.boolean(),
-  // Novos campos Sprint 2
   monthlyIncome: z.number().optional(),
   occupation: z.string().optional(),
   education: z.string().optional(),
   hasDisability: z.boolean().optional()
-        });
+})
 
-// Middleware para verificar tenant em todas as rotas
-// CRIADO: type assertion para compatibilidade Express
-router.use(citizenAuthMiddleware as any);
+const updateMemberSchema = z.object({
+  relationship: z
+    .enum([
+      'SPOUSE',
+      'SON',
+      'DAUGHTER',
+      'FATHER',
+      'MOTHER',
+      'BROTHER',
+      'SISTER',
+      'GRANDFATHER',
+      'GRANDMOTHER',
+      'GRANDSON',
+      'GRANDDAUGHTER',
+      'OTHER'
+    ])
+    .optional(),
+  isDependent: z.boolean().optional(),
+  monthlyIncome: z.number().optional(),
+  occupation: z.string().optional(),
+  education: z.string().optional(),
+  hasDisability: z.boolean().optional()
+})
 
-// GET /api/family - Minha composição familiar
+// ============================================================================
+// ROTAS - COMPOSIÇÃO FAMILIAR
+// ============================================================================
+
+/**
+ * GET /api/citizen/family
+ * Buscar composição familiar completa
+ */
 router.get('/', async (req, res) => {
   try {
-    const { citizen } = req as TenantCitizenAuthenticatedRequest;
+    const { citizen } = req as TenantCitizenAuthenticatedRequest
 
-    // Buscar membros da família onde o cidadão é responsável
-    const familyMembers = await prisma.familyComposition.findMany({
-      where: {
-        
-        headId: citizen.id
-        },
-      include: {
-        member: {
-          select: {
-            id: true,
-            cpf: true,
-            name: true,
-            email: true,
-            phone: true,
-            address: true,
-            isActive: true,
-            createdAt: true
-        }
-      }
-        },
-      orderBy: [{ relationship: 'asc' }, { member: { name: 'asc' } }]
-        });
+    const family = await familyService.getFamilyComposition(citizen.id)
 
-    // Buscar famílias onde o cidadão é membro
-    const memberOf = await prisma.familyComposition.findMany({
-      where: {
-        
-        memberId: citizen.id
-        },
-      include: {
-        head: {
-          select: {
-            id: true,
-            cpf: true,
-            name: true,
-            email: true,
-            phone: true
-        }
-      }
-        }
-        });
-
-    return res.json({
-      family: {
-        head: {
-          id: citizen.id,
-          cpf: citizen.cpf,
-          name: citizen.name,
-          email: citizen.email,
-          phone: citizen.phone,
-          birthDate: citizen.birthDate
-        },
-        members: familyMembers,
-        memberOf: memberOf
-        }
-        });
-  } catch (error) {
-    console.error('Erro ao buscar composição familiar:', error);
-    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'));
+    return res.json(createSuccessResponse({ family }))
+  } catch (error: any) {
+    console.error('Erro ao buscar composição familiar:', error)
+    return res.status(500).json(
+      createErrorResponse('INTERNAL_ERROR', error.message || 'Erro interno do servidor')
+    )
   }
-});
+})
 
-// POST /api/family/members - Adicionar membro à família
+/**
+ * POST /api/citizen/family/members
+ * Adicionar membro à família
+ *
+ * IMPORTANTE: O cidadão deve estar cadastrado no sistema
+ * Se não estiver, use o endpoint de convites (/api/citizen/family/invites)
+ */
 router.post('/members', async (req, res) => {
   try {
-    const data = addMemberSchema.parse(req.body);
-    const { citizen } = req as TenantCitizenAuthenticatedRequest;
+    const { citizen } = req as TenantCitizenAuthenticatedRequest
+    const data = addMemberSchema.parse(req.body)
 
-    // Validar CPF
-    if (!validateCPF(data.cpf)) {
-      return res.status(400).json(createErrorResponse('VALIDATION_ERROR', 'CPF inválido'));
+    const result = await familyService.addFamilyMember(citizen.id, data as any)
+
+    if (!result.success) {
+      const statusCode = result.error?.includes('não encontrado') ? 404 : 400
+      return res.status(statusCode).json(
+        createErrorResponse('ADD_MEMBER_ERROR', result.error || 'Erro ao adicionar membro')
+      )
     }
 
-    // Verificar se já existe um cidadão com esse CPF
-    let memberCitizen = await prisma.citizen.findFirst({
-      where: {
-        
-        cpf: data.cpf
-        }
-        });
+    return res.json(
+      createSuccessResponse({
+        member: result.data,
+        warnings: result.warnings
+      })
+    )
+  } catch (error: any) {
+    console.error('Erro ao adicionar membro:', error)
 
-    // Se não existe, criar novo cidadão
-    if (!memberCitizen) {
-      // Gerar senha temporária
-      const tempPassword = Math.random().toString(36).slice(-8);
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-      memberCitizen = await prisma.citizen.create({
-        data: {
-          
-          cpf: data.cpf,
-          name: data.name,
-          email: data.email || `${data.cpf}@temp.digiurban.com`,
-          phone: data.phone,
-          address: data.address,
-          password: hashedPassword,
-          isActive: true
-        }
-        });
-
-      // Criar notificação sobre a senha temporária
-      if (data.email) {
-        await prisma.notification.create({
-          data: {
-            
-            citizenId: memberCitizen.id,
-            title: 'Conta Criada',
-            message: `Sua conta foi criada por ${citizen.name}. Senha temporária: ${tempPassword}`,
-            type: 'INFO',
-            channel: 'EMAIL'
-        }
-        });
-      }
-    }
-
-    // Verificar se já existe relacionamento familiar
-    const existingRelation = await prisma.familyComposition.findFirst({
-      where: {
-        
-        headId: citizen.id,
-        memberId: memberCitizen.id
-        }
-        });
-
-    if (existingRelation) {
+    if (error.name === 'ZodError') {
       return res.status(400).json(
-        createErrorResponse('DUPLICATE_MEMBER', 'Este membro já faz parte da sua família')
-      );
+        createErrorResponse('VALIDATION_ERROR', 'Dados inválidos', error.errors)
+      )
     }
 
-    // Verificar se o cidadão não está tentando adicionar a si mesmo
-    if (memberCitizen.id === citizen.id) {
-      return res.status(400).json(
-        createErrorResponse('INVALID_SELF_ADD', 'Você não pode adicionar a si mesmo como membro da família')
-      );
-    }
-
-    // Validação inteligente de relacionamento (Sprint 3.1)
-    let warnings: string[] = [];
-    if (data.birthDate) {
-      const birthDate = new Date(data.birthDate);
-      warnings = familyStatsService.validateRelationshipByAge(data.relationship, birthDate);
-    }
-
-    // Criar relacionamento familiar
-    const familyComposition = await prisma.familyComposition.create({
-      data: {
-
-        headId: citizen.id,
-        memberId: memberCitizen.id,
-        relationship: data.relationship,
-        isDependent: data.isDependent,
-        // Novos campos Sprint 2
-        monthlyIncome: data.monthlyIncome,
-        occupation: data.occupation,
-        education: data.education,
-        hasDisability: data.hasDisability
-        },
-      include: {
-        member: {
-          select: {
-            id: true,
-            cpf: true,
-            name: true,
-            email: true,
-            phone: true,
-            address: true,
-            isActive: true,
-            createdAt: true
-        }
-      }
-        }
-        });
-
-    // Criar notificação para o membro adicionado
-    await prisma.notification.create({
-      data: {
-        
-        citizenId: memberCitizen.id,
-        title: 'Adicionado à Família',
-        message: `Você foi adicionado à composição familiar de ${citizen.name}`,
-        type: 'INFO'
-        }
-        });
-
-    return res.status(201).json({
-      message: 'Membro adicionado à família com sucesso',
-      familyComposition,
-      warnings: warnings.length > 0 ? warnings : undefined
-        });
-  } catch (error: unknown) {
-    console.error('Erro ao adicionar membro da família:', error);
-
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Dados inválidos',
-        details: error.issues
-        });
-    }
-
-    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'));
+    return res.status(500).json(
+      createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor')
+    )
   }
-});
+})
 
-// PUT /api/family/members/:memberId - Atualizar relacionamento familiar
+/**
+ * PUT /api/citizen/family/members/:memberId
+ * Atualizar informações de um membro
+ */
 router.put('/members/:memberId', async (req, res) => {
   try {
-    const data = updateRelationshipSchema.parse(req.body);
-    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest;
-    const { memberId } = req.params;
+    const { memberId } = req.params
+    const data = updateMemberSchema.parse(req.body)
 
-    // Buscar relacionamento familiar
-    const familyComposition = await prisma.familyComposition.findFirst({
-      where: {
-        
-        headId: citizen.id,
-        memberId
-        }
-        });
+    const result = await familyService.updateFamilyMember(memberId, data as any)
 
-    if (!familyComposition) {
-      return res.status(404).json(
-        createNotFoundResponse('Membro da família')
-      );
+    if (!result.success) {
+      const statusCode = result.error?.includes('não encontrad') ? 404 : 400
+      return res.status(statusCode).json(
+        createErrorResponse('UPDATE_MEMBER_ERROR', result.error || 'Erro ao atualizar membro')
+      )
     }
 
-    // Atualizar relacionamento
-    const updatedComposition = await prisma.familyComposition.update({
-      where: { id: familyComposition.id },
-      data: {
-        relationship: data.relationship,
-        isDependent: data.isDependent,
-        // Novos campos Sprint 2
-        monthlyIncome: data.monthlyIncome,
-        occupation: data.occupation,
-        education: data.education,
-        hasDisability: data.hasDisability
-        },
-      include: {
-        member: {
-          select: {
-            id: true,
-            cpf: true,
-            name: true,
-            email: true,
-            phone: true,
-            address: true,
-            isActive: true
-        }
-      }
-        }
-        });
+    return res.json(
+      createSuccessResponse({
+        member: result.data,
+        warnings: result.warnings
+      })
+    )
+  } catch (error: any) {
+    console.error('Erro ao atualizar membro:', error)
 
-    return res.json({
-      message: 'Relacionamento familiar atualizado com sucesso',
-      familyComposition: updatedComposition
-        });
-  } catch (error: unknown) {
-    console.error('Erro ao atualizar relacionamento familiar:', error);
-
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Dados inválidos',
-        details: error.issues
-        });
+    if (error.name === 'ZodError') {
+      return res.status(400).json(
+        createErrorResponse('VALIDATION_ERROR', 'Dados inválidos', error.errors)
+      )
     }
 
-    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'));
+    return res.status(500).json(
+      createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor')
+    )
   }
-});
+})
 
-// DELETE /api/family/members/:memberId - Remover membro da família
+/**
+ * DELETE /api/citizen/family/members/:memberId
+ * Remover membro da família
+ */
 router.delete('/members/:memberId', async (req, res) => {
   try {
-    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest;
-    const { memberId } = req.params;
+    const { memberId } = req.params
 
-    // Buscar relacionamento familiar
-    const familyComposition = await prisma.familyComposition.findFirst({
-      where: {
-        
-        headId: citizen.id,
-        memberId
-        },
-      include: {
-        member: {
-          select: {
-            id: true,
-            name: true
-        }
-      }
-        }
-        });
+    const result = await familyService.removeFamilyMember(memberId)
 
-    if (!familyComposition) {
-      return res.status(404).json(
-        createNotFoundResponse('Membro da família')
-      );
+    if (!result.success) {
+      const statusCode = result.error?.includes('não encontrad') ? 404 : 400
+      return res.status(statusCode).json(
+        createErrorResponse('REMOVE_MEMBER_ERROR', result.error || 'Erro ao remover membro')
+      )
     }
 
-    // Remover relacionamento familiar
-    await prisma.familyComposition.delete({
-      where: { id: familyComposition.id }
-        });
-
-    // Criar notificação para o membro removido
-    await prisma.notification.create({
-      data: {
-        
-        citizenId: memberId,
-        title: 'Removido da Família',
-        message: `Você foi removido da composição familiar de ${citizen.name}`,
-        type: 'WARNING'
-        }
-        });
-
-    return res.json({
-      message: 'Membro removido da família com sucesso'
-        });
+    return res.json(
+      createSuccessResponse({ message: 'Membro removido com sucesso' })
+    )
   } catch (error) {
-    console.error('Erro ao remover membro da família:', error);
-    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'));
+    console.error('Erro ao remover membro:', error)
+    return res.status(500).json(
+      createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor')
+    )
   }
-});
+})
 
-// GET /api/family/protocols - Protocolos de todos os membros da família
-router.get('/protocols', async (req, res) => {
-  try {
-    const { citizen } = req as TenantCitizenAuthenticatedRequest;
-    const { status, page = 1, limit = 20 } = req.query;
-
-    const skip = (Number(page) - 1) * Number(limit);
-
-    // Buscar IDs dos membros da família
-    const familyMembers = await prisma.familyComposition.findMany({
-      where: {
-        
-        headId: citizen.id
-        },
-      select: { memberId: true }
-      });
-
-    const allFamilyIds = [citizen.id, ...familyMembers.map(m => m.memberId)];
-
-    // Construir filtros
-    const where: Record<string, unknown> = {
-      
-      citizenId: { in: allFamilyIds }
-        };
-
-    if (status) {
-      where.status = status;
-    }
-
-    // Buscar protocolos familiares
-    const [protocols, total] = await Promise.all([
-      prisma.protocolSimplified.findMany({
-        where,
-        include: {
-          service: {
-            select: {
-              id: true,
-              name: true,
-              category: true
-        }
-      },
-          department: {
-            select: {
-              id: true,
-              name: true
-        }
-      },
-          citizen: {
-            select: {
-              id: true,
-              name: true,
-              cpf: true
-        }
-      },
-          history: {
-            orderBy: { timestamp: 'desc' },
-            take: 1
-        }
-        },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: Number(limit)
-        }),
-      prisma.protocolSimplified.count({ where }),
-    ]);
-
-    return res.json({
-      protocols,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit))
-        }
-        });
-  } catch (error) {
-    console.error('Erro ao buscar protocolos familiares:', error);
-    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'));
-  }
-});
-
-// GET /api/family/stats - Estatísticas da família
-router.get('/stats', async (req, res) => {
-  try {
-    const { citizen } = req as TenantCitizenAuthenticatedRequest;
-
-    // Usar o novo FamilyStatsService
-    const familyStats = await familyStatsService.calculateStats(citizen.id);
-
-    // Buscar membros da família para protocolo stats
-    const familyMembers = await prisma.familyComposition.findMany({
-      where: {
-        headId: citizen.id
-      },
-      select: { memberId: true, relationship: true, isDependent: true }
-    });
-
-    const allFamilyIds = [citizen.id, ...familyMembers.map(m => m.memberId)];
-
-    // Estatísticas dos protocolos familiares
-    const protocolStats = await prisma.protocolSimplified.groupBy({
-      by: ['status'],
-      where: {
-        citizenId: { in: allFamilyIds }
-      },
-      _count: {
-        status: true
-      }
-    });
-
-    // Total de protocolos
-    const totalProtocols = await prisma.protocolSimplified.count({
-      where: {
-        citizenId: { in: allFamilyIds }
-      }
-    });
-
-    // Estatísticas por membro
-    const memberStats = await Promise.all(
-      allFamilyIds.map(async memberId => {
-        const member =
-          memberId === citizen.id
-            ? citizen
-            : await prisma.citizen.findUnique({
-                where: { id: memberId },
-                select: { id: true, name: true, cpf: true }
-              });
-
-        const protocolCount = await prisma.protocolSimplified.count({
-          where: {
-            citizenId: memberId
-          }
-        });
-
-        const relationship =
-          memberId === citizen.id
-            ? 'HEAD'
-            : familyMembers.find(fm => fm.memberId === memberId)?.relationship;
-
-        return {
-          member,
-          relationship,
-          protocolCount
-        };
-      })
-    );
-
-    return res.json({
-      // Estatísticas demográficas (novo)
-      demographics: {
-        totalMembers: familyStats.totalMembers,
-        totalDependents: familyStats.totalDependents,
-        totalChildren: familyStats.totalChildren,
-        totalElderly: familyStats.totalElderly,
-        totalWithDisability: familyStats.totalWithDisability,
-        averageAge: familyStats.averageAge,
-        membersByRelationship: familyStats.membersByRelationship
-      },
-      // Estatísticas financeiras (novo)
-      financial: {
-        totalIncome: familyStats.totalIncome,
-        incomePerCapita: familyStats.incomePerCapita
-      },
-      // Estatísticas de protocolos (mantido)
-      protocols: {
-        total: totalProtocols,
-        byStatus: protocolStats,
-        byMember: memberStats
-      },
-      // Retrocompatibilidade (deprecated)
-      familySize: familyStats.totalMembers,
-      dependents: familyStats.totalDependents,
-      totalProtocols,
-      protocolsByStatus: protocolStats,
-      memberStats
-    });
-  } catch (error) {
-    console.error('Erro ao buscar estatísticas familiares:', error);
-    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'));
-  }
-});
-
-// GET /api/family/members/:memberId - Detalhes de um membro específico
+/**
+ * GET /api/citizen/family/members/:memberId
+ * Buscar detalhes de um membro específico
+ */
 router.get('/members/:memberId', async (req, res) => {
   try {
-    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest;
-    const { memberId } = req.params;
+    const { citizen } = req as unknown as TenantCitizenAuthenticatedRequest
+    const { memberId } = req.params
 
-    // Buscar relacionamento familiar
-    const familyComposition = await prisma.familyComposition.findFirst({
-      where: {
-        
-        headId: citizen.id,
-        memberId
-        },
-      include: {
-        member: {
-          select: {
-            id: true,
-            cpf: true,
-            name: true,
-            email: true,
-            phone: true,
-            address: true,
-            isActive: true,
-            createdAt: true,
-            lastLogin: true
-        }
-      }
-        }
-        });
+    // Buscar composição familiar onde este membro está incluído
+    const composition = await familyService.getFamilyComposition(citizen.id)
 
-    if (!familyComposition) {
+    const member = composition.members.find((m: any) => m.id === memberId)
+
+    if (!member) {
       return res.status(404).json(
-        createNotFoundResponse('Membro da família')
-      );
+        createErrorResponse('NOT_FOUND', 'Membro não encontrado na composição familiar')
+      )
     }
 
-    // Buscar protocolos do membro
-    const memberProtocols = await prisma.protocolSimplified.findMany({
-      where: {
-        
-        citizenId: memberId
-        },
-      include: {
-        service: {
-          select: {
-            id: true,
-            name: true,
-            category: true
-        }
-      },
-        department: {
-          select: {
-            id: true,
-            name: true
-        }
-      }
-        },
-      orderBy: { createdAt: 'desc' },
-      take: 10
-        });
-
-    return res.json({
-      familyComposition,
-      protocols: memberProtocols
-        });
+    return res.json(createSuccessResponse({ member }))
   } catch (error) {
-    console.error('Erro ao buscar detalhes do membro:', error);
-    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor'));
+    console.error('Erro ao buscar membro:', error)
+    return res.status(500).json(
+      createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor')
+    )
   }
-});
+})
 
-export default router;
+// ============================================================================
+// ROTAS - ESTATÍSTICAS
+// ============================================================================
+
+/**
+ * GET /api/citizen/family/stats
+ * Buscar estatísticas da família (demografia, finanças, etc)
+ */
+router.get('/stats', async (req, res) => {
+  try {
+    const { citizen } = req as TenantCitizenAuthenticatedRequest
+
+    const stats = await familyService.calculateFamilyStats(citizen.id)
+
+    return res.json(createSuccessResponse({ stats }))
+  } catch (error) {
+    console.error('Erro ao calcular estatísticas:', error)
+    return res.status(500).json(
+      createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor')
+    )
+  }
+})
+
+// ============================================================================
+// ROTAS - PROTOCOLOS DA FAMÍLIA
+// ============================================================================
+
+/**
+ * GET /api/citizen/family/protocols
+ * Buscar protocolos de todos os membros da família
+ */
+router.get('/protocols', async (req, res) => {
+  try {
+    const { citizen } = req as TenantCitizenAuthenticatedRequest
+
+    // Buscar composição familiar
+    const family = await familyService.getFamilyComposition(citizen.id)
+
+    // Coletar IDs de todos os membros (incluindo responsável)
+    const memberIds = [citizen.id, ...family.members.map((m: any) => m.memberId)]
+
+    // Buscar protocolos de todos os membros
+    // TODO: Implementar busca de protocolos (integração com protocols-simplified)
+    // const protocols = await protocolService.getProtocolsByMultipleCitizens(memberIds)
+
+    return res.json(
+      createSuccessResponse({
+        message: 'Funcionalidade de protocolos em desenvolvimento',
+        memberIds
+      })
+    )
+  } catch (error) {
+    console.error('Erro ao buscar protocolos da família:', error)
+    return res.status(500).json(
+      createErrorResponse('INTERNAL_ERROR', 'Erro interno do servidor')
+    )
+  }
+})
+
+export default router
