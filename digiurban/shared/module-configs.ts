@@ -4,7 +4,12 @@
  * @module shared
  */
 
-import { ModuleConfig } from '../backend/src/modules/core/interfaces';
+export interface ModuleConfig {
+  code: string;
+  name: string;
+  department: string;
+  [key: string]: any;
+}
 
 /**
  * Configuração completa de todos os módulos do DigiUrban
