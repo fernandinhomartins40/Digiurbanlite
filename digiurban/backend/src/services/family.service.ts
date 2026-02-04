@@ -147,7 +147,7 @@ export class FamilyService {
       if (!head) {
         return {
           success: false,
-          error: FAMILY_MESSAGES.ERROR.MEMBER_NOT_FOUND
+          error: FAMILY_MESSAGES.ERROR_MEMBER_NOT_FOUND
         }
       }
 
@@ -160,7 +160,7 @@ export class FamilyService {
       if (!member) {
         return {
           success: false,
-          error: FAMILY_MESSAGES.ERROR.CITIZEN_NOT_REGISTERED
+          error: FAMILY_MESSAGES.ERROR_CITIZEN_NOT_REGISTERED
         }
       }
 
@@ -168,7 +168,7 @@ export class FamilyService {
       if (headId === data.memberId) {
         return {
           success: false,
-          error: FAMILY_MESSAGES.ERROR.CANNOT_ADD_SELF
+          error: FAMILY_MESSAGES.ERROR_CANNOT_ADD_SELF
         }
       }
 
@@ -183,16 +183,29 @@ export class FamilyService {
       if (existingRelation) {
         return {
           success: false,
-          error: FAMILY_MESSAGES.ERROR.MEMBER_ALREADY_EXISTS
+          error: FAMILY_MESSAGES.ERROR_MEMBER_ALREADY_EXISTS
         }
       }
 
       // Validar relacionamento por idade
-      const warnings = validateRelationshipByAge(
-        data.relationship,
-        member.birthDate,
-        head.birthDate
-      )
+      const headAge = calculateAge(head.birthDate);
+      const memberAge = calculateAge(member.birthDate);
+      const validation = validateRelationshipByAge(headAge, memberAge, data.relationship);
+      const warnings: ValidationWarning[] = [];
+
+      if (!validation.valid && validation.warning) {
+        warnings.push({
+          type: 'age',
+          message: validation.warning,
+          severity: 'high'
+        });
+      } else if (validation.warning) {
+        warnings.push({
+          type: 'age',
+          message: validation.warning,
+          severity: 'medium'
+        });
+      }
 
       // Criar vínculo familiar (com status PENDING aguardando confirmação do membro)
       const familyComposition = await prisma.familyComposition.create({
@@ -262,13 +275,25 @@ export class FamilyService {
       }
 
       // Validar novo relacionamento se fornecido
-      let warnings: ValidationWarning[] = []
+      const warnings: ValidationWarning[] = [];
       if (data.relationship) {
-        warnings = validateRelationshipByAge(
-          data.relationship,
-          composition.member.birthDate,
-          composition.head.birthDate
-        )
+        const headAge = calculateAge(composition.head.birthDate);
+        const memberAge = calculateAge(composition.member.birthDate);
+        const validation = validateRelationshipByAge(headAge, memberAge, data.relationship);
+
+        if (!validation.valid && validation.warning) {
+          warnings.push({
+            type: 'age',
+            message: validation.warning,
+            severity: 'high'
+          });
+        } else if (validation.warning) {
+          warnings.push({
+            type: 'age',
+            message: validation.warning,
+            severity: 'medium'
+          });
+        }
       }
 
       const updated = await prisma.familyComposition.update({
@@ -490,9 +515,9 @@ export class FamilyService {
       const invite = await prisma.familyInvite.create({
         data: {
           headId,
-          email: data.email,
+          email: data.email || data.memberEmail || '',
           cpf: data.cpf,
-          phone: data.phone,
+          phone: data.phone || data.memberPhone,
           name: data.name,
           relationship: data.relationship,
           isDependent: data.isDependent || false,
@@ -546,7 +571,7 @@ export class FamilyService {
       if (!invite) {
         return {
           success: false,
-          error: FAMILY_MESSAGES.ERROR.INVITE_NOT_FOUND
+          error: FAMILY_MESSAGES.ERROR_INVITE_NOT_FOUND
         }
       }
 
@@ -558,7 +583,7 @@ export class FamilyService {
         })
         return {
           success: false,
-          error: FAMILY_MESSAGES.ERROR.INVITE_EXPIRED
+          error: FAMILY_MESSAGES.ERROR_INVITE_EXPIRED
         }
       }
 
@@ -605,7 +630,7 @@ export class FamilyService {
 
         return {
           success: true,
-          data: { message: FAMILY_MESSAGES.SUCCESS.INVITE_ACCEPTED }
+          data: { message: FAMILY_MESSAGES.SUCCESS_INVITE_ACCEPTED }
         }
       } else {
         // Rejeitar convite
@@ -624,7 +649,7 @@ export class FamilyService {
 
         return {
           success: true,
-          data: { message: FAMILY_MESSAGES.SUCCESS.INVITE_REJECTED }
+          data: { message: FAMILY_MESSAGES.SUCCESS_INVITE_REJECTED }
         }
       }
     } catch (error: any) {
@@ -761,7 +786,10 @@ export class FamilyService {
       averageAge,
       membersByRelationship,
       activeLinks,
-      pendingLinks
+      pendingLinks,
+      activeMembersCount: activeLinks,
+      pendingMembersCount: pendingLinks,
+      relationshipCounts: membersByRelationship
     }
   }
 
