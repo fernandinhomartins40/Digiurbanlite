@@ -363,8 +363,9 @@ export default function EnfermagemPage() {
 
     try {
       const payload: Record<string, any> = {
-        atendimentoId: filaId,
-        profissionalId: 'profissional-default', // TODO: obter do contexto autenticado
+        filaAtendimentoId: filaId,
+        enfermeiroId: 'profissional-default', // TODO: obter do contexto autenticado
+        unidadeId: contexto?.fila?.unidade?.id || '',
         queixaPrincipal: avaliacaoEnf.queixaPrincipal,
         classificacaoRisco,
         observacoes: avaliacaoEnf.observacoes || undefined,
@@ -376,13 +377,30 @@ export default function EnfermagemPage() {
       if (sinaisVitais.frequenciaRespiratoria) payload.frequenciaRespiratoria = parseInt(sinaisVitais.frequenciaRespiratoria);
       if (sinaisVitais.temperatura) payload.temperatura = parseFloat(sinaisVitais.temperatura);
       if (sinaisVitais.saturacaoO2) payload.saturacaoO2 = parseFloat(sinaisVitais.saturacaoO2);
+      if (sinaisVitais.dor) payload.dor = parseInt(sinaisVitais.dor);
 
-      // Peso / Altura
+      // Antropometria
       if (antropometria.peso) payload.peso = parseFloat(antropometria.peso);
       if (antropometria.altura) payload.altura = parseFloat(antropometria.altura);
+      if (antropometria.imc) payload.imc = parseFloat(antropometria.imc);
+      if (antropometria.perimetroCefalico) payload.perimetroCefalico = parseFloat(antropometria.perimetroCefalico);
+      if (antropometria.circunferenciaAbdominal) payload.circunferenciaAbdominal = parseFloat(antropometria.circunferenciaAbdominal);
+
+      // Glicemia
+      if (glicemia.valor) payload.glicemiaCapilar = parseFloat(glicemia.valor);
+      if (glicemia.momento) payload.momentoGlicemia = glicemia.momento;
+
+      // Outros campos da avaliação
+      if (avaliacaoEnf.historiaDoencaAtual) payload.historiaDoencaAtual = avaliacaoEnf.historiaDoencaAtual;
+      if (avaliacaoEnf.alergiasConhecidas) payload.alergiasConhecidas = avaliacaoEnf.alergiasConhecidas;
+      if (avaliacaoEnf.medicamentosUso) payload.medicamentosUso = avaliacaoEnf.medicamentosUso;
+      if (avaliacaoEnf.comorbidades) payload.comorbidades = avaliacaoEnf.comorbidades;
+
+      // Discriminador de Manchester
+      if (discriminador) payload.discriminadorUtilizado = discriminador;
 
       // Enviar para a API de triagem existente
-      const res = await fetch('/api/saude/atendimento/triagem', {
+      const res = await fetch('/api/saude/triagem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
