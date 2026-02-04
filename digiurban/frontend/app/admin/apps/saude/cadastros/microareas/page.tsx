@@ -251,7 +251,7 @@ export default function MicroareasListagem() {
                 <div>
                   <p className="text-sm text-gray-600">Famílias Cadastradas</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {microareas.reduce((acc, m) => acc + m._count.citizens, 0)}
+                    {microareas.reduce((acc, m) => acc + (m._count?.citizens || 0), 0)}
                   </p>
                 </div>
                 <Users className="h-8 w-8 text-orange-200" />
@@ -331,7 +331,7 @@ export default function MicroareasListagem() {
                           )}
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant="outline">{microarea._count.citizens}</Badge>
+                          <Badge variant="outline">{microarea._count?.citizens || 0}</Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={microarea.ativo ? 'default' : 'secondary'}>

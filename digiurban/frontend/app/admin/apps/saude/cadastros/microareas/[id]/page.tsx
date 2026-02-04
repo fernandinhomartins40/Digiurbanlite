@@ -220,7 +220,7 @@ export default function EditarMicroarea() {
         </div>
 
         {/* Stats Card */}
-        {microarea._count.citizens > 0 && (
+        {(microarea._count?.citizens || 0) > 0 && (
           <Card className="mb-6 bg-blue-50 border-blue-200">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -228,7 +228,7 @@ export default function EditarMicroarea() {
                 <div>
                   <p className="text-sm text-blue-800">Famílias Cadastradas</p>
                   <p className="text-2xl font-bold text-blue-900">
-                    {microarea._count.citizens}
+                    {microarea._count?.citizens || 0}
                   </p>
                 </div>
               </div>

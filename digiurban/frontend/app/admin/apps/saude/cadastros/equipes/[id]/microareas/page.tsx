@@ -205,7 +205,7 @@ export default function MicroareasEquipePage() {
   };
 
   const microareasAtivas = microareas.filter((m) => m.ativo);
-  const totalCidadaos = microareasAtivas.reduce((sum, m) => sum + m._count.citizens, 0);
+  const totalCidadaos = microareasAtivas.reduce((sum, m) => sum + (m._count?.citizens || 0), 0);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -387,7 +387,7 @@ export default function MicroareasEquipePage() {
                         <TableCell className="text-center">
                           <Badge variant="outline">
                             <Users className="h-3 w-3 mr-1" />
-                            {microarea._count.citizens}
+                            {microarea._count?.citizens || 0}
                           </Badge>
                         </TableCell>
                         <TableCell>
