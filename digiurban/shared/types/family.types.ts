@@ -4,37 +4,45 @@
  */
 
 // ============================================================================
-// ENUMS
+// ENUMS - Exportados como const objects E tipos para máxima compatibilidade
 // ============================================================================
 
-export enum FamilyRelationship {
-  SPOUSE = 'SPOUSE',
-  SON = 'SON',
-  DAUGHTER = 'DAUGHTER',
-  FATHER = 'FATHER',
-  MOTHER = 'MOTHER',
-  BROTHER = 'BROTHER',
-  SISTER = 'SISTER',
-  GRANDFATHER = 'GRANDFATHER',
-  GRANDMOTHER = 'GRANDMOTHER',
-  GRANDSON = 'GRANDSON',
-  GRANDDAUGHTER = 'GRANDDAUGHTER',
-  OTHER = 'OTHER'
-}
+export const FamilyRelationship = {
+  SPOUSE: 'SPOUSE',
+  SON: 'SON',
+  DAUGHTER: 'DAUGHTER',
+  FATHER: 'FATHER',
+  MOTHER: 'MOTHER',
+  BROTHER: 'BROTHER',
+  SISTER: 'SISTER',
+  GRANDFATHER: 'GRANDFATHER',
+  GRANDMOTHER: 'GRANDMOTHER',
+  GRANDSON: 'GRANDSON',
+  GRANDDAUGHTER: 'GRANDDAUGHTER',
+  OTHER: 'OTHER',
+} as const;
 
-export enum FamilyLinkStatus {
-  PENDING = 'PENDING',       // Aguardando confirmação do membro
-  ACTIVE = 'ACTIVE',         // Ambos confirmaram
-  REJECTED = 'REJECTED'      // Membro rejeitou
-}
+export type FamilyRelationship =
+  (typeof FamilyRelationship)[keyof typeof FamilyRelationship];
 
-export enum InviteStatus {
-  PENDING = 'PENDING',       // Aguardando resposta
-  ACCEPTED = 'ACCEPTED',     // Aceito e vínculo criado
-  REJECTED = 'REJECTED',     // Rejeitado pelo convidado
-  EXPIRED = 'EXPIRED',       // Expirou (7 dias)
-  CANCELLED = 'CANCELLED'    // Cancelado pelo remetente
-}
+export const FamilyLinkStatus = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type FamilyLinkStatus =
+  (typeof FamilyLinkStatus)[keyof typeof FamilyLinkStatus];
+
+export const InviteStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export type InviteStatus = (typeof InviteStatus)[keyof typeof InviteStatus];
 
 // ============================================================================
 // INTERFACES - DATABASE MODELS
@@ -92,6 +100,15 @@ export interface CitizenBasic {
   birthDate?: Date | null
 }
 
+export interface FamilyMember {
+  id: string;
+  name: string;
+  cpf: string | null;
+  email: string | null;
+  phone: string | null;
+  birthDate: Date | null;
+}
+
 export interface FamilyMemberWithDetails extends FamilyComposition {
   member: CitizenBasic
 }
@@ -105,31 +122,46 @@ export interface FamilyHeadWithDetails {
   birthDate?: Date | null
 }
 
+export interface FamilyCompositionItem {
+  id: string;
+  headId: string;
+  memberId: string;
+  relationship: FamilyRelationship;
+  status: FamilyLinkStatus;
+  notes: string | null;
+  member: FamilyMember;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface FamilyData {
-  head: FamilyHeadWithDetails
-  members: FamilyMemberWithDetails[]
+  head: FamilyMember;
+  members: FamilyCompositionItem[];
   memberOf: Array<{
-    id: string
-    relationship: FamilyRelationship
-    isDependent: boolean
-    status: FamilyLinkStatus
-    head: CitizenBasic
-  }>
-  stats: FamilyStats
+    id: string;
+    headId: string;
+    relationship: FamilyRelationship;
+    status: FamilyLinkStatus;
+    head: FamilyMember;
+  }>;
+  stats: FamilyStats;
 }
 
 export interface FamilyStats {
-  totalMembers: number
-  totalDependents: number
-  totalChildren: number
-  totalElderly: number
-  totalWithDisability: number
-  totalIncome: number
-  incomePerCapita: number
-  averageAge: number | null
-  membersByRelationship: Record<string, number>
-  activeLinks: number
-  pendingLinks: number
+  totalMembers: number;
+  activeMembersCount: number;
+  pendingMembersCount: number;
+  relationshipCounts: Record<string, number>;
+  averageAge?: number | null;
+  totalDependents?: number;
+  totalChildren?: number;
+  totalElderly?: number;
+  totalWithDisability?: number;
+  totalIncome?: number;
+  incomePerCapita?: number;
+  membersByRelationship?: Record<string, number>;
+  activeLinks?: number;
+  pendingLinks?: number;
 }
 
 // ============================================================================
@@ -137,42 +169,44 @@ export interface FamilyStats {
 // ============================================================================
 
 export interface AddFamilyMemberRequest {
-  memberId: string
-  relationship: FamilyRelationship
-  isDependent: boolean
-  monthlyIncome?: number
-  occupation?: string
-  education?: string
-  hasDisability?: boolean
+  memberId: string;
+  relationship: FamilyRelationship;
+  notes?: string;
+  isDependent?: boolean;
+  monthlyIncome?: number;
+  occupation?: string;
+  education?: string;
+  hasDisability?: boolean;
 }
 
 export interface UpdateFamilyMemberRequest {
-  relationship?: FamilyRelationship
-  isDependent?: boolean
-  monthlyIncome?: number
-  occupation?: string
-  education?: string
-  hasDisability?: boolean
+  relationship?: FamilyRelationship;
+  status?: FamilyLinkStatus;
+  notes?: string;
+  isDependent?: boolean;
+  monthlyIncome?: number;
+  occupation?: string;
+  education?: string;
+  hasDisability?: boolean;
 }
 
 export interface SendFamilyInviteRequest {
-  email: string
-  cpf?: string
-  phone?: string
-  name?: string
-  relationship: FamilyRelationship
-  isDependent?: boolean
-  message?: string
-  monthlyIncome?: number
-  occupation?: string
-  education?: string
-  hasDisability?: boolean
+  memberEmail?: string;
+  memberPhone?: string;
+  relationship: FamilyRelationship;
+  message?: string;
+  email?: string;
+  cpf?: string;
+  phone?: string;
+  name?: string;
+  isDependent?: boolean;
 }
 
 export interface RespondToInviteRequest {
-  token: string
-  accept: boolean
-  reason?: string
+  accept: boolean;
+  notes?: string;
+  token?: string;
+  reason?: string;
 }
 
 // ============================================================================
@@ -204,9 +238,10 @@ export interface FamilyInviteFormData {
 // ============================================================================
 
 export interface ValidationWarning {
-  field: string
-  message: string
-  severity: 'warning' | 'error'
+  type: 'age' | 'relationship' | 'duplicate' | 'other';
+  message: string;
+  severity: 'low' | 'medium' | 'high';
+  suggestion?: string;
 }
 
 export interface RelationshipSuggestion {
