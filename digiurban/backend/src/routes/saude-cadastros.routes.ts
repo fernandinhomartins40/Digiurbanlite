@@ -175,7 +175,17 @@ router.get('/dados-saude', async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    res.json(healthData);
+    // Formatar para retornar diretamente os dados do usuário
+    const formatted = healthData.map((hd) => ({
+      id: hd.user.id,
+      name: hd.user.name,
+      email: hd.user.email,
+      categoria: hd.categoria,
+      cbo: hd.cbo,
+      registroProfissional: hd.registroProfissional,
+    }));
+
+    res.json(formatted);
   } catch (error: any) {
     console.error('Erro ao buscar dados-saude:', error);
     res.status(500).json({ error: error.message });
@@ -1751,6 +1761,12 @@ router.get('/microareas', async (req: Request, res: Response) => {
             nome: true,
             ine: true,
             tipo: true,
+            unidade: {
+              select: {
+                id: true,
+                nome: true,
+              },
+            },
           },
         },
         acs: {
