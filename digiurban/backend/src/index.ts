@@ -452,6 +452,7 @@ try {
   console.log('   → APP-SAUDE-02: Farmácia Municipal...');
   const saudeFarmaciaRoutes = require('./routes/saude-farmacia.routes').default;
   app.use('/api/saude/farmacia', saudeFarmaciaRoutes);
+  app.use('/api/apps/saude/farmacia', saudeFarmaciaRoutes); // Alias para compatibilidade frontend
   console.log('   ✅ APP-SAUDE-02 carregado (~28 endpoints)');
 } catch (e) {
   console.error('❌ Erro ao carregar APP-SAUDE-02:', e);
