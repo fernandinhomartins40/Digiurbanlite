@@ -244,9 +244,11 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
   }, [refreshUserData])
 
   // Hook para verificar autenticação ao montar o componente
+  // CRITICAL FIX: Executar apenas uma vez, não observar dependências
   useEffect(() => {
     checkAuth()
-  }, [checkAuth])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const value: AdminAuthContextType = {
     user,
