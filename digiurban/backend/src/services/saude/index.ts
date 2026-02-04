@@ -6,3 +6,4 @@ export { default as TriagemEnfermagemService } from './triagem-enfermagem.servic
 export { default as EquipeSaudeService } from './equipe-saude.service';
 export { default as AtividadeColetivaService } from './atividade-coletiva.service';
 export { default as AgendaService } from './agenda.service';
+export { default as ConsultaMedicaService } from './consulta-medica.service';

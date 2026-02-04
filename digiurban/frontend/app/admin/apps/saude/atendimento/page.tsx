@@ -210,19 +210,19 @@ export default function ListaAtendimentosPage() {
   const handleAcao = (atendimento: AtendimentoNaLista, acao: string) => {
     switch (acao) {
       case 'classificacao-risco':
-        router.push(`/admin/apps/saude/atendimento/${atendimento.id}/classificacao-risco`);
+        router.push(`/admin/apps/saude/atendimento/enfermagem?filaId=${atendimento.id}`);
         break;
       case 'acolhimento':
-        router.push(`/admin/apps/saude/atendimento/${atendimento.id}/acolhimento`);
+        router.push(`/admin/apps/saude/atendimento/enfermagem?filaId=${atendimento.id}`);
         break;
       case 'escuta-inicial':
         router.push(`/admin/apps/saude/atendimento/escuta-inicial/${atendimento.id}`);
         break;
       case 'triagem':
-        router.push(`/admin/apps/saude/atendimento/triagem?atendimentoId=${atendimento.id}`);
+        router.push(`/admin/apps/saude/atendimento/enfermagem?filaId=${atendimento.id}`);
         break;
       case 'consulta':
-        router.push(`/admin/apps/saude/atendimento/consulta?atendimentoId=${atendimento.id}`);
+        router.push(`/admin/apps/saude/atendimento/consulta?filaId=${atendimento.id}`);
         break;
       case 'prontuario':
         router.push(`/admin/apps/saude/atendimento/prontuario/${atendimento.cidadao.id}`);

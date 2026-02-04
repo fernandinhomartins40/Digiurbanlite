@@ -111,71 +111,6 @@ export async function realizarTriagem(data: {
 export const criarTriagem = realizarTriagem;
 
 // ============================================================================
-// PRESCRIÇÃO
-// ============================================================================
-
-export async function criarPrescricao(data: {
-  atendimentoId: string;
-  profissionalId: string;
-  observacoes?: string;
-  itens: Array<{
-    medicamentoId: string;
-    quantidade: number;
-    posologia: string;
-    duracao?: string;
-  }>;
-}) {
-  const res = await fetch(`${API_BASE}/prescricao`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-export async function gerarPrescricaoPDF(prescricaoId: string) {
-  const res = await fetch(`${API_BASE}/prescricao/${prescricaoId}/pdf`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-// ============================================================================
-// ATESTADO
-// ============================================================================
-
-export async function criarAtestado(data: {
-  atendimentoId: string;
-  profissionalId: string;
-  cid10: string;
-  diasAfastamento: number;
-  dataInicio: Date;
-  observacoes?: string;
-}) {
-  const res = await fetch(`${API_BASE}/atestado`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-export async function gerarAtestadoPDF(atestadoId: string) {
-  const res = await fetch(`${API_BASE}/atestado/${atestadoId}/pdf`, {
-    method: 'POST',
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-// ============================================================================
 // PRONTUÁRIO
 // ============================================================================
 
@@ -216,27 +151,140 @@ export async function obterEstatisticasAtendimento(filtros: {
 }
 
 // ============================================================================
-// CONSULTA MÉDICA
+// CONSULTA MÉDICA — PEC e-SUS
 // ============================================================================
 
-export async function criarConsultaMedica(data: {
-  atendimentoId: string;
-  medicoId: string;
-  queixaPrincipal: string;
-  historiaDoencaAtual: string;
-  historicoMedico?: string;
-  exameFisico: string;
-  hipoteseDiagnostica?: string;
-  diagnosticos?: any;
-  conduta: string;
-  observacoes?: string;
-}) {
-  const res = await fetch(`${API_BASE}/consulta`, {
+const CONSULTA_BASE = '/api/saude/consulta-medica';
+
+// Contexto completo da fila (paciente + problemas + histórico)
+export async function buscarContextoFila(filaId: string) {
+  const res = await fetch(`${CONSULTA_BASE}/contexto-fila/${filaId}`, { credentials: 'include' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// Buscar consulta já existente para esta entrada na fila
+export async function buscarConsultaPorFila(filaId: string) {
+  const res = await fetch(`${CONSULTA_BASE}/fila/${filaId}`, { credentials: 'include' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// Criar consulta médica (SOAP)
+export async function criarConsultaMedica(data: Record<string, any>) {
+  const res = await fetch(`${CONSULTA_BASE}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
     credentials: 'include',
   });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// Finalizar consulta (atualiza status fila → FINALIZADO)
+export async function finalizarConsulta(filaId: string) {
+  const res = await fetch(`${CONSULTA_BASE}/finalizar/${filaId}`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── Prescrições ──
+export async function criarPrescricao(consultaId: string, data: Record<string, any>) {
+  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/prescricao`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function listarPrescricoes(consultaId: string) {
+  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/prescricoes`, { credentials: 'include' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── Exames ──
+export async function criarExame(consultaId: string, data: Record<string, any>) {
+  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/exame`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function listarExames(consultaId: string) {
+  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/exames`, { credentials: 'include' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── Encaminhamentos ──
+export async function criarEncaminhamento(consultaId: string, data: Record<string, any>) {
+  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/encaminhamento`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function listarEncaminhamentos(consultaId: string) {
+  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/encaminhamentos`, { credentials: 'include' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── Atestados ──
+export async function criarAtestado(consultaId: string, data: Record<string, any>) {
+  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/atestado`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function listarAtestados(consultaId: string) {
+  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/atestados`, { credentials: 'include' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── Problemas / Condições ──
+export async function buscarProblemasCidadao(citizenId: string) {
+  const res = await fetch(`${CONSULTA_BASE}/problemas/${citizenId}`, { credentials: 'include' });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function criarProblema(citizenId: string, data: Record<string, any>) {
+  const res = await fetch(`${CONSULTA_BASE}/problemas/${citizenId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── Medicamentos (autocomplete) ──
+export async function buscarMedicamentos(q: string) {
+  const res = await fetch(`${CONSULTA_BASE}/medicamentos/busca?q=${encodeURIComponent(q)}`, { credentials: 'include' });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
