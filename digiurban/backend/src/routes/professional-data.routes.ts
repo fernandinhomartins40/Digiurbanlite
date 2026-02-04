@@ -19,7 +19,7 @@ router.get('/health', authenticateToken, async (req: Request, res: Response) => 
 
     const where: any = {};
     if (categoria) where.categoria = categoria as string;
-    if (ativo !== undefined) where.ativo = ativo === 'true';
+    if (ativo !== undefined) where.status = ativo === 'true' ? 'ATIVO' : 'INATIVO';
 
     const healthData = await prisma.healthProfessionalData.findMany({
       where,
@@ -241,7 +241,7 @@ router.put('/health/:userId', authenticateToken, async (req: Request, res: Respo
     if (aceitaAgendamento !== undefined) updateData.aceitaAgendamento = aceitaAgendamento;
     if (tempoMedioConsulta !== undefined) updateData.tempoMedioConsulta = tempoMedioConsulta;
     if (ativo !== undefined) {
-      updateData.ativo = ativo;
+      updateData.status = ativo ? 'ATIVO' : 'INATIVO';
       if (!ativo) {
         updateData.dataInativacao = new Date();
         updateData.motivoInativacao = motivoInativacao;
@@ -653,11 +653,11 @@ router.get('/health/stats', authenticateToken, async (req: Request, res: Respons
   try {
     const [total, ativos, porCategoria] = await Promise.all([
       prisma.healthProfessionalData.count(),
-      prisma.healthProfessionalData.count({ where: { ativo: true } }),
+      prisma.healthProfessionalData.count({ where: { status: 'ATIVO' } }),
       prisma.healthProfessionalData.groupBy({
         by: ['categoria'],
         _count: true,
-        where: { ativo: true },
+        where: { status: 'ATIVO' },
       }),
     ]);
 
