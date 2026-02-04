@@ -96,13 +96,11 @@ RUN npm install --legacy-peer-deps
 # Copiar código do frontend
 COPY digiurban/frontend ./
 
-# Build Next.js
-RUN npm run build
-
-# Validar que o build do Next.js foi bem-sucedido
-RUN test -d .next || (echo "❌ ERRO: Build do Next.js falhou!" && exit 1)
-RUN test -f .next/BUILD_ID || (echo "❌ ERRO: BUILD_ID não foi gerado!" && exit 1)
-RUN echo "✅ Build do Next.js concluído com sucesso"
+# Build Next.js com validação integrada
+RUN npm run build && \
+    test -d .next && echo "✅ .next directory exists" || { echo "❌ ERRO: .next não existe!"; exit 1; } && \
+    test -f .next/BUILD_ID && echo "✅ BUILD_ID exists" || { echo "❌ ERRO: BUILD_ID não gerado!"; exit 1; } && \
+    echo "✅ Build do Next.js concluído com sucesso"
 
 # ========== STAGE 3: Production Image ==========
 FROM node:18-bookworm-slim AS runner
