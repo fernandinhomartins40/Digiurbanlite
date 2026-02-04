@@ -236,11 +236,11 @@ export default function FilaAtendimentoPage() {
                           item.prioridade
                         )}`}
                       >
-                        #{item.ordem}
+                        #{filaAguardando.indexOf(item) + 1}
                       </div>
                       <div>
                         <div className="font-medium">
-                          {item.consulta?.citizen?.name || 'Paciente'}
+                          {item.citizen?.name || 'Paciente'}
                         </div>
                         <div className="text-sm text-gray-500">
                           Prioridade: {item.prioridade}
@@ -278,17 +278,17 @@ export default function FilaAtendimentoPage() {
                 >
                   <div className="flex-1">
                     <div className="font-medium">
-                      {item.consulta?.citizen?.name || 'Paciente'}
+                      {item.citizen?.name || 'Paciente'}
                     </div>
                     <div className="text-sm text-gray-500">
-                      Consultório {item.consultorio}
+                      {item.motivoBusca || '—'}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     {getStatusBadge(item.status)}
                     <div className="text-sm text-gray-500">
-                      {item.chamadaEm &&
-                        new Date(item.chamadaEm).toLocaleTimeString('pt-BR', {
+                      {item.dataHoraInicio &&
+                        new Date(item.dataHoraInicio).toLocaleTimeString('pt-BR', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}

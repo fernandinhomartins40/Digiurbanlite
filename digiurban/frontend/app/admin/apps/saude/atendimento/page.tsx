@@ -47,7 +47,6 @@ interface AtendimentoNaLista {
   };
   criadoEm: string;
   iniciadoEm?: string;
-  chamadaEm?: string;
 }
 
 export default function ListaAtendimentosPage() {
@@ -105,24 +104,23 @@ export default function ListaAtendimentosPage() {
 
       const data = await response.json();
 
-      // Mapear dados da API para formato da lista
-      const atendimentosFormatados = data.map((item: any) => ({
-        id: item.consulta?.id || item.id,
+      // Mapear dados da API (FilaAtendimento) para formato da lista
+      const atendimentosFormatados = data.map((item: any, index: number) => ({
+        id: item.id,
         status: item.status,
         prioridade: item.prioridade,
-        ordem: item.ordem,
+        ordem: index + 1,
         cidadao: {
-          id: item.consulta?.citizen?.id || '',
-          name: item.consulta?.citizen?.name || 'Paciente',
-          cpf: item.consulta?.citizen?.cpf,
-          cns: item.consulta?.citizen?.cns,
+          id: item.citizen?.id || '',
+          name: item.citizen?.name || 'Paciente',
+          cpf: item.citizen?.cpf,
+          cns: item.citizen?.cns,
         },
-        tipoAtendimento: item.consulta?.tipoAtendimento || 'CONSULTA',
-        motivoChegada: item.consulta?.motivoChegada,
-        profissional: item.consulta?.profissional,
-        criadoEm: item.criadoEm,
-        iniciadoEm: item.iniciadoEm,
-        chamadaEm: item.chamadaEm,
+        tipoAtendimento: item.tipoAtendimento || 'CONSULTA',
+        motivoChegada: item.motivoBusca,
+        profissional: item.profissional,
+        criadoEm: item.dataHoraChegada,
+        iniciadoEm: item.dataHoraInicio,
       }));
 
       setAtendimentos(atendimentosFormatados);

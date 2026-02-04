@@ -24,18 +24,18 @@ export async function realizarCheckIn(data: {
 }
 
 export async function obterFilaUnidade(unidadeId: string) {
-  const res = await fetch(`${API_BASE}/fila/unidade/${unidadeId}`, {
+  const res = await fetch(`/api/saude/fila-atendimento?unidadeId=${unidadeId}`, {
     credentials: 'include',
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
-export async function chamarProximo(unidadeId: string, consultorio: string) {
-  const res = await fetch(`${API_BASE}/fila/chamar-proximo`, {
+export async function chamarProximo(unidadeId: string, profissionalId: string) {
+  const res = await fetch(`/api/saude/fila-atendimento/chamar-proximo`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ unidadeId, consultorio }),
+    body: JSON.stringify({ unidadeId, profissionalId }),
     credentials: 'include',
   });
   if (!res.ok) throw new Error(await res.text());
